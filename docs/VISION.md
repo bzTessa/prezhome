@@ -50,6 +50,27 @@ Que tú marques las recetas que te gustan y la app:
 ### FASE 7 — Google Calendar
 - Conectar cuenta (OAuth) y volcar plan + avisos diarios como eventos.
 
+## Ideas ampliadas (integrar en las fases correspondientes)
+
+- **IA para rellenar recetas (Fase 1.5):** el usuario escribe el nombre o pega
+  una receta y una Supabase Edge Function (con la API key OCULTA en el servidor
+  y control de límite mensual vía tabla `subscriptions.ai_monthly_limit`) devuelve
+  macros, ingredientes, tiempos y aparato. NUNCA poner la API key en el cliente.
+
+- **Patrones de consumo por persona y día (Fase 3):** cada miembro del hogar puede
+  tener un patrón semanal (ej. la pareja entre semana solo cena en casa y come
+  fuera en el trabajo). El planificador escala cantidades según quién come cada
+  comida cada día.
+
+- **Calendario visual estilo "Flo" (Fase 4):** vista de calendario del hogar que
+  muestra tareas + comidas del día. Permite marcar excepciones (ej. "hoy como
+  fuera" o "no cumplí el plan") y la app RECALCULA el plan, el congelador y la
+  compra en consecuencia (recálculo dinámico).
+
+- **Aprendizaje de tickets (Fase 6):** a medida que se suben tickets, la app
+  aprende precios, sitios de compra y rutinas, y estima el gasto mensual esperado.
+  Sanitizar datos personales (Principio 3 de seguridad).
+
 ## Principios de seguridad
 Ver `.kiro/steering/security.md`. Perfil físico privado por defecto; recetas
 compartidas en el hogar; RLS en todas las tablas.
