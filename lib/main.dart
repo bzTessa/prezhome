@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
-import 'home_screen.dart';
+import 'home_session_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,11 +26,17 @@ class PrezHomeApp extends StatelessWidget {
       title: 'PrezHome',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFFDF8E1), // Amarillo pastel cálido[cite: 10]
-        primaryColor: const Color(0xFFE2C792), // Tonos de madera clara[cite: 10]
+        scaffoldBackgroundColor: const Color(
+          0xFFFDF8E1,
+        ), // Amarillo pastel cálido[cite: 10]
+        primaryColor: const Color(
+          0xFFE2C792,
+        ), // Tonos de madera clara[cite: 10]
         textTheme: GoogleFonts.nunitoTextTheme(
           Theme.of(context).textTheme.apply(
-            bodyColor: const Color(0xFF1E1E1E), // Gris oscuro Presidente Miau[cite: 10]
+            bodyColor: const Color(
+              0xFF1E1E1E,
+            ), // Gris oscuro Presidente Miau[cite: 10]
             displayColor: const Color(0xFF1E1E1E),
           ),
         ),
@@ -44,7 +50,7 @@ class PrezHomeApp extends StatelessWidget {
           ),
         ),
       ),
-      home: session == null ? const LoginScreen() : const HomeScreen(),
+      home: session == null ? const LoginScreen() : const HomeSessionScreen(),
     );
   }
 }
