@@ -32,8 +32,10 @@ Antes de usarla, ejecuta la migración `0004_ai_usage.sql` en el SQL Editor
 
 ## Cómo la usa la app
 `AddRecipeScreen` llama a `supabase.functions.invoke('generate-recipe', body: {query})`.
-La función valida la sesión, comprueba el límite mensual de IA del hogar
-(`subscriptions.ai_monthly_limit`), llama a Gemini y devuelve `{ recipe: {...} }`.
+El `query` puede ser un nombre corto ("Pesto Chicken Subs") o una **receta entera
+pegada** (hasta 8000 caracteres). La función valida la sesión, comprueba el límite
+mensual de IA del hogar (`subscriptions.ai_monthly_limit`), llama a Gemini
+(probando varios modelos como fallback) y devuelve `{ recipe: {...} }`.
 
 ## Límite de IA
 Cada llamada consume 1 crédito del hogar. El límite por defecto es 20/mes
