@@ -4,11 +4,16 @@ class Recipe {
   final String title;
   final String? description;
   final int servings;
-  final int? prepTimeMinutes;
+  final int? prepTimeMinutes; // tiempo de preparación
+  final int? cookTimeMinutes; // tiempo de cocción
   final int? calories;
   final double? protein;
   final double? carbs;
   final double? fat;
+  final String appliance; // none | oven | stovetop | pot | airfryer | microwave
+  final String mealType; // breakfast | lunch | dinner | snack
+  final bool isFavorite;
+  final bool freezable;
 
   Recipe({
     required this.id,
@@ -17,10 +22,15 @@ class Recipe {
     this.description,
     required this.servings,
     this.prepTimeMinutes,
+    this.cookTimeMinutes,
     this.calories,
     this.protein,
     this.carbs,
     this.fat,
+    this.appliance = 'none',
+    this.mealType = 'lunch',
+    this.isFavorite = false,
+    this.freezable = false,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
@@ -30,11 +40,16 @@ class Recipe {
       title: map['title'],
       description: map['description'],
       servings: map['servings'] ?? 1,
-      prepTimeMinutes: map['prep_time_minutes'],
+      prepTimeMinutes: map['prep_minutes'] ?? map['prep_time_minutes'],
+      cookTimeMinutes: map['cook_minutes'],
       calories: map['calories_per_serving'],
       protein: (map['protein_grams'] as num?)?.toDouble(),
       carbs: (map['carbs_grams'] as num?)?.toDouble(),
       fat: (map['fat_grams'] as num?)?.toDouble(),
+      appliance: map['appliance'] ?? 'none',
+      mealType: map['meal_type'] ?? 'lunch',
+      isFavorite: map['is_favorite'] ?? false,
+      freezable: map['freezable'] ?? false,
     );
   }
 
@@ -44,11 +59,40 @@ class Recipe {
       'title': title,
       'description': description,
       'servings': servings,
-      'prep_time_minutes': prepTimeMinutes,
+      'prep_minutes': prepTimeMinutes,
+      'cook_minutes': cookTimeMinutes,
       'calories_per_serving': calories,
       'protein_grams': protein,
       'carbs_grams': carbs,
       'fat_grams': fat,
+      'appliance': appliance,
+      'meal_type': mealType,
+      'is_favorite': isFavorite,
+      'freezable': freezable,
     };
   }
+
+  int? get totalTimeMinutes {
+    if (prepTimeMinutes == null && cookTimeMinutes == null) return null;
+    return (prepTimeMinutes ?? 0) + (cookTimeMinutes ?? 0);
+  }
+
+  static const Map<String, String> applianceLabels = {
+    'none': 'Ninguno',
+    'oven': 'Horno',
+    'stovetop': 'Sartén',
+    'pot': 'Olla',
+    'airfryer': 'Airfryer',
+    'microwave': 'Microondas',
+  };
+
+  static const Map<String, String> mealTypeLabels = {
+    'breakfast': 'Desayuno',
+    'lunch': 'Comida',
+    'dinner': 'Cena',
+    'snack': 'Snack',
+  };
+
+  String get applianceLabel => applianceLabels[appliance] ?? 'Ninguno';
+  String get mealTypeLabel => mealTypeLabels[mealType] ?? 'Comida';
 }
