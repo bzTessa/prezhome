@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'inventory_screen.dart';
 import 'recipes_screen.dart';
+import 'nutrition_profile_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -86,6 +87,17 @@ class HomeScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const RecipesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _HomeCard(
+                    title: 'Mi Perfil Nutricional',
+                    icon: Icons.favorite_outline,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NutritionProfileScreen(),
                         ),
                       );
                     },
