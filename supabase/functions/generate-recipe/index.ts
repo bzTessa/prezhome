@@ -86,14 +86,29 @@ Deno.serve(async (req: Request) => {
     }
     const userId = userData.user.id;
 
-    // 2. Obtener el home_id del usuario
+    // 2. Obtener el home_id del usuario (maybeSingle para no lanzar si no hay fila)
     const { data: profile, error: profErr } = await admin
       .from("profiles")
       .select("home_id")
       .eq("id", userId)
-      .single();
-    if (profErr || !profile?.home_id) {
-      return json({ error: "El usuario no pertenece a ningún hogar" }, 400);
+      .maybeSingle();
+    if (profErr) {
+      return json(
+        { error: `No se pudo leer el perfil: ${profErr.message}` },
+        500,
+      );
+    }
+    if (!profile) {
+      return json(
+        { error: `No existe perfil para el usuario ${userId}` },
+        400,
+      );
+    }
+    if (!profile.home_id) {
+      return json(
+        { error: "El usuario no pertenece a ningún hogar" },
+        400,
+      );
     }
     const homeId = profile.home_id as string;
 
