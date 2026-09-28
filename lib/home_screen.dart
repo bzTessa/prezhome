@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'inventory_screen.dart';
 import 'recipes_screen.dart';
 import 'nutrition_profile_screen.dart';
+import 'household_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -28,6 +29,15 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFFDF8E1),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.home_outlined, color: Color(0xFF1E1E1E)),
+            tooltip: 'Mi Hogar',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HouseholdScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFF1E1E1E)),
             onPressed: () => _logout(context),
@@ -98,6 +108,17 @@ class HomeScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const NutritionProfileScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _HomeCard(
+                    title: 'Mi Hogar',
+                    icon: Icons.home_outlined,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const HouseholdScreen(),
                         ),
                       );
                     },
