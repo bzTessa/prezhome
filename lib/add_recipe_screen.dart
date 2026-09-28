@@ -30,6 +30,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   bool _isFavorite = false;
   bool _freezable = false;
   bool _isLoading = false;
+  bool _aiLoading = false;
 
   // Ingredientes dinámicos
   final List<_IngredientControllers> _ingredients = [_IngredientControllers()];
@@ -61,6 +62,133 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     final t = c.text.trim();
     if (t.isEmpty) return null;
     return int.tryParse(t);
+  }
+
+  /// Pide un texto al usuario y rellena el formulario llamando a la Edge
+  /// Function 'generate-recipe' (que a su vez usa Gemini de forma segura).
+  Future<void> _fillWithAI() async {
+    final query = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFDF8E1),
+          title: const Text('Rellenar con IA ✨'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Ej. Pesto Chicken Subs',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE2C792),
+                foregroundColor: const Color(0xFF1E1E1E),
+                elevation: 0,
+              ),
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
+              child: const Text('Generar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (query == null || query.isEmpty) return;
+
+    setState(() => _aiLoading = true);
+    try {
+      final res = await _client.functions.invoke(
+        'generate-recipe',
+        body: {'query': query},
+      );
+
+      final data = res.data;
+      if (data is Map && data['recipe'] is Map) {
+        _applyAIRecipe(Map<String, dynamic>.from(data['recipe'] as Map));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Receta rellenada ✨ Revísala antes de guardar.')),
+          );
+        }
+      } else {
+        final msg = (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'La IA no devolvió una receta válida';
+        throw msg;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error con la IA: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
+    }
+  }
+
+  /// Vuelca el JSON devuelto por la IA en los campos del formulario.
+  void _applyAIRecipe(Map<String, dynamic> r) {
+    String s(dynamic v) => v == null ? '' : v.toString();
+
+    setState(() {
+      _titleController.text = s(r['title']);
+      _descriptionController.text = s(r['description']);
+      if (r['servings'] != null) _servingsController.text = s(r['servings']);
+      if (r['calories_per_serving'] != null) {
+        _caloriesController.text = s(r['calories_per_serving']);
+      }
+      if (r['protein_grams'] != null) _proteinController.text = s(r['protein_grams']);
+      if (r['carbs_grams'] != null) _carbsController.text = s(r['carbs_grams']);
+      if (r['fat_grams'] != null) _fatController.text = s(r['fat_grams']);
+      if (r['prep_minutes'] != null) _prepController.text = s(r['prep_minutes']);
+      if (r['cook_minutes'] != null) _cookController.text = s(r['cook_minutes']);
+
+      final appliance = s(r['appliance']);
+      if (Recipe.applianceLabels.containsKey(appliance)) _appliance = appliance;
+      final mealType = s(r['meal_type']);
+      if (Recipe.mealTypeLabels.containsKey(mealType)) _mealType = mealType;
+      if (r['freezable'] is bool) _freezable = r['freezable'] as bool;
+
+      // Ingredientes
+      final ings = r['ingredients'];
+      if (ings is List && ings.isNotEmpty) {
+        for (final ing in _ingredients) {
+          ing.dispose();
+        }
+        _ingredients
+          ..clear()
+          ..addAll(
+            ings.map((raw) {
+              final m = raw is Map ? raw : <String, dynamic>{};
+              final c = _IngredientControllers();
+              c.name.text = s(m['name']);
+              if (m['quantity'] != null) c.quantity.text = s(m['quantity']);
+              c.unit.text = s(m['unit']);
+              return c;
+            }),
+          );
+        if (_ingredients.isEmpty) _ingredients.add(_IngredientControllers());
+      }
+    });
   }
 
   Future<void> _save() async {
@@ -167,6 +295,29 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            OutlinedButton.icon(
+              onPressed: _aiLoading ? null : _fillWithAI,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1E1E1E),
+                minimumSize: const Size.fromHeight(48),
+                side: const BorderSide(color: Color(0xFFE2C792), width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: _aiLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.auto_awesome),
+              label: Text(
+                _aiLoading ? 'Generando…' : 'Rellenar con IA ✨',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 20),
             TextFormField(
               controller: _titleController,
               decoration: _dec('Título (ej. Pesto Chicken Sub)'),
