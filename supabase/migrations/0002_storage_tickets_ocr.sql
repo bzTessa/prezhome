@@ -60,6 +60,8 @@ create table if not exists public.tickets (
 );
 create index if not exists tickets_home_id_idx on public.tickets (home_id);
 
+grant select, insert, update, delete on public.tickets to authenticated;
+
 alter table public.tickets enable row level security;
 
 drop policy if exists tickets_row_select on public.tickets;

@@ -198,6 +198,28 @@ end;
 $$;
 
 -- ============================================================================
+-- GRANTS base para los roles de Supabase
+-- ============================================================================
+-- RLS controla QUÉ filas ve cada usuario, pero el rol necesita el permiso base
+-- para operar sobre la tabla. Sin esto, PostgREST devuelve 42501 "permission
+-- denied". El acceso real sigue restringido por las políticas RLS de abajo.
+grant usage on schema public to authenticated, anon;
+
+grant select, insert, update, delete on
+  public.homes,
+  public.profiles,
+  public.home_members,
+  public.subscriptions,
+  public.inventory_items,
+  public.recipes
+to authenticated;
+
+-- Permitir ejecutar las funciones RPC del onboarding
+grant execute on function public.create_home_and_join(text) to authenticated;
+grant execute on function public.join_home(uuid) to authenticated;
+grant execute on function public.auth_home_id() to authenticated;
+
+-- ============================================================================
 -- ACTIVAR ROW LEVEL SECURITY (Principio 1: activado desde el diseño)
 -- ============================================================================
 alter table public.homes           enable row level security;
