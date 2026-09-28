@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_recipe_screen.dart';
+import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 
@@ -128,7 +129,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             itemCount: recipes.length,
             itemBuilder: (context, index) {
-              return _RecipeCard(recipe: recipes[index], caloriesPerMeal: perMeal);
+              final recipe = recipes[index];
+              return _RecipeCard(
+                recipe: recipe,
+                caloriesPerMeal: perMeal,
+                onTap: () async {
+                  final changed = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => RecipeDetailScreen(recipe: recipe),
+                    ),
+                  );
+                  if (changed == true) _reload();
+                },
+              );
             },
           );
         },
@@ -146,8 +159,9 @@ class _RecipesData {
 class _RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final int? caloriesPerMeal;
+  final VoidCallback? onTap;
 
-  const _RecipeCard({required this.recipe, this.caloriesPerMeal});
+  const _RecipeCard({required this.recipe, this.caloriesPerMeal, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -160,21 +174,24 @@ class _RecipeCard extends StatelessWidget {
       servingsHint = '≈ ${n.toStringAsFixed(1)} ración(es) por comida';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -198,7 +215,8 @@ class _RecipeCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Chip(text: recipe.mealTypeLabel),
+              for (final label in recipe.mealTypeLabelsList)
+                _Chip(text: label),
               if (recipe.appliance != 'none')
                 _Chip(text: recipe.applianceLabel),
               if (recipe.totalTimeMinutes != null)
@@ -256,18 +274,19 @@ class _RecipeCard extends StatelessWidget {
               ],
             ],
           ),
-          if (servingsHint != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              servingsHint,
-              style: const TextStyle(
-                color: Color(0xFF1E1E1E),
-                fontStyle: FontStyle.italic,
-                fontSize: 13,
+            if (servingsHint != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                servingsHint,
+                style: const TextStyle(
+                  color: Color(0xFF1E1E1E),
+                  fontStyle: FontStyle.italic,
+                  fontSize: 13,
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
