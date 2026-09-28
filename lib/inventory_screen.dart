@@ -1,80 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'providers/inventory_provider.dart';
 import 'models/inventory_item.dart';
 
-class InventoryScreen extends StatefulWidget {
-  const InventoryScreen({super.key});
+class InventoryScreen extends ConsumerWidget {
+  const InventoryScreen({Key? key}) : super(key: key);
 
   @override
-  State<InventoryScreen> createState() => _InventoryScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final inventoryAsync = ref.watch(inventoryProvider);
 
-class _InventoryScreenState extends State<InventoryScreen> {
-  final SupabaseClient supabase = Supabase.instance.client;
-  late Future<List<InventoryItem>> _inventoryFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _inventoryFuture = _fetchInventory();
-  }
-
-  Future<List<InventoryItem>> _fetchInventory() async {
-    final response = await supabase
-        .from('inventory_items')
-        .select()
-        .order('created_at', ascending: false);
-    
-    return (response as List).map((item) => InventoryItem.fromMap(item)).toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF9E6), // Fondo amarillo pastel cálido[cite: 3]
       appBar: AppBar(
-        title: const Text('Inventario & Despensa', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFFFDF8E1),
+        title: const Text(
+          'Despensa y Nevera',
+          style: TextStyle(color: Color(0xFF2C2C2C), fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF2C2C2C)),
       ),
-      body: FutureBuilder<List<InventoryItem>>(
-        future: _inventoryFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar inventario: ${snapshot.error}'));
-          }
-          final items = snapshot.data ?? [];
-
+      body: inventoryAsync.when(
+        data: (items) {
           if (items.isEmpty) {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Image.asset(
-                        'assets/images/presidente_prezhome.jpg',
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Presidente Miau dice que la despensa está vacía.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Aquí se integrará visualmente Presidente Miau en estados vacíos[cite: 3, 4]
+                  Image.asset('assets/images/presidente_prezhome.jpg', height: 120),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '¡Todo está vacío por aquí, Miau!',
+                    style: TextStyle(color: Color(0xFF2C2C2C), fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
             );
           }
-
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
@@ -82,39 +46,36 @@ class _InventoryScreenState extends State<InventoryScreen> {
               final item = items[index];
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const SizedBox(height: 4),
-                        Text('Categoría: ${item.category}', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-                      ],
-                    ),
-                    Text(
-                      '${item.quantity} ${item.unit}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFE2C792)),
-                    ),
-                  ],
+                child: ListTile(
+                  title: Text(
+                    item.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C2C2C)),
+                  ),
+                  subtitle: Text('${item.quantity} ${item.unit} • ${item.location}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    onPressed: () {
+                      ref.read(inventoryProvider.notifier).removeItem(item.id);
+                    },
+                  ),
                 ),
               );
             },
           );
         },
+        loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF2C2C2C))),
+        error: (err, stack) => Center(child: Text('Error al cargar inventario: $err')),
       ),
     );
   }

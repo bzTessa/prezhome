@@ -80,7 +80,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               decoration: InputDecoration(
                 labelText: 'Ubicación',
                 filled: true,
@@ -110,7 +110,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 Expanded(
                   flex: 2,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedUnit,
+                    initialValue: _selectedUnit,
                     decoration: InputDecoration(
                       labelText: 'Unidad',
                       filled: true,
