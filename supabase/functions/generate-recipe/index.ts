@@ -15,8 +15,6 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const GEMINI_MODEL = "gemini-2.0-flash";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -33,8 +31,18 @@ function json(body: unknown, status = 200): Response {
 
 // Prompt que fuerza a Gemini a devolver el esquema exacto que usa la app.
 function buildPrompt(query: string): string {
-  return `Eres un asistente de cocina. Genera los datos de una receta a partir de
-esta petición del usuario: "${query}".
+  return `Eres un asistente de cocina experto. El usuario te da el NOMBRE de una
+receta o bien PEGA una receta completa (con ingredientes, cantidades, pasos...).
+En ambos casos, extrae/deduce y estructura los datos.
+
+Si el texto ya trae ingredientes y cantidades, respétalos tal cual. Si faltan
+macros o calorías, ESTÍMALOS de forma razonable. Si es solo un nombre, genera una
+receta estándar.
+
+Petición del usuario:
+"""
+${query}
+"""
 
 Responde SOLO con un objeto JSON válido (sin texto adicional, sin markdown) con
 exactamente esta forma:
@@ -118,7 +126,7 @@ Deno.serve(async (req: Request) => {
     if (!query) {
       return json({ error: "Falta el nombre o descripción de la receta" }, 400);
     }
-    if (query.length > 500) {
+    if (query.length > 8000) {
       return json({ error: "La petición es demasiado larga" }, 400);
     }
 
@@ -137,30 +145,58 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 5. Llamar a Gemini pidiendo JSON estructurado
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: buildPrompt(query) }] }],
-          generationConfig: { responseMimeType: "application/json" },
-        }),
-      },
-    );
+    // 5. Llamar a Gemini pidiendo JSON estructurado.
+    // Probamos varios modelos por si alguno no está disponible para esta key.
+    const models = [
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-latest",
+    ];
+    const requestBody = JSON.stringify({
+      contents: [{ parts: [{ text: buildPrompt(query) }] }],
+      generationConfig: { responseMimeType: "application/json" },
+    });
 
-    if (!geminiRes.ok) {
-      const detail = await geminiRes.text();
-      console.error("Gemini error:", detail);
-      return json({ error: "El servicio de IA no está disponible ahora mismo" }, 502);
+    let geminiData: unknown;
+    let lastError = "";
+    for (const model of models) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody,
+        },
+      );
+      if (res.ok) {
+        geminiData = await res.json();
+        break;
+      }
+      // Guardamos el detalle del error para diagnosticar
+      lastError = `${model}: HTTP ${res.status} — ${await res.text()}`;
+      console.error("Gemini error:", lastError);
+      // Si es un error de clave/permiso (401/403), no tiene sentido reintentar
+      if (res.status === 401 || res.status === 403) break;
     }
 
-    const geminiData = await geminiRes.json();
+    if (geminiData === undefined) {
+      // Exponemos el detalle real (recortado) para poder arreglarlo
+      return json(
+        { error: `Error de la IA → ${lastError.substring(0, 400)}` },
+        502,
+      );
+    }
+
     const text: string | undefined =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+      (geminiData as any)?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {
-      return json({ error: "La IA no devolvió una receta válida" }, 502);
+      return json(
+        {
+          error:
+            "La IA no devolvió texto. Puede haber bloqueado la respuesta por seguridad. Prueba con otra receta.",
+        },
+        502,
+      );
     }
 
     let recipe: unknown;
