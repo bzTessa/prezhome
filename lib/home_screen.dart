@@ -10,9 +10,9 @@ class HomeScreen extends StatelessWidget {
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
     if (context.mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
   }
 
@@ -20,7 +20,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PrezHome', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'PrezHome',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: const Color(0xFFFDF8E1),
         elevation: 0,
         actions: [
@@ -70,7 +73,9 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.kitchen,
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const InventoryScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const InventoryScreen(),
+                        ),
                       );
                     },
                   ),
@@ -79,7 +84,9 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.restaurant_menu,
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const RecipesScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const RecipesScreen(),
+                        ),
                       );
                     },
                   ),
@@ -98,7 +105,11 @@ class _HomeCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _HomeCard({required this.title, required this.icon, required this.onTap});
+  const _HomeCard({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +123,7 @@ class _HomeCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

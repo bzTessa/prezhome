@@ -24,7 +24,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
         .from('recipes')
         .select()
         .order('created_at', ascending: false);
-    
+
     return (response as List).map((item) => Recipe.fromMap(item)).toList();
   }
 
@@ -32,7 +32,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recetas & Meal Prep', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Recetas & Meal Prep',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: const Color(0xFFFDF8E1),
         elevation: 0,
       ),
@@ -43,7 +46,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar recetas: ${snapshot.error}'));
+            return Center(
+              child: Text('Error al cargar recetas: ${snapshot.error}'),
+            );
           }
           final recipes = snapshot.data ?? [];
 
@@ -67,7 +72,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     const Text(
                       'Presidente Miau supervisa la cocina, pero aún no hay recetas registradas.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -88,7 +96,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -99,7 +107,11 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   children: [
                     Text(
                       recipe.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1E1E1E)),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Color(0xFF1E1E1E),
+                      ),
                     ),
                     if (recipe.description != null) ...[
                       const SizedBox(height: 6),
@@ -115,12 +127,18 @@ class _RecipesScreenState extends State<RecipesScreen> {
                         if (recipe.calories != null)
                           Text(
                             '${recipe.calories} kcal',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE2C792)),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE2C792),
+                            ),
                           ),
                         if (recipe.protein != null)
                           Text(
                             'Prot: ${recipe.protein}g',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[700]),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                            ),
                           ),
                       ],
                     ),
