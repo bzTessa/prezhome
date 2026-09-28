@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'home_screen.dart';
+import 'home_session_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -38,20 +38,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Cuenta creada con éxito! Bienvenido a PrezHome.')),
+            const SnackBar(
+              content: Text('¡Cuenta creada con éxito! Bienvenido a PrezHome.'),
+            ),
           );
         }
       }
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const HomeSessionScreen()),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error de Autenticación: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error de Autenticación: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -84,7 +89,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 24),
                   Text(
                     _isLoginMode ? 'Acceso a PrezHome' : 'Registro en PrezHome',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   TextFormField(
@@ -100,7 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty || !value.contains('@')) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          !value.contains('@')) {
                         return 'Introduce un correo electrónico válido';
                       }
                       return null;
@@ -144,7 +154,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? const CircularProgressIndicator()
                           : Text(
                               _isLoginMode ? 'Entrar' : 'Registrarse',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                     ),
                   ),
@@ -159,7 +172,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       _isLoginMode
                           ? '¿No tienes cuenta? Regístrate aquí'
                           : '¿Ya tienes cuenta? Inicia sesión',
-                      style: const TextStyle(color: Color(0xFF1E1E1E), fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Color(0xFF1E1E1E),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
