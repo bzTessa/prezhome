@@ -66,6 +66,41 @@ Los macros y calorías son POR RACIÓN. Usa gramos/ml/unidades en "unit".
 Escribe el contenido en español.`;
 }
 
+// Consulta a Google qué modelos hay disponibles para esta key y devuelve los que
+// soportan generateContent, ordenados con los "flash" primero (más rápidos/baratos).
+async function pickModels(apiKey: string): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+    );
+    if (!res.ok) {
+      console.error("ListModels error:", res.status, await res.text());
+      return [];
+    }
+    const data = await res.json();
+    const models: string[] = (data?.models ?? [])
+      .filter((m: any) =>
+        Array.isArray(m?.supportedGenerationMethods) &&
+        m.supportedGenerationMethods.includes("generateContent")
+      )
+      .map((m: any) => m.name as string);
+
+    // Priorizar flash > resto; evitar modelos de solo-imagen/embedding.
+    const usable = models.filter(
+      (n) => !n.includes("embedding") && !n.includes("aqa"),
+    );
+    usable.sort((a, b) => {
+      const score = (n: string) =>
+        n.includes("flash") ? 0 : n.includes("pro") ? 1 : 2;
+      return score(a) - score(b);
+    });
+    return usable;
+  } catch (e) {
+    console.error("ListModels exception:", e);
+    return [];
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -145,13 +180,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 5. Llamar a Gemini pidiendo JSON estructurado.
-    // Probamos varios modelos por si alguno no está disponible para esta key.
-    const models = [
-      "gemini-2.0-flash",
-      "gemini-1.5-flash",
-      "gemini-1.5-flash-latest",
-    ];
+    // 5. Descubrir qué modelos soporta ESTA key (los nombres cambian con el
+    // tiempo, así que no los fijamos). Pedimos la lista y filtramos los que
+    // soportan generateContent, priorizando modelos "flash".
+    const models = await pickModels(geminiKey);
+    if (models.length === 0) {
+      return json(
+        {
+          error:
+            "Tu clave no tiene modelos de Gemini disponibles para generar contenido. "
+            + "Revisa que la API de Gemini esté habilitada en tu proyecto de Google.",
+        },
+        502,
+      );
+    }
+
     const requestBody = JSON.stringify({
       contents: [{ parts: [{ text: buildPrompt(query) }] }],
       generationConfig: { responseMimeType: "application/json" },
@@ -160,8 +203,9 @@ Deno.serve(async (req: Request) => {
     let geminiData: unknown;
     let lastError = "";
     for (const model of models) {
+      // model ya viene como "models/xxx"; usamos v1beta
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${geminiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -172,15 +216,12 @@ Deno.serve(async (req: Request) => {
         geminiData = await res.json();
         break;
       }
-      // Guardamos el detalle del error para diagnosticar
       lastError = `${model}: HTTP ${res.status} — ${await res.text()}`;
       console.error("Gemini error:", lastError);
-      // Si es un error de clave/permiso (401/403), no tiene sentido reintentar
       if (res.status === 401 || res.status === 403) break;
     }
 
     if (geminiData === undefined) {
-      // Exponemos el detalle real (recortado) para poder arreglarlo
       return json(
         { error: `Error de la IA → ${lastError.substring(0, 400)}` },
         502,
