@@ -42,20 +42,30 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         .eq('id', homeId)
         .maybeSingle();
 
-    // Miembros: unimos home_members con profiles para el nombre.
+    // Miembros del hogar (no hay FK directa home_members->profiles, así que
+    // hacemos dos consultas y las cruzamos en memoria por user_id).
     final membersRes = await _client
         .from('home_members')
-        .select('user_id, role, profiles(full_name)')
+        .select('user_id, role')
         .eq('home_id', homeId);
 
+    final profilesRes = await _client
+        .from('profiles')
+        .select('id, full_name')
+        .eq('home_id', homeId);
+
+    final nameById = <String, String?>{
+      for (final p in (profilesRes as List))
+        p['id'] as String: p['full_name'] as String?,
+    };
+
     final members = (membersRes as List).map((m) {
-      final prof = m['profiles'];
-      final name = (prof is Map ? prof['full_name'] : null) as String?;
+      final uid = m['user_id'] as String;
       return _Member(
-        userId: m['user_id'] as String,
+        userId: uid,
         role: (m['role'] as String?) ?? 'member',
-        name: name,
-        isMe: m['user_id'] == user.id,
+        name: nameById[uid],
+        isMe: uid == user.id,
       );
     }).toList();
 
