@@ -4,8 +4,7 @@ import 'tabs/home_tab.dart';
 import 'tabs/meals_tab.dart';
 import 'household_screen.dart';
 import 'tasks_screen.dart';
-import 'widgets/coming_soon.dart';
-import 'widgets/miau_character.dart';
+import 'economy_screen.dart';
 import 'theme/app_theme.dart';
 
 /// Estructura principal de la app con barra de navegación inferior.
@@ -24,7 +23,7 @@ class _MainShellState extends State<MainShell> {
     HomeTab(),
     MealsTab(),
     TasksScreen(),
-    _EconomyTab(),
+    EconomyScreen(),
     HouseholdScreen(),
   ];
 
@@ -73,24 +72,6 @@ class _MainShellState extends State<MainShell> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _EconomyTab extends StatelessWidget {
-  const _EconomyTab();
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Economía')),
-      body: const ComingSoon(
-        title: 'Economía del hogar',
-        message:
-            'Pronto podrás escanear tickets de la compra, controlar el gasto '
-            'del mes y que los precios actualicen tus recetas.',
-        mood: MiauMood.curious,
       ),
     );
   }

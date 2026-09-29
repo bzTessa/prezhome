@@ -358,8 +358,10 @@ class _TaskCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 4,
                   children: [
                     _mini(task.recurrenceLabel),
+                    if (task.dueTime != null) _mini(task.dueTime!),
                     _mini(memberName),
                     _mini('${task.points} pts'),
                   ],

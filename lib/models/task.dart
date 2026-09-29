@@ -11,6 +11,7 @@ class HomeTask {
   final List<int> weekdays; // para custom_weekdays: 1=Lun..7=Dom
   final String? assignedTo; // user id, o null = cualquiera
   final DateTime? dueDate;
+  final String? dueTime; // hora "HH:mm" opcional
   final bool isDone;
   final String? completedBy;
   final DateTime? completedAt;
@@ -27,6 +28,7 @@ class HomeTask {
     this.weekdays = const [],
     this.assignedTo,
     this.dueDate,
+    this.dueTime,
     this.isDone = false,
     this.completedBy,
     this.completedAt,
@@ -50,6 +52,7 @@ class HomeTask {
       dueDate: map['due_date'] != null
           ? DateTime.tryParse(map['due_date'])
           : null,
+      dueTime: _shortTime(map['due_time']),
       isDone: map['is_done'] ?? false,
       completedBy: map['completed_by'],
       completedAt: map['completed_at'] != null
@@ -70,8 +73,18 @@ class HomeTask {
       'weekdays': recurrence == 'custom_weekdays' ? weekdays : null,
       'assigned_to': assignedTo,
       'due_date': dueDate?.toIso8601String().split('T').first,
+      'due_time': dueTime, // "HH:mm" o null
       'created_by': createdBy,
     };
+  }
+
+  /// Normaliza una hora que puede venir como "20:00:00" a "20:00".
+  static String? _shortTime(dynamic raw) {
+    if (raw == null) return null;
+    final s = raw.toString();
+    final parts = s.split(':');
+    if (parts.length >= 2) return '${parts[0].padLeft(2, '0')}:${parts[1]}';
+    return s;
   }
 
   static const Map<String, String> recurrenceLabels = {
