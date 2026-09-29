@@ -348,7 +348,7 @@ class _CalendarViewState extends State<_CalendarView> {
               Row(
                 children: [
                   const MiauCharacter(
-                    mood: MiauMood.neutral,
+                    mood: MiauMood.curious,
                     size: 48,
                     float: false,
                   ),
