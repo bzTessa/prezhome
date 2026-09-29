@@ -72,7 +72,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: 'Nombre del alimento (ej. Kéfir, Pollo)',
+                labelText: 'Nombre del alimento',
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),

@@ -228,10 +228,25 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     'Rinde: ${scaledServings % 1 == 0 ? scaledServings.toStringAsFixed(0) : scaledServings.toStringAsFixed(1)} raciones',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
+                  if (r.gramsPerServing != null)
+                    Text(
+                      '1 ración ≈ ${r.gramsPerServing!.toStringAsFixed(0)} g'
+                      '${_multiplier != 1 ? '  ·  total ${(r.gramsPerServing! * scaledServings).toStringAsFixed(0)} g' : ''}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  if (r.kcalPer100g != null)
+                    Text(
+                      'Densidad: ${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
+
+            // --- Cuántos gramos poner para unas calorías objetivo ---
+            if (r.kcalPer100g != null) _GramsForCaloriesCard(recipe: r),
+            if (r.kcalPer100g != null) const SizedBox(height: 16),
 
             // --- Macros (por ración, no se escalan) ---
             if (r.calories != null || r.protein != null)
@@ -431,6 +446,98 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+/// Tarjeta: metes las calorías que quieres comer y te dice cuántos gramos poner.
+class _GramsForCaloriesCard extends StatefulWidget {
+  final Recipe recipe;
+  const _GramsForCaloriesCard({required this.recipe});
+
+  @override
+  State<_GramsForCaloriesCard> createState() => _GramsForCaloriesCardState();
+}
+
+class _GramsForCaloriesCardState extends State<_GramsForCaloriesCard> {
+  final _kcalController = TextEditingController();
+  double? _grams;
+
+  @override
+  void dispose() {
+    _kcalController.dispose();
+    super.dispose();
+  }
+
+  void _calc() {
+    final kcal = int.tryParse(_kcalController.text.trim());
+    setState(() {
+      _grams = kcal == null ? null : widget.recipe.gramsForCalories(kcal);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '¿Cuánto poner en el taper?',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Escribe las calorías que quieres para esta comida.',
+            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _kcalController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => _calc(),
+                  decoration: InputDecoration(
+                    labelText: 'Calorías objetivo (kcal)',
+                    filled: true,
+                    fillColor: const Color(0xFFFDF8E1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_grams != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Pon ≈ ${_grams!.toStringAsFixed(0)} g en la báscula ⚖️',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFB58A3C),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

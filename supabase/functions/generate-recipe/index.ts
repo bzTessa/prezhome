@@ -50,12 +50,13 @@ exactamente esta forma:
   "title": string,
   "description": string,
   "servings": number,
-  "meal_types": string[],  // uno o varios de: "breakfast","lunch","dinner","snack"
+  "meal_types": string[],  // uno o varios de: "breakfast","lunch","dinner","snack","dessert"
   "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave",
   "prep_minutes": number,
   "cook_minutes": number,
   "freezable": boolean,
   "calories_per_serving": number,
+  "grams_per_serving": number,  // peso aproximado en gramos de UNA ración ya preparada
   "protein_grams": number,
   "carbs_grams": number,
   "fat_grams": number,
@@ -64,8 +65,9 @@ exactamente esta forma:
 }
 
 En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
-ejemplo ["lunch","dinner"] si vale para comida y cena).
-Los macros y calorías son POR RACIÓN. Usa gramos/ml/unidades en "unit".
+ejemplo ["lunch","dinner"] si vale para comida y cena; usa "dessert" para postres).
+Los macros y calorías son POR RACIÓN. Estima "grams_per_serving" (el peso en
+gramos de una ración del plato ya preparado). Usa gramos/ml/unidades en "unit".
 En "instructions" escribe los pasos claros y numerados (1., 2., 3., ...).
 Escribe todo el contenido en español.`;
 }
