@@ -12,6 +12,9 @@ class NutritionProfile {
   final int mealsPerDay;
   final bool isPublic;
 
+  /// % de las calorías diarias por comida (breakfast/lunch/dinner/snack/dessert).
+  final Map<String, int> mealSplit;
+
   NutritionProfile({
     required this.id,
     this.fullName,
@@ -23,7 +26,14 @@ class NutritionProfile {
     this.goal = 'maintain',
     this.mealsPerDay = 4,
     this.isPublic = false,
-  });
+    Map<String, int>? mealSplit,
+  }) : mealSplit = mealSplit ?? const {
+         'breakfast': 20,
+         'lunch': 40,
+         'dinner': 40,
+         'snack': 0,
+         'dessert': 0,
+       };
 
   factory NutritionProfile.fromMap(Map<String, dynamic> map) {
     return NutritionProfile(
@@ -39,7 +49,16 @@ class NutritionProfile {
       goal: map['goal'] ?? 'maintain',
       mealsPerDay: (map['meals_per_day'] as int?) ?? 4,
       isPublic: map['is_public'] ?? false,
+      mealSplit: _parseSplit(map['meal_split']),
     );
+  }
+
+  static Map<String, int>? _parseSplit(dynamic raw) {
+    if (raw is Map) {
+      return raw.map((k, v) =>
+          MapEntry(k.toString(), (v as num?)?.round() ?? 0));
+    }
+    return null;
   }
 
   Map<String, dynamic> toUpdateMap() {
@@ -53,6 +72,7 @@ class NutritionProfile {
       'goal': goal,
       'meals_per_day': mealsPerDay,
       'is_public': isPublic,
+      'meal_split': mealSplit,
     };
   }
 
@@ -142,4 +162,39 @@ class NutritionProfile {
     if (kcal == null || mealsPerDay <= 0) return null;
     return (kcal / mealsPerDay).round();
   }
+
+  /// Calorías que te tocan para un tipo de comida concreto, según el reparto (%).
+  /// Para recetas con varios tipos, usa el tipo de mayor %.
+  int? caloriesForMealTypes(List<String> types) {
+    final kcal = targetCalories;
+    if (kcal == null || types.isEmpty) return null;
+    // Elegimos el porcentaje más alto entre los tipos aplicables.
+    int bestPct = 0;
+    for (final t in types) {
+      final pct = mealSplit[t] ?? 0;
+      if (pct > bestPct) bestPct = pct;
+    }
+    if (bestPct == 0) return null;
+    return (kcal * bestPct / 100).round();
+  }
+
+  static const List<String> splitOrder = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'snack',
+    'dessert',
+  ];
+
+  static const Map<String, String> mealLabels = {
+    'breakfast': 'Desayuno',
+    'lunch': 'Comida',
+    'dinner': 'Cena',
+    'snack': 'Snack',
+    'dessert': 'Postre',
+  };
+
+  /// Suma de porcentajes (para validar que sumen ~100).
+  int get splitTotal =>
+      mealSplit.values.fold(0, (a, b) => a + b);
 }

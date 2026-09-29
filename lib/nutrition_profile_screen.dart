@@ -23,6 +23,13 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
   String _goal = 'maintain';
   int _mealsPerDay = 4;
   bool _isPublic = false;
+  Map<String, int> _mealSplit = {
+    'breakfast': 20,
+    'lunch': 40,
+    'dinner': 40,
+    'snack': 0,
+    'dessert': 0,
+  };
 
   bool _loading = true;
   bool _saving = false;
@@ -61,6 +68,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         _goal = p.goal;
         _mealsPerDay = p.mealsPerDay;
         _isPublic = p.isPublic;
+        _mealSplit = Map<String, int>.from(p.mealSplit);
         _loading = false;
       });
     } catch (e) {
@@ -88,6 +96,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     goal: _goal,
     mealsPerDay: _mealsPerDay,
     isPublic: _isPublic,
+    mealSplit: _mealSplit,
   );
 
   Future<void> _save() async {
@@ -243,32 +252,68 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                       .toList(),
                   onChanged: (v) => setState(() => _goal = v!),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
+
+                // --- Reparto de calorías por comida ---
                 Row(
                   children: [
-                    const Text('Comidas al día:'),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline),
-                      onPressed: _mealsPerDay > 1
-                          ? () => setState(() => _mealsPerDay--)
-                          : null,
-                    ),
-                    Text(
-                      '$_mealsPerDay',
-                      style: const TextStyle(
-                        fontSize: 18,
+                    const Text(
+                      'Reparto de calorías por comida',
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline),
-                      onPressed: _mealsPerDay < 8
-                          ? () => setState(() => _mealsPerDay++)
-                          : null,
+                    const Spacer(),
+                    Text(
+                      'Total: ${_mealSplit.values.fold(0, (a, b) => a + b)}%',
+                      style: TextStyle(
+                        color:
+                            _mealSplit.values.fold(0, (a, b) => a + b) == 100
+                            ? Colors.green[700]
+                            : Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  'Pon 0% en las comidas que no haces. La suma debería ser 100%.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                ...NutritionProfile.splitOrder.map((key) {
+                  final label = NutritionProfile.mealLabels[key] ?? key;
+                  final value = _mealSplit[key] ?? 0;
+                  return Row(
+                    children: [
+                      SizedBox(width: 90, child: Text(label)),
+                      Expanded(
+                        child: Slider(
+                          value: value.toDouble(),
+                          min: 0,
+                          max: 100,
+                          divisions: 20,
+                          label: '$value%',
+                          activeColor: const Color(0xFFE2C792),
+                          onChanged: (v) => setState(
+                            () => _mealSplit[key] = v.round(),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 44,
+                        child: Text(
+                          '$value%',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                const SizedBox(height: 16),
                 SwitchListTile(
                   title: const Text('Compartir mi perfil con mi pareja'),
                   subtitle: const Text(
