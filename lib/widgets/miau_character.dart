@@ -24,12 +24,14 @@ class MiauCharacter extends StatefulWidget {
   static const String _base = 'assets/images/presidente_prezhome.jpg';
 
   // Mapa de mood -> ruta de imagen de pose (PNG transparente).
+  // neutral usa "saludando" como pose limpia por defecto del personaje.
   static const Map<MiauMood, String> _poseAssets = {
     MiauMood.greeting: 'assets/images/miau_saludando.png',
     MiauMood.celebrating: 'assets/images/miau_celebrando.png',
     MiauMood.sleeping: 'assets/images/miau_durmiendo.png',
     MiauMood.cooking: 'assets/images/miau_cocinando.png',
-    MiauMood.curious: 'assets/images/miau_curioso.png',
+    MiauMood.curious: 'assets/images/miau_pensando.png',
+    MiauMood.neutral: 'assets/images/miau_saludando.png',
   };
 
   @override
