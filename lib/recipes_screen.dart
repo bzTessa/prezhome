@@ -7,7 +7,9 @@ import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 
 class RecipesScreen extends StatefulWidget {
-  const RecipesScreen({super.key});
+  /// Cuando va dentro de una pestaña con su propio AppBar, lo ocultamos.
+  final bool embedded;
+  const RecipesScreen({super.key, this.embedded = false});
 
   @override
   State<RecipesScreen> createState() => _RecipesScreenState();
@@ -60,14 +62,16 @@ class _RecipesScreenState extends State<RecipesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8E1),
-      appBar: AppBar(
-        title: const Text(
-          'Recetas & Meal Prep',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFFFDF8E1),
-        elevation: 0,
-      ),
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              title: const Text(
+                'Recetas & Meal Prep',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: const Color(0xFFFDF8E1),
+              elevation: 0,
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openAdd,
         backgroundColor: const Color(0xFFE2C792),

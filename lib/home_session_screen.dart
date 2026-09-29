@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home_onboarding_screen.dart';
-import 'home_screen.dart';
+import 'main_shell.dart';
 import 'login_screen.dart';
 
 class HomeSessionScreen extends StatefulWidget {
@@ -56,7 +56,7 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
           );
         }
         return snapshot.data!
-            ? const HomeScreen()
+            ? const MainShell()
             : const HomeOnboardingScreen();
       },
     );
