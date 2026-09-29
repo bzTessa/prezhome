@@ -169,12 +169,14 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
 
       // 3. Aprender correcciones: si el nombre corregido difiere del original,
       //    guardamos/actualizamos el alias para el futuro.
-      final aliasRows = <Map<String, dynamic>>[];
+      //    Deduplicamos por raw_name (un ticket puede repetir el mismo texto),
+      //    porque el upsert no admite dos filas con la misma clave a la vez.
+      final aliasByRaw = <String, Map<String, dynamic>>{};
       for (final it in _items) {
         final raw = it.rawName.trim();
         final name = it.name.text.trim();
         if (raw.isNotEmpty && name.isNotEmpty && raw != name) {
-          aliasRows.add({
+          aliasByRaw[raw] = {
             'home_id': homeId,
             'raw_name': raw,
             'correct_name': name,
@@ -182,13 +184,16 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                 ? null
                 : it.category.text.trim(),
             'updated_at': DateTime.now().toIso8601String(),
-          });
+          };
         }
       }
-      if (aliasRows.isNotEmpty) {
+      if (aliasByRaw.isNotEmpty) {
         await _client
             .from('product_aliases')
-            .upsert(aliasRows, onConflict: 'home_id,raw_name');
+            .upsert(
+              aliasByRaw.values.toList(),
+              onConflict: 'home_id,raw_name',
+            );
       }
 
       if (mounted) Navigator.of(context).pop(true);
