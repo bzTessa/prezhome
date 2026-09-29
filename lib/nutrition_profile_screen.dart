@@ -110,7 +110,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
           .eq('id', user.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil guardado ✅')),
+          const SnackBar(content: Text('Perfil guardado')),
         );
       }
     } catch (e) {

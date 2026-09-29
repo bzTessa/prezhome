@@ -4,6 +4,7 @@ import 'tabs/home_tab.dart';
 import 'tabs/meals_tab.dart';
 import 'household_screen.dart';
 import 'widgets/coming_soon.dart';
+import 'widgets/miau_character.dart';
 import 'theme/app_theme.dart';
 
 /// Estructura principal de la app con barra de navegación inferior.
@@ -87,8 +88,7 @@ class _TasksTab extends StatelessWidget {
         title: 'Tareas del hogar',
         message:
             'Pronto podréis repartir las tareas de casa de forma cooperativa, '
-            'con un sistema de puntos para motivaros. 🏆',
-        icon: Icons.check_circle_outline,
+            'con un sistema de puntos para motivaros.',
       ),
     );
   }
@@ -105,8 +105,8 @@ class _EconomyTab extends StatelessWidget {
         title: 'Economía del hogar',
         message:
             'Pronto podrás escanear tickets de la compra, controlar el gasto '
-            'del mes y que los precios actualicen tus recetas. 🧾',
-        icon: Icons.savings_outlined,
+            'del mes y que los precios actualicen tus recetas.',
+        mood: MiauMood.curious,
       ),
     );
   }

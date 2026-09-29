@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'miau_character.dart';
 
 /// Pantalla reutilizable de "Próximamente", con Presidente Miau.
 class ComingSoon extends StatelessWidget {
   final String title;
   final String message;
-  final IconData icon;
+  final MiauMood mood;
 
   const ComingSoon({
     super.key,
     required this.title,
     required this.message,
-    required this.icon,
+    this.mood = MiauMood.curious,
   });
 
   @override
@@ -23,15 +24,7 @@ class ComingSoon extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: Image.asset(
-                'assets/images/presidente_prezhome.jpg',
-                width: 140,
-                height: 140,
-                fit: BoxFit.cover,
-              ),
-            ),
+            MiauCharacter(mood: mood, size: 140),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -39,19 +32,14 @@ class ComingSoon extends StatelessWidget {
                 color: AppColors.wood,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 18, color: AppColors.ink),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Próximamente',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                ],
+              child: const Text(
+                'PRÓXIMAMENTE',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  fontSize: 12,
+                  letterSpacing: 1,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -64,7 +52,11 @@ class ComingSoon extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[700], fontSize: 15, height: 1.4),
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 15,
+                height: 1.4,
+              ),
             ),
           ],
         ),

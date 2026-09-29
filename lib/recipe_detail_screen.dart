@@ -169,8 +169,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 if (r.appliance != 'none') _chip(r.applianceLabel),
                 if (r.totalTimeMinutes != null)
                   _chip('${r.totalTimeMinutes} min'),
-                if (r.freezable) _chip('Congelable ❄️'),
-                if (r.isFavorite) _chip('Favorita ⭐'),
+                if (r.freezable) _chip('Congelable'),
+                if (r.isFavorite) _chip('Favorita'),
               ],
             ),
             if (r.description != null && r.description!.isNotEmpty) ...[
@@ -443,7 +443,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Tu taper 🐱⚖️',
+            'Tu ración',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 4),
