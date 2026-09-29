@@ -151,7 +151,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         final controller = TextEditingController();
         return AlertDialog(
           backgroundColor: const Color(0xFFFDF8E1),
-          title: const Text('Rellenar con IA ✨'),
+          title: const Text('Rellenar con IA'),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -202,7 +202,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Receta rellenada ✨ Revísala antes de guardar.'),
+              content: Text('Receta rellenada. Revísala antes de guardar.'),
             ),
           );
         }
@@ -443,7 +443,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             )
                           : const Icon(Icons.auto_awesome),
                       label: Text(
-                        _aiLoading ? 'Generando…' : 'Rellenar con IA ✨',
+                        _aiLoading ? 'Generando…' : 'Rellenar con IA',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -600,7 +600,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     onChanged: (v) => setState(() => _freezable = v),
                   ),
                   SwitchListTile(
-                    title: const Text('Marcar como favorita ⭐'),
+                    title: const Text('Marcar como favorita'),
                     value: _isFavorite,
                     activeThumbColor: const Color(0xFFE2C792),
                     contentPadding: EdgeInsets.zero,

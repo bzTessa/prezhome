@@ -225,7 +225,7 @@ class _RecipeCard extends StatelessWidget {
                 _Chip(text: recipe.applianceLabel),
               if (recipe.totalTimeMinutes != null)
                 _Chip(text: '${recipe.totalTimeMinutes} min'),
-              if (recipe.freezable) const _Chip(text: 'Congelable ❄️'),
+              if (recipe.freezable) const _Chip(text: 'Congelable'),
             ],
           ),
           if (recipe.description != null) ...[

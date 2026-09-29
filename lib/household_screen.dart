@@ -361,7 +361,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                     icon: const Icon(Icons.copy, color: Color(0xFFB58A3C)),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: data.homeId!));
-                      _snack('Código copiado ✅');
+                      _snack('Código copiado');
                     },
                   ),
                 ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/miau_character.dart';
 
 /// Pestaña de Inicio: se puede ver como Dashboard o como Calendario,
 /// con un conmutador arriba a la derecha.
@@ -14,12 +14,6 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   bool _calendarView = false; // false = dashboard, true = calendario
-
-  String get _greetingName {
-    final meta = Supabase.instance.client.auth.currentUser?.userMetadata;
-    final name = meta?['full_name'];
-    return (name is String && name.isNotEmpty) ? name : '';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,42 +80,43 @@ class _ViewToggle extends StatelessWidget {
 class _DashboardView extends StatelessWidget {
   const _DashboardView();
 
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 6) return 'Buenas noches';
+    if (h < 14) return 'Buenos días';
+    if (h < 21) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // Cabecera con Presidente Miau
+        // Cabecera con Presidente Miau como personaje
         Container(
           padding: const EdgeInsets.all(20),
           decoration: AppTheme.cardDecoration(),
           child: Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset(
-                  'assets/images/presidente_prezhome.jpg',
-                  width: 72,
-                  height: 72,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              const MiauCharacter(mood: MiauMood.greeting, size: 72),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '¡Hola! 👋',
-                      style: TextStyle(
-                        fontSize: 20,
+                      _greeting(),
+                      style: const TextStyle(
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        height: 1.1,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      'Presidente Miau supervisa el hogar 🐱👑',
-                      style: TextStyle(color: Colors.black54),
+                      'Este es el resumen de tu hogar',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                   ],
                 ),
@@ -129,11 +124,16 @@ class _DashboardView extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 28),
 
-        const Text(
-          'Resumen de hoy',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'Hoy',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: Colors.grey[500],
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -347,21 +347,17 @@ class _CalendarViewState extends State<_CalendarView> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.asset(
-                      'assets/images/presidente_prezhome.jpg',
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                    ),
+                  const MiauCharacter(
+                    mood: MiauMood.neutral,
+                    size: 48,
+                    float: false,
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Aquí verás tus comidas y tareas del día cuando '
                       'actives el planificador semanal.',
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
                   ),
                 ],
