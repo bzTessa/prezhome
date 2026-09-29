@@ -29,13 +29,14 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-// Descubre un modelo de Gemini con visión disponible para la key.
-async function pickModel(apiKey: string): Promise<string | null> {
+// Descubre los modelos de Gemini con visión disponibles para la key, ordenados
+// (flash primero). Devuelve una lista para poder reintentar si alguno da 404.
+async function pickModels(apiKey: string): Promise<string[]> {
   try {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
     );
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data = await res.json();
     const models: string[] = (data?.models ?? [])
       .filter((m: any) =>
@@ -44,10 +45,16 @@ async function pickModel(apiKey: string): Promise<string | null> {
       )
       .map((m: any) => m.name as string)
       .filter((n: string) => !n.includes("embedding") && !n.includes("aqa"));
-    models.sort((a, b) => (a.includes("flash") ? 0 : 1) - (b.includes("flash") ? 0 : 1));
-    return models[0] ?? null;
+    // Prioriza flash; luego los de version mas alta (heuristica por nombre).
+    models.sort((a, b) => {
+      const fa = a.includes("flash") ? 0 : 1;
+      const fb = b.includes("flash") ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      return b.localeCompare(a); // nombres "mayores" primero (3.8 antes que 2.5)
+    });
+    return models;
   } catch (_e) {
-    return null;
+    return [];
   }
 }
 
@@ -152,43 +159,55 @@ Deno.serve(async (req: Request) => {
       correct_name: string;
     }[];
 
-    const model = await pickModel(geminiKey);
-    if (!model) {
+    const models = await pickModels(geminiKey);
+    if (models.length === 0) {
       return json(
         { error: "No hay modelos de Gemini disponibles para tu clave." },
         502,
       );
     }
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${geminiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: buildPrompt(aliases) },
-                { inline_data: { mime_type: mimeType, data: imageBase64 } },
-              ],
-            },
+    const requestBody = JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { text: buildPrompt(aliases) },
+            { inline_data: { mime_type: mimeType, data: imageBase64 } },
           ],
-          generationConfig: { responseMimeType: "application/json" },
-        }),
-      },
-    );
+        },
+      ],
+      generationConfig: { responseMimeType: "application/json" },
+    });
 
-    if (!geminiRes.ok) {
-      const detail = await geminiRes.text();
-      console.error("Gemini error:", detail);
+    let geminiData: any;
+    let lastError = "";
+    for (const model of models) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody,
+        },
+      );
+      if (res.ok) {
+        geminiData = await res.json();
+        break;
+      }
+      lastError = `${model}: HTTP ${res.status} — ${await res.text()}`;
+      console.error("Gemini error:", lastError);
+      // 401/403 = problema de clave, no tiene sentido reintentar
+      if (res.status === 401 || res.status === 403) break;
+      // 404 (modelo retirado) u otros: probamos el siguiente modelo
+    }
+
+    if (geminiData === undefined) {
       return json(
-        { error: `Error de la IA -> ${detail.substring(0, 300)}` },
+        { error: `Error de la IA -> ${lastError.substring(0, 300)}` },
         502,
       );
     }
 
-    const geminiData = await geminiRes.json();
     const text: string | undefined =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) return json({ error: "La IA no devolvió datos del ticket" }, 502);

@@ -98,7 +98,9 @@ async function pickModels(apiKey: string): Promise<string[]> {
     usable.sort((a, b) => {
       const score = (n: string) =>
         n.includes("flash") ? 0 : n.includes("pro") ? 1 : 2;
-      return score(a) - score(b);
+      const s = score(a) - score(b);
+      if (s !== 0) return s;
+      return b.localeCompare(a); // versiones "mayores" primero (3.x antes que 2.x)
     });
     return usable;
   } catch (e) {
