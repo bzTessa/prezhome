@@ -21,6 +21,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final _notesController = TextEditingController();
   int _points = 10;
   String _recurrence = 'once';
+  int _intervalCount = 2;
+  String _intervalUnit = 'day';
+  final Set<int> _weekdays = {}; // 1=Lun..7=Dom
   String? _assignedTo; // null = cualquiera
   DateTime? _dueDate;
   bool _saving = false;
@@ -46,6 +49,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       final homeId = profile['home_id'];
       if (homeId == null) throw 'No perteneces a ningún hogar.';
 
+      // Validaciones de la recurrencia personalizada
+      if (_recurrence == 'custom_weekdays' && _weekdays.isEmpty) {
+        throw 'Elige al menos un día de la semana.';
+      }
+
       final task = HomeTask(
         id: '',
         homeId: homeId,
@@ -55,6 +63,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             : _notesController.text.trim(),
         points: _points,
         recurrence: _recurrence,
+        intervalCount: _intervalCount,
+        intervalUnit: _intervalUnit,
+        weekdays: _weekdays.toList(),
         assignedTo: _assignedTo,
         dueDate: _dueDate,
       );
@@ -118,6 +129,78 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   .toList(),
               onChanged: (v) => setState(() => _recurrence = v!),
             ),
+
+            // Ajustes de "Cada X días/semanas"
+            if (_recurrence == 'custom_interval') ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Text('Cada', style: TextStyle(fontSize: 16)),
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: _intervalCount > 1
+                        ? () => setState(() => _intervalCount--)
+                        : null,
+                  ),
+                  Text(
+                    '$_intervalCount',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    onPressed: _intervalCount < 30
+                        ? () => setState(() => _intervalCount++)
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _intervalUnit,
+                      decoration: _dec('Unidad'),
+                      items: const [
+                        DropdownMenuItem(value: 'day', child: Text('días')),
+                        DropdownMenuItem(value: 'week', child: Text('semanas')),
+                      ],
+                      onChanged: (v) => setState(() => _intervalUnit = v!),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            // Ajustes de "Días concretos"
+            if (_recurrence == 'custom_weekdays') ...[
+              const SizedBox(height: 12),
+              const Text(
+                'Elige los días:',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: List.generate(7, (i) {
+                  final day = i + 1; // 1=Lun..7=Dom
+                  final selected = _weekdays.contains(day);
+                  return FilterChip(
+                    label: Text(HomeTask.weekdayShort[i]),
+                    selected: selected,
+                    selectedColor: const Color(0xFFE2C792),
+                    backgroundColor: Colors.white,
+                    onSelected: (v) => setState(() {
+                      if (v) {
+                        _weekdays.add(day);
+                      } else {
+                        _weekdays.remove(day);
+                      }
+                    }),
+                  );
+                }),
+              ),
+            ],
+
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
               initialValue: _assignedTo,

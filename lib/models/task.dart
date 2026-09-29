@@ -4,7 +4,11 @@ class HomeTask {
   final String title;
   final String? notes;
   final int points;
-  final String recurrence; // once | daily | weekly
+  // once | daily | weekly | custom_interval | custom_weekdays
+  final String recurrence;
+  final int? intervalCount; // para custom_interval (ej. 3)
+  final String? intervalUnit; // 'day' | 'week'
+  final List<int> weekdays; // para custom_weekdays: 1=Lun..7=Dom
   final String? assignedTo; // user id, o null = cualquiera
   final DateTime? dueDate;
   final bool isDone;
@@ -18,6 +22,9 @@ class HomeTask {
     this.notes,
     this.points = 10,
     this.recurrence = 'once',
+    this.intervalCount,
+    this.intervalUnit,
+    this.weekdays = const [],
     this.assignedTo,
     this.dueDate,
     this.isDone = false,
@@ -26,6 +33,7 @@ class HomeTask {
   });
 
   factory HomeTask.fromMap(Map<String, dynamic> map) {
+    final rawWeekdays = map['weekdays'];
     return HomeTask(
       id: map['id'],
       homeId: map['home_id'],
@@ -33,6 +41,11 @@ class HomeTask {
       notes: map['notes'],
       points: map['points'] ?? 10,
       recurrence: map['recurrence'] ?? 'once',
+      intervalCount: map['interval_count'],
+      intervalUnit: map['interval_unit'],
+      weekdays: rawWeekdays is List
+          ? rawWeekdays.map((e) => (e as num).toInt()).toList()
+          : const [],
       assignedTo: map['assigned_to'],
       dueDate: map['due_date'] != null
           ? DateTime.tryParse(map['due_date'])
@@ -52,6 +65,9 @@ class HomeTask {
       'notes': notes,
       'points': points,
       'recurrence': recurrence,
+      'interval_count': recurrence == 'custom_interval' ? intervalCount : null,
+      'interval_unit': recurrence == 'custom_interval' ? intervalUnit : null,
+      'weekdays': recurrence == 'custom_weekdays' ? weekdays : null,
       'assigned_to': assignedTo,
       'due_date': dueDate?.toIso8601String().split('T').first,
       'created_by': createdBy,
@@ -62,7 +78,32 @@ class HomeTask {
     'once': 'Puntual',
     'daily': 'Cada día',
     'weekly': 'Cada semana',
+    'custom_interval': 'Cada X días/semanas',
+    'custom_weekdays': 'Días concretos',
   };
 
-  String get recurrenceLabel => recurrenceLabels[recurrence] ?? 'Puntual';
+  static const List<String> weekdayShort = [
+    'L', 'M', 'X', 'J', 'V', 'S', 'D',
+  ];
+  static const List<String> weekdayLong = [
+    'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
+  ];
+
+  /// Etiqueta legible de la recurrencia (para mostrar en la lista).
+  String get recurrenceLabel {
+    switch (recurrence) {
+      case 'custom_interval':
+        final n = intervalCount ?? 1;
+        final unit = intervalUnit == 'week'
+            ? (n == 1 ? 'semana' : 'semanas')
+            : (n == 1 ? 'día' : 'días');
+        return 'Cada $n $unit';
+      case 'custom_weekdays':
+        if (weekdays.isEmpty) return 'Días concretos';
+        final sorted = [...weekdays]..sort();
+        return sorted.map((d) => weekdayShort[d - 1]).join(' ');
+      default:
+        return recurrenceLabels[recurrence] ?? 'Puntual';
+    }
+  }
 }
