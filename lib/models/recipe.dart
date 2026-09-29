@@ -12,9 +12,10 @@ class Recipe {
   final double? carbs;
   final double? fat;
   final String appliance; // none | oven | stovetop | pot | airfryer | microwave
-  final List<String> mealTypes; // varias: breakfast/lunch/dinner/snack
+  final List<String> mealTypes; // breakfast/lunch/dinner/snack/dessert
   final bool isFavorite;
   final bool freezable;
+  final double? gramsPerServing; // peso de una ración ya preparada
 
   Recipe({
     required this.id,
@@ -33,6 +34,7 @@ class Recipe {
     this.mealTypes = const [],
     this.isFavorite = false,
     this.freezable = false,
+    this.gramsPerServing,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
@@ -63,6 +65,7 @@ class Recipe {
       mealTypes: types,
       isFavorite: map['is_favorite'] ?? false,
       freezable: map['freezable'] ?? false,
+      gramsPerServing: (map['grams_per_serving'] as num?)?.toDouble(),
     );
   }
 
@@ -85,6 +88,7 @@ class Recipe {
       'meal_type': mealTypes.isNotEmpty ? mealTypes.first : 'lunch',
       'is_favorite': isFavorite,
       'freezable': freezable,
+      'grams_per_serving': gramsPerServing,
     };
   }
 
@@ -107,6 +111,7 @@ class Recipe {
     'lunch': 'Comida',
     'dinner': 'Cena',
     'snack': 'Snack',
+    'dessert': 'Postre',
   };
 
   String get applianceLabel => applianceLabels[appliance] ?? 'Ninguno';
@@ -114,4 +119,19 @@ class Recipe {
   /// Etiquetas legibles de los tipos de comida (ej. "Comida, Cena").
   List<String> get mealTypeLabelsList =>
       mealTypes.map((t) => mealTypeLabels[t] ?? t).toList();
+
+  /// Densidad calórica: kcal por 100 g del plato preparado.
+  double? get kcalPer100g {
+    if (calories == null || gramsPerServing == null || gramsPerServing! <= 0) {
+      return null;
+    }
+    return calories! / gramsPerServing! * 100;
+  }
+
+  /// Gramos necesarios para alcanzar [targetKcal] de este plato.
+  double? gramsForCalories(int targetKcal) {
+    final density = kcalPer100g; // kcal / 100 g
+    if (density == null || density <= 0) return null;
+    return targetKcal / density * 100;
+  }
 }

@@ -23,6 +23,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _descriptionController = TextEditingController();
   final _instructionsController = TextEditingController();
   final _servingsController = TextEditingController(text: '1');
+  final _gramsController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
   final _carbsController = TextEditingController();
@@ -55,6 +56,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _descriptionController.text = r.description ?? '';
     _instructionsController.text = r.instructions ?? '';
     _servingsController.text = r.servings.toString();
+    _gramsController.text = r.gramsPerServing == null
+        ? ''
+        : (r.gramsPerServing! % 1 == 0
+              ? r.gramsPerServing!.toStringAsFixed(0)
+              : r.gramsPerServing!.toString());
     _caloriesController.text = r.calories?.toString() ?? '';
     _proteinController.text = r.protein?.toStringAsFixed(0) ?? '';
     _carbsController.text = r.carbs?.toStringAsFixed(0) ?? '';
@@ -113,6 +119,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _descriptionController.dispose();
     _instructionsController.dispose();
     _servingsController.dispose();
+    _gramsController.dispose();
     _caloriesController.dispose();
     _proteinController.dispose();
     _carbsController.dispose();
@@ -229,6 +236,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         _instructionsController.text = s(r['instructions']);
       }
       if (r['servings'] != null) _servingsController.text = s(r['servings']);
+      if (r['grams_per_serving'] != null) {
+        _gramsController.text = s(r['grams_per_serving']);
+      }
       if (r['calories_per_serving'] != null) {
         _caloriesController.text = s(r['calories_per_serving']);
       }
@@ -317,6 +327,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             ? null
             : _instructionsController.text.trim(),
         servings: _parseI(_servingsController) ?? 1,
+        gramsPerServing: _parseD(_gramsController),
         prepTimeMinutes: _parseI(_prepController),
         cookTimeMinutes: _parseI(_cookController),
         calories: _parseI(_caloriesController),
@@ -440,7 +451,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ],
                   TextFormField(
                     controller: _titleController,
-                    decoration: _dec('Título (ej. Pesto Chicken Sub)'),
+                    decoration: _dec('Título'),
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? 'Ponle un título'
                         : null,
@@ -477,10 +488,26 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _servingsController,
-                    keyboardType: TextInputType.number,
-                    decoration: _dec('Raciones'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _servingsController,
+                          keyboardType: TextInputType.number,
+                          decoration: _dec('Raciones'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _gramsController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: _dec('Gramos / ración'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
 
