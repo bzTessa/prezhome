@@ -26,6 +26,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final Set<int> _weekdays = {}; // 1=Lun..7=Dom
   String? _assignedTo; // null = cualquiera
   DateTime? _dueDate;
+  TimeOfDay? _dueTime;
   bool _saving = false;
 
   @override
@@ -68,6 +69,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         weekdays: _weekdays.toList(),
         assignedTo: _assignedTo,
         dueDate: _dueDate,
+        dueTime: _dueTime == null
+            ? null
+            : '${_dueTime!.hour.toString().padLeft(2, '0')}:'
+                  '${_dueTime!.minute.toString().padLeft(2, '0')}',
       );
       await _client.from('tasks').insert(task.toInsertMap(createdBy: user.id));
       if (mounted) Navigator.of(context).pop(true);
@@ -245,6 +250,36 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     if (_dueDate != null)
                       GestureDetector(
                         onTap: () => setState(() => _dueDate = null),
+                        child: const Icon(Icons.clear, size: 20),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: _dueTime ?? TimeOfDay.now(),
+                  helpText: 'Hora (opcional)',
+                );
+                if (picked != null) setState(() => _dueTime = picked);
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: InputDecorator(
+                decoration: _dec('Hora (opcional)'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _dueTime == null
+                          ? 'Sin hora'
+                          : _dueTime!.format(context),
+                    ),
+                    if (_dueTime != null)
+                      GestureDetector(
+                        onTap: () => setState(() => _dueTime = null),
                         child: const Icon(Icons.clear, size: 20),
                       ),
                   ],
