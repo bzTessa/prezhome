@@ -50,7 +50,7 @@ exactamente esta forma:
   "title": string,
   "description": string,
   "servings": number,
-  "meal_type": "breakfast" | "lunch" | "dinner" | "snack",
+  "meal_types": string[],  // uno o varios de: "breakfast","lunch","dinner","snack"
   "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave",
   "prep_minutes": number,
   "cook_minutes": number,
@@ -59,11 +59,15 @@ exactamente esta forma:
   "protein_grams": number,
   "carbs_grams": number,
   "fat_grams": number,
-  "ingredients": [ { "name": string, "quantity": number, "unit": string } ]
+  "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
+  "instructions": string  // pasos de preparación numerados, separados por saltos de línea
 }
 
+En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
+ejemplo ["lunch","dinner"] si vale para comida y cena).
 Los macros y calorías son POR RACIÓN. Usa gramos/ml/unidades en "unit".
-Escribe el contenido en español.`;
+En "instructions" escribe los pasos claros y numerados (1., 2., 3., ...).
+Escribe todo el contenido en español.`;
 }
 
 // Consulta a Google qué modelos hay disponibles para esta key y devuelve los que

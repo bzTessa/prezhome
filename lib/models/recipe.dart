@@ -3,6 +3,7 @@ class Recipe {
   final String homeId;
   final String title;
   final String? description;
+  final String? instructions; // pasos de preparación
   final int servings;
   final int? prepTimeMinutes; // tiempo de preparación
   final int? cookTimeMinutes; // tiempo de cocción
@@ -11,7 +12,7 @@ class Recipe {
   final double? carbs;
   final double? fat;
   final String appliance; // none | oven | stovetop | pot | airfryer | microwave
-  final String mealType; // breakfast | lunch | dinner | snack
+  final List<String> mealTypes; // varias: breakfast/lunch/dinner/snack
   final bool isFavorite;
   final bool freezable;
 
@@ -20,6 +21,7 @@ class Recipe {
     required this.homeId,
     required this.title,
     this.description,
+    this.instructions,
     required this.servings,
     this.prepTimeMinutes,
     this.cookTimeMinutes,
@@ -28,17 +30,28 @@ class Recipe {
     this.carbs,
     this.fat,
     this.appliance = 'none',
-    this.mealType = 'lunch',
+    this.mealTypes = const [],
     this.isFavorite = false,
     this.freezable = false,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
+    // meal_types (array) es lo nuevo; si viene vacío, caemos al meal_type (single).
+    final rawTypes = map['meal_types'];
+    List<String> types = [];
+    if (rawTypes is List) {
+      types = rawTypes.map((e) => e.toString()).toList();
+    }
+    if (types.isEmpty && map['meal_type'] != null) {
+      types = [map['meal_type'].toString()];
+    }
+
     return Recipe(
       id: map['id'],
       homeId: map['home_id'],
       title: map['title'],
       description: map['description'],
+      instructions: map['instructions'],
       servings: map['servings'] ?? 1,
       prepTimeMinutes: map['prep_minutes'] ?? map['prep_time_minutes'],
       cookTimeMinutes: map['cook_minutes'],
@@ -47,7 +60,7 @@ class Recipe {
       carbs: (map['carbs_grams'] as num?)?.toDouble(),
       fat: (map['fat_grams'] as num?)?.toDouble(),
       appliance: map['appliance'] ?? 'none',
-      mealType: map['meal_type'] ?? 'lunch',
+      mealTypes: types,
       isFavorite: map['is_favorite'] ?? false,
       freezable: map['freezable'] ?? false,
     );
@@ -58,6 +71,7 @@ class Recipe {
       'home_id': homeId,
       'title': title,
       'description': description,
+      'instructions': instructions,
       'servings': servings,
       'prep_minutes': prepTimeMinutes,
       'cook_minutes': cookTimeMinutes,
@@ -66,7 +80,9 @@ class Recipe {
       'carbs_grams': carbs,
       'fat_grams': fat,
       'appliance': appliance,
-      'meal_type': mealType,
+      'meal_types': mealTypes,
+      // Mantener meal_type (singular) sincronizado por compatibilidad.
+      'meal_type': mealTypes.isNotEmpty ? mealTypes.first : 'lunch',
       'is_favorite': isFavorite,
       'freezable': freezable,
     };
@@ -94,5 +110,8 @@ class Recipe {
   };
 
   String get applianceLabel => applianceLabels[appliance] ?? 'Ninguno';
-  String get mealTypeLabel => mealTypeLabels[mealType] ?? 'Comida';
+
+  /// Etiquetas legibles de los tipos de comida (ej. "Comida, Cena").
+  List<String> get mealTypeLabelsList =>
+      mealTypes.map((t) => mealTypeLabels[t] ?? t).toList();
 }

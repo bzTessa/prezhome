@@ -5,7 +5,11 @@ import 'models/ingredient.dart';
 import 'models/recipe.dart';
 
 class AddRecipeScreen extends StatefulWidget {
-  const AddRecipeScreen({super.key});
+  /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
+  final Recipe? recipe;
+  const AddRecipeScreen({super.key, this.recipe});
+
+  bool get isEditing => recipe != null;
 
   @override
   State<AddRecipeScreen> createState() => _AddRecipeScreenState();
@@ -17,6 +21,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _instructionsController = TextEditingController();
   final _servingsController = TextEditingController(text: '1');
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
@@ -26,19 +31,87 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _cookController = TextEditingController();
 
   String _appliance = 'none';
-  String _mealType = 'lunch';
+  final Set<String> _mealTypes = {}; // selección múltiple
   bool _isFavorite = false;
   bool _freezable = false;
   bool _isLoading = false;
   bool _aiLoading = false;
+  bool _loadingInitial = false;
 
-  // Ingredientes dinámicos
   final List<_IngredientControllers> _ingredients = [_IngredientControllers()];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.recipe != null) {
+      _prefillFromRecipe(widget.recipe!);
+    } else {
+      _mealTypes.add('lunch');
+    }
+  }
+
+  void _prefillFromRecipe(Recipe r) {
+    _titleController.text = r.title;
+    _descriptionController.text = r.description ?? '';
+    _instructionsController.text = r.instructions ?? '';
+    _servingsController.text = r.servings.toString();
+    _caloriesController.text = r.calories?.toString() ?? '';
+    _proteinController.text = r.protein?.toStringAsFixed(0) ?? '';
+    _carbsController.text = r.carbs?.toStringAsFixed(0) ?? '';
+    _fatController.text = r.fat?.toStringAsFixed(0) ?? '';
+    _prepController.text = r.prepTimeMinutes?.toString() ?? '';
+    _cookController.text = r.cookTimeMinutes?.toString() ?? '';
+    _appliance = r.appliance;
+    _mealTypes
+      ..clear()
+      ..addAll(r.mealTypes.isEmpty ? ['lunch'] : r.mealTypes);
+    _isFavorite = r.isFavorite;
+    _freezable = r.freezable;
+    // Cargar ingredientes existentes de la receta.
+    _loadingInitial = true;
+    _loadIngredients(r.id);
+  }
+
+  Future<void> _loadIngredients(String recipeId) async {
+    try {
+      final res = await _client
+          .from('recipe_ingredients')
+          .select()
+          .eq('recipe_id', recipeId)
+          .order('position');
+      final list = (res as List).map((m) => Ingredient.fromMap(m)).toList();
+      if (list.isNotEmpty) {
+        for (final ing in _ingredients) {
+          ing.dispose();
+        }
+        _ingredients
+          ..clear()
+          ..addAll(
+            list.map((ing) {
+              final c = _IngredientControllers();
+              c.name.text = ing.name;
+              c.quantity.text = ing.quantity == null
+                  ? ''
+                  : (ing.quantity! % 1 == 0
+                        ? ing.quantity!.toStringAsFixed(0)
+                        : ing.quantity!.toString());
+              c.unit.text = ing.unit ?? '';
+              return c;
+            }),
+          );
+      }
+    } catch (_) {
+      // Si falla, se queda con una fila vacía.
+    } finally {
+      if (mounted) setState(() => _loadingInitial = false);
+    }
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _instructionsController.dispose();
     _servingsController.dispose();
     _caloriesController.dispose();
     _proteinController.dispose();
@@ -64,8 +137,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     return int.tryParse(t);
   }
 
-  /// Pide un texto al usuario y rellena el formulario llamando a la Edge
-  /// Function 'generate-recipe' (que a su vez usa Gemini de forma segura).
   Future<void> _fillWithAI() async {
     final query = await showDialog<String>(
       context: context,
@@ -77,8 +148,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           content: TextField(
             controller: controller,
             autofocus: true,
+            maxLines: 6,
+            minLines: 1,
             decoration: InputDecoration(
-              hintText: 'Ej. Pesto Chicken Subs',
+              hintText: 'Escribe el nombre o pega una receta entera…',
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
@@ -86,7 +159,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 borderSide: BorderSide.none,
               ),
             ),
-            onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
           ),
           actions: [
             TextButton(
@@ -122,7 +194,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         _applyAIRecipe(Map<String, dynamic>.from(data['recipe'] as Map));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Receta rellenada ✨ Revísala antes de guardar.')),
+            const SnackBar(
+              content: Text('Receta rellenada ✨ Revísala antes de guardar.'),
+            ),
           );
         }
       } else {
@@ -145,18 +219,22 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     }
   }
 
-  /// Vuelca el JSON devuelto por la IA en los campos del formulario.
   void _applyAIRecipe(Map<String, dynamic> r) {
     String s(dynamic v) => v == null ? '' : v.toString();
 
     setState(() {
       _titleController.text = s(r['title']);
       _descriptionController.text = s(r['description']);
+      if (r['instructions'] != null) {
+        _instructionsController.text = s(r['instructions']);
+      }
       if (r['servings'] != null) _servingsController.text = s(r['servings']);
       if (r['calories_per_serving'] != null) {
         _caloriesController.text = s(r['calories_per_serving']);
       }
-      if (r['protein_grams'] != null) _proteinController.text = s(r['protein_grams']);
+      if (r['protein_grams'] != null) {
+        _proteinController.text = s(r['protein_grams']);
+      }
       if (r['carbs_grams'] != null) _carbsController.text = s(r['carbs_grams']);
       if (r['fat_grams'] != null) _fatController.text = s(r['fat_grams']);
       if (r['prep_minutes'] != null) _prepController.text = s(r['prep_minutes']);
@@ -164,11 +242,27 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
       final appliance = s(r['appliance']);
       if (Recipe.applianceLabels.containsKey(appliance)) _appliance = appliance;
-      final mealType = s(r['meal_type']);
-      if (Recipe.mealTypeLabels.containsKey(mealType)) _mealType = mealType;
+
+      // Tipos de comida (array). Fallback al singular por compatibilidad.
+      final rawTypes = r['meal_types'];
+      final types = <String>{};
+      if (rawTypes is List) {
+        for (final t in rawTypes) {
+          final key = t.toString();
+          if (Recipe.mealTypeLabels.containsKey(key)) types.add(key);
+        }
+      }
+      if (types.isEmpty && Recipe.mealTypeLabels.containsKey(s(r['meal_type']))) {
+        types.add(s(r['meal_type']));
+      }
+      if (types.isNotEmpty) {
+        _mealTypes
+          ..clear()
+          ..addAll(types);
+      }
+
       if (r['freezable'] is bool) _freezable = r['freezable'] as bool;
 
-      // Ingredientes
       final ings = r['ingredients'];
       if (ings is List && ings.isNotEmpty) {
         for (final ing in _ingredients) {
@@ -193,6 +287,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_mealTypes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Elige al menos un tipo de comida.')),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final user = _client.auth.currentUser;
@@ -207,12 +307,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (homeId == null) throw 'El usuario no está asignado a ningún hogar.';
 
       final recipe = Recipe(
-        id: '',
+        id: widget.recipe?.id ?? '',
         homeId: homeId,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
+        instructions: _instructionsController.text.trim().isEmpty
+            ? null
+            : _instructionsController.text.trim(),
         servings: _parseI(_servingsController) ?? 1,
         prepTimeMinutes: _parseI(_prepController),
         cookTimeMinutes: _parseI(_cookController),
@@ -221,20 +324,30 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         carbs: _parseD(_carbsController),
         fat: _parseD(_fatController),
         appliance: _appliance,
-        mealType: _mealType,
+        mealTypes: _mealTypes.toList(),
         isFavorite: _isFavorite,
         freezable: _freezable,
       );
 
-      // Insertar receta y recuperar su id
-      final inserted = await _client
-          .from('recipes')
-          .insert(recipe.toMap())
-          .select('id')
-          .single();
-      final recipeId = inserted['id'] as String;
+      String recipeId;
+      if (widget.isEditing) {
+        // Actualizar receta existente
+        recipeId = widget.recipe!.id;
+        await _client.from('recipes').update(recipe.toMap()).eq('id', recipeId);
+        // Reemplazar ingredientes: borrar los antiguos y volver a insertar.
+        await _client
+            .from('recipe_ingredients')
+            .delete()
+            .eq('recipe_id', recipeId);
+      } else {
+        final inserted = await _client
+            .from('recipes')
+            .insert(recipe.toMap())
+            .select('id')
+            .single();
+        recipeId = inserted['id'] as String;
+      }
 
-      // Insertar ingredientes (los que tengan nombre)
       final ingredientRows = <Map<String, dynamic>>[];
       var pos = 0;
       for (final ing in _ingredients) {
@@ -283,61 +396,165 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8E1),
       appBar: AppBar(
-        title: const Text(
-          'Nueva Receta',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          widget.isEditing ? 'Editar Receta' : 'Nueva Receta',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFDF8E1),
         elevation: 0,
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            OutlinedButton.icon(
-              onPressed: _aiLoading ? null : _fillWithAI,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1E1E1E),
-                minimumSize: const Size.fromHeight(48),
-                side: const BorderSide(color: Color(0xFFE2C792), width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              icon: _aiLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.auto_awesome),
-              label: Text(
-                _aiLoading ? 'Generando…' : 'Rellenar con IA ✨',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _titleController,
-              decoration: _dec('Título (ej. Pesto Chicken Sub)'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Ponle un título' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: _dec('Descripción (opcional)'),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _mealType,
-                    decoration: _dec('Tipo de comida'),
-                    items: Recipe.mealTypeLabels.entries
+      body: _loadingInitial
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  if (!widget.isEditing) ...[
+                    OutlinedButton.icon(
+                      onPressed: _aiLoading ? null : _fillWithAI,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1E1E1E),
+                        minimumSize: const Size.fromHeight(48),
+                        side: const BorderSide(
+                          color: Color(0xFFE2C792),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: _aiLoading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.auto_awesome),
+                      label: Text(
+                        _aiLoading ? 'Generando…' : 'Rellenar con IA ✨',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: _dec('Título (ej. Pesto Chicken Sub)'),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Ponle un título'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: _dec('Descripción (opcional)'),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // --- Tipos de comida (selección múltiple) ---
+                  const _SectionTitle('Tipo de comida (puedes elegir varios)'),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: Recipe.mealTypeLabels.entries.map((e) {
+                      final selected = _mealTypes.contains(e.key);
+                      return FilterChip(
+                        label: Text(e.value),
+                        selected: selected,
+                        selectedColor: const Color(0xFFE2C792),
+                        checkmarkColor: const Color(0xFF1E1E1E),
+                        backgroundColor: Colors.white,
+                        onSelected: (v) => setState(() {
+                          if (v) {
+                            _mealTypes.add(e.key);
+                          } else {
+                            _mealTypes.remove(e.key);
+                          }
+                        }),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _servingsController,
+                    keyboardType: TextInputType.number,
+                    decoration: _dec('Raciones'),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- Macros ---
+                  const _SectionTitle('Valores nutricionales (por ración)'),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _caloriesController,
+                    keyboardType: TextInputType.number,
+                    decoration: _dec('Calorías (kcal)'),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _proteinController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: _dec('Proteína (g)'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _carbsController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: _dec('Carbos (g)'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _fatController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: _dec('Grasa (g)'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- Tiempos y aparato ---
+                  const _SectionTitle('Cocina'),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _prepController,
+                          keyboardType: TextInputType.number,
+                          decoration: _dec('Prep (min)'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _cookController,
+                          keyboardType: TextInputType.number,
+                          decoration: _dec('Cocción (min)'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: _appliance,
+                    decoration: _dec('Aparato principal'),
+                    items: Recipe.applianceLabels.entries
                         .map(
                           (e) => DropdownMenuItem(
                             value: e.key,
@@ -345,162 +562,85 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           ),
                         )
                         .toList(),
-                    onChanged: (v) => setState(() => _mealType = v!),
+                    onChanged: (v) => setState(() => _appliance = v!),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _servingsController,
-                    keyboardType: TextInputType.number,
-                    decoration: _dec('Raciones'),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    title: const Text('Es congelable'),
+                    value: _freezable,
+                    activeThumbColor: const Color(0xFFE2C792),
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (v) => setState(() => _freezable = v),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  SwitchListTile(
+                    title: const Text('Marcar como favorita ⭐'),
+                    value: _isFavorite,
+                    activeThumbColor: const Color(0xFFE2C792),
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (v) => setState(() => _isFavorite = v),
+                  ),
+                  const SizedBox(height: 16),
 
-            // --- Macros ---
-            const _SectionTitle('Valores nutricionales (por ración)'),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _caloriesController,
-              keyboardType: TextInputType.number,
-              decoration: _dec('Calorías (kcal)'),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _proteinController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _dec('Proteína (g)'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _carbsController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _dec('Carbos (g)'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _fatController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _dec('Grasa (g)'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // --- Tiempos y aparato ---
-            const _SectionTitle('Cocina'),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _prepController,
-                    keyboardType: TextInputType.number,
-                    decoration: _dec('Prep (min)'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _cookController,
-                    keyboardType: TextInputType.number,
-                    decoration: _dec('Cocción (min)'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _appliance,
-              decoration: _dec('Aparato principal'),
-              items: Recipe.applianceLabels.entries
-                  .map(
-                    (e) =>
-                        DropdownMenuItem(value: e.key, child: Text(e.value)),
-                  )
-                  .toList(),
-              onChanged: (v) => setState(() => _appliance = v!),
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              title: const Text('Es congelable'),
-              value: _freezable,
-              activeThumbColor: const Color(0xFFE2C792),
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => _freezable = v),
-            ),
-            SwitchListTile(
-              title: const Text('Marcar como favorita ⭐'),
-              value: _isFavorite,
-              activeThumbColor: const Color(0xFFE2C792),
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => _isFavorite = v),
-            ),
-            const SizedBox(height: 16),
-
-            // --- Ingredientes dinámicos ---
-            const _SectionTitle('Ingredientes'),
-            const SizedBox(height: 12),
-            ..._buildIngredientRows(),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () =>
-                    setState(() => _ingredients.add(_IngredientControllers())),
-                icon: const Icon(Icons.add, color: Color(0xFF1E1E1E)),
-                label: const Text(
-                  'Añadir ingrediente',
-                  style: TextStyle(
-                    color: Color(0xFF1E1E1E),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE2C792),
-                foregroundColor: const Color(0xFF1E1E1E),
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              onPressed: _isLoading ? null : _save,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text(
-                      'Guardar Receta',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                  // --- Ingredientes ---
+                  const _SectionTitle('Ingredientes'),
+                  const SizedBox(height: 12),
+                  ..._buildIngredientRows(),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => setState(
+                        () => _ingredients.add(_IngredientControllers()),
+                      ),
+                      icon: const Icon(Icons.add, color: Color(0xFF1E1E1E)),
+                      label: const Text(
+                        'Añadir ingrediente',
+                        style: TextStyle(
+                          color: Color(0xFF1E1E1E),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- Pasos / instrucciones ---
+                  const _SectionTitle('Pasos de preparación'),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _instructionsController,
+                    decoration: _dec('Escribe los pasos, uno por línea…'),
+                    maxLines: 8,
+                    minLines: 4,
+                  ),
+                  const SizedBox(height: 24),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE2C792),
+                      foregroundColor: const Color(0xFF1E1E1E),
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: _isLoading ? null : _save,
+                    child: _isLoading
+                        ? const CircularProgressIndicator()
+                        : Text(
+                            widget.isEditing
+                                ? 'Guardar cambios'
+                                : 'Guardar Receta',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
