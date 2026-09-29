@@ -7,8 +7,8 @@ enum MiauMood { greeting, celebrating, sleeping, cooking, curious, neutral }
 /// Presidente Miau como "personaje": muestra la pose según el contexto y
 /// aparece con una animación sutil (escala + leve flotación) para dar vida.
 ///
-/// Para añadir poses nuevas, guarda las imágenes en assets/images/ con estos
-/// nombres y añádelas al pubspec. Mientras no existan, se usa la imagen base.
+/// Las imágenes de pose (PNG con fondo transparente) se guardan en
+/// assets/images/. Mientras no existan, se usa la imagen base (recortada).
 class MiauCharacter extends StatefulWidget {
   final MiauMood mood;
   final double size;
@@ -23,14 +23,13 @@ class MiauCharacter extends StatefulWidget {
 
   static const String _base = 'assets/images/presidente_prezhome.jpg';
 
-  // Mapa de mood -> ruta de imagen. Cambia estas rutas cuando tengas las poses.
-  static const Map<MiauMood, String> _assets = {
+  // Mapa de mood -> ruta de imagen de pose (PNG transparente).
+  static const Map<MiauMood, String> _poseAssets = {
     MiauMood.greeting: 'assets/images/miau_saludando.png',
     MiauMood.celebrating: 'assets/images/miau_celebrando.png',
     MiauMood.sleeping: 'assets/images/miau_durmiendo.png',
     MiauMood.cooking: 'assets/images/miau_cocinando.png',
     MiauMood.curious: 'assets/images/miau_curioso.png',
-    MiauMood.neutral: _base,
   };
 
   @override
@@ -65,36 +64,44 @@ class _MiauCharacterState extends State<MiauCharacter>
 
   @override
   Widget build(BuildContext context) {
-    final path = MiauCharacter._assets[widget.mood] ?? MiauCharacter._base;
-
+    final posePath = MiauCharacter._poseAssets[widget.mood];
     final scale = CurvedAnimation(parent: _entry, curve: Curves.easeOutBack);
+
+    // Poses = PNG transparente -> se muestran limpias (contain, sin recorte).
+    // Base = foto .jpg -> se recorta en cuadrado redondeado.
+    final Widget image = posePath != null
+        ? Image.asset(
+            posePath,
+            width: widget.size,
+            height: widget.size,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stack) => _baseImage(),
+          )
+        : _baseImage();
 
     return AnimatedBuilder(
       animation: Listenable.merge([_entry, _floatCtrl]),
       builder: (context, child) {
         final floatOffset = widget.float
-            ? (0.5 - (_floatCtrl.value - 0.5).abs()) * 8 // 0..4..0 px
+            ? (0.5 - (_floatCtrl.value - 0.5).abs()) * 8
             : 0.0;
         return Transform.translate(
           offset: Offset(0, -floatOffset),
           child: Transform.scale(scale: scale.value, child: child),
         );
       },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(widget.size * 0.28),
-        child: Image.asset(
-          path,
-          width: widget.size,
-          height: widget.size,
-          fit: BoxFit.cover,
-          // Si la pose no existe todavía, usa la imagen base.
-          errorBuilder: (context, error, stack) => Image.asset(
-            MiauCharacter._base,
-            width: widget.size,
-            height: widget.size,
-            fit: BoxFit.cover,
-          ),
-        ),
+      child: image,
+    );
+  }
+
+  Widget _baseImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(widget.size * 0.28),
+      child: Image.asset(
+        MiauCharacter._base,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.cover,
       ),
     );
   }
