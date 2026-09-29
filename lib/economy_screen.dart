@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'add_expense_screen.dart';
-import 'models/expense.dart';
+import 'scan_ticket_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 
@@ -48,22 +47,24 @@ class _EconomyScreenState extends State<EconomyScreen> {
         .maybeSingle();
     final budget = (budgetRow?['monthly_amount'] as num?)?.toDouble() ?? 0;
 
-    // Gastos del mes actual
-    final expRes = await _client
-        .from('expenses')
-        .select()
+    // Tickets del mes actual
+    final ticketsRes = await _client
+        .from('tickets')
+        .select('id, merchant, total_amount, purchased_at')
         .eq('home_id', homeId)
-        .gte('spent_on', firstStr)
-        .order('spent_on', ascending: false);
-    final expenses =
-        (expRes as List).map((m) => Expense.fromMap(m)).toList();
+        .gte('purchased_at', firstStr)
+        .order('purchased_at', ascending: false);
+    final tickets = (ticketsRes as List).cast<Map<String, dynamic>>();
 
-    final total = expenses.fold<double>(0, (a, e) => a + e.amount);
+    final total = tickets.fold<double>(
+      0,
+      (a, t) => a + ((t['total_amount'] as num?)?.toDouble() ?? 0),
+    );
 
     return _EconomyData(
       homeId: homeId,
       budget: budget,
-      expenses: expenses,
+      tickets: tickets,
       totalThisMonth: total,
     );
   }
@@ -124,15 +125,15 @@ class _EconomyScreenState extends State<EconomyScreen> {
     _reload();
   }
 
-  Future<void> _openAdd() async {
+  Future<void> _openScan() async {
     final added = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AddExpenseScreen()),
+      MaterialPageRoute(builder: (_) => const ScanTicketScreen()),
     );
     if (added == true) _reload();
   }
 
-  Future<void> _delete(Expense e) async {
-    await _client.from('expenses').delete().eq('id', e.id);
+  Future<void> _deleteTicket(String id) async {
+    await _client.from('tickets').delete().eq('id', id);
     _reload();
   }
 
@@ -142,12 +143,12 @@ class _EconomyScreenState extends State<EconomyScreen> {
       backgroundColor: AppColors.cream,
       appBar: AppBar(title: const Text('Economía')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAdd,
+        onPressed: _openScan,
         backgroundColor: AppColors.wood,
         foregroundColor: AppColors.ink,
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.document_scanner_outlined),
         label: const Text(
-          'Nuevo gasto',
+          'Escanear ticket',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -171,7 +172,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               _budgetCard(data),
               const SizedBox(height: 16),
               Text(
-                'GASTOS DE ESTE MES',
+                'TICKETS DE ESTE MES',
                 style: TextStyle(
                   fontSize: 12,
                   letterSpacing: 1,
@@ -180,10 +181,10 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              if (data.expenses.isEmpty)
+              if (data.tickets.isEmpty)
                 _empty()
               else
-                ...data.expenses.map((e) => _expenseCard(e)),
+                ...data.tickets.map((t) => _ticketCard(t)),
             ],
           );
         },
@@ -260,7 +261,12 @@ class _EconomyScreenState extends State<EconomyScreen> {
     );
   }
 
-  Widget _expenseCard(Expense e) {
+  Widget _ticketCard(Map<String, dynamic> t) {
+    final merchant = (t['merchant'] as String?)?.trim();
+    final amount = (t['total_amount'] as num?)?.toDouble() ?? 0;
+    final dateStr = t['purchased_at'] as String?;
+    final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -274,7 +280,10 @@ class _EconomyScreenState extends State<EconomyScreen> {
               color: AppColors.cream,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(_iconFor(e.category), color: AppColors.ink),
+            child: const Icon(
+              Icons.receipt_long_outlined,
+              color: AppColors.ink,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -282,44 +291,29 @@ class _EconomyScreenState extends State<EconomyScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  e.store?.isNotEmpty == true ? e.store! : e.category,
+                  merchant?.isNotEmpty == true ? merchant! : 'Ticket',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  '${e.category} · ${e.spentOn.day.toString().padLeft(2, '0')}/'
-                  '${e.spentOn.month.toString().padLeft(2, '0')}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
+                if (date != null)
+                  Text(
+                    '${date.day.toString().padLeft(2, '0')}/'
+                    '${date.month.toString().padLeft(2, '0')}/${date.year}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
               ],
             ),
           ),
           Text(
-            '${e.amount.toStringAsFixed(2)} €',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            '${amount.toStringAsFixed(2)} €',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-            onPressed: () => _delete(e),
+            onPressed: () => _deleteTicket(t['id'] as String),
           ),
         ],
       ),
     );
-  }
-
-  IconData _iconFor(String category) {
-    switch (category) {
-      case 'Supermercado':
-        return Icons.shopping_cart_outlined;
-      case 'Hogar':
-        return Icons.home_outlined;
-      case 'Ocio':
-        return Icons.celebration_outlined;
-      default:
-        return Icons.receipt_long_outlined;
-    }
   }
 
   Widget _empty() {
@@ -330,7 +324,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
           const MiauCharacter(mood: MiauMood.curious, size: 110),
           const SizedBox(height: 12),
           Text(
-            'Aún no hay gastos este mes.',
+            'Aún no hay tickets este mes.\nEscanea el primero.',
+            textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey[700]),
           ),
         ],
@@ -342,12 +337,12 @@ class _EconomyScreenState extends State<EconomyScreen> {
 class _EconomyData {
   final String? homeId;
   final double budget;
-  final List<Expense> expenses;
+  final List<Map<String, dynamic>> tickets;
   final double totalThisMonth;
   _EconomyData({
     required this.homeId,
     this.budget = 0,
-    this.expenses = const [],
+    this.tickets = const [],
     this.totalThisMonth = 0,
   });
 }
