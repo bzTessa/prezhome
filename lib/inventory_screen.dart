@@ -5,7 +5,8 @@ import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
 
 class InventoryScreen extends StatefulWidget {
-  const InventoryScreen({super.key});
+  final bool embedded;
+  const InventoryScreen({super.key, this.embedded = false});
 
   @override
   State<InventoryScreen> createState() => _InventoryScreenState();
@@ -64,18 +65,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8E1),
-      appBar: AppBar(
-        title: const Text(
-          'Despensa y Nevera',
-          style: TextStyle(
-            color: Color(0xFF1E1E1E),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: const Color(0xFFFDF8E1),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF1E1E1E)),
-      ),
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              title: const Text(
+                'Despensa y Nevera',
+                style: TextStyle(
+                  color: Color(0xFF1E1E1E),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: const Color(0xFFFDF8E1),
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Color(0xFF1E1E1E)),
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openAddItem,
         backgroundColor: const Color(0xFFE2C792),

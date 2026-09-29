@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'home_screen.dart';
+import 'main_shell.dart';
 
 class HomeOnboardingScreen extends StatefulWidget {
   const HomeOnboardingScreen({super.key});
@@ -40,7 +40,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
       await action();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const MainShell()),
           (_) => false,
         );
       }

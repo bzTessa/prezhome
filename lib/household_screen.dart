@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'nutrition_profile_screen.dart';
+import 'login_screen.dart';
+
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({super.key});
 
@@ -178,6 +181,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     }
   }
 
+  Future<void> _logout() async {
+    await _client.auth.signOut();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
+    }
+  }
+
   void _snack(String msg, {bool error = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -199,6 +212,22 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         ),
         backgroundColor: const Color(0xFFFDF8E1),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_outline),
+            tooltip: 'Mi Perfil Nutricional',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const NutritionProfileScreen(),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: FutureBuilder<_HouseholdData>(
         future: _future,
