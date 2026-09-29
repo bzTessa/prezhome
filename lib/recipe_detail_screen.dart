@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_recipe_screen.dart';
 import 'models/ingredient.dart';
+import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   late Recipe _recipe;
   late Future<List<Ingredient>> _ingredientsFuture;
+  NutritionProfile? _profile;
 
   // Multiplicador para escalar cantidades sin tocar la receta base.
   double _multiplier = 1;
@@ -27,6 +29,20 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     super.initState();
     _recipe = widget.recipe;
     _ingredientsFuture = _fetchIngredients();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    final p = await _client
+        .from('profiles')
+        .select()
+        .eq('id', user.id)
+        .maybeSingle();
+    if (p != null && mounted) {
+      setState(() => _profile = NutritionProfile.fromMap(p));
+    }
   }
 
   Future<List<Ingredient>> _fetchIngredients() async {
@@ -244,9 +260,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             const SizedBox(height: 16),
 
-            // --- Cuántos gramos poner para unas calorías objetivo ---
-            if (r.kcalPer100g != null) _GramsForCaloriesCard(recipe: r),
-            if (r.kcalPer100g != null) const SizedBox(height: 16),
+            // --- Cuánto poner en tu taper (automático según tu perfil) ---
+            if (r.kcalPer100g != null) ...[
+              _autoTaperCard(r),
+              const SizedBox(height: 16),
+            ],
 
             // --- Macros (por ración, no se escalan) ---
             if (r.calories != null || r.protein != null)
@@ -382,6 +400,74 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
+  /// Calcula automáticamente, según el perfil y el tipo de la receta, cuántas
+  /// kcal te tocan y cuántos gramos poner en el taper. Sin preguntar nada.
+  Widget _autoTaperCard(Recipe r) {
+    final profile = _profile;
+    if (profile == null) {
+      return _card(
+        child: const Padding(
+          padding: EdgeInsets.all(4),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    if (!profile.isComplete) {
+      return _card(
+        child: Text(
+          'Completa tu Perfil Nutricional para ver cuántos gramos poner en tu taper.',
+          style: TextStyle(color: Colors.grey[700]),
+        ),
+      );
+    }
+
+    final kcalForMeal = profile.caloriesForMealTypes(r.mealTypes);
+    if (kcalForMeal == null) {
+      return _card(
+        child: Text(
+          'Ajusta el reparto de calorías por comida en tu perfil para este tipo de receta.',
+          style: TextStyle(color: Colors.grey[700]),
+        ),
+      );
+    }
+
+    final grams = r.gramsForCalories(kcalForMeal);
+    // Etiqueta del tipo con mayor % para explicar de dónde sale.
+    String mealLabel = r.mealTypeLabelsList.isNotEmpty
+        ? r.mealTypeLabelsList.first
+        : 'comida';
+
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tu taper 🐱⚖️',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Calculado con tu perfil: para tu $mealLabel te tocan '
+            '≈ $kcalForMeal kcal.',
+            style: TextStyle(color: Colors.grey[700], fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            grams == null
+                ? '—'
+                : 'Pon ≈ ${grams.toStringAsFixed(0)} g en la báscula',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFB58A3C),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _multBtn(String label, double value) {
     final selected = _multiplier == value;
     return Padding(
@@ -450,94 +536,4 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 }
 
-/// Tarjeta: metes las calorías que quieres comer y te dice cuántos gramos poner.
-class _GramsForCaloriesCard extends StatefulWidget {
-  final Recipe recipe;
-  const _GramsForCaloriesCard({required this.recipe});
 
-  @override
-  State<_GramsForCaloriesCard> createState() => _GramsForCaloriesCardState();
-}
-
-class _GramsForCaloriesCardState extends State<_GramsForCaloriesCard> {
-  final _kcalController = TextEditingController();
-  double? _grams;
-
-  @override
-  void dispose() {
-    _kcalController.dispose();
-    super.dispose();
-  }
-
-  void _calc() {
-    final kcal = int.tryParse(_kcalController.text.trim());
-    setState(() {
-      _grams = kcal == null ? null : widget.recipe.gramsForCalories(kcal);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '¿Cuánto poner en el taper?',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Escribe las calorías que quieres para esta comida.',
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _kcalController,
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calc(),
-                  decoration: InputDecoration(
-                    labelText: 'Calorías objetivo (kcal)',
-                    filled: true,
-                    fillColor: const Color(0xFFFDF8E1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (_grams != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Pon ≈ ${_grams!.toStringAsFixed(0)} g en la báscula ⚖️',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFB58A3C),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
