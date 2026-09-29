@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/meals_tab.dart';
 import 'household_screen.dart';
+import 'tasks_screen.dart';
 import 'widgets/coming_soon.dart';
 import 'widgets/miau_character.dart';
 import 'theme/app_theme.dart';
@@ -22,7 +23,7 @@ class _MainShellState extends State<MainShell> {
   final _pages = const [
     HomeTab(),
     MealsTab(),
-    _TasksTab(),
+    TasksScreen(),
     _EconomyTab(),
     HouseholdScreen(),
   ];
@@ -72,23 +73,6 @@ class _MainShellState extends State<MainShell> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _TasksTab extends StatelessWidget {
-  const _TasksTab();
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Tareas')),
-      body: const ComingSoon(
-        title: 'Tareas del hogar',
-        message:
-            'Pronto podréis repartir las tareas de casa de forma cooperativa, '
-            'con un sistema de puntos para motivaros.',
       ),
     );
   }
