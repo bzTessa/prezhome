@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
@@ -39,6 +42,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   bool _aiLoading = false;
   bool _loadingInitial = false;
 
+  // Imagen de la receta
+  final _picker = ImagePicker();
+  Uint8List? _newImageBytes; // imagen recién elegida (aún sin subir)
+  String? _newImageExt;
+  String? _existingImageUrl; // la que ya tenía la receta (en edición)
+
   final List<_IngredientControllers> _ingredients = [_IngredientControllers()];
 
   @override
@@ -73,6 +82,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ..addAll(r.mealTypes.isEmpty ? ['lunch'] : r.mealTypes);
     _isFavorite = r.isFavorite;
     _freezable = r.freezable;
+    _existingImageUrl = r.imageUrl;
     // Cargar ingredientes existentes de la receta.
     _loadingInitial = true;
     _loadIngredients(r.id);
@@ -295,6 +305,39 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     });
   }
 
+  Future<void> _pickImage() async {
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 82,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    setState(() {
+      _newImageBytes = bytes;
+      _newImageExt = file.name.contains('.')
+          ? file.name.split('.').last.toLowerCase()
+          : 'jpg';
+    });
+  }
+
+  /// Sube la imagen elegida al bucket y devuelve su ruta (o null si no hay).
+  Future<String?> _uploadImageIfAny(String homeId) async {
+    if (_newImageBytes == null) return null;
+    final ext = (_newImageExt == 'png') ? 'png' : 'jpg';
+    final path =
+        '$homeId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    await _client.storage.from('recipe-images').uploadBinary(
+          path,
+          _newImageBytes!,
+          fileOptions: FileOptions(
+            contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
+            upsert: true,
+          ),
+        );
+    return path;
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_mealTypes.isEmpty) {
@@ -315,6 +358,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           .single();
       final homeId = profile['home_id'];
       if (homeId == null) throw 'El usuario no está asignado a ningún hogar.';
+
+      // Subir imagen nueva si se eligió
+      final uploadedPath = await _uploadImageIfAny(homeId);
 
       final recipe = Recipe(
         id: widget.recipe?.id ?? '',
@@ -340,11 +386,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         freezable: _freezable,
       );
 
+      final recipeMap = recipe.toMap();
+      // Guardar la ruta de la imagen: la nueva si se subió, si no la que había.
+      if (uploadedPath != null) {
+        recipeMap['image_path'] = uploadedPath;
+      }
+
       String recipeId;
       if (widget.isEditing) {
         // Actualizar receta existente
         recipeId = widget.recipe!.id;
-        await _client.from('recipes').update(recipe.toMap()).eq('id', recipeId);
+        await _client.from('recipes').update(recipeMap).eq('id', recipeId);
         // Reemplazar ingredientes: borrar los antiguos y volver a insertar.
         await _client
             .from('recipe_ingredients')
@@ -353,7 +405,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       } else {
         final inserted = await _client
             .from('recipes')
-            .insert(recipe.toMap())
+            .insert(recipeMap)
             .select('id')
             .single();
         recipeId = inserted['id'] as String;
@@ -449,6 +501,66 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
+                  // Selector de imagen de la receta
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 160,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.white,
+                        image: _newImageBytes != null
+                            ? DecorationImage(
+                                image: MemoryImage(_newImageBytes!),
+                                fit: BoxFit.cover,
+                              )
+                            : (_existingImageUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(_existingImageUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null),
+                      ),
+                      child:
+                          (_newImageBytes == null && _existingImageUrl == null)
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo_outlined,
+                                  size: 36,
+                                  color: Colors.grey[500],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Añadir foto (opcional)',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                              ],
+                            )
+                          : Align(
+                              alignment: Alignment.topRight,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: CircleAvatar(
+                                  backgroundColor: Colors.black54,
+                                  radius: 16,
+                                  child: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: _pickImage,
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _titleController,
                     decoration: _dec('Título'),

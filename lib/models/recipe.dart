@@ -16,6 +16,7 @@ class Recipe {
   final bool isFavorite;
   final bool freezable;
   final double? gramsPerServing; // peso de una ración ya preparada
+  final String? imageUrl; // URL pública de la foto de la receta
 
   Recipe({
     required this.id,
@@ -35,6 +36,7 @@ class Recipe {
     this.isFavorite = false,
     this.freezable = false,
     this.gramsPerServing,
+    this.imageUrl,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
@@ -66,7 +68,15 @@ class Recipe {
       isFavorite: map['is_favorite'] ?? false,
       freezable: map['freezable'] ?? false,
       gramsPerServing: (map['grams_per_serving'] as num?)?.toDouble(),
+      imageUrl: _imageUrlFrom(map['image_path']),
     );
+  }
+
+  // URL pública del bucket recipe-images a partir de la ruta guardada.
+  static const String _supabaseUrl = 'https://ubrihtnnkbwcbchvvlno.supabase.co';
+  static String? _imageUrlFrom(dynamic path) {
+    if (path == null || path.toString().isEmpty) return null;
+    return '$_supabaseUrl/storage/v1/object/public/recipe-images/$path';
   }
 
   Map<String, dynamic> toMap() {
@@ -119,6 +129,14 @@ class Recipe {
   /// Etiquetas legibles de los tipos de comida (ej. "Comida, Cena").
   List<String> get mealTypeLabelsList =>
       mealTypes.map((t) => mealTypeLabels[t] ?? t).toList();
+
+  /// Icono representativo según el tipo de comida (para el placeholder visual).
+  int get placeholderIconCode {
+    if (mealTypes.contains('breakfast')) return 0xe57a; // free_breakfast
+    if (mealTypes.contains('dessert')) return 0xe544; // cake
+    if (mealTypes.contains('snack')) return 0xe561; // fastfood
+    return 0xe56c; // restaurant
+  }
 
   /// Densidad calórica: kcal por 100 g del plato preparado.
   double? get kcalPer100g {
