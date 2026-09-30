@@ -23,7 +23,10 @@ class _TasksScreenState extends State<TasksScreen> {
     _future = _load();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    final future = _load();
+    setState(() => _future = future);
+  }
 
   Future<_TasksData> _load() async {
     final user = _client.auth.currentUser;

@@ -22,7 +22,10 @@ class _EconomyScreenState extends State<EconomyScreen> {
     _future = _load();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    final future = _load();
+    setState(() => _future = future);
+  }
 
   Future<_EconomyData> _load() async {
     final user = _client.auth.currentUser;

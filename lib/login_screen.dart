@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('¡Cuenta creada! Bienvenida a PrezHome.'),
+              content: Text('¡Cuenta creada! Bienvenido a PrezHome.'),
             ),
           );
         }
@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const MiauCharacter(mood: MiauMood.greeting, size: 120),
                 const SizedBox(height: 20),
                 Text(
-                  _isLoginMode ? 'Bienvenida de nuevo' : 'Crea tu cuenta',
+                  _isLoginMode ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,

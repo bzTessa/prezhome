@@ -20,7 +20,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _slides = const [
     _Slide(
       mood: MiauMood.greeting,
-      title: 'Bienvenida a PrezHome',
+      title: 'Bienvenido a PrezHome',
       text:
           'Organiza la comida, las tareas y los gastos de tu hogar en un solo '
           'sitio. Presidente Miau supervisa que todo esté en orden.',
