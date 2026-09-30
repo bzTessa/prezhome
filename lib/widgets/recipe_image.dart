@@ -30,7 +30,7 @@ class RecipeImage extends StatelessWidget {
             ? Image.network(
                 recipe.imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
+                errorBuilder: (context, error, stack) => _placeholder(),
                 loadingBuilder: (context, child, progress) {
                   if (progress == null) return child;
                   return _placeholder(loading: true);

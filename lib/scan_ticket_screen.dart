@@ -501,13 +501,12 @@ class _ItemRow {
   final TextEditingController totalPrice;
 
   _ItemRow({
-    String rawName = '',
+    this.rawName = '',
     String name = '',
     String category = '',
     String quantity = '1',
     String totalPrice = '',
-  })  : rawName = rawName,
-        name = TextEditingController(text: name),
+  })  : name = TextEditingController(text: name),
         category = TextEditingController(text: category),
         quantity = TextEditingController(text: quantity),
         totalPrice = TextEditingController(text: totalPrice);
