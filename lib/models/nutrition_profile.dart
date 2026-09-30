@@ -19,6 +19,12 @@ class NutritionProfile {
   /// ausente = todos los días. Ej.: {"lunch": [6,7]} = comida en casa solo finde.
   final Map<String, List<int>> mealsAtHome;
 
+  /// Cómo cocina: 'daily' (del día) o 'mealprep' (en lote y congela).
+  final String cookingMode;
+
+  /// Porciones: 'practical' (formatos de súper, redondeo) o 'strict' (exacto).
+  final String portionMode;
+
   NutritionProfile({
     required this.id,
     this.fullName,
@@ -32,6 +38,8 @@ class NutritionProfile {
     this.isPublic = false,
     Map<String, int>? mealSplit,
     Map<String, List<int>>? mealsAtHome,
+    this.cookingMode = 'daily',
+    this.portionMode = 'practical',
   })  : mealSplit = mealSplit ?? const {
           'breakfast': 20,
           'lunch': 40,
@@ -57,8 +65,13 @@ class NutritionProfile {
       isPublic: map['is_public'] ?? false,
       mealSplit: _parseSplit(map['meal_split']),
       mealsAtHome: _parseAtHome(map['meals_at_home']),
+      cookingMode: map['cooking_mode'] ?? 'daily',
+      portionMode: map['portion_mode'] ?? 'practical',
     );
   }
+
+  bool get isMealPrep => cookingMode == 'mealprep';
+  bool get isStrictPortions => portionMode == 'strict';
 
   static Map<String, int>? _parseSplit(dynamic raw) {
     if (raw is Map) {
@@ -91,6 +104,8 @@ class NutritionProfile {
       'is_public': isPublic,
       'meal_split': mealSplit,
       'meals_at_home': mealsAtHome,
+      'cooking_mode': cookingMode,
+      'portion_mode': portionMode,
     };
   }
 
