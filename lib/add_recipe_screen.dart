@@ -14,7 +14,15 @@ class AddRecipeScreen extends StatefulWidget {
   /// Si es true, al abrir muestra directamente el diálogo de "Rellenar con IA".
   final bool startWithAI;
 
-  const AddRecipeScreen({super.key, this.recipe, this.startWithAI = false});
+  /// Si es true, es modo manual: se oculta el botón "Rellenar con IA".
+  final bool manual;
+
+  const AddRecipeScreen({
+    super.key,
+    this.recipe,
+    this.startWithAI = false,
+    this.manual = false,
+  });
 
   bool get isEditing => recipe != null;
 
@@ -54,6 +62,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   final List<_IngredientControllers> _ingredients = [_IngredientControllers()];
 
+  // Componentes del plato (pollo/arroz...) que vienen de la IA o de la receta.
+  // Se conservan y guardan; no se editan en el formulario para no complicarlo.
+  List<RecipeComponent> _components = const [];
+
   @override
   void initState() {
     super.initState();
@@ -89,6 +101,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ..addAll(r.mealTypes.isEmpty ? ['lunch'] : r.mealTypes);
     _isFavorite = r.isFavorite;
     _freezable = r.freezable;
+    _components = r.components;
     _existingImageUrl = r.imageUrl;
     // Cargar ingredientes existentes de la receta.
     _loadingInitial = true;
@@ -309,6 +322,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           );
         if (_ingredients.isEmpty) _ingredients.add(_IngredientControllers());
       }
+
+      // Componentes del plato (pollo + arroz...) generados por la IA
+      final comps = r['components'];
+      if (comps is List) {
+        _components = comps
+            .whereType<Map>()
+            .map((m) => RecipeComponent.fromMap(Map<String, dynamic>.from(m)))
+            .where((c) => c.name.isNotEmpty)
+            .toList();
+      }
     });
   }
 
@@ -398,6 +421,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         mealTypes: _mealTypes.toList(),
         isFavorite: _isFavorite,
         freezable: _freezable,
+        components: _components,
       );
 
       final recipeMap = recipe.toMap();
@@ -499,7 +523,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
-                  if (!widget.isEditing) ...[
+                  if (!widget.isEditing && !widget.manual) ...[
                     OutlinedButton.icon(
                       onPressed: _aiLoading ? null : _fillWithAI,
                       style: OutlinedButton.styleFrom(

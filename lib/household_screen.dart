@@ -342,7 +342,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Compártelo con tu pareja para que se una a este hogar.',
+                'Compártelo con los demás para que se unan a este hogar.',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),

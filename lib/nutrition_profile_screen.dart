@@ -315,7 +315,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 }),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Compartir mi perfil con mi pareja'),
+                  title: const Text('Compartir mi perfil con el hogar'),
                   subtitle: const Text(
                     'Si está desactivado, tu perfil es privado.',
                   ),

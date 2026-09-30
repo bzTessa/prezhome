@@ -61,14 +61,20 @@ exactamente esta forma:
   "carbs_grams": number,
   "fat_grams": number,
   "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
-  "instructions": string  // pasos de preparación numerados, separados por saltos de línea
+  "instructions": string,  // pasos de preparación, uno por línea, empezando cada uno con "1. ", "2. "...
+  "components": [ { "name": string, "proportion": number } ]  // partes del plato YA cocinado y su % del peso total
 }
 
 En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
 ejemplo ["lunch","dinner"] si vale para comida y cena; usa "dessert" para postres).
 Los macros y calorías son POR RACIÓN. Estima "grams_per_serving" (el peso en
 gramos de una ración del plato ya preparado). Usa gramos/ml/unidades en "unit".
-En "instructions" escribe los pasos claros y numerados (1., 2., 3., ...).
+En "instructions" escribe los pasos claros, uno por línea, empezando cada línea
+con su número ("1. ", "2. ", ...).
+En "components" desglosa el plato YA COCINADO en sus partes principales con el %
+que representa cada una del peso total (deben sumar 100). Por ejemplo, un pollo
+con arroz sería [{"name":"Pollo","proportion":55},{"name":"Arroz","proportion":45}].
+Si el plato es homogéneo (una crema, un batido...), deja "components" como [].
 Escribe todo el contenido en español.`;
 }
 
