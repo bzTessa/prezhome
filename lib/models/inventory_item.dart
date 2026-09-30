@@ -2,10 +2,16 @@ class InventoryItem {
   final String id;
   final String homeId;
   final String name;
-  final String category;
+  final String category; // Despensa | Nevera | Congelador (ubicación)
   final double quantity;
   final String unit;
   final DateTime? expirationDate;
+
+  // Niveles del inventario inteligente
+  final String kind; // ingredient | prep | dish
+  final String? recipeId; // si procede de una receta
+  final double? servings; // nº de raciones (para platos/preparados)
+  final DateTime? frozenOn; // fecha de congelación
 
   InventoryItem({
     required this.id,
@@ -15,6 +21,10 @@ class InventoryItem {
     required this.quantity,
     required this.unit,
     this.expirationDate,
+    this.kind = 'ingredient',
+    this.recipeId,
+    this.servings,
+    this.frozenOn,
   });
 
   factory InventoryItem.fromMap(Map<String, dynamic> map) {
@@ -28,6 +38,12 @@ class InventoryItem {
       expirationDate: map['expiration_date'] != null
           ? DateTime.parse(map['expiration_date'])
           : null,
+      kind: map['kind'] ?? 'ingredient',
+      recipeId: map['recipe_id'],
+      servings: (map['servings'] as num?)?.toDouble(),
+      frozenOn: map['frozen_on'] != null
+          ? DateTime.parse(map['frozen_on'])
+          : null,
     );
   }
 
@@ -39,6 +55,18 @@ class InventoryItem {
       'quantity': quantity,
       'unit': unit,
       'expiration_date': expirationDate?.toIso8601String().split('T').first,
+      'kind': kind,
+      'recipe_id': recipeId,
+      'servings': servings,
+      'frozen_on': frozenOn?.toIso8601String().split('T').first,
     };
   }
+
+  static const Map<String, String> kindLabels = {
+    'ingredient': 'Ingrediente',
+    'prep': 'Preparado',
+    'dish': 'Plato listo',
+  };
+
+  String get kindLabel => kindLabels[kind] ?? 'Ingrediente';
 }

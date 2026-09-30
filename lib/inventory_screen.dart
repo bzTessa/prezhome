@@ -155,7 +155,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    '${item.quantity} ${item.unit} • ${item.category}',
+                    '${item.quantity} ${item.unit} • ${item.category}'
+                    '${item.kind != 'ingredient' ? ' • ${item.kindLabel}' : ''}'
+                    '${item.servings != null ? ' • ${item.servings!.toStringAsFixed(0)} rac.' : ''}',
                   ),
                   trailing: IconButton(
                     icon: const Icon(
