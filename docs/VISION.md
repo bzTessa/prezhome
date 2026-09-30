@@ -72,6 +72,27 @@ Que tú marques las recetas que te gustan y la app:
    viable de forma fiable (las plataformas bloquean el acceso); alternativa:
    pegar la descripción del post en "Rellenar con IA".
 
+## Escalera del "cerebro" de meal prep (estado)
+
+Sistema de gestión de cocina a largo plazo. Se construye peldaño a peldaño:
+
+1. ✅ Inventario con niveles (ingrediente / preparado / plato listo) + raciones y
+   fecha de congelación. (PR #36)
+2. ✅ Modo de cocina en el perfil: "Del día" (sencillo, sobra→nevera) vs
+   "Meal prep" (lote + congelar). Modo de porciones prácticas/exactas. (PR #37)
+3. ✅ Receta adaptada al modo (controles de lote solo en Meal prep). (PR #38)
+4. ✅ Botón "Ya cocinado → al congelador": registra el plato listo en el
+   inventario con sus raciones. (PR #39)
+5. ⬜ Planificador que USA el congelador: al planificar, priorizar los platos ya
+   congelados antes de mandar cocinar; descontarlos al consumirlos.
+6. ⬜ Registro automático "por defecto se hizo": al pasar el día, asumir que se
+   cocinó/comió lo planificado (y actualizar inventario) salvo que se marque "no".
+7. ⬜ Lista de la compra para X días: qué falta según el plan y lo que ya hay.
+8. ⬜ Batch cooking: comprar en lote, trocear/embolsar ingredientes y preparados
+   para varias recetas/semanas; equilibrio entre cocinar fresco y usar congelado.
+9. ⬜ Reorganización visual del inventario (nombres más intuitivos que "Despensa"
+   para todo; aspecto más visual).
+
 ## Notas de diseño
 - Sin emojis en la interfaz; estética "Cozy" profesional.
 - Presidente Miau como personaje (varias poses según contexto).
