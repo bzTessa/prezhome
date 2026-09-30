@@ -17,12 +17,12 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 0;
+  int _index = 2; // arranca en Inicio (centro)
 
   final _pages = const [
-    HomeTab(),
     MealsTab(),
     TasksScreen(),
+    HomeTab(),
     EconomyScreen(),
     HouseholdScreen(),
   ];
@@ -46,11 +46,6 @@ class _MainShellState extends State<MainShell> {
           height: 68,
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Inicio',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.restaurant_menu_outlined),
               selectedIcon: Icon(Icons.restaurant_menu),
               label: 'Comidas',
@@ -59,6 +54,11 @@ class _MainShellState extends State<MainShell> {
               icon: Icon(Icons.check_circle_outline),
               selectedIcon: Icon(Icons.check_circle),
               label: 'Tareas',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Inicio',
             ),
             NavigationDestination(
               icon: Icon(Icons.savings_outlined),
