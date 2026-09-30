@@ -10,7 +10,11 @@ import 'models/recipe.dart';
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
   final Recipe? recipe;
-  const AddRecipeScreen({super.key, this.recipe});
+
+  /// Si es true, al abrir muestra directamente el diálogo de "Rellenar con IA".
+  final bool startWithAI;
+
+  const AddRecipeScreen({super.key, this.recipe, this.startWithAI = false});
 
   bool get isEditing => recipe != null;
 
@@ -57,6 +61,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       _prefillFromRecipe(widget.recipe!);
     } else {
       _mealTypes.add('lunch');
+      if (widget.startWithAI) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _fillWithAI());
+      }
     }
   }
 
@@ -359,8 +366,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       final homeId = profile['home_id'];
       if (homeId == null) throw 'El usuario no está asignado a ningún hogar.';
 
-      // Subir imagen nueva si se eligió
-      final uploadedPath = await _uploadImageIfAny(homeId);
+      // Subir imagen nueva si se eligió. Si falla (p. ej. incidencia de
+      // Storage), no bloqueamos: guardamos la receta sin foto y avisamos.
+      String? uploadedPath;
+      bool imageFailed = false;
+      try {
+        uploadedPath = await _uploadImageIfAny(homeId);
+      } catch (_) {
+        imageFailed = true;
+      }
 
       final recipe = Recipe(
         id: widget.recipe?.id ?? '',
@@ -429,7 +443,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         await _client.from('recipe_ingredients').insert(ingredientRows);
       }
 
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        if (imageFailed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Receta guardada, pero la foto no se pudo subir. '
+                'Prueba a editarla más tarde.',
+              ),
+            ),
+          );
+        }
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

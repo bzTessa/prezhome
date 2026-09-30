@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'add_recipe_screen.dart';
+import 'add_recipe_chooser.dart';
 import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
@@ -53,9 +53,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
   void _reload() => setState(() => _future = _fetch());
 
   Future<void> _openAdd() async {
-    final added = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AddRecipeScreen()),
-    );
+    final added = await AddRecipeChooser.show(context);
     if (added == true) _reload();
   }
 
