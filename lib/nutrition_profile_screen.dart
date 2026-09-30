@@ -32,6 +32,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
   };
   // Días (1..7) en que cada comida se hace en casa. Vacío = todos los días.
   Map<String, List<int>> _mealsAtHome = {};
+  String _cookingMode = 'daily';
+  String _portionMode = 'practical';
 
   bool _loading = true;
   bool _saving = false;
@@ -74,6 +76,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         _mealsAtHome = {
           for (final e in p.mealsAtHome.entries) e.key: List<int>.from(e.value),
         };
+        _cookingMode = p.cookingMode;
+        _portionMode = p.portionMode;
         _loading = false;
       });
     } catch (e) {
@@ -103,6 +107,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     isPublic: _isPublic,
     mealSplit: _mealSplit,
     mealsAtHome: _mealsAtHome,
+    cookingMode: _cookingMode,
+    portionMode: _portionMode,
   );
 
   Future<void> _save() async {
@@ -217,6 +223,67 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
           : ListView(
               padding: const EdgeInsets.all(24),
               children: [
+                // --- Modo de cocina ---
+                const Text(
+                  '¿Cómo cocinas?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                _ModeCard(
+                  title: 'Del día',
+                  subtitle:
+                      'Cocino y lo que sobra lo guardo para el día siguiente. '
+                      'Interfaz sencilla.',
+                  icon: Icons.wb_sunny_outlined,
+                  selected: _cookingMode == 'daily',
+                  onTap: () => setState(() => _cookingMode = 'daily'),
+                ),
+                const SizedBox(height: 8),
+                _ModeCard(
+                  title: 'Meal prep',
+                  subtitle:
+                      'Cocino en lote y congelo para varios días. Se activan '
+                      'congelador, lotes y planificación.',
+                  icon: Icons.ac_unit,
+                  selected: _cookingMode == 'mealprep',
+                  onTap: () => setState(() => _cookingMode = 'mealprep'),
+                ),
+                const SizedBox(height: 16),
+
+                // --- Modo de porciones ---
+                const Text(
+                  'Cantidades',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Prácticas'),
+                        subtitle: const Text('Formatos de súper'),
+                        value: 'practical',
+                        groupValue: _portionMode,
+                        activeColor: const Color(0xFFB58A3C),
+                        onChanged: (v) => setState(() => _portionMode = v!),
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Exactas'),
+                        subtitle: const Text('Al gramo'),
+                        value: 'strict',
+                        groupValue: _portionMode,
+                        activeColor: const Color(0xFFB58A3C),
+                        onChanged: (v) => setState(() => _portionMode = v!),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 28),
+
                 TextField(
                   controller: _nameController,
                   decoration: _dec('Nombre'),
@@ -420,6 +487,69 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+class _ModeCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ModeCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFE2C792) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? const Color(0xFFB58A3C) : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF1E1E1E)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: selected ? Colors.black87 : Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (selected)
+              const Icon(Icons.check_circle, color: Color(0xFFB58A3C)),
+          ],
+        ),
+      ),
     );
   }
 }
