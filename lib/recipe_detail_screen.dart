@@ -179,6 +179,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         servings = r.servings * _multiplier;
       }
 
+      final now = DateTime.now();
+      // Consumo preferente: hoy + días recomendados por la IA (o 90 por defecto).
+      final days = r.freezerDays ?? 90;
+      final bestBefore = days > 0
+          ? DateTime(now.year, now.month, now.day + days)
+          : null;
+
       final item = InventoryItem(
         id: '',
         homeId: r.homeId,
@@ -189,7 +196,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         kind: 'dish',
         recipeId: r.id,
         servings: double.parse(servings.toStringAsFixed(1)),
-        frozenOn: DateTime.now(),
+        frozenOn: now,
+        bestBefore: bestBefore,
       );
       await _client.from('inventory_items').insert(item.toMap());
 

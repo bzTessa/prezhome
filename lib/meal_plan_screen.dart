@@ -111,11 +111,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       // Cada uno da para 'quantity' comidas de hogar. Los priorizamos.
       final freezerRes = await _client
           .from('inventory_items')
-          .select('id, recipe_id, quantity')
+          .select('id, recipe_id, quantity, best_before')
           .eq('home_id', data.homeId!)
           .eq('category', 'Congelador')
           .eq('kind', 'dish')
-          .not('recipe_id', 'is', null);
+          .not('recipe_id', 'is', null)
+          .order('best_before', ascending: true, nullsFirst: false);
       // Cola de "comidas congeladas" disponibles: {recipeId, itemId} por unidad.
       final freezerQueue = <_FrozenMeal>[];
       for (final f in (freezerRes as List)) {

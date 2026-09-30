@@ -65,6 +65,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   // Componentes del plato (pollo/arroz...) que vienen de la IA o de la receta.
   // Se conservan y guardan; no se editan en el formulario para no complicarlo.
   List<RecipeComponent> _components = const [];
+  int? _freezerDays; // días recomendados de congelación (de la IA)
 
   @override
   void initState() {
@@ -102,6 +103,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _isFavorite = r.isFavorite;
     _freezable = r.freezable;
     _components = r.components;
+    _freezerDays = r.freezerDays;
     _existingImageUrl = r.imageUrl;
     // Cargar ingredientes existentes de la receta.
     _loadingInitial = true;
@@ -323,6 +325,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         if (_ingredients.isEmpty) _ingredients.add(_IngredientControllers());
       }
 
+      if (r['freezer_days'] != null) {
+        _freezerDays = int.tryParse(r['freezer_days'].toString());
+      }
       // Componentes del plato (pollo + arroz...) generados por la IA
       final comps = r['components'];
       if (comps is List) {
@@ -422,6 +427,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         isFavorite: _isFavorite,
         freezable: _freezable,
         components: _components,
+        freezerDays: _freezerDays,
       );
 
       final recipeMap = recipe.toMap();
