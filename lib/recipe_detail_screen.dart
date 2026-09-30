@@ -5,6 +5,7 @@ import 'add_recipe_screen.dart';
 import 'models/ingredient.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
+import 'widgets/recipe_image.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -160,6 +161,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            RecipeImage(recipe: r, height: 200, radius: 24),
+            const SizedBox(height: 16),
             // Chips de tipo/aparato/tiempo/congelable
             Wrap(
               spacing: 8,

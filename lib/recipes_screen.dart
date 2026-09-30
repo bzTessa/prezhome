@@ -5,6 +5,7 @@ import 'add_recipe_screen.dart';
 import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
+import 'widgets/recipe_image.dart';
 
 class RecipesScreen extends StatefulWidget {
   /// Cuando va dentro de una pestaña con su propio AppBar, lo ocultamos.
@@ -198,6 +199,8 @@ class _RecipeCard extends StatelessWidget {
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          RecipeImage(recipe: recipe, height: 150, radius: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
