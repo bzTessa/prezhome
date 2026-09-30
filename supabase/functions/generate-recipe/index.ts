@@ -62,7 +62,8 @@ exactamente esta forma:
   "fat_grams": number,
   "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
   "instructions": string,  // pasos de preparación, uno por línea, empezando cada uno con "1. ", "2. "...
-  "components": [ { "name": string, "proportion": number } ]  // partes del plato YA cocinado y su % del peso total
+  "components": [ { "name": string, "proportion": number } ],  // partes del plato YA cocinado y su % del peso total
+  "freezer_days": number   // días que aguanta bien congelado según el tipo de plato
 }
 
 En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
@@ -86,6 +87,9 @@ representa cada una del peso total (deben sumar 100). Un plato con varios
 alimentos SIEMPRE tiene componentes; por ejemplo "patata y pavo" sería
 [{"name":"Patata","proportion":60},{"name":"Pavo","proportion":40}]. Solo deja
 "components" vacío [] si es un único alimento homogéneo (una crema, un batido).
+En "freezer_days" indica cuántos días aguanta bien congelado ESTE tipo de plato
+(sé realista: pescado ~30-60, guisos/legumbres ~90, carnes cocinadas ~60-90,
+platos con nata/lácteos menos). Si no es congelable, pon 0.
 Escribe todo el contenido en español.`;
 }
 

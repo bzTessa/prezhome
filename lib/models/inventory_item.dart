@@ -12,6 +12,7 @@ class InventoryItem {
   final String? recipeId; // si procede de una receta
   final double? servings; // nº de raciones (para platos/preparados)
   final DateTime? frozenOn; // fecha de congelación
+  final DateTime? bestBefore; // consumo preferente
 
   InventoryItem({
     required this.id,
@@ -25,6 +26,7 @@ class InventoryItem {
     this.recipeId,
     this.servings,
     this.frozenOn,
+    this.bestBefore,
   });
 
   factory InventoryItem.fromMap(Map<String, dynamic> map) {
@@ -44,6 +46,9 @@ class InventoryItem {
       frozenOn: map['frozen_on'] != null
           ? DateTime.parse(map['frozen_on'])
           : null,
+      bestBefore: map['best_before'] != null
+          ? DateTime.parse(map['best_before'])
+          : null,
     );
   }
 
@@ -59,7 +64,17 @@ class InventoryItem {
       'recipe_id': recipeId,
       'servings': servings,
       'frozen_on': frozenOn?.toIso8601String().split('T').first,
+      'best_before': bestBefore?.toIso8601String().split('T').first,
     };
+  }
+
+  /// Días que quedan hasta el consumo preferente (null si no tiene fecha).
+  int? get daysUntilBestBefore {
+    if (bestBefore == null) return null;
+    final today = DateTime.now();
+    return bestBefore!
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
   }
 
   static const Map<String, String> kindLabels = {

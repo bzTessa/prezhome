@@ -154,10 +154,41 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       color: Color(0xFF1E1E1E),
                     ),
                   ),
-                  subtitle: Text(
-                    '${item.quantity} ${item.unit} • ${item.category}'
-                    '${item.kind != 'ingredient' ? ' • ${item.kindLabel}' : ''}'
-                    '${item.servings != null ? ' • ${item.servings!.toStringAsFixed(0)} rac.' : ''}',
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${item.quantity} ${item.unit} • ${item.category}'
+                        '${item.kind != 'ingredient' ? ' • ${item.kindLabel}' : ''}'
+                        '${item.servings != null ? ' • ${item.servings!.toStringAsFixed(0)} rac.' : ''}',
+                      ),
+                      if (item.daysUntilBestBefore != null)
+                        Builder(
+                          builder: (_) {
+                            final d = item.daysUntilBestBefore!;
+                            final soon = d <= 7;
+                            final expired = d < 0;
+                            return Text(
+                              expired
+                                  ? 'Caducado'
+                                  : soon
+                                  ? 'Consumir en $d día${d == 1 ? '' : 's'}'
+                                  : 'Consumir antes: ${item.bestBefore!.day}/${item.bestBefore!.month}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: (soon || expired)
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: expired
+                                    ? Colors.red
+                                    : soon
+                                    ? const Color(0xFFB58A3C)
+                                    : Colors.grey[600],
+                              ),
+                            );
+                          },
+                        ),
+                    ],
                   ),
                   trailing: IconButton(
                     icon: const Icon(

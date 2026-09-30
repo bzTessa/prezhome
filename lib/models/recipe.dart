@@ -18,6 +18,7 @@ class Recipe {
   final double? gramsPerServing; // peso de una ración ya preparada
   final String? imageUrl; // URL pública de la foto de la receta
   final List<RecipeComponent> components; // partes del plato (pollo, arroz...)
+  final int? freezerDays; // días recomendados de congelación (estimado por IA)
 
   Recipe({
     required this.id,
@@ -39,6 +40,7 @@ class Recipe {
     this.gramsPerServing,
     this.imageUrl,
     this.components = const [],
+    this.freezerDays,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
@@ -72,6 +74,7 @@ class Recipe {
       gramsPerServing: (map['grams_per_serving'] as num?)?.toDouble(),
       imageUrl: _imageUrlFrom(map['image_path']),
       components: _componentsFrom(map['components']),
+      freezerDays: map['freezer_days'],
     );
   }
 
@@ -116,6 +119,7 @@ class Recipe {
       'components': components.isEmpty
           ? null
           : components.map((c) => c.toMap()).toList(),
+      'freezer_days': freezerDays,
     };
   }
 
