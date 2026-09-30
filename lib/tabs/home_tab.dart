@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../meal_plan_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
 
@@ -355,12 +356,22 @@ class _CalendarViewState extends State<_CalendarView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Aquí verás tus comidas y tareas del día cuando '
-                      'actives el planificador semanal.',
+                      'Genera tu plan semanal de comidas y aparecerá aquí.',
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MealPlanScreen()),
+                  ),
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text('Abrir plan semanal'),
+                ),
               ),
             ],
           ),
