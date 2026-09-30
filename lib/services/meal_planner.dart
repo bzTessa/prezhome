@@ -27,8 +27,20 @@ class MealPlanner {
     required List<String> mealTypes,
     required List<Recipe> recipes,
     Map<String, int> scoreByRecipe = const {},
+    // Recetas de las que hay platos congelados disponibles. Con energía baja,
+    // se priorizan mucho (cocinar menos, tirar del congelador).
+    Set<String> frozenRecipeIds = const {},
+    // 0 = cocinar poco (usa congelado), 1 = normal, 2 = cocinar mucho (fresco).
+    int energyLevel = 1,
   }) {
     final plan = <DateTime, Map<String, String>>{};
+
+    // Sesgo hacia recetas con congelado según la energía.
+    final frozenBoost = energyLevel == 0
+        ? 6.0
+        : energyLevel == 1
+        ? 2.0
+        : 0.0;
 
     // Agrupar recetas por tipo de comida.
     final byType = <String, List<Recipe>>{};
@@ -51,6 +63,8 @@ class MealPlanner {
           options: options,
           recentIds: recent[type]!,
           scoreByRecipe: scoreByRecipe,
+          frozenRecipeIds: frozenRecipeIds,
+          frozenBoost: frozenBoost,
         );
         if (picked != null) {
           dayMap[type] = picked.id;
@@ -73,6 +87,8 @@ class MealPlanner {
     required List<Recipe> options,
     required List<String> recentIds,
     required Map<String, int> scoreByRecipe,
+    Set<String> frozenRecipeIds = const {},
+    double frozenBoost = 0,
   }) {
     if (options.isEmpty) return null;
 
@@ -82,6 +98,9 @@ class MealPlanner {
       var w = 1.0;
       if (r.isFavorite) w += 1.5; // favoritas más probables
       w += (scoreByRecipe[r.id] ?? 0) * 0.5; // historial (aceptado/rechazado)
+      if (frozenRecipeIds.contains(r.id)) {
+        w += frozenBoost; // hay congelado: priorizar si la energía es baja
+      }
       if (recentIds.contains(r.id)) w *= 0.15; // penaliza repetir seguido
       if (w < 0.05) w = 0.05; // nunca cero del todo
       weights.add(w);

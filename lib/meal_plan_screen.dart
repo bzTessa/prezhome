@@ -32,6 +32,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   ];
 
   bool _generating = false;
+  int _energyLevel = 1; // 0=cocinar poco, 1=normal, 2=cocinar mucho
 
   @override
   void initState() {
@@ -129,6 +130,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         }
       }
 
+      final frozenRecipeIds = freezerQueue.map((f) => f.recipeId).toSet();
+
       final planner = MealPlanner();
       final plan = planner.generate(
         startDate: _weekStart,
@@ -136,6 +139,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         mealTypes: data.activeMeals,
         recipes: data.recipes,
         scoreByRecipe: scores,
+        frozenRecipeIds: frozenRecipeIds,
+        energyLevel: _energyLevel,
       );
 
       // Borrar el plan anterior de la semana y guardar el nuevo.
@@ -318,7 +323,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-      children: days.map((date) {
+      children: [
+        _energyCard(),
+        const SizedBox(height: 12),
+        ...days.map((date) {
         final key = date.toIso8601String().split('T').first;
         final dayEntries = byDate[key] ?? [];
         final isToday = _isSameDay(date, DateTime.now());
@@ -450,7 +458,49 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             ],
           ),
         );
-      }).toList(),
+      }),
+      ],
+    );
+  }
+
+  Widget _energyCard() {
+    const labels = ['Cocinar poco', 'Normal', 'Cocinar mucho'];
+    const subtitle = 'Con "cocinar poco" el plan tira más del congelador.';
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Esta semana',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(3, (i) {
+              final selected = _energyLevel == i;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: i < 2 ? 8 : 0),
+                  child: ChoiceChip(
+                    label: Text(labels[i]),
+                    selected: selected,
+                    selectedColor: AppColors.wood,
+                    backgroundColor: const Color(0xFFFDF8E1),
+                    onSelected: (_) => setState(() => _energyLevel = i),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 
