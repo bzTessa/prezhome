@@ -160,9 +160,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     // Los ingredientes se escalan respecto a la "comida de hogar": cuántas
     // raciones-base equivale esa comida × el multiplicador.
     final scaled = q * _servingsFactor;
-    return scaled % 1 == 0
-        ? scaled.toStringAsFixed(0)
-        : scaled.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    // Redondeo natural: cantidades grandes a enteros; pequeñas con 1 decimal.
+    if (scaled >= 10) return scaled.round().toString();
+    if (scaled >= 1) {
+      final r1 = (scaled * 2).round() / 2; // medios (1, 1.5, 2...)
+      return r1 % 1 == 0 ? r1.toStringAsFixed(0) : r1.toStringAsFixed(1);
+    }
+    return scaled.toStringAsFixed(1);
   }
 
   @override

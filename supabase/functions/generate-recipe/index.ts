@@ -69,6 +69,13 @@ En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
 ejemplo ["lunch","dinner"] si vale para comida y cena; usa "dessert" para postres).
 Los macros y calorías son POR RACIÓN. Estima "grams_per_serving" (el peso en
 gramos de una ración del plato ya preparado). Usa gramos/ml/unidades en "unit".
+Sobre las cantidades de "ingredients": usa unidades NATURALES cuando sea lo
+habitual en cocina (ej. "2 zanahorias", "1 cebolla", "3 cucharadas de aceite",
+"1 lata de tomate"), y gramos/ml solo cuando tenga sentido pesar. Usa números
+REDONDOS y realistas (nada de decimales raros; mejor 500 g que 512.3 g), y
+cantidades acordes a formatos de supermercado (paquetes de 250/500 g/1 kg, latas,
+botes). En "unit" pon la unidad ("unidades", "cucharadas", "g", "ml", "lata"...).
+
 MUY IMPORTANTE sobre "instructions": es OBLIGATORIO que cada paso vaya en su
 propia línea separada por un salto de línea real (\\n). NO juntes todos los pasos
 en un solo párrafo. Cada línea empieza con su número. Ejemplo EXACTO del formato:
