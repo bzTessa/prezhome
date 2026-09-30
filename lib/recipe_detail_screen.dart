@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_recipe_screen.dart';
 import 'models/ingredient.dart';
+import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'theme/app_theme.dart';
@@ -21,6 +22,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late Recipe _recipe;
   late Future<List<Ingredient>> _ingredientsFuture;
   List<NutritionProfile> _profiles = []; // miembros del hogar con perfil visible
+  NutritionProfile? _myProfile; // perfil del usuario logueado (para el modo)
+
+  bool get _isMealPrep => _myProfile?.isMealPrep ?? false;
 
   // Multiplicador: nº de "comidas de hogar" a preparar (1 = para hoy todos).
   double _multiplier = 1;
@@ -57,10 +61,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         .eq('home_id', _recipe.homeId);
     if (mounted) {
       setState(() {
-        _profiles = (rows as List)
+        final all = (rows as List)
             .map((p) => NutritionProfile.fromMap(p))
-            .where((p) => p.isComplete)
             .toList();
+        _profiles = all.where((p) => p.isComplete).toList();
+        // Mi perfil (para saber el modo de cocina). Puede estar incompleto.
+        for (final p in all) {
+          if (p.id == user.id) _myProfile = p;
+        }
       });
     }
   }
@@ -155,6 +163,55 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return counted > 0 ? total : null;
   }
 
+  /// Registra la receta como cocinada: guarda en el congelador las raciones
+  /// preparadas como "plato listo" (para meal prep). El nº de raciones = nº de
+  /// comidas de hogar (el multiplicador) × personas que comen en casa.
+  Future<void> _markCooked() async {
+    try {
+      final r = _recipe;
+      // Nº de raciones individuales preparadas.
+      double servings;
+      final mealGrams = _householdMealGrams(r);
+      if (mealGrams != null && r.gramsPerServing != null &&
+          r.gramsPerServing! > 0) {
+        servings = (mealGrams / r.gramsPerServing!) * _multiplier;
+      } else {
+        servings = r.servings * _multiplier;
+      }
+
+      final item = InventoryItem(
+        id: '',
+        homeId: r.homeId,
+        name: r.title,
+        category: 'Congelador',
+        quantity: _multiplier, // nº de tandas/comidas de hogar
+        unit: 'comidas',
+        kind: 'dish',
+        recipeId: r.id,
+        servings: double.parse(servings.toStringAsFixed(1)),
+        frozenOn: DateTime.now(),
+      );
+      await _client.from('inventory_items').insert(item.toMap());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Guardado en el congelador como plato listo.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo guardar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   String _fmtQty(double? q) {
     if (q == null) return '';
     // Los ingredientes se escalan respecto a la "comida de hogar": cuántas
@@ -243,49 +300,54 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '×1 = una comida para todo el hogar. Sube el número para '
-                    'cocinar de más y congelar. No cambia la receta guardada.',
+                    _isMealPrep
+                        ? '×1 = una comida para todo el hogar. Sube el número '
+                              'para cocinar de más y congelar.'
+                        : 'Cantidad para una comida de todo el hogar.',
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _multBtn('×1', 1),
-                      _multBtn('×2', 2),
-                      _multBtn('×3', 3),
-                      _multBtn('×4', 4),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text('Multiplicador personalizado:'),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: _multiplier > 1
-                            ? () => setState(
-                                () => _multiplier =
-                                    (_multiplier - 1).clamp(1, 50).toDouble(),
-                              )
-                            : null,
-                      ),
-                      Text(
-                        '×${_multiplier % 1 == 0 ? _multiplier.toStringAsFixed(0) : _multiplier}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  // Controles de lote solo en modo Meal prep.
+                  if (_isMealPrep) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _multBtn('×1', 1),
+                        _multBtn('×2', 2),
+                        _multBtn('×3', 3),
+                        _multBtn('×4', 4),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Multiplicador personalizado:'),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: _multiplier > 1
+                              ? () => setState(
+                                  () => _multiplier =
+                                      (_multiplier - 1).clamp(1, 50).toDouble(),
+                                )
+                              : null,
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () => setState(
-                          () => _multiplier =
-                              (_multiplier + 1).clamp(1, 50).toDouble(),
+                        Text(
+                          '×${_multiplier % 1 == 0 ? _multiplier.toStringAsFixed(0) : _multiplier}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: () => setState(
+                            () => _multiplier =
+                                (_multiplier + 1).clamp(1, 50).toDouble(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const Divider(),
                   Builder(
                     builder: (_) {
@@ -328,6 +390,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       'Densidad: ${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
                       style: TextStyle(color: Colors.grey[700]),
                     ),
+                  if (_isMealPrep) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _markCooked,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.ink,
+                          side: const BorderSide(
+                            color: AppColors.wood,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.ac_unit),
+                        label: const Text('Ya cocinado → al congelador'),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
