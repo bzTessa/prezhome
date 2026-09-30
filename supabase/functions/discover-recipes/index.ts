@@ -93,10 +93,11 @@ Responde SOLO con un JSON válido (sin markdown) con esta forma:
   ]
 }
 
-Macros y calorías POR RACIÓN. En "instructions" un paso por línea empezando con
-su número. En "components" desglosa el plato cocinado en partes con su % del peso
-(suman 100); si es homogéneo, deja []. Todo en español. Recetas realistas y
-variadas, adecuadas al objetivo y la dieta indicados.`;
+Macros y calorías POR RACIÓN. En "instructions" es OBLIGATORIO un paso por línea
+separado por salto de línea real (\\n), cada uno con su número; NO juntes todo en
+un párrafo. En "components" desglosa SIEMPRE el plato en partes con su % del peso
+(suman 100); solo [] si es un único alimento homogéneo. Todo en español. Recetas
+realistas y variadas, adecuadas al objetivo y la dieta indicados.`;
 }
 
 Deno.serve(async (req: Request) => {
