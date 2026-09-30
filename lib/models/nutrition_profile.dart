@@ -15,6 +15,10 @@ class NutritionProfile {
   /// % de las calorías diarias por comida (breakfast/lunch/dinner/snack/dessert).
   final Map<String, int> mealSplit;
 
+  /// Días (1=Lun..7=Dom) en que cada comida se hace EN CASA. Lista vacía o
+  /// ausente = todos los días. Ej.: {"lunch": [6,7]} = comida en casa solo finde.
+  final Map<String, List<int>> mealsAtHome;
+
   NutritionProfile({
     required this.id,
     this.fullName,
@@ -27,13 +31,15 @@ class NutritionProfile {
     this.mealsPerDay = 4,
     this.isPublic = false,
     Map<String, int>? mealSplit,
-  }) : mealSplit = mealSplit ?? const {
-         'breakfast': 20,
-         'lunch': 40,
-         'dinner': 40,
-         'snack': 0,
-         'dessert': 0,
-       };
+    Map<String, List<int>>? mealsAtHome,
+  })  : mealSplit = mealSplit ?? const {
+          'breakfast': 20,
+          'lunch': 40,
+          'dinner': 40,
+          'snack': 0,
+          'dessert': 0,
+        },
+        mealsAtHome = mealsAtHome ?? const {};
 
   factory NutritionProfile.fromMap(Map<String, dynamic> map) {
     return NutritionProfile(
@@ -50,6 +56,7 @@ class NutritionProfile {
       mealsPerDay: (map['meals_per_day'] as int?) ?? 4,
       isPublic: map['is_public'] ?? false,
       mealSplit: _parseSplit(map['meal_split']),
+      mealsAtHome: _parseAtHome(map['meals_at_home']),
     );
   }
 
@@ -57,6 +64,16 @@ class NutritionProfile {
     if (raw is Map) {
       return raw.map((k, v) =>
           MapEntry(k.toString(), (v as num?)?.round() ?? 0));
+    }
+    return null;
+  }
+
+  static Map<String, List<int>>? _parseAtHome(dynamic raw) {
+    if (raw is Map) {
+      return raw.map((k, v) => MapEntry(
+            k.toString(),
+            (v is List) ? v.map((e) => (e as num).toInt()).toList() : <int>[],
+          ));
     }
     return null;
   }
@@ -73,7 +90,16 @@ class NutritionProfile {
       'meals_per_day': mealsPerDay,
       'is_public': isPublic,
       'meal_split': mealSplit,
+      'meals_at_home': mealsAtHome,
     };
+  }
+
+  /// ¿La comida [type] se hace en casa el día [weekday] (1=Lun..7=Dom)?
+  /// Si no hay configuración para esa comida, se asume que sí (todos los días).
+  bool eatsAtHome(String type, int weekday) {
+    final days = mealsAtHome[type];
+    if (days == null || days.isEmpty) return true;
+    return days.contains(weekday);
   }
 
   static const Map<String, String> activityLabels = {

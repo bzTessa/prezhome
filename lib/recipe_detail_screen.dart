@@ -485,8 +485,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       );
     }
 
+    final today = DateTime.now().weekday; // 1=Lun..7=Dom
     final rows = <Widget>[];
     for (final p in _profiles) {
+      // Si ese miembro come FUERA hoy en todos los tipos de esta receta, se salta.
+      final eatsHome = r.mealTypes.any((t) => p.eatsAtHome(t, today));
+      if (!eatsHome) continue;
+
       final kcal = p.caloriesForMealTypes(r.mealTypes);
       if (kcal == null) continue;
       final grams = r.gramsForCalories(kcal);
