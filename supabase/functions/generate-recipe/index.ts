@@ -69,12 +69,16 @@ En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
 ejemplo ["lunch","dinner"] si vale para comida y cena; usa "dessert" para postres).
 Los macros y calorías son POR RACIÓN. Estima "grams_per_serving" (el peso en
 gramos de una ración del plato ya preparado). Usa gramos/ml/unidades en "unit".
-En "instructions" escribe los pasos claros, uno por línea, empezando cada línea
-con su número ("1. ", "2. ", ...).
-En "components" desglosa el plato YA COCINADO en sus partes principales con el %
-que representa cada una del peso total (deben sumar 100). Por ejemplo, un pollo
-con arroz sería [{"name":"Pollo","proportion":55},{"name":"Arroz","proportion":45}].
-Si el plato es homogéneo (una crema, un batido...), deja "components" como [].
+MUY IMPORTANTE sobre "instructions": es OBLIGATORIO que cada paso vaya en su
+propia línea separada por un salto de línea real (\\n). NO juntes todos los pasos
+en un solo párrafo. Cada línea empieza con su número. Ejemplo EXACTO del formato:
+"1. Cocer el arroz.\\n2. Cortar el pollo.\\n3. Freír el pollo.\\n4. Servir."
+
+En "components" desglosa SIEMPRE el plato en sus partes principales con el % que
+representa cada una del peso total (deben sumar 100). Un plato con varios
+alimentos SIEMPRE tiene componentes; por ejemplo "patata y pavo" sería
+[{"name":"Patata","proportion":60},{"name":"Pavo","proportion":40}]. Solo deja
+"components" vacío [] si es un único alimento homogéneo (una crema, un batido).
 Escribe todo el contenido en español.`;
 }
 

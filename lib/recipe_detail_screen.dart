@@ -22,9 +22,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late Future<List<Ingredient>> _ingredientsFuture;
   List<NutritionProfile> _profiles = []; // miembros del hogar con perfil visible
 
-  // Multiplicador para escalar cantidades sin tocar la receta base.
+  // Multiplicador: nº de "comidas de hogar" a preparar (1 = para hoy todos).
   double _multiplier = 1;
   bool _changed = false; // para avisar a la lista si hubo cambios al volver
+
+  /// Cuántas raciones-base de la receta equivale el total a preparar.
+  /// Base = gramos de una comida de hogar / gramos por ración. Si no hay datos
+  /// de perfil o peso, cae a "multiplicador = raciones" (comportamiento simple).
+  double get _servingsFactor {
+    final mealGrams = _householdMealGrams(_recipe);
+    final perServing = _recipe.gramsPerServing;
+    if (mealGrams != null && perServing != null && perServing > 0) {
+      return (mealGrams / perServing) * _multiplier;
+    }
+    return _multiplier; // fallback: 1 = 1 ración
+  }
 
   @override
   void initState() {
@@ -123,9 +135,31 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
   }
 
+  /// Gramos de UNA comida para todo el hogar: suma de los gramos que come cada
+  /// miembro (con perfil, que come en casa hoy) según su objetivo para esta
+  /// comida. Es la base de "×1 = comida para todos".
+  double? _householdMealGrams(Recipe r) {
+    final today = DateTime.now().weekday;
+    double total = 0;
+    var counted = 0;
+    for (final p in _profiles) {
+      final eatsHome = r.mealTypes.any((t) => p.eatsAtHome(t, today));
+      if (!eatsHome) continue;
+      final kcal = p.caloriesForMealTypes(r.mealTypes);
+      if (kcal == null) continue;
+      final g = r.gramsForCalories(kcal);
+      if (g == null) continue;
+      total += g;
+      counted++;
+    }
+    return counted > 0 ? total : null;
+  }
+
   String _fmtQty(double? q) {
     if (q == null) return '';
-    final scaled = q * _multiplier;
+    // Los ingredientes se escalan respecto a la "comida de hogar": cuántas
+    // raciones-base equivale esa comida × el multiplicador.
+    final scaled = q * _servingsFactor;
     return scaled % 1 == 0
         ? scaled.toStringAsFixed(0)
         : scaled.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
@@ -134,7 +168,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final r = _recipe;
-    final scaledServings = (r.servings * _multiplier);
 
     return PopScope(
       canPop: true,
@@ -206,8 +239,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Escala la receta para congelar o para más gente. '
-                    'No cambia la receta guardada.',
+                    '×1 = una comida para todo el hogar. Sube el número para '
+                    'cocinar de más y congelar. No cambia la receta guardada.',
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                   const SizedBox(height: 12),
@@ -250,16 +283,42 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ],
                   ),
                   const Divider(),
-                  Text(
-                    'Rinde: ${scaledServings % 1 == 0 ? scaledServings.toStringAsFixed(0) : scaledServings.toStringAsFixed(1)} raciones',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  Builder(
+                    builder: (_) {
+                      final mealGrams = _householdMealGrams(r);
+                      if (mealGrams != null) {
+                        final totalGrams = mealGrams * _multiplier;
+                        final label = _multiplier == 1
+                            ? 'una comida para el hogar'
+                            : '${_multiplier.toStringAsFixed(0)} comidas para el hogar';
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'A preparar: $label',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              'Total ≈ ${totalGrams.toStringAsFixed(0)} g',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFB58A3C),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      // Fallback sin perfiles: mostrar raciones como antes.
+                      final servings = r.servings * _multiplier;
+                      return Text(
+                        'Rinde: ${servings.toStringAsFixed(0)} raciones'
+                        '${r.gramsPerServing != null ? '  ·  total ${(r.gramsPerServing! * servings).toStringAsFixed(0)} g' : ''}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      );
+                    },
                   ),
-                  if (r.gramsPerServing != null)
-                    Text(
-                      '1 ración ≈ ${r.gramsPerServing!.toStringAsFixed(0)} g'
-                      '${_multiplier != 1 ? '  ·  total ${(r.gramsPerServing! * scaledServings).toStringAsFixed(0)} g' : ''}',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
                   if (r.kcalPer100g != null)
                     Text(
                       'Densidad: ${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
@@ -410,12 +469,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   /// Convierte el texto de instrucciones en una lista bonita, cada paso con su
   /// número en un círculo. Detecta líneas o el patrón "1. 2. 3.".
   List<Widget> _buildSteps(String instructions) {
-    // Separar por saltos de línea; si viene todo junto, separar por "N."
+    // 1) Separar por saltos de línea.
     var parts = instructions
         .split(RegExp(r'\n+'))
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .toList();
+
+    // 2) Si vino todo junto, separar por los números "1. 2. 3.".
     if (parts.length <= 1) {
       parts = instructions
           .split(RegExp(r'(?=\d+[\.\)]\s)'))
@@ -423,6 +484,17 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           .where((s) => s.isNotEmpty)
           .toList();
     }
+
+    // 3) Último recurso: si sigue siendo un solo bloque, separar por frases
+    //    (un punto seguido de espacio y mayúscula = nueva instrucción).
+    if (parts.length <= 1) {
+      parts = instructions
+          .split(RegExp(r'(?<=[\.\!])\s+(?=[A-ZÁÉÍÓÚÑ])'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+
     // Quitar el número inicial de cada paso (lo ponemos nosotros en el círculo)
     final steps = parts
         .map((s) => s.replaceFirst(RegExp(r'^\d+[\.\)]\s*'), ''))
