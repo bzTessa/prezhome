@@ -87,13 +87,16 @@ Responde SOLO con un JSON válido (sin markdown) con esta forma:
       "carbs_grams": number,
       "fat_grams": number,
       "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
-      "instructions": string
+      "instructions": string,
+      "components": [ { "name": string, "proportion": number } ]
     }
   ]
 }
 
-Macros y calorías POR RACIÓN. Todo en español. Recetas realistas y variadas,
-adecuadas al objetivo y la dieta indicados.`;
+Macros y calorías POR RACIÓN. En "instructions" un paso por línea empezando con
+su número. En "components" desglosa el plato cocinado en partes con su % del peso
+(suman 100); si es homogéneo, deja []. Todo en español. Recetas realistas y
+variadas, adecuadas al objetivo y la dieta indicados.`;
 }
 
 Deno.serve(async (req: Request) => {

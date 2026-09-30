@@ -30,6 +30,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     'snack': 0,
     'dessert': 0,
   };
+  // Días (1..7) en que cada comida se hace en casa. Vacío = todos los días.
+  Map<String, List<int>> _mealsAtHome = {};
 
   bool _loading = true;
   bool _saving = false;
@@ -69,6 +71,9 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         _mealsPerDay = p.mealsPerDay;
         _isPublic = p.isPublic;
         _mealSplit = Map<String, int>.from(p.mealSplit);
+        _mealsAtHome = {
+          for (final e in p.mealsAtHome.entries) e.key: List<int>.from(e.value),
+        };
         _loading = false;
       });
     } catch (e) {
@@ -97,6 +102,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     mealsPerDay: _mealsPerDay,
     isPublic: _isPublic,
     mealSplit: _mealSplit,
+    mealsAtHome: _mealsAtHome,
   );
 
   Future<void> _save() async {
@@ -148,6 +154,51 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
       borderSide: BorderSide.none,
     ),
   );
+
+  static const _weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  Widget _buildMealDaysRow(String mealKey) {
+    final label = NutritionProfile.mealLabels[mealKey] ?? mealKey;
+    // Lista actual; vacía = todos los días.
+    final current = _mealsAtHome[mealKey] ?? [];
+    final allDays = current.isEmpty; // vacío = todos
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            children: List.generate(7, (i) {
+              final day = i + 1;
+              final selected = allDays || current.contains(day);
+              return FilterChip(
+                label: Text(_weekdayShort[i]),
+                selected: selected,
+                selectedColor: const Color(0xFFE2C792),
+                backgroundColor: Colors.white,
+                visualDensity: VisualDensity.compact,
+                onSelected: (v) => setState(() {
+                  // Si estaba en "todos", materializamos la lista completa antes de quitar.
+                  final list = allDays ? [1, 2, 3, 4, 5, 6, 7] : [...current];
+                  if (v) {
+                    if (!list.contains(day)) list.add(day);
+                  } else {
+                    list.remove(day);
+                  }
+                  // Si quedan los 7, lo dejamos como vacío (= todos, por defecto).
+                  _mealsAtHome[mealKey] = (list.length == 7) ? [] : list;
+                }),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -313,9 +364,26 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     ],
                   );
                 }),
+                const SizedBox(height: 24),
+
+                // --- Comidas en casa por día (comer fuera) ---
+                const Text(
+                  'Comidas en casa',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Marca los días que haces cada comida en casa. Si comes fuera '
+                  '(p. ej. en el trabajo), desmarca ese día y no se contará.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                ...NutritionProfile.splitOrder
+                    .where((k) => (_mealSplit[k] ?? 0) > 0)
+                    .map(_buildMealDaysRow),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Compartir mi perfil con mi pareja'),
+                  title: const Text('Compartir mi perfil con el hogar'),
                   subtitle: const Text(
                     'Si está desactivado, tu perfil es privado.',
                   ),

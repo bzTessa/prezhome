@@ -130,6 +130,17 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         appliance: (r['appliance'] ?? 'none').toString(),
         mealTypes: types.isEmpty ? ['lunch'] : types,
         gramsPerServing: d(r['grams_per_serving']),
+        components: (r['components'] is List)
+            ? (r['components'] as List)
+                  .whereType<Map>()
+                  .map(
+                    (m) => RecipeComponent.fromMap(
+                      Map<String, dynamic>.from(m),
+                    ),
+                  )
+                  .where((c) => c.name.isNotEmpty)
+                  .toList()
+            : const [],
       );
 
       final inserted = await _client

@@ -5,6 +5,7 @@ import 'add_recipe_screen.dart';
 import 'models/ingredient.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
+import 'theme/app_theme.dart';
 import 'widgets/recipe_image.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   late Recipe _recipe;
   late Future<List<Ingredient>> _ingredientsFuture;
-  NutritionProfile? _profile;
+  List<NutritionProfile> _profiles = []; // miembros del hogar con perfil visible
 
   // Multiplicador para escalar cantidades sin tocar la receta base.
   double _multiplier = 1;
@@ -36,13 +37,19 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Future<void> _loadProfile() async {
     final user = _client.auth.currentUser;
     if (user == null) return;
-    final p = await _client
+    // Perfiles del hogar visibles: el propio siempre, y los de los miembros
+    // que tengan el perfil compartido (RLS ya filtra: solo devuelve visibles).
+    final rows = await _client
         .from('profiles')
         .select()
-        .eq('id', user.id)
-        .maybeSingle();
-    if (p != null && mounted) {
-      setState(() => _profile = NutritionProfile.fromMap(p));
+        .eq('home_id', _recipe.homeId);
+    if (mounted) {
+      setState(() {
+        _profiles = (rows as List)
+            .map((p) => NutritionProfile.fromMap(p))
+            .where((p) => p.isComplete)
+            .toList();
+      });
     }
   }
 
@@ -390,10 +397,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      r.instructions!,
-                      style: const TextStyle(height: 1.5, fontSize: 15),
-                    ),
+                    ..._buildSteps(r.instructions!),
                   ],
                 ),
               ),
@@ -403,69 +407,166 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  /// Calcula automáticamente, según el perfil y el tipo de la receta, cuántas
-  /// kcal te tocan y cuántos gramos poner en el taper. Sin preguntar nada.
+  /// Convierte el texto de instrucciones en una lista bonita, cada paso con su
+  /// número en un círculo. Detecta líneas o el patrón "1. 2. 3.".
+  List<Widget> _buildSteps(String instructions) {
+    // Separar por saltos de línea; si viene todo junto, separar por "N."
+    var parts = instructions
+        .split(RegExp(r'\n+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.length <= 1) {
+      parts = instructions
+          .split(RegExp(r'(?=\d+[\.\)]\s)'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    // Quitar el número inicial de cada paso (lo ponemos nosotros en el círculo)
+    final steps = parts
+        .map((s) => s.replaceFirst(RegExp(r'^\d+[\.\)]\s*'), ''))
+        .toList();
+
+    final widgets = <Widget>[];
+    for (var i = 0; i < steps.length; i++) {
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: const BoxDecoration(
+                  color: AppColors.wood,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${i + 1}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.ink,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    steps[i],
+                    style: const TextStyle(height: 1.4, fontSize: 15),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return widgets;
+  }
+
+  /// Muestra, para cada miembro del hogar (con perfil), cuántos gramos y kcal
+  /// le corresponden de este plato según su perfil. Si el plato tiene
+  /// componentes (pollo + arroz...), desglosa los gramos por componente.
   Widget _autoTaperCard(Recipe r) {
-    final profile = _profile;
-    if (profile == null) {
-      return _card(
-        child: const Padding(
-          padding: EdgeInsets.all(4),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
-    if (!profile.isComplete) {
+    if (_profiles.isEmpty) {
       return _card(
         child: Text(
-          'Completa tu Perfil Nutricional para ver cuántos gramos poner en tu taper.',
+          'Completa un Perfil Nutricional para ver cuántos gramos y calorías '
+          'corresponden a cada persona.',
           style: TextStyle(color: Colors.grey[700]),
         ),
       );
     }
 
-    final kcalForMeal = profile.caloriesForMealTypes(r.mealTypes);
-    if (kcalForMeal == null) {
-      return _card(
-        child: Text(
-          'Ajusta el reparto de calorías por comida en tu perfil para este tipo de receta.',
-          style: TextStyle(color: Colors.grey[700]),
+    final today = DateTime.now().weekday; // 1=Lun..7=Dom
+    final rows = <Widget>[];
+    for (final p in _profiles) {
+      // Si ese miembro come FUERA hoy en todos los tipos de esta receta, se salta.
+      final eatsHome = r.mealTypes.any((t) => p.eatsAtHome(t, today));
+      if (!eatsHome) continue;
+
+      final kcal = p.caloriesForMealTypes(r.mealTypes);
+      if (kcal == null) continue;
+      final grams = r.gramsForCalories(kcal);
+      if (grams == null) continue;
+      final name = (p.fullName?.trim().isNotEmpty == true)
+          ? p.fullName!.trim()
+          : 'Miembro';
+
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Text(
+                    '${grams.toStringAsFixed(0)} g · $kcal kcal',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB58A3C),
+                    ),
+                  ),
+                ],
+              ),
+              // Desglose por componentes del plato (pollo + arroz...)
+              if (r.hasComponents) ...[
+                const SizedBox(height: 4),
+                ...r.components.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 2),
+                    child: Text(
+                      '· ${c.name}: ${c.gramsFromTotal(grams).toStringAsFixed(0)} g',
+                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       );
     }
 
-    final grams = r.gramsForCalories(kcalForMeal);
-    // Etiqueta del tipo con mayor % para explicar de dónde sale.
-    String mealLabel = r.mealTypeLabelsList.isNotEmpty
-        ? r.mealTypeLabelsList.first
-        : 'comida';
+    if (rows.isEmpty) {
+      return _card(
+        child: Text(
+          'Ajusta el reparto de calorías por comida en el perfil para este tipo '
+          'de receta.',
+          style: TextStyle(color: Colors.grey[700]),
+        ),
+      );
+    }
 
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Tu ración',
+            'Según el perfil de cada uno',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 4),
           Text(
-            'Calculado con tu perfil: para tu $mealLabel te tocan '
-            '≈ $kcalForMeal kcal.',
-            style: TextStyle(color: Colors.grey[700], fontSize: 13),
+            'Cantidad y calorías por persona para esta comida.',
+            style: TextStyle(color: Colors.grey[600], fontSize: 13),
           ),
-          const SizedBox(height: 12),
-          Text(
-            grams == null
-                ? '—'
-                : 'Pon ≈ ${grams.toStringAsFixed(0)} g en la báscula',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFB58A3C),
-            ),
-          ),
+          const Divider(height: 20),
+          ...rows,
         ],
       ),
     );

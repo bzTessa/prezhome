@@ -87,7 +87,9 @@ class AddRecipeChooser extends StatelessWidget {
               subtitle: 'Rellena tú la receta paso a paso, sin IA.',
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
-                  MaterialPageRoute(builder: (_) => const AddRecipeScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const AddRecipeScreen(manual: true),
+                  ),
                 );
                 if (context.mounted) Navigator.of(context).pop(r);
               },

@@ -17,6 +17,7 @@ class Recipe {
   final bool freezable;
   final double? gramsPerServing; // peso de una ración ya preparada
   final String? imageUrl; // URL pública de la foto de la receta
+  final List<RecipeComponent> components; // partes del plato (pollo, arroz...)
 
   Recipe({
     required this.id,
@@ -37,6 +38,7 @@ class Recipe {
     this.freezable = false,
     this.gramsPerServing,
     this.imageUrl,
+    this.components = const [],
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
@@ -69,7 +71,19 @@ class Recipe {
       freezable: map['freezable'] ?? false,
       gramsPerServing: (map['grams_per_serving'] as num?)?.toDouble(),
       imageUrl: _imageUrlFrom(map['image_path']),
+      components: _componentsFrom(map['components']),
     );
+  }
+
+  static List<RecipeComponent> _componentsFrom(dynamic raw) {
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((m) => RecipeComponent.fromMap(Map<String, dynamic>.from(m)))
+          .where((c) => c.name.isNotEmpty)
+          .toList();
+    }
+    return const [];
   }
 
   // URL pública del bucket recipe-images a partir de la ruta guardada.
@@ -99,6 +113,9 @@ class Recipe {
       'is_favorite': isFavorite,
       'freezable': freezable,
       'grams_per_serving': gramsPerServing,
+      'components': components.isEmpty
+          ? null
+          : components.map((c) => c.toMap()).toList(),
     };
   }
 
@@ -152,4 +169,26 @@ class Recipe {
     if (density == null || density <= 0) return null;
     return targetKcal / density * 100;
   }
+
+  bool get hasComponents => components.isNotEmpty;
+}
+
+/// Parte de un plato combinado (ej. "Arroz") con su % del peso total.
+class RecipeComponent {
+  final String name;
+  final double proportion; // % del peso total del plato (0-100)
+
+  RecipeComponent({required this.name, required this.proportion});
+
+  factory RecipeComponent.fromMap(Map<String, dynamic> m) {
+    return RecipeComponent(
+      name: (m['name'] ?? '').toString(),
+      proportion: (m['proportion'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {'name': name, 'proportion': proportion};
+
+  /// Gramos de este componente dado el peso total en gramos.
+  double gramsFromTotal(double totalGrams) => totalGrams * proportion / 100;
 }
