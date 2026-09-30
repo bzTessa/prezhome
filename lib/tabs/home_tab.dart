@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../meal_plan_screen.dart';
+import '../models/meal_plan_entry.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
 
@@ -221,14 +223,82 @@ class _CalendarViewState extends State<_CalendarView> {
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
   DateTime _selected = DateTime.now();
 
+  final SupabaseClient _client = Supabase.instance.client;
+  // Plan cargado: 'yyyy-mm-dd' -> lista de (tipo, titulo receta, skipped)
+  Map<String, List<_PlanItem>> _planByDate = {};
+  Set<String> _daysWithPlan = {};
+
   static const _weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   static const _months = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
   ];
+  static const _mealLabels = {
+    'breakfast': 'Desayuno',
+    'lunch': 'Comida',
+    'dinner': 'Cena',
+    'snack': 'Snack',
+    'dessert': 'Postre',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMonthPlan();
+  }
+
+  Future<void> _loadMonthPlan() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null) return;
+
+      final start = DateTime(_month.year, _month.month, 1);
+      final end = DateTime(_month.year, _month.month + 1, 1);
+      // Traer entries del mes con el título de la receta.
+      final res = await _client
+          .from('meal_plan_entries')
+          .select('plan_date, meal_type, skipped, recipes(title)')
+          .eq('home_id', homeId)
+          .gte('plan_date', start.toIso8601String().split('T').first)
+          .lt('plan_date', end.toIso8601String().split('T').first);
+
+      final byDate = <String, List<_PlanItem>>{};
+      final withPlan = <String>{};
+      for (final row in (res as List)) {
+        final e = MealPlanEntry.fromMap(row);
+        final key = e.date.toIso8601String().split('T').first;
+        final rec = row['recipes'];
+        final title = (rec is Map ? rec['title'] : null) as String?;
+        byDate.putIfAbsent(key, () => []).add(
+              _PlanItem(
+                mealType: e.mealType,
+                title: title ?? 'Receta',
+                skipped: e.skipped,
+              ),
+            );
+        withPlan.add(key);
+      }
+      if (mounted) {
+        setState(() {
+          _planByDate = byDate;
+          _daysWithPlan = withPlan;
+        });
+      }
+    } catch (_) {
+      // Silencioso: si falla, el calendario se ve sin plan.
+    }
+  }
 
   void _changeMonth(int delta) {
     setState(() => _month = DateTime(_month.year, _month.month + delta));
+    _loadMonthPlan();
   }
 
   @override
@@ -248,6 +318,8 @@ class _CalendarViewState extends State<_CalendarView> {
           date.month == _selected.month &&
           date.day == _selected.day;
       final isToday = _isSameDay(date, DateTime.now());
+      final key = date.toIso8601String().split('T').first;
+      final hasPlan = _daysWithPlan.contains(key);
       cells.add(
         GestureDetector(
           onTap: () => setState(() => _selected = date),
@@ -260,16 +332,31 @@ class _CalendarViewState extends State<_CalendarView> {
                   ? Border.all(color: AppColors.wood, width: 1.5)
                   : null,
             ),
-            child: Center(
-              child: Text(
-                '$d',
-                style: TextStyle(
-                  fontWeight: isSelected || isToday
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                  color: AppColors.ink,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$d',
+                  style: TextStyle(
+                    fontWeight: isSelected || isToday
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: AppColors.ink,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                // Puntito si ese día tiene comidas planificadas
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: hasPlan && !isSelected
+                        ? AppColors.woodDark
+                        : Colors.transparent,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -346,31 +433,29 @@ class _CalendarViewState extends State<_CalendarView> {
                 ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  const MiauCharacter(
-                    mood: MiauMood.curious,
-                    size: 48,
-                    float: false,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Genera tu plan semanal de comidas y aparecerá aquí.',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ),
-                ],
-              ),
+              _buildDayPlan(),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const MealPlanScreen()),
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const MealPlanScreen(),
+                      ),
+                    );
+                    _loadMonthPlan(); // refrescar al volver
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.ink,
+                    minimumSize: const Size.fromHeight(48),
+                    side: const BorderSide(color: AppColors.wood, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Abrir plan semanal'),
+                  label: const Text('Gestionar plan semanal'),
                 ),
               ),
             ],
@@ -380,6 +465,79 @@ class _CalendarViewState extends State<_CalendarView> {
     );
   }
 
+  Widget _buildDayPlan() {
+    final key = _selected.toIso8601String().split('T').first;
+    final items = _planByDate[key] ?? [];
+    if (items.isEmpty) {
+      return Row(
+        children: [
+          const MiauCharacter(
+            mood: MiauMood.curious,
+            size: 48,
+            float: false,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'No hay comidas planificadas este día. Genera el plan semanal.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ),
+        ],
+      );
+    }
+    // Ordenar por tipo de comida (desayuno, comida, cena...)
+    const order = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
+    items.sort(
+      (a, b) => order.indexOf(a.mealType).compareTo(order.indexOf(b.mealType)),
+    );
+    return Column(
+      children: items.map((it) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 80,
+                child: Text(
+                  _mealLabels[it.mealType] ?? it.mealType,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  it.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    decoration:
+                        it.skipped ? TextDecoration.lineThrough : null,
+                    color: it.skipped ? Colors.grey : AppColors.ink,
+                  ),
+                ),
+              ),
+              if (it.skipped)
+                Text(
+                  'fuera',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+class _PlanItem {
+  final String mealType;
+  final String title;
+  final bool skipped;
+  _PlanItem({
+    required this.mealType,
+    required this.title,
+    required this.skipped,
+  });
 }
