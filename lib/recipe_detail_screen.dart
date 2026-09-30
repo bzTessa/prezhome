@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_recipe_screen.dart';
 import 'models/ingredient.dart';
+import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'theme/app_theme.dart';
@@ -160,6 +161,55 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       counted++;
     }
     return counted > 0 ? total : null;
+  }
+
+  /// Registra la receta como cocinada: guarda en el congelador las raciones
+  /// preparadas como "plato listo" (para meal prep). El nº de raciones = nº de
+  /// comidas de hogar (el multiplicador) × personas que comen en casa.
+  Future<void> _markCooked() async {
+    try {
+      final r = _recipe;
+      // Nº de raciones individuales preparadas.
+      double servings;
+      final mealGrams = _householdMealGrams(r);
+      if (mealGrams != null && r.gramsPerServing != null &&
+          r.gramsPerServing! > 0) {
+        servings = (mealGrams / r.gramsPerServing!) * _multiplier;
+      } else {
+        servings = r.servings * _multiplier;
+      }
+
+      final item = InventoryItem(
+        id: '',
+        homeId: r.homeId,
+        name: r.title,
+        category: 'Congelador',
+        quantity: _multiplier, // nº de tandas/comidas de hogar
+        unit: 'comidas',
+        kind: 'dish',
+        recipeId: r.id,
+        servings: double.parse(servings.toStringAsFixed(1)),
+        frozenOn: DateTime.now(),
+      );
+      await _client.from('inventory_items').insert(item.toMap());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Guardado en el congelador como plato listo.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo guardar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   String _fmtQty(double? q) {
@@ -340,6 +390,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       'Densidad: ${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
                       style: TextStyle(color: Colors.grey[700]),
                     ),
+                  if (_isMealPrep) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _markCooked,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.ink,
+                          side: const BorderSide(
+                            color: AppColors.wood,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.ac_unit),
+                        label: const Text('Ya cocinado → al congelador'),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
