@@ -5,6 +5,8 @@ class MealPlanEntry {
   final String mealType; // breakfast/lunch/dinner/snack/dessert
   final String? recipeId;
   final bool skipped;
+  final bool fromFreezer; // true = se consume de un plato congelado
+  final String? inventoryItemId; // item del congelador del que procede
 
   MealPlanEntry({
     this.id,
@@ -13,6 +15,8 @@ class MealPlanEntry {
     required this.mealType,
     this.recipeId,
     this.skipped = false,
+    this.fromFreezer = false,
+    this.inventoryItemId,
   });
 
   factory MealPlanEntry.fromMap(Map<String, dynamic> map) {
@@ -23,6 +27,8 @@ class MealPlanEntry {
       mealType: map['meal_type'],
       recipeId: map['recipe_id'],
       skipped: map['skipped'] ?? false,
+      fromFreezer: map['from_freezer'] ?? false,
+      inventoryItemId: map['inventory_item_id'],
     );
   }
 
@@ -33,6 +39,8 @@ class MealPlanEntry {
       'meal_type': mealType,
       'recipe_id': recipeId,
       'skipped': skipped,
+      'from_freezer': fromFreezer,
+      'inventory_item_id': inventoryItemId,
     };
   }
 }

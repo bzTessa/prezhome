@@ -107,6 +107,27 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         scores[id] = (scores[id] ?? 0) + (f['action'] == 'accepted' ? 1 : -1);
       }
 
+      // Platos ya congelados disponibles (kind='dish' en Congelador con receta).
+      // Cada uno da para 'quantity' comidas de hogar. Los priorizamos.
+      final freezerRes = await _client
+          .from('inventory_items')
+          .select('id, recipe_id, quantity')
+          .eq('home_id', data.homeId!)
+          .eq('category', 'Congelador')
+          .eq('kind', 'dish')
+          .not('recipe_id', 'is', null);
+      // Cola de "comidas congeladas" disponibles: {recipeId, itemId} por unidad.
+      final freezerQueue = <_FrozenMeal>[];
+      for (final f in (freezerRes as List)) {
+        final recipeId = f['recipe_id'] as String?;
+        final itemId = f['id'] as String;
+        final qty = (f['quantity'] as num?)?.toDouble() ?? 0;
+        if (recipeId == null) continue;
+        for (var i = 0; i < qty.floor(); i++) {
+          freezerQueue.add(_FrozenMeal(recipeId: recipeId, itemId: itemId));
+        }
+      }
+
       final planner = MealPlanner();
       final plan = planner.generate(
         startDate: _weekStart,
@@ -126,15 +147,29 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           .gte('plan_date', start.toIso8601String().split('T').first)
           .lt('plan_date', end.toIso8601String().split('T').first);
 
+      // Recetas que SÍ tienen platos congelados, para preferir usarlas primero.
+      final frozenByRecipe = <String, List<_FrozenMeal>>{};
+      for (final fm in freezerQueue) {
+        frozenByRecipe.putIfAbsent(fm.recipeId, () => []).add(fm);
+      }
+
       final rows = <Map<String, dynamic>>[];
       plan.forEach((date, meals) {
         meals.forEach((type, recipeId) {
+          // Si hay una unidad congelada de esta receta, la usamos (del congelador).
+          _FrozenMeal? frozen;
+          final pool = frozenByRecipe[recipeId];
+          if (pool != null && pool.isNotEmpty) {
+            frozen = pool.removeAt(0);
+          }
           rows.add(
             MealPlanEntry(
               homeId: data.homeId!,
               date: date,
               mealType: type,
               recipeId: recipeId,
+              fromFreezer: frozen != null,
+              inventoryItemId: frozen?.itemId,
             ).toMap(),
           );
         });
@@ -355,15 +390,40 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           ),
                         ),
                         Expanded(
-                          child: Text(
-                            recipe?.title ?? 'Receta',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              decoration: e.skipped
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              color: e.skipped ? Colors.grey : AppColors.ink,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                recipe?.title ?? 'Receta',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  decoration: e.skipped
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: e.skipped
+                                      ? Colors.grey
+                                      : AppColors.ink,
+                                ),
+                              ),
+                              if (e.fromFreezer)
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.ac_unit,
+                                      size: 12,
+                                      color: Color(0xFFB58A3C),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Del congelador',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
                           ),
                         ),
                         // Botón "como fuera" para reajuste dinámico
@@ -395,6 +455,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+class _FrozenMeal {
+  final String recipeId;
+  final String itemId;
+  _FrozenMeal({required this.recipeId, required this.itemId});
 }
 
 class _PlanData {
