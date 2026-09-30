@@ -22,7 +22,10 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     _future = _load();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    final future = _load();
+    setState(() => _future = future);
+  }
 
   Future<_HouseholdData> _load() async {
     final user = _client.auth.currentUser;

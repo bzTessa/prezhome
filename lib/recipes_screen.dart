@@ -50,7 +50,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
     return _RecipesData(recipes: recipes, profile: profile);
   }
 
-  void _reload() => setState(() => _future = _fetch());
+  void _reload() {
+    final future = _fetch();
+    setState(() => _future = future);
+  }
 
   Future<void> _openAdd() async {
     final added = await AddRecipeChooser.show(context);
