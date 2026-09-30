@@ -50,6 +50,34 @@ Que tú marques las recetas que te gustan y la app:
 ### FASE 7 — Google Calendar
 - Conectar cuenta (OAuth) y volcar plan + avisos diarios como eventos.
 
+## Cola de mejoras pendientes (por hacer, en orden aproximado)
+
+1. **Comer fuera de casa (por miembro/día):** un miembro puede comer fuera
+   ciertos días (ej. en el trabajo). Poder indicar aprox. lo que consume fuera
+   y que esos días solo cuenten cena/postre en casa. Ajustable por persona.
+2. **Zona de Ajustes organizada:** separar ajustes por tema — lo de comidas en
+   Perfil Nutricional; lo de tareas, visualización y hogar en Hogar/Ajustes.
+   Incluir mostrar/ocultar los cálculos de gramos/kcal (personalizable).
+3. **Onboarding + login moderno:** pantallas de bienvenida que expliquen la app
+   + ajuste de perfil antes del registro; login con Google (OAuth) además del
+   correo; sesión persistente (no pedir correo al reabrir si no se cerró sesión).
+4. **Estadísticas con gráficos:** en Hogar y Economía — puntos de tareas, gasto
+   por tienda/categoría, evolución de precios.
+5. **Aprendizaje de rutinas (IA):** aprender hábitos de compra/comida a partir de
+   los tickets y predecir (qué toca comprar, gasto mensual esperado).
+6. **Planificador semanal:** generar el plan de comidas equilibrado que llena el
+   calendario, con variedad, uso del congelador y lista de la compra.
+7. **Enlace de vídeo en recetas (Instagram/TikTok/YouTube):** guardar el enlace
+   como apoyo ("Ver vídeo original"). La transcripción automática del vídeo NO es
+   viable de forma fiable (las plataformas bloquean el acceso); alternativa:
+   pegar la descripción del post en "Rellenar con IA".
+
+## Notas de diseño
+- Sin emojis en la interfaz; estética "Cozy" profesional.
+- Presidente Miau como personaje (varias poses según contexto).
+- Lenguaje inclusivo de convivencia: "hogar/miembros", no "pareja".
+- Útil por defecto pero personalizable/ocultable (cada quien ve lo que quiere).
+
 ## Principios de seguridad
 Ver `.kiro/steering/security.md`. Perfil físico privado por defecto; recetas
 compartidas en el hogar; RLS en todas las tablas.
