@@ -193,6 +193,7 @@ class _TasksScreenState extends State<TasksScreen> {
         builder: (context, snap) {
           final members = snap.data?.members ?? {};
           return FloatingActionButton.extended(
+            heroTag: 'fab-tasks',
             onPressed: () => _openAdd(members),
             backgroundColor: AppColors.wood,
             foregroundColor: AppColors.ink,

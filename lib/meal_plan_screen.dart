@@ -243,6 +243,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             return const SizedBox.shrink();
           }
           return FloatingActionButton.extended(
+            heroTag: 'fab-meal-plan',
             onPressed: _generating ? null : () => _generatePlan(data),
             backgroundColor: AppColors.wood,
             foregroundColor: AppColors.ink,

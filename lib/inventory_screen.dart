@@ -80,6 +80,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               iconTheme: const IconThemeData(color: Color(0xFF1E1E1E)),
             ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab-inventory',
         onPressed: _openAddItem,
         backgroundColor: const Color(0xFFE2C792),
         foregroundColor: const Color(0xFF1E1E1E),
