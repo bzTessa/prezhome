@@ -279,8 +279,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       }
       if (r['carbs_grams'] != null) _carbsController.text = s(r['carbs_grams']);
       if (r['fat_grams'] != null) _fatController.text = s(r['fat_grams']);
-      if (r['prep_minutes'] != null) _prepController.text = s(r['prep_minutes']);
-      if (r['cook_minutes'] != null) _cookController.text = s(r['cook_minutes']);
+      if (r['prep_minutes'] != null)
+        _prepController.text = s(r['prep_minutes']);
+      if (r['cook_minutes'] != null)
+        _cookController.text = s(r['cook_minutes']);
 
       final appliance = s(r['appliance']);
       if (Recipe.applianceLabels.containsKey(appliance)) _appliance = appliance;
@@ -294,7 +296,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           if (Recipe.mealTypeLabels.containsKey(key)) types.add(key);
         }
       }
-      if (types.isEmpty && Recipe.mealTypeLabels.containsKey(s(r['meal_type']))) {
+      if (types.isEmpty &&
+          Recipe.mealTypeLabels.containsKey(s(r['meal_type']))) {
         types.add(s(r['meal_type']));
       }
       if (types.isNotEmpty) {
@@ -360,9 +363,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<String?> _uploadImageIfAny(String homeId) async {
     if (_newImageBytes == null) return null;
     final ext = (_newImageExt == 'png') ? 'png' : 'jpg';
-    final path =
-        '$homeId/${DateTime.now().millisecondsSinceEpoch}.$ext';
-    await _client.storage.from('recipe-images').uploadBinary(
+    final path = '$homeId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    await _client.storage
+        .from('recipe-images')
+        .uploadBinary(
           path,
           _newImageBytes!,
           fileOptions: FileOptions(

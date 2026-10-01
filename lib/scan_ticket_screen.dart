@@ -110,8 +110,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
     });
   }
 
-  double _num(String v) =>
-      double.tryParse(v.trim().replaceAll(',', '.')) ?? 0;
+  double _num(String v) => double.tryParse(v.trim().replaceAll(',', '.')) ?? 0;
 
   double get _total =>
       _items.fold(0.0, (a, it) => a + _num(it.totalPrice.text));
@@ -137,8 +136,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             'storage_path': '', // (futuro: subir la imagen al bucket)
             'merchant': _merchantController.text.trim(),
             'total_amount': _total,
-            'purchased_at':
-                _purchasedAt.toIso8601String().split('T').first,
+            'purchased_at': _purchasedAt.toIso8601String().split('T').first,
           })
           .select('id')
           .single();
@@ -190,10 +188,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       if (aliasByRaw.isNotEmpty) {
         await _client
             .from('product_aliases')
-            .upsert(
-              aliasByRaw.values.toList(),
-              onConflict: 'home_id,raw_name',
-            );
+            .upsert(aliasByRaw.values.toList(), onConflict: 'home_id,raw_name');
       }
 
       if (mounted) Navigator.of(context).pop(true);
@@ -446,7 +441,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, -2)),
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
         ],
       ),
       child: SafeArea(
@@ -506,10 +505,10 @@ class _ItemRow {
     String category = '',
     String quantity = '1',
     String totalPrice = '',
-  })  : name = TextEditingController(text: name),
-        category = TextEditingController(text: category),
-        quantity = TextEditingController(text: quantity),
-        totalPrice = TextEditingController(text: totalPrice);
+  }) : name = TextEditingController(text: name),
+       category = TextEditingController(text: category),
+       quantity = TextEditingController(text: quantity),
+       totalPrice = TextEditingController(text: totalPrice);
 
   void dispose() {
     name.dispose();

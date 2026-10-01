@@ -22,7 +22,15 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   bool _isLoading = false;
 
   final List<String> _categories = ['Despensa', 'Nevera', 'Congelador'];
-  final List<String> _units = ['unidades', 'kg', 'g', 'litros', 'ml', 'botes', 'bolsas'];
+  final List<String> _units = [
+    'unidades',
+    'kg',
+    'g',
+    'litros',
+    'ml',
+    'botes',
+    'bolsas',
+  ];
 
   @override
   void dispose() {
@@ -70,7 +78,9 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         frozenOn: _selectedCategory == 'Congelador' ? _frozenOn : null,
       );
 
-      await Supabase.instance.client.from('inventory_items').insert(item.toMap());
+      await Supabase.instance.client
+          .from('inventory_items')
+          .insert(item.toMap());
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -137,10 +147,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             ),
             const SizedBox(height: 20),
 
-            TextField(
-              controller: _nameController,
-              decoration: _dec('Nombre'),
-            ),
+            TextField(controller: _nameController, decoration: _dec('Nombre')),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _selectedCategory,
@@ -169,10 +176,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     decoration: _dec('Unidad'),
                     items: _units
                         .map(
-                          (unit) => DropdownMenuItem(
-                            value: unit,
-                            child: Text(unit),
-                          ),
+                          (unit) =>
+                              DropdownMenuItem(value: unit, child: Text(unit)),
                         )
                         .toList(),
                     onChanged: (val) => setState(() => _selectedUnit = val!),

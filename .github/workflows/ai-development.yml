@@ -1,0 +1,190 @@
+# Validacion de cambios automaticos (desarrollo asistido por IA).
+# Este workflow protege la base de datos cuando los cambios los genera un
+# asistente de forma automatica. Comprueba, sobre todo en las migraciones:
+#   1. INMUTABILIDAD: las migraciones existentes 0001-0020 no se pueden
+#      modificar ni borrar. Solo se permiten migraciones nuevas con prefijo
+#      0021 o superior, siguiendo el patron NNNN_nombre.sql (4 digitos).
+#   2. DUPLICADOS: no puede haber dos migraciones con el mismo prefijo numerico.
+#   3. SENTENCIAS PELIGROSAS: DROP TABLE y borrado de columnas (tanto la forma
+#      larga DROP COLUMN como la forma corta DROP col) requieren revision manual.
+#   4. CAMBIOS RLS/AUTH: cambios en politicas (policy / row level security) o
+#      referencias a auth. requieren revision manual.
+#
+# Regla general: los cambios SEGUROS pueden auto-mergearse, pero las
+# migraciones destructivas y los cambios de RLS o de auth REQUIEREN
+# aprobacion manual (hacen fallar el gate correspondiente).
+name: Validacion de cambios IA
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+
+jobs:
+  # Validaciones bloqueantes SIEMPRE: inmutabilidad y duplicados.
+  # Si fallan, el cambio no es correcto y no debe mergearse de ninguna forma.
+  validaciones:
+    name: Validaciones obligatorias (inmutabilidad y duplicados)
+    runs-on: ubuntu-latest
+    steps:
+      # Necesitamos el historico completo para comparar con la rama destino.
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Comprueba que ninguna migracion 0001-0020 fue modificada o borrada
+      # y que las nuevas migraciones usan prefijo >= 0021 con 4 digitos.
+      - name: Comprobar inmutabilidad de migraciones 0001-0020
+        run: |
+          set -euo pipefail
+          echo "Comprobando inmutabilidad de las migraciones existentes (0001-0020)..."
+
+          # Rama destino del pull request (normalmente main).
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          git fetch origin "$BASE_REF" --depth=0 || git fetch origin "$BASE_REF"
+          BASE="origin/$BASE_REF"
+
+          # Lista de ficheros de migracion modificados o borrados respecto a la base.
+          CAMBIADOS=$(git diff --name-status "$BASE"...HEAD -- 'supabase/migrations/' || true)
+
+          FALLO=0
+          while IFS=$'\t' read -r ESTADO FICHERO RESTO; do
+            [ -z "${FICHERO:-}" ] && continue
+            BASENAME=$(basename "$FICHERO")
+            # Extrae el prefijo de 4 digitos del nombre del fichero.
+            PREFIJO=$(echo "$BASENAME" | grep -oE '^[0-9]{4}' || true)
+            if [ -z "$PREFIJO" ]; then
+              # Fichero sin prefijo de 4 digitos: no cumple la convencion.
+              if [ "$ESTADO" != "D" ]; then
+                echo "ERROR: la migracion '$BASENAME' no sigue el patron NNNN_nombre.sql (4 digitos)."
+                FALLO=1
+              fi
+              continue
+            fi
+            # Convierte a numero en base 10 (evita interpretacion octal).
+            NUM=$((10#$PREFIJO))
+            case "$ESTADO" in
+              A)
+                # Fichero anadido: debe ser 0021 o superior.
+                if [ "$NUM" -lt 21 ]; then
+                  echo "ERROR: no se puede anadir una migracion con prefijo $PREFIJO. Las nuevas deben ser 0021 o superior."
+                  FALLO=1
+                fi
+                ;;
+              M|D|R*)
+                # Modificado, borrado o renombrado: prohibido para 0001-0020.
+                if [ "$NUM" -ge 1 ] && [ "$NUM" -le 20 ]; then
+                  echo "ERROR: la migracion '$BASENAME' (prefijo $PREFIJO) es INMUTABLE y no se puede modificar, borrar ni renombrar."
+                  FALLO=1
+                fi
+                ;;
+            esac
+          done <<< "$CAMBIADOS"
+
+          if [ "$FALLO" -ne 0 ]; then
+            echo "La comprobacion de inmutabilidad ha fallado."
+            exit 1
+          fi
+          echo "Inmutabilidad correcta: no se han tocado las migraciones 0001-0020."
+
+      # Comprueba que no existan dos migraciones con el mismo prefijo de 4 digitos.
+      - name: Detectar prefijos de migracion duplicados
+        run: |
+          set -euo pipefail
+          echo "Buscando prefijos de migracion duplicados..."
+          DIR="supabase/migrations"
+          # Lista los prefijos de 4 digitos de todos los ficheros .sql.
+          PREFIJOS=$(ls "$DIR"/*.sql 2>/dev/null | xargs -n1 basename | grep -oE '^[0-9]{4}' || true)
+          DUPLICADOS=$(echo "$PREFIJOS" | sort | uniq -d || true)
+          if [ -n "$DUPLICADOS" ]; then
+            echo "ERROR: hay prefijos de migracion duplicados:"
+            echo "$DUPLICADOS"
+            exit 1
+          fi
+          echo "Sin duplicados: cada prefijo de migracion es unico."
+
+  # Gate de revision manual: si detecta sentencias peligrosas o cambios de
+  # RLS/auth, este job FALLA a proposito para impedir el auto-merge.
+  # Un cambio seguro deja este job en verde y puede auto-mergearse.
+  revision-manual-requerida:
+    name: Revision manual requerida (DROP / RLS / auth)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detectar cambios que exigen aprobacion manual
+        run: |
+          set -euo pipefail
+          echo "Revisando migraciones en busca de cambios que exijan aprobacion manual..."
+
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          git fetch origin "$BASE_REF" --depth=0 || git fetch origin "$BASE_REF"
+          BASE="origin/$BASE_REF"
+
+          # Ficheros .sql de migracion anadidos o modificados en este PR.
+          FICHEROS=$(git diff --name-only --diff-filter=AM "$BASE"...HEAD -- 'supabase/migrations/*.sql' || true)
+
+          if [ -z "$FICHEROS" ]; then
+            echo "No hay migraciones nuevas ni modificadas. Cambio seguro: puede auto-mergearse."
+            exit 0
+          fi
+
+          REQUIERE_MANUAL=0
+
+          for FICHERO in $FICHEROS; do
+            [ -f "$FICHERO" ] || continue
+            echo "Analizando $FICHERO ..."
+
+            # (c) Sentencias peligrosas: DROP TABLE y DROP COLUMN (toleran espacios).
+            if grep -iqE 'drop[[:space:]]+table' "$FICHERO"; then
+              echo "  AVISO: contiene DROP TABLE. Requiere aprobacion manual."
+              REQUIERE_MANUAL=1
+            fi
+            # Postgres admite dos formas de borrar una columna:
+            #   ALTER TABLE t DROP COLUMN c;   (forma larga)
+            #   ALTER TABLE t DROP c;          (forma corta, sin COLUMN)
+            # Por eso hacemos la palabra COLUMN opcional, para no dejar escapar
+            # la forma corta (que es igual de destructiva). Toleramos espacios y
+            # el posible IF EXISTS entre DROP y COLUMN.
+            if grep -iqE 'drop[[:space:]]+(column[[:space:]]+)?(if[[:space:]]+exists[[:space:]]+)?' "$FICHERO" \
+               && grep -iqE 'alter[[:space:]]+table' "$FICHERO"; then
+              echo "  AVISO: posible borrado de columna (DROP COLUMN o forma corta DROP col). Requiere aprobacion manual."
+              REQUIERE_MANUAL=1
+            fi
+
+            # (d) Cambios de RLS: politicas y row level security.
+            if grep -iqE '(create|alter|drop)[[:space:]]+policy' "$FICHERO"; then
+              echo "  AVISO: modifica politicas (policy). Requiere aprobacion manual."
+              REQUIERE_MANUAL=1
+            fi
+            if grep -iqE 'row[[:space:]]+level[[:space:]]+security' "$FICHERO"; then
+              echo "  AVISO: toca Row Level Security. Requiere aprobacion manual."
+              REQUIERE_MANUAL=1
+            fi
+
+            # (d) Cambios de auth: cualquier referencia al esquema auth.
+            # DECISION DELIBERADA: este patron es amplio a proposito. Marca
+            # cualquier uso de 'auth.' (incluido el ubicuo auth.uid() de las
+            # policies de RLS). Preferimos sobre-bloquear (fail-safe): es mejor
+            # pedir una revision manual de mas que dejar pasar un cambio de
+            # seguridad sin mirar. Si en el futuro la aprobacion manual se
+            # vuelve un tramite constante, se puede acotar el patron (por
+            # ejemplo a auth.users / grant / revoke) de forma consciente.
+            if grep -iqE 'auth\.' "$FICHERO"; then
+              echo "  AVISO: hace referencia a auth. Requiere aprobacion manual."
+              REQUIERE_MANUAL=1
+            fi
+          done
+
+          if [ "$REQUIERE_MANUAL" -ne 0 ]; then
+            echo ""
+            echo "RESULTADO: este cambio incluye migraciones destructivas o cambios de RLS/auth."
+            echo "NO se permite el auto-merge. Hace falta aprobacion manual de una persona."
+            exit 1
+          fi
+
+          echo "RESULTADO: cambio seguro. No se detectaron DROP TABLE/COLUMN ni cambios de RLS/auth. Puede auto-mergearse."

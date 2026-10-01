@@ -1,0 +1,146 @@
+# Integracion continua (CI) de PrezHome.
+# Se ejecuta en cada pull request y en cada push para comprobar que la app
+# Flutter compila, respeta el formato, pasa el analisis estatico y los tests,
+# y que las migraciones de Supabase no tienen problemas de sintaxis.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - ci/github-actions
+
+# Evitamos que el mismo CI corra dos veces a la vez sobre la misma referencia.
+# Cuando se abre un pull request desde una rama que tambien dispara el evento
+# push (por ejemplo ci/github-actions), GitHub lanzaria el workflow dos veces;
+# con esta clave de concurrencia solo se mantiene la ejecucion mas reciente y
+# se cancela la anterior en curso, ahorrando minutos de runner.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Verificacion de la app Flutter: formato, analisis y tests.
+  flutter:
+    name: Flutter (formato, analisis y tests)
+    runs-on: ubuntu-latest
+    steps:
+      # Descarga el codigo del repositorio.
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Instala Flutter en el canal estable. El SDK de Dart es ^3.11.1,
+      # que viene con una version reciente de Flutter stable (~3.35+),
+      # por eso usamos el canal stable.
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # Descarga las dependencias declaradas en pubspec.yaml.
+      - name: Descargar dependencias
+        run: flutter pub get
+
+      # Comprueba que el codigo esta bien formateado. Si algun fichero no
+      # cumple el formato, el paso falla (no reformatea nada).
+      - name: Verificar formato
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Analisis estatico segun analysis_options.yaml (flutter_lints).
+      - name: Analizar codigo
+        run: flutter analyze
+
+      # Ejecuta los tests del proyecto (test/widget_test.dart y demas).
+      - name: Ejecutar tests
+        run: flutter test
+
+  # Validacion de las migraciones de Supabase.
+  #
+  # IMPORTANTE: aqui NO usamos `supabase db lint` ni `supabase db reset`.
+  # Ambos comandos necesitan el stack local arrancado (`supabase start`), que a
+  # su vez exige Docker y un fichero supabase/config.toml. Este repositorio no
+  # tiene config.toml ni Docker garantizado en el runner, asi que esos comandos
+  # fallarian SIEMPRE y dejarian el check de CI en rojo permanente.
+  #
+  # Tampoco usamos `supabase db lint --linked` porque eso obligaria a meter
+  # secrets y acceso de red al proyecto remoto dentro del CI de los pull
+  # requests, lo que no queremos (los secrets solo se usan en el despliegue).
+  #
+  # En su lugar hacemos una validacion ligera y autosuficiente de los ficheros
+  # .sql, que corre en un runner limpio sin Docker, sin config.toml y sin
+  # credenciales: comprobamos que las migraciones existen, que ninguna esta
+  # vacia, que todas siguen el patron de nombre NNNN_nombre.sql (4 digitos) y
+  # que cada fichero esta razonablemente formado (sin parentesis desbalanceados
+  # y terminando en punto y coma). La validacion profunda de SQL contra la base
+  # real la hace `supabase db push` en el despliegue, que si tiene credenciales.
+  supabase:
+    name: Supabase (validacion de migraciones)
+    runs-on: ubuntu-latest
+    steps:
+      # Descarga el codigo del repositorio.
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Validacion ligera de los ficheros de migracion sin arrancar nada.
+      - name: Validar ficheros de migracion
+        run: |
+          set -euo pipefail
+          DIR="supabase/migrations"
+          echo "Validando los ficheros de migracion en $DIR ..."
+
+          # Debe existir el directorio de migraciones.
+          if [ ! -d "$DIR" ]; then
+            echo "ERROR: no existe el directorio $DIR."
+            exit 1
+          fi
+
+          # Debe haber al menos un fichero .sql.
+          shopt -s nullglob
+          FICHEROS=("$DIR"/*.sql)
+          if [ "${#FICHEROS[@]}" -eq 0 ]; then
+            echo "ERROR: no hay ninguna migracion .sql en $DIR."
+            exit 1
+          fi
+
+          FALLO=0
+          for FICHERO in "${FICHEROS[@]}"; do
+            BASENAME=$(basename "$FICHERO")
+            echo "Comprobando $BASENAME ..."
+
+            # 1. El fichero no puede estar vacio (ni solo espacios).
+            if [ ! -s "$FICHERO" ] || ! grep -q '[^[:space:]]' "$FICHERO"; then
+              echo "  ERROR: la migracion '$BASENAME' esta vacia."
+              FALLO=1
+              continue
+            fi
+
+            # 2. El nombre debe seguir el patron NNNN_nombre.sql (4 digitos).
+            if ! echo "$BASENAME" | grep -qE '^[0-9]{4}_.+\.sql$'; then
+              echo "  ERROR: '$BASENAME' no sigue el patron NNNN_nombre.sql (4 digitos)."
+              FALLO=1
+            fi
+
+            # 3. Comprobacion basica de forma: los parentesis deben estar
+            #    balanceados. Es un chequeo sintactico simple que no necesita
+            #    una base de datos.
+            ABIERTOS=$(tr -cd '(' < "$FICHERO" | wc -c | tr -d ' ')
+            CERRADOS=$(tr -cd ')' < "$FICHERO" | wc -c | tr -d ' ')
+            if [ "$ABIERTOS" != "$CERRADOS" ]; then
+              echo "  ERROR: parentesis desbalanceados en '$BASENAME' ($ABIERTOS abiertos, $CERRADOS cerrados)."
+              FALLO=1
+            fi
+
+            # 4. El contenido util deberia terminar en punto y coma, senal de
+            #    que la ultima sentencia SQL esta cerrada.
+            ULTIMO=$(grep -v '^[[:space:]]*--' "$FICHERO" | grep '[^[:space:]]' | tail -n1 | sed 's/[[:space:]]*$//')
+            if [ -n "$ULTIMO" ] && [ "${ULTIMO: -1}" != ";" ]; then
+              echo "  AVISO: '$BASENAME' no termina en punto y coma; revisa que la ultima sentencia este completa."
+            fi
+          done
+
+          if [ "$FALLO" -ne 0 ]; then
+            echo "La validacion de migraciones ha fallado."
+            exit 1
+          fi
+          echo "Validacion de migraciones correcta."

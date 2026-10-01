@@ -28,7 +28,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     'dessert': 'Postre',
   };
   static const _dayNames = [
-    'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
   ];
 
   bool _generating = false;
@@ -70,8 +76,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
     // Recetas del hogar
     final recRes = await _client.from('recipes').select().eq('home_id', homeId);
-    final recipes =
-        (recRes as List).map((m) => Recipe.fromMap(m)).toList();
+    final recipes = (recRes as List).map((m) => Recipe.fromMap(m)).toList();
 
     // Plan de esta semana
     final start = _weekStart;
@@ -82,8 +87,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .eq('home_id', homeId)
         .gte('plan_date', start.toIso8601String().split('T').first)
         .lt('plan_date', end.toIso8601String().split('T').first);
-    final entries =
-        (planRes as List).map((m) => MealPlanEntry.fromMap(m)).toList();
+    final entries = (planRes as List)
+        .map((m) => MealPlanEntry.fromMap(m))
+        .toList();
 
     return _PlanData(
       homeId: homeId,
@@ -316,10 +322,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       byDate.putIfAbsent(key, () => []).add(e);
     }
 
-    final days = List.generate(
-      7,
-      (i) => _weekStart.add(Duration(days: i)),
-    );
+    final days = List.generate(7, (i) => _weekStart.add(Duration(days: i)));
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -327,138 +330,138 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         _energyCard(),
         const SizedBox(height: 12),
         ...days.map((date) {
-        final key = date.toIso8601String().split('T').first;
-        final dayEntries = byDate[key] ?? [];
-        final isToday = _isSameDay(date, DateTime.now());
+          final key = date.toIso8601String().split('T').first;
+          final dayEntries = byDate[key] ?? [];
+          final isToday = _isSameDay(date, DateTime.now());
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(16),
-          decoration: AppTheme.cardDecoration(radius: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    _dayNames[date.weekday - 1],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: isToday ? AppColors.woodDark : AppColors.ink,
+          return Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.all(16),
+            decoration: AppTheme.cardDecoration(radius: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      _dayNames[date.weekday - 1],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isToday ? AppColors.woodDark : AppColors.ink,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${date.day}/${date.month}',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                  ),
-                  if (isToday) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.wood,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        'Hoy',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(width: 6),
+                    Text(
+                      '${date.day}/${date.month}',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                    ),
+                    if (isToday) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.wood,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'Hoy',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (dayEntries.isEmpty)
-                Text(
-                  'Sin comidas planificadas',
-                  style: TextStyle(color: Colors.grey[500]),
-                )
-              else
-                ...dayEntries.map((e) {
-                  final recipe = data.recipesById[e.recipeId];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          child: Text(
-                            _mealLabels[e.mealType] ?? e.mealType,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
+                ),
+                const SizedBox(height: 8),
+                if (dayEntries.isEmpty)
+                  Text(
+                    'Sin comidas planificadas',
+                    style: TextStyle(color: Colors.grey[500]),
+                  )
+                else
+                  ...dayEntries.map((e) {
+                    final recipe = data.recipesById[e.recipeId];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: Text(
+                              _mealLabels[e.mealType] ?? e.mealType,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                recipe?.title ?? 'Receta',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  decoration: e.skipped
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  color: e.skipped
-                                      ? Colors.grey
-                                      : AppColors.ink,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  recipe?.title ?? 'Receta',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    decoration: e.skipped
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    color: e.skipped
+                                        ? Colors.grey
+                                        : AppColors.ink,
+                                  ),
                                 ),
-                              ),
-                              if (e.fromFreezer)
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.ac_unit,
-                                      size: 12,
-                                      color: Color(0xFFB58A3C),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Del congelador',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey[600],
+                                if (e.fromFreezer)
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.ac_unit,
+                                        size: 12,
+                                        color: Color(0xFFB58A3C),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                            ],
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Del congelador',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                        // Botón "como fuera" para reajuste dinámico
-                        IconButton(
-                          tooltip: e.skipped
-                              ? 'Reactivar (como en casa)'
-                              : 'Hoy como fuera',
-                          icon: Icon(
-                            e.skipped
-                                ? Icons.restore
-                                : Icons.no_meals_outlined,
-                            size: 20,
-                            color: e.skipped
-                                ? AppColors.woodDark
-                                : Colors.grey,
+                          // Botón "como fuera" para reajuste dinámico
+                          IconButton(
+                            tooltip: e.skipped
+                                ? 'Reactivar (como en casa)'
+                                : 'Hoy como fuera',
+                            icon: Icon(
+                              e.skipped
+                                  ? Icons.restore
+                                  : Icons.no_meals_outlined,
+                              size: 20,
+                              color: e.skipped
+                                  ? AppColors.woodDark
+                                  : Colors.grey,
+                            ),
+                            onPressed: () => _toggleSkip(e),
                           ),
-                          onPressed: () => _toggleSkip(e),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-            ],
-          ),
-        );
-      }),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }

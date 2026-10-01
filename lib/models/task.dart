@@ -95,11 +95,15 @@ class HomeTask {
     'custom_weekdays': 'Días concretos',
   };
 
-  static const List<String> weekdayShort = [
-    'L', 'M', 'X', 'J', 'V', 'S', 'D',
-  ];
+  static const List<String> weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   static const List<String> weekdayLong = [
-    'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
   ];
 
   /// Etiqueta legible de la recurrencia (para mostrar en la lista).

@@ -122,8 +122,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               foregroundColor: const Color(0xFF1E1E1E),
               elevation: 0,
             ),
-            onPressed: () =>
-                Navigator.of(context).pop(controller.text.trim()),
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
             child: const Text('Unirme'),
           ),
         ],
@@ -168,8 +167,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               foregroundColor: const Color(0xFF1E1E1E),
               elevation: 0,
             ),
-            onPressed: () =>
-                Navigator.of(context).pop(controller.text.trim()),
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
             child: const Text('Guardar'),
           ),
         ],
@@ -197,10 +195,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   void _snack(String msg, {bool error = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: error ? Colors.red : null,
-      ),
+      SnackBar(content: Text(msg), backgroundColor: error ? Colors.red : null),
     );
   }
 
@@ -220,9 +215,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             icon: const Icon(Icons.favorite_outline),
             tooltip: 'Mi Perfil Nutricional',
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const NutritionProfileScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const NutritionProfileScreen()),
             ),
           ),
           IconButton(
@@ -247,9 +240,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             );
           }
           final data = snapshot.data!;
-          return data.homeId == null
-              ? _buildNoHome()
-              : _buildHome(data);
+          return data.homeId == null ? _buildNoHome() : _buildHome(data);
         },
       ),
     );
@@ -318,8 +309,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit, size: 20),
-                    onPressed: () =>
-                        _renameHome(data.homeId!, data.homeName!),
+                    onPressed: () => _renameHome(data.homeId!, data.homeName!),
                   ),
                 ],
               ),
@@ -397,7 +387,9 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                         ? m.name!
                         : 'Miembro',
                   ),
-                  subtitle: Text(m.role == 'owner' ? 'Administrador' : 'Miembro'),
+                  subtitle: Text(
+                    m.role == 'owner' ? 'Administrador' : 'Miembro',
+                  ),
                   trailing: m.isMe
                       ? const Chip(
                           label: Text('Tú'),

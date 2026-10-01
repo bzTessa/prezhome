@@ -1,0 +1,65 @@
+# Despliegue de migraciones de Supabase.
+# Se ejecuta automaticamente al hacer push a la rama main, pero SOLO cuando
+# cambian ficheros dentro de supabase/migrations/. Asi evitamos desplegar
+# cuando el cambio no afecta a la base de datos.
+#
+# Los secrets los configura la usuaria en GitHub (Settings -> Secrets and
+# variables -> Actions). El asistente no acepta ni ve esas credenciales.
+# Secrets usados: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD.
+name: Desplegar migraciones a Supabase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+
+# Serializamos los despliegues: si llegan dos merges seguidos a main, no
+# queremos dos `supabase db push` solapados contra la misma base de datos
+# (el resultado seria impredecible). Con esta clave de concurrencia solo se
+# ejecuta un despliegue a la vez; aqui NO cancelamos el que esta en curso
+# (cancel-in-progress: false) para no interrumpir un push a mitad de camino,
+# sino que el siguiente espera a que termine.
+concurrency:
+  group: desplegar-supabase
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Aplicar migraciones en Supabase
+    runs-on: ubuntu-latest
+    # Colgamos el despliegue de un GitHub Environment llamado 'production'.
+    # Esto permite que la aprobacion manual sea REAL (forzada por la plataforma)
+    # y no solo una convencion: si configuras en GitHub (Settings -> Environments
+    # -> production) una regla de "required reviewers", este job quedara en
+    # pausa esperando que una persona lo apruebe antes de aplicar nada.
+    # Los pasos para configurarlo estan en docs/CI_CD_SECRETS.md.
+    environment: production
+    # Variables de entorno a partir de los secrets del repositorio.
+    # SUPABASE_ACCESS_TOKEN autentica la CLI (equivale a iniciar sesion).
+    # SUPABASE_DB_PASSWORD es la contrasena de la base de datos del proyecto.
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      # Descarga el codigo del repositorio.
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Instala la CLI de Supabase en su ultima version.
+      - name: Instalar la CLI de Supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Vincula el proyecto remoto usando el identificador (project-ref).
+      # Usamos --project-ref para no depender de un supabase/config.toml
+      # committeado. La CLI se autentica con SUPABASE_ACCESS_TOKEN y usa
+      # SUPABASE_DB_PASSWORD para la conexion a la base de datos.
+      - name: Vincular el proyecto de Supabase
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      # Aplica en el proyecto remoto todas las migraciones pendientes.
+      - name: Desplegar migraciones
+        run: supabase db push

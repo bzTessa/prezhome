@@ -58,7 +58,7 @@ class RecipeImage extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : Icon(
-                IconData(recipe.placeholderIconCode, fontFamily: 'MaterialIcons'),
+                recipe.placeholderIcon,
                 size: height * 0.32,
                 color: Colors.white.withValues(alpha: 0.9),
               ),

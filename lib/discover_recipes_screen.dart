@@ -28,7 +28,12 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   final Set<int> _saving = {};
   final Set<int> _savedIdx = {};
 
-  static const _goals = ['mantener', 'perder grasa', 'ganar músculo', 'alta proteína'];
+  static const _goals = [
+    'mantener',
+    'perder grasa',
+    'ganar músculo',
+    'alta proteína',
+  ];
   static const _diets = [
     'sin restricción',
     'vegetariana',
@@ -134,9 +139,8 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
             ? (r['components'] as List)
                   .whereType<Map>()
                   .map(
-                    (m) => RecipeComponent.fromMap(
-                      Map<String, dynamic>.from(m),
-                    ),
+                    (m) =>
+                        RecipeComponent.fromMap(Map<String, dynamic>.from(m)),
                   )
                   .where((c) => c.name.isNotEmpty)
                   .toList()
@@ -153,17 +157,20 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       final ings = r['ingredients'];
       if (ings is List && ings.isNotEmpty) {
         var pos = 0;
-        final rows = ings.map((raw) {
-          final m = raw is Map ? raw : {};
-          return {
-            'recipe_id': recipeId,
-            'home_id': homeId,
-            'name': (m['name'] ?? '').toString(),
-            'quantity': d(m['quantity']),
-            'unit': m['unit']?.toString(),
-            'position': pos++,
-          };
-        }).where((m) => (m['name'] as String).isNotEmpty).toList();
+        final rows = ings
+            .map((raw) {
+              final m = raw is Map ? raw : {};
+              return {
+                'recipe_id': recipeId,
+                'home_id': homeId,
+                'name': (m['name'] ?? '').toString(),
+                'quantity': d(m['quantity']),
+                'unit': m['unit']?.toString(),
+                'position': pos++,
+              };
+            })
+            .where((m) => (m['name'] as String).isNotEmpty)
+            .toList();
         if (rows.isNotEmpty) {
           await _client.from('recipe_ingredients').insert(rows);
         }
@@ -181,7 +188,10 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error al guardar: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -287,7 +297,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.auto_awesome),
-                    label: Text(_loading ? 'Generando ideas…' : 'Generar ideas'),
+                    label: Text(
+                      _loading ? 'Generando ideas…' : 'Generar ideas',
+                    ),
                   ),
                 ],
               ),
