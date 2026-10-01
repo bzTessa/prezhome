@@ -194,6 +194,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
       backgroundColor: AppColors.cream,
       appBar: AppBar(title: const Text('Economía')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab-economy',
         onPressed: _openScan,
         backgroundColor: AppColors.wood,
         foregroundColor: AppColors.ink,

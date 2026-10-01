@@ -75,6 +75,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
               elevation: 0,
             ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab-recipes',
         onPressed: _openAdd,
         backgroundColor: const Color(0xFFE2C792),
         foregroundColor: const Color(0xFF1E1E1E),
