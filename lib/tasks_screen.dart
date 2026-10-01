@@ -25,7 +25,9 @@ class _TasksScreenState extends State<TasksScreen> {
 
   void _reload() {
     final future = _load();
-    setState(() => _future = future);
+    setState(() {
+      _future = future;
+    });
   }
 
   Future<_TasksData> _load() async {

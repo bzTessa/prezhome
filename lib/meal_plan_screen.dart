@@ -48,7 +48,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   void _reload() {
     final f = _load();
-    setState(() => _future = f);
+    setState(() {
+      _future = f;
+    });
   }
 
   DateTime get _weekStart {
