@@ -99,8 +99,12 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     fullName: _nameController.text.trim(),
     sex: _sex,
     birthDate: _birthDate,
-    heightCm: double.tryParse(_heightController.text.trim().replaceAll(',', '.')),
-    weightKg: double.tryParse(_weightController.text.trim().replaceAll(',', '.')),
+    heightCm: double.tryParse(
+      _heightController.text.trim().replaceAll(',', '.'),
+    ),
+    weightKg: double.tryParse(
+      _weightController.text.trim().replaceAll(',', '.'),
+    ),
     activityLevel: _activity,
     goal: _goal,
     mealsPerDay: _mealsPerDay,
@@ -121,9 +125,9 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
           .update(_current.toUpdateMap())
           .eq('id', user.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil guardado')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Perfil guardado')));
       }
     } catch (e) {
       if (mounted) {
@@ -347,10 +351,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                       .map(
                         (e) => DropdownMenuItem(
                           value: e.key,
-                          child: Text(
-                            e.value,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          child: Text(e.value, overflow: TextOverflow.ellipsis),
                         ),
                       )
                       .toList(),
@@ -386,8 +387,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     Text(
                       'Total: ${_mealSplit.values.fold(0, (a, b) => a + b)}%',
                       style: TextStyle(
-                        color:
-                            _mealSplit.values.fold(0, (a, b) => a + b) == 100
+                        color: _mealSplit.values.fold(0, (a, b) => a + b) == 100
                             ? Colors.green[700]
                             : Colors.redAccent,
                         fontWeight: FontWeight.bold,
@@ -415,9 +415,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                           divisions: 20,
                           label: '$value%',
                           activeColor: const Color(0xFFE2C792),
-                          onChanged: (v) => setState(
-                            () => _mealSplit[key] = v.round(),
-                          ),
+                          onChanged: (v) =>
+                              setState(() => _mealSplit[key] = v.round()),
                         ),
                       ),
                       SizedBox(

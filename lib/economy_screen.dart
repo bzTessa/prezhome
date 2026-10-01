@@ -20,8 +20,18 @@ class _EconomyScreenState extends State<EconomyScreen> {
   late DateTime _viewMonth;
 
   static const _monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
 
   @override
@@ -151,12 +161,13 @@ class _EconomyScreenState extends State<EconomyScreen> {
     );
     if (value == null) return;
     final user = _client.auth.currentUser;
-    final homeId = (await _client
-            .from('profiles')
-            .select('home_id')
-            .eq('id', user!.id)
-            .single())['home_id']
-        as String;
+    final homeId =
+        (await _client
+                .from('profiles')
+                .select('home_id')
+                .eq('id', user!.id)
+                .single())['home_id']
+            as String;
     await _client.from('budgets').upsert({
       'home_id': homeId,
       'monthly_amount': value,
@@ -166,9 +177,9 @@ class _EconomyScreenState extends State<EconomyScreen> {
   }
 
   Future<void> _openScan() async {
-    final added = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const ScanTicketScreen()),
-    );
+    final added = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
     if (added == true) _reload();
   }
 

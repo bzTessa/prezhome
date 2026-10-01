@@ -198,90 +198,90 @@ class _RecipeCard extends StatelessWidget {
           ],
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RecipeImage(recipe: recipe, height: 150, radius: 16),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  recipe.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Color(0xFF1E1E1E),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RecipeImage(recipe: recipe, height: 150, radius: 16),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    recipe.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Color(0xFF1E1E1E),
+                    ),
                   ),
                 ),
-              ),
-              if (recipe.isFavorite)
-                const Icon(Icons.star, color: Color(0xFFE2C792), size: 20),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final label in recipe.mealTypeLabelsList)
-                _Chip(text: label),
-              if (recipe.appliance != 'none')
-                _Chip(text: recipe.applianceLabel),
-              if (recipe.totalTimeMinutes != null)
-                _Chip(text: '${recipe.totalTimeMinutes} min'),
-              if (recipe.freezable) const _Chip(text: 'Congelable'),
-            ],
-          ),
-          if (recipe.description != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              recipe.description!,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                if (recipe.isFavorite)
+                  const Icon(Icons.star, color: Color(0xFFE2C792), size: 20),
+              ],
             ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              if (recipe.calories != null)
-                Text(
-                  '${recipe.calories} kcal',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFB58A3C),
-                  ),
-                ),
-              if (recipe.protein != null) ...[
-                const SizedBox(width: 12),
-                Text(
-                  'P: ${recipe.protein!.toStringAsFixed(0)}g',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
-                ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final label in recipe.mealTypeLabelsList)
+                  _Chip(text: label),
+                if (recipe.appliance != 'none')
+                  _Chip(text: recipe.applianceLabel),
+                if (recipe.totalTimeMinutes != null)
+                  _Chip(text: '${recipe.totalTimeMinutes} min'),
+                if (recipe.freezable) const _Chip(text: 'Congelable'),
               ],
-              if (recipe.carbs != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  'C: ${recipe.carbs!.toStringAsFixed(0)}g',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ],
-              if (recipe.fat != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  'G: ${recipe.fat!.toStringAsFixed(0)}g',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ],
+            ),
+            if (recipe.description != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                recipe.description!,
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
             ],
-          ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (recipe.calories != null)
+                  Text(
+                    '${recipe.calories} kcal',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB58A3C),
+                    ),
+                  ),
+                if (recipe.protein != null) ...[
+                  const SizedBox(width: 12),
+                  Text(
+                    'P: ${recipe.protein!.toStringAsFixed(0)}g',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+                if (recipe.carbs != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    'C: ${recipe.carbs!.toStringAsFixed(0)}g',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+                if (recipe.fat != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    'G: ${recipe.fat!.toStringAsFixed(0)}g',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ],
+            ),
             if (servingsHint != null) ...[
               const SizedBox(height: 8),
               Text(

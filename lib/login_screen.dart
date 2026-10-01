@@ -199,8 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () =>
-                      setState(() => _isLoginMode = !_isLoginMode),
+                  onPressed: () => setState(() => _isLoginMode = !_isLoginMode),
                   child: Text(
                     _isLoginMode
                         ? '¿No tienes cuenta? Regístrate'

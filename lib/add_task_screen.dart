@@ -128,8 +128,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               decoration: _dec('Periodicidad'),
               items: HomeTask.recurrenceLabels.entries
                   .map(
-                    (e) =>
-                        DropdownMenuItem(value: e.key, child: Text(e.value)),
+                    (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
                   )
                   .toList(),
               onChanged: (v) => setState(() => _recurrence = v!),
@@ -273,9 +272,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _dueTime == null
-                          ? 'Sin hora'
-                          : _dueTime!.format(context),
+                      _dueTime == null ? 'Sin hora' : _dueTime!.format(context),
                     ),
                     if (_dueTime != null)
                       GestureDetector(

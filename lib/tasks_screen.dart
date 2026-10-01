@@ -46,8 +46,8 @@ class _TasksScreenState extends State<TasksScreen> {
         .eq('home_id', homeId);
     final members = <String, String>{};
     for (final p in (profs as List)) {
-      members[p['id'] as String] =
-          (p['full_name'] as String?)?.trim().isNotEmpty == true
+      members[p['id']
+          as String] = (p['full_name'] as String?)?.trim().isNotEmpty == true
           ? p['full_name'] as String
           : 'Miembro';
     }
@@ -59,8 +59,7 @@ class _TasksScreenState extends State<TasksScreen> {
         .eq('home_id', homeId)
         .order('is_done')
         .order('created_at', ascending: false);
-    final tasks =
-        (tasksRes as List).map((m) => HomeTask.fromMap(m)).toList();
+    final tasks = (tasksRes as List).map((m) => HomeTask.fromMap(m)).toList();
 
     // Puntos por usuario
     final pointsRes = await _client
@@ -96,23 +95,29 @@ class _TasksScreenState extends State<TasksScreen> {
 
       if (task.recurrence == 'once') {
         // Puntual: marcar como hecha
-        await _client.from('tasks').update({
-          'is_done': true,
-          'completed_by': user.id,
-          'completed_at': DateTime.now().toIso8601String(),
-        }).eq('id', task.id);
+        await _client
+            .from('tasks')
+            .update({
+              'is_done': true,
+              'completed_by': user.id,
+              'completed_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', task.id);
       } else {
         // Recurrente: se mantiene activa (solo suma puntos al completarla)
-        await _client.from('tasks').update({
-          'completed_by': user.id,
-          'completed_at': DateTime.now().toIso8601String(),
-        }).eq('id', task.id);
+        await _client
+            .from('tasks')
+            .update({
+              'completed_by': user.id,
+              'completed_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', task.id);
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('¡+${task.points} puntos!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('¡+${task.points} puntos!')));
       }
       _reload();
     } catch (e) {

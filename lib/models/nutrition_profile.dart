@@ -40,14 +40,16 @@ class NutritionProfile {
     Map<String, List<int>>? mealsAtHome,
     this.cookingMode = 'daily',
     this.portionMode = 'practical',
-  })  : mealSplit = mealSplit ?? const {
-          'breakfast': 20,
-          'lunch': 40,
-          'dinner': 40,
-          'snack': 0,
-          'dessert': 0,
-        },
-        mealsAtHome = mealsAtHome ?? const {};
+  }) : mealSplit =
+           mealSplit ??
+           const {
+             'breakfast': 20,
+             'lunch': 40,
+             'dinner': 40,
+             'snack': 0,
+             'dessert': 0,
+           },
+       mealsAtHome = mealsAtHome ?? const {};
 
   factory NutritionProfile.fromMap(Map<String, dynamic> map) {
     return NutritionProfile(
@@ -75,18 +77,21 @@ class NutritionProfile {
 
   static Map<String, int>? _parseSplit(dynamic raw) {
     if (raw is Map) {
-      return raw.map((k, v) =>
-          MapEntry(k.toString(), (v as num?)?.round() ?? 0));
+      return raw.map(
+        (k, v) => MapEntry(k.toString(), (v as num?)?.round() ?? 0),
+      );
     }
     return null;
   }
 
   static Map<String, List<int>>? _parseAtHome(dynamic raw) {
     if (raw is Map) {
-      return raw.map((k, v) => MapEntry(
-            k.toString(),
-            (v is List) ? v.map((e) => (e as num).toInt()).toList() : <int>[],
-          ));
+      return raw.map(
+        (k, v) => MapEntry(
+          k.toString(),
+          (v is List) ? v.map((e) => (e as num).toInt()).toList() : <int>[],
+        ),
+      );
     }
     return null;
   }
@@ -236,6 +241,5 @@ class NutritionProfile {
   };
 
   /// Suma de porcentajes (para validar que sumen ~100).
-  int get splitTotal =>
-      mealSplit.values.fold(0, (a, b) => a + b);
+  int get splitTotal => mealSplit.values.fold(0, (a, b) => a + b);
 }

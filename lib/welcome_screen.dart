@@ -48,9 +48,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _goLogin() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
   @override

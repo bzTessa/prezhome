@@ -198,10 +198,7 @@ class _DashboardView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.black54),
-                ),
+                Text(subtitle, style: const TextStyle(color: Colors.black54)),
               ],
             ),
           ),
@@ -230,8 +227,18 @@ class _CalendarViewState extends State<_CalendarView> {
 
   static const _weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   static const _months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
   static const _mealLabels = {
     'breakfast': 'Desayuno',
@@ -276,7 +283,9 @@ class _CalendarViewState extends State<_CalendarView> {
         final key = e.date.toIso8601String().split('T').first;
         final rec = row['recipes'];
         final title = (rec is Map ? rec['title'] : null) as String?;
-        byDate.putIfAbsent(key, () => []).add(
+        byDate
+            .putIfAbsent(key, () => [])
+            .add(
               _PlanItem(
                 mealType: e.mealType,
                 title: title ?? 'Receta',
@@ -314,7 +323,8 @@ class _CalendarViewState extends State<_CalendarView> {
     }
     for (var d = 1; d <= daysInMonth; d++) {
       final date = DateTime(_month.year, _month.month, d);
-      final isSelected = date.year == _selected.year &&
+      final isSelected =
+          date.year == _selected.year &&
           date.month == _selected.month &&
           date.day == _selected.day;
       final isToday = _isSameDay(date, DateTime.now());
@@ -440,9 +450,7 @@ class _CalendarViewState extends State<_CalendarView> {
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const MealPlanScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const MealPlanScreen()),
                     );
                     _loadMonthPlan(); // refrescar al volver
                   },
@@ -471,11 +479,7 @@ class _CalendarViewState extends State<_CalendarView> {
     if (items.isEmpty) {
       return Row(
         children: [
-          const MiauCharacter(
-            mood: MiauMood.curious,
-            size: 48,
-            float: false,
-          ),
+          const MiauCharacter(mood: MiauMood.curious, size: 48, float: false),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -509,8 +513,7 @@ class _CalendarViewState extends State<_CalendarView> {
                   it.title,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    decoration:
-                        it.skipped ? TextDecoration.lineThrough : null,
+                    decoration: it.skipped ? TextDecoration.lineThrough : null,
                     color: it.skipped ? Colors.grey : AppColors.ink,
                   ),
                 ),

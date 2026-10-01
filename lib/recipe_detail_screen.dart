@@ -21,7 +21,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   late Recipe _recipe;
   late Future<List<Ingredient>> _ingredientsFuture;
-  List<NutritionProfile> _profiles = []; // miembros del hogar con perfil visible
+  List<NutritionProfile> _profiles =
+      []; // miembros del hogar con perfil visible
   NutritionProfile? _myProfile; // perfil del usuario logueado (para el modo)
 
   bool get _isMealPrep => _myProfile?.isMealPrep ?? false;
@@ -172,7 +173,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       // Nº de raciones individuales preparadas.
       double servings;
       final mealGrams = _householdMealGrams(r);
-      if (mealGrams != null && r.gramsPerServing != null &&
+      if (mealGrams != null &&
+          r.gramsPerServing != null &&
           r.gramsPerServing! > 0) {
         servings = (mealGrams / r.gramsPerServing!) * _multiplier;
       } else {
@@ -301,10 +303,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 children: [
                   const Text(
                     'Cantidad a preparar',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -334,8 +333,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           icon: const Icon(Icons.remove_circle_outline),
                           onPressed: _multiplier > 1
                               ? () => setState(
-                                  () => _multiplier =
-                                      (_multiplier - 1).clamp(1, 50).toDouble(),
+                                  () => _multiplier = (_multiplier - 1)
+                                      .clamp(1, 50)
+                                      .toDouble(),
                                 )
                               : null,
                         ),
@@ -349,8 +349,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline),
                           onPressed: () => setState(
-                            () => _multiplier =
-                                (_multiplier + 1).clamp(1, 50).toDouble(),
+                            () => _multiplier = (_multiplier + 1)
+                                .clamp(1, 50)
+                                .toDouble(),
                           ),
                         ),
                       ],
@@ -447,10 +448,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        if (r.calories != null)
-                          _macro('${r.calories}', 'kcal'),
+                        if (r.calories != null) _macro('${r.calories}', 'kcal'),
                         if (r.protein != null)
-                          _macro('${r.protein!.toStringAsFixed(0)}g', 'Proteína'),
+                          _macro(
+                            '${r.protein!.toStringAsFixed(0)}g',
+                            'Proteína',
+                          ),
                         if (r.carbs != null)
                           _macro('${r.carbs!.toStringAsFixed(0)}g', 'Carbos'),
                         if (r.fat != null)
@@ -806,5 +809,3 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 }
-
-
