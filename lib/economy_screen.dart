@@ -16,15 +16,36 @@ class _EconomyScreenState extends State<EconomyScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   late Future<_EconomyData> _future;
 
+  // Mes que se está viendo (1 = primer día de ese mes).
+  late DateTime _viewMonth;
+
+  static const _monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  ];
+
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _viewMonth = DateTime(now.year, now.month);
     _future = _load();
   }
 
   void _reload() {
     final future = _load();
     setState(() => _future = future);
+  }
+
+  void _changeMonth(int delta) {
+    _viewMonth = DateTime(_viewMonth.year, _viewMonth.month + delta);
+    final future = _load();
+    setState(() => _future = future);
+  }
+
+  bool get _isCurrentMonth {
+    final now = DateTime.now();
+    return _viewMonth.year == now.year && _viewMonth.month == now.month;
   }
 
   Future<_EconomyData> _load() async {
@@ -38,9 +59,11 @@ class _EconomyScreenState extends State<EconomyScreen> {
     final homeId = profile?['home_id'] as String?;
     if (homeId == null) return _EconomyData(homeId: null);
 
-    final now = DateTime.now();
-    final firstOfMonth = DateTime(now.year, now.month, 1);
-    final firstStr = firstOfMonth.toIso8601String().split('T').first;
+    // Rango del mes que se está viendo.
+    final monthStart = DateTime(_viewMonth.year, _viewMonth.month, 1);
+    final monthEnd = DateTime(_viewMonth.year, _viewMonth.month + 1, 1);
+    final startStr = monthStart.toIso8601String().split('T').first;
+    final endStr = monthEnd.toIso8601String().split('T').first;
 
     // Presupuesto
     final budgetRow = await _client
@@ -50,18 +73,28 @@ class _EconomyScreenState extends State<EconomyScreen> {
         .maybeSingle();
     final budget = (budgetRow?['monthly_amount'] as num?)?.toDouble() ?? 0;
 
-    // Tickets del mes actual. Filtramos por created_at (cuándo se escaneó, dato
-    // siempre fiable) en vez de purchased_at (la fecha del ticket, que la IA
-    // puede leer mal o dejar vacía y haría desaparecer el ticket).
+    // Tickets del mes que se ve (por created_at, dato fiable).
     final ticketsRes = await _client
         .from('tickets')
         .select('id, merchant, total_amount, purchased_at, created_at')
         .eq('home_id', homeId)
-        .gte('created_at', firstStr)
+        .gte('created_at', startStr)
+        .lt('created_at', endStr)
         .order('created_at', ascending: false);
     final tickets = (ticketsRes as List).cast<Map<String, dynamic>>();
 
     final total = tickets.fold<double>(
+      0,
+      (a, t) => a + ((t['total_amount'] as num?)?.toDouble() ?? 0),
+    );
+
+    // Histórico: gasto total de TODOS los meses (memoria) + nº de tickets.
+    final allRes = await _client
+        .from('tickets')
+        .select('total_amount')
+        .eq('home_id', homeId);
+    final all = (allRes as List);
+    final historicalTotal = all.fold<double>(
       0,
       (a, t) => a + ((t['total_amount'] as num?)?.toDouble() ?? 0),
     );
@@ -71,6 +104,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
       budget: budget,
       tickets: tickets,
       totalThisMonth: total,
+      historicalTotal: historicalTotal,
+      historicalTicketCount: all.length,
     );
   }
 
@@ -174,10 +209,14 @@ class _EconomyScreenState extends State<EconomyScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             children: [
+              _monthNavigator(),
+              const SizedBox(height: 12),
               _budgetCard(data),
+              const SizedBox(height: 12),
+              _historicalCard(data),
               const SizedBox(height: 16),
               Text(
-                'TICKETS DE ESTE MES',
+                'TICKETS DE ${_monthNames[_viewMonth.month - 1].toUpperCase()}',
                 style: TextStyle(
                   fontSize: 12,
                   letterSpacing: 1,
@@ -193,6 +232,75 @@ class _EconomyScreenState extends State<EconomyScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _monthNavigator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed: () => _changeMonth(-1),
+          ),
+          Text(
+            '${_monthNames[_viewMonth.month - 1]} ${_viewMonth.year}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right),
+            // No dejar avanzar más allá del mes actual.
+            onPressed: _isCurrentMonth ? null : () => _changeMonth(1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _historicalCard(_EconomyData data) {
+    if (data.historicalTicketCount == 0) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.cream,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.history, color: AppColors.ink),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gasto total registrado',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+                Text(
+                  '${data.historicalTotal.toStringAsFixed(2)} €',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  '${data.historicalTicketCount} tickets en total',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -344,10 +452,14 @@ class _EconomyData {
   final double budget;
   final List<Map<String, dynamic>> tickets;
   final double totalThisMonth;
+  final double historicalTotal;
+  final int historicalTicketCount;
   _EconomyData({
     required this.homeId,
     this.budget = 0,
     this.tickets = const [],
     this.totalThisMonth = 0,
+    this.historicalTotal = 0,
+    this.historicalTicketCount = 0,
   });
 }
