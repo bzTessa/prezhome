@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Recipe {
   final String id;
   final String homeId;
@@ -152,11 +154,15 @@ class Recipe {
       mealTypes.map((t) => mealTypeLabels[t] ?? t).toList();
 
   /// Icono representativo según el tipo de comida (para el placeholder visual).
-  int get placeholderIconCode {
-    if (mealTypes.contains('breakfast')) return 0xe57a; // free_breakfast
-    if (mealTypes.contains('dessert')) return 0xe544; // cake
-    if (mealTypes.contains('snack')) return 0xe561; // fastfood
-    return 0xe56c; // restaurant
+  ///
+  /// Devuelve un [IconData] constante de [Icons] para que los widgets puedan
+  /// construir el icono sin crear un [IconData] con un code point calculado en
+  /// tiempo de ejecución (lo cual rompería el uso de constructores const).
+  IconData get placeholderIcon {
+    if (mealTypes.contains('breakfast')) return Icons.free_breakfast;
+    if (mealTypes.contains('dessert')) return Icons.cake;
+    if (mealTypes.contains('snack')) return Icons.fastfood;
+    return Icons.restaurant;
   }
 
   /// Densidad calórica: kcal por 100 g del plato preparado.
