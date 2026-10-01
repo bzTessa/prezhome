@@ -85,73 +85,91 @@ class _RecipesScreenState extends State<RecipesScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: FutureBuilder<_RecipesData>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error al cargar recetas: ${snapshot.error}'),
-            );
-          }
-          final data = snapshot.data!;
-          final recipes = data.recipes;
-          final perMeal = data.profile?.caloriesPerMeal;
-
-          if (recipes.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Image.asset(
-                        'assets/images/presidente_prezhome.jpg',
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Presidente Miau supervisa la cocina, pero aún no hay '
-                      'recetas registradas.\n¡Pulsa "Nueva receta" para empezar!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+      body: Column(
+        children: [
+          // Marca de version para diagnostico: si se ve este texto tras
+          // actualizar, el navegador ejecuta el build nuevo (no cacheado).
+          const Padding(
+            padding: EdgeInsets.only(top: 8, right: 12),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'build diag v1',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
               ),
-            );
-          }
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<_RecipesData>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error al cargar recetas: ${snapshot.error}'),
+                  );
+                }
+                final data = snapshot.data!;
+                final recipes = data.recipes;
+                final perMeal = data.profile?.caloriesPerMeal;
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-            itemCount: recipes.length,
-            itemBuilder: (context, index) {
-              final recipe = recipes[index];
-              return _RecipeCard(
-                recipe: recipe,
-                caloriesPerMeal: perMeal,
-                onTap: () async {
-                  final changed = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(
-                      builder: (_) => RecipeDetailScreen(recipe: recipe),
+                if (recipes.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: Image.asset(
+                              'assets/images/presidente_prezhome.jpg',
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Presidente Miau supervisa la cocina, pero aún no hay '
+                            'recetas registradas.\n¡Pulsa "Nueva receta" para empezar!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
-                  if (changed == true) _reload();
-                },
-              );
-            },
-          );
-        },
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                  itemCount: recipes.length,
+                  itemBuilder: (context, index) {
+                    final recipe = recipes[index];
+                    return _RecipeCard(
+                      recipe: recipe,
+                      caloriesPerMeal: perMeal,
+                      onTap: () async {
+                        final changed = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => RecipeDetailScreen(recipe: recipe),
+                          ),
+                        );
+                        if (changed == true) _reload();
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
