@@ -52,7 +52,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
   void _reload() {
     final future = _fetch();
-    setState(() => _future = future);
+    setState(() {
+      _future = future;
+    });
   }
 
   Future<void> _openAdd() async {

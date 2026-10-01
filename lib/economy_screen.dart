@@ -44,13 +44,17 @@ class _EconomyScreenState extends State<EconomyScreen> {
 
   void _reload() {
     final future = _load();
-    setState(() => _future = future);
+    setState(() {
+      _future = future;
+    });
   }
 
   void _changeMonth(int delta) {
     _viewMonth = DateTime(_viewMonth.year, _viewMonth.month + delta);
     final future = _load();
-    setState(() => _future = future);
+    setState(() {
+      _future = future;
+    });
   }
 
   bool get _isCurrentMonth {

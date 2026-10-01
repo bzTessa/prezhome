@@ -36,7 +36,9 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
 
   void _retry() {
     final future = _loadHomeMembership();
-    setState(() => _hasHome = future);
+    setState(() {
+      _hasHome = future;
+    });
   }
 
   @override
