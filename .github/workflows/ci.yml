@@ -1,0 +1,71 @@
+# Integracion continua (CI) de PrezHome.
+# Se ejecuta en cada pull request y en cada push para comprobar que la app
+# Flutter compila, respeta el formato, pasa el analisis estatico y los tests,
+# y que las migraciones de Supabase no tienen problemas de sintaxis.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - ci/github-actions
+
+jobs:
+  # Verificacion de la app Flutter: formato, analisis y tests.
+  flutter:
+    name: Flutter (formato, analisis y tests)
+    runs-on: ubuntu-latest
+    steps:
+      # Descarga el codigo del repositorio.
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Instala Flutter en el canal estable. El SDK de Dart es ^3.11.1,
+      # que viene con una version reciente de Flutter stable (~3.35+),
+      # por eso usamos el canal stable.
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # Descarga las dependencias declaradas en pubspec.yaml.
+      - name: Descargar dependencias
+        run: flutter pub get
+
+      # Comprueba que el codigo esta bien formateado. Si algun fichero no
+      # cumple el formato, el paso falla (no reformatea nada).
+      - name: Verificar formato
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Analisis estatico segun analysis_options.yaml (flutter_lints).
+      - name: Analizar codigo
+        run: flutter analyze
+
+      # Ejecuta los tests del proyecto (test/widget_test.dart y demas).
+      - name: Ejecutar tests
+        run: flutter test
+
+  # Validacion de las migraciones de Supabase.
+  supabase:
+    name: Supabase (validacion de migraciones)
+    runs-on: ubuntu-latest
+    steps:
+      # Descarga el codigo del repositorio.
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Instala la CLI de Supabase en su ultima version.
+      - name: Instalar la CLI de Supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Validamos las migraciones con `supabase db lint`.
+      # NOTA: no usamos `supabase db reset` ni un arranque local de la base de
+      # datos porque eso requeriria un supabase/config.toml committeado y Docker
+      # disponible en el runner, cosas que este repositorio no garantiza.
+      # Por eso `db lint` es la validacion principal: revisa la sintaxis y
+      # posibles problemas de las migraciones sin levantar una base local.
+      - name: Validar migraciones con db lint
+        run: supabase db lint --level warning
