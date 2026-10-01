@@ -35,7 +35,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   void _reload() {
-    setState(() => _itemsFuture = _fetchItems());
+    final future = _fetchItems();
+    setState(() => _itemsFuture = future);
   }
 
   Future<void> _deleteItem(InventoryItem item) async {
