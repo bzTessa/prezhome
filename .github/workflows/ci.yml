@@ -123,9 +123,14 @@ jobs:
 
             # 3. Comprobacion basica de forma: los parentesis deben estar
             #    balanceados. Es un chequeo sintactico simple que no necesita
-            #    una base de datos.
-            ABIERTOS=$(tr -cd '(' < "$FICHERO" | wc -c | tr -d ' ')
-            CERRADOS=$(tr -cd ')' < "$FICHERO" | wc -c | tr -d ' ')
+            #    una base de datos. Antes de contar quitamos los comentarios de
+            #    linea de SQL (todo lo que va tras '--' hasta el fin de linea)
+            #    para no contar los parentesis que aparezcan dentro de un
+            #    comentario (p. ej. "(homes_select)" o "(0013-0020)"), que no
+            #    forman parte del SQL ejecutable y darian falsos positivos.
+            SIN_COMENTARIOS=$(sed 's/--.*$//' "$FICHERO")
+            ABIERTOS=$(printf '%s' "$SIN_COMENTARIOS" | tr -cd '(' | wc -c | tr -d ' ')
+            CERRADOS=$(printf '%s' "$SIN_COMENTARIOS" | tr -cd ')' | wc -c | tr -d ' ')
             if [ "$ABIERTOS" != "$CERRADOS" ]; then
               echo "  ERROR: parentesis desbalanceados en '$BASENAME' ($ABIERTOS abiertos, $CERRADOS cerrados)."
               FALLO=1
