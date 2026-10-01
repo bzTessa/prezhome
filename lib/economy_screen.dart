@@ -50,13 +50,15 @@ class _EconomyScreenState extends State<EconomyScreen> {
         .maybeSingle();
     final budget = (budgetRow?['monthly_amount'] as num?)?.toDouble() ?? 0;
 
-    // Tickets del mes actual
+    // Tickets del mes actual. Filtramos por created_at (cuándo se escaneó, dato
+    // siempre fiable) en vez de purchased_at (la fecha del ticket, que la IA
+    // puede leer mal o dejar vacía y haría desaparecer el ticket).
     final ticketsRes = await _client
         .from('tickets')
-        .select('id, merchant, total_amount, purchased_at')
+        .select('id, merchant, total_amount, purchased_at, created_at')
         .eq('home_id', homeId)
-        .gte('purchased_at', firstStr)
-        .order('purchased_at', ascending: false);
+        .gte('created_at', firstStr)
+        .order('created_at', ascending: false);
     final tickets = (ticketsRes as List).cast<Map<String, dynamic>>();
 
     final total = tickets.fold<double>(
