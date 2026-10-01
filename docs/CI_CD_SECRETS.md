@@ -122,16 +122,50 @@ Sigue esta ruta exacta dentro del navegador:
 > workflows. Copialos tal cual aparecen en esta tabla (mayusculas y guiones
 > bajos incluidos).
 
+## Aprobacion manual real de los despliegues (Environment "production")
+
+Para que la aprobacion de un despliegue sea de verdad (que GitHub pare el
+proceso y espere a que una persona lo apruebe, en lugar de aplicarse solo), el
+workflow de despliegue usa un "Environment" (entorno) llamado `production`. Si
+quieres que esa aprobacion manual quede forzada por la plataforma, configuralo
+asi una sola vez:
+
+1. Entra en la pagina del repositorio en GitHub.
+2. Pulsa la pestana **Settings** (Ajustes).
+3. En el menu de la izquierda, pulsa **Environments** (Entornos).
+4. Pulsa **New environment** (Nuevo entorno), escribe exactamente `production`
+   como nombre y pulsa **Configure environment**.
+5. Marca la opcion **Required reviewers** (Revisores requeridos) y anadete a ti
+   misma (o a quien deba aprobar). Guarda los cambios con **Save protection rules**.
+
+A partir de ese momento, cada vez que haya que desplegar migraciones a Supabase,
+el proceso quedara EN PAUSA esperando tu aprobacion. Recibiras un aviso en GitHub
+y tendras que pulsar **Review deployments** -> **Approve and deploy** para que se
+apliquen los cambios. Si no lo apruebas, no se despliega nada.
+
+> Nota honesta: si NO configuras este entorno con revisores requeridos, el
+> despliegue se aplicara de forma automatica en cuanto cambien las migraciones
+> en `main`. El paso de pausa y aprobacion solo existe si creas el entorno
+> `production` con la regla de revisores como se explica arriba. El gate de
+> seguridad del workflow de validacion (DROP, RLS, auth) actua antes, en los
+> pull requests, pero esa comprobacion por si sola no detiene el despliegue a
+> `main`: para detenerlo de verdad necesitas el entorno protegido.
+
 ## Que depende de ti y que deja listo el asistente
 
 Para que quede claro quien hace que:
 
 - **Tu te encargas de:**
   - Configurar los secrets en GitHub siguiendo esta guia.
-  - Aprobar y ejecutar los despliegues cuando corresponda. Algunos cambios de la
-    base de datos (por ejemplo los destructivos o los que tocan permisos de
-    seguridad) requieren tu aprobacion manual a proposito, para que nada
-    delicado se aplique de forma automatica.
+  - Configurar el entorno `production` con revisores requeridos (ver la seccion
+    "Aprobacion manual real de los despliegues") si quieres que GitHub pare el
+    despliegue y espere tu aprobacion. Mientras no lo configures, los
+    despliegues a `main` se aplican automaticamente.
+  - Aprobar y ejecutar los despliegues cuando corresponda. El workflow de
+    validacion marca para revision manual los cambios delicados (destructivos o
+    de permisos de seguridad) en los pull requests; y, si configuras el entorno
+    `production`, cada despliegue a la base de datos esperara tu aprobacion
+    explicita antes de aplicarse.
 - **El asistente deja listo:**
   - Los workflows de automatizacion (CI, despliegue y validacion de cambios) ya
     preparados en el repositorio.

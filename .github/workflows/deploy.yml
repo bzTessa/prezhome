@@ -15,10 +15,27 @@ on:
     paths:
       - 'supabase/migrations/**'
 
+# Serializamos los despliegues: si llegan dos merges seguidos a main, no
+# queremos dos `supabase db push` solapados contra la misma base de datos
+# (el resultado seria impredecible). Con esta clave de concurrencia solo se
+# ejecuta un despliegue a la vez; aqui NO cancelamos el que esta en curso
+# (cancel-in-progress: false) para no interrumpir un push a mitad de camino,
+# sino que el siguiente espera a que termine.
+concurrency:
+  group: desplegar-supabase
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Aplicar migraciones en Supabase
     runs-on: ubuntu-latest
+    # Colgamos el despliegue de un GitHub Environment llamado 'production'.
+    # Esto permite que la aprobacion manual sea REAL (forzada por la plataforma)
+    # y no solo una convencion: si configuras en GitHub (Settings -> Environments
+    # -> production) una regla de "required reviewers", este job quedara en
+    # pausa esperando que una persona lo apruebe antes de aplicar nada.
+    # Los pasos para configurarlo estan en docs/CI_CD_SECRETS.md.
+    environment: production
     # Variables de entorno a partir de los secrets del repositorio.
     # SUPABASE_ACCESS_TOKEN autentica la CLI (equivale a iniciar sesion).
     # SUPABASE_DB_PASSWORD es la contrasena de la base de datos del proyecto.

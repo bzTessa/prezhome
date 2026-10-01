@@ -5,7 +5,8 @@
 #      modificar ni borrar. Solo se permiten migraciones nuevas con prefijo
 #      0021 o superior, siguiendo el patron NNNN_nombre.sql (4 digitos).
 #   2. DUPLICADOS: no puede haber dos migraciones con el mismo prefijo numerico.
-#   3. SENTENCIAS PELIGROSAS: DROP TABLE y DROP COLUMN requieren revision manual.
+#   3. SENTENCIAS PELIGROSAS: DROP TABLE y borrado de columnas (tanto la forma
+#      larga DROP COLUMN como la forma corta DROP col) requieren revision manual.
 #   4. CAMBIOS RLS/AUTH: cambios en politicas (policy / row level security) o
 #      referencias a auth. requieren revision manual.
 #
@@ -143,8 +144,15 @@ jobs:
               echo "  AVISO: contiene DROP TABLE. Requiere aprobacion manual."
               REQUIERE_MANUAL=1
             fi
-            if grep -iqE 'drop[[:space:]]+column' "$FICHERO"; then
-              echo "  AVISO: contiene DROP COLUMN. Requiere aprobacion manual."
+            # Postgres admite dos formas de borrar una columna:
+            #   ALTER TABLE t DROP COLUMN c;   (forma larga)
+            #   ALTER TABLE t DROP c;          (forma corta, sin COLUMN)
+            # Por eso hacemos la palabra COLUMN opcional, para no dejar escapar
+            # la forma corta (que es igual de destructiva). Toleramos espacios y
+            # el posible IF EXISTS entre DROP y COLUMN.
+            if grep -iqE 'drop[[:space:]]+(column[[:space:]]+)?(if[[:space:]]+exists[[:space:]]+)?' "$FICHERO" \
+               && grep -iqE 'alter[[:space:]]+table' "$FICHERO"; then
+              echo "  AVISO: posible borrado de columna (DROP COLUMN o forma corta DROP col). Requiere aprobacion manual."
               REQUIERE_MANUAL=1
             fi
 
@@ -159,6 +167,13 @@ jobs:
             fi
 
             # (d) Cambios de auth: cualquier referencia al esquema auth.
+            # DECISION DELIBERADA: este patron es amplio a proposito. Marca
+            # cualquier uso de 'auth.' (incluido el ubicuo auth.uid() de las
+            # policies de RLS). Preferimos sobre-bloquear (fail-safe): es mejor
+            # pedir una revision manual de mas que dejar pasar un cambio de
+            # seguridad sin mirar. Si en el futuro la aprobacion manual se
+            # vuelve un tramite constante, se puede acotar el patron (por
+            # ejemplo a auth.users / grant / revoke) de forma consciente.
             if grep -iqE 'auth\.' "$FICHERO"; then
               echo "  AVISO: hace referencia a auth. Requiere aprobacion manual."
               REQUIERE_MANUAL=1
