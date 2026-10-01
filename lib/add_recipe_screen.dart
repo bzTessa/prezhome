@@ -402,10 +402,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       // Storage), no bloqueamos: guardamos la receta sin foto y avisamos.
       String? uploadedPath;
       bool imageFailed = false;
+      String? imageError;
       try {
         uploadedPath = await _uploadImageIfAny(homeId);
-      } catch (_) {
+      } catch (e) {
         imageFailed = true;
+        imageError = e.toString();
       }
 
       final recipe = Recipe(
@@ -480,10 +482,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         if (imageFailed) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Receta guardada, pero la foto no se pudo subir. '
-                'Prueba a editarla más tarde.',
+                'Receta guardada, pero la foto no se pudo subir: '
+                '${imageError ?? ''}',
               ),
             ),
           );
