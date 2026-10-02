@@ -15,13 +15,23 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _servingsController = TextEditingController();
+  String _itemType = 'comida';
   String _selectedCategory = 'Despensa';
   String _selectedUnit = 'unidades';
   String _kind = 'ingredient';
   DateTime? _frozenOn;
   bool _isLoading = false;
 
-  final List<String> _categories = ['Despensa', 'Nevera', 'Congelador'];
+  static const List<String> _foodCategories = [
+    'Despensa',
+    'Nevera',
+    'Congelador',
+  ];
+  static const List<String> _homeCategories = ['Limpieza', 'Hogar'];
+
+  List<String> get _categories =>
+      _itemType == 'hogar' ? _homeCategories : _foodCategories;
+
   final List<String> _units = [
     'unidades',
     'kg',
@@ -62,20 +72,24 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       );
       if (qty == null) throw 'Introduce una cantidad válida.';
 
+      final isFood = _itemType == 'comida';
       final item = InventoryItem(
         id: '',
         homeId: homeId,
         name: _nameController.text.trim(),
         category: _selectedCategory,
+        itemType: _itemType,
         quantity: qty,
         unit: _selectedUnit,
-        kind: _kind,
-        servings: (_kind != 'ingredient')
+        kind: isFood ? _kind : 'ingredient',
+        servings: (isFood && _kind != 'ingredient')
             ? double.tryParse(
                 _servingsController.text.trim().replaceAll(',', '.'),
               )
             : null,
-        frozenOn: _selectedCategory == 'Congelador' ? _frozenOn : null,
+        frozenOn: (isFood && _selectedCategory == 'Congelador')
+            ? _frozenOn
+            : null,
       );
 
       await Supabase.instance.client
@@ -109,7 +123,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isFrozen = _selectedCategory == 'Congelador';
+    final isFood = _itemType == 'comida';
+    final isFrozen = isFood && _selectedCategory == 'Congelador';
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(title: const Text('Añadir al inventario')),
@@ -117,41 +132,72 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         padding: const EdgeInsets.all(24.0),
         child: ListView(
           children: [
-            // Tipo de item (nivel)
+            // Tipo de producto (comida u hogar/limpieza)
             const Text(
-              '¿Qué es?',
+              'Tipo de producto',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              children: InventoryItem.kindLabels.entries.map((e) {
-                final selected = _kind == e.key;
+              children: InventoryItem.itemTypeLabels.entries.map((e) {
+                final selected = _itemType == e.key;
                 return ChoiceChip(
                   label: Text(e.value),
                   selected: selected,
                   selectedColor: AppColors.wood,
                   backgroundColor: Colors.white,
-                  onSelected: (_) => setState(() => _kind = e.key),
+                  onSelected: (_) {
+                    setState(() {
+                      _itemType = e.key;
+                      // Al cambiar de tipo, fijamos una categoría válida.
+                      if (!_categories.contains(_selectedCategory)) {
+                        _selectedCategory = _categories.first;
+                      }
+                    });
+                  },
                 );
               }).toList(),
             ),
-            const SizedBox(height: 4),
-            Text(
-              _kind == 'ingredient'
-                  ? 'Materia prima (ej. pollo troceado, cebolla picada).'
-                  : _kind == 'prep'
-                  ? 'Base preparada (ej. sofrito, sopa en daditos).'
-                  : 'Plato listo para comer (ej. lentejas cocinadas).',
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
-            ),
             const SizedBox(height: 20),
+
+            // Nivel del item (solo aplica a comida).
+            if (isFood) ...[
+              const Text(
+                '¿Qué es?',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: InventoryItem.kindLabels.entries.map((e) {
+                  final selected = _kind == e.key;
+                  return ChoiceChip(
+                    label: Text(e.value),
+                    selected: selected,
+                    selectedColor: AppColors.wood,
+                    backgroundColor: Colors.white,
+                    onSelected: (_) => setState(() => _kind = e.key),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _kind == 'ingredient'
+                    ? 'Materia prima (ej. pollo troceado, cebolla picada).'
+                    : _kind == 'prep'
+                    ? 'Base preparada (ej. sofrito, sopa en daditos).'
+                    : 'Plato listo para comer (ej. lentejas cocinadas).',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+            ],
 
             TextField(controller: _nameController, decoration: _dec('Nombre')),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _selectedCategory,
-              decoration: _dec('Ubicación'),
+              decoration: _dec(isFood ? 'Ubicación' : 'Categoría'),
               items: _categories
                   .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                   .toList(),
@@ -186,8 +232,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               ],
             ),
 
-            // Raciones (solo para platos/preparados)
-            if (_kind != 'ingredient') ...[
+            // Raciones (solo para platos/preparados de comida)
+            if (isFood && _kind != 'ingredient') ...[
               const SizedBox(height: 16),
               TextField(
                 controller: _servingsController,

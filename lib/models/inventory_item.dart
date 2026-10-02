@@ -3,6 +3,7 @@ class InventoryItem {
   final String homeId;
   final String name;
   final String category; // Despensa | Nevera | Congelador (ubicación)
+  final String itemType; // comida | hogar
   final double quantity;
   final String unit;
   final DateTime? expirationDate;
@@ -19,6 +20,7 @@ class InventoryItem {
     required this.homeId,
     required this.name,
     required this.category,
+    this.itemType = 'comida',
     required this.quantity,
     required this.unit,
     this.expirationDate,
@@ -35,6 +37,7 @@ class InventoryItem {
       homeId: map['home_id'],
       name: map['name'],
       category: map['category'],
+      itemType: map['item_type'] ?? 'comida',
       quantity: (map['quantity'] as num).toDouble(),
       unit: map['unit'],
       expirationDate: map['expiration_date'] != null
@@ -57,6 +60,7 @@ class InventoryItem {
       'home_id': homeId,
       'name': name,
       'category': category,
+      'item_type': itemType,
       'quantity': quantity,
       'unit': unit,
       'expiration_date': expirationDate?.toIso8601String().split('T').first,
@@ -84,4 +88,11 @@ class InventoryItem {
   };
 
   String get kindLabel => kindLabels[kind] ?? 'Ingrediente';
+
+  static const Map<String, String> itemTypeLabels = {
+    'comida': 'Comida',
+    'hogar': 'Hogar/Limpieza',
+  };
+
+  String get itemTypeLabel => itemTypeLabels[itemType] ?? 'Comida';
 }

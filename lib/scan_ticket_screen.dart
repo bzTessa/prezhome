@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/inventory_item.dart';
 import 'theme/app_theme.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
@@ -27,6 +28,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   DateTime _purchasedAt = DateTime.now();
   List<_ItemRow> _items = [];
   bool _hasResult = false;
+  bool _addToPantry = true;
 
   @override
   void dispose() {
@@ -191,6 +193,27 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             .upsert(aliasByRaw.values.toList(), onConflict: 'home_id,raw_name');
       }
 
+      // 4. Añadir los productos a la despensa (inventario), si procede.
+      //    Es un paso secundario: si falla, el ticket queda guardado igual.
+      if (_addToPantry) {
+        try {
+          await _addItemsToPantry(homeId);
+        } catch (e) {
+          debugPrint('No se pudo actualizar la despensa: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'El ticket se guardó, pero no se pudo actualizar la '
+                  'despensa: $e',
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+      }
+
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
@@ -203,6 +226,107 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       }
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// Mete los productos del ticket en el inventario (comida, en Despensa).
+  /// Deduplica contra el inventario existente y dentro del propio ticket:
+  /// si el producto ya existe por NOMBRE NORMALIZADO en CUALQUIER ubicación
+  /// (Despensa, Nevera o Congelador), suma la cantidad sobre esa fila en vez
+  /// de crear un duplicado. Solo si no existe en ninguna ubicación se inserta
+  /// uno nuevo en Despensa (comida por defecto).
+  ///
+  /// La categoría que la IA asignó por línea del ticket NO se usa para la
+  /// ubicación del inventario: todos los productos del ticket entran como
+  /// 'comida' en 'Despensa'. Es una simplificación deliberada (lo pedido en el
+  /// diseño y lo que anuncia el subtítulo del switch); mapear Nevera/Congelador
+  /// desde la IA es opcional y queda fuera de alcance. El cruce se hace solo
+  /// por nombre, así que un producto ya ubicado en Nevera/Congelador igualmente
+  /// recibe la suma y no se duplica.
+  Future<void> _addItemsToPantry(dynamic homeId) async {
+    const category = 'Despensa';
+
+    // Inventario actual del hogar (RLS ya filtra; el eq es explícito y barato).
+    final existing = await _client
+        .from('inventory_items')
+        .select('id, name, item_type, quantity, created_at')
+        .eq('home_id', homeId);
+
+    // Índice por NOMBRE normalizado -> {id, quantity}, ignorando la ubicación.
+    // Solo cruzamos contra filas de comida (item_type != 'hogar') para no
+    // fusionar un alimento del ticket con un producto de limpieza que
+    // casualmente se llame igual. Si hubiera varias filas con el mismo nombre,
+    // elegimos de forma determinista la más antigua (menor created_at; a
+    // igualdad, menor id) para que el resultado sea estable.
+    final existingByName = <String, Map<String, dynamic>>{};
+    for (final row in (existing as List)) {
+      final map = Map<String, dynamic>.from(row as Map);
+      final itemType = (map['item_type'] ?? 'comida').toString();
+      if (itemType == 'hogar') continue;
+      final name = (map['name'] ?? '').toString();
+      final key = name.trim().toLowerCase();
+      if (key.isEmpty) continue;
+      final id = (map['id'] ?? '').toString();
+      final createdAt = (map['created_at'] ?? '').toString();
+      final candidate = {
+        'id': map['id'],
+        'quantity': (map['quantity'] as num?)?.toDouble() ?? 0,
+        'created_at': createdAt,
+        '_id': id,
+      };
+      final prev = existingByName[key];
+      if (prev == null) {
+        existingByName[key] = candidate;
+      } else {
+        final prevCreated = (prev['created_at'] as String);
+        final prevId = (prev['_id'] as String);
+        final isOlder =
+            createdAt.compareTo(prevCreated) < 0 ||
+            (createdAt == prevCreated && id.compareTo(prevId) < 0);
+        if (isOlder) existingByName[key] = candidate;
+      }
+    }
+
+    // Acumulamos las cantidades del ticket por nombre normalizado para no
+    // duplicar dentro del propio lote (un ticket puede repetir el producto).
+    final ticketByName = <String, Map<String, dynamic>>{};
+    for (final it in _items) {
+      final name = it.name.text.trim();
+      if (name.isEmpty) continue;
+      final qtyRaw = _num(it.quantity.text);
+      final qty = qtyRaw > 0 ? qtyRaw : 1.0;
+      final key = name.trim().toLowerCase();
+      final acc = ticketByName[key];
+      if (acc == null) {
+        ticketByName[key] = {'name': name, 'quantity': qty};
+      } else {
+        acc['quantity'] = (acc['quantity'] as double) + qty;
+      }
+    }
+
+    for (final entry in ticketByName.entries) {
+      final name = entry.value['name'] as String;
+      final qty = entry.value['quantity'] as double;
+      final found = existingByName[entry.key];
+      if (found != null) {
+        final newQty = (found['quantity'] as double) + qty;
+        await _client
+            .from('inventory_items')
+            .update({'quantity': newQty})
+            .eq('id', found['id']);
+      } else {
+        final item = InventoryItem(
+          id: '',
+          homeId: homeId,
+          name: name,
+          category: category,
+          itemType: 'comida',
+          quantity: qty,
+          unit: 'unidades',
+          kind: 'ingredient',
+        );
+        await _client.from('inventory_items').insert(item.toMap());
+      }
     }
   }
 
@@ -328,6 +452,22 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                           '${_purchasedAt.year}',
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Añadir a la despensa'),
+                      subtitle: const Text(
+                        'Mete los productos en el inventario (comida, en '
+                        'Despensa)',
+                      ),
+                      value: _addToPantry,
+                      activeThumbColor: AppColors.wood,
+                      onChanged: (val) {
+                        setState(() {
+                          _addToPantry = val;
+                        });
+                      },
                     ),
                   ],
                 ),
