@@ -90,6 +90,21 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
+  /// Rellena el formulario con los valores de una plantilla tipica del hogar.
+  /// La usuaria puede ajustar cualquier campo despues antes de guardar.
+  void _applyTemplate(_TaskTemplate tpl) {
+    setState(() {
+      _titleController.text = tpl.title;
+      _points = tpl.points;
+      _recurrence = tpl.recurrence;
+      _intervalCount = tpl.intervalCount ?? _intervalCount;
+      _intervalUnit = tpl.intervalUnit ?? _intervalUnit;
+      // Las plantillas actuales no usan dias concretos; limpiamos por si venia
+      // una seleccion previa de un cambio manual.
+      _weekdays.clear();
+    });
+  }
+
   InputDecoration _dec(String label) => InputDecoration(
     labelText: label,
     filled: true,
@@ -110,6 +125,37 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            // Plantillas tipicas del hogar: un toque rellena titulo, periodicidad
+            // y puntos sugeridos; luego se puede ajustar todo antes de guardar.
+            const Text(
+              'Plantillas rápidas',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Toca una para rellenarla y ajústala si quieres.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _TaskTemplate.catalog
+                  .map(
+                    (tpl) => ActionChip(
+                      avatar: Text(
+                        tpl.emoji,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      label: Text(tpl.title),
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: AppColors.wood),
+                      onPressed: () => _applyTemplate(tpl),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 20),
             TextFormField(
               controller: _titleController,
               decoration: _dec('Título'),
@@ -321,4 +367,82 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       ),
     );
   }
+}
+
+/// Plantilla de tarea tipica del hogar. Prerellena titulo, periodicidad y
+/// puntos sugeridos; la usuaria puede ajustarlo todo antes de guardar.
+class _TaskTemplate {
+  final String emoji;
+  final String title;
+  final String recurrence; // once | daily | weekly | custom_interval
+  final int? intervalCount;
+  final String? intervalUnit; // 'day' | 'week'
+  final int points;
+
+  const _TaskTemplate({
+    required this.emoji,
+    required this.title,
+    required this.recurrence,
+    this.intervalCount,
+    this.intervalUnit,
+    this.points = 10,
+  });
+
+  /// Catalogo de plantillas tipicas del hogar.
+  static const List<_TaskTemplate> catalog = [
+    _TaskTemplate(
+      emoji: '🍽️',
+      title: 'Fregar los platos',
+      recurrence: 'daily',
+      points: 10,
+    ),
+    _TaskTemplate(
+      emoji: '🗑️',
+      title: 'Sacar la basura',
+      recurrence: 'custom_interval',
+      intervalCount: 2,
+      intervalUnit: 'day',
+      points: 10,
+    ),
+    _TaskTemplate(
+      emoji: '🚽',
+      title: 'Limpiar el baño',
+      recurrence: 'weekly',
+      points: 20,
+    ),
+    _TaskTemplate(
+      emoji: '🛏️',
+      title: 'Cambiar las sábanas',
+      recurrence: 'weekly',
+      points: 20,
+    ),
+    _TaskTemplate(
+      emoji: '🧹',
+      title: 'Barrer y fregar el suelo',
+      recurrence: 'custom_interval',
+      intervalCount: 3,
+      intervalUnit: 'day',
+      points: 15,
+    ),
+    _TaskTemplate(
+      emoji: '🧺',
+      title: 'Poner la lavadora',
+      recurrence: 'custom_interval',
+      intervalCount: 3,
+      intervalUnit: 'day',
+      points: 10,
+    ),
+    _TaskTemplate(
+      emoji: '🧽',
+      title: 'Limpiar el polvo',
+      recurrence: 'weekly',
+      points: 15,
+    ),
+    _TaskTemplate(
+      emoji: '🛒',
+      title: 'Hacer la compra',
+      recurrence: 'weekly',
+      points: 15,
+    ),
+  ];
 }
