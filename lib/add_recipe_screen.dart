@@ -45,6 +45,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _fatController = TextEditingController();
   final _prepController = TextEditingController();
   final _cookController = TextEditingController();
+  final _videoController = TextEditingController();
 
   String _appliance = 'none';
   final Set<String> _mealTypes = {}; // selección múltiple
@@ -96,6 +97,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _fatController.text = r.fat?.toStringAsFixed(0) ?? '';
     _prepController.text = r.prepTimeMinutes?.toString() ?? '';
     _cookController.text = r.cookTimeMinutes?.toString() ?? '';
+    _videoController.text = r.videoUrl ?? '';
     _appliance = r.appliance;
     _mealTypes
       ..clear()
@@ -158,6 +160,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _fatController.dispose();
     _prepController.dispose();
     _cookController.dispose();
+    _videoController.dispose();
     for (final ing in _ingredients) {
       ing.dispose();
     }
@@ -174,6 +177,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     final t = c.text.trim();
     if (t.isEmpty) return null;
     return int.tryParse(t);
+  }
+
+  /// Comprueba de forma laxa si el texto parece un enlace http/https. Solo se
+  /// usa para avisar suavemente; nunca para impedir guardar la receta.
+  bool _looksLikeUrl(String text) {
+    final uri = Uri.tryParse(text);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
   }
 
   Future<void> _fillWithAI() async {
@@ -401,6 +413,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       );
       return;
     }
+    // Aviso suave si el enlace de video no parece una URL. No bloquea: la
+    // receta se guarda igual con el texto tal cual lo escribió la persona.
+    final videoText = _videoController.text.trim();
+    if (videoText.isNotEmpty && !_looksLikeUrl(videoText)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'El enlace de video no parece una URL, pero lo guardamos igual.',
+          ),
+        ),
+      );
+    }
     setState(() => _isLoading = true);
     try {
       final user = _client.auth.currentUser;
@@ -450,6 +474,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         mealTypes: _mealTypes.toList(),
         isFavorite: _isFavorite,
         freezable: _freezable,
+        videoUrl: _videoController.text.trim().isEmpty
+            ? null
+            : _videoController.text.trim(),
         components: _components,
         freezerDays: _freezerDays,
       );
@@ -653,6 +680,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     controller: _descriptionController,
                     decoration: _dec('Descripción (opcional)'),
                     maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  // Enlace de video opcional (Instagram, TikTok, YouTube...).
+                  // Si el texto no parece una URL mostramos un aviso suave en
+                  // _save, pero NO bloqueamos el guardado (ver _save).
+                  TextFormField(
+                    controller: _videoController,
+                    keyboardType: TextInputType.url,
+                    decoration: _dec('Enlace de video (opcional)'),
                   ),
                   const SizedBox(height: 20),
 

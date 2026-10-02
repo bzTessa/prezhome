@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
 import 'models/ingredient.dart';
@@ -222,6 +223,35 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
   }
 
+  /// Abre el enlace de video de la receta en una app/pestaña externa.
+  Future<void> _openVideo() async {
+    final url = _recipe.videoUrl?.trim();
+    if (url == null || url.isEmpty) return;
+    try {
+      final ok = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir el enlace del video'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir el enlace del video'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   String _fmtQty(double? q) {
     if (q == null) return '';
     // Los ingredientes se escalan respecto a la "comida de hogar": cuántas
@@ -292,6 +322,25 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               Text(
                 r.description!,
                 style: TextStyle(color: Colors.grey[700], fontSize: 15),
+              ),
+            ],
+            // Enlace de video de la receta, solo si existe.
+            if (r.videoUrl != null && r.videoUrl!.trim().isNotEmpty) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openVideo,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.ink,
+                    side: const BorderSide(color: AppColors.wood, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('Ver video'),
+                ),
               ),
             ],
             const SizedBox(height: 20),
