@@ -19,6 +19,7 @@ class Recipe {
   final bool freezable;
   final double? gramsPerServing; // peso de una ración ya preparada
   final String? imageUrl; // URL pública de la foto de la receta
+  final String? videoUrl; // enlace de video opcional (Instagram, TikTok...)
   final List<RecipeComponent> components; // partes del plato (pollo, arroz...)
   final int? freezerDays; // días recomendados de congelación (estimado por IA)
 
@@ -41,6 +42,7 @@ class Recipe {
     this.freezable = false,
     this.gramsPerServing,
     this.imageUrl,
+    this.videoUrl,
     this.components = const [],
     this.freezerDays,
   });
@@ -75,6 +77,7 @@ class Recipe {
       freezable: map['freezable'] ?? false,
       gramsPerServing: (map['grams_per_serving'] as num?)?.toDouble(),
       imageUrl: _imageUrlFrom(map['image_path']),
+      videoUrl: map['video_url'] as String?,
       components: _componentsFrom(map['components']),
       freezerDays: map['freezer_days'],
     );
@@ -118,6 +121,7 @@ class Recipe {
       'is_favorite': isFavorite,
       'freezable': freezable,
       'grams_per_serving': gramsPerServing,
+      'video_url': videoUrl,
       'components': components.isEmpty
           ? null
           : components.map((c) => c.toMap()).toList(),
