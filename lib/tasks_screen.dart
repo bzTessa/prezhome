@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -172,6 +173,7 @@ class _TasksScreenState extends State<TasksScreen> {
           return Column(
             children: [
               _Scoreboard(members: data.members, scores: data.scores),
+              _PointsChart(members: data.members, scores: data.scores),
               _TareasCelebracion(visible: todoHecho),
               Expanded(
                 child: data.tasks.isEmpty
@@ -367,6 +369,201 @@ class _Scoreboard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Gráfica de barras de puntos por persona del hogar, estilo marcador visual.
+/// Reutiliza los mismos datos que [_Scoreboard]: [members] (id -> nombre) y
+/// [scores] (user_id -> suma de puntos). Los miembros sin puntos aparecen a 0 y
+/// las barras se ordenan de mayor a menor. Cuando nadie tiene puntos todavía,
+/// muestra un estado vacío amable con Miau en lugar de barras planas.
+class _PointsChart extends StatelessWidget {
+  final Map<String, String> members;
+  final Map<String, int> scores;
+  const _PointsChart({required this.members, required this.scores});
+
+  @override
+  Widget build(BuildContext context) {
+    if (members.isEmpty) return const SizedBox.shrink();
+
+    // Pares (nombre, puntos) para TODOS los miembros, 0 si no tienen puntos,
+    // ordenados de mayor a menor como el marcador textual.
+    final entries = members.entries.toList()
+      ..sort((a, b) => (scores[b.key] ?? 0).compareTo(scores[a.key] ?? 0));
+    final data = [
+      for (final e in entries)
+        _PersonPoints(name: e.value, points: scores[e.key] ?? 0),
+    ];
+
+    final totalPoints = data.fold<int>(0, (a, p) => a + p.points);
+    if (totalPoints == 0) return _empty();
+
+    final maxPoints = data.fold<int>(0, (a, p) => p.points > a ? p.points : a);
+    // Un poco de aire por encima para que la barra no toque el borde superior.
+    final maxY = maxPoints <= 0 ? 10.0 : maxPoints * 1.2;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      padding: const EdgeInsets.all(18),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PUNTOS POR PERSONA',
+            style: TextStyle(
+              fontSize: 12,
+              letterSpacing: 1,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[500],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 180,
+            child: BarChart(
+              BarChartData(
+                maxY: maxY,
+                minY: 0,
+                alignment: BarChartAlignment.spaceAround,
+                borderData: FlBorderData(show: false),
+                gridData: const FlGridData(show: false),
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        '${rod.toY.toInt()} pts',
+                        const TextStyle(
+                          color: AppColors.ink,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24,
+                      getTitlesWidget: (value, meta) {
+                        final i = value.toInt();
+                        if (i < 0 || i >= data.length) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            _shortName(data[i].name),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                barGroups: [
+                  for (int i = 0; i < data.length; i++)
+                    BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: data[i].points.toDouble(),
+                          color: AppColors.wood,
+                          width: 22,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Acorta nombres largos para que no se solapen bajo las barras.
+  String _shortName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.length <= 8) return trimmed;
+    final first = trimmed.split(' ').first;
+    if (first.length <= 10) return first;
+    return '${first.substring(0, 9)}…';
+  }
+
+  /// Estado vacío amable cuando nadie ha sumado puntos todavía, para no mostrar
+  /// una gráfica plana de barras a cero.
+  Widget _empty() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      padding: const EdgeInsets.all(18),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PUNTOS POR PERSONA',
+            style: TextStyle(
+              fontSize: 12,
+              letterSpacing: 1,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[500],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const MiauCharacter(mood: MiauMood.curious, size: 72),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Aún no hay puntos',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Completa tareas para ir sumando.',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Par nombre + puntos usado por [_PointsChart].
+class _PersonPoints {
+  final String name;
+  final int points;
+  const _PersonPoints({required this.name, required this.points});
 }
 
 class _TaskCard extends StatelessWidget {

@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -685,6 +686,13 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
         ),
         const SizedBox(height: 16),
 
+        // Tarjeta de variedad del menú: solo tiene sentido si hay plan en la
+        // semana. Si no, abajo ya se muestra el bloque de Miau.
+        if (_weekHasPlan) ...[
+          _VarietyCard(planByDate: _planByDate),
+          const SizedBox(height: 16),
+        ],
+
         // Estado vacío: ningún día de la semana tiene plan.
         if (!_weekHasPlan)
           Container(
@@ -850,4 +858,217 @@ class _PlanItem {
     required this.title,
     required this.skipped,
   });
+}
+
+/// Tarjeta "Variedad de la semana": reutiliza el plan ya cargado en
+/// [_planByDate] (sin consulta extra) para mostrar de un vistazo si el menú
+/// está variado o repetitivo. Cuenta las comidas planificadas que NO están
+/// saltadas, cuántas recetas distintas hay y cuántas veces se repite cada una.
+class _VarietyCard extends StatelessWidget {
+  final Map<String, List<_PlanItem>> planByDate;
+  const _VarietyCard({required this.planByDate});
+
+  @override
+  Widget build(BuildContext context) {
+    // Conteo por título solo de las comidas que de verdad se van a hacer
+    // (ignoramos las saltadas: no cuentan para la variedad real del menú).
+    final counts = <String, int>{};
+    for (final items in planByDate.values) {
+      for (final it in items) {
+        if (it.skipped) continue;
+        counts[it.title] = (counts[it.title] ?? 0) + 1;
+      }
+    }
+
+    final numeroComidas = counts.values.fold<int>(0, (a, b) => a + b);
+    final numeroRecetasDistintas = counts.length;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'VARIEDAD DE LA SEMANA',
+            style: TextStyle(
+              fontSize: 12,
+              letterSpacing: 1,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[500],
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (numeroComidas == 0)
+            _allSkipped()
+          else
+            ..._content(numeroComidas, numeroRecetasDistintas, counts),
+        ],
+      ),
+    );
+  }
+
+  /// Caso en el que todas las comidas de la semana están marcadas como fuera:
+  /// no tiene sentido dibujar una gráfica vacía, mejor un mensaje amable.
+  Widget _allSkipped() {
+    return Row(
+      children: [
+        const MiauCharacter(mood: MiauMood.curious, size: 56, float: false),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            'Esta semana todas las comidas están marcadas como fuera de casa. '
+            'Cuando planifiquéis platos verás aquí si el menú es variado.',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _content(
+    int numeroComidas,
+    int numeroRecetasDistintas,
+    Map<String, int> counts,
+  ) {
+    // Indicador cualitativo simple y sin jerga: comparamos recetas distintas
+    // frente al total de comidas. Cuanto más cerca de 1, más variado.
+    final ratio = numeroComidas == 0
+        ? 0.0
+        : numeroRecetasDistintas / numeroComidas;
+    final String mensaje;
+    final Color mensajeColor;
+    if (numeroRecetasDistintas <= 1) {
+      mensaje = 'Menú muy repetitivo';
+      mensajeColor = Colors.grey[700]!;
+    } else if (ratio >= 0.75) {
+      mensaje = '¡Menú muy variado!';
+      mensajeColor = AppColors.woodDark;
+    } else if (ratio >= 0.5) {
+      mensaje = 'Menú bastante variado';
+      mensajeColor = AppColors.woodDark;
+    } else {
+      mensaje = 'Se repiten varias recetas';
+      mensajeColor = Colors.grey[700]!;
+    }
+
+    final comidasLabel = numeroComidas == 1 ? 'comida' : 'comidas';
+    final recetasLabel = numeroRecetasDistintas == 1
+        ? 'receta distinta'
+        : 'recetas distintas';
+
+    // Top de recetas más repetidas, de mayor a menor. Limitamos a 6 para que
+    // la gráfica no se sature cuando hay muchos platos distintos.
+    final ordenadas = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = ordenadas.take(6).toList();
+    final maxCount = top.fold<int>(0, (a, e) => e.value > a ? e.value : a);
+    final maxY = maxCount <= 0 ? 1.0 : maxCount * 1.2;
+
+    return [
+      Text(
+        '$numeroRecetasDistintas $recetasLabel en $numeroComidas $comidasLabel',
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: AppColors.ink,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        mensaje,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: mensajeColor,
+        ),
+      ),
+      const SizedBox(height: 16),
+      SizedBox(
+        height: 180,
+        child: BarChart(
+          BarChartData(
+            maxY: maxY,
+            minY: 0,
+            alignment: BarChartAlignment.spaceAround,
+            borderData: FlBorderData(show: false),
+            gridData: const FlGridData(show: false),
+            barTouchData: BarTouchData(
+              touchTooltipData: BarTouchTooltipData(
+                getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                  final veces = rod.toY.toInt();
+                  return BarTooltipItem(
+                    '${top[group.x].key}\n'
+                    '$veces ${veces == 1 ? 'vez' : 'veces'}',
+                    const TextStyle(
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                },
+              ),
+            ),
+            titlesData: FlTitlesData(
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 28,
+                  getTitlesWidget: (value, meta) {
+                    final i = value.toInt();
+                    if (i < 0 || i >= top.length) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        _shortTitle(top[i].key),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            barGroups: [
+              for (int i = 0; i < top.length; i++)
+                BarChartGroupData(
+                  x: i,
+                  barRods: [
+                    BarChartRodData(
+                      toY: top[i].value.toDouble(),
+                      color: AppColors.wood,
+                      width: 22,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(6),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    ];
+  }
+
+  /// Acorta títulos largos para que no se solapen bajo las barras.
+  String _shortTitle(String title) {
+    final trimmed = title.trim();
+    if (trimmed.length <= 10) return trimmed;
+    return '${trimmed.substring(0, 9)}…';
+  }
 }
