@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'economy_screen.dart';
 import 'nutrition_profile_screen.dart';
+import 'profile_wizard_screen.dart';
 import 'login_screen.dart';
 
 class HouseholdScreen extends StatefulWidget {
@@ -214,13 +216,6 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite_outline),
-            tooltip: 'Mi Perfil Nutricional',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NutritionProfileScreen()),
-            ),
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',
             onPressed: _logout,
@@ -403,7 +398,71 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        // Accesos agrupados en Hogar/Ajustes: economía del hogar, perfil
+        // nutricional y cuestionario guiado. Economía dejó de ser una pestaña
+        // propia y vive ahora aquí.
+        _card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Hogar y ajustes',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              _settingTile(
+                icon: Icons.savings_outlined,
+                title: 'Economía',
+                subtitle: 'Presupuesto y gastos del hogar',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EconomyScreen()),
+                ),
+              ),
+              _settingTile(
+                icon: Icons.favorite_outline,
+                title: 'Mi perfil nutricional',
+                subtitle: 'Objetivo de calorías y preferencias',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NutritionProfileScreen(),
+                  ),
+                ),
+              ),
+              _settingTile(
+                icon: Icons.quiz_outlined,
+                title: 'Cuestionario de perfil',
+                subtitle: 'Recalcula tu objetivo paso a paso',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ProfileWizardScreen(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  /// Fila táctil de un acceso dentro de la tarjeta de hogar/ajustes.
+  Widget _settingTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundColor: const Color(0xFFFDF8E1),
+        child: Icon(icon, color: const Color(0xFF1E1E1E)),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right, color: Colors.black26),
+      onTap: onTap,
     );
   }
 

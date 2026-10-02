@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../food_diary_screen.dart';
-import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/nutrition_profile.dart';
@@ -10,11 +9,9 @@ import '../models/task.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
 
-/// Vistas disponibles en la pestaña de Inicio.
-enum _HomeView { dashboard, semana, mes }
-
-/// Pestaña de Inicio: se puede ver como Dashboard, como agenda de la Semana
-/// o como calendario del Mes, con un conmutador arriba a la derecha.
+/// Pestaña de Inicio: dashboard con el resumen del día del hogar (comidas de
+/// hoy, calorías, tareas y gasto). El plan semanal/mensual vive ahora en la
+/// pestaña Comidas > Plan, así que Inicio solo muestra el resumen.
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
@@ -23,132 +20,9 @@ class HomeTab extends StatefulWidget {
 }
 
 class HomeTabState extends State<HomeTab> {
-  // Vista activa. El arranque de la pestaña sigue siendo el Dashboard.
-  _HomeView _view = _HomeView.dashboard;
-
-  // Claves para poder forzar la recarga de la vista activa sin reconstruir
-  // la pestaña completa ni las demás pestañas del IndexedStack.
-  final GlobalKey<_DashboardViewState> _dashboardKey =
-      GlobalKey<_DashboardViewState>();
-  final GlobalKey<_WeekAgendaViewState> _weekKey =
-      GlobalKey<_WeekAgendaViewState>();
-  final GlobalKey<_CalendarViewState> _calendarKey =
-      GlobalKey<_CalendarViewState>();
-
-  /// Recarga los datos de la vista actualmente visible. Lo llama MainShell
-  /// cuando la pestaña Inicio vuelve a estar en primer plano, para reflejar
-  /// un plan recién generado sin recargar toda la app.
-  void refreshActiveView() {
-    switch (_view) {
-      case _HomeView.dashboard:
-        _dashboardKey.currentState?.reload();
-        break;
-      case _HomeView.semana:
-        _weekKey.currentState?.reload();
-        break;
-      case _HomeView.mes:
-        _calendarKey.currentState?.reload();
-        break;
-    }
-  }
-
-  Widget _buildBody() {
-    switch (_view) {
-      case _HomeView.dashboard:
-        return _DashboardView(key: _dashboardKey);
-      case _HomeView.semana:
-        return _WeekAgendaView(key: _weekKey);
-      case _HomeView.mes:
-        return _CalendarView(key: _calendarKey);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: AppBar(
-        title: const Text('PrezHome'),
-        actions: [
-          // Conmutador Dashboard <-> Semana <-> Mes
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: _ViewToggle(
-              current: _view,
-              onChanged: (v) => setState(() => _view = v),
-            ),
-          ),
-        ],
-      ),
-      body: _buildBody(),
-    );
-  }
-}
-
-/// Botón segmentado para cambiar de vista.
-class _ViewToggle extends StatelessWidget {
-  final _HomeView current;
-  final ValueChanged<_HomeView> onChanged;
-  const _ViewToggle({required this.current, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        children: [
-          _seg(
-            Icons.dashboard_rounded,
-            current == _HomeView.dashboard,
-            () => onChanged(_HomeView.dashboard),
-          ),
-          _seg(
-            Icons.view_agenda_rounded,
-            current == _HomeView.semana,
-            () => onChanged(_HomeView.semana),
-          ),
-          _seg(
-            Icons.calendar_month_rounded,
-            current == _HomeView.mes,
-            () => onChanged(_HomeView.mes),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _seg(IconData icon, bool active, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: active ? AppColors.wood : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Icon(icon, size: 20, color: AppColors.ink),
-      ),
-    );
-  }
-}
-
-/// Vista Dashboard: cabecera con Miau + resumen del día.
-class _DashboardView extends StatefulWidget {
-  const _DashboardView({super.key});
-
-  @override
-  State<_DashboardView> createState() => _DashboardViewState();
-}
-
-class _DashboardViewState extends State<_DashboardView> {
   final SupabaseClient _client = Supabase.instance.client;
 
-  // Comidas planificadas para HOY (mismo patrón que _CalendarView).
+  // Comidas planificadas para HOY (mismo patrón de consulta que el plan).
   List<_PlanItem> _todayItems = [];
 
   // Resumen de tareas pendientes del hogar (is_done == false).
@@ -187,8 +61,10 @@ class _DashboardViewState extends State<_DashboardView> {
     _loadDashboard();
   }
 
-  /// Permite a HomeTab forzar una recarga de todo el dashboard.
-  void reload() => _loadDashboard();
+  /// Recarga los datos del dashboard. Lo llama MainShell cuando la pestaña
+  /// Inicio vuelve a estar en primer plano, para reflejar un plan recién
+  /// generado o un cuestionario completado sin recargar toda la app.
+  void refreshActiveView() => _loadDashboard();
 
   /// Carga todas las secciones del dashboard. Cada carga tiene su propio
   /// try/catch, de modo que un fallo en una no impide ver las demás.
@@ -399,71 +275,75 @@ class _DashboardViewState extends State<_DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        // Cabecera con Presidente Miau como personaje
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: AppTheme.cardDecoration(),
-          child: Row(
-            children: [
-              const MiauCharacter(mood: MiauMood.greeting, size: 72),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _greeting(),
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        height: 1.1,
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      appBar: AppBar(title: const Text('PrezHome')),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          // Cabecera con Presidente Miau como personaje
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: AppTheme.cardDecoration(),
+            child: Row(
+              children: [
+                const MiauCharacter(mood: MiauMood.greeting, size: 72),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _greeting(),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          height: 1.1,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Este es el resumen de tu hogar',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        'Este es el resumen de tu hogar',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 28),
+          const SizedBox(height: 28),
 
-        Text(
-          'Hoy',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-            color: Colors.grey[500],
+          Text(
+            'Hoy',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: Colors.grey[500],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-
-        // Resumen de las comidas planificadas para hoy.
-        _mealsCard(),
-        const SizedBox(height: 12),
-        // Si el perfil no está completo o aún no hay objetivo de calorías,
-        // invitamos a calcularlo con el cuestionario guiado antes de mostrar
-        // la tarjeta de calorías del día.
-        if (!_profileComplete ||
-            _targetCalories == null ||
-            _targetCalories! <= 0) ...[
-          _calorieGoalPrompt(),
           const SizedBox(height: 12),
+
+          // Resumen de las comidas planificadas para hoy.
+          _mealsCard(),
+          const SizedBox(height: 12),
+          // Si el perfil no está completo o aún no hay objetivo de calorías,
+          // invitamos a calcularlo con el cuestionario guiado antes de mostrar
+          // la tarjeta de calorías del día.
+          if (!_profileComplete ||
+              _targetCalories == null ||
+              _targetCalories! <= 0) ...[
+            _calorieGoalPrompt(),
+            const SizedBox(height: 12),
+          ],
+          _caloriesCard(),
+          const SizedBox(height: 12),
+          _tasksCard(),
+          const SizedBox(height: 12),
+          _spendingCard(),
         ],
-        _caloriesCard(),
-        const SizedBox(height: 12),
-        _tasksCard(),
-        const SizedBox(height: 12),
-        _spendingCard(),
-      ],
+      ),
     );
   }
 
@@ -855,682 +735,8 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 }
 
-/// Vista Calendario: mes actual con selección de día (estructura base).
-class _CalendarView extends StatefulWidget {
-  const _CalendarView({super.key});
-
-  @override
-  State<_CalendarView> createState() => _CalendarViewState();
-}
-
-class _CalendarViewState extends State<_CalendarView> {
-  DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
-  DateTime _selected = DateTime.now();
-
-  final SupabaseClient _client = Supabase.instance.client;
-  // Plan cargado: 'yyyy-mm-dd' -> lista de (tipo, titulo receta, skipped)
-  Map<String, List<_PlanItem>> _planByDate = {};
-  Set<String> _daysWithPlan = {};
-
-  static const _weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  static const _months = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
-  static const _mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Snack',
-    'dessert': 'Postre',
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMonthPlan();
-  }
-
-  /// Permite a HomeTab forzar una recarga del calendario.
-  void reload() => _loadMonthPlan();
-
-  Future<void> _loadMonthPlan() async {
-    try {
-      final user = _client.auth.currentUser;
-      if (user == null) return;
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
-      final homeId = profile?['home_id'] as String?;
-      if (homeId == null) return;
-
-      final start = DateTime(_month.year, _month.month, 1);
-      final end = DateTime(_month.year, _month.month + 1, 1);
-      // Traer entries del mes con el título de la receta.
-      final res = await _client
-          .from('meal_plan_entries')
-          .select('plan_date, meal_type, skipped, recipes(title)')
-          .eq('home_id', homeId)
-          .gte('plan_date', start.toIso8601String().split('T').first)
-          .lt('plan_date', end.toIso8601String().split('T').first);
-
-      final byDate = <String, List<_PlanItem>>{};
-      final withPlan = <String>{};
-      for (final row in (res as List)) {
-        final e = MealPlanEntry.fromMap(row);
-        final key = e.date.toIso8601String().split('T').first;
-        final rec = row['recipes'];
-        final title = (rec is Map ? rec['title'] : null) as String?;
-        byDate
-            .putIfAbsent(key, () => [])
-            .add(
-              _PlanItem(
-                mealType: e.mealType,
-                title: title ?? 'Receta',
-                skipped: e.skipped,
-              ),
-            );
-        withPlan.add(key);
-      }
-      if (mounted) {
-        setState(() {
-          _planByDate = byDate;
-          _daysWithPlan = withPlan;
-        });
-      }
-    } catch (e) {
-      // No rompemos la UI (el calendario se ve sin plan), pero dejamos traza
-      // del error para no confundir un fallo de carga con un mes sin plan.
-      debugPrint('HomeTab._loadMonthPlan error: $e');
-    }
-  }
-
-  void _changeMonth(int delta) {
-    setState(() => _month = DateTime(_month.year, _month.month + delta));
-    _loadMonthPlan();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final firstDay = DateTime(_month.year, _month.month, 1);
-    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
-    // weekday: 1=Lun..7=Dom -> offset para empezar en Lunes
-    final leading = firstDay.weekday - 1;
-
-    final cells = <Widget>[];
-    for (var i = 0; i < leading; i++) {
-      cells.add(const SizedBox.shrink());
-    }
-    for (var d = 1; d <= daysInMonth; d++) {
-      final date = DateTime(_month.year, _month.month, d);
-      final isSelected =
-          date.year == _selected.year &&
-          date.month == _selected.month &&
-          date.day == _selected.day;
-      final isToday = _isSameDay(date, DateTime.now());
-      final key = date.toIso8601String().split('T').first;
-      final hasPlan = _daysWithPlan.contains(key);
-      cells.add(
-        GestureDetector(
-          onTap: () => setState(() => _selected = date),
-          child: Container(
-            margin: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.wood : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: isToday && !isSelected
-                  ? Border.all(color: AppColors.wood, width: 1.5)
-                  : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$d',
-                  style: TextStyle(
-                    fontWeight: isSelected || isToday
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                // Puntito si ese día tiene comidas planificadas
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: hasPlan && !isSelected
-                        ? AppColors.woodDark
-                        : Colors.transparent,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: AppTheme.cardDecoration(),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () => _changeMonth(-1),
-                  ),
-                  Text(
-                    '${_months[_month.month - 1]} ${_month.year}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: () => _changeMonth(1),
-                  ),
-                ],
-              ),
-              Row(
-                children: _weekdays
-                    .map(
-                      (w) => Expanded(
-                        child: Center(
-                          child: Text(
-                            w,
-                            style: const TextStyle(
-                              color: Colors.black45,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 8),
-              GridView.count(
-                crossAxisCount: 7,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: cells,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: AppTheme.cardDecoration(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Plan del ${_selected.day} de ${_months[_selected.month - 1]}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildDayPlan(),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const MealPlanScreen()),
-                    );
-                    _loadMonthPlan(); // refrescar al volver
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.ink,
-                    minimumSize: const Size.fromHeight(48),
-                    side: const BorderSide(color: AppColors.wood, width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Gestionar plan semanal'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDayPlan() {
-    final key = _selected.toIso8601String().split('T').first;
-    final items = _planByDate[key] ?? [];
-    if (items.isEmpty) {
-      return Row(
-        children: [
-          const MiauCharacter(mood: MiauMood.curious, size: 48, float: false),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'No hay comidas planificadas este día. Genera el plan semanal.',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ),
-        ],
-      );
-    }
-    // Ordenar por tipo de comida (desayuno, comida, cena...)
-    const order = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
-    items.sort(
-      (a, b) => order.indexOf(a.mealType).compareTo(order.indexOf(b.mealType)),
-    );
-    return Column(
-      children: items.map((it) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 80,
-                child: Text(
-                  _mealLabels[it.mealType] ?? it.mealType,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  it.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    decoration: it.skipped ? TextDecoration.lineThrough : null,
-                    color: it.skipped ? Colors.grey : AppColors.ink,
-                  ),
-                ),
-              ),
-              if (it.skipped)
-                Text(
-                  'fuera',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-}
-
-/// Vista Semana: agenda vertical con los 7 días de la semana actual
-/// (lunes a domingo) y las comidas de cada día escritas, sin tener que
-/// pulsar ningún día. Es la respuesta directa al feedback de ver el plan
-/// de un vistazo. Carga sus propios datos, espejo de _CalendarView.
-class _WeekAgendaView extends StatefulWidget {
-  const _WeekAgendaView({super.key});
-
-  @override
-  State<_WeekAgendaView> createState() => _WeekAgendaViewState();
-}
-
-class _WeekAgendaViewState extends State<_WeekAgendaView> {
-  // Lunes de la semana mostrada actualmente.
-  DateTime _weekStart = _mondayOf(DateTime.now());
-
-  final SupabaseClient _client = Supabase.instance.client;
-  // Plan cargado: 'yyyy-mm-dd' -> lista de (tipo, titulo receta, skipped)
-  Map<String, List<_PlanItem>> _planByDate = {};
-
-  static const _weekdayNames = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-  ];
-  static const _months = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
-  static const _mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Snack',
-    'dessert': 'Postre',
-  };
-  static const _mealOrder = [
-    'breakfast',
-    'lunch',
-    'dinner',
-    'snack',
-    'dessert',
-  ];
-
-  /// Devuelve el lunes de la semana que contiene [d] (a medianoche).
-  static DateTime _mondayOf(DateTime d) {
-    final day = DateTime(d.year, d.month, d.day);
-    return day.subtract(Duration(days: day.weekday - 1));
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWeekPlan();
-  }
-
-  /// Permite a HomeTab forzar una recarga de la agenda semanal.
-  void reload() => _loadWeekPlan();
-
-  Future<void> _loadWeekPlan() async {
-    try {
-      final user = _client.auth.currentUser;
-      if (user == null) return;
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
-      final homeId = profile?['home_id'] as String?;
-      if (homeId == null) return;
-
-      // Rango acotado a la semana mostrada: lunes incluido, lunes siguiente
-      // excluido (misma técnica que _loadMonthPlan).
-      final start = _weekStart;
-      final end = _weekStart.add(const Duration(days: 7));
-      final res = await _client
-          .from('meal_plan_entries')
-          .select('plan_date, meal_type, skipped, recipes(title)')
-          .eq('home_id', homeId)
-          .gte('plan_date', start.toIso8601String().split('T').first)
-          .lt('plan_date', end.toIso8601String().split('T').first);
-
-      final byDate = <String, List<_PlanItem>>{};
-      for (final row in (res as List)) {
-        final e = MealPlanEntry.fromMap(row);
-        final key = e.date.toIso8601String().split('T').first;
-        final rec = row['recipes'];
-        final title = (rec is Map ? rec['title'] : null) as String?;
-        byDate
-            .putIfAbsent(key, () => [])
-            .add(
-              _PlanItem(
-                mealType: e.mealType,
-                title: title ?? 'Receta',
-                skipped: e.skipped,
-              ),
-            );
-      }
-      if (mounted) {
-        setState(() => _planByDate = byDate);
-      }
-    } catch (e) {
-      // No rompemos la UI (la agenda se ve sin plan), pero dejamos traza del
-      // error para no confundir un fallo de carga con una semana sin plan.
-      debugPrint('HomeTab._loadWeekPlan error: $e');
-    }
-  }
-
-  void _changeWeek(int delta) {
-    setState(() => _weekStart = _weekStart.add(Duration(days: 7 * delta)));
-    _loadWeekPlan();
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-
-  bool get _weekHasPlan => _planByDate.values.any((items) => items.isNotEmpty);
-
-  @override
-  Widget build(BuildContext context) {
-    final weekEnd = _weekStart.add(const Duration(days: 6));
-    final title =
-        'Semana del ${_weekStart.day} de ${_months[_weekStart.month - 1]}';
-
-    final days = List<DateTime>.generate(
-      7,
-      (i) => _weekStart.add(Duration(days: i)),
-    );
-
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        // Cabecera con navegación de semanas.
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: AppTheme.cardDecoration(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: () => _changeWeek(-1),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${_weekStart.day} ${_months[_weekStart.month - 1]} - '
-                      '${weekEnd.day} ${_months[weekEnd.month - 1]}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: () => _changeWeek(1),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Estado vacío: ningún día de la semana tiene plan.
-        if (!_weekHasPlan)
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: AppTheme.cardDecoration(),
-            child: Row(
-              children: [
-                const MiauCharacter(
-                  mood: MiauMood.curious,
-                  size: 56,
-                  float: false,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Esta semana aún no tiene plan. Genera el plan semanal '
-                    'para ver aquí las comidas de cada día.',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ...days.map(_buildDayCard),
-
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () async {
-              await Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const MealPlanScreen()));
-              _loadWeekPlan(); // refrescar al volver
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.ink,
-              minimumSize: const Size.fromHeight(48),
-              side: const BorderSide(color: AppColors.wood, width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            icon: const Icon(Icons.auto_awesome),
-            label: const Text('Gestionar plan semanal'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Tarjeta de un día: cabecera (nombre + número, HOY resaltado) y las
-  /// comidas del día escritas.
-  Widget _buildDayCard(DateTime date) {
-    final isToday = _isSameDay(date, DateTime.now());
-    final key = date.toIso8601String().split('T').first;
-    final items = [...(_planByDate[key] ?? <_PlanItem>[])];
-    items.sort(
-      (a, b) => _mealOrder
-          .indexOf(a.mealType)
-          .compareTo(_mealOrder.indexOf(b.mealType)),
-    );
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Cabecera del día; se resalta HOY con un fondo wood.
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isToday ? AppColors.wood : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isToday
-                      ? null
-                      : Border.all(color: AppColors.wood, width: 1.2),
-                ),
-                child: Text(
-                  '${_weekdayNames[date.weekday - 1]} ${date.day}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-              if (isToday) ...[
-                const SizedBox(width: 8),
-                Text(
-                  'Hoy',
-                  style: TextStyle(
-                    color: AppColors.woodDark,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (items.isEmpty)
-            Text(
-              'Sin plan',
-              style: TextStyle(color: Colors.grey[500], fontSize: 13),
-            )
-          else
-            ...items.map(
-              (it) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      child: Text(
-                        _mealLabels[it.mealType] ?? it.mealType,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        it.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          decoration: it.skipped
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: it.skipped ? Colors.grey : AppColors.ink,
-                        ),
-                      ),
-                    ),
-                    if (it.skipped)
-                      Text(
-                        'fuera',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
+/// Comida planificada (tipo + título de receta + si se salta) usada por el
+/// resumen de comidas de hoy del dashboard.
 class _PlanItem {
   final String mealType;
   final String title;
