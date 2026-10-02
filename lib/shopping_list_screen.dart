@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/ingredient.dart';
 import 'models/shopping_list_item.dart';
 import 'theme/app_theme.dart';
+import 'widgets/food_category_icon.dart';
 import 'widgets/miau_character.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
@@ -449,9 +450,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           final pendientes = items.where((i) => !i.checked).toList();
           final comprados = items.where((i) => i.checked).toList();
 
+          // Compra terminada: hay items y todos están marcados. Mostramos a
+          // Miau celebrando con una animación de aparición sutil.
+          final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
+
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
             children: [
+              _CompraCelebracion(visible: compraTerminada),
               if (pendientes.isNotEmpty) ...[
                 _sectionTitle('Por comprar'),
                 ...pendientes.map(_buildRow),
@@ -492,13 +498,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         onChanged: (v) => _toggleChecked(item, v ?? false),
         activeColor: AppColors.woodDark,
         controlAffinity: ListTileControlAffinity.leading,
-        title: Text(
-          item.display,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            decoration: done ? TextDecoration.lineThrough : null,
-            color: done ? Colors.grey : AppColors.ink,
-          ),
+        title: Row(
+          children: [
+            CategoryIcons.badge(item.name, size: 34),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                item.display,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  decoration: done ? TextDecoration.lineThrough : null,
+                  color: done ? Colors.grey : AppColors.ink,
+                ),
+              ),
+            ),
+          ],
         ),
         subtitle: item.source == 'auto'
             ? Text(
@@ -539,6 +553,58 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta de celebración cuando no quedan items por comprar. Aparece con una
+/// animación sutil (opacidad + escala) y muestra a Miau celebrando.
+class _CompraCelebracion extends StatelessWidget {
+  final bool visible;
+  const _CompraCelebracion({required this.visible});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: visible ? 1 : 0,
+        child: visible
+            ? Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.cardDecoration(),
+                child: Row(
+                  children: [
+                    const MiauCharacter(mood: MiauMood.celebrating, size: 72),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Compra completada',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Ya tienes todo lo de la lista. Miau esta orgulloso.',
+                            style: TextStyle(color: AppColors.ink),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : const SizedBox(width: double.infinity),
       ),
     );
   }

@@ -244,13 +244,20 @@ class _RecipeCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final label in recipe.mealTypeLabelsList)
-                  _Chip(text: label),
+                for (final type in recipe.mealTypes)
+                  _Chip(
+                    text: Recipe.mealTypeLabels[type] ?? type,
+                    icon: _mealTypeIcon(type),
+                  ),
                 if (recipe.appliance != 'none')
-                  _Chip(text: recipe.applianceLabel),
+                  _Chip(text: recipe.applianceLabel, icon: Icons.blender),
                 if (recipe.totalTimeMinutes != null)
-                  _Chip(text: '${recipe.totalTimeMinutes} min'),
-                if (recipe.freezable) const _Chip(text: 'Congelable'),
+                  _Chip(
+                    text: '${recipe.totalTimeMinutes} min',
+                    icon: Icons.schedule,
+                  ),
+                if (recipe.freezable)
+                  const _Chip(text: 'Congelable', icon: Icons.ac_unit),
               ],
             ),
             if (recipe.description != null) ...[
@@ -321,9 +328,28 @@ class _RecipeCard extends StatelessWidget {
   }
 }
 
+/// Icono representativo de cada tipo de comida para los chips de la tarjeta.
+IconData _mealTypeIcon(String type) {
+  switch (type) {
+    case 'breakfast':
+      return Icons.free_breakfast;
+    case 'lunch':
+      return Icons.lunch_dining;
+    case 'dinner':
+      return Icons.dinner_dining;
+    case 'snack':
+      return Icons.fastfood;
+    case 'dessert':
+      return Icons.cake;
+    default:
+      return Icons.restaurant;
+  }
+}
+
 class _Chip extends StatelessWidget {
   final String text;
-  const _Chip({required this.text});
+  final IconData? icon;
+  const _Chip({required this.text, this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -333,13 +359,22 @@ class _Chip extends StatelessWidget {
         color: const Color(0xFFFDF8E1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF1E1E1E),
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: const Color(0xFFB58A3C)),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E1E1E),
+            ),
+          ),
+        ],
       ),
     );
   }

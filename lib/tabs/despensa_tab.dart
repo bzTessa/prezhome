@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../inventory_screen.dart';
 import '../shopping_list_screen.dart';
 import '../theme/app_theme.dart';
+import '../widgets/miau_character.dart';
 
 /// Pestaña "Despensa": agrupa lo que hay en casa y lo que falta por comprar,
 /// como hacen las apps de nevera/despensa. Tiene dos sub-tabs: Inventario
@@ -29,13 +30,50 @@ class DespensaTab extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            // Cada pantalla trae su propio contenido y botón flotante.
-            _EmbeddedInventory(),
-            _EmbeddedShopping(),
+        body: Column(
+          children: const [
+            _DespensaHeader(),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // Cada pantalla trae su propio contenido y botón flotante.
+                  _EmbeddedInventory(),
+                  _EmbeddedShopping(),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Cabecera cozy con Miau para dar presencia de la mascota en la sección.
+/// Miau trae su propia animación de entrada y flotación suave.
+class _DespensaHeader extends StatelessWidget {
+  const _DespensaHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: AppTheme.cardDecoration(),
+      child: Row(
+        children: const [
+          MiauCharacter(mood: MiauMood.cooking, size: 56),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Controla lo que tienes y lo que falta por comprar.',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
