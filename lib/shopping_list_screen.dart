@@ -295,18 +295,27 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
       // Inventario del hogar, indexado por nombre normalizado. Nos quedamos con
       // una entrada por nombre (si hay varias, basta con detectar que existe).
+      // Incluimos is_staple para tratar los basicos "siempre en casa" como
+      // siempre disponibles.
       final invRes = await _client
           .from('inventory_items')
-          .select('name, quantity, unit')
+          .select('name, quantity, unit, is_staple')
           .eq('home_id', homeId);
       final inventory = <String, _InvEntry>{};
+      // Conjunto de nombres normalizados marcados como "siempre en casa".
+      // Criterio de match: nombre normalizado (minusculas + sin acentos) con la
+      // MISMA normalizacion de CategoryIcons.normalize, para que, por ejemplo,
+      // "Pimienta" en inventario excluya "pimienta" del plan.
+      final staples = <String>{};
       for (final row in (invRes as List)) {
         final map = row as Map<String, dynamic>;
         final name = (map['name'] ?? '').toString().trim();
         if (name.isEmpty) continue;
-        final nKey = name.toLowerCase();
+        final nKey = CategoryIcons.normalize(name);
         final qty = (map['quantity'] as num?)?.toDouble();
         final unit = (map['unit'] as String?)?.trim().toLowerCase();
+        final isStaple = (map['is_staple'] as bool?) ?? false;
+        if (isStaple) staples.add(nKey);
         // Si ya habia una entrada para ese nombre, la dejamos como esta (basta
         // con una para decidir si descontamos).
         inventory.putIfAbsent(nKey, () => _InvEntry(quantity: qty, unit: unit));
@@ -318,7 +327,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       // quedarnos cortos.
       final faltan = <ShoppingListItem>[];
       for (final item in agg.values) {
-        final nKey = item.name.toLowerCase();
+        final nKey = CategoryIcons.normalize(item.name);
+
+        // Basicos "siempre en casa": si el ingrediente coincide por nombre
+        // normalizado con un item is_staple=true, lo tratamos como siempre
+        // disponible y NO lo anadimos a la lista, por poca cantidad que pida la
+        // receta (sal, pimienta, aceite...).
+        if (staples.contains(nKey)) continue;
+
         final inv = inventory[nKey];
 
         if (inv != null &&
@@ -458,10 +474,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
             children: [
               _CompraCelebracion(visible: compraTerminada),
-              if (pendientes.isNotEmpty) ...[
-                _sectionTitle('Por comprar'),
-                ...pendientes.map(_buildRow),
-              ],
+              if (pendientes.isNotEmpty)
+                ..._buildPendientesPorCategoria(pendientes),
               if (comprados.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 _sectionTitle('Comprados'),
@@ -484,6 +498,66 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           fontSize: 16,
           color: AppColors.ink,
         ),
+      ),
+    );
+  }
+
+  /// Agrupa los pendientes por categoria (CategoryIcons.categoryFor) y los
+  /// pinta con un encabezado de seccion legible por cada grupo no vacio. El
+  /// orden de las secciones sigue el del enum FoodCategory (verduras, frutas,
+  /// carne... y "Otros" al final), que ya va de alimentos frescos a genericos.
+  List<Widget> _buildPendientesPorCategoria(List<ShoppingListItem> pendientes) {
+    final grupos = <FoodCategory, List<ShoppingListItem>>{};
+    for (final item in pendientes) {
+      final cat = CategoryIcons.categoryFor(item.name);
+      grupos.putIfAbsent(cat, () => []).add(item);
+    }
+
+    final widgets = <Widget>[];
+    for (final cat in FoodCategory.values) {
+      final items = grupos[cat];
+      if (items == null || items.isEmpty) continue;
+      widgets.add(_categoryHeader(cat, items.length));
+      widgets.addAll(items.map(_buildRow));
+      widgets.add(const SizedBox(height: 8));
+    }
+    return widgets;
+  }
+
+  /// Encabezado de seccion con el emoji de la categoria, su nombre legible y un
+  /// contador de items. Mantiene la estetica Cozy (tonos madera sobre crema).
+  Widget _categoryHeader(FoodCategory category, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 8),
+      child: Row(
+        children: [
+          Text(category.emoji, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 8),
+          Text(
+            category.label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+            decoration: BoxDecoration(
+              color: AppColors.wood,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

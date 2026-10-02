@@ -1,0 +1,14 @@
+{
+  "task_id": "task-prezhome-mejoras",
+  "task_description": "Cinco frentes de mejora para PrezHome (Flutter + Supabase, en espanol, usuaria no tecnica Tessa): (1) Recetas con medidas naturales -> gramos para solidos, ml para liquidos, cucharadas/pizcas/'al gusto' solo para especias; arreglo del plural '2 unidad'->'2 unidades'. (2) Tareas recurrentes programadas de verdad (reaparecen en su proxima fecha), plantillas tipicas del hogar, tareas de hoy marcables desde el Dashboard y proyectadas en un calendario mensual junto a las comidas. (3) Despensa: basicos/especias 'siempre en casa' (staple) que no se anaden a la lista de la compra. (4) Lista de la compra rediseñada (agrupada por categorias, mas visual, Cozy + Miau) y mapeo de emojis arreglado con neutro cuando no hay match claro.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "Flutter 3.47.6 stable instalado en el sandbox. 'dart format --output=none --set-exit-if-changed .' -> 48 ficheros, 0 cambios. 'flutter analyze' -> No issues found. 'flutter test' -> All tests passed (39, incluidos los nuevos de measure_format, task_schedule y food_category_icon). Las dos migraciones nuevas (0030_tasks_scheduling.sql, 0031_inventory_staple.sql) siguen el patron NNNN_nombre.sql, son idempotentes, no tocan RLS y tienen parentesis balanceados fuera de comentarios (2=2 y 0=0). Calidad de tests: computeNextDue se prueba con fechas concretas y casos de borde (wrap de semana, once->null) y es la logica real usada por TaskScheduler/TaskOccurrences; los tests de categorizacion verifican los falsos positivos de subcadena corregidos; los de measure_format cubren el plural real usado por los getters display. No es codigo estatico ni mocks vacios. No hay Dockerfile en el repo: docker_build no aplica. Las migraciones NO se aplican aqui (lo hace deploy.yml al mergear a main). Las Edge Functions NO se despliegan por CI: la usuaria debe ejecutar manualmente 'supabase functions deploy generate-recipe' y 'supabase functions deploy discover-recipes'."
+  }
+}

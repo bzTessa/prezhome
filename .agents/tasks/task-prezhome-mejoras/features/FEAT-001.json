@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Preparar el entorno de validacion. Flutter NO esta instalado en PATH en el sandbox, pero la red llega a github.com, storage.googleapis.com y pub.dev. Instalar Flutter stable, descargar dependencias y establecer una linea base verde (format + analyze + test) ANTES de tocar codigo, para que todas las features posteriores puedan validarse con los mismos comandos del CI.",
+  "status": "completed",
+  "steps": [
+    "Comprobar si Flutter/Dart ya estan disponibles: 'which flutter dart'. Si no lo estan, instalar Flutter stable con: 'git clone --depth 1 -b stable https://github.com/flutter/flutter.git $HOME/flutter' y usar 'export PATH=\"$HOME/flutter/bin:$PATH\"' en cada comando (o anadirlo de forma persistente a la sesion).",
+    "Ejecutar 'flutter --version' para confirmar el canal stable y la version de Dart (debe cubrir sdk ^3.11.1 de pubspec.yaml).",
+    "Ejecutar 'flutter pub get' en la raiz del repo /projects/sandbox/prezhome para descargar las dependencias (supabase_flutter, google_fonts, image_picker, url_launcher, fl_chart).",
+    "Establecer la linea base replicando el CI: 'dart format --output=none --set-exit-if-changed .' (debe pasar sin cambios), 'flutter analyze' (0 issues) y 'flutter test' (verde). Anotar en findings el resultado exacto de cada comando.",
+    "Si la instalacion de Flutter falla o tarda en exceso (es una descarga grande), degradar: instalar/activar solo el Dart SDK disponible, ejecutar 'dart format --output=none --set-exit-if-changed .' y 'dart analyze', y DEJAR CONSTANCIA clara en findings de que la validacion full de Flutter (analyze/test con bindings de Flutter) no fue posible en el sandbox y debe recaer en el CI del PR."
+  ],
+  "acceptance_criteria": [
+    "'flutter --version' (o, en el peor caso, 'dart --version') responde correctamente y queda registrado en findings.",
+    "'flutter pub get' completa sin errores (o se documenta el fallback a dart-only).",
+    "La linea base queda registrada en findings: resultado de 'dart format --set-exit-if-changed', 'flutter analyze' y 'flutter test' (o el fallback dart-only con su limitacion anotada).",
+    "No se ha modificado ningun fichero de codigo de la app en esta feature (solo instalacion de toolchain)."
+  ],
+  "verification": [
+    "flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": "Entorno de validacion Flutter instalado y LINEA BASE VERDE establecida en el sandbox (no fue necesario el fallback dart-only). Detalles exactos:\n\n- Toolchain: Flutter/Dart NO estaban en PATH. Instalado con 'git clone --depth 1 -b stable https://github.com/flutter/flutter.git $HOME/flutter'. Usar en CADA comando de features posteriores: export PATH=\"$HOME/flutter/bin:$PATH\" (no es persistente entre llamadas de bash).\n- 'flutter --version': Flutter 3.47.6 - channel stable - Framework revision 5fc346839b (2026-09-30) - Engine 692136cb65 - Tools Dart 3.13.5 - DevTools 2.60.0. Dart 3.13.5 cubre el requisito sdk ^3.11.1 de pubspec.yaml. OK.\n- 'flutter pub get' (en /projects/sandbox/prezhome): completado sin errores. 'Changed 21 dependencies!'. Resueltas supabase_flutter, google_fonts, image_picker, url_launcher, fl_chart y transitivas. .dart_tool/ y package_config quedan resueltos en el sandbox.\n- 'dart format --output=none --set-exit-if-changed .': PASA. 'Formatted 42 files (0 changed)'. Exit 0. El formato del repo ya es correcto; igualmente ejecutar 'dart format .' antes de commitear en features siguientes (el CI es estricto).\n- 'flutter analyze': PASA. 'No issues found! (ran in ~9s)'. 0 issues. Exit 0.\n- 'flutter test': PASA. test/widget_test.dart -> '+1: All tests passed!'. Exit 0.\n\nNOTA IMPORTANTE para features posteriores (comportamiento del SDK 3.47.6 stable, no es un bug a arreglar): tanto 'flutter pub get' como 'flutter analyze' REESCRIBEN automaticamente ficheros que NO son codigo de la app y que esta feature (solo toolchain) ha REVERTIDO para no ensuciar el repo:\n  * analysis_options.yaml: el SDK anade un bloque 'analyzer: exclude: [build/**, android/**, ios/**, web/**, windows/**, macos/**, linux/**]' ('Upgrading analysis_options.yaml to exclude build and platform directories'). La linea base pasa IGUAL con o sin ese bloque (0 issues en ambos casos). Si una feature posterior ve este cambio tras pub get/analyze, puede revertirlo con 'git checkout -- analysis_options.yaml' salvo que quiera adoptarlo conscientemente.\n  * Ficheros generados de plugins de escritorio: linux/flutter/generated_plugin_registrant.cc, linux/flutter/generated_plugins.cmake, macos/Flutter/GeneratedPluginRegistrant.swift, windows/flutter/generated_plugin_registrant.cc, windows/flutter/generated_plugins.cmake y pubspec.lock se regeneran por el SDK. Son artefactos generados, no codigo de la app; revertir con 'git checkout --' si aparecen y no se desean en el commit.\nTras revertir todo lo anterior el arbol de git queda limpio (solo .agents/ sin trackear). No se ha modificado ningun fichero de codigo de la app. Red usada: github.com y storage.googleapis.com (descarga del Dart SDK del engine, ~228MB) OK."
+}

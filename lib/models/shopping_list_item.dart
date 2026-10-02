@@ -1,3 +1,5 @@
+import '../utils/measure_format.dart';
+
 class ShoppingListItem {
   final String? id;
   final String homeId;
@@ -55,16 +57,12 @@ class ShoppingListItem {
   }
 
   /// Texto legible: "2 unidades Cebolla" o "Sal".
+  ///
+  /// Usa [formatQuantityUnit] (el mismo helper que [Ingredient.display]) para
+  /// que el plural de la unidad concuerde con la cantidad.
   String get display {
-    final parts = <String>[];
-    if (quantity != null) {
-      final q = quantity! % 1 == 0
-          ? quantity!.toStringAsFixed(0)
-          : quantity!.toString();
-      parts.add(q);
-    }
-    if (unit != null && unit!.isNotEmpty) parts.add(unit!);
-    parts.add(name);
-    return parts.join(' ');
+    final measure = formatQuantityUnit(quantity, unit);
+    if (measure.isEmpty) return name;
+    return '$measure $name';
   }
 }

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../food_diary_screen.dart';
+import '../month_calendar_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
+import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
 
@@ -125,8 +127,8 @@ class HomeTabState extends State<HomeTab> {
   }
 
   /// Carga las tareas pendientes del hogar (mismo patrón de consulta que
-  /// lib/tasks_screen.dart) y las guarda ordenadas: las que tienen fecha
-  /// primero (ascendente) y las que no la tienen al final.
+  /// lib/tasks_screen.dart) y las guarda ordenadas por su proxima aparicion
+  /// (next_due ?? due_date) ascendente; las que no tienen fecha van al final.
   Future<void> _loadTasksSummary() async {
     try {
       final user = _client.auth.currentUser;
@@ -148,10 +150,14 @@ class HomeTabState extends State<HomeTab> {
           .map((m) => HomeTask.fromMap(m))
           .toList();
 
-      // Ordenar por fecha ascendente; las tareas sin fecha van al final.
+      // Ordenar por la proxima aparicion real (next_due o, por
+      // compatibilidad, due_date), igual que _todayTasks/_taskWhen; las tareas
+      // sin fecha van al final. Esto alinea el orden con el resto del flujo:
+      // las filas backfilled por 0030 (con next_due adelantado y due_date
+      // antiguo) se ordenan por cuando toca de verdad, no por la fecha vieja.
       pending.sort((a, b) {
-        final da = a.dueDate;
-        final db = b.dueDate;
+        final da = a.nextDue ?? a.dueDate;
+        final db = b.nextDue ?? b.dueDate;
         if (da == null && db == null) return 0;
         if (da == null) return 1;
         if (db == null) return -1;
@@ -167,6 +173,43 @@ class HomeTabState extends State<HomeTab> {
       // No rompemos la UI (la tarjeta se ve vacía), pero dejamos traza del
       // error para no confundir un fallo de carga con un hogar sin tareas.
       debugPrint('HomeTab._loadTasksSummary error: $e');
+    }
+  }
+
+  /// Tareas pendientes cuya proxima fecha (next_due o, por compatibilidad,
+  /// due_date) es HOY o ya pasada, mas las que no tienen fecha (toca cuando se
+  /// pueda). Son las que la usuaria puede marcar directamente desde el
+  /// Dashboard.
+  List<HomeTask> get _todayTasks {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return _pendingTasks.where((t) {
+      final due = t.nextDue ?? t.dueDate;
+      if (due == null) return true; // sin fecha: siempre a mano
+      final d = DateTime(due.year, due.month, due.day);
+      return !d.isAfter(today); // hoy o atrasada
+    }).toList();
+  }
+
+  /// Completa una tarea directamente desde el Dashboard reutilizando la misma
+  /// logica (puntos + reprogramacion) que la pantalla de Tareas, y refresca el
+  /// resumen sin reiniciar la app.
+  Future<void> _completeTaskFromDashboard(HomeTask task) async {
+    try {
+      await TaskScheduler(_client).complete(task);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('¡+${task.points} puntos!')));
+      }
+      await _loadTasksSummary();
+    } catch (e) {
+      debugPrint('HomeTab._completeTaskFromDashboard error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -342,7 +385,60 @@ class HomeTabState extends State<HomeTab> {
           _tasksCard(),
           const SizedBox(height: 12),
           _spendingCard(),
+          const SizedBox(height: 12),
+          _calendarCard(),
         ],
+      ),
+    );
+  }
+
+  /// Tarjeta 'Calendario del mes': abre la vista mensual con comidas y tareas
+  /// (incluidas las apariciones futuras de las recurrentes). Al volver,
+  /// refresca el resumen del dashboard.
+  Widget _calendarCard() {
+    const color = Color(0xFFE2DAF0);
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () async {
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const MonthCalendarScreen()));
+        _loadDashboard(); // refrescar al volver del calendario
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: AppTheme.cardDecoration(),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.calendar_month, color: AppColors.ink),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Calendario del mes',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Comidas y tareas de todo el mes, día a día.',
+                    style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black26),
+          ],
+        ),
       ),
     );
   }
@@ -428,83 +524,128 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
-  /// Tarjeta 'Tareas del hogar' con el recuento de pendientes y las próximas.
+  /// Tarjeta 'Tareas del hogar': muestra las tareas de HOY (y atrasadas o sin
+  /// fecha) y permite marcarlas como hechas de un toque directamente desde el
+  /// Dashboard, con el mismo flujo de puntos + reprogramacion que la pantalla
+  /// de Tareas. Debajo, un recuento del total de pendientes.
   Widget _tasksCard() {
     const color = Color(0xFFE8F0DC);
     final count = _pendingTasks.length;
-    // Hasta 3 próximas tareas (ya vienen ordenadas por fecha ascendente).
-    final next = _pendingTasks.take(3).toList();
+    final today = _todayTasks;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: AppTheme.cardDecoration(),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.check_circle_outline, color: AppColors.ink),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Tareas del hogar',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 6),
-                if (count == 0)
-                  const Text(
-                    'Todo al día',
-                    style: TextStyle(color: Colors.black54),
-                  )
-                else ...[
-                  Text(
-                    count == 1
-                        ? '1 tarea pendiente'
-                        : '$count tareas pendientes',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  ...next.map(
-                    (t) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              t.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                          if (_taskWhen(t) != null) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              _taskWhen(t)!,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ],
+                child: const Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tareas del hogar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
-                  ),
-                ],
-              ],
+                    const SizedBox(height: 6),
+                    if (count == 0)
+                      const Text(
+                        'Todo al día',
+                        style: TextStyle(color: Colors.black54),
+                      )
+                    else if (today.isEmpty)
+                      Text(
+                        count == 1
+                            ? '1 tarea pendiente (ninguna para hoy)'
+                            : '$count tareas pendientes (ninguna para hoy)',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      )
+                    else
+                      Text(
+                        today.length == 1
+                            ? 'Para hoy: 1 tarea'
+                            : 'Para hoy: ${today.length} tareas',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Lista de tareas de hoy, cada una marcable de un toque.
+          if (today.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ...today.map(_todayTaskRow),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Fila de una tarea de hoy con boton circular para marcarla hecha, con el
+  /// mismo aspecto que _TaskCard de la pantalla de Tareas.
+  Widget _todayTaskRow(HomeTask t) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => _completeTaskFromDashboard(t),
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(color: Colors.grey, width: 2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              t.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+          if (_taskWhen(t) != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              _taskWhen(t)!,
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+          ],
+          const SizedBox(width: 8),
+          Text(
+            '${t.points} pts',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.woodDark,
             ),
           ),
         ],
@@ -515,7 +656,7 @@ class HomeTabState extends State<HomeTab> {
   /// Texto breve de cuándo toca una tarea: 'Hoy', 'Mañana' o 'dd/mm'.
   /// Devuelve null si la tarea no tiene fecha.
   String? _taskWhen(HomeTask t) {
-    final due = t.dueDate;
+    final due = t.nextDue ?? t.dueDate;
     if (due == null) return null;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

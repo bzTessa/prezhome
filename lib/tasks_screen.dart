@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_task_screen.dart';
 import 'models/task.dart';
+import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 
@@ -88,34 +89,9 @@ class _TasksScreenState extends State<TasksScreen> {
     final user = _client.auth.currentUser;
     if (user == null) return;
     try {
-      // Registrar puntos ganados
-      await _client.from('task_points').insert({
-        'home_id': task.homeId,
-        'user_id': user.id,
-        'points': task.points,
-        'task_id': task.id,
-      });
-
-      if (task.recurrence == 'once') {
-        // Puntual: marcar como hecha
-        await _client
-            .from('tasks')
-            .update({
-              'is_done': true,
-              'completed_by': user.id,
-              'completed_at': DateTime.now().toIso8601String(),
-            })
-            .eq('id', task.id);
-      } else {
-        // Recurrente: se mantiene activa (solo suma puntos al completarla)
-        await _client
-            .from('tasks')
-            .update({
-              'completed_by': user.id,
-              'completed_at': DateTime.now().toIso8601String(),
-            })
-            .eq('id', task.id);
-      }
+      // Registra puntos y reprograma (recurrentes) o marca hecha ('once')
+      // con la misma logica compartida que usa el Dashboard de Inicio.
+      await TaskScheduler(_client).complete(task);
 
       if (mounted) {
         ScaffoldMessenger.of(

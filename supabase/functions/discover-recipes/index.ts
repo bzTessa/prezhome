@@ -95,18 +95,30 @@ Responde SOLO con un JSON válido (sin markdown) con esta forma:
 
 Macros y calorías POR RACIÓN.
 
-MEDIDAS DE LOS INGREDIENTES (muy importante): piensa como quien cocina en casa,
-no como un laboratorio. Usa SIEMPRE que puedas MEDIDAS CASERAS Y FÁCILES de
-cocina en "unit": taza, cucharada, cucharadita, puñado, unidad, loncha, rodaja,
-diente, vaso, lata, bote, pizca, chorro, rebanada, "al gusto"... Esa debe ser la
-unidad POR DEFECTO. Usa gramos o ml SOLO cuando sea lo natural de ese alimento
-(por ejemplo "200 g de pollo", "150 g de arroz", "100 ml de leche") o cuando no
-exista una medida casera clara. Ejemplos: "1 taza de arroz" (quantity 1, unit
-"taza"), "2 cucharadas de aceite" (quantity 2, unit "cucharadas"), "1 cebolla"
-(quantity 1, unit "unidad" o "" si el nombre ya es contable), "un puñado de
-espinacas" (quantity 1, unit "puñado"), "sal al gusto" (quantity null, unit
-"al gusto"). Para ingredientes "al gusto" o "a ojo", "quantity" puede ir a null y
-la expresión va en "unit". Números REDONDOS y realistas.
+MEDIDAS DE LOS INGREDIENTES (muy importante): usa medidas de PESO y VOLUMEN
+realistas, como quien hace la compra en el supermercado. Reglas por defecto:
+  1. SÓLIDOS (arroz, pasta, legumbres, harina, carne, pescado, patata, verduras
+     que se pesan, pan, azúcar...) en GRAMOS -> unit "g" (usa "kg" solo si es una
+     cantidad muy grande).
+  2. LÍQUIDOS (leche, aceite, agua, caldo, vino, nata, zumo...) en MILILITROS ->
+     unit "ml" (usa litros solo si procede).
+  3. SOLO las ESPECIAS y CONDIMENTOS (sal, pimienta, pimentón, orégano, comino,
+     cúrcuma, canela, hierbas...) van en "cucharada" / "cucharadita" / "pizca", o
+     bien "al gusto" con quantity null. NO uses tazas ni cucharadas para
+     ingredientes principales.
+  4. Los elementos naturalmente CONTABLES (huevos, cebolla, dientes de ajo, limón,
+     latas, lonchas) pueden ir en "unidad" / "diente" / "loncha" / "lata".
+Mantén números REDONDOS y cantidades tipo supermercado (paquetes de 250/500 g o
+1 kg, botellas de 1 L, latas). Ejemplos del estilo que quiero:
+  - "200 g de arroz"         -> quantity 200, unit "g"
+  - "150 g de pollo"         -> quantity 150, unit "g"
+  - "500 ml de caldo"        -> quantity 500, unit "ml"
+  - "1 cucharadita de pimentón" -> quantity 1, unit "cucharadita"
+  - "sal al gusto"           -> quantity null, unit "al gusto"
+  - "2 huevos"               -> quantity 2,   unit "unidad"
+  - "1 cebolla"              -> quantity 1,   unit "unidad"
+Para ingredientes "al gusto" o "a ojo", "quantity" puede ir a null y la
+expresión va en "unit".
 
 En "instructions" es OBLIGATORIO un paso por línea
 separado por salto de línea real (\\n), cada uno con su número; NO juntes todo en

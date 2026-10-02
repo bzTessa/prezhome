@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
+import 'utils/measure_format.dart';
 import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
@@ -580,7 +581,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       return Column(
                         children: ings.map((ing) {
                           final qty = _fmtQty(ing.quantity);
-                          final unit = ing.unit?.trim() ?? '';
+                          final rawUnit = ing.unit?.trim() ?? '';
+                          // Concordamos el plural con la cantidad ya escalada
+                          // (p.ej. "2 unidades" en vez de "2 unidad").
+                          final scaledQty =
+                              (ing.quantity ?? 0) * _servingsFactor;
+                          final unit = rawUnit.isEmpty
+                              ? ''
+                              : pluralizeUnit(rawUnit, scaledQty);
                           // Caso "al gusto"/"a ojo" sin cantidad: queda mas
                           // natural leer "Sal (al gusto)" que "al gusto Sal".
                           final isLooseMeasure = qty.isEmpty && unit.isNotEmpty;

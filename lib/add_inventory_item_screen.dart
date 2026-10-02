@@ -20,6 +20,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   String _selectedUnit = 'unidades';
   String _kind = 'ingredient';
   DateTime? _frozenOn;
+  bool _isStaple = false;
   bool _isLoading = false;
 
   static const List<String> _foodCategories = [
@@ -90,6 +91,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         frozenOn: (isFood && _selectedCategory == 'Congelador')
             ? _frozenOn
             : null,
+        // Solo tiene sentido marcar basicos de comida como "siempre en casa".
+        isStaple: isFood && _isStaple,
       );
 
       await Supabase.instance.client
@@ -269,6 +272,35 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                               '${_frozenOn!.month.toString().padLeft(2, '0')}/'
                               '${_frozenOn!.year}',
                   ),
+                ),
+              ),
+            ],
+
+            // "Siempre en casa": basicos/especias que no queremos que acaben
+            // en la lista de la compra (sal, pimienta, aceite...). Solo para
+            // productos de comida.
+            if (isFood) ...[
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: SwitchListTile(
+                  value: _isStaple,
+                  activeThumbColor: AppColors.woodDark,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  title: const Text(
+                    'Siempre en casa',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: const Text(
+                    'Básico o especia que das por supuesto. No se añadirá a '
+                    'la lista de la compra aunque una receta lo pida.',
+                  ),
+                  onChanged: (v) => setState(() => _isStaple = v),
                 ),
               ),
             ],
