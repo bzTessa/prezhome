@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "FRENTE 1 (Recetas): medidas de ingredientes mas naturales y realistas, y arreglo del singular/plural ('2 unidad' -> '2 unidades'). Dos partes independientes: (A) INVERTIR las reglas de medidas en el prompt de las dos Edge Functions Gemini para que los solidos vayan en GRAMOS, los liquidos en ML y solo especias/condimentos en cucharadas/pizcas/'al gusto'; (B) hacer robusto el lado Flutter con un helper de pluralizacion en espanol usado al mostrar cantidad+unidad, para que concuerde aunque la IA falle. Puede paralelizarse con FEAT-003 y FEAT-004 (ficheros distintos), aunque FEAT-004 tambien toca shopping_list_item.dart: coordinar el display con el helper de pluralizacion creado aqui.",
+  "status": "pending",
+  "steps": [
+    "PARTE A - Prompt de supabase/functions/generate-recipe/index.ts (funcion buildPrompt): reescribir el bloque 'MEDIDAS DE LOS INGREDIENTES'. Nuevas reglas, por defecto PESO/VOLUMEN realista: (1) Solidos (arroz, pasta, legumbres, harina, carne, pescado, patata, verduras por peso, pan, azucar...) en GRAMOS 'g' (o kg solo si es muy grande). (2) Liquidos (leche, aceite, agua, caldo, vino, nata, zumo...) en MILILITROS 'ml' (o litros si procede). (3) SOLO especias y condimentos (sal, pimienta, pimenton, oregano, comino, curcuma, canela, hierbas...) en 'cucharada'/'cucharadita'/'pizca' o 'al gusto' (quantity null). (4) Elementos naturalmente contables (huevos, cebolla, dientes de ajo, limon, latas, lonchas) pueden ir en 'unidad'/'diente'/'loncha'/'lata'. Mantener numeros REDONDOS y cantidades tipo supermercado (paquetes de 250/500 g/1 kg, botellas 1 L, latas). Actualizar los EJEMPLOS del prompt para que reflejen las nuevas reglas: p.ej. '200 g de arroz' (NO '2 tazas de arroz'), '150 g de pollo', '500 ml de caldo', '1 cucharadita de pimenton', 'sal al gusto', '2 huevos' unit 'unidad'. NO tocar el resto del esquema JSON (title, macros, instructions, components, freezer_days) ni la logica de pickModels/Deno.serve.",
+    "PARTE A - Prompt de supabase/functions/discover-recipes/index.ts (funcion buildPrompt): aplicar EXACTAMENTE las mismas reglas y ejemplos nuevos de medidas que en generate-recipe para mantener consistencia. Solo el bloque de medidas; no tocar el resto.",
+    "PARTE B - Crear un helper de pluralizacion en espanol reutilizable, p.ej. lib/utils/measure_format.dart con una funcion 'String formatQuantityUnit(num? quantity, String? unit)' (y/o 'String pluralizeUnit(String unit, num quantity)'). Reglas: si quantity es null, devolver solo la unidad/expresion (p.ej. 'al gusto'); formatear la cantidad sin decimales si es entera (toStringAsFixed(0)) igual que hace hoy el getter display; pluralizar la unidad SOLO cuando quantity != 1 y la unidad sea contable/pluralizable. Cubrir el mapeo de las unidades que usa la app y la IA: 'unidad'->'unidades', 'cucharada'->'cucharadas', 'cucharadita'->'cucharaditas', 'pizca'->'pizcas', 'diente'->'dientes', 'loncha'->'lonchas', 'rodaja'->'rodajas', 'rebanada'->'rebanadas', 'vaso'->'vasos', 'taza'->'tazas', 'lata'->'latas', 'bote'->'botes', 'bolsa'->'bolsas', 'punado'/'puñado'->'puñados', 'chorro'->'chorros', 'vaso'->'vasos'. Unidades invariables que NUNCA se pluralizan: 'g','kg','ml','l','litros' (ya plural), 'ml', y expresiones 'al gusto'/'a ojo'. Si la unidad ya viene en plural o no se reconoce, dejarla tal cual (no inventar). Normalizar comparando en minusculas/sin acentos. Anadir doc comment explicando el objetivo.",
+    "PARTE B - Usar el helper en lib/models/ingredient.dart: reescribir el getter 'display' para delegar en formatQuantityUnit(quantity, unit) + name, conservando el formato legible actual ('2 unidades Cebolla', 'Sal al gusto'). Mantener la tolerancia a nulls.",
+    "PARTE B - Usar el MISMO helper en lib/models/shopping_list_item.dart getter 'display' para que la lista de la compra muestre tambien el plural correcto. (Nota: FEAT-004 reorganiza visualmente la lista; dejar el display coherente con el helper para que ambas features encajen.)",
+    "PARTE B - Buscar con grep cualquier otro punto que concatene cantidad+unidad a mano (p.ej. recipe_detail_screen, inventory_screen muestra '${item.quantity} ${item.unit}') y, donde sea una cantidad+unidad de ingrediente/compra, usar el helper. Para el inventario, evaluar si aplica (sus unidades vienen de un desplegable fijo: 'unidades','kg','g','litros','ml','botes','bolsas'); si se decide no tocar inventario, anotarlo en findings con el motivo.",
+    "Anadir un test unitario en test/ (p.ej. test/measure_format_test.dart) que cubra el helper: '1 unidad' vs '2 unidades', 'quantity null' -> 'al gusto', '200 g' invariable, '1 cucharadita' vs '3 cucharaditas', unidad desconocida se deja igual, entero sin decimales. Estos tests son Dart puro (no requieren bindings de Flutter)."
+  ],
+  "acceptance_criteria": [
+    "En generate-recipe/index.ts y discover-recipes/index.ts el prompt pide GRAMOS para solidos, ML para liquidos y reserva cucharadas/cucharaditas/pizcas/'al gusto' SOLO para especias/condimentos; los ejemplos del prompt ya NO contienen 'taza de arroz' y usan '200 g de arroz'/'500 ml de caldo'.",
+    "El resto del esquema JSON y la logica de ambas Edge Functions quedan intactos (solo cambia el texto del bloque de medidas).",
+    "Existe un helper de pluralizacion en espanol reutilizable y los getters display de Ingredient y ShoppingListItem lo usan: para quantity 2 y unit 'unidad' el texto es '2 unidades <nombre>' (no '2 unidad'); para quantity 1 es '1 unidad <nombre>'; 'g'/'ml' nunca se pluralizan; quantity null muestra la expresion ('al gusto').",
+    "Nuevo test de Dart puro para el helper pasa con 'flutter test'.",
+    "'flutter analyze' sin issues y 'dart format --set-exit-if-changed .' sin cambios."
+  ],
+  "verification": [
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
