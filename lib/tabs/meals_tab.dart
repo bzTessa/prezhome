@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../recipes_screen.dart';
 import '../inventory_screen.dart';
+import '../shopping_list_screen.dart';
 import '../theme/app_theme.dart';
 
-/// Pestaña "Comidas": agrupa Recetas y Despensa/Nevera/Congelador (Inventario).
+/// Pestaña "Comidas": agrupa Recetas, Despensa/Nevera/Congelador (Inventario)
+/// y la Lista de la compra.
 class MealsTab extends StatelessWidget {
   const MealsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: AppColors.cream,
         appBar: AppBar(
@@ -24,6 +26,7 @@ class MealsTab extends StatelessWidget {
             tabs: [
               Tab(text: 'Recetas', icon: Icon(Icons.restaurant_menu)),
               Tab(text: 'Despensa', icon: Icon(Icons.kitchen)),
+              Tab(text: 'Compra', icon: Icon(Icons.shopping_cart_outlined)),
             ],
           ),
         ),
@@ -32,6 +35,7 @@ class MealsTab extends StatelessWidget {
             // Cada pantalla trae su propio contenido y botón flotante.
             _EmbeddedRecipes(),
             _EmbeddedInventory(),
+            _EmbeddedShopping(),
           ],
         ),
       ),
@@ -50,4 +54,11 @@ class _EmbeddedInventory extends StatelessWidget {
   const _EmbeddedInventory();
   @override
   Widget build(BuildContext context) => const InventoryScreen(embedded: true);
+}
+
+class _EmbeddedShopping extends StatelessWidget {
+  const _EmbeddedShopping();
+  @override
+  Widget build(BuildContext context) =>
+      const ShoppingListScreen(embedded: true);
 }
