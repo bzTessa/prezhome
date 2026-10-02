@@ -5,6 +5,7 @@ import 'models/food_log_entry.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'nutrition_profile_screen.dart';
+import 'photo_meal_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 
@@ -184,6 +185,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 subtitle: const Text('Registra una receta tuya como comida'),
                 onTap: () => Navigator.of(context).pop('receta'),
               ),
+              ListTile(
+                leading: const Icon(
+                  Icons.photo_camera_outlined,
+                  color: AppColors.ink,
+                ),
+                title: const Text('Con una foto'),
+                subtitle: const Text(
+                  'Haz una foto al plato y la IA estima las calorías',
+                ),
+                onTap: () => Navigator.of(context).pop('foto'),
+              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -194,7 +206,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       await _addManual();
     } else if (choice == 'receta') {
       await _addFromRecipe();
+    } else if (choice == 'foto') {
+      await _addFromPhoto();
     }
+  }
+
+  Future<void> _addFromPhoto() async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => PhotoMealScreen(logDate: _viewDay)),
+    );
+    if (!mounted) return;
+    if (changed == true) _reload();
   }
 
   Future<void> _addManual() async {
