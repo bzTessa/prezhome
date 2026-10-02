@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../food_diary_screen.dart';
 import '../meal_plan_screen.dart';
+import '../profile_wizard_screen.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
@@ -160,6 +161,10 @@ class _DashboardViewState extends State<_DashboardView> {
   // Resumen de calorías de hoy (diario de consumo personal).
   double _todayCalories = 0;
   int? _targetCalories;
+
+  // ¿El perfil nutricional está completo? Si no lo está, invitamos a calcular
+  // el objetivo de calorías con el cuestionario guiado.
+  bool _profileComplete = true;
 
   static const _mealLabels = {
     'breakfast': 'Desayuno',
@@ -353,9 +358,11 @@ class _DashboardViewState extends State<_DashboardView> {
           .select()
           .eq('id', user.id)
           .maybeSingle();
-      final target = profileRow != null
-          ? NutritionProfile.fromMap(profileRow).targetCalories
+      final profile = profileRow != null
+          ? NutritionProfile.fromMap(profileRow)
           : null;
+      final target = profile?.targetCalories;
+      final complete = profile?.isComplete ?? false;
 
       final todayKey = DateTime.now().toIso8601String().split('T').first;
       final res = await _client
@@ -372,6 +379,7 @@ class _DashboardViewState extends State<_DashboardView> {
         setState(() {
           _targetCalories = target;
           _todayCalories = total;
+          _profileComplete = complete;
         });
       }
     } catch (e) {
@@ -441,6 +449,15 @@ class _DashboardViewState extends State<_DashboardView> {
         // Resumen de las comidas planificadas para hoy.
         _mealsCard(),
         const SizedBox(height: 12),
+        // Si el perfil no está completo o aún no hay objetivo de calorías,
+        // invitamos a calcularlo con el cuestionario guiado antes de mostrar
+        // la tarjeta de calorías del día.
+        if (!_profileComplete ||
+            _targetCalories == null ||
+            _targetCalories! <= 0) ...[
+          _calorieGoalPrompt(),
+          const SizedBox(height: 12),
+        ],
         _caloriesCard(),
         const SizedBox(height: 12),
         _tasksCard(),
@@ -636,6 +653,48 @@ class _DashboardViewState extends State<_DashboardView> {
     }
     final time = t.dueTime;
     return time != null ? '$label $time' : label;
+  }
+
+  /// Aviso amable para calcular el objetivo de calorías con el cuestionario
+  /// guiado. Aparece mientras el perfil no está completo. Al pulsarlo abre el
+  /// ProfileWizardScreen y, al volver, refresca el resumen de calorías.
+  Widget _calorieGoalPrompt() {
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () async {
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ProfileWizardScreen()));
+        _loadCaloriesSummary(); // refrescar al volver del cuestionario
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: AppTheme.cardDecoration(),
+        child: Row(
+          children: [
+            const MiauCharacter(mood: MiauMood.curious, size: 56),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Calcula tu objetivo de calorías',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Responde unas preguntas rápidas y adaptaré PrezHome a ti.',
+                    style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black26),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Tarjeta 'Calorías de hoy': total consumido del diario personal y, si el

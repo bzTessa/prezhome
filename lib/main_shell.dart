@@ -13,10 +13,10 @@ class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   static const _homeIndex = 2; // Inicio (centro)
   int _index = _homeIndex; // arranca en Inicio
 
@@ -39,6 +39,13 @@ class _MainShellState extends State<MainShell> {
     if (i == _homeIndex) {
       _homeKey.currentState?.refreshActiveView();
     }
+  }
+
+  /// Refresca la vista activa de la pestaña Inicio. Lo usa HomeSessionScreen
+  /// tras cerrarse el cuestionario automatico, para que el dashboard refleje el
+  /// objetivo de calorias recien calculado sin tener que cambiar de pestana.
+  void refreshHome() {
+    _homeKey.currentState?.refreshActiveView();
   }
 
   @override

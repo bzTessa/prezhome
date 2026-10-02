@@ -4,6 +4,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_onboarding_screen.dart';
 import 'main_shell.dart';
 import 'login_screen.dart';
+import 'models/nutrition_profile.dart';
+import 'profile_wizard_screen.dart';
+
+/// Resultado de evaluar el estado del usuario para decidir a donde llevarlo:
+/// si pertenece a un hogar y si su perfil nutricional esta completo.
+class _SessionState {
+  final bool hasHome;
+  final bool profileComplete;
+
+  const _SessionState({required this.hasHome, required this.profileComplete});
+}
 
 class HomeSessionScreen extends StatefulWidget {
   const HomeSessionScreen({super.key});
@@ -13,31 +24,70 @@ class HomeSessionScreen extends StatefulWidget {
 }
 
 class _HomeSessionScreenState extends State<HomeSessionScreen> {
-  late Future<bool> _hasHome;
+  late Future<_SessionState> _session;
+
+  // Evita lanzar el wizard automatico mas de una vez por montaje de la pantalla
+  // (p. ej. si el FutureBuilder se reconstruye), asi no hay bucles ni dobles
+  // aperturas del cuestionario.
+  bool _wizardLaunched = false;
+
+  // Clave de MainShell para refrescar la pestana Inicio cuando el wizard
+  // automatico se cierra, de modo que el dashboard refleje el objetivo recien
+  // calculado sin que el usuario tenga que cambiar de pestana.
+  final GlobalKey<MainShellState> _shellKey = GlobalKey<MainShellState>();
 
   @override
   void initState() {
     super.initState();
-    _hasHome = _loadHomeMembership();
+    _session = _loadSession();
   }
 
-  Future<bool> _loadHomeMembership() async {
+  Future<_SessionState> _loadSession() async {
     final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return false;
+    if (user == null) {
+      return const _SessionState(hasHome: false, profileComplete: false);
+    }
 
+    // Solo necesitamos home_id y las columnas que consume isComplete; incluimos
+    // 'id' porque NutritionProfile.fromMap lo lee. Asi no cargamos el perfil
+    // entero en la ruta critica del arranque.
     final profile = await Supabase.instance.client
         .from('profiles')
-        .select('home_id')
+        .select('id, home_id, sex, birth_date, height_cm, weight_kg')
         .eq('id', user.id)
         .maybeSingle();
+
     final homeId = profile?['home_id'];
-    return homeId is String && homeId.isNotEmpty;
+    final hasHome = homeId is String && homeId.isNotEmpty;
+    final profileComplete =
+        profile != null && NutritionProfile.fromMap(profile).isComplete;
+
+    return _SessionState(hasHome: hasHome, profileComplete: profileComplete);
   }
 
   void _retry() {
-    final future = _loadHomeMembership();
+    final future = _loadSession();
     setState(() {
-      _hasHome = future;
+      _session = future;
+    });
+  }
+
+  /// Lanza el cuestionario UNA sola vez sobre MainShell en el primer frame,
+  /// cuando el usuario ya tiene hogar pero el perfil no esta completo. El
+  /// wizard siempre tiene salida (el usuario puede cerrarlo y entrar a la app),
+  /// por lo que no hay bucles ni callejones sin salida.
+  void _maybeLaunchWizard() {
+    if (_wizardLaunched) return;
+    _wizardLaunched = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const ProfileWizardScreen()));
+      // Al volver del cuestionario, refrescamos la pestana Inicio para que el
+      // aviso de calorias y la tarjeta reflejen el objetivo ya calculado.
+      if (!mounted) return;
+      _shellKey.currentState?.refreshHome();
     });
   }
 
@@ -47,8 +97,8 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
       return const LoginScreen();
     }
 
-    return FutureBuilder<bool>(
-      future: _hasHome,
+    return FutureBuilder<_SessionState>(
+      future: _session,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _ProfileLoadError(onRetry: _retry);
@@ -58,9 +108,16 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return snapshot.data!
-            ? const MainShell()
-            : const HomeOnboardingScreen();
+        final state = snapshot.data!;
+        if (!state.hasHome) {
+          return const HomeOnboardingScreen();
+        }
+        if (!state.profileComplete) {
+          // Hogar + perfil incompleto: entramos a la app y abrimos el
+          // cuestionario encima una sola vez, siempre con salida.
+          _maybeLaunchWizard();
+        }
+        return MainShell(key: _shellKey);
       },
     );
   }
