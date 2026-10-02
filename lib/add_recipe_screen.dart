@@ -359,6 +359,22 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     });
   }
 
+  /// Devuelve el detalle real de un error de subida al Storage para poder
+  /// diagnosticar fallos como el 403 "new row violates row-level security
+  /// policy". Un `e.toString()` de StorageException suele quedarse corto, asi
+  /// que extraemos message, statusCode y, si existe, el campo error/cuerpo.
+  String _describeUploadError(Object e) {
+    if (e is StorageException) {
+      final parts = <String>[];
+      if (e.message.isNotEmpty) parts.add(e.message);
+      if (e.statusCode != null) parts.add('status ${e.statusCode}');
+      if (e.error != null && e.error!.isNotEmpty) parts.add('error ${e.error}');
+      if (parts.isEmpty) return e.toString();
+      return parts.join(' · ');
+    }
+    return e.toString();
+  }
+
   /// Sube la imagen elegida al bucket y devuelve su ruta (o null si no hay).
   Future<String?> _uploadImageIfAny(String homeId) async {
     if (_newImageBytes == null) return null;
@@ -407,7 +423,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         uploadedPath = await _uploadImageIfAny(homeId);
       } catch (e) {
         imageFailed = true;
-        imageError = e.toString();
+        imageError = _describeUploadError(e);
+        // Traza completa en consola para diagnosticar el 403 de Storage.
+        debugPrint('AddRecipeScreen._uploadImageIfAny error: $e');
       }
 
       final recipe = Recipe(
