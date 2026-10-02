@@ -1,0 +1,7 @@
+{
+  "task_id": "task-recetas-rediseno",
+  "task_description": "Rediseñar el apartado de Recetas de PrezHome (Flutter + Supabase, en espanol) para que sea mas estetico, cozy y profesional estilo Yazio / apps de caducidad de nevera: foto automatica via Pexels (edge function nueva recipe-photo + columna image_url), placeholder cozy por tipo de plato, rejilla de 2 columnas, barra de filtros (tipo de comida/favoritas/tiempo), chips con color e icono, y estados vacio/carga cuidados; manteniendo la identidad Cozy + Miau y sin romper el resto de la app. Degradar con elegancia si no hay PEXELS_API_KEY.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

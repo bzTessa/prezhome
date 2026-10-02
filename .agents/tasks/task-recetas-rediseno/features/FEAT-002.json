@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Capa de datos y backend para la FOTO AUTOMATICA de recetas via Pexels. Anade una columna image_url (URL externa) a recipes, hace que el modelo Recipe la soporte sin romper la foto manual (image_path/bucket), crea la edge function segura recipe-photo que consulta Pexels, y engancha la llamada en los dos puntos donde se crean recetas (Rellenar con IA / manual, e Ideas personalizadas). Todo debe DEGRADAR CON ELEGANCIA: si no hay PEXELS_API_KEY o Pexels falla, la receta se guarda sin foto y se ve el placeholder cozy. La clave NUNCA va en el cliente Flutter.",
+  "status": "pending",
+  "steps": [
+    "Crear migracion supabase/migrations/0032_recipe_image_url.sql (siguiente numero tras 0031_inventory_staple.sql). Idempotente: 'alter table public.recipes add column if not exists image_url text;'. Comentario explicando que es para URLs externas (Pexels), distinto de image_path (ruta en el bucket recipe-images). NO tocar policies ni RLS (solo una columna). Asegurar parentesis balanceados ignorando comentarios y que termina en ';'.",
+    "Actualizar lib/models/recipe.dart: en Recipe.fromMap, el campo imageUrl debe PREFERIR map['image_url'] (URL externa completa, cuando no es null/vacia) y caer a _imageUrlFrom(map['image_path']) en caso contrario. Mantener la tolerancia a nulls. En Recipe.toMap, anadir 'image_url': <valor de la url externa> (ver siguiente paso para como se pasa). Conviene anadir un parametro/campo que distinga la url externa de la derivada; la via mas simple: guardar la url externa en un campo nuevo del modelo (p.ej. externalImageUrl) y que imageUrl la devuelva con prioridad. Evaluar la opcion mas limpia manteniendo compatibilidad con el codigo que ya usa recipe.imageUrl (recipes_screen, recipe_detail_screen, add_recipe_screen _existingImageUrl). Si se usa un solo campo imageUrl que puede ser URL externa O derivada, toMap debe escribir image_url SOLO cuando sea una URL externa real, no la derivada del bucket (para no duplicar).",
+    "Crear la edge function supabase/functions/recipe-photo/index.ts siguiendo EXACTAMENTE el patron de seguridad de supabase/functions/generate-recipe/index.ts: CORS headers, manejar OPTIONS, solo POST, helper json(), validar JWT con admin.auth.getUser(jwt) (createClient con SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY), leer home_id de profiles (maybeSingle). La funcion recibe body {'query': <titulo/nombre del plato>}. Lee la clave con Deno.env.get('PEXELS_API_KEY'). Si NO hay clave, responder json({url: null}) con status 200 (degradar, NO 500). Si hay clave, hacer fetch a 'https://api.pexels.com/v1/search?query=<encode>&per_page=1&orientation=landscape' con header Authorization: <PEXELS_API_KEY>. Parsear la respuesta y devolver json({url: photos[0].src.large || medium || original}) o json({url: null}) si no hay resultados. Capturar errores de red y devolver json({url: null}, 200) para no romper el alta de receta. NO consumir credito IA (esto NO es Gemini, no llamar a consume_ai_credit). Comentar arriba, como en generate-recipe, que el despliegue lo hace la usuaria: 'supabase secrets set PEXELS_API_KEY=...' y 'supabase functions deploy recipe-photo'.",
+    "Enganchar en lib/add_recipe_screen.dart _save(): tras determinar homeId y ANTES de construir recipeMap, si NO hay foto manual nueva (_newImageBytes == null) y NO hay ya una imagen (en alta: siempre; en edicion: solo si _existingImageUrl == null) y hay titulo, invocar _client.functions.invoke('recipe-photo', body: {'query': <titulo>}) dentro de try/catch; si devuelve data['url'] no vacio, poner esa URL en recipeMap['image_url']. Si falla o viene null, continuar sin foto (NO mostrar error bloqueante; a lo sumo un debugPrint). Respetar que la foto MANUAL (uploadedPath -> image_path) tiene prioridad sobre la de Pexels. No usar setState con arrow para futures.",
+    "Enganchar lo mismo en lib/discover_recipes_screen.dart _saveIdea(): antes de insertar la receta, si no hay imagen, invocar recipe-photo con el titulo y, si hay url, incluir 'image_url' en el mapa que se inserta. Mismo manejo de errores degradado.",
+    "Verificar que recipe.toMap() enviado en insert/update incluye image_url cuando corresponde y que no se envia la URL derivada del bucket como image_url. Comprobar que add_recipe_screen escribe recipeMap['image_url'] de forma coherente con el modelo."
+  ],
+  "acceptance_criteria": [
+    "Existe supabase/migrations/0032_recipe_image_url.sql, idempotente, que anade la columna image_url text a recipes, con nombre NNNN_nombre.sql y parentesis balanceados (pasa la validacion del job supabase de ci.yml).",
+    "Recipe.fromMap devuelve la URL externa (image_url) cuando existe y cae a la derivada de image_path si no; tolera nulls. Recipe.toMap incluye image_url solo cuando es una URL externa real.",
+    "Existe supabase/functions/recipe-photo/index.ts que valida JWT, lee PEXELS_API_KEY del entorno, consulta Pexels y devuelve {url: <string>} o {url: null}; nunca devuelve 500 por falta de clave o fallo de Pexels; no llama a consume_ai_credit.",
+    "El alta de receta (IA y manual) y el guardado de ideas invocan recipe-photo solo cuando no hay foto manual, y degradan sin romper si falla.",
+    "'dart format', 'flutter analyze' y 'flutter test' pasan tras los cambios."
+  ],
+  "verification": [
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test",
+    "Revisar manualmente supabase/functions/recipe-photo/index.ts para confirmar que degrada con {url:null} y valida JWT como generate-recipe",
+    "sed 's/--.*$//' supabase/migrations/0032_recipe_image_url.sql | tr -cd '(' | wc -c  y  '... | tr -cd ')' | wc -c  deben coincidir (parentesis balanceados)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

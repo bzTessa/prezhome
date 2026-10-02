@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Pulido de coherencia visual del detalle de receta (lib/recipe_detail_screen.dart) para que combine con el nuevo look de la lista (foto grande cozy, chips con color/icono en vez de chips planos), sin tocar la logica de datos. Y documentacion clara para Tessa (notas del PR / doc) sobre el despliegue manual de la edge function recipe-photo y el secret de Pexels, dejando claro que funciona ya sin la key y que se activa con ella.",
+  "status": "pending",
+  "steps": [
+    "En lib/recipe_detail_screen.dart, aplicar el mismo estilo de chips (color + icono) que la lista en la fila de Wrap de tipos/aparato/tiempo/congelable/favorita, reutilizando el widget de chip comun si FEAT-003 lo extrajo (evitar duplicar; si el chip quedo privado en recipes_screen, mover el widget a un archivo compartido p.ej. lib/widgets/recipe_chip.dart y usarlo en ambos). La foto (RecipeImage height ~200) ya existe; asegurarse de que el nuevo placeholder cozy se ve bien tambien aqui. No cambiar la logica de editar/eliminar/video.",
+    "Crear o actualizar un documento de notas para la usuaria (p.ej. docs/RECETAS_FOTOS.md en espanol, lenguaje no tecnico) explicando: (1) que para activar las fotos automaticas hay que crear cuenta en Pexels y obtener una API key; (2) el comando 'supabase secrets set PEXELS_API_KEY=...'; (3) el comando 'supabase functions deploy recipe-photo'; (4) que SIN la key la app funciona igual (rediseño, placeholders cozy y filtros ya activos) y solo faltan las fotos reales automaticas; (5) que la foto manual sigue funcionando como siempre. Enlazar este doc desde README.md si encaja con el estilo existente.",
+    "Dejar en el campo findings de este feature un bloque de 'NOTAS PARA EL PR' listo para que el orquestador lo use, recordando MUY CLARAMENTE: desplegar manualmente la edge function nueva con 'supabase functions deploy recipe-photo'; configurar el secret con 'supabase secrets set PEXELS_API_KEY=...'; y, SOLO si se toco el prompt o el codigo de generate-recipe/discover-recipes (en esta tanda NO se toca el prompt, pero discover-recipes/add_recipe se tocan solo en el CLIENTE Flutter, no en la funcion; aclararlo), que no hace falta redeploy de esas funciones salvo que se hayan editado sus index.ts. Indicar que funciona sin la key y que se activa al ponerla.",
+    "Revision final de coherencia: que el detalle y la lista comparten look, que no hay colores hardcodeados sueltos duplicados, y que no se rompio ningun flujo (añadir, editar, eliminar, video, plan)."
+  ],
+  "acceptance_criteria": [
+    "El detalle de receta usa chips con color/icono coherentes con la lista y se ve el placeholder cozy cuando no hay foto; la logica de editar/eliminar/video intacta.",
+    "Existe un doc en espanol (docs/RECETAS_FOTOS.md o similar) para Tessa con los pasos de Pexels/secret/deploy y la aclaracion de que funciona sin la key.",
+    "El campo findings contiene un bloque 'NOTAS PARA EL PR' con los recordatorios de deploy de recipe-photo y del secret PEXELS_API_KEY.",
+    "'dart format', 'flutter analyze' y 'flutter test' pasan."
+  ],
+  "verification": [
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test",
+    "Confirmar que existe docs/RECETAS_FOTOS.md con los comandos supabase functions deploy recipe-photo y supabase secrets set PEXELS_API_KEY",
+    "Revisar que detalle y lista comparten el widget de chip (sin duplicacion)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

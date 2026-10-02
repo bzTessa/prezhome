@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Rediseno visual del apartado de RECETAS (lib/recipes_screen.dart) inspirado en Yazio / apps de caducidad de nevera, manteniendo la identidad Cozy + Miau. Pasa de lista de 1 columna con tarjetas beige planas gigantes a una REJILLA de 2 columnas con tarjetas con foto, chips con color e icono, placeholder cozy por tipo de plato, y una barra de FILTROS por tipo de comida (desayuno/comida/cena/snack/postre) mas favoritas y tiempo. Mejora tambien los estados vacio y de carga. No romper el resto de la app ni el FAB.",
+  "status": "pending",
+  "steps": [
+    "Quitar la marca de diagnostico 'build diag v1' de lib/recipes_screen.dart.",
+    "Mejorar lib/widgets/recipe_image.dart: cuando no hay foto, pintar un placeholder COZY por tipo de plato (no el cubierto gris). Usar la paleta (AppColors.wood/cream, gradiente suave) y un emoji o icono grande segun el tipo (apoyarse en recipe.placeholderIcon o en un emoji por mealType, estilo de lib/widgets/food_category_icon.dart). Debe verse calido y coherente; sin texto roto. Mantener el loadingBuilder y el errorBuilder (que caiga al placeholder si la URL externa de Pexels falla).",
+    "Reescribir el cuerpo de RecipesScreen para usar un GridView de 2 columnas (GridView.builder con SliverGridDelegateWithFixedCrossAxisCount crossAxisCount:2, con childAspectRatio ajustado para tarjeta con foto arriba + texto abajo; padding y spacing comodos). Cada tarjeta: foto (RecipeImage) ocupando la parte superior con esquinas redondeadas, titulo (max 2 lineas, ellipsis), 1-2 chips clave (tipo principal y/o tiempo o kcal), e icono de favorita (estrella) si aplica. Sombra suave (AppTheme.cardDecoration o similar), bordes redondeados calidos. Mantener el onTap que abre RecipeDetailScreen y recarga si cambia.",
+    "Anadir una BARRA DE FILTROS arriba (sobre la rejilla) estilo chips seleccionables: 'Todas' + un chip por tipo (Desayuno/Comida/Cena/Snack/Postre) usando Recipe.mealTypeLabels, mas un chip 'Favoritas'. Opcional si encaja limpio: filtro de tiempo (p.ej. '< 30 min'). Los chips activos se resaltan con color de la paleta (wood/woodDark). El filtrado es en cliente sobre la lista ya cargada (recipe.mealTypes contains tipo; recipe.isFavorite; recipe.totalTimeMinutes). Mantener el orden actual (favoritas primero, luego recientes). Gestionar estado con setState usando cuerpo de bloque (NUNCA arrow con future).",
+    "Rediseñar los chips (clase _Chip o nueva) para que tengan COLOR e ICONO y den jerarquia visual, en vez de todos en crema plano: p.ej. tipo de comida con un tono, tiempo con otro, kcal destacado. Centralizar los colores nuevos en lib/theme/app_theme.dart (ampliar AppColors de forma centralizada) si se anaden tonos; no hardcodear colores sueltos repetidos.",
+    "Mejorar el estado VACIO (ya usa presidente_prezhome.jpg): dejarlo cozy y alineado con el nuevo look; se puede usar MiauCharacter si queda mejor, manteniendo el mensaje amable existente. Mejorar el estado de CARGA: en vez de un CircularProgressIndicator pelado, mostrar algo mas cuidado (p.ej. placeholders/skeletons de tarjetas o un indicador centrado con el color de la paleta). Debe seguir siendo simple y no romper el embedded.",
+    "Mantener el FAB 'Nueva receta' con heroTag UNICO 'fab-recipes' y el flujo AddRecipeChooser intacto. Respetar embedded:true (sin AppBar cuando va dentro de ComidasTab). Comprobar que la rejilla no choca con el FAB (padding inferior suficiente, como el 96 actual)."
+  ],
+  "acceptance_criteria": [
+    "La lista de recetas se muestra en rejilla de 2 columnas con tarjetas que tienen foto (o placeholder cozy por tipo), titulo y chips con color/icono.",
+    "Existe una barra de filtros funcional por tipo de comida + favoritas (y opcionalmente tiempo) que filtra la rejilla en cliente; 'Todas' muestra todo.",
+    "El placeholder sin foto ya NO es el cubierto gris: es un placeholder cozy por tipo de plato con la paleta de la app.",
+    "Se mantiene el FAB 'Nueva receta' (heroTag 'fab-recipes') y el flujo de añadir; funciona embebido en ComidasTab (sub-tab Recetas) sin AppBar duplicado.",
+    "Estados vacio y de carga cuidados y coherentes con el estilo Cozy.",
+    "Se elimino la marca 'build diag v1'.",
+    "'dart format', 'flutter analyze' y 'flutter test' pasan."
+  ],
+  "verification": [
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test",
+    "Revisar que recipes_screen.dart usa GridView 2 columnas, barra de filtros y chips con color; que no quedan colores crema hardcodeados repetidos sino tokens de AppColors",
+    "Confirmar que heroTag 'fab-recipes' sigue presente y unico"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
