@@ -127,8 +127,8 @@ class HomeTabState extends State<HomeTab> {
   }
 
   /// Carga las tareas pendientes del hogar (mismo patrón de consulta que
-  /// lib/tasks_screen.dart) y las guarda ordenadas: las que tienen fecha
-  /// primero (ascendente) y las que no la tienen al final.
+  /// lib/tasks_screen.dart) y las guarda ordenadas por su proxima aparicion
+  /// (next_due ?? due_date) ascendente; las que no tienen fecha van al final.
   Future<void> _loadTasksSummary() async {
     try {
       final user = _client.auth.currentUser;
@@ -150,10 +150,14 @@ class HomeTabState extends State<HomeTab> {
           .map((m) => HomeTask.fromMap(m))
           .toList();
 
-      // Ordenar por fecha ascendente; las tareas sin fecha van al final.
+      // Ordenar por la proxima aparicion real (next_due o, por
+      // compatibilidad, due_date), igual que _todayTasks/_taskWhen; las tareas
+      // sin fecha van al final. Esto alinea el orden con el resto del flujo:
+      // las filas backfilled por 0030 (con next_due adelantado y due_date
+      // antiguo) se ordenan por cuando toca de verdad, no por la fecha vieja.
       pending.sort((a, b) {
-        final da = a.dueDate;
-        final db = b.dueDate;
+        final da = a.nextDue ?? a.dueDate;
+        final db = b.nextDue ?? b.dueDate;
         if (da == null && db == null) return 0;
         if (da == null) return 1;
         if (db == null) return -1;
