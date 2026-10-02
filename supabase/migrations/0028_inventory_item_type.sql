@@ -42,8 +42,29 @@ end $$;
 --    El CHECK original (de 0001) solo admitía ubicaciones de comida; los items
 --    de hogar usan categorías no-comida ('Limpieza','Hogar'), que de otro modo
 --    violarían el constraint al insertar.
-alter table public.inventory_items
-  drop constraint if exists inventory_items_category_check;
+--
+--    En vez de asumir el nombre por defecto del CHECK inline de 0001
+--    ('inventory_items_category_check'), eliminamos dinámicamente CUALQUIER
+--    constraint CHECK de la tabla cuya definición mencione 'category'. Así es
+--    robusto aunque el constraint llegara con otro nombre en algún entorno,
+--    sin tocar 0001-0027.
+do $$
+declare
+  r record;
+begin
+  for r in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.inventory_items'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) ilike '%category%'
+  loop
+    execute format(
+      'alter table public.inventory_items drop constraint %I',
+      r.conname
+    );
+  end loop;
+end $$;
 
 do $$
 begin
