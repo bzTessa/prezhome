@@ -631,8 +631,10 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 const SizedBox(height: 16),
                 _caloriesChartCard(data),
               ],
-              const SizedBox(height: 16),
-              _macrosCard(data),
+              if (data.entries.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _macrosCard(data),
+              ],
               const SizedBox(height: 16),
               if (data.entries.isEmpty)
                 _empty()
