@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
+import 'theme/app_theme.dart';
+import 'widgets/food_category_icon.dart';
+import 'widgets/miau_character.dart';
 
 class InventoryScreen extends StatefulWidget {
   final bool embedded;
@@ -115,18 +118,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.asset(
-                      'assets/images/presidente_prezhome.jpg',
-                      height: 120,
-                    ),
-                  ),
+                  const MiauCharacter(mood: MiauMood.curious, size: 120),
                   const SizedBox(height: 16),
                   const Text(
                     '¡Todo está vacío por aquí, Miau!',
                     style: TextStyle(
-                      color: Color(0xFF1E1E1E),
+                      color: AppColors.ink,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -211,6 +208,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ],
           ),
           child: ListTile(
+            leading: CategoryIcons.badge(item.name, itemType: item.itemType),
             title: Row(
               children: [
                 Expanded(

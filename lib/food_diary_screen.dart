@@ -16,7 +16,10 @@ import 'widgets/miau_character.dart';
 class FoodDiaryScreen extends StatefulWidget {
   /// Día que se muestra al abrir la pantalla (por defecto, hoy).
   final DateTime? initialDate;
-  const FoodDiaryScreen({super.key, this.initialDate});
+
+  /// Cuando va dentro de una pestaña con su propio AppBar, lo ocultamos.
+  final bool embedded;
+  const FoodDiaryScreen({super.key, this.initialDate, this.embedded = false});
 
   @override
   State<FoodDiaryScreen> createState() => _FoodDiaryScreenState();
@@ -556,7 +559,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Mi diario')),
+      appBar: widget.embedded ? null : AppBar(title: const Text('Mi diario')),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-food-diary',
         onPressed: _openAddChooser,

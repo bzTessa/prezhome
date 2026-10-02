@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'tabs/home_tab.dart';
-import 'tabs/meals_tab.dart';
+import 'tabs/comidas_tab.dart';
+import 'tabs/despensa_tab.dart';
 import 'household_screen.dart';
 import 'tasks_screen.dart';
-import 'economy_screen.dart';
 import 'theme/app_theme.dart';
 
 /// Estructura principal de la app con barra de navegación inferior.
-/// Secciones: Inicio (calendario/dashboard) · Comidas · Tareas · Economía · Hogar.
+/// Secciones agrupadas por momento de uso: Comidas (plan, recetas y diario) ·
+/// Despensa (inventario y compra) · Inicio (resumen del día, centro) · Tareas ·
+/// Hogar (miembros, economía, perfil y ajustes).
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -25,10 +27,10 @@ class MainShellState extends State<MainShell> {
   final GlobalKey<HomeTabState> _homeKey = GlobalKey<HomeTabState>();
 
   late final List<Widget> _pages = [
-    const MealsTab(),
-    const TasksScreen(),
+    const ComidasTab(),
+    const DespensaTab(),
     HomeTab(key: _homeKey),
-    const EconomyScreen(),
+    const TasksScreen(),
     const HouseholdScreen(),
   ];
 
@@ -72,9 +74,9 @@ class MainShellState extends State<MainShell> {
               label: 'Comidas',
             ),
             NavigationDestination(
-              icon: Icon(Icons.check_circle_outline),
-              selectedIcon: Icon(Icons.check_circle),
-              label: 'Tareas',
+              icon: Icon(Icons.kitchen_outlined),
+              selectedIcon: Icon(Icons.kitchen),
+              label: 'Despensa',
             ),
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
@@ -82,9 +84,9 @@ class MainShellState extends State<MainShell> {
               label: 'Inicio',
             ),
             NavigationDestination(
-              icon: Icon(Icons.savings_outlined),
-              selectedIcon: Icon(Icons.savings),
-              label: 'Economía',
+              icon: Icon(Icons.check_circle_outline),
+              selectedIcon: Icon(Icons.check_circle),
+              label: 'Tareas',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),

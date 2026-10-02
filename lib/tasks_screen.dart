@@ -164,9 +164,15 @@ class _TasksScreenState extends State<TasksScreen> {
             return const Center(child: Text('No perteneces a ningún hogar.'));
           }
 
+          // Todas las tareas puntuales estan hechas: no queda ninguna
+          // pendiente de completar. Mostramos a Miau celebrando.
+          final hayTareas = data.tasks.isNotEmpty;
+          final todoHecho = hayTareas && data.tasks.every((t) => t.isDone);
+
           return Column(
             children: [
               _Scoreboard(members: data.members, scores: data.scores),
+              _TareasCelebracion(visible: todoHecho),
               Expanded(
                 child: data.tasks.isEmpty
                     ? _empty()
@@ -227,6 +233,58 @@ class _TasksScreenState extends State<TasksScreen> {
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Banner de celebración cuando todas las tareas están completadas. Aparece
+/// con una animación sutil (tamaño + opacidad) y muestra a Miau celebrando.
+class _TareasCelebracion extends StatelessWidget {
+  final bool visible;
+  const _TareasCelebracion({required this.visible});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: visible ? 1 : 0,
+        child: visible
+            ? Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.cardDecoration(),
+                child: Row(
+                  children: const [
+                    MiauCharacter(mood: MiauMood.celebrating, size: 72),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '¡Todo hecho!',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'No quedan tareas pendientes. Miau esta encantado.',
+                            style: TextStyle(color: AppColors.ink),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : const SizedBox(width: double.infinity),
       ),
     );
   }

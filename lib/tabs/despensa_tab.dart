@@ -1,0 +1,94 @@
+import 'package:flutter/material.dart';
+
+import '../inventory_screen.dart';
+import '../shopping_list_screen.dart';
+import '../theme/app_theme.dart';
+import '../widgets/miau_character.dart';
+
+/// Pestaña "Despensa": agrupa lo que hay en casa y lo que falta por comprar,
+/// como hacen las apps de nevera/despensa. Tiene dos sub-tabs: Inventario
+/// (Despensa/Nevera/Congelador) y Compra (lista de la compra).
+class DespensaTab extends StatelessWidget {
+  const DespensaTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        appBar: AppBar(
+          title: const Text('Despensa'),
+          bottom: const TabBar(
+            indicatorColor: AppColors.woodDark,
+            labelColor: AppColors.ink,
+            unselectedLabelColor: Colors.grey,
+            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+            tabs: [
+              Tab(text: 'Inventario', icon: Icon(Icons.kitchen)),
+              Tab(text: 'Compra', icon: Icon(Icons.shopping_cart_outlined)),
+            ],
+          ),
+        ),
+        body: Column(
+          children: const [
+            _DespensaHeader(),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // Cada pantalla trae su propio contenido y botón flotante.
+                  _EmbeddedInventory(),
+                  _EmbeddedShopping(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Cabecera cozy con Miau para dar presencia de la mascota en la sección.
+/// Miau trae su propia animación de entrada y flotación suave.
+class _DespensaHeader extends StatelessWidget {
+  const _DespensaHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: AppTheme.cardDecoration(),
+      child: Row(
+        children: const [
+          MiauCharacter(mood: MiauMood.cooking, size: 56),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Controla lo que tienes y lo que falta por comprar.',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Envolvemos las pantallas existentes para reutilizarlas dentro de las tabs.
+class _EmbeddedInventory extends StatelessWidget {
+  const _EmbeddedInventory();
+  @override
+  Widget build(BuildContext context) => const InventoryScreen(embedded: true);
+}
+
+class _EmbeddedShopping extends StatelessWidget {
+  const _EmbeddedShopping();
+  @override
+  Widget build(BuildContext context) =>
+      const ShoppingListScreen(embedded: true);
+}
