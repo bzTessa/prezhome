@@ -31,6 +31,11 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
   // aperturas del cuestionario.
   bool _wizardLaunched = false;
 
+  // Clave de MainShell para refrescar la pestana Inicio cuando el wizard
+  // automatico se cierra, de modo que el dashboard refleje el objetivo recien
+  // calculado sin que el usuario tenga que cambiar de pestana.
+  final GlobalKey<MainShellState> _shellKey = GlobalKey<MainShellState>();
+
   @override
   void initState() {
     super.initState();
@@ -43,9 +48,12 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
       return const _SessionState(hasHome: false, profileComplete: false);
     }
 
+    // Solo necesitamos home_id y las columnas que consume isComplete; incluimos
+    // 'id' porque NutritionProfile.fromMap lo lee. Asi no cargamos el perfil
+    // entero en la ruta critica del arranque.
     final profile = await Supabase.instance.client
         .from('profiles')
-        .select()
+        .select('id, home_id, sex, birth_date, height_cm, weight_kg')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -71,11 +79,15 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
   void _maybeLaunchWizard() {
     if (_wizardLaunched) return;
     _wizardLaunched = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      Navigator.of(
+      await Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const ProfileWizardScreen()));
+      // Al volver del cuestionario, refrescamos la pestana Inicio para que el
+      // aviso de calorias y la tarjeta reflejen el objetivo ya calculado.
+      if (!mounted) return;
+      _shellKey.currentState?.refreshHome();
     });
   }
 
@@ -105,7 +117,7 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
           // cuestionario encima una sola vez, siempre con salida.
           _maybeLaunchWizard();
         }
-        return const MainShell();
+        return MainShell(key: _shellKey);
       },
     );
   }

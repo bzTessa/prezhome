@@ -50,6 +50,44 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadExisting();
+  }
+
+  /// Carga el perfil actual de Supabase para precargar los campos que el
+  /// usuario ya tenga configurados (mejor UX) y, sobre todo, para no perder el
+  /// resto de datos del perfil: al guardar solo enviamos los campos del wizard.
+  Future<void> _loadExisting() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final data = await _client
+          .from('profiles')
+          .select('sex, birth_date, height_cm, weight_kg, activity_level, goal')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (data == null || !mounted) return;
+      final p = NutritionProfile.fromMap({'id': user.id, ...data});
+      setState(() {
+        _sex = p.sex;
+        _birthDate = p.birthDate;
+        if (p.heightCm != null) {
+          _heightController.text = p.heightCm!.toStringAsFixed(0);
+        }
+        if (p.weightKg != null) {
+          _weightController.text = p.weightKg!.toStringAsFixed(1);
+        }
+        _activity = p.activityLevel;
+        _goal = p.goal;
+      });
+    } catch (_) {
+      // Si falla la precarga, el wizard sigue funcionando con los valores por
+      // defecto; el guardado parcial no pisa el resto del perfil igualmente.
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _heightController.dispose();
@@ -170,9 +208,19 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) throw 'No autenticado';
+      // Update PARCIAL: solo los seis campos que recoge el wizard. Asi no
+      // sobreescribimos otros datos del perfil (nombre, reparto de comidas,
+      // modo de cocina, etc.) que el usuario pudiera tener ya configurados.
       await _client
           .from('profiles')
-          .update(_buildProfile().toUpdateMap())
+          .update({
+            'sex': _sex,
+            'birth_date': _birthDate?.toIso8601String().split('T').first,
+            'height_cm': _height,
+            'weight_kg': _weight,
+            'activity_level': _activity,
+            'goal': _goal,
+          })
           .eq('id', user.id);
       if (!mounted) return;
       if (widget.onFinished != null) {
