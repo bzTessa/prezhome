@@ -899,6 +899,28 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
+  // Sugerencias de medidas caseras para el campo Unidad. Es solo una ayuda:
+  // la usuaria puede escribir cualquier texto libre.
+  static const List<String> _householdUnits = [
+    'taza',
+    'cucharada',
+    'cucharadita',
+    'unidad',
+    'puñado',
+    'loncha',
+    'rodaja',
+    'diente',
+    'vaso',
+    'lata',
+    'bote',
+    'pizca',
+    'chorro',
+    'rebanada',
+    'al gusto',
+    'g',
+    'ml',
+  ];
+
   List<Widget> _buildIngredientRows() {
     final rows = <Widget>[];
     for (var i = 0; i < _ingredients.length; i++) {
@@ -920,10 +942,52 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: ing.unit,
-                  decoration: _dec('Unidad'),
+                flex: 3,
+                child: RawAutocomplete<String>(
+                  textEditingController: ing.unit,
+                  focusNode: ing.unitFocus,
+                  optionsBuilder: (TextEditingValue value) {
+                    final q = value.text.trim().toLowerCase();
+                    if (q.isEmpty) return _householdUnits;
+                    return _householdUnits.where(
+                      (u) => u.toLowerCase().contains(q),
+                    );
+                  },
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onFieldSubmitted) {
+                        return TextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: _dec('Unidad (taza, cda, g...)'),
+                          onSubmitted: (_) => onFieldSubmitted(),
+                        );
+                      },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    final opts = options.toList();
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(12),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 220),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: opts.length,
+                            itemBuilder: (context, index) {
+                              final opt = opts[index];
+                              return ListTile(
+                                dense: true,
+                                title: Text(opt),
+                                onTap: () => onSelected(opt),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -956,11 +1020,14 @@ class _IngredientControllers {
   final quantity = TextEditingController();
   final unit = TextEditingController();
   final name = TextEditingController();
+  // Foco propio del campo Unidad para el Autocomplete de medidas caseras.
+  final unitFocus = FocusNode();
 
   void dispose() {
     quantity.dispose();
     unit.dispose();
     name.dispose();
+    unitFocus.dispose();
   }
 }
 
