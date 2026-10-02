@@ -82,10 +82,23 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       if (data is Map && data['meal'] is Map) {
         _applyResult(Map<String, dynamic>.from(data['meal'] as Map));
       } else {
-        final msg = (data is Map && data['error'] != null)
-            ? data['error'].toString()
-            : 'No se pudo analizar la comida';
-        throw msg;
+        // Camino en el que invoke devuelve el cuerpo en res.data (2xx con
+        // forma inesperada, o versiones que no lanzan en no-2xx).
+        throw _errorFrom(data) ?? 'No se pudo analizar la comida';
+      }
+    } on FunctionException catch (e) {
+      // Según la versión de supabase_flutter, invoke lanza FunctionException en
+      // respuestas no-2xx (p. ej. el 429 'Has alcanzado tu límite mensual de
+      // IA'). El cuerpo real de la función llega en e.details, así que lo
+      // extraemos para mostrar el mensaje en español en vez de uno genérico.
+      final msg = _errorFrom(e.details) ?? 'No se pudo analizar la comida';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al analizar la foto: $msg'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -105,8 +118,39 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
     }
   }
 
+  /// Extrae el mensaje de error en español que devuelve la función en el
+  /// cuerpo { error }. Acepta tanto el cuerpo ya parseado como Map (res.data o
+  /// FunctionException.details) como un String con JSON crudo. Devuelve null si
+  /// no encuentra un mensaje aprovechable.
+  String? _errorFrom(dynamic details) {
+    if (details is Map && details['error'] != null) {
+      return details['error'].toString();
+    }
+    if (details is String && details.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(details);
+        if (decoded is Map && decoded['error'] != null) {
+          return decoded['error'].toString();
+        }
+      } catch (_) {
+        // No era JSON: usamos el texto tal cual.
+      }
+      return details;
+    }
+    return null;
+  }
+
   void _applyResult(Map<String, dynamic> meal) {
     String s(dynamic v) => v == null ? '' : v.toString();
+    // Los gramos vienen como 'estimated_grams'. La IA usa 0 cuando no puede
+    // estimar la porción, así que en ese caso dejamos el campo vacío para no
+    // mostrar un "0 g" engañoso que la usuaria tendría que borrar.
+    String grams(dynamic v) {
+      final n = v is num ? v.toDouble() : double.tryParse(s(v).trim());
+      if (n == null || n <= 0) return '';
+      return n == n.roundToDouble() ? n.round().toString() : s(v);
+    }
+
     for (final it in _items) {
       it.dispose();
     }
@@ -118,6 +162,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
         items.add(
           _MealItemRow(
             name: s(m['name']),
+            grams: grams(m['estimated_grams']),
             calories: s(m['calories']),
             protein: s(m['protein']),
             carbs: s(m['carbs']),
@@ -141,6 +186,10 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
     return double.tryParse(t.replaceAll(',', '.'));
   }
 
+  // El total se recalcula SIEMPRE desde las filas editables, no desde el
+  // meal['total_calories'] que devuelve la IA: ese campo del contrato es solo
+  // informativo y queda obsoleto en cuanto la usuaria corrige una fila, por eso
+  // no se usa ni se coteja.
   double get _totalCalories =>
       _items.fold(0.0, (a, it) => a + _num(it.calories.text));
 
@@ -444,10 +493,22 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
             ],
           ),
           const SizedBox(height: 8),
+          // Porción aproximada (gramos estimados por la IA) junto a las kcal:
+          // ver los gramos ayuda a la usuaria a corregir las calorías con
+          // criterio ("esto no eran 300 g, eran 150"). No se persiste en la BD.
           Row(
             children: [
-              SizedBox(
-                width: 90,
+              Expanded(
+                child: TextField(
+                  controller: it.grams,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: _dec('g (aprox)'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
                 child: TextField(
                   controller: it.calories,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -456,7 +517,11 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                   decoration: _dec('kcal'),
                 ),
               ),
-              const SizedBox(width: 8),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
                 child: TextField(
                   controller: it.protein,
@@ -552,8 +617,13 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
 
 /// Una fila editable de alimento detectado (o añadido a mano). Cada campo
 /// numérico es un TextEditingController que hay que liberar con dispose().
+/// Los gramos ('grams') son la porción aproximada estimada por la IA: ayudan
+/// a la usuaria a juzgar y corregir las kcal con criterio, pero NO se guardan
+/// en la BD (food_log_entries no tiene columna de gramos); solo sirven de
+/// contexto en la pantalla de revisión.
 class _MealItemRow {
   final TextEditingController name;
+  final TextEditingController grams;
   final TextEditingController calories;
   final TextEditingController protein;
   final TextEditingController carbs;
@@ -561,11 +631,13 @@ class _MealItemRow {
 
   _MealItemRow({
     String name = '',
+    String grams = '',
     String calories = '',
     String protein = '',
     String carbs = '',
     String fat = '',
   }) : name = TextEditingController(text: name),
+       grams = TextEditingController(text: grams),
        calories = TextEditingController(text: calories),
        protein = TextEditingController(text: protein),
        carbs = TextEditingController(text: carbs),
@@ -573,6 +645,7 @@ class _MealItemRow {
 
   void dispose() {
     name.dispose();
+    grams.dispose();
     calories.dispose();
     protein.dispose();
     carbs.dispose();
