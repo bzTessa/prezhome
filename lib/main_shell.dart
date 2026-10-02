@@ -17,15 +17,29 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 2; // arranca en Inicio (centro)
+  static const _homeIndex = 2; // Inicio (centro)
+  int _index = _homeIndex; // arranca en Inicio
 
-  final _pages = const [
-    MealsTab(),
-    TasksScreen(),
-    HomeTab(),
-    EconomyScreen(),
-    HouseholdScreen(),
+  // Clave para refrescar la pestaña Inicio al volver a ella sin reconstruir
+  // las demás pestañas del IndexedStack.
+  final GlobalKey<HomeTabState> _homeKey = GlobalKey<HomeTabState>();
+
+  late final List<Widget> _pages = [
+    const MealsTab(),
+    const TasksScreen(),
+    HomeTab(key: _homeKey),
+    const EconomyScreen(),
+    const HouseholdScreen(),
   ];
+
+  void _onDestinationSelected(int i) {
+    setState(() => _index = i);
+    // Al volver a Inicio, refrescar la vista activa para reflejar cambios
+    // (p. ej. un plan recién generado) sin recargar toda la app.
+    if (i == _homeIndex) {
+      _homeKey.currentState?.refreshActiveView();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +56,7 @@ class _MainShellState extends State<MainShell> {
         ),
         child: NavigationBar(
           selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
+          onDestinationSelected: _onDestinationSelected,
           height: 68,
           destinations: const [
             NavigationDestination(
