@@ -60,7 +60,7 @@ exactamente esta forma:
   "protein_grams": number,
   "carbs_grams": number,
   "fat_grams": number,
-  "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
+  "ingredients": [ { "name": string, "quantity": number o null, "unit": string } ],
   "instructions": string,  // pasos de preparación, uno por línea, empezando cada uno con "1. ", "2. "...
   "components": [ { "name": string, "proportion": number } ],  // partes del plato YA cocinado y su % del peso total
   "freezer_days": number   // días que aguanta bien congelado según el tipo de plato

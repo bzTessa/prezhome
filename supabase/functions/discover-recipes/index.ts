@@ -86,7 +86,7 @@ Responde SOLO con un JSON válido (sin markdown) con esta forma:
       "protein_grams": number,
       "carbs_grams": number,
       "fat_grams": number,
-      "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
+      "ingredients": [ { "name": string, "quantity": number o null, "unit": string } ],
       "instructions": string,
       "components": [ { "name": string, "proportion": number } ]
     }
