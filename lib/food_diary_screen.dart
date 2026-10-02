@@ -131,7 +131,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   }
 
   Future<void> _deleteEntry(String id) async {
-    await _client.from('food_log_entries').delete().eq('id', id);
+    try {
+      await _client.from('food_log_entries').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('FoodDiary._deleteEntry error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo borrar la comida.')),
+      );
+      return;
+    }
+    if (!mounted) return;
     _reload();
   }
 
@@ -317,7 +327,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       fat: double.tryParse(fatController.text.trim().replaceAll(',', '.')),
       source: 'manual',
     );
-    await _client.from('food_log_entries').insert(entry.toInsertMap());
+    try {
+      await _client.from('food_log_entries').insert(entry.toInsertMap());
+    } catch (e) {
+      debugPrint('FoodDiary._addManual insert error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo guardar la comida.')),
+      );
+      return;
+    }
+    if (!mounted) return;
     _reload();
   }
 
@@ -401,7 +421,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     if (recipe == null) return;
     if (!mounted) return;
 
-    // Pedir el número de raciones (por defecto 1).
+    // Pedir el número de raciones (por defecto 1). Se valida que sea un
+    // número mayor que 0 para no registrar en silencio con un factor erróneo.
     final servingsController = TextEditingController(text: '1');
     final confirmed = await showDialog<bool>(
       context: context,
@@ -426,7 +447,20 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () {
+                final servings = double.tryParse(
+                  servingsController.text.trim().replaceAll(',', '.'),
+                );
+                if (servings == null || servings <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pon un número de raciones mayor que 0.'),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.of(context).pop(true);
+              },
               child: const Text('Registrar'),
             ),
           ],
@@ -438,10 +472,10 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     final user = _client.auth.currentUser;
     if (user == null) return;
 
-    final servings =
+    // La validación del diálogo garantiza un número > 0 aquí.
+    final factor =
         double.tryParse(servingsController.text.trim().replaceAll(',', '.')) ??
-        1;
-    final factor = servings <= 0 ? 1.0 : servings;
+        1.0;
     final baseKcal = (recipe.calories ?? 0).toDouble();
 
     final entry = FoodLogEntry(
@@ -456,7 +490,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       source: 'receta',
       recipeId: recipe.id,
     );
-    await _client.from('food_log_entries').insert(entry.toInsertMap());
+    try {
+      await _client.from('food_log_entries').insert(entry.toInsertMap());
+    } catch (e) {
+      debugPrint('FoodDiary._addFromRecipe insert error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo registrar la receta.')),
+      );
+      return;
+    }
+    if (!mounted) return;
     _reload();
   }
 
