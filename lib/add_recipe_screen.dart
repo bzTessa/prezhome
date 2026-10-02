@@ -452,6 +452,34 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         debugPrint('AddRecipeScreen._uploadImageIfAny error: $e');
       }
 
+      // Foto automática (Pexels) SOLO si no hay foto manual y, en edición, no
+      // había ya una imagen. La foto manual (uploadedPath -> image_path) tiene
+      // prioridad. Degrada con elegancia: si falla o viene null, se guarda sin
+      // foto (se verá el placeholder cozy).
+      String? autoImageUrl;
+      final title = _titleController.text.trim();
+      final needsAutoPhoto =
+          _newImageBytes == null &&
+          uploadedPath == null &&
+          (!widget.isEditing || _existingImageUrl == null) &&
+          title.isNotEmpty;
+      if (needsAutoPhoto) {
+        try {
+          final res = await _client.functions.invoke(
+            'recipe-photo',
+            body: {'query': title},
+          );
+          final data = res.data;
+          if (data is Map) {
+            final url = data['url']?.toString();
+            if (url != null && url.isNotEmpty) autoImageUrl = url;
+          }
+        } catch (e) {
+          // No bloqueamos el alta: la receta se guarda sin foto automática.
+          debugPrint('AddRecipeScreen recipe-photo error: $e');
+        }
+      }
+
       final recipe = Recipe(
         id: widget.recipe?.id ?? '',
         homeId: homeId,
@@ -474,6 +502,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         mealTypes: _mealTypes.toList(),
         isFavorite: _isFavorite,
         freezable: _freezable,
+        externalImageUrl: autoImageUrl,
         videoUrl: _videoController.text.trim().isEmpty
             ? null
             : _videoController.text.trim(),

@@ -18,7 +18,16 @@ class Recipe {
   final bool isFavorite;
   final bool freezable;
   final double? gramsPerServing; // peso de una ración ya preparada
-  final String? imageUrl; // URL pública de la foto de la receta
+
+  /// URL externa de la foto (banco de imágenes Pexels), tal cual se guarda en
+  /// la columna `image_url`. Es una URL http(s) COMPLETA a un recurso externo,
+  /// distinta de la foto manual (ver [imageUrl] y la derivación de image_path).
+  final String? externalImageUrl;
+
+  /// Ruta de la foto manual dentro del bucket público recipe-images
+  /// (columna `image_path`). Se conserva para poder derivar la URL pública.
+  final String? imagePath;
+
   final String? videoUrl; // enlace de video opcional (Instagram, TikTok...)
   final List<RecipeComponent> components; // partes del plato (pollo, arroz...)
   final int? freezerDays; // días recomendados de congelación (estimado por IA)
@@ -41,7 +50,8 @@ class Recipe {
     this.isFavorite = false,
     this.freezable = false,
     this.gramsPerServing,
-    this.imageUrl,
+    this.externalImageUrl,
+    this.imagePath,
     this.videoUrl,
     this.components = const [],
     this.freezerDays,
@@ -76,7 +86,8 @@ class Recipe {
       isFavorite: map['is_favorite'] ?? false,
       freezable: map['freezable'] ?? false,
       gramsPerServing: (map['grams_per_serving'] as num?)?.toDouble(),
-      imageUrl: _imageUrlFrom(map['image_path']),
+      externalImageUrl: _nonEmptyString(map['image_url']),
+      imagePath: _nonEmptyString(map['image_path']),
       videoUrl: map['video_url'] as String?,
       components: _componentsFrom(map['components']),
       freezerDays: map['freezer_days'],
@@ -94,12 +105,25 @@ class Recipe {
     return const [];
   }
 
+  // Devuelve el valor como String si no es null ni vacío; si no, null.
+  static String? _nonEmptyString(dynamic value) {
+    if (value == null) return null;
+    final s = value.toString();
+    return s.isEmpty ? null : s;
+  }
+
   // URL pública del bucket recipe-images a partir de la ruta guardada.
   static const String _supabaseUrl = 'https://ubrihtnnkbwcbchvvlno.supabase.co';
-  static String? _imageUrlFrom(dynamic path) {
-    if (path == null || path.toString().isEmpty) return null;
+  static String? _imageUrlFrom(String? path) {
+    if (path == null || path.isEmpty) return null;
     return '$_supabaseUrl/storage/v1/object/public/recipe-images/$path';
   }
+
+  /// URL de la foto a mostrar. La foto MANUAL (image_path, bucket) tiene
+  /// prioridad sobre la de Pexels (externalImageUrl); si no hay ninguna,
+  /// devuelve null y el widget muestra el placeholder cozy.
+  String? get imageUrl =>
+      _imageUrlFrom(imagePath) ?? _nonEmptyString(externalImageUrl);
 
   Map<String, dynamic> toMap() {
     return {
@@ -121,6 +145,9 @@ class Recipe {
       'is_favorite': isFavorite,
       'freezable': freezable,
       'grams_per_serving': gramsPerServing,
+      // Solo escribimos image_url cuando es una URL externa real (Pexels), no
+      // la derivada del bucket, para no duplicar la foto manual (image_path).
+      'image_url': _nonEmptyString(externalImageUrl),
       'video_url': videoUrl,
       'components': components.isEmpty
           ? null

@@ -119,10 +119,31 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           ? (r['meal_types'] as List).map((e) => e.toString()).toList()
           : <String>['lunch'];
 
+      // Foto automática (Pexels) para la idea guardada. Las ideas no traen foto
+      // manual, así que siempre lo intentamos. Degrada con elegancia: si falla o
+      // viene null, se guarda sin foto (se verá el placeholder cozy).
+      final title = (r['title'] ?? 'Receta').toString();
+      String? autoImageUrl;
+      if (title.trim().isNotEmpty) {
+        try {
+          final photoRes = await _client.functions.invoke(
+            'recipe-photo',
+            body: {'query': title},
+          );
+          final photoData = photoRes.data;
+          if (photoData is Map) {
+            final url = photoData['url']?.toString();
+            if (url != null && url.isNotEmpty) autoImageUrl = url;
+          }
+        } catch (e) {
+          debugPrint('DiscoverRecipesScreen recipe-photo error: $e');
+        }
+      }
+
       final recipe = Recipe(
         id: '',
         homeId: homeId,
-        title: (r['title'] ?? 'Receta').toString(),
+        title: title,
         description: r['description']?.toString(),
         instructions: r['instructions']?.toString(),
         servings: i(r['servings']) ?? 1,
@@ -135,6 +156,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         appliance: (r['appliance'] ?? 'none').toString(),
         mealTypes: types.isEmpty ? ['lunch'] : types,
         gramsPerServing: d(r['grams_per_serving']),
+        externalImageUrl: autoImageUrl,
         components: (r['components'] is List)
             ? (r['components'] as List)
                   .whereType<Map>()
