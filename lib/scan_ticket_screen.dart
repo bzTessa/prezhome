@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/inventory_item.dart';
 import 'theme/app_theme.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
@@ -27,6 +28,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   DateTime _purchasedAt = DateTime.now();
   List<_ItemRow> _items = [];
   bool _hasResult = false;
+  bool _addToPantry = true;
 
   @override
   void dispose() {
@@ -191,6 +193,27 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             .upsert(aliasByRaw.values.toList(), onConflict: 'home_id,raw_name');
       }
 
+      // 4. Añadir los productos a la despensa (inventario), si procede.
+      //    Es un paso secundario: si falla, el ticket queda guardado igual.
+      if (_addToPantry) {
+        try {
+          await _addItemsToPantry(homeId);
+        } catch (e) {
+          debugPrint('No se pudo actualizar la despensa: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'El ticket se guardó, pero no se pudo actualizar la '
+                  'despensa: $e',
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+      }
+
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
@@ -203,6 +226,77 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       }
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// Mete los productos del ticket en el inventario (comida, en Despensa).
+  /// Deduplica contra el inventario existente y dentro del propio ticket:
+  /// si el producto ya existe (nombre normalizado + categoría), suma la
+  /// cantidad en vez de crear un duplicado.
+  Future<void> _addItemsToPantry(dynamic homeId) async {
+    const category = 'Despensa';
+
+    String keyFor(String name) => '${name.trim().toLowerCase()}|$category';
+
+    // Inventario actual del hogar (RLS ya filtra; el eq es explícito y barato).
+    final existing = await _client
+        .from('inventory_items')
+        .select('id, name, category, quantity')
+        .eq('home_id', homeId);
+
+    // Índice por clave normalizada -> {id, quantity}.
+    final existingByKey = <String, Map<String, dynamic>>{};
+    for (final row in (existing as List)) {
+      final map = Map<String, dynamic>.from(row as Map);
+      final name = (map['name'] ?? '').toString();
+      final cat = (map['category'] ?? '').toString();
+      final key = '${name.trim().toLowerCase()}|$cat';
+      existingByKey[key] = {
+        'id': map['id'],
+        'quantity': (map['quantity'] as num?)?.toDouble() ?? 0,
+      };
+    }
+
+    // Acumulamos las cantidades del ticket por clave para no duplicar dentro
+    // del propio lote (un ticket puede repetir el mismo producto).
+    final ticketByKey = <String, Map<String, dynamic>>{};
+    for (final it in _items) {
+      final name = it.name.text.trim();
+      if (name.isEmpty) continue;
+      final qtyRaw = _num(it.quantity.text);
+      final qty = qtyRaw > 0 ? qtyRaw : 1.0;
+      final key = keyFor(name);
+      final acc = ticketByKey[key];
+      if (acc == null) {
+        ticketByKey[key] = {'name': name, 'quantity': qty};
+      } else {
+        acc['quantity'] = (acc['quantity'] as double) + qty;
+      }
+    }
+
+    for (final entry in ticketByKey.entries) {
+      final name = entry.value['name'] as String;
+      final qty = entry.value['quantity'] as double;
+      final found = existingByKey[entry.key];
+      if (found != null) {
+        final newQty = (found['quantity'] as double) + qty;
+        await _client
+            .from('inventory_items')
+            .update({'quantity': newQty})
+            .eq('id', found['id']);
+      } else {
+        final item = InventoryItem(
+          id: '',
+          homeId: homeId,
+          name: name,
+          category: category,
+          itemType: 'comida',
+          quantity: qty,
+          unit: 'unidades',
+          kind: 'ingredient',
+        );
+        await _client.from('inventory_items').insert(item.toMap());
+      }
     }
   }
 
@@ -328,6 +422,22 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                           '${_purchasedAt.year}',
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Añadir a la despensa'),
+                      subtitle: const Text(
+                        'Mete los productos en el inventario (comida, en '
+                        'Despensa)',
+                      ),
+                      value: _addToPantry,
+                      activeThumbColor: AppColors.wood,
+                      onChanged: (val) {
+                        setState(() {
+                          _addToPantry = val;
+                        });
+                      },
                     ),
                   ],
                 ),
