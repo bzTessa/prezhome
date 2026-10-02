@@ -6,35 +6,55 @@ import '../theme/app_theme.dart';
 ///
 /// No existe un campo "categoría" en los modelos (ni en [ShoppingListItem] ni
 /// en [InventoryItem]), así que la deducimos por palabras clave del nombre.
-/// El objetivo es puramente estético: dar un toque visual tipo "apps de la
-/// compra" sin saturar ni pretender ser exhaustivo.
+/// El objetivo es estético y organizativo: dar un toque visual tipo "apps de
+/// la compra" y permitir agrupar la lista por secciones legibles.
 enum FoodCategory {
-  verdura('🥦'),
-  fruta('🍎'),
-  carne('🥩'),
-  pescado('🐟'),
-  lacteos('🧀'),
-  bebidas('🥤'),
-  panaderia('🥖'),
-  limpieza('🧽'),
-  hogar('🏠'),
-  otros('🛒');
+  verdura('🥦', 'Verduras'),
+  fruta('🍎', 'Frutas'),
+  carne('🥩', 'Carne'),
+  pescado('🐟', 'Pescado'),
+  lacteos('🧀', 'Lácteos'),
+  bebidas('🥤', 'Bebidas'),
+  panaderia('🥖', 'Panadería/Cereales'),
+  limpieza('🧽', 'Limpieza'),
+  hogar('🏠', 'Hogar'),
+  // Neutro: carrito de la compra. Es el fallback cuando no hay match claro,
+  // para no forzar una categoría dudosa.
+  otros('🛒', 'Otros');
 
-  const FoodCategory(this.emoji);
+  const FoodCategory(this.emoji, this.label);
 
   /// Emoji representativo de la categoría.
   final String emoji;
+
+  /// Nombre legible de la sección (para encabezados en la lista de la compra).
+  final String label;
 }
 
 /// Helper reutilizable para asignar un emoji/icono de categoría a un producto
 /// a partir de su nombre. Se usa en la lista de la compra y en el inventario
 /// para que cada item muestre un pequeño distintivo visual consistente.
+///
+/// Estrategia de categorización (evita falsos positivos por subcadena):
+///   1. Normalizamos el nombre (minúsculas, sin acentos) y lo tokenizamos en
+///      palabras.
+///   2. Comparamos cada palabra clave contra las PALABRAS del nombre, no contra
+///      la cadena entera. Una keyword acierta si alguna palabra del nombre es
+///      igual a la keyword o empieza por ella (prefijo claro, p.ej. "tomate"
+///      casa con "tomates"/"tomatitos"). Así "chocolate" ya NO cae en verdura
+///      por contener "col", ni "ajonjolí" en verdura por contener "ajo".
+///   3. Evaluamos las categorías de específico a genérico (p.ej. las keywords
+///      "leche de avena"/"cafe" de bebidas antes que "leche" de lácteos).
+///   4. Si no hay match claro devolvemos [FoodCategory.otros] (emoji neutro de
+///      carrito) en lugar de inventar una categoría.
 class CategoryIcons {
   CategoryIcons._();
 
   /// Normaliza un texto a minúsculas y sin acentos para comparar de forma
   /// razonable (no cubre todos los casos, pero sí los habituales en español).
-  static String _normalize(String input) {
+  /// Público para que otras pantallas (p.ej. la exclusión de staples en la
+  /// lista de la compra) reutilicen exactamente la misma normalización.
+  static String normalize(String input) {
     final lower = input.toLowerCase().trim();
     const from = 'áàäâãéèëêíìïîóòöôõúùüûñç';
     const to = 'aaaaaeeeeiiiiooooouuuunc';
@@ -47,10 +67,64 @@ class CategoryIcons {
     return buffer.toString();
   }
 
+  /// Tokeniza el nombre normalizado en palabras (letras/números), descartando
+  /// signos de puntuación y espacios. Ej: "arroz, 2 tazas" -> ["arroz","2","tazas"].
+  static List<String> _tokens(String normalized) {
+    return normalized
+        .split(RegExp(r'[^a-z0-9]+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
+  }
+
+  /// Comprueba si una keyword (que puede tener varias palabras, p.ej.
+  /// "leche de avena") casa con el nombre. Reglas:
+  ///   - Keyword de una sola palabra: acierta si alguna palabra del nombre es
+  ///     igual o empieza por la keyword (prefijo claro). Para keywords muy
+  ///     cortas (<= 3 letras, p.ej. "col", "ajo", "te") exigimos igualdad
+  ///     exacta para no arrastrar prefijos ambiguos ("col" NO casa "coliflor"
+  ///     salvo que "coliflor" sea su propia keyword).
+  ///   - Keyword de varias palabras: la buscamos como secuencia de palabras
+  ///     dentro de los tokens del nombre (comparando por igualdad/prefijo).
+  static bool _matches(List<String> tokens, String keyword) {
+    final parts = keyword.split(' ').where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return false;
+
+    if (parts.length == 1) {
+      final kw = parts.first;
+      final exactOnly = kw.length <= 3;
+      for (final token in tokens) {
+        if (token == kw) return true;
+        if (!exactOnly && token.startsWith(kw)) return true;
+      }
+      return false;
+    }
+
+    // Keyword multi-palabra: buscar la secuencia dentro de los tokens.
+    for (var i = 0; i + parts.length <= tokens.length; i++) {
+      var all = true;
+      for (var j = 0; j < parts.length; j++) {
+        final token = tokens[i + j];
+        final kw = parts[j];
+        final exactOnly = kw.length <= 3;
+        final ok = token == kw || (!exactOnly && token.startsWith(kw));
+        if (!ok) {
+          all = false;
+          break;
+        }
+      }
+      if (all) return true;
+    }
+    return false;
+  }
+
   /// Palabras clave por categoría. El orden importa: evaluamos las categorías
-  /// más específicas antes que las genéricas (p.ej. "leche" antes que fallback).
+  /// más específicas antes que las genéricas (p.ej. "leche de avena"/"cafe" de
+  /// bebidas antes que "leche" de lácteos; "coliflor" propio para que no lo
+  /// capture "col").
   static const Map<FoodCategory, List<String>> _keywords = {
     FoodCategory.limpieza: [
+      'limpiacristales',
+      'limpiahogar',
       'limpia',
       'detergente',
       'lejia',
@@ -63,6 +137,7 @@ class CategoryIcons {
       'lavavajillas',
       'papel higienico',
       'servilleta',
+      'servilletas',
       'basura',
       'escoba',
       'ambientador',
@@ -70,11 +145,13 @@ class CategoryIcons {
     FoodCategory.hogar: [
       'bombilla',
       'pila',
+      'pilas',
       'bateria',
       'cargador',
-      'pañal',
       'panal',
+      'panales',
       'toallita',
+      'toallitas',
       'champu',
       'gel',
       'pasta de dientes',
@@ -85,28 +162,34 @@ class CategoryIcons {
     FoodCategory.bebidas: [
       'agua',
       'refresco',
-      'cola',
+      'coca cola',
       'zumo',
       'cerveza',
       'vino',
       'cafe',
-      'te ',
+      'the',
+      'te',
       'infusion',
       'bebida',
       'leche de avena',
+      'leche de soja',
+      'leche de almendra',
       'horchata',
       'batido',
     ],
     FoodCategory.lacteos: [
       'leche',
       'yogur',
+      'yogures',
       'queso',
+      'quesos',
       'mantequilla',
       'nata',
       'cuajada',
       'kefir',
       'requeson',
       'mozzarella',
+      'cuajo',
     ],
     FoodCategory.pescado: [
       'pescado',
@@ -115,14 +198,22 @@ class CategoryIcons {
       'atun',
       'bacalao',
       'gamba',
+      'gambas',
       'marisco',
       'sardina',
+      'sardinas',
       'dorada',
       'lubina',
       'calamar',
+      'calamares',
       'pulpo',
       'mejillon',
+      'mejillones',
       'trucha',
+      'langostino',
+      'langostinos',
+      'boqueron',
+      'boquerones',
     ],
     FoodCategory.carne: [
       'pollo',
@@ -132,55 +223,83 @@ class CategoryIcons {
       'jamon',
       'chorizo',
       'salchicha',
+      'salchichas',
       'pavo',
       'bacon',
       'lomo',
       'costilla',
+      'costillas',
       'hamburguesa',
+      'hamburguesas',
       'embutido',
       'huevo',
+      'huevos',
+      'solomillo',
+      'filete',
+      'filetes',
     ],
     FoodCategory.verdura: [
       'verdura',
+      'verduras',
       'lechuga',
       'tomate',
       'cebolla',
       'ajo',
       'patata',
+      'patatas',
       'zanahoria',
       'pimiento',
       'calabacin',
+      'calabaza',
       'brocoli',
       'espinaca',
+      'espinacas',
       'pepino',
       'champinon',
+      'champinones',
       'seta',
+      'setas',
       'judia',
+      'judias',
       'guisante',
+      'guisantes',
       'berenjena',
       'puerro',
       'apio',
+      'coliflor',
       'col',
+      'repollo',
+      'acelga',
+      'acelgas',
+      'escarola',
     ],
     FoodCategory.fruta: [
       'fruta',
+      'frutas',
       'manzana',
       'platano',
       'banana',
       'naranja',
       'pera',
       'fresa',
+      'fresas',
       'uva',
+      'uvas',
       'melon',
       'sandia',
       'kiwi',
       'limon',
       'mandarina',
       'melocoton',
-      'piña',
       'pina',
       'cereza',
+      'cerezas',
       'aguacate',
+      'ciruela',
+      'ciruelas',
+      'frambuesa',
+      'arandano',
+      'arandanos',
     ],
     FoodCategory.panaderia: [
       'pan',
@@ -188,27 +307,40 @@ class CategoryIcons {
       'arroz',
       'pasta',
       'macarron',
+      'macarrones',
       'espagueti',
+      'espaguetis',
       'cereal',
+      'cereales',
       'avena',
       'galleta',
+      'galletas',
       'bolleria',
       'croissant',
       'tostada',
+      'tostadas',
       'bizcocho',
       'magdalena',
+      'magdalenas',
+      'lenteja',
+      'lentejas',
+      'garbanzo',
+      'garbanzos',
     ],
   };
 
   /// Devuelve la categoría inferida del nombre del producto.
   ///
-  /// Si [itemType] es 'hogar' y no hay una coincidencia más específica, se
-  /// usa la categoría [FoodCategory.hogar] como respaldo razonable.
+  /// Si no hay match claro de alimentos y [itemType] es 'hogar', usamos
+  /// [FoodCategory.hogar] como respaldo razonable; en cualquier otro caso
+  /// devolvemos [FoodCategory.otros] (emoji neutro).
   static FoodCategory categoryFor(String name, {String? itemType}) {
-    final normalized = _normalize(name);
-    for (final entry in _keywords.entries) {
-      for (final keyword in entry.value) {
-        if (normalized.contains(keyword)) return entry.key;
+    final tokens = _tokens(normalize(name));
+    if (tokens.isNotEmpty) {
+      for (final entry in _keywords.entries) {
+        for (final keyword in entry.value) {
+          if (_matches(tokens, keyword)) return entry.key;
+        }
       }
     }
     if (itemType == 'hogar') return FoodCategory.hogar;

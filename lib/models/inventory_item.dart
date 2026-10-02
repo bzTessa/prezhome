@@ -8,6 +8,10 @@ class InventoryItem {
   final String unit;
   final DateTime? expirationDate;
 
+  // "Siempre en casa": basico/especia que damos por supuesto. Cuando es true,
+  // _generarDesdePlan lo trata como disponible y NO lo anade a la compra.
+  final bool isStaple;
+
   // Niveles del inventario inteligente
   final String kind; // ingredient | prep | dish
   final String? recipeId; // si procede de una receta
@@ -24,6 +28,7 @@ class InventoryItem {
     required this.quantity,
     required this.unit,
     this.expirationDate,
+    this.isStaple = false,
     this.kind = 'ingredient',
     this.recipeId,
     this.servings,
@@ -43,6 +48,7 @@ class InventoryItem {
       expirationDate: map['expiration_date'] != null
           ? DateTime.parse(map['expiration_date'])
           : null,
+      isStaple: (map['is_staple'] as bool?) ?? false,
       kind: map['kind'] ?? 'ingredient',
       recipeId: map['recipe_id'],
       servings: (map['servings'] as num?)?.toDouble(),
@@ -64,6 +70,7 @@ class InventoryItem {
       'quantity': quantity,
       'unit': unit,
       'expiration_date': expirationDate?.toIso8601String().split('T').first,
+      'is_staple': isStaple,
       'kind': kind,
       'recipe_id': recipeId,
       'servings': servings,

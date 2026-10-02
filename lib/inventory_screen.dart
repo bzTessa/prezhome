@@ -64,6 +64,36 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
   }
 
+  /// Alterna el flag "siempre en casa" (is_staple) de un item para que la
+  /// usuaria pueda gestionar sus basicos de un vistazo desde el inventario.
+  Future<void> _toggleStaple(InventoryItem item, bool value) async {
+    try {
+      await supabase
+          .from('inventory_items')
+          .update({'is_staple': value})
+          .eq('id', item.id);
+      _reload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? '${item.name} marcado como "siempre en casa".'
+                : '${item.name} ya no es "siempre en casa".',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo actualizar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _openAddItem() async {
     final added = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const AddInventoryItemScreen()),
@@ -220,12 +250,45 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     ),
                   ),
                 ),
+                if (item.isStaple)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    margin: const EdgeInsets.only(left: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDF8E1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFB58A3C)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.push_pin,
+                          size: 12,
+                          color: Color(0xFFB58A3C),
+                        ),
+                        SizedBox(width: 3),
+                        Text(
+                          'Siempre en casa',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFB58A3C),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (item.itemType == 'hogar')
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 2,
                     ),
+                    margin: const EdgeInsets.only(left: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE2C792),
                       borderRadius: BorderRadius.circular(12),
@@ -277,9 +340,31 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
               ],
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              onPressed: () => _deleteItem(item),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Toggle rapido de "siempre en casa" (solo para comida).
+                if (item.itemType == 'comida')
+                  IconButton(
+                    icon: Icon(
+                      item.isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                      color: item.isStaple
+                          ? const Color(0xFFB58A3C)
+                          : Colors.grey,
+                    ),
+                    tooltip: item.isStaple
+                        ? 'Quitar de "siempre en casa"'
+                        : 'Marcar como "siempre en casa"',
+                    onPressed: () => _toggleStaple(item, !item.isStaple),
+                  ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.redAccent,
+                  ),
+                  onPressed: () => _deleteItem(item),
+                ),
+              ],
             ),
           ),
         );
