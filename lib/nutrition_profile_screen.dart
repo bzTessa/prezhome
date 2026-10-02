@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'food_diary_screen.dart';
 import 'models/nutrition_profile.dart';
 
 class NutritionProfileScreen extends StatefulWidget {
@@ -221,6 +222,15 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         ),
         backgroundColor: const Color(0xFFFDF8E1),
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Mi diario de hoy',
+            icon: const Icon(Icons.menu_book_outlined),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen())),
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

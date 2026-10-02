@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../food_diary_screen.dart';
 import '../meal_plan_screen.dart';
 import '../models/meal_plan_entry.dart';
+import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
@@ -155,6 +157,10 @@ class _DashboardViewState extends State<_DashboardView> {
   double _monthSpent = 0;
   double _monthBudget = 0;
 
+  // Resumen de calorías de hoy (diario de consumo personal).
+  double _todayCalories = 0;
+  int? _targetCalories;
+
   static const _mealLabels = {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
@@ -186,6 +192,7 @@ class _DashboardViewState extends State<_DashboardView> {
       _loadTodayPlan(),
       _loadTasksSummary(),
       _loadEconomySummary(),
+      _loadCaloriesSummary(),
     ]);
   }
 
@@ -333,6 +340,47 @@ class _DashboardViewState extends State<_DashboardView> {
     }
   }
 
+  /// Suma las calorías del diario de consumo personal de HOY y lee el objetivo
+  /// diario del perfil. Es personal (va por user_id), a diferencia del resto
+  /// de resúmenes del dashboard que son por hogar.
+  Future<void> _loadCaloriesSummary() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+
+      final profileRow = await _client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+      final target = profileRow != null
+          ? NutritionProfile.fromMap(profileRow).targetCalories
+          : null;
+
+      final todayKey = DateTime.now().toIso8601String().split('T').first;
+      final res = await _client
+          .from('food_log_entries')
+          .select('calories')
+          .eq('user_id', user.id)
+          .eq('log_date', todayKey);
+      final total = (res as List).fold<double>(
+        0,
+        (a, e) => a + ((e['calories'] as num?)?.toDouble() ?? 0),
+      );
+
+      if (mounted) {
+        setState(() {
+          _targetCalories = target;
+          _todayCalories = total;
+        });
+      }
+    } catch (e) {
+      // No rompemos la UI (la tarjeta se ve a 0), pero dejamos traza del
+      // error para no confundir un fallo de carga con un día sin comidas.
+      debugPrint('HomeTab._loadCaloriesSummary error: $e');
+    }
+  }
+
   String _greeting() {
     final h = DateTime.now().hour;
     if (h < 6) return 'Buenas noches';
@@ -392,6 +440,8 @@ class _DashboardViewState extends State<_DashboardView> {
 
         // Resumen de las comidas planificadas para hoy.
         _mealsCard(),
+        const SizedBox(height: 12),
+        _caloriesCard(),
         const SizedBox(height: 12),
         _tasksCard(),
         const SizedBox(height: 12),
@@ -586,6 +636,91 @@ class _DashboardViewState extends State<_DashboardView> {
     }
     final time = t.dueTime;
     return time != null ? '$label $time' : label;
+  }
+
+  /// Tarjeta 'Calorías de hoy': total consumido del diario personal y, si el
+  /// perfil tiene objetivo, barra de progreso con lo que queda o el exceso.
+  /// Al tocarla abre el diario del día y refresca al volver.
+  Widget _caloriesCard() {
+    const color = Color(0xFFFBE3D4);
+    final total = _todayCalories;
+    final target = _targetCalories;
+    final hasTarget = target != null && target > 0;
+    final ratio = hasTarget ? (total / target).clamp(0.0, 1.0) : 0.0;
+    final over = hasTarget && total > target;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () async {
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
+        _loadCaloriesSummary(); // refrescar al volver del diario
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: AppTheme.cardDecoration(),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.local_fire_department_outlined,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Calorías de hoy',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    hasTarget
+                        ? 'Hoy has comido ${total.round()} kcal de $target'
+                        : 'Hoy has comido ${total.round()} kcal',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  if (hasTarget) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: ratio,
+                        minHeight: 10,
+                        backgroundColor: const Color(0xFFEFE7CC),
+                        color: over ? Colors.redAccent : AppColors.wood,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      over
+                          ? 'Te has pasado ${(total - target).round()} kcal'
+                          : 'Te quedan ${(target - total).round()} kcal',
+                      style: TextStyle(
+                        color: over ? Colors.redAccent : Colors.grey[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black26),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Tarjeta 'Gasto del mes': gasto acumulado y, si hay presupuesto, barra de
