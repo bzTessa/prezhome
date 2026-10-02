@@ -12,11 +12,29 @@ class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
   @override
-  State<HomeTab> createState() => _HomeTabState();
+  State<HomeTab> createState() => HomeTabState();
 }
 
-class _HomeTabState extends State<HomeTab> {
+class HomeTabState extends State<HomeTab> {
   bool _calendarView = false; // false = dashboard, true = calendario
+
+  // Claves para poder forzar la recarga de la vista activa sin reconstruir
+  // la pestaña completa ni las demás pestañas del IndexedStack.
+  final GlobalKey<_DashboardViewState> _dashboardKey =
+      GlobalKey<_DashboardViewState>();
+  final GlobalKey<_CalendarViewState> _calendarKey =
+      GlobalKey<_CalendarViewState>();
+
+  /// Recarga los datos de la vista actualmente visible. Lo llama MainShell
+  /// cuando la pestaña Inicio vuelve a estar en primer plano, para reflejar
+  /// un plan recién generado sin recargar toda la app.
+  void refreshActiveView() {
+    if (_calendarView) {
+      _calendarKey.currentState?.reload();
+    } else {
+      _dashboardKey.currentState?.reload();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +53,9 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ],
       ),
-      body: _calendarView ? const _CalendarView() : const _DashboardView(),
+      body: _calendarView
+          ? _CalendarView(key: _calendarKey)
+          : _DashboardView(key: _dashboardKey),
     );
   }
 }
@@ -80,8 +100,89 @@ class _ViewToggle extends StatelessWidget {
 }
 
 /// Vista Dashboard: cabecera con Miau + resumen del día.
-class _DashboardView extends StatelessWidget {
-  const _DashboardView();
+class _DashboardView extends StatefulWidget {
+  const _DashboardView({super.key});
+
+  @override
+  State<_DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends State<_DashboardView> {
+  final SupabaseClient _client = Supabase.instance.client;
+
+  // Comidas planificadas para HOY (mismo patrón que _CalendarView).
+  List<_PlanItem> _todayItems = [];
+
+  static const _mealLabels = {
+    'breakfast': 'Desayuno',
+    'lunch': 'Comida',
+    'dinner': 'Cena',
+    'snack': 'Snack',
+    'dessert': 'Postre',
+  };
+  static const _mealOrder = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'snack',
+    'dessert',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTodayPlan();
+  }
+
+  /// Permite a HomeTab forzar una recarga del resumen de hoy.
+  void reload() => _loadTodayPlan();
+
+  Future<void> _loadTodayPlan() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null) return;
+
+      final todayKey = DateTime.now().toIso8601String().split('T').first;
+      final res = await _client
+          .from('meal_plan_entries')
+          .select('plan_date, meal_type, skipped, recipes(title)')
+          .eq('home_id', homeId)
+          .eq('plan_date', todayKey);
+
+      final items = <_PlanItem>[];
+      for (final row in (res as List)) {
+        final e = MealPlanEntry.fromMap(row);
+        final rec = row['recipes'];
+        final title = (rec is Map ? rec['title'] : null) as String?;
+        items.add(
+          _PlanItem(
+            mealType: e.mealType,
+            title: title ?? 'Receta',
+            skipped: e.skipped,
+          ),
+        );
+      }
+      items.sort(
+        (a, b) => _mealOrder
+            .indexOf(a.mealType)
+            .compareTo(_mealOrder.indexOf(b.mealType)),
+      );
+      if (mounted) {
+        setState(() => _todayItems = items);
+      }
+    } catch (e) {
+      // No rompemos la UI (el resumen se ve sin plan), pero dejamos traza del
+      // error para no confundir un fallo de carga con un dia sin plan.
+      debugPrint('HomeTab._loadTodayPlan error: $e');
+    }
+  }
 
   String _greeting() {
     final h = DateTime.now().hour;
@@ -140,13 +241,8 @@ class _DashboardView extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Tarjetas de resumen (placeholder hasta que exista el planificador)
-        _summaryCard(
-          icon: Icons.restaurant_menu,
-          title: 'Comidas de hoy',
-          subtitle: 'Aún no hay un plan para hoy',
-          color: const Color(0xFFFDEFC8),
-        ),
+        // Resumen de las comidas planificadas para hoy.
+        _mealsCard(),
         const SizedBox(height: 12),
         _summaryCard(
           icon: Icons.check_circle_outline,
@@ -162,6 +258,87 @@ class _DashboardView extends StatelessWidget {
           color: const Color(0xFFF3E4D7),
         ),
       ],
+    );
+  }
+
+  /// Tarjeta 'Comidas de hoy' con el plan real de meal_plan_entries.
+  Widget _mealsCard() {
+    const color = Color(0xFFFDEFC8);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: AppTheme.cardDecoration(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.restaurant_menu, color: AppColors.ink),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Comidas de hoy',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 6),
+                if (_todayItems.isEmpty)
+                  const Text(
+                    'Aún no hay un plan para hoy',
+                    style: TextStyle(color: Colors.black54),
+                  )
+                else
+                  ..._todayItems.map(
+                    (it) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: Text(
+                              _mealLabels[it.mealType] ?? it.mealType,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              it.title,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                decoration: it.skipped
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: it.skipped ? Colors.grey : AppColors.ink,
+                              ),
+                            ),
+                          ),
+                          if (it.skipped)
+                            Text(
+                              'fuera',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 12,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -210,7 +387,7 @@ class _DashboardView extends StatelessWidget {
 
 /// Vista Calendario: mes actual con selección de día (estructura base).
 class _CalendarView extends StatefulWidget {
-  const _CalendarView();
+  const _CalendarView({super.key});
 
   @override
   State<_CalendarView> createState() => _CalendarViewState();
@@ -253,6 +430,9 @@ class _CalendarViewState extends State<_CalendarView> {
     super.initState();
     _loadMonthPlan();
   }
+
+  /// Permite a HomeTab forzar una recarga del calendario.
+  void reload() => _loadMonthPlan();
 
   Future<void> _loadMonthPlan() async {
     try {
@@ -300,8 +480,10 @@ class _CalendarViewState extends State<_CalendarView> {
           _daysWithPlan = withPlan;
         });
       }
-    } catch (_) {
-      // Silencioso: si falla, el calendario se ve sin plan.
+    } catch (e) {
+      // No rompemos la UI (el calendario se ve sin plan), pero dejamos traza
+      // del error para no confundir un fallo de carga con un mes sin plan.
+      debugPrint('HomeTab._loadMonthPlan error: $e');
     }
   }
 
