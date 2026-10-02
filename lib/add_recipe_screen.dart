@@ -387,7 +387,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           _newImageBytes!,
           fileOptions: FileOptions(
             contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
-            upsert: true,
+            upsert: false,
           ),
         );
     return path;
