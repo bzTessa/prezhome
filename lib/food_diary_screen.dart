@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -117,10 +118,48 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
     final total = entries.fold<double>(0, (a, e) => a + (e.calories ?? 0));
 
+    // Macros del día visible (para el gráfico de reparto).
+    final dayProtein = entries.fold<double>(0, (a, e) => a + (e.protein ?? 0));
+    final dayCarbs = entries.fold<double>(0, (a, e) => a + (e.carbs ?? 0));
+    final dayFat = entries.fold<double>(0, (a, e) => a + (e.fat ?? 0));
+
+    // Evolución de kcal de los últimos 7 días (incluyendo el día visible como
+    // último punto). Una sola consulta por rango y agregación por día en Dart.
+    final startDay = DateTime(_viewDay.year, _viewDay.month, _viewDay.day - 6);
+    final startKey = startDay.toIso8601String().split('T').first;
+    final rangeRes = await _client
+        .from('food_log_entries')
+        .select('log_date, calories')
+        .eq('user_id', user.id)
+        .gte('log_date', startKey)
+        .lte('log_date', _dayKey);
+    final rangeRows = (rangeRes as List)
+        .map((m) => FoodLogEntry.fromMap(Map<String, dynamic>.from(m)))
+        .toList();
+
+    // Agregamos las kcal por clave de fecha (yyyy-MM-dd).
+    final kcalByDay = <String, double>{};
+    for (final e in rangeRows) {
+      final key = e.logDate.toIso8601String().split('T').first;
+      kcalByDay[key] = (kcalByDay[key] ?? 0) + (e.calories ?? 0);
+    }
+
+    // Rellenamos siempre 7 puntos (días sin datos a 0.0).
+    final last7Days = <_DayCalories>[];
+    for (int i = 0; i < 7; i++) {
+      final day = DateTime(startDay.year, startDay.month, startDay.day + i);
+      final key = day.toIso8601String().split('T').first;
+      last7Days.add(_DayCalories(day: day, calories: kcalByDay[key] ?? 0.0));
+    }
+
     return _DiaryData(
       entries: entries,
       totalCalories: total,
       targetCalories: targetCalories,
+      last7Days: last7Days,
+      dayProtein: dayProtein,
+      dayCarbs: dayCarbs,
+      dayFat: dayFat,
     );
   }
 
@@ -588,6 +627,14 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               _dayNavigator(),
               const SizedBox(height: 12),
               _summaryCard(data),
+              if (data.last7Days.any((d) => d.calories > 0)) ...[
+                const SizedBox(height: 16),
+                _caloriesChartCard(data),
+              ],
+              if (data.entries.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _macrosCard(data),
+              ],
               const SizedBox(height: 16),
               if (data.entries.isEmpty)
                 _empty()
@@ -807,6 +854,248 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     );
   }
 
+  // --- Gráficas ------------------------------------------------------------
+
+  // Iniciales del día de la semana (1=Lun..7=Dom), para el eje X.
+  static const _weekdayInitials = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  /// Tarjeta con la evolución de kcal de los últimos 7 días en barras, con una
+  /// marca horizontal del objetivo diario cuando existe.
+  Widget _caloriesChartCard(_DiaryData data) {
+    final days = data.last7Days;
+    final target = data.targetCalories;
+    final hasTarget = target != null && target > 0;
+
+    final maxDay = days.fold<double>(
+      0,
+      (a, d) => d.calories > a ? d.calories : a,
+    );
+    final targetValue = hasTarget ? target.toDouble() : 0.0;
+    final maxValue = (maxDay > targetValue ? maxDay : targetValue);
+    // Dejamos un poco de aire por encima para que la barra o la línea no toque
+    // el borde superior; mínimo razonable para evitar un eje a 0.
+    final maxY = maxValue <= 0 ? 100.0 : maxValue * 1.2;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tus últimos 7 días',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          if (hasTarget) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Objetivo: $target kcal al día',
+              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+            ),
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 180,
+            child: BarChart(
+              BarChartData(
+                maxY: maxY,
+                minY: 0,
+                alignment: BarChartAlignment.spaceAround,
+                borderData: FlBorderData(show: false),
+                gridData: const FlGridData(show: false),
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        '${rod.toY.round()} kcal',
+                        const TextStyle(
+                          color: AppColors.ink,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24,
+                      getTitlesWidget: (value, meta) {
+                        final i = value.toInt();
+                        if (i < 0 || i >= days.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final d = days[i].day;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            _weekdayInitials[d.weekday - 1],
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                extraLinesData: hasTarget
+                    ? ExtraLinesData(
+                        horizontalLines: [
+                          HorizontalLine(
+                            y: targetValue,
+                            color: AppColors.woodDark,
+                            strokeWidth: 2,
+                            dashArray: [6, 4],
+                            label: HorizontalLineLabel(
+                              show: true,
+                              alignment: Alignment.topRight,
+                              style: const TextStyle(
+                                color: AppColors.woodDark,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              labelResolver: (_) => 'Objetivo',
+                            ),
+                          ),
+                        ],
+                      )
+                    : const ExtraLinesData(),
+                barGroups: [
+                  for (int i = 0; i < days.length; i++)
+                    BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: days[i].calories,
+                          color: AppColors.wood,
+                          width: 16,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tarjeta con el reparto de macros (proteína/carbos/grasa) del día visible.
+  /// Si no hay macros registrados, muestra un mensaje amable en vez de una
+  /// tarta vacía.
+  Widget _macrosCard(_DiaryData data) {
+    final protein = data.dayProtein;
+    final carbs = data.dayCarbs;
+    final fat = data.dayFat;
+    final total = protein + carbs + fat;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Reparto de hoy',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          if (total <= 0)
+            Text(
+              'Aún no hay macros registrados hoy.',
+              style: TextStyle(color: Colors.grey[700]),
+            )
+          else
+            Row(
+              children: [
+                SizedBox(
+                  height: 120,
+                  width: 120,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 28,
+                      sections: [
+                        PieChartSectionData(
+                          value: protein,
+                          color: AppColors.woodDark,
+                          radius: 26,
+                          showTitle: false,
+                        ),
+                        PieChartSectionData(
+                          value: carbs,
+                          color: AppColors.wood,
+                          radius: 26,
+                          showTitle: false,
+                        ),
+                        PieChartSectionData(
+                          value: fat,
+                          color: const Color(0xFFEFE7CC),
+                          radius: 26,
+                          showTitle: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _macroLegend(AppColors.woodDark, 'Proteína', protein),
+                      const SizedBox(height: 8),
+                      _macroLegend(AppColors.wood, 'Carbos', carbs),
+                      const SizedBox(height: 8),
+                      _macroLegend(const Color(0xFFEFE7CC), 'Grasa', fat),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _macroLegend(Color color, String label, double grams) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
+        Text(
+          '${grams.round()} g',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      ],
+    );
+  }
+
   Widget _empty() {
     return Padding(
       padding: const EdgeInsets.only(top: 24),
@@ -829,9 +1118,30 @@ class _DiaryData {
   final List<FoodLogEntry> entries;
   final double totalCalories;
   final int? targetCalories;
+
+  /// Evolución de kcal de los últimos 7 días (siempre 7 puntos, con 0.0 en los
+  /// días sin datos). El último punto es el día visible.
+  final List<_DayCalories> last7Days;
+
+  /// Suma de macros del día visible (en gramos), para el gráfico de reparto.
+  final double dayProtein;
+  final double dayCarbs;
+  final double dayFat;
+
   _DiaryData({
     required this.entries,
     required this.totalCalories,
     required this.targetCalories,
+    required this.last7Days,
+    required this.dayProtein,
+    required this.dayCarbs,
+    required this.dayFat,
   });
+}
+
+/// Kcal totales de un día concreto, para la gráfica de evolución.
+class _DayCalories {
+  final DateTime day;
+  final double calories;
+  _DayCalories({required this.day, required this.calories});
 }
