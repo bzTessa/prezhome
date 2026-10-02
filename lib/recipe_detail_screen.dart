@@ -422,31 +422,54 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               'A preparar: $label',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
+                                fontSize: 15,
                               ),
                             ),
+                            const SizedBox(height: 2),
                             Text(
-                              'Total ≈ ${totalGrams.toStringAsFixed(0)} g',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFB58A3C),
+                              'Dato nutricional: unos ${totalGrams.toStringAsFixed(0)} g en total',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 12,
                               ),
                             ),
                           ],
                         );
                       }
-                      // Fallback sin perfiles: mostrar raciones como antes.
+                      // Fallback sin perfiles: mostrar raciones como antes, con
+                      // el peso total relegado a dato nutricional secundario.
                       final servings = r.servings * _multiplier;
-                      return Text(
-                        'Rinde: ${servings.toStringAsFixed(0)} raciones'
-                        '${r.gramsPerServing != null ? '  ·  total ${(r.gramsPerServing! * servings).toStringAsFixed(0)} g' : ''}',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rinde: ${servings.toStringAsFixed(0)} raciones',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                          if (r.gramsPerServing != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Dato nutricional: unos ${(r.gramsPerServing! * servings).toStringAsFixed(0)} g en total',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ],
                       );
                     },
                   ),
                   if (r.kcalPer100g != null)
-                    Text(
-                      'Densidad: ${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
-                      style: TextStyle(color: Colors.grey[700]),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'Dato nutricional: ${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
                     ),
                   if (_isMealPrep) ...[
                     const SizedBox(height: 12),
@@ -557,12 +580,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       return Column(
                         children: ings.map((ing) {
                           final qty = _fmtQty(ing.quantity);
+                          final unit = ing.unit?.trim() ?? '';
+                          // Caso "al gusto"/"a ojo" sin cantidad: queda mas
+                          // natural leer "Sal (al gusto)" que "al gusto Sal".
+                          final isLooseMeasure = qty.isEmpty && unit.isNotEmpty;
                           final parts = <String>[];
                           if (qty.isNotEmpty) parts.add(qty);
-                          if (ing.unit != null && ing.unit!.isNotEmpty) {
-                            parts.add(ing.unit!);
-                          }
-                          final prefix = parts.join(' ');
+                          if (unit.isNotEmpty) parts.add(unit);
+                          final prefix = isLooseMeasure ? '' : parts.join(' ');
+                          final suffix = isLooseMeasure ? ' ($unit)' : '';
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Row(
@@ -576,7 +602,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                Expanded(child: Text(ing.name)),
+                                Expanded(child: Text('${ing.name}$suffix')),
                               ],
                             ),
                           );
