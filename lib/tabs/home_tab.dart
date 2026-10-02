@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -177,8 +178,10 @@ class _DashboardViewState extends State<_DashboardView> {
       if (mounted) {
         setState(() => _todayItems = items);
       }
-    } catch (_) {
-      // Silencioso: si falla, el resumen se ve sin plan.
+    } catch (e) {
+      // No rompemos la UI (el resumen se ve sin plan), pero dejamos traza del
+      // error para no confundir un fallo de carga con un dia sin plan.
+      debugPrint('HomeTab._loadTodayPlan error: $e');
     }
   }
 
@@ -478,8 +481,10 @@ class _CalendarViewState extends State<_CalendarView> {
           _daysWithPlan = withPlan;
         });
       }
-    } catch (_) {
-      // Silencioso: si falla, el calendario se ve sin plan.
+    } catch (e) {
+      // No rompemos la UI (el calendario se ve sin plan), pero dejamos traza
+      // del error para no confundir un fallo de carga con un mes sin plan.
+      debugPrint('HomeTab._loadMonthPlan error: $e');
     }
   }
 
