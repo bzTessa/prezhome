@@ -60,7 +60,7 @@ exactamente esta forma:
   "protein_grams": number,
   "carbs_grams": number,
   "fat_grams": number,
-  "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
+  "ingredients": [ { "name": string, "quantity": number o null, "unit": string } ],
   "instructions": string,  // pasos de preparación, uno por línea, empezando cada uno con "1. ", "2. "...
   "components": [ { "name": string, "proportion": number } ],  // partes del plato YA cocinado y su % del peso total
   "freezer_days": number   // días que aguanta bien congelado según el tipo de plato
@@ -69,13 +69,26 @@ exactamente esta forma:
 En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
 ejemplo ["lunch","dinner"] si vale para comida y cena; usa "dessert" para postres).
 Los macros y calorías son POR RACIÓN. Estima "grams_per_serving" (el peso en
-gramos de una ración del plato ya preparado). Usa gramos/ml/unidades en "unit".
-Sobre las cantidades de "ingredients": usa unidades NATURALES cuando sea lo
-habitual en cocina (ej. "2 zanahorias", "1 cebolla", "3 cucharadas de aceite",
-"1 lata de tomate"), y gramos/ml solo cuando tenga sentido pesar. Usa números
-REDONDOS y realistas (nada de decimales raros; mejor 500 g que 512.3 g), y
-cantidades acordes a formatos de supermercado (paquetes de 250/500 g/1 kg, latas,
-botes). En "unit" pon la unidad ("unidades", "cucharadas", "g", "ml", "lata"...).
+gramos de una ración del plato ya preparado).
+
+MEDIDAS DE LOS INGREDIENTES (muy importante): piensa como quien cocina en casa,
+no como un laboratorio. Usa SIEMPRE que puedas MEDIDAS CASERAS Y FÁCILES de
+cocina en "unit": taza, cucharada, cucharadita, puñado, unidad, loncha, rodaja,
+diente, vaso, lata, bote, pizca, chorro, rebanada, "al gusto"... Esa debe ser la
+unidad POR DEFECTO. Usa gramos o ml SOLO cuando sea lo natural de ese alimento
+(por ejemplo "200 g de pollo", "150 g de arroz", "100 ml de leche") o cuando no
+exista una medida casera clara. Ejemplos del estilo que quiero:
+  - "1 taza de arroz"      -> quantity 1,   unit "taza"
+  - "2 cucharadas de aceite" -> quantity 2, unit "cucharadas"
+  - "1 cebolla"            -> quantity 1,   unit "unidad" (o "" si el nombre ya es contable)
+  - "un puñado de espinacas" -> quantity 1, unit "puñado"
+  - "sal al gusto"         -> quantity null, unit "al gusto"
+  - "200 g de pollo"       -> quantity 200, unit "g" (solo cuando pesar es lo natural)
+Para ingredientes "al gusto" o "a ojo" (sal, pimienta, especias...), "quantity"
+puede ir a null y la expresión ("al gusto", "a ojo") va en "unit". Mantén números
+REDONDOS y realistas (nada de decimales raros; mejor "1 taza" o "500 g" que
+"1.3 tazas" o "512.3 g"), y cantidades acordes a formatos de supermercado cuando
+uses gramos (paquetes de 250/500 g/1 kg, latas, botes).
 
 MUY IMPORTANTE sobre "instructions": es OBLIGATORIO que cada paso vaya en su
 propia línea separada por un salto de línea real (\\n). NO juntes todos los pasos

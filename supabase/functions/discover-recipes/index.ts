@@ -86,14 +86,29 @@ Responde SOLO con un JSON válido (sin markdown) con esta forma:
       "protein_grams": number,
       "carbs_grams": number,
       "fat_grams": number,
-      "ingredients": [ { "name": string, "quantity": number, "unit": string } ],
+      "ingredients": [ { "name": string, "quantity": number o null, "unit": string } ],
       "instructions": string,
       "components": [ { "name": string, "proportion": number } ]
     }
   ]
 }
 
-Macros y calorías POR RACIÓN. En "instructions" es OBLIGATORIO un paso por línea
+Macros y calorías POR RACIÓN.
+
+MEDIDAS DE LOS INGREDIENTES (muy importante): piensa como quien cocina en casa,
+no como un laboratorio. Usa SIEMPRE que puedas MEDIDAS CASERAS Y FÁCILES de
+cocina en "unit": taza, cucharada, cucharadita, puñado, unidad, loncha, rodaja,
+diente, vaso, lata, bote, pizca, chorro, rebanada, "al gusto"... Esa debe ser la
+unidad POR DEFECTO. Usa gramos o ml SOLO cuando sea lo natural de ese alimento
+(por ejemplo "200 g de pollo", "150 g de arroz", "100 ml de leche") o cuando no
+exista una medida casera clara. Ejemplos: "1 taza de arroz" (quantity 1, unit
+"taza"), "2 cucharadas de aceite" (quantity 2, unit "cucharadas"), "1 cebolla"
+(quantity 1, unit "unidad" o "" si el nombre ya es contable), "un puñado de
+espinacas" (quantity 1, unit "puñado"), "sal al gusto" (quantity null, unit
+"al gusto"). Para ingredientes "al gusto" o "a ojo", "quantity" puede ir a null y
+la expresión va en "unit". Números REDONDOS y realistas.
+
+En "instructions" es OBLIGATORIO un paso por línea
 separado por salto de línea real (\\n), cada uno con su número; NO juntes todo en
 un párrafo. En "components" desglosa SIEMPRE el plato en partes con su % del peso
 (suman 100); solo [] si es un único alimento homogéneo. Todo en español. Recetas
