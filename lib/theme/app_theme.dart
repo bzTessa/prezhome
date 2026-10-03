@@ -9,6 +9,30 @@ class AppColors {
   static const ink = Color(0xFF1E1E1E); // gris muy oscuro (texto)
   static const card = Colors.white;
   static const softShadow = Color(0x14000000);
+
+  // --- Tonos para chips e identificadores con jerarquía visual ---------------
+  // Mantienen la calidez de la paleta pero dan contraste suave entre tipos de
+  // información (tipo de comida, tiempo, kcal, favorita...). Se usan como pares
+  // fondo + texto/icono para chips tipo "pastel".
+
+  /// Verde salvia suave: tiempo de preparación (reloj).
+  static const sageBg = Color(0xFFE6EFE0);
+  static const sage = Color(0xFF5C7A4F);
+
+  /// Terracota suave: calorías / energía (destacado cálido).
+  static const terracottaBg = Color(0xFFF6E0D4);
+  static const terracotta = Color(0xFFB5663C);
+
+  /// Melocotón suave: tipo de comida principal.
+  static const peachBg = Color(0xFFF6E6CC);
+  static const peach = Color(0xFF9B6B2E);
+
+  /// Azul grisáceo suave: congelable / frío.
+  static const frostBg = Color(0xFFDFE9EF);
+  static const frost = Color(0xFF4A7489);
+
+  /// Dorado/estrella: favorita.
+  static const favorite = Color(0xFFE0A52E);
 }
 
 class AppTheme {

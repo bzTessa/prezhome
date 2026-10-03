@@ -1,0 +1,15 @@
+{
+  "task_id": "task-unsplash-autodeploy",
+  "task_description": "On branch feat/recetas-rediseno (PR #69, no new branch/PR): adapt the recipe-photo edge function to use Unsplash as primary provider (Client-ID auth, search/photos, best-effort download trigger, attribution in response) with Pexels fallback and graceful degradation to {url:null}; and automate deployment of all Supabase edge functions in .github/workflows/deploy.yml (trigger also on supabase/functions/**, deploy five functions by name, reuse existing secrets, never dump env). Update docs/RECETAS_FOTOS.md and docs/CI_CD_SECRETS.md so the only thing the non-technical user must do is add UNSPLASH_ACCESS_KEY as a secret in the Supabase web panel (no terminal).",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "review": "Semantic review v1 (2026-10-03-123755-review.md) verdict APPROVED. Of its 3 non-blocking findings, #1 (awaited download trigger adding latency) was fixed in commit fb7639d (bounded AbortController timeout + EdgeRuntime.waitUntil fire-and-forget with safe fallback); #2 (attribution not shown in UI) and #3 (no Deno test runner) left as documented future work per the minimal-scope task.",
+    "summary": "flutter pub get OK; dart format --set-exit-if-changed reports 0 changes; flutter analyze 0 issues; flutter test 62 passed (incl. recipe_image_url_test.dart which exercises the real Recipe image_url/externalImageUrl logic that the Unsplash URL flows through). All three workflow YAMLs (deploy.yml, ci.yml, ai-development.yml) parse with pyyaml. deploy.yml references only SUPABASE_ACCESS_TOKEN/SUPABASE_PROJECT_REF/SUPABASE_DB_PASSWORD, no env/printenv dumps, no secret echoes, no --no-verify-jwt (only a comment). The edge function has no Deno test runner in-repo; verified by case analysis (no key, Unsplash happy path, Pexels fallback, provider failure, zero results, download-trigger failure all degrade to {url:null} 200 and never 500). No Dockerfile relevant to this change, so docker_build skipped."
+  }
+}

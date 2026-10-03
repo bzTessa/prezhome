@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Preparar el entorno de validacion y confirmar que la base esta verde antes de tocar nada. Flutter no esta en PATH en el sandbox; hay que instalarlo (o degradar a Dart SDK) para poder correr dart format, flutter analyze y flutter test, que es lo que exige el CI.",
+  "status": "completed",
+  "steps": [
+    "Crear una rama nueva a partir de main para toda la tanda: 'git checkout main && git pull --ff-only' (ya esta en main, limpio) y luego 'git checkout -b feat/recetas-rediseno'. Trabajar y commitear SIEMPRE en esa rama. NO hacer push ni abrir PR.",
+    "Instalar Flutter stable: 'git clone --depth 1 -b stable https://github.com/flutter/flutter.git $HOME/flutter' y exportar PATH 'export PATH=\"$HOME/flutter/bin:$PATH\"'. Verificar 'flutter --version'. La red llega a github.com y storage.googleapis.com.",
+    "Ejecutar 'flutter pub get' en /projects/sandbox/prezhome.",
+    "Correr la verificacion de base tal cual el CI: 'dart format --output=none --set-exit-if-changed .', 'flutter analyze', 'flutter test'. Dejar constancia del resultado en findings.",
+    "Si la instalacion de Flutter falla o tarda demasiado, degradar: instalar solo el Dart SDK, correr 'dart format .' y 'dart analyze', y DEJAR CLARO en findings que flutter test/analyze no se pudieron correr y por que."
+  ],
+  "acceptance_criteria": [
+    "Existe la rama feat/recetas-rediseno creada desde main.",
+    "'flutter pub get' completa sin error (o se documenta el fallback a Dart SDK).",
+    "La base (sin cambios) pasa 'dart format --output=none --set-exit-if-changed .', 'flutter analyze' y 'flutter test', o se documenta en findings exactamente que no se pudo correr y por que."
+  ],
+  "verification": [
+    "flutter --version (o dart --version si fallback)",
+    "flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": "Baseline VERDE. Rama 'feat/recetas-rediseno' creada desde main (ultimo commit base: 5fd9a77). Flutter YA estaba instalado en $HOME/flutter (no hizo falta clonar): Flutter 3.47.6 - channel stable - Dart 3.13.5 - DevTools 2.60.0 (revision framework 5fc346839b). PATH usado: 'export PATH=\"$HOME/flutter/bin:$PATH\"'. Nota: la version local de Flutter (Dart 3.13.5) es MAS NUEVA que el target del proyecto (pubspec.yaml sdk ^3.11.1); el CI usa subosito/flutter-action channel:stable que puede diferir. Resultados de verificacion (replicando ci.yml) con la base SIN cambios: (1) 'flutter pub get' OK (Changed 21 dependencies). (2) 'dart format --output=none --set-exit-if-changed .' OK: Formatted 49 files (0 changed), exit 0. (3) 'flutter analyze' OK: 'No issues found!' (0 issues). (4) 'flutter test' OK: 'All tests passed!' (47 tests en test/widget_test.dart). IMPORTANTE sobre artefactos: 'flutter pub get' con esta version mas nueva de Flutter regenero/modifico pubspec.lock (bump de sdks a dart >=3.12.0 / flutter >=3.44.0 y deps transitivas), analysis_options.yaml (anadio bloque 'exclude:' de plataformas), y los generated_plugin_registrant de linux/macos/windows. Son side-effects del SDK local mas nuevo, NO cambios intencionados de esta tarea, por lo que se REVIRTIERON con 'git checkout --' para dejar la rama limpia; el CI (channel stable) los regenerara segun su propia version. El unico contenido versionado del commit de FEAT-001 son los ficheros de estado en .agents/tasks/task-recetas-rediseno/. No se hizo push ni PR (lo hace el orquestador)."
+}

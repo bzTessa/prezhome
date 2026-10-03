@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Establish a green baseline. Confirm the working branch is feat/recetas-rediseno, install the Flutter toolchain (not pre-installed in the sandbox), fetch dependencies, and run the existing format/analyze/test checks so later changes are measured against a known-good starting point.",
+  "status": "completed",
+  "steps": [
+    "Run `git branch --show-current` and confirm it prints exactly `feat/recetas-rediseno`. If it does not, run `git checkout feat/recetas-rediseno`. Do NOT create a new branch. Do NOT push or open a PR.",
+    "Install Flutter stable. The sandbox has no flutter/dart on PATH but network to github.com and storage.googleapis.com (flutter releases) is reachable. Install via git clone of https://github.com/flutter/flutter.git -b stable (shallow) into a tool dir and add its bin to PATH, or any equivalent that yields a working `flutter`/`dart`. Verify with `flutter --version`.",
+    "From the repo root run `flutter pub get`.",
+    "Run `dart format --output=none --set-exit-if-changed .` and confirm it reports no formatting changes needed.",
+    "Run `flutter analyze` and confirm 0 issues.",
+    "Run `flutter test` and confirm all tests pass (including test/recipe_image_url_test.dart).",
+    "Record in findings the exact commands used to install Flutter and the versions, so later features can reuse them."
+  ],
+  "acceptance_criteria": [
+    "`git branch --show-current` outputs `feat/recetas-rediseno`.",
+    "`flutter --version` succeeds and Flutter stable is on PATH.",
+    "`flutter pub get` completes without error.",
+    "`dart format --output=none --set-exit-if-changed .` exits 0 with no changes.",
+    "`flutter analyze` reports 0 issues.",
+    "`flutter test` passes all tests."
+  ],
+  "verification": [
+    "flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": "GREEN BASELINE CONFIRMED. Branch verified: `git branch --show-current` -> feat/recetas-rediseno (already checked out, no checkout needed).\n\nFLUTTER INSTALL (reuse these exact steps in later features; Flutter is NOT persisted across sandbox sessions if the tool dir is wiped, but /opt/flutter persists within this session):\n1) git clone --depth 1 https://github.com/flutter/flutter.git -b stable /opt/flutter\n2) Running as root triggers a harmless 'Woah! running flutter as root' warning (non-fatal). Also /root/.gitconfig is read-only ('could not write config file ... Device or resource busy'), so DO NOT run `git config --global`. Instead pass safe.directory via env on every flutter/dart invocation:\n   export PATH=\"/opt/flutter/bin:$PATH\"\n   export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0=/opt/flutter\n3) First `flutter --version` auto-downloads the Dart SDK/engine (~228MB) and builds the flutter tool.\n\nVERSIONS: Flutter 3.47.6 • channel stable • Framework revision 5fc346839b (2026-09-30) • Engine b8c8d3d8d5 (692136cb65) • Tools Dart 3.13.5 • DevTools 2.60.0.\n\nVERIFICATION RESULTS (all from repo root /projects/sandbox/prezhome):\n- flutter pub get: OK ('Changed 21 dependencies!'). NOTE: pub get resolves a newer lock than what is committed and WRITES to tracked files: pubspec.lock, linux/windows/macos generated plugin registrants + generated_plugins.cmake, and auto-upgrades analysis_options.yaml to add an analyzer `exclude:` block (build/android/ios/web/windows/macos/linux). pubspec.yaml already declares fl_chart ^1.2.0, image_picker ^1.1.2, url_launcher ^6.3.0 but the committed lock/registrants were stale and omitted them. These writes are byproducts of the newer toolchain, NOT part of FEAT-001 (which must make no code changes), so I reverted all of them with `git restore` to keep the baseline pristine. Working tree is clean (only the untracked .agents task dir remains). Later features that intentionally change code can decide whether to let these regenerate/commit.\n- dart format --output=none --set-exit-if-changed .: exit 0, 'Formatted 51 files (0 changed)'. No formatting drift.\n- flutter analyze: exit 0, 'No issues found!'.\n- flutter test: exit 0, 'All tests passed!' 62 tests green, including all of test/recipe_image_url_test.dart and test/widget_test.dart.\n\nNO COMMIT MADE for FEAT-001 (nothing to commit by design; toolchain lives in /opt/flutter outside the repo, not added to git)."
+}
