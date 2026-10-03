@@ -44,6 +44,41 @@ Sigue esta ruta exacta dentro del navegador:
 > los que usan los workflows del repositorio. Si cambias el nombre, aunque sea
 > una letra, la automatizacion fallara porque no sabra encontrarlo.
 
+## Dos sitios distintos para los secrets (no los confundas)
+
+Hay dos lugares donde viven los datos privados, y cada uno sirve para una cosa:
+
+- **Secrets del repositorio en GitHub Actions** (los que explica esta guia): los
+  usa la automatizacion para la CLI de Supabase, para aplicar migraciones y para
+  desplegar las funciones. Son `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` y
+  `SUPABASE_DB_PASSWORD`.
+- **Secrets de Edge Functions dentro del panel de Supabase**: los usan las
+  funciones cuando se ejecutan (por ejemplo la clave de Unsplash para las fotos,
+  o la clave de Gemini para generar recetas). Esos NO van en GitHub: van en el
+  panel web de Supabase, en **Edge Functions -> Secrets**.
+
+## Las funciones ahora se despliegan solas
+
+Novedad importante: las Edge Functions (las funciones en `supabase/functions/`)
+**ya se despliegan automaticamente** cuando un cambio llega a `main`. El workflow
+de despliegue instala la CLI de Supabase y despliega todas las funciones por su
+nombre: `analyze-meal`, `discover-recipes`, `generate-recipe`, `recipe-photo` y
+`scan-ticket`.
+
+Esto significa que **ya no hace falta ejecutar nunca a mano**
+`supabase functions deploy`. En particular, las funciones de Gemini
+(`generate-recipe`, `discover-recipes`, `analyze-meal`), que antes habia que
+desplegar a mano, tambien se despliegan solas con este workflow.
+
+Para que las **fotos de las recetas** funcionen, lo UNICO que tienes que hacer
+tu es anadir, una sola vez y sin terminal, el secret `UNSPLASH_ACCESS_KEY` en el
+panel web de Supabase (**Edge Functions -> Secrets**, o
+**Project Settings -> Edge Functions -> Secrets**). El paso a paso con capturas
+mentales esta en `docs/RECETAS_FOTOS.md`. Ojo: ese `UNSPLASH_ACCESS_KEY` NO es un
+secret de GitHub Actions; va en el panel de Supabase, que es distinto de los
+"repository secrets" que explica el resto de esta guia (esos siguen siendo solo
+para la CLI y las migraciones).
+
 ## Los secrets, uno por uno
 
 ### 1. SUPABASE_ACCESS_TOKEN
@@ -94,15 +129,16 @@ Sigue esta ruta exacta dentro del navegador:
 - **Para que sirve:** es la clave de la API de Google Gemini. En este proyecto
   la usan las Edge Functions de Supabase (las funciones en `supabase/functions/`)
   cuando se ejecutan, por ejemplo para generar o descubrir recetas.
-- **Honestidad sobre este secret:** hoy esta clave la usan las Edge Functions de
-  Supabase en tiempo de ejecucion, y NO la consume ninguno de los tres workflows
-  de GitHub Actions que se han creado (CI, despliegue y validacion de cambios).
-  Lo mas probable es que ya la tengas configurada como secret de Edge Function
-  dentro de Supabase, que es donde hace falta ahora mismo. Si en el futuro algun
-  workflow de GitHub Actions necesitara usar esta clave, entonces tendrias que
-  anadirla tambien aqui como "repository secret" de Actions, con este mismo
-  nombre exacto, `GEMINI_API_KEY`. No es necesario que lo hagas hoy solo por los
-  workflows actuales.
+- **Donde va este secret:** esta clave la usan las Edge Functions de Supabase en
+  tiempo de ejecucion, asi que va en el panel web de Supabase
+  (**Edge Functions -> Secrets**), NO como repository secret de GitHub Actions.
+  El workflow de despliegue ahora instala las funciones de Gemini
+  (`generate-recipe`, `discover-recipes`, `analyze-meal`) de forma automatica al
+  llegar un cambio a `main`, pero para que funcionen en ejecucion necesitan tener
+  su `GEMINI_API_KEY` guardada en los secrets de Edge Functions de Supabase. Si
+  en el futuro algun workflow de GitHub Actions necesitara esta clave, entonces
+  si tendrias que anadirla tambien como repository secret de Actions con este
+  mismo nombre exacto, `GEMINI_API_KEY`; hoy no hace falta.
 - **Donde conseguirlo:** en Google AI Studio, en la pagina de claves de API:
   [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 - **Que pegar:** copia la clave completa de Gemini y pegala en el campo

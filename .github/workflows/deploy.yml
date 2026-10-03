@@ -1,12 +1,17 @@
-# Despliegue de migraciones de Supabase.
+# Despliegue de migraciones y funciones (Edge Functions) de Supabase.
 # Se ejecuta automaticamente al hacer push a la rama main, pero SOLO cuando
-# cambian ficheros dentro de supabase/migrations/. Asi evitamos desplegar
-# cuando el cambio no afecta a la base de datos.
+# cambian ficheros dentro de supabase/migrations/ o de supabase/functions/.
+# Asi evitamos desplegar cuando el cambio no afecta ni a la base de datos ni a
+# las funciones.
+#
+# Novedad importante: las Edge Functions ahora se despliegan SOLAS cuando el
+# cambio llega a main. Ya no hace falta ejecutar nunca a mano
+# `supabase functions deploy`: este workflow lo hace por ti.
 #
 # Los secrets los configura la usuaria en GitHub (Settings -> Secrets and
 # variables -> Actions). El asistente no acepta ni ve esas credenciales.
 # Secrets usados: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD.
-name: Desplegar migraciones a Supabase
+name: Desplegar migraciones y funciones a Supabase
 
 on:
   push:
@@ -14,11 +19,12 @@ on:
       - main
     paths:
       - 'supabase/migrations/**'
+      - 'supabase/functions/**'
 
 # Serializamos los despliegues: si llegan dos merges seguidos a main, no
-# queremos dos `supabase db push` solapados contra la misma base de datos
-# (el resultado seria impredecible). Con esta clave de concurrencia solo se
-# ejecuta un despliegue a la vez; aqui NO cancelamos el que esta en curso
+# queremos dos despliegues solapados contra el mismo proyecto (el resultado
+# seria impredecible). Con esta clave de concurrencia solo se ejecuta un
+# despliegue a la vez; aqui NO cancelamos el que esta en curso
 # (cancel-in-progress: false) para no interrumpir un push a mitad de camino,
 # sino que el siguiente espera a que termine.
 concurrency:
@@ -38,7 +44,8 @@ jobs:
     environment: production
     # Variables de entorno a partir de los secrets del repositorio.
     # SUPABASE_ACCESS_TOKEN autentica la CLI (equivale a iniciar sesion).
-    # SUPABASE_DB_PASSWORD es la contrasena de la base de datos del proyecto.
+    # SUPABASE_DB_PASSWORD es la contrasena de la base de datos del proyecto
+    # y solo hace falta para aplicar migraciones (supabase db push).
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
@@ -63,3 +70,56 @@ jobs:
       # Aplica en el proyecto remoto todas las migraciones pendientes.
       - name: Desplegar migraciones
         run: supabase db push
+
+  deploy-functions:
+    name: Desplegar funciones (Edge Functions) en Supabase
+    runs-on: ubuntu-latest
+    # Las funciones se despliegan DESPUES de las migraciones para que el codigo
+    # nuevo nunca corra contra una base de datos todavia sin actualizar. Al
+    # depender del job 'deploy', tambien respeta su aprobacion del entorno
+    # 'production' (si la configuras) antes de llegar aqui.
+    needs: deploy
+    environment: production
+    # Para desplegar funciones solo hace falta autenticar la CLI; NO exponemos
+    # aqui SUPABASE_DB_PASSWORD porque este job no toca la base de datos.
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      # Descarga el codigo del repositorio (incluye supabase/functions/).
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Instala la CLI de Supabase en su ultima version.
+      - name: Instalar la CLI de Supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Vincula el proyecto remoto igual que en el job de migraciones.
+      - name: Vincular el proyecto de Supabase
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      # Desplegamos cada funcion POR SU NOMBRE, de forma explicita. Lo hacemos
+      # asi (en vez de un `supabase functions deploy` sin nombre, que despliega
+      # todas) para ser robustos ante cambios de comportamiento entre versiones
+      # de la CLI y para que quede claro, de un vistazo, que funciones existen.
+      # NO pasamos --no-verify-jwt a proposito: cada funcion valida su propio
+      # JWT, asi que deben desplegarse con la verificacion activada.
+      # Gracias a este paso, las funciones (incluidas las de Gemini:
+      # generate-recipe, discover-recipes y analyze-meal) se despliegan solas al
+      # llegar el cambio a main. Ya no hay que ejecutar nunca a mano
+      # `supabase functions deploy`.
+      - name: Desplegar analyze-meal
+        run: supabase functions deploy analyze-meal --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Desplegar discover-recipes
+        run: supabase functions deploy discover-recipes --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Desplegar generate-recipe
+        run: supabase functions deploy generate-recipe --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Desplegar recipe-photo
+        run: supabase functions deploy recipe-photo --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Desplegar scan-ticket
+        run: supabase functions deploy scan-ticket --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
