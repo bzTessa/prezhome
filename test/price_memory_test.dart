@@ -71,4 +71,44 @@ void main() {
       expect(est.total, closeTo(1.0, 0.001));
     });
   });
+
+  group('computeRecipeCost', () {
+    final prices = {
+      'leche': const ProductPrice(
+        nameNormalized: 'leche',
+        lastUnitPrice: 1.0,
+        avgUnitPrice: 1.0,
+        samples: 2,
+      ),
+    };
+    double? approx(String name, double? q, String? u) =>
+        PriceMemory.keyFor(name) == 'leche' ? null : 2.0;
+
+    test('usa precio real si lo hay y aproximado si no (approx=true)', () {
+      final cost = computeRecipeCost(
+        ingredients: [
+          (name: 'Leche', quantity: 2, unit: 'unidad'),
+          (name: 'Harina', quantity: 500, unit: 'g'),
+        ],
+        prices: prices,
+        servings: 2,
+        approxOf: approx,
+      );
+      expect(cost.total, closeTo(4.0, 0.001));
+      expect(cost.perServing, closeTo(2.0, 0.001));
+      expect(cost.approx, isTrue);
+    });
+
+    test('solo precios reales: approx=false', () {
+      final cost = computeRecipeCost(
+        ingredients: [(name: 'Leche', quantity: 3, unit: 'unidad')],
+        prices: prices,
+        servings: 3,
+        approxOf: approx,
+      );
+      expect(cost.total, closeTo(3.0, 0.001));
+      expect(cost.perServing, closeTo(1.0, 0.001));
+      expect(cost.approx, isFalse);
+    });
+  });
 }

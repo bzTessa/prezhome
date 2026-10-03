@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
+import 'services/price_memory.dart';
+import 'utils/approx_price.dart';
 import 'utils/measure_format.dart';
 import 'utils/practical_quantity.dart';
 import 'models/ingredient.dart';
@@ -30,6 +32,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late Future<List<Ingredient>> _ingredientsFuture;
   bool _changingPhoto = false; // true mientras se regenera/sube una foto
   String? _homeSupermarketLabel; // etiqueta del súper del hogar (chip)
+  RecipeCost? _cost; // coste estimado de la receta (precio real o aproximado)
   List<NutritionProfile> _profiles =
       []; // miembros del hogar con perfil visible
   NutritionProfile? _myProfile; // perfil del usuario logueado (para el modo)
@@ -59,6 +62,29 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _ingredientsFuture = _fetchIngredients();
     _loadProfile();
     _loadHomeSupermarketLabel();
+    _loadCost();
+  }
+
+  /// Calcula el coste estimado de la receta: precio real de los tickets si lo
+  /// hay, y aproximado por tipo de alimento si no. Best-effort.
+  Future<void> _loadCost() async {
+    try {
+      final ings = await _ingredientsFuture;
+      if (ings.isEmpty) return;
+      final prices = await PriceMemory(_client).loadAll(_recipe.homeId);
+      final cost = computeRecipeCost(
+        ingredients: [
+          for (final i in ings)
+            (name: i.name, quantity: i.quantity, unit: i.unit),
+        ],
+        prices: prices,
+        servings: _recipe.servings < 1 ? 1 : _recipe.servings,
+        approxOf: ApproxPrice.estimate,
+      );
+      if (mounted) setState(() => _cost = cost);
+    } catch (_) {
+      // Sin coste si falla; no es crítico.
+    }
   }
 
   /// Carga la etiqueta del primer súper del hogar para mostrarla como chip
@@ -840,6 +866,48 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           _macro('${r.fat!.toStringAsFixed(0)}g', 'Grasa'),
                       ],
                     ),
+                  if (_cost != null) ...[
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.euro_rounded,
+                          size: 18,
+                          color: AppColors.sage,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_cost!.perServing.toStringAsFixed(2).replaceAll('.', ',')} € por ración',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '≈ ${_cost!.total.toStringAsFixed(2).replaceAll('.', ',')} € total',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_cost!.approx)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Coste aproximado. Escanea tickets para afinarlo con '
+                          'tus precios reales.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ),
+                  ],
                 ],
               ),
             ),
