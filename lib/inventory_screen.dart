@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
 import 'theme/app_theme.dart';
-import 'widgets/food_category_icon.dart';
+import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 
 /// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
@@ -335,64 +335,112 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _sectionHeader(_InventorySection section) {
-    // Para las secciones de comida añadimos un resumen de lo que caduca pronto
-    // o ya ha caducado, para que la usuaria lo vea de un vistazo.
-    String countLine = '${section.title} · ${section.items.length}';
-    final alerts = <String>[];
+    // Resumen de la sección estilo "app de nevera": título + total y, para las
+    // secciones de comida, una fila de números grandes por estado
+    // (Frescos / Pronto / Caducados) con los colores de estado de AppColors.
+    final int frescos;
+    final int pronto;
+    final int caducados;
     if (section.isFood) {
-      final pronto = section.items
+      frescos = section.items
+          .where((i) => i.expiryStatus == ExpiryStatus.fresco)
+          .length;
+      pronto = section.items
           .where((i) => i.expiryStatus == ExpiryStatus.pronto)
           .length;
-      final caducados = section.items
+      caducados = section.items
           .where((i) => i.expiryStatus == ExpiryStatus.caducado)
           .length;
-      if (caducados > 0) {
-        alerts.add('$caducados caducado${caducados == 1 ? '' : 's'}');
-      }
-      if (pronto > 0) {
-        alerts.add('$pronto caduca${pronto == 1 ? '' : 'n'} pronto');
-      }
+    } else {
+      frescos = 0;
+      pronto = 0;
+      caducados = 0;
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      child: Row(
+      padding: const EdgeInsets.only(top: 8, bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.wood,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(section.icon, color: AppColors.ink, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  countLine,
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.wood,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(section.icon, color: AppColors.ink, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '${section.title} · ${section.items.length}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: AppColors.ink,
                   ),
                 ),
-                if (alerts.isNotEmpty)
-                  Text(
-                    alerts.join(' · '),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.woodDark,
-                    ),
-                  ),
+              ),
+            ],
+          ),
+          if (section.isFood) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _statSummary('Frescos', frescos, AppColors.fresh),
+                const SizedBox(width: 8),
+                _statSummary('Pronto', pronto, AppColors.soon),
+                const SizedBox(width: 8),
+                _statSummary('Caducados', caducados, AppColors.expired),
               ],
             ),
-          ),
+          ],
         ],
+      ),
+    );
+  }
+
+  /// Tarjeta-resumen con un NÚMERO grande y su etiqueta de estado, con el color
+  /// cálido correspondiente (fresco/pronto/caducado). Pensada para que la
+  /// usuaria vea de un vistazo cómo está cada ubicación.
+  Widget _statSummary(String label, int count, Color color) {
+    final active = count > 0;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: active ? color.withValues(alpha: 0.45) : AppColors.wood,
+            width: 1.2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: active ? color : AppColors.woodDark,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: active ? color : AppColors.woodDark,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -403,7 +451,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: AppTheme.cardDecoration(radius: 16),
       child: ListTile(
-        leading: CategoryIcons.badge(item.name, itemType: item.itemType),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        leading: FoodImage(
+          name: item.name,
+          itemType: item.itemType,
+          imageUrl: item.imageUrl,
+          size: 56,
+          radius: 14,
+        ),
         title: Row(
           children: [
             Expanded(
