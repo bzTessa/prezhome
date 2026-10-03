@@ -99,12 +99,37 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     super.dispose();
   }
 
+  /// Títulos a evitar al generar: los de las recetas que el hogar ya tiene +
+  /// las ideas ya mostradas en esta pantalla (para que "Generar" otra vez no
+  /// repita). Best-effort: si falla la consulta, devuelve solo las de pantalla.
+  Future<List<String>> _existingTitles() async {
+    final titles = <String>{};
+    for (final idea in _ideas) {
+      final t = (idea['title'] ?? '').toString().trim();
+      if (t.isNotEmpty) titles.add(t);
+    }
+    try {
+      final res = await _client.from('recipes').select('title');
+      for (final row in (res as List)) {
+        final t = (row['title'] ?? '').toString().trim();
+        if (t.isNotEmpty) titles.add(t);
+      }
+    } catch (_) {
+      // Sin títulos de la BD si falla; usamos los de pantalla.
+    }
+    return titles.toList();
+  }
+
   Future<void> _generate() async {
     setState(() {
       _loading = true;
       _savedIdx.clear();
     });
     try {
+      // Títulos de recetas que ya tiene el hogar, para pedir a la IA que NO
+      // los repita (variedad). Best-effort: si falla, se genera igual.
+      final avoid = await _existingTitles();
+
       final res = await _client.functions.invoke(
         'discover-recipes',
         body: {
@@ -118,6 +143,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           'appliances': _appliances.toList(),
           'weekly_budget': _budgetController.text.trim(),
           'count': 5,
+          'avoid': avoid,
         },
       );
       final data = res.data;

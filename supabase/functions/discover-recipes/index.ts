@@ -60,6 +60,16 @@ function buildPrompt(p: Record<string, unknown>): string {
     : "";
   const budget = (p.weekly_budget ?? "").toString();
   const count = Number(p.count ?? 5);
+  // Títulos de recetas que la usuaria YA tiene: hay que proponer cosas
+  // DISTINTAS para no repetir lo de siempre.
+  const avoid = Array.isArray(p.avoid)
+    ? (p.avoid as string[]).filter((s) => s && s.trim().length > 0)
+    : [];
+  const avoidLine = avoid.length > 0
+    ? `\n- NO repitas estas recetas que el usuario YA tiene (propón platos
+     claramente DISTINTOS, con otros ingredientes principales o estilos):
+     ${avoid.slice(0, 40).join("; ")}.`
+    : "";
 
   const superLine = supermarket
     ? `- Supermercado(s) donde se compra: ${supermarket}. Ten en cuenta ese(os)
@@ -77,7 +87,7 @@ ${superLine}
 - Objetivo nutricional: ${goal}
 - Dieta / restricción: ${diet}
 - Electrodomésticos disponibles: ${appliances || "cualquiera"}
-- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR
+- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${avoidLine}
 
 Responde SOLO con un JSON válido (sin markdown) con esta forma:
 {
