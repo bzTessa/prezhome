@@ -188,7 +188,6 @@ class _CalendarViewState extends State<_CalendarView> {
   final SupabaseClient _client = Supabase.instance.client;
   // Plan cargado: 'yyyy-mm-dd' -> lista de (tipo, titulo receta, skipped)
   Map<String, List<_PlanItem>> _planByDate = {};
-  Set<String> _daysWithPlan = {};
 
   static const _weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   static const _months = [
@@ -250,7 +249,6 @@ class _CalendarViewState extends State<_CalendarView> {
           .lt('plan_date', end.toIso8601String().split('T').first);
 
       final byDate = <String, List<_PlanItem>>{};
-      final withPlan = <String>{};
       for (final row in (res as List)) {
         final e = MealPlanEntry.fromMap(row);
         final key = e.date.toIso8601String().split('T').first;
@@ -265,12 +263,10 @@ class _CalendarViewState extends State<_CalendarView> {
                 skipped: e.skipped,
               ),
             );
-        withPlan.add(key);
       }
       if (mounted) {
         setState(() {
           _planByDate = byDate;
-          _daysWithPlan = withPlan;
         });
       }
     } catch (e) {
