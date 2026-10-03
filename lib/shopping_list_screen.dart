@@ -9,6 +9,7 @@ import 'services/food_photo_service.dart';
 import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
+import 'utils/shopping_display.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
@@ -1022,30 +1023,63 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
               ),
               const SizedBox(width: 12),
+              // Nombre LIMPIO (sin marca ni unidad redundante) + origen.
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.display,
+                      shoppingCleanName(item.name),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
+                        height: 1.15,
                         decoration: done ? TextDecoration.lineThrough : null,
                         color: done ? Colors.grey : AppColors.ink,
                       ),
                     ),
                     if (item.source == 'auto')
-                      Text(
-                        'Del plan de la semana',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: done ? Colors.grey[400] : Colors.grey[500],
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          'Del plan de la semana',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: done ? Colors.grey[400] : Colors.grey[500],
+                          ),
                         ),
                       ),
                   ],
                 ),
               ),
+              // Pastilla de cantidad a la derecha (separada del nombre).
+              if (shoppingQtyLabel(item.quantity, item.unit).isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: done ? Colors.grey[200] : AppColors.cream,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: done ? Colors.grey[300]! : AppColors.wood,
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    shoppingQtyLabel(item.quantity, item.unit),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: done ? Colors.grey : AppColors.woodDark,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
