@@ -1,21 +1,35 @@
 // ============================================================================
 // PrezHome · Edge Function: recipe-photo
 // ============================================================================
-// Busca una FOTO para una receta en un banco de imágenes (Pexels) de forma
-// SEGURA y SIEMPRE DEGRADANDO CON ELEGANCIA:
-//   - La PEXELS_API_KEY vive como secreto del servidor (nunca en el cliente).
+// Busca una FOTO para una receta en un banco de imágenes de forma SEGURA y
+// SIEMPRE DEGRADANDO CON ELEGANCIA:
+//   - Proveedor PRINCIPAL: Unsplash. Si existe el secreto UNSPLASH_ACCESS_KEY
+//     se usa Unsplash (autenticación por cabecera "Authorization: Client-ID
+//     <key>", endpoint search/photos).
+//   - Proveedor de RESPALDO: Pexels. Si NO hay UNSPLASH_ACCESS_KEY pero sí hay
+//     PEXELS_API_KEY, se usa el camino de Pexels tal cual (sin cambios).
+//   - Si NO hay ninguna clave, o el proveedor no responde, o no hay resultados,
+//     devuelve { url: null } con status 200. NUNCA devuelve 500 por falta de
+//     clave o fallo del proveedor: la receta se guarda sin foto y se ve el
+//     placeholder cozy.
+//   - Las claves viven como secretos del servidor (nunca en el cliente).
 //   - Valida la sesión del usuario (JWT) y obtiene su home_id (mismo patrón de
 //     seguridad que generate-recipe).
-//   - Recibe { "query": <título/nombre del plato> } y consulta Pexels.
-//   - Si NO hay PEXELS_API_KEY, o Pexels no responde, o no hay resultados,
-//     devuelve { url: null } con status 200. NUNCA devuelve 500 por falta de
-//     clave o fallo de Pexels: la receta se guarda sin foto y se ve el
-//     placeholder cozy.
+//   - Recibe { "query": <título/nombre del plato> }.
 //   - Esto NO es Gemini: NO consume crédito de IA (no llama a consume_ai_credit).
 //
-// Despliegue (lo hace la usuaria):
-//   supabase secrets set PEXELS_API_KEY=...
-//   supabase functions deploy recipe-photo
+// Unsplash · requisito de "download trigger":
+//   Las normas de la API de Unsplash exigen avisar al endpoint
+//   links.download_location cuando una foto se "usa"/selecciona. Lo hacemos en
+//   modo BEST-EFFORT: si falla, NO rompe la respuesta (la foto se devuelve
+//   igual). Mostrar el crédito del fotógrafo en la UI queda como mejora futura
+//   documentada; el disparo técnico obligatorio ya está implementado.
+//
+// Despliegue:
+//   El secreto UNSPLASH_ACCESS_KEY (y, si se quiere respaldo, PEXELS_API_KEY)
+//   se configura desde el panel web de Supabase (Edge Functions · Secrets).
+//   El despliegue de la función lo hace AUTOMÁTICAMENTE CI (GitHub Actions);
+//   ya no hace falta ejecutar `supabase functions deploy` a mano.
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -32,6 +46,68 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// --- Unsplash ---------------------------------------------------------------
+// Busca una foto en Unsplash y devuelve { url, attribution } o { url: null }.
+// Cualquier excepción de red, respuesta no OK o ausencia de resultados se
+// degrada a { url: null }: NUNCA lanza hacia el flujo principal.
+async function searchUnsplash(query: string, key: string): Promise<unknown> {
+  try {
+    const url =
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}` +
+      `&per_page=1&orientation=landscape`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Client-ID ${key}` },
+    });
+    if (!res.ok) {
+      console.error("Unsplash error:", res.status, await res.text());
+      return { url: null };
+    }
+    const data = await res.json();
+    const results = Array.isArray(data?.results) ? data.results : [];
+    if (results.length === 0) {
+      return { url: null };
+    }
+    const first = results[0];
+    const photoUrl = first?.urls?.regular ?? first?.urls?.small ?? null;
+    if (!photoUrl) {
+      return { url: null };
+    }
+
+    const photographerName = first?.user?.name ?? null;
+    const photographerUrl = first?.user?.links?.html ?? null;
+    const unsplashUrl = "https://unsplash.com";
+
+    // Requisito de la API de Unsplash: hay que "disparar" el endpoint de
+    // descarga (links.download_location) cuando se usa/selecciona una foto.
+    // Es BEST-EFFORT y va en su propio try/catch: si falla, solo lo registramos
+    // y seguimos devolviendo la foto con normalidad.
+    const downloadLocation = first?.links?.download_location;
+    if (typeof downloadLocation === "string" && downloadLocation.length > 0) {
+      try {
+        await fetch(downloadLocation, {
+          headers: { Authorization: `Client-ID ${key}` },
+        });
+      } catch (e) {
+        console.error("Unsplash download trigger exception:", e);
+      }
+    }
+
+    return {
+      url: photoUrl,
+      provider: "unsplash",
+      attribution: {
+        photographer: photographerName,
+        photographerUrl,
+        source: "Unsplash",
+        sourceUrl: unsplashUrl,
+      },
+    };
+  } catch (e) {
+    console.error("Unsplash fetch exception:", e);
+    return { url: null };
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -93,15 +169,24 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Falta el nombre del plato" }, 400);
     }
 
-    // 4. Leer la clave de Pexels. Si NO hay clave, degradar: { url: null }.
-    //    NUNCA 500 por falta de clave (la foto es opcional).
+    // 4. Selección de proveedor. Unsplash es el PRINCIPAL; Pexels el RESPALDO.
+    //    Si no hay ninguna clave, degradar: { url: null } (NUNCA 500).
+    const unsplashKey = Deno.env.get("UNSPLASH_ACCESS_KEY");
     const pexelsKey = Deno.env.get("PEXELS_API_KEY");
+
+    // 4a. Camino PRINCIPAL: Unsplash. searchUnsplash ya degrada a { url: null }
+    //     ante cualquier fallo, por lo que nunca rompe el alta de receta.
+    if (unsplashKey) {
+      return json(await searchUnsplash(query, unsplashKey));
+    }
+
+    // 4b. Camino de RESPALDO: Pexels (comportamiento previo, sin cambios).
     if (!pexelsKey) {
       return json({ url: null });
     }
 
-    // 5. Consultar Pexels. Cualquier error de red o respuesta no OK se degrada
-    //    a { url: null } con status 200 para no romper el alta de receta.
+    // Consultar Pexels. Cualquier error de red o respuesta no OK se degrada
+    // a { url: null } con status 200 para no romper el alta de receta.
     try {
       const url =
         `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}` +
