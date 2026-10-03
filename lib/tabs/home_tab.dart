@@ -15,6 +15,7 @@ import '../models/inventory_item.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
+import '../services/smart_reminders.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
@@ -54,6 +55,10 @@ class HomeTabState extends State<HomeTab> {
   // alimentos caducan pronto y cuántos ya han caducado.
   int _expiringSoon = 0;
   int _expired = 0;
+
+  // Recordatorios inteligentes unificados (cocina/congelador/caducidad/tareas/
+  // compra). Se calculan sin IA cruzando los datos del día.
+  List<Reminder> _reminders = [];
 
   // Preferencias de personalización del dashboard (orden/visibilidad de
   // tarjetas y accesos rápidos). Por usuario, en profiles.dashboard_prefs.
@@ -95,6 +100,7 @@ class HomeTabState extends State<HomeTab> {
       _loadEconomySummary(),
       _loadCaloriesSummary(),
       _loadExpirySummary(),
+      _loadReminders(),
     ]);
   }
 
@@ -418,6 +424,95 @@ class HomeTabState extends State<HomeTab> {
     }
   }
 
+  /// Construye los recordatorios inteligentes (sin IA) cruzando: inventario de
+  /// comida (caducidades y congelador), comidas de hoy, tareas de hoy y compra
+  /// pendiente. Best-effort: si algo falla, la tarjeta se ve con lo que haya.
+  Future<void> _loadReminders() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null) return;
+
+      // Inventario de comida con caducidad.
+      final invRes = await _client
+          .from('inventory_items')
+          .select()
+          .eq('home_id', homeId);
+      final items = (invRes as List)
+          .map((m) => InventoryItem.fromMap(m as Map<String, dynamic>))
+          .where((it) => it.itemType == 'comida')
+          .toList();
+
+      final stock = <ReminderStockItem>[];
+      final takeOuts = <ReminderTakeOut>[];
+      for (final it in items) {
+        final frozen = it.category == 'Congelador';
+        stock.add(
+          ReminderStockItem(
+            name: it.name,
+            daysUntilExpiry: it.daysUntilExpiry,
+            isFrozen: frozen,
+          ),
+        );
+        // Platos congelados que convviene sacar: si su consumo preferente está
+        // muy cerca (<=2 días), sugerimos sacarlos. Es una señal simple y útil
+        // sin depender del plan.
+        if (frozen && it.kind == 'dish') {
+          final d = it.daysUntilExpiry;
+          if (d != null && d <= 2) {
+            // daysUntilTakeOut 0 = hoy. Si ya caducó (d<0) -> ya tocaba.
+            takeOuts.add(
+              ReminderTakeOut(name: it.name, daysUntilTakeOut: d < 0 ? -1 : 0),
+            );
+          }
+        }
+      }
+
+      // Tareas que vencen hoy o están vencidas (de las ya cargadas).
+      final today = DateTime.now();
+      final todayKey = DateTime(today.year, today.month, today.day);
+      final tareasHoy = <String>[];
+      for (final t in _pendingTasks) {
+        final due = t.dueDate;
+        if (due == null) continue;
+        final dd = DateTime(due.year, due.month, due.day);
+        if (!dd.isAfter(todayKey)) tareasHoy.add(t.title);
+      }
+
+      // Compra pendiente (no comprada).
+      int pending = 0;
+      try {
+        final shopRes = await _client
+            .from('shopping_list_items')
+            .select('id')
+            .eq('home_id', homeId)
+            .eq('checked', false);
+        pending = (shopRes as List).length;
+      } catch (_) {}
+
+      final reminders = buildReminders(
+        mealsToday: [
+          for (final m in _todayItems)
+            if (!m.skipped) m.title,
+        ],
+        stock: stock,
+        takeOuts: takeOuts,
+        tasksToday: tareasHoy,
+        pendingShopping: pending,
+      );
+
+      if (mounted) setState(() => _reminders = reminders);
+    } catch (e) {
+      debugPrint('HomeTab._loadReminders error: $e');
+    }
+  }
+
   String _greeting() {
     final h = DateTime.now().hour;
     if (h < 6) return 'Buenas noches';
@@ -515,6 +610,8 @@ class HomeTabState extends State<HomeTab> {
   /// Devuelve el widget de una tarjeta del dashboard por su tipo.
   Widget _cardWidget(DashboardCard card) {
     switch (card) {
+      case DashboardCard.reminders:
+        return _remindersCard();
       case DashboardCard.meals:
         return _mealsCard();
       case DashboardCard.expiry:
@@ -624,6 +721,150 @@ class HomeTabState extends State<HomeTab> {
       ),
     );
     if (result != null) await _savePrefs(result);
+  }
+
+  /// Tarjeta 'Hoy toca': centro de recordatorios inteligentes unificados
+  /// (cocina, congelador, caducidades, tareas, compra), ordenados por urgencia.
+  Widget _remindersCard() {
+    final items = _reminders;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.notifications_active_outlined,
+                color: AppColors.woodDark,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Hoy toca',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              if (items.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.wood,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${items.length}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (items.isEmpty)
+            Row(
+              children: [
+                const MiauCharacter(
+                  mood: MiauMood.sleeping,
+                  size: 48,
+                  float: false,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Nada urgente ahora mismo. Todo bajo control 🐾',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                ),
+              ],
+            )
+          else
+          // Mostramos hasta 6 para no saturar; el resto se resume.
+          ...[
+            for (final r in items.take(6)) _reminderRow(r),
+            if (items.length > 6)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'y ${items.length - 6} más…',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _reminderRow(Reminder r) {
+    // Icono y color por área + urgencia.
+    final IconData icon;
+    switch (r.kind) {
+      case ReminderKind.congelador:
+        icon = Icons.ac_unit;
+        break;
+      case ReminderKind.caducidad:
+        icon = Icons.schedule;
+        break;
+      case ReminderKind.cocina:
+        icon = Icons.restaurant_menu;
+        break;
+      case ReminderKind.tarea:
+        icon = Icons.check_circle_outline;
+        break;
+      case ReminderKind.compra:
+        icon = Icons.shopping_cart_outlined;
+        break;
+    }
+    final Color color = switch (r.urgency) {
+      ReminderUrgency.urgente => AppColors.expired,
+      ReminderUrgency.hoy => AppColors.woodDark,
+      ReminderUrgency.pronto => AppColors.sage,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              r.text,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.ink,
+                height: 1.2,
+              ),
+            ),
+          ),
+          if (r.urgency == ReminderUrgency.urgente)
+            Container(
+              margin: const EdgeInsets.only(left: 6, top: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.expiredBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                '¡Ya!',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.expired,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   /// Tarjeta 'Caducidades': resume cuántos alimentos caducan pronto y cuántos
