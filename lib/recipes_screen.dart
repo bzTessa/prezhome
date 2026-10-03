@@ -39,10 +39,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
   _RecipeFilter _filter = _RecipeFilter.all;
 
+  // Texto del buscador (en cliente, sobre nombre e ingredientes).
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
     _future = _fetch();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<_RecipesData> _fetch() async {
@@ -87,9 +97,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
     });
   }
 
-  /// Aplica el filtro activo manteniendo el orden original (favoritas primero,
-  /// luego recientes), que ya viene resuelto por la consulta.
+  /// Aplica el filtro de categoría activo + el texto del buscador, manteniendo
+  /// el orden original (favoritas primero, luego recientes).
   List<Recipe> _applyFilter(List<Recipe> recipes) {
+    final byCategory = _applyCategoryFilter(recipes);
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return byCategory;
+    return byCategory.where((r) {
+      final title = r.title.toLowerCase();
+      final desc = (r.description ?? '').toLowerCase();
+      return title.contains(q) || desc.contains(q);
+    }).toList();
+  }
+
+  List<Recipe> _applyCategoryFilter(List<Recipe> recipes) {
     switch (_filter) {
       case _RecipeFilter.all:
         return recipes;
@@ -158,25 +179,58 @@ class _RecipesScreenState extends State<RecipesScreen> {
           }
 
           final visible = _applyFilter(allRecipes);
+          final searching = _query.trim().isNotEmpty;
 
           return Column(
             children: [
+              _SearchBar(
+                controller: _searchCtrl,
+                onChanged: (v) => setState(() => _query = v),
+                onClear: () => setState(() {
+                  _searchCtrl.clear();
+                  _query = '';
+                }),
+              ),
               _FilterBar(
                 active: _filter,
                 onSelected: _setFilter,
                 recipes: allRecipes,
               ),
+              // Contador de resultados: ayuda a orientarse al filtrar/buscar.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 2, 20, 6),
+                child: Row(
+                  children: [
+                    Text(
+                      visible.isEmpty
+                          ? 'Sin resultados'
+                          : '${visible.length} '
+                                '${visible.length == 1 ? 'receta' : 'recetas'}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               Expanded(
                 child: visible.isEmpty
-                    ? const _NoMatchesState()
+                    ? (searching
+                          ? _NoSearchResults(query: _query.trim())
+                          : const _NoMatchesState())
                     : GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 14,
                               mainAxisSpacing: 14,
-                              childAspectRatio: 0.68,
+                              // Tarjetas algo menos altas: evita el gran hueco
+                              // inferior cuando hay pocas recetas y hace la
+                              // rejilla más equilibrada.
+                              childAspectRatio: 0.78,
                             ),
                         itemCount: visible.length,
                         itemBuilder: (context, index) {
@@ -599,7 +653,7 @@ class _LoadingGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 14,
         mainAxisSpacing: 14,
-        childAspectRatio: 0.68,
+        childAspectRatio: 0.78,
       ),
       itemCount: 6,
       itemBuilder: (context, index) => const _SkeletonCard(),
@@ -644,6 +698,93 @@ class _SkeletonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.circular(6),
+      ),
+    );
+  }
+}
+
+/// Buscador de recetas: campo de texto cozy con icono de lupa y botón de
+/// limpiar. Filtra en cliente por nombre y descripción.
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _SearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(color: AppColors.ink, fontSize: 15),
+        decoration: InputDecoration(
+          hintText: 'Buscar receta...',
+          hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.woodDark,
+          ),
+          suffixIcon: controller.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.woodDark,
+                  ),
+                  onPressed: onClear,
+                  tooltip: 'Limpiar',
+                ),
+          filled: true,
+          fillColor: AppColors.card,
+          contentPadding: const EdgeInsets.symmetric(vertical: 2),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.wood, width: 1.4),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.woodDark, width: 1.8),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Estado cuando el buscador no encuentra ninguna receta con ese texto.
+class _NoSearchResults extends StatelessWidget {
+  final String query;
+  const _NoSearchResults({required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const MiauCharacter(mood: MiauMood.curious, size: 96),
+            const SizedBox(height: 16),
+            Text(
+              'No hay recetas que coincidan con\n"$query".',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

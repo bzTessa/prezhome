@@ -29,6 +29,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
     'Despensa',
     'Nevera',
     'Congelador',
+    'Especias',
   ];
   static const List<String> _homeCategories = ['Limpieza', 'Hogar'];
 
@@ -83,7 +84,9 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       // si no hay clave, falla o no hay match, devuelve null y el item se
       // guarda sin foto (la UI mostrará la ilustración cozy de la categoría).
       String? imageUrl;
-      if (isFood && name.isNotEmpty) {
+      // Para especias/condimentos no buscamos foto real: salen genéricas y la
+      // ilustración cozy (🧂) queda más limpia. Resto de comida sí.
+      if (isFood && name.isNotEmpty && _selectedCategory != 'Especias') {
         try {
           imageUrl = await FoodPhotoService(
             Supabase.instance.client,
@@ -230,7 +233,13 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               items: _categories
                   .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                   .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val!),
+              onChanged: (val) => setState(() {
+                _selectedCategory = val!;
+                // Las especias son básicos que no deben acabar en la lista de
+                // la compra: activamos "siempre en casa" por defecto al
+                // elegir esta ubicación (la usuaria puede desmarcarlo).
+                if (_selectedCategory == 'Especias') _isStaple = true;
+              }),
             ),
             const SizedBox(height: 16),
             Row(

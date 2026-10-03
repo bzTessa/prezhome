@@ -212,6 +212,14 @@ class _CalendarViewState extends State<_CalendarView> {
     'snack': 'Snack',
     'dessert': 'Postre',
   };
+  // Orden de tipos de comida para el resumen dentro de cada celda del mes.
+  static const _mealOrderMonth = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'snack',
+    'dessert',
+  ];
 
   @override
   void initState() {
@@ -296,42 +304,86 @@ class _CalendarViewState extends State<_CalendarView> {
           date.day == _selected.day;
       final isToday = _isSameDay(date, DateTime.now());
       final key = date.toIso8601String().split('T').first;
-      final hasPlan = _daysWithPlan.contains(key);
+      // Comidas del día (ordenadas por tipo) para mostrar un resumen DENTRO de
+      // la celda, no solo un puntito: así se ve de un vistazo qué hay cada día.
+      final dayItems = [...(_planByDate[key] ?? const <_PlanItem>[])]
+        ..sort(
+          (a, b) => _mealOrderMonth
+              .indexOf(a.mealType)
+              .compareTo(_mealOrderMonth.indexOf(b.mealType)),
+        );
+      final hasPlan = dayItems.isNotEmpty;
       cells.add(
         GestureDetector(
           onTap: () => setState(() => _selected = date),
           child: Container(
             margin: const EdgeInsets.all(2),
+            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.wood : Colors.transparent,
+              color: isSelected
+                  ? AppColors.wood
+                  : (hasPlan ? AppColors.cream : Colors.transparent),
               borderRadius: BorderRadius.circular(12),
-              border: isToday && !isSelected
-                  ? Border.all(color: AppColors.wood, width: 1.5)
-                  : null,
+              border: isToday
+                  ? Border.all(color: AppColors.woodDark, width: 1.8)
+                  : (hasPlan && !isSelected
+                        ? Border.all(color: AppColors.wood, width: 1)
+                        : null),
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
                   '$d',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
+                    fontSize: 13,
                     fontWeight: isSelected || isToday
                         ? FontWeight.bold
-                        : FontWeight.normal,
+                        : FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 2),
-                // Puntito si ese día tiene comidas planificadas
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: hasPlan && !isSelected
-                        ? AppColors.woodDark
-                        : Colors.transparent,
-                  ),
+                // Resumen de hasta 2 comidas escritas; si hay más, "+N".
+                Expanded(
+                  child: hasPlan
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            for (final it in dayItems.take(2))
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 1),
+                                child: Text(
+                                  it.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 8.5,
+                                    height: 1.1,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: it.skipped
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    color: isSelected
+                                        ? AppColors.ink
+                                        : AppColors.woodDark,
+                                  ),
+                                ),
+                              ),
+                            if (dayItems.length > 2)
+                              Text(
+                                '+${dayItems.length - 2}',
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ],
             ),
@@ -390,6 +442,9 @@ class _CalendarViewState extends State<_CalendarView> {
                 crossAxisCount: 7,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                // Celdas más altas que anchas para que quepa el día + el
+                // resumen corto de comidas dentro de cada casilla.
+                childAspectRatio: 0.62,
                 children: cells,
               ),
             ],
