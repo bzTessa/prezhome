@@ -148,6 +148,7 @@ class ShelfLife {
       case 'Congelador':
         return 2;
       case 'Despensa':
+      case 'Bebidas': // bebidas: ventana tipo despensa (agua, refrescos...)
       default:
         return 0;
     }
@@ -243,7 +244,7 @@ class ShelfLife {
     FoodCategory.carne: 'Nevera',
     FoodCategory.pescado: 'Nevera',
     FoodCategory.lacteos: 'Nevera',
-    FoodCategory.bebidas: 'Despensa',
+    FoodCategory.bebidas: 'Bebidas',
     FoodCategory.panaderia: 'Despensa',
     FoodCategory.especias: 'Especias',
     FoodCategory.otros: 'Despensa',

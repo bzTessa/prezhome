@@ -207,11 +207,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
         return i.itemType == 'comida' && i.category == 'Congelador';
       case 'Especias':
         return i.itemType == 'comida' && i.category == 'Especias';
+      case 'Bebidas':
+        return i.itemType == 'comida' && i.category == 'Bebidas';
       case 'Despensa':
         return i.itemType == 'comida' &&
             i.category != 'Nevera' &&
             i.category != 'Congelador' &&
-            i.category != 'Especias';
+            i.category != 'Especias' &&
+            i.category != 'Bebidas';
       default:
         return true;
     }
@@ -226,6 +229,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ('Nevera', 'Nevera', Icons.kitchen),
       ('Congelador', 'Congelador', Icons.ac_unit),
       ('Despensa', 'Despensa', Icons.inventory_2),
+      ('Bebidas', 'Bebidas', Icons.local_drink),
       ('Especias', 'Condimentos', Icons.grass),
       ('Hogar', 'Hogar y limpieza', Icons.cleaning_services),
     ];
@@ -286,6 +290,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final congelador = <InventoryItem>[];
     final despensa = <InventoryItem>[];
     final especias = <InventoryItem>[];
+    final bebidas = <InventoryItem>[];
     final hogar = <InventoryItem>[];
 
     for (final item in items) {
@@ -305,6 +310,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
           break;
         case 'Especias':
           especias.add(item);
+          break;
+        case 'Bebidas':
+          bebidas.add(item);
           break;
         default:
           // Cualquier otra ubicación de comida se trata como despensa.
@@ -328,6 +336,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     sortByExpiry(nevera);
     sortByExpiry(congelador);
     sortByExpiry(despensa);
+    sortByExpiry(bebidas);
     // Las especias no se ordenan por caducidad (no suele aplicar); las dejamos
     // en su orden natural de llegada.
 
@@ -349,6 +358,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
         icon: Icons.inventory_2,
         isFood: true,
         items: despensa,
+      ),
+      // Bebidas: agua, refrescos, zumos, leche, vino... Con semáforo de
+      // caducidad porque algunas (leche, zumo) sí caducan.
+      _InventorySection(
+        title: 'Bebidas',
+        icon: Icons.local_drink,
+        isFood: true,
+        items: bebidas,
       ),
       // Especias y condimentos: básicos que no caducan rápido ni van a la
       // compra. Sin semáforo de caducidad (isFood: false) para no mostrar
