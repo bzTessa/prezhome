@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Preparar entorno Flutter y extender el modelo NutritionProfile con las preferencias alimentarias (diet, allergies, disliked, cookTimePref) que ya cubre la migración 0041. Dejar baseline verde y añadir cobertura de tests para fromMap/toUpdateMap de los campos nuevos.",
+  "status": "completed",
+  "steps": [
+    "Instalar Flutter 3.47.6 si no está: git clone --depth 1 --branch 3.47.6 https://github.com/flutter/flutter.git ~/flutter_sdk. Para cada comando exportar PATH=\"$HOME/flutter_sdk/bin:$PATH\" y FLUTTER_SUPPRESS_ANALYTICS=true.",
+    "Ejecutar baseline: `flutter pub get` y luego `flutter test` para confirmar que los 149 tests existentes pasan ANTES de tocar nada.",
+    "En lib/models/nutrition_profile.dart añadir 4 campos finales nuevos: `final String? diet;`, `final List<String> allergies;`, `final List<String> disliked;`, `final String? cookTimePref;`. En el constructor acepta parámetros opcionales `List<String>? allergies`, `List<String>? disliked` (y diet/cookTimePref directos), con defaults neutros: diet=null, cookTimePref=null, y las listas inicializadas a [] en el cuerpo del inicializador (p. ej. `allergies = allergies ?? const <String>[]`). NO romper los call-sites existentes que construyen NutritionProfile sin estos campos.",
+    "Añadir un helper estático análogo a _parseAtHome: `static List<String> _parseStringList(dynamic raw) => (raw is List) ? raw.map((e) => e.toString()).toList() : <String>[];`.",
+    "En fromMap parsear: `diet: map['diet']`, `allergies: _parseStringList(map['allergies'])`, `disliked: _parseStringList(map['disliked'])`, `cookTimePref: map['cook_time_pref']`.",
+    "En toUpdateMap añadir las claves: `'diet': diet`, `'allergies': allergies`, `'disliked': disliked`, `'cook_time_pref': cookTimePref`.",
+    "Opcional pero recomendado: añadir mapas de etiquetas en español para la UI (p. ej. `static const Map<String,String> dietLabels` con omnivora/vegetariana/vegana/pescetariana/baja_carbo/sin_gluten y `cookTimeLabels` con rapido/normal/elaborado) para reutilizar en el wizard. Texto en español, tono cercano.",
+    "Crear test/nutrition_profile_preferences_test.dart siguiendo el patrón de test/nutrition_calc_test.dart: (a) fromMap parsea diet, allergies (text[] como List de Supabase), disliked y cook_time_pref correctamente; (b) fromMap con esos campos ausentes da defaults neutros (diet null, listas vacías, cookTimePref null); (c) toUpdateMap incluye las 4 claves con los valores esperados.",
+    "Formatear con el Dart del SDK clonado: `dart format lib/ test/`. Correr `flutter analyze` (0 issues) y `flutter test` (todo verde)."
+  ],
+  "acceptance_criteria": [
+    "lib/models/nutrition_profile.dart compila y expone diet (String?), allergies (List<String>), disliked (List<String>), cookTimePref (String?).",
+    "fromMap parsea 'diet','allergies','disliked','cook_time_pref' con defaults neutros cuando faltan; toUpdateMap serializa esas 4 claves.",
+    "El nuevo fichero de test cubre fromMap y toUpdateMap de los campos nuevos y pasa.",
+    "`dart format --output=none --set-exit-if-changed lib/ test/` no reporta cambios, `flutter analyze` da 0 issues y `flutter test` pasa todos los tests (149 previos + los nuevos)."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+    "dart format --output=none --set-exit-if-changed lib/ test/",
+    "flutter analyze",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": "Entorno: Flutter 3.47.6 ya clonado en ~/flutter_sdk (Dart 3.13.5). `flutter pub get` OK (modificó autogenerados: pubspec.lock, analysis_options.yaml, .flutter-plugins-dependencies, etc.; NO editados a mano, el orquestador los revierte). Baseline previo verde: 149 tests. \n\nImplementación en lib/models/nutrition_profile.dart: añadidos 4 campos finales `String? diet`, `List<String> allergies`, `List<String> disliked`, `String? cookTimePref` con defaults neutros (diet/cookTimePref null; listas inicializadas a const <String>[] en el inicializador para no romper call-sites existentes). Añadido helper estático `_parseStringList(dynamic raw)` (List->List<String> vía toString). fromMap parsea 'diet','allergies','disliked','cook_time_pref'. toUpdateMap serializa esas 4 claves. Añadidos mapas estáticos de etiquetas en español `dietLabels` (omnivora/vegetariana/vegana/pescetariana/baja_carbo/sin_gluten) y `cookTimeLabels` (rapido/normal/elaborado) para reutilizar en el wizard. NO se tocó la migración 0041.\n\nTest nuevo: test/nutrition_profile_preferences_test.dart (unit puro, sin Supabase) con 6 tests cubriendo fromMap de los 4 campos, defaults neutros con campos ausentes, conversión no-string->string en listas, toUpdateMap con las 4 claves/valores, toUpdateMap con defaults, y presencia de las etiquetas.\n\nResultado EXACTO de verificación (CI): `dart format --output=none --set-exit-if-changed lib/ test/` -> 'Formatted 79 files (0 changed)' (sin cambios); `flutter analyze` -> 'No issues found!' (0 issues); `flutter test` -> 'All tests passed!' con 155 tests (149 previos + 6 nuevos). NO se hizo commit/push/PR (lo hace el orquestador)."
+}

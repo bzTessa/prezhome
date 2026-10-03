@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'models/supermarket.dart';
 import 'services/food_facts_service.dart';
@@ -11,6 +12,38 @@ import 'theme/app_theme.dart';
 /// recetas. Puedes guardar las que te gusten en tus recetas.
 class DiscoverRecipesScreen extends StatefulWidget {
   const DiscoverRecipesScreen({super.key});
+
+  /// Regla pura de precedencia de dieta: si el perfil tiene una dieta marcada y
+  /// mapeable a etiqueta en español, esa etiqueta manda sobre el dropdown
+  /// local; en caso contrario se usa la dieta local. Extraída como estática
+  /// pura para poder testearla sin Supabase ni widgets.
+  ///
+  /// Coherencia con [profileDietOverrides]: 'omnivora' ("De todo") NO es una
+  /// restricción real, así que se trata como "sin override" en AMBAS funciones.
+  /// En ese caso resolveDiet usa la dieta local del dropdown (que vuelve a ser
+  /// editable) para que el control tenga efecto real y no sea un fantasma.
+  static String resolveDiet(String? profileDiet, String localDiet) {
+    if (!profileDietOverrides(profileDiet)) return localDiet;
+    return NutritionProfile.dietLabels[profileDiet] ?? localDiet;
+  }
+
+  /// ¿La dieta del perfil tiene prioridad sobre el dropdown local? True cuando
+  /// hay una dieta de perfil mapeable y que suponga una restricción real. Se
+  /// usa para avisar en la UI de que el dropdown de dieta queda sin efecto en
+  /// ese caso. 'omnivora' ("De todo") devuelve false porque no restringe nada:
+  /// así el dropdown sigue editable y se oculta el aviso. Debe permanecer
+  /// alineada con [resolveDiet] (ver su documentación).
+  static bool profileDietOverrides(String? profileDiet) =>
+      profileDiet != null &&
+      profileDiet != 'omnivora' &&
+      NutritionProfile.dietLabels[profileDiet] != null;
+
+  /// Preferencia de tiempo de cocina legible (español) a partir de la clave del
+  /// perfil (rapido/normal/elaborado). null si no hay preferencia o no mapea.
+  static String? cookTimeLabel(String? profileCookTime) =>
+      profileCookTime != null
+      ? NutritionProfile.cookTimeLabels[profileCookTime]
+      : null;
 
   @override
   State<DiscoverRecipesScreen> createState() => _DiscoverRecipesScreenState();
@@ -28,6 +61,14 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   // hogar (homes.supermarkets) pero se pueden ajustar aquí sin cambiar los del
   // hogar. Opcional: si está vacío, la IA no se ciñe a ningún súper.
   final Set<String> _supermarkets = {};
+
+  // Preferencias de comida del perfil del usuario (FEAT-001/002). Se usan para
+  // personalizar la generación: la dieta se envía como etiqueta legible y las
+  // alergias/ingredientes no deseados se mandan a la IA para que los evite.
+  String? _profileDiet;
+  List<String> _profileAllergies = [];
+  List<String> _profileDisliked = [];
+  String? _profileCookTime;
 
   bool _loading = false;
   bool _savedAny = false;
@@ -70,9 +111,22 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       if (user == null) return;
       final profile = await _client
           .from('profiles')
-          .select('home_id')
+          .select('home_id, diet, allergies, disliked, cook_time_pref')
           .eq('id', user.id)
           .maybeSingle();
+      // Guardamos las preferencias del perfil para personalizar la generación.
+      // Parseo directo tolerante a null (no usamos NutritionProfile.fromMap
+      // porque la consulta no trae el 'id' que ese factory exige).
+      if (profile != null && mounted) {
+        List<String> asStrings(dynamic raw) =>
+            (raw is List) ? raw.map((e) => e.toString()).toList() : <String>[];
+        setState(() {
+          _profileDiet = profile['diet'] as String?;
+          _profileAllergies = asStrings(profile['allergies']);
+          _profileDisliked = asStrings(profile['disliked']);
+          _profileCookTime = profile['cook_time_pref'] as String?;
+        });
+      }
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
       final home = await _client
@@ -130,21 +184,42 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       // los repita (variedad). Best-effort: si falla, se genera igual.
       final avoid = await _existingTitles();
 
+      // Dieta: si el perfil tiene una dieta marcada, enviamos su etiqueta
+      // legible en español (NutritionProfile.dietLabels). Si no hay perfil o
+      // la clave no está mapeada, usamos el dropdown local como hasta ahora.
+      final diet = DiscoverRecipesScreen.resolveDiet(_profileDiet, _diet);
+
+      // Tiempo de cocina del perfil (rapido/normal/elaborado) como etiqueta
+      // legible; null si no hay preferencia. Si es null no se envía al body
+      // (compatibilidad hacia atrás: comportamiento idéntico al anterior).
+      final cookTime = DiscoverRecipesScreen.cookTimeLabel(_profileCookTime);
+
+      final body = <String, dynamic>{
+        // Enviamos los supermercados elegidos como etiquetas legibles
+        // (p. ej. "Mercadona, Lidl"); vacío si no se eligió ninguno.
+        'supermarket': Supermarket.labelsFor(_supermarkets.toList()).join(', '),
+        'goal': _goal,
+        'diet': diet,
+        'appliances': _appliances.toList(),
+        'weekly_budget': _budgetController.text.trim(),
+        'count': 5,
+        // Títulos existentes (para no repetir); el prompt los trata como
+        // "no repetir", distinto de alergias/disliked.
+        'avoid': avoid,
+        // Alergias (restricción dura) e ingredientes no deseados (blanda).
+        'allergies': _profileAllergies,
+        'disliked': _profileDisliked,
+      };
+      // Tiempo de cocina del perfil (si lo hay): así ajustamos las recetas al
+      // ritmo que la usuaria eligió en su cuestionario. Si es null, la clave no
+      // se incluye (compatibilidad hacia atrás: comportamiento idéntico).
+      if (cookTime != null) {
+        body['cook_time'] = cookTime;
+      }
+
       final res = await _client.functions.invoke(
         'discover-recipes',
-        body: {
-          // Enviamos los supermercados elegidos como etiquetas legibles
-          // (p. ej. "Mercadona, Lidl"); vacío si no se eligió ninguno.
-          'supermarket': Supermarket.labelsFor(
-            _supermarkets.toList(),
-          ).join(', '),
-          'goal': _goal,
-          'diet': _diet,
-          'appliances': _appliances.toList(),
-          'weekly_budget': _budgetController.text.trim(),
-          'count': 5,
-          'avoid': avoid,
-        },
+        body: body,
       );
       final data = res.data;
       if (data is Map && data['recipes'] is List) {
@@ -386,8 +461,36 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                     items: _diets
                         .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                         .toList(),
-                    onChanged: (v) => setState(() => _diet = v!),
+                    onChanged:
+                        DiscoverRecipesScreen.profileDietOverrides(_profileDiet)
+                        ? null
+                        : (v) => setState(() => _diet = v!),
                   ),
+                  if (DiscoverRecipesScreen.profileDietOverrides(
+                    _profileDiet,
+                  )) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.favorite,
+                          size: 16,
+                          color: AppColors.woodDark,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Usamos la dieta de tu perfil: '
+                            '${NutritionProfile.dietLabels[_profileDiet]}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   TextField(
                     controller: _budgetController,

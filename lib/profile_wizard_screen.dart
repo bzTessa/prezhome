@@ -35,10 +35,14 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
 
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _dislikedController = TextEditingController();
 
-  // Numero total de pasos (0 bienvenida ... 7 resultado).
-  static const int _totalPages = 8;
-  static const int _resultPage = 7;
+  // Numero total de pasos:
+  // 0 bienvenida, 1 sexo, 2 fecha, 3 altura, 4 peso, 5 actividad, 6 objetivo,
+  // 7 dieta, 8 alergias, 9 ingredientes a evitar, 10 tiempo de cocina,
+  // 11 resultado.
+  static const int _totalPages = 12;
+  static const int _resultPage = 11;
 
   int _page = 0;
 
@@ -47,7 +51,24 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   String _activity = 'moderate';
   String _goal = 'maintain';
 
+  // Preferencias alimentarias (opcionales).
+  String? _diet;
+  final Set<String> _allergies = {};
+  String? _cookTimePref;
+
   bool _saving = false;
+
+  /// Alergias e intolerancias mas comunes que se ofrecen en el paso de
+  /// alergias. En espanol y con tono cercano.
+  static const List<String> _commonAllergies = [
+    'frutos secos',
+    'lactosa',
+    'gluten',
+    'huevo',
+    'marisco',
+    'soja',
+    'pescado',
+  ];
 
   @override
   void initState() {
@@ -64,7 +85,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     try {
       final data = await _client
           .from('profiles')
-          .select('sex, birth_date, height_cm, weight_kg, activity_level, goal')
+          .select(
+            'sex, birth_date, height_cm, weight_kg, activity_level, goal, '
+            'diet, allergies, disliked, cook_time_pref',
+          )
           .eq('id', user.id)
           .maybeSingle();
       if (data == null || !mounted) return;
@@ -80,6 +104,12 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         }
         _activity = p.activityLevel;
         _goal = p.goal;
+        _diet = p.diet;
+        _allergies
+          ..clear()
+          ..addAll(p.allergies);
+        _dislikedController.text = p.disliked.join(', ');
+        _cookTimePref = p.cookTimePref;
       });
     } catch (_) {
       // Si falla la precarga, el wizard sigue funcionando con los valores por
@@ -92,6 +122,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     _controller.dispose();
     _heightController.dispose();
     _weightController.dispose();
+    _dislikedController.dispose();
     super.dispose();
   }
 
@@ -201,6 +232,16 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     );
   }
 
+  /// Convierte el texto libre de ingredientes a evitar (separado por comas) en
+  /// una lista limpia, descartando espacios y entradas vacias.
+  List<String> _parseDisliked() {
+    return _dislikedController.text
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
   Future<void> _save() async {
     setState(() {
       _saving = true;
@@ -220,6 +261,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             'weight_kg': _weight,
             'activity_level': _activity,
             'goal': _goal,
+            'diet': _diet,
+            'allergies': _allergies.toList(),
+            'disliked': _parseDisliked(),
+            'cook_time_pref': _cookTimePref,
           })
           .eq('id', user.id);
       if (!mounted) return;
@@ -290,6 +335,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                   _buildWeightStep(),
                   _buildActivityStep(),
                   _buildGoalStep(),
+                  _buildDietStep(),
+                  _buildAllergiesStep(),
+                  _buildDislikedStep(),
+                  _buildCookTimeStep(),
                   _buildResultStep(),
                 ],
               ),
@@ -585,6 +634,135 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     );
   }
 
+  /// Iconos para cada tipo de dieta (todos existen en Flutter 3.47.6).
+  static const Map<String, IconData> _dietIcons = {
+    'omnivora': Icons.restaurant_menu,
+    'vegetariana': Icons.eco,
+    'vegana': Icons.spa,
+    'pescetariana': Icons.set_meal,
+    'baja_carbo': Icons.local_fire_department,
+    'sin_gluten': Icons.grass,
+  };
+
+  Widget _buildDietStep() {
+    return _stepScroll(
+      children: [
+        _stepHeader(
+          '¿Como te alimentas?',
+          'Elige el tipo de dieta que mejor va contigo. Asi te propondre '
+              'recetas que encajen.',
+        ),
+        ...NutritionProfile.dietLabels.entries.map(
+          (e) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _OptionCard(
+              title: e.value,
+              icon: _dietIcons[e.key],
+              selected: _diet == e.key,
+              onTap: () => setState(() {
+                _diet = e.key;
+              }),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAllergiesStep() {
+    return _stepScroll(
+      children: [
+        _stepHeader(
+          'Alergias o intolerancias',
+          'Marca lo que debamos evitar. Si no tienes ninguna, pasa al '
+              'siguiente paso sin problema.',
+        ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: _commonAllergies.map((allergy) {
+            final selected = _allergies.contains(allergy);
+            return FilterChip(
+              label: Text(allergy),
+              selected: selected,
+              onSelected: (value) => setState(() {
+                if (value) {
+                  _allergies.add(allergy);
+                } else {
+                  _allergies.remove(allergy);
+                }
+              }),
+              showCheckmark: false,
+              backgroundColor: AppColors.card,
+              selectedColor: AppColors.wood,
+              side: BorderSide(
+                color: selected ? AppColors.woodDark : Colors.transparent,
+                width: 1.5,
+              ),
+              labelStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDislikedStep() {
+    return _stepScroll(
+      children: [
+        _stepHeader(
+          'Ingredientes que no te gustan',
+          'Escribe los que prefieras evitar, separados por comas (p. ej. '
+              'cebolla, cilantro). Es opcional.',
+        ),
+        TextField(
+          controller: _dislikedController,
+          textCapitalization: TextCapitalization.sentences,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(fontSize: 16, color: AppColors.ink),
+          decoration: _textDecoration('cebolla, cilantro...'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCookTimeStep() {
+    const descriptions = {
+      'rapido': 'Platos resueltos en poco tiempo.',
+      'normal': 'Un equilibrio entre rapido y elaborado.',
+      'elaborado': 'Disfruto cocinando con calma.',
+    };
+    return _stepScroll(
+      children: [
+        _stepHeader(
+          '¿Cuanto tiempo quieres cocinar?',
+          'Asi ajusto las recetas a tu ritmo. Puedes dejarlo sin elegir.',
+        ),
+        ...NutritionProfile.cookTimeLabels.entries.map(
+          (e) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _OptionCard(
+              title: e.value,
+              subtitle: descriptions[e.key],
+              selected: _cookTimePref == e.key,
+              onTap: () => setState(() {
+                _cookTimePref = e.key;
+              }),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildResultStep() {
     final profile = _buildProfile();
     final kcal = profile.targetCalories;
@@ -650,6 +828,20 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       ],
     );
   }
+
+  /// Decoracion simple de texto (sin sufijo) para campos libres como los
+  /// ingredientes a evitar, coherente con la estetica Cozy.
+  InputDecoration _textDecoration(String hint) => InputDecoration(
+    filled: true,
+    fillColor: AppColors.card,
+    hintText: hint,
+    hintStyle: TextStyle(fontSize: 15, color: Colors.grey[500]),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(20),
+      borderSide: BorderSide.none,
+    ),
+  );
 
   InputDecoration _numberDecoration(String suffix) => InputDecoration(
     filled: true,
