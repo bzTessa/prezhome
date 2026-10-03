@@ -309,38 +309,58 @@ class _CalendarViewState extends State<_CalendarView> {
               .compareTo(_mealOrderMonth.indexOf(b.mealType)),
         );
       final hasPlan = dayItems.isNotEmpty;
+      // El número del día: hoy va dentro de un círculo wood sólido.
+      final dayNumber = isToday
+          ? Container(
+              width: 22,
+              height: 22,
+              decoration: const BoxDecoration(
+                color: AppColors.woodDark,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '$d',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : Text(
+              '$d',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            );
+
       cells.add(
         GestureDetector(
           onTap: () => setState(() => _selected = date),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
             margin: const EdgeInsets.all(2),
             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.wood
-                  : (hasPlan ? AppColors.cream : Colors.transparent),
-              borderRadius: BorderRadius.circular(12),
-              border: isToday
-                  ? Border.all(color: AppColors.woodDark, width: 1.8)
-                  : (hasPlan && !isSelected
+              color: hasPlan ? AppColors.cream : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              // Día seleccionado: anillo grueso woodDark. Con plan (no sel.):
+              // borde suave wood. Resto: sin borde.
+              border: isSelected
+                  ? Border.all(color: AppColors.woodDark, width: 2)
+                  : (hasPlan
                         ? Border.all(color: AppColors.wood, width: 1)
                         : null),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  '$d',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected || isToday
-                        ? FontWeight.bold
-                        : FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 2),
+                Align(alignment: Alignment.topCenter, child: dayNumber),
+                const SizedBox(height: 3),
                 // Resumen de hasta 2 comidas escritas; si hay más, "+N".
                 Expanded(
                   child: hasPlan
@@ -348,8 +368,19 @@ class _CalendarViewState extends State<_CalendarView> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             for (final it in dayItems.take(2))
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 1),
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: it.skipped
+                                      ? Colors.transparent
+                                      : AppColors.wood.withValues(alpha: 0.35),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                                 child: Text(
                                   it.title,
                                   maxLines: 1,
@@ -362,15 +393,13 @@ class _CalendarViewState extends State<_CalendarView> {
                                     decoration: it.skipped
                                         ? TextDecoration.lineThrough
                                         : null,
-                                    color: isSelected
-                                        ? AppColors.ink
-                                        : AppColors.woodDark,
+                                    color: AppColors.woodDark,
                                   ),
                                 ),
                               ),
                             if (dayItems.length > 2)
                               Text(
-                                '+${dayItems.length - 2}',
+                                '+${dayItems.length - 2} más',
                                 style: TextStyle(
                                   fontSize: 8,
                                   fontWeight: FontWeight.bold,
@@ -396,42 +425,54 @@ class _CalendarViewState extends State<_CalendarView> {
           decoration: AppTheme.cardDecoration(),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () => _changeMonth(-1),
-                  ),
-                  Text(
-                    '${_months[_month.month - 1]} ${_month.year}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.cream,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _MonthNavButton(
+                      icon: Icons.chevron_left,
+                      onTap: () => _changeMonth(-1),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: () => _changeMonth(1),
-                  ),
-                ],
+                    Text(
+                      '${_months[_month.month - 1]} ${_month.year}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    _MonthNavButton(
+                      icon: Icons.chevron_right,
+                      onTap: () => _changeMonth(1),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 10),
               Row(
-                children: _weekdays
-                    .map(
-                      (w) => Expanded(
-                        child: Center(
-                          child: Text(
-                            w,
-                            style: const TextStyle(
-                              color: Colors.black45,
-                              fontWeight: FontWeight.bold,
-                            ),
+                children: [
+                  for (var i = 0; i < _weekdays.length; i++)
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          _weekdays[i],
+                          style: TextStyle(
+                            // Fin de semana (S, D) atenuado y en tono cálido.
+                            color: i >= 5
+                                ? AppColors.woodDark.withValues(alpha: 0.7)
+                                : Colors.black45,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
                           ),
                         ),
                       ),
-                    )
-                    .toList(),
+                    ),
+                ],
               ),
               const SizedBox(height: 8),
               GridView.count(
@@ -1121,5 +1162,28 @@ class _VarietyCard extends StatelessWidget {
     final trimmed = title.trim();
     if (trimmed.length <= 10) return trimmed;
     return '${trimmed.substring(0, 9)}…';
+  }
+}
+
+/// Botón redondo de navegación del calendario (mes anterior/siguiente).
+class _MonthNavButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _MonthNavButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.card,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, color: AppColors.woodDark, size: 22),
+        ),
+      ),
+    );
   }
 }
