@@ -61,9 +61,16 @@ function buildPrompt(p: Record<string, unknown>): string {
   const budget = (p.weekly_budget ?? "").toString();
   const count = Number(p.count ?? 5);
 
+  const superLine = supermarket
+    ? `- Supermercado(s) donde se compra: ${supermarket}. Usa productos y
+     FORMATOS DE VENTA típicos de ese(os) supermercado(s) español(es) (p. ej.
+     en Mercadona la marca Hacendado; botes/latas/paquetes y tamaños reales que
+     se venden ahí). Elige ingredientes fáciles de encontrar en ese súper.`
+    : `- Supermercado: cualquiera (usa ingredientes comunes de súper español).`;
+
   return `Eres un chef que propone ideas de comidas prácticas. Genera ${count}
 ideas de recetas distintas y variadas con estos criterios:
-- Supermercado: ${supermarket || "cualquiera"}
+${superLine}
 - Objetivo nutricional: ${goal}
 - Dieta / restricción: ${diet}
 - Electrodomésticos disponibles: ${appliances || "cualquiera"}
