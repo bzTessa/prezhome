@@ -1,3 +1,19 @@
+/// Estado de caducidad de un producto, pensado para que la usuaria lo entienda
+/// de un vistazo con colores cálidos (ver AppColors "Estados de caducidad").
+enum ExpiryStatus {
+  /// Aún queda tiempo de sobra.
+  fresco,
+
+  /// Caduca pronto (hoy o en los próximos días).
+  pronto,
+
+  /// Ya ha caducado.
+  caducado,
+
+  /// No tiene fecha de caducidad conocida.
+  sinFecha,
+}
+
 class InventoryItem {
   final String id;
   final String homeId;
@@ -87,6 +103,67 @@ class InventoryItem {
         .difference(DateTime(today.year, today.month, today.day))
         .inDays;
   }
+
+  // --- API de caducidades ----------------------------------------------------
+  // Semántica única y sencilla para la usuaria: no tiene que pensar en reglas
+  // distintas por ubicación. Nevera y Despensa usan la fecha de caducidad
+  // directa; el Congelador usa el consumo preferente (best_before), que si no
+  // se indica se calcula sumando una ventana de congelación por defecto a la
+  // fecha de congelación.
+
+  /// Ventana de congelación por defecto (en días). Es un valor genérico y
+  /// seguro para que la usuaria no tenga que recordar cuánto aguanta cada
+  /// alimento congelado: unos 3 meses cubren la mayoría de los casos.
+  static const int defaultFreezerDays = 90;
+
+  /// Fecha de caducidad efectiva según la ubicación:
+  /// - Congelador: best_before si está, si no frozen_on + [defaultFreezerDays].
+  /// - Nevera/Despensa (y cualquier otra): expiration_date, o best_before si no
+  ///   hay fecha de caducidad.
+  DateTime? get effectiveExpiry {
+    if (category == 'Congelador') {
+      if (bestBefore != null) return bestBefore;
+      if (frozenOn != null) {
+        return frozenOn!.add(const Duration(days: defaultFreezerDays));
+      }
+      return null;
+    }
+    return expirationDate ?? bestBefore;
+  }
+
+  /// Días que quedan hasta la caducidad efectiva (null si no tiene fecha).
+  /// Usa la misma normalización de fecha que [daysUntilBestBefore].
+  int? get daysUntilExpiry {
+    final expiry = effectiveExpiry;
+    if (expiry == null) return null;
+    final today = DateTime.now();
+    return expiry
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
+  }
+
+  /// Estado de caducidad según umbrales cálidos y sencillos:
+  /// - sin fecha => [ExpiryStatus.sinFecha]
+  /// - días < 0 => [ExpiryStatus.caducado]
+  /// - días <= 3 => [ExpiryStatus.pronto]
+  /// - en otro caso => [ExpiryStatus.fresco]
+  ExpiryStatus get expiryStatus {
+    final days = daysUntilExpiry;
+    if (days == null) return ExpiryStatus.sinFecha;
+    if (days < 0) return ExpiryStatus.caducado;
+    if (days <= 3) return ExpiryStatus.pronto;
+    return ExpiryStatus.fresco;
+  }
+
+  static const Map<ExpiryStatus, String> expiryLabels = {
+    ExpiryStatus.fresco: 'Fresco',
+    ExpiryStatus.pronto: 'Caduca pronto',
+    ExpiryStatus.caducado: 'Caducado',
+    ExpiryStatus.sinFecha: 'Sin fecha',
+  };
+
+  /// Etiqueta corta en español para el estado de caducidad.
+  String get expiryLabel => expiryLabels[expiryStatus] ?? 'Sin fecha';
 
   static const Map<String, String> kindLabels = {
     'ingredient': 'Ingrediente',

@@ -20,6 +20,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   String _selectedUnit = 'unidades';
   String _kind = 'ingredient';
   DateTime? _frozenOn;
+  DateTime? _expirationDate;
   bool _isStaple = false;
   bool _isLoading = false;
 
@@ -90,6 +91,11 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             : null,
         frozenOn: (isFood && _selectedCategory == 'Congelador')
             ? _frozenOn
+            : null,
+        // La fecha de caducidad solo aplica a comida fuera del congelador
+        // (Nevera/Despensa); el congelador usa la fecha de congelación.
+        expirationDate: (isFood && _selectedCategory != 'Congelador')
+            ? _expirationDate
             : null,
         // Solo tiene sentido marcar basicos de comida como "siempre en casa".
         isStaple: isFood && _isStaple,
@@ -273,6 +279,44 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                               '${_frozenOn!.year}',
                   ),
                 ),
+              ),
+            ],
+
+            // Fecha de caducidad (solo comida fuera del congelador)
+            if (isFood && !isFrozen) ...[
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () async {
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _expirationDate ?? now,
+                    firstDate: DateTime(now.year - 1),
+                    lastDate: DateTime(now.year + 5),
+                    helpText: 'Fecha de caducidad',
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _expirationDate = picked;
+                    });
+                  }
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: InputDecorator(
+                  decoration: _dec('Caduca el (opcional)'),
+                  child: Text(
+                    _expirationDate == null
+                        ? 'Sin fecha'
+                        : '${_expirationDate!.day.toString().padLeft(2, '0')}/'
+                              '${_expirationDate!.month.toString().padLeft(2, '0')}/'
+                              '${_expirationDate!.year}',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Te avisaremos en el Inicio cuando esté a punto de caducar.',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
             ],
 
