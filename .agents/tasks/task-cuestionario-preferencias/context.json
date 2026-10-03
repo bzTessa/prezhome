@@ -1,0 +1,25 @@
+{
+  "project_type": "Flutter mobile/web app (PrezHome, gestión del hogar) con backend Supabase (Postgres + Edge Functions Deno). UI 100% en español, estética Cozy con mascota Miau.",
+  "language": "Dart (Flutter) para la app; TypeScript (Deno) para edge functions; SQL para migraciones.",
+  "build_system": "Flutter SDK. En el sandbox Flutter NO viene preinstalado: se clona Flutter 3.47.6 (Dart 3.13.5) desde github en ~/flutter_sdk porque pubspec exige SDK ^3.11.1.",
+  "test_framework": "flutter_test. 16 ficheros en test/, 149 tests existentes que deben seguir verdes. Patrón: unit tests puros sobre utils/models (ver test/nutrition_calc_test.dart).",
+  "build_command": "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+  "test_command": "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; flutter test",
+  "verification_instructions": "El CI valida exactamente: 1) `dart format --output=none --set-exit-if-changed lib/ test/` (TALL-style Dart 3.7+; formatear SIEMPRE con el Dart de ~/flutter_sdk, no uno viejo); 2) `flutter analyze` con 0 issues; 3) `flutter test` todos verdes (149+). Orden recomendado: pub get -> dart format lib/ test/ -> flutter analyze -> flutter test.",
+  "snapshot_or_generated_files": "flutter pub get / flutter test MODIFICAN autogenerados: pubspec.lock, analysis_options.yaml, .flutter-plugins-dependencies, carpetas linux/ macos/ windows/ y plugin registrants. Esos cambios NO van en el commit; el orquestador hace git checkout -- de ellos. No hay snapshots de tests.",
+  "setup_instructions": "git clone --depth 1 --branch 3.47.6 https://github.com/flutter/flutter.git ~/flutter_sdk ; luego por comando: export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+  "environment_constraints": "network_mode OPEN_INTERNET (clonado de Flutter y pub get permitidos). No hay Docker/Supabase local garantizado: las edge functions y migraciones NO se ejecutan en CI (solo validación ligera de ficheros .sql por patrón NNNN_nombre.sql y balance de paréntesis). La migración 0041 ya existe y es inmutable: NO tocarla.",
+  "contribution_requirements": "NO commitear, push ni PR (lo hace el orquestador). Mantener todo el texto de UI en español, tono cozy. NUNCA inventar cifras nutricionales concretas. No eliminar funcionalidad existente del wizard. Las migraciones existentes son inmutables.",
+  "key_patterns": "NutritionProfile: constructor con finales + defaults; factory fromMap que parsea Map de Supabase; toUpdateMap que serializa para update parcial. Helper estático _parseAtHome convierte dynamic List -> List<int>; análogo necesario para text[] -> List<String>: `(raw is List) ? raw.map((e) => e.toString()).toList() : <String>[]`. Wizard ProfileWizardScreen: PageView con _buildXxxStep() por paso, _totalPages/_resultPage constantes, _loadExisting() precarga, _save() update parcial por campo, _OptionCard es la tarjeta Cozy seleccionable reutilizable, _stepScroll/_stepHeader helpers de layout, _currentStepValid/_missingDataMessage por índice de página. PITFALLS: evitar (_, __) en builders (unnecessary_underscores), Icons.nutrition NO existe (usar Icons.restaurant_menu/eco/spa), setState(() => x = future) rompe (usar bloque), FAB necesita heroTag único. DiscoverRecipesScreen: carga home_id/supermercados vía profiles+homes; invoca edge function discover-recipes con body {supermarket, goal, diet, appliances, weekly_budget, count, avoid}. El _diet local usa etiquetas en español legibles (distintas de los códigos de diet del perfil).",
+  "relevant_files": [
+    "lib/models/nutrition_profile.dart",
+    "lib/profile_wizard_screen.dart",
+    "lib/discover_recipes_screen.dart",
+    "supabase/functions/discover-recipes/index.ts",
+    "supabase/functions/generate-recipe/index.ts",
+    "supabase/migrations/0041_profile_food_preferences.sql",
+    "test/nutrition_calc_test.dart",
+    ".github/workflows/ci.yml"
+  ],
+  "directory_structure": "lib/ código Flutter (models/, services/, widgets/, theme/, utils/ y pantallas sueltas en raíz de lib); test/ unit tests; supabase/migrations/ SQL inmutable (0041 ya añade diet/allergies/disliked/cook_time_pref a profiles); supabase/functions/ edge functions Deno; .github/workflows/ci.yml define la validación."
+}

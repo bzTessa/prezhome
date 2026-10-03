@@ -25,6 +25,20 @@ class NutritionProfile {
   /// Porciones: 'practical' (formatos de súper, redondeo) o 'strict' (exacto).
   final String portionMode;
 
+  /// Tipo de dieta: 'omnivora' | 'vegetariana' | 'vegana' | 'pescetariana' |
+  /// 'baja_carbo' | 'sin_gluten'. null = sin preferencia marcada.
+  final String? diet;
+
+  /// Alergias/intolerancias (p. ej. ['frutos secos', 'lactosa']).
+  final List<String> allergies;
+
+  /// Ingredientes que la persona NO quiere (p. ej. ['cebolla']).
+  final List<String> disliked;
+
+  /// Cuánto tiempo quiere dedicar a cocinar: 'rapido' (<20 min) | 'normal' |
+  /// 'elaborado'. null = sin preferencia marcada.
+  final String? cookTimePref;
+
   NutritionProfile({
     required this.id,
     this.fullName,
@@ -40,7 +54,13 @@ class NutritionProfile {
     Map<String, List<int>>? mealsAtHome,
     this.cookingMode = 'daily',
     this.portionMode = 'practical',
-  }) : mealSplit =
+    this.diet,
+    List<String>? allergies,
+    List<String>? disliked,
+    this.cookTimePref,
+  }) : allergies = allergies ?? const <String>[],
+       disliked = disliked ?? const <String>[],
+       mealSplit =
            mealSplit ??
            const {
              'breakfast': 20,
@@ -69,6 +89,10 @@ class NutritionProfile {
       mealsAtHome: _parseAtHome(map['meals_at_home']),
       cookingMode: map['cooking_mode'] ?? 'daily',
       portionMode: map['portion_mode'] ?? 'practical',
+      diet: map['diet'],
+      allergies: _parseStringList(map['allergies']),
+      disliked: _parseStringList(map['disliked']),
+      cookTimePref: map['cook_time_pref'],
     );
   }
 
@@ -83,6 +107,9 @@ class NutritionProfile {
     }
     return null;
   }
+
+  static List<String> _parseStringList(dynamic raw) =>
+      (raw is List) ? raw.map((e) => e.toString()).toList() : <String>[];
 
   static Map<String, List<int>>? _parseAtHome(dynamic raw) {
     if (raw is Map) {
@@ -111,8 +138,29 @@ class NutritionProfile {
       'meals_at_home': mealsAtHome,
       'cooking_mode': cookingMode,
       'portion_mode': portionMode,
+      'diet': diet,
+      'allergies': allergies,
+      'disliked': disliked,
+      'cook_time_pref': cookTimePref,
     };
   }
+
+  /// Etiquetas en español para los tipos de dieta (reutilizable en el wizard).
+  static const Map<String, String> dietLabels = {
+    'omnivora': 'De todo',
+    'vegetariana': 'Vegetariana',
+    'vegana': 'Vegana',
+    'pescetariana': 'Pescetariana',
+    'baja_carbo': 'Baja en carbohidratos',
+    'sin_gluten': 'Sin gluten',
+  };
+
+  /// Etiquetas en español para la preferencia de tiempo de cocina.
+  static const Map<String, String> cookTimeLabels = {
+    'rapido': 'Rápido (menos de 20 min)',
+    'normal': 'Normal',
+    'elaborado': 'Elaborado (me gusta cocinar)',
+  };
 
   /// ¿La comida [type] se hace en casa el día [weekday] (1=Lun..7=Dom)?
   /// Si no hay configuración para esa comida, se asume que sí (todos los días).

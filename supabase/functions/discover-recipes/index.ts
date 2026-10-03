@@ -65,10 +65,43 @@ function buildPrompt(p: Record<string, unknown>): string {
   const avoid = Array.isArray(p.avoid)
     ? (p.avoid as string[]).filter((s) => s && s.trim().length > 0)
     : [];
+  // Alergias/intolerancias del perfil: restricción DURA (nunca incluir).
+  const allergies = Array.isArray(p.allergies)
+    ? (p.allergies as string[]).filter((s) => s && s.trim().length > 0)
+    : [];
+  // Ingredientes que no le gustan: preferencia blanda (evitar si se puede).
+  const disliked = Array.isArray(p.disliked)
+    ? (p.disliked as string[]).filter((s) => s && s.trim().length > 0)
+    : [];
+  // Preferencia de tiempo de cocina del perfil (etiqueta legible en español,
+  // p. ej. "Rápido (menos de 20 min)"). Opcional: si no viene, no se añade
+  // ninguna línea y el comportamiento es idéntico al anterior.
+  const cookTime = (p.cook_time ?? "").toString().trim();
   const avoidLine = avoid.length > 0
     ? `\n- NO repitas estas recetas que el usuario YA tiene (propón platos
      claramente DISTINTOS, con otros ingredientes principales o estilos):
      ${avoid.slice(0, 40).join("; ")}.`
+    : "";
+  const allergyLine = allergies.length > 0
+    ? `\n- ALERGIAS / INTOLERANCIAS (restricción DURA, OBLIGATORIA): estos
+     alimentos NO deben aparecer NUNCA en ninguna receta, ni como ingrediente
+     principal ni oculto ni como traza. Evítalos por completo:
+     ${allergies.slice(0, 40).join("; ")}.`
+    : "";
+  const dislikedLine = disliked.length > 0
+    ? `\n- Ingredientes que al usuario NO le gustan (preferencia blanda):
+     intenta evitarlos siempre que sea posible, pero NO son una prohibición
+     absoluta: ${disliked.slice(0, 40).join("; ")}.`
+    : "";
+  // Traducimos la preferencia de tiempo de cocina a una instrucción concreta
+  // sobre el tiempo total de preparación de las recetas.
+  const cookTimeLine = cookTime
+    ? `\n- Tiempo de cocina preferido: ${cookTime}. Ajusta las recetas a ese
+     ritmo. Si pide algo rápido (menos de 20 min), prioriza preparaciones
+     sencillas con pocos pasos y poco tiempo total (prep + cocción) de unos
+     20 minutos o menos. Si es normal, recetas de dificultad media (unos 30-45
+     minutos). Si es elaborado, puedes proponer platos más trabajados y con
+     más tiempo de cocción.`
     : "";
 
   const superLine = supermarket
@@ -87,7 +120,7 @@ ${superLine}
 - Objetivo nutricional: ${goal}
 - Dieta / restricción: ${diet}
 - Electrodomésticos disponibles: ${appliances || "cualquiera"}
-- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${avoidLine}
+- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${cookTimeLine}${allergyLine}${dislikedLine}${avoidLine}
 
 Responde SOLO con un JSON válido (sin markdown) con esta forma:
 {

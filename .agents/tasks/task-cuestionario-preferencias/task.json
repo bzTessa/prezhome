@@ -1,0 +1,14 @@
+{
+  "task_id": "task-cuestionario-preferencias",
+  "task_description": "Ampliar el cuestionario de perfil (ProfileWizardScreen) con preferencias alimentarias (dieta, alergias/intolerancias, ingredientes a evitar, tiempo de cocina) guardadas como columnas del perfil (migración 0041 ya existente), y usar esas preferencias para personalizar el generador de recetas IA (discover-recipes). Rama feat/cuestionario-preferencias. CI local verde; sin commit/push/PR.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "flutter pub get OK; dart format --output=none --set-exit-if-changed lib/ test/ -> Formatted 79 files (0 changed); flutter analyze -> No issues found! (0 issues); flutter test -> 155 tests All passed (149 previos + 6 nuevos en nutrition_profile_preferences_test.dart). Los tests nuevos ejercitan fromMap/toUpdateMap reales de los 4 campos de preferencias (fallan si se revierte el modelo). No hay Dockerfile; las edge functions TS no se ejecutan en CI (solo validación de .sql por patrón). La migración 0041 queda intacta."
+  }
+}
