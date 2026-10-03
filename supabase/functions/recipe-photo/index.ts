@@ -48,15 +48,75 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// --- Refinado de la query de comida -----------------------------------------
+// El título de una receta ("Garbanzos salteados con espinacas") da fotos
+// genéricas en Unsplash (sale "espinacas en un colador"). Para acertar más:
+//   1. Limpiamos el título: quitamos preposiciones/relleno de cocina
+//      ("al horno", "salteado con", "a la plancha"...) que confunden la
+//      búsqueda, y nos quedamos con los INGREDIENTES/sustantivos clave.
+//   2. Añadimos el contexto "food dish meal" para empujar a Unsplash hacia
+//      fotos de PLATOS DE COMIDA y no de ingredientes sueltos o paisajes.
+// Devuelve una lista de queries a probar en orden (de más específica a más
+// genérica) para maximizar el acierto sin dejar de degradar con elegancia.
+function buildFoodQueries(raw: string): string[] {
+  const original = raw.trim();
+  if (!original) return [];
+
+  // Palabras de "relleno" culinario y conectores que no aportan a la búsqueda
+  // visual (en español). Se eliminan para quedarnos con los ingredientes.
+  const stop = new Set([
+    "al", "a", "la", "el", "los", "las", "con", "de", "del", "y", "o", "en",
+    "estilo", "casero", "casera", "rápido", "rapido", "rápida", "rapida",
+    "fácil", "facil", "rico", "rica", "sabroso", "sabrosa",
+    "horno", "plancha", "sartén", "sarten", "vapor", "olla", "cazuela",
+    "salteado", "salteada", "salteados", "salteadas", "asado", "asada",
+    "asados", "asadas", "cocido", "cocida", "cocidos", "cocidas",
+    "guisado", "guisada", "frito", "frita", "fritos", "fritas",
+    "gratinado", "gratinada", "relleno", "rellena", "crujiente",
+  ]);
+
+  const words = original
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+
+  const keyWords = words.filter((w) => !stop.has(w));
+  // Los 3 primeros términos significativos suelen ser los ingredientes clave.
+  const core = keyWords.slice(0, 3).join(" ").trim();
+
+  const queries: string[] = [];
+  // 1) Núcleo de ingredientes + contexto de comida (lo que mejor acierta).
+  if (core) queries.push(`${core} food dish meal`);
+  // 2) Título original + contexto de comida.
+  queries.push(`${original} food dish`);
+  // 3) Solo el primer término significativo + comida (último recurso útil).
+  if (keyWords.length > 0) queries.push(`${keyWords[0]} food plate`);
+  // Quitar duplicados preservando el orden.
+  return [...new Set(queries)];
+}
+
 // --- Unsplash ---------------------------------------------------------------
 // Busca una foto en Unsplash y devuelve { url, attribution } o { url: null }.
-// Cualquier excepción de red, respuesta no OK o ausencia de resultados se
-// degrada a { url: null }: NUNCA lanza hacia el flujo principal.
-async function searchUnsplash(query: string, key: string): Promise<unknown> {
+// Prueba varias queries refinadas (orientadas a comida) en orden hasta que una
+// devuelva resultado. Cualquier excepción de red, respuesta no OK o ausencia de
+// resultados se degrada a { url: null }: NUNCA lanza hacia el flujo principal.
+async function searchUnsplash(rawQuery: string, key: string): Promise<unknown> {
+  const queries = buildFoodQueries(rawQuery);
+  if (queries.length === 0) return { url: null };
+  for (const q of queries) {
+    const result = await searchUnsplashOnce(q, key);
+    if ((result as { url?: unknown }).url) return result;
+  }
+  return { url: null };
+}
+
+// Una sola búsqueda en Unsplash para una query concreta.
+async function searchUnsplashOnce(query: string, key: string): Promise<unknown> {
   try {
     const url =
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}` +
-      `&per_page=1&orientation=landscape`;
+      `&per_page=1&orientation=landscape&content_filter=high`;
     const res = await fetch(url, {
       headers: { Authorization: `Client-ID ${key}` },
     });
