@@ -475,8 +475,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
           imageUrl: item.imageUrl,
           size: 56,
           radius: 14,
-          // Especias: ilustración cozy (🧂) en vez de foto real genérica.
-          forceIllustration: item.category == 'Especias',
+          // Ilustración cozy por categoría SIEMPRE: las fotos reales de
+          // ingredientes crudos casi nunca acertaban (p. ej. "pechuga de pollo"
+          // salía como un plato cocinado). La ilustración es coherente y
+          // limpia, nunca falla.
+          forceIllustration: true,
         ),
         title: Row(
           children: [
