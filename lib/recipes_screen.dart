@@ -204,9 +204,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
       await supabase.from('recipes').delete().eq('id', recipe.id);
       _reload();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('"${recipe.title}" eliminada.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('"${recipe.title}" eliminada.')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
