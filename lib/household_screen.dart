@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'economy_screen.dart';
 import 'models/supermarket.dart';
 import 'nutrition_profile_screen.dart';
-import 'profile_wizard_screen.dart';
 import 'login_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
@@ -467,24 +466,12 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               _settingTile(
                 icon: Icons.favorite_outline,
                 title: 'Mi perfil nutricional',
-                subtitle: 'Objetivo de calorías y preferencias',
+                subtitle: 'Objetivo de calorías, preferencias y asistente',
                 iconBg: AppColors.terracottaBg,
                 iconFg: AppColors.terracotta,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const NutritionProfileScreen(),
-                  ),
-                ),
-              ),
-              _settingTile(
-                icon: Icons.quiz_outlined,
-                title: 'Cuestionario de perfil',
-                subtitle: 'Recalcula tu objetivo paso a paso',
-                iconBg: AppColors.peachBg,
-                iconFg: AppColors.peach,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ProfileWizardScreen(),
                   ),
                 ),
               ),
