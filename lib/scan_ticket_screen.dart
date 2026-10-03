@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
+import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
@@ -315,6 +316,9 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             .update({'quantity': newQty})
             .eq('id', found['id']);
       } else {
+        // Caducidad orientativa automática según el producto (entra en
+        // Despensa). La usuaria puede ajustarla luego desde el inventario.
+        final estimated = ShelfLife.estimateDate(name, category);
         final item = InventoryItem(
           id: '',
           homeId: homeId,
@@ -324,6 +328,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           quantity: qty,
           unit: 'unidades',
           kind: 'ingredient',
+          expirationDate: estimated,
         );
         await _client.from('inventory_items').insert(item.toMap());
       }
