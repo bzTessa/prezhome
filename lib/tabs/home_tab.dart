@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../food_diary_screen.dart';
+import '../inventory_screen.dart';
 import '../month_calendar_screen.dart';
 import '../profile_wizard_screen.dart';
+import '../models/inventory_item.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
@@ -42,6 +44,11 @@ class HomeTabState extends State<HomeTab> {
   // el objetivo de calorías con el cuestionario guiado.
   bool _profileComplete = true;
 
+  // Resumen de caducidades del inventario de comida del hogar: cuántos
+  // alimentos caducan pronto y cuántos ya han caducado.
+  int _expiringSoon = 0;
+  int _expired = 0;
+
   static const _mealLabels = {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
@@ -76,6 +83,7 @@ class HomeTabState extends State<HomeTab> {
       _loadTasksSummary(),
       _loadEconomySummary(),
       _loadCaloriesSummary(),
+      _loadExpirySummary(),
     ]);
   }
 
@@ -308,6 +316,61 @@ class HomeTabState extends State<HomeTab> {
     }
   }
 
+  /// Cuenta los alimentos del inventario del hogar que caducan pronto y los que
+  /// ya han caducado, usando la misma semántica de [InventoryItem.expiryStatus]
+  /// que la pantalla de Despensa. Solo cuenta comida (itemType == 'comida'),
+  /// no productos de hogar/limpieza.
+  Future<void> _loadExpirySummary() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null) return;
+
+      // RLS ya filtra por hogar; filtramos también por home_id por claridad.
+      final res = await _client
+          .from('inventory_items')
+          .select()
+          .eq('home_id', homeId);
+      final items = (res as List)
+          .map((m) => InventoryItem.fromMap(m as Map<String, dynamic>))
+          .where((it) => it.itemType == 'comida');
+
+      var soon = 0;
+      var expired = 0;
+      for (final it in items) {
+        switch (it.expiryStatus) {
+          case ExpiryStatus.pronto:
+            soon++;
+            break;
+          case ExpiryStatus.caducado:
+            expired++;
+            break;
+          case ExpiryStatus.fresco:
+          case ExpiryStatus.sinFecha:
+            break;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _expiringSoon = soon;
+          _expired = expired;
+        });
+      }
+    } catch (e) {
+      // No rompemos la UI (la tarjeta muestra el estado tranquilizador), pero
+      // dejamos traza del error para no confundir un fallo de carga con una
+      // despensa sin caducidades.
+      debugPrint('HomeTab._loadExpirySummary error: $e');
+    }
+  }
+
   String _greeting() {
     final h = DateTime.now().hour;
     if (h < 6) return 'Buenas noches';
@@ -371,6 +434,9 @@ class HomeTabState extends State<HomeTab> {
           // Resumen de las comidas planificadas para hoy.
           _mealsCard(),
           const SizedBox(height: 12),
+          // Aviso de caducidades: alto en la lista porque es útil verlo pronto.
+          _expiryCard(),
+          const SizedBox(height: 12),
           // Si el perfil no está completo o aún no hay objetivo de calorías,
           // invitamos a calcularlo con el cuestionario guiado antes de mostrar
           // la tarjeta de calorías del día.
@@ -388,6 +454,88 @@ class HomeTabState extends State<HomeTab> {
           const SizedBox(height: 12),
           _calendarCard(),
         ],
+      ),
+    );
+  }
+
+  /// Tarjeta 'Caducidades': resume cuántos alimentos caducan pronto y cuántos
+  /// ya han caducado. Al tocarla abre la Despensa (InventoryScreen a pantalla
+  /// completa) y, al volver, refresca el recuento. Si no hay nada que avisar,
+  /// muestra un mensaje tranquilizador con el tono cozy de Miau.
+  Widget _expiryCard() {
+    const color = AppColors.soonBg;
+    final hasAlerts = _expiringSoon > 0 || _expired > 0;
+
+    String statusText;
+    if (!hasAlerts) {
+      statusText = 'Todo fresco por aquí 🐾';
+    } else {
+      final parts = <String>[];
+      if (_expiringSoon > 0) {
+        parts.add(
+          _expiringSoon == 1
+              ? '1 alimento caduca pronto'
+              : '$_expiringSoon alimentos caducan pronto',
+        );
+      }
+      if (_expired > 0) {
+        parts.add(
+          _expired == 1
+              ? '1 alimento caducado'
+              : '$_expired alimentos caducados',
+        );
+      }
+      statusText = parts.join(' · ');
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () async {
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const InventoryScreen()));
+        _loadExpirySummary(); // refrescar al volver de la despensa
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: AppTheme.cardDecoration(),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.event_busy, color: AppColors.ink),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Caducidades',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      fontWeight: hasAlerts
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      color: hasAlerts ? AppColors.ink : Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black26),
+          ],
+        ),
       ),
     );
   }
