@@ -346,10 +346,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
       final caducados = section.items
           .where((i) => i.expiryStatus == ExpiryStatus.caducado)
           .length;
-      if (caducados > 0)
+      if (caducados > 0) {
         alerts.add('$caducados caducado${caducados == 1 ? '' : 's'}');
-      if (pronto > 0)
+      }
+      if (pronto > 0) {
         alerts.add('$pronto caduca${pronto == 1 ? '' : 'n'} pronto');
+      }
     }
 
     return Padding(
@@ -569,8 +571,11 @@ class _ExpiryChip extends StatelessWidget {
     if (days == 1) return 'Caduca mañana';
     if (status == ExpiryStatus.pronto) return 'Caduca en $days días';
 
-    // Fresco y lejano: mostramos una fecha sencilla.
+    // Fresco y lejano: mostramos una fecha completa dd/mm/yyyy para que no
+    // sea ambigua al cruzar el cambio de año.
     final expiry = item.effectiveExpiry!;
-    return 'Caduca ${expiry.day}/${expiry.month}';
+    return 'Caduca ${expiry.day.toString().padLeft(2, '0')}/'
+        '${expiry.month.toString().padLeft(2, '0')}/'
+        '${expiry.year}';
   }
 }
