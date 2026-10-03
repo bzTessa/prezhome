@@ -9,6 +9,7 @@ import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'theme/app_theme.dart';
+import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -310,12 +311,42 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final label in r.mealTypeLabelsList) _chip(label),
-                if (r.appliance != 'none') _chip(r.applianceLabel),
+                for (final type in r.mealTypes)
+                  RecipeChip(
+                    text: Recipe.mealTypeLabels[type] ?? type,
+                    icon: mealTypeIcon(type),
+                    style: RecipeChipStyle.type,
+                  ),
+                if (r.appliance != 'none')
+                  RecipeChip(
+                    text: r.applianceLabel,
+                    icon: Icons.kitchen_rounded,
+                    style: RecipeChipStyle.type,
+                  ),
                 if (r.totalTimeMinutes != null)
-                  _chip('${r.totalTimeMinutes} min'),
-                if (r.freezable) _chip('Congelable'),
-                if (r.isFavorite) _chip('Favorita'),
+                  RecipeChip(
+                    text: '${r.totalTimeMinutes} min',
+                    icon: Icons.schedule_rounded,
+                    style: RecipeChipStyle.time,
+                  ),
+                if (r.calories != null)
+                  RecipeChip(
+                    text: '${r.calories} kcal',
+                    icon: Icons.local_fire_department_rounded,
+                    style: RecipeChipStyle.calories,
+                  ),
+                if (r.freezable)
+                  const RecipeChip(
+                    text: 'Congelable',
+                    icon: Icons.ac_unit,
+                    style: RecipeChipStyle.freezer,
+                  ),
+                if (r.isFavorite)
+                  const RecipeChip(
+                    text: 'Favorita',
+                    icon: Icons.star_rounded,
+                    style: RecipeChipStyle.favorite,
+                  ),
               ],
             ),
             if (r.description != null && r.description!.isNotEmpty) ...[
@@ -835,24 +866,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         selectedColor: const Color(0xFFE2C792),
         backgroundColor: const Color(0xFFFDF8E1),
         onSelected: (_) => setState(() => _multiplier = value),
-      ),
-    );
-  }
-
-  Widget _chip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF1E1E1E),
-        ),
       ),
     );
   }

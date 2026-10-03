@@ -25,3 +25,10 @@ porque contienen credenciales de Supabase y de Google.
 
 La guia paso a paso, en espanol y pensada para una persona no tecnica, esta en
 [docs/CI_CD_SECRETS.md](docs/CI_CD_SECRETS.md).
+
+## Fotos automaticas en las recetas
+
+Las recetas pueden mostrar una foto automatica (de Pexels) cuando se crean con
+la IA. La app funciona igual sin configurarlo (con dibujos cozy por tipo de
+plato), y la guia sencilla para activarlo esta en
+[docs/RECETAS_FOTOS.md](docs/RECETAS_FOTOS.md).
