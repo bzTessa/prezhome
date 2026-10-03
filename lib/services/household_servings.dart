@@ -71,14 +71,17 @@ ServingsResult servingsForMeal(
   int weekday,
 ) {
   final eating = members.where((m) => m.eatsAtHome(type, weekday)).toList();
-  // Orden estable: "tú" primero, luego el resto en el orden recibido.
-  eating.sort((a, b) {
-    if (a.isMe == b.isMe) return 0;
-    return a.isMe ? -1 : 1;
-  });
+  // Orden EXPLÍCITO y determinista: "tú" (isMe) primero, luego el resto en el
+  // mismo orden en que llegaron. No usamos List.sort porque Dart no garantiza
+  // su estabilidad por contrato: construimos la lista a mano para que el orden
+  // sea una garantía (p.ej. ['tú','Pablo','Ana']) y no un detalle del SDK.
+  final ordered = <HouseholdMember>[
+    ...eating.where((m) => m.isMe),
+    ...eating.where((m) => !m.isMe),
+  ];
   return ServingsResult(
-    count: eating.length,
-    names: [for (final m in eating) m.label],
+    count: ordered.length,
+    names: [for (final m in ordered) m.label],
   );
 }
 

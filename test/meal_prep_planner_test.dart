@@ -143,6 +143,53 @@ void main() {
         greaterThan(planBajo.cookingDays.length),
       );
     });
+
+    test('(f) energía alta con días de comida muy dispersos: ningún día de '
+        'cocción queda sin tandas', () {
+      // Solo tres días con comida, muy separados (lunes, miércoles y domingo).
+      // Con energía alta (hasta 3 días de cocción) los bloques podrían caer en
+      // días sin comidas propias; el plan NO debe incluir días vacíos.
+      final meals = [
+        PrepMeal(
+          recipeId: 'lentejas',
+          date: day(0),
+          mealType: 'lunch',
+          servings: 2,
+        ),
+        PrepMeal(
+          recipeId: 'pollo',
+          date: day(2),
+          mealType: 'lunch',
+          servings: 2,
+        ),
+        PrepMeal(
+          recipeId: 'lentejas',
+          date: day(6),
+          mealType: 'dinner',
+          servings: 2,
+        ),
+      ];
+      final plan = const MealPrepPlanner().buildPlan(
+        meals: meals,
+        recipesById: recipes,
+        weekStart: weekStart,
+        energyLevel: 2,
+      );
+
+      // Todos los días de cocción tienen al menos una tanda y raciones > 0.
+      expect(plan.cookingDays, isNotEmpty);
+      for (final d in plan.cookingDays) {
+        expect(d.batches, isNotEmpty);
+        expect(d.totalServings, greaterThan(0));
+      }
+      // Cada comida se cuece en un día de cocción que no es posterior a ella.
+      for (final m in meals) {
+        final cocinado = plan.cookingDays.any(
+          (d) => !d.date.isAfter(m.date) && d.batches.isNotEmpty,
+        );
+        expect(cocinado, isTrue);
+      }
+    });
   });
 
   group('Resumen cozy', () {

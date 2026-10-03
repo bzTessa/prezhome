@@ -279,16 +279,47 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       final before = {for (final s in slots) s.id: s};
       final adjustment = const PlanAdjuster().adjustForSkipped(slots, e.id!);
 
-      // Persistir solo las entradas que cambiaron (recipe_id/skipped).
+      // Metadatos del congelador del plato que se mueve (el del origen). Al
+      // recolocarlo, deben VIAJAR al día destino y limpiarse en el origen, para
+      // que no queden `from_freezer`/`inventory_item_id` huérfanos apuntando a
+      // un plato que ya no está ahí. Las raciones NO viajan: cada día conserva
+      // las suyas (calculadas para quién come en casa ese día).
+      final movedToDate = adjustment.movedToDate;
+      final movedFromFreezer = e.fromFreezer;
+      final movedInventoryItemId = e.inventoryItemId;
+
+      // Persistir solo las entradas que cambiaron (recipe_id/skipped y, si
+      // procede, los metadatos del congelador).
       for (final slot in adjustment.slots) {
         final prev = before[slot.id];
         if (prev == null) continue;
         final recipeChanged = prev.recipeId != slot.recipeId;
         final skipChanged = prev.skipped != slot.skipped;
-        if (!recipeChanged && !skipChanged) continue;
+        final isOrigin = slot.id == e.id;
+        final isDestination = movedToDate != null &&
+            _isSameDay(slot.date, movedToDate) &&
+            slot.mealType == e.mealType &&
+            slot.recipeId == adjustment.movedRecipeId;
+        if (!recipeChanged && !skipChanged && !isOrigin && !isDestination) {
+          continue;
+        }
+        final update = <String, dynamic>{
+          'recipe_id': slot.recipeId,
+          'skipped': slot.skipped,
+        };
+        if (isOrigin) {
+          // El plato deja de estar en el origen: limpiamos su vínculo con el
+          // congelador/inventario para no dejar datos colgando.
+          update['from_freezer'] = false;
+          update['inventory_item_id'] = null;
+        } else if (isDestination) {
+          // El plato (y su posible origen congelado) viaja al destino.
+          update['from_freezer'] = movedFromFreezer;
+          update['inventory_item_id'] = movedInventoryItemId;
+        }
         await _client
             .from('meal_plan_entries')
-            .update({'recipe_id': slot.recipeId, 'skipped': slot.skipped})
+            .update(update)
             .eq('id', slot.id!);
       }
 
@@ -624,13 +655,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     };
     final meals = <PrepMeal>[
       for (final e in data.entries)
-        if (!e.skipped && e.recipeId != null)
+        // Solo entran comidas activas, con receta y con raciones > 0. Si una
+        // entrada no tiene raciones (nulo o <=0) significa que no come nadie en
+        // casa (o es un plan antiguo sin la columna): no la metemos en la
+        // logística para no cocinar algo que no se va a comer.
+        if (!e.skipped && e.recipeId != null && (e.servings ?? 0) > 0)
           PrepMeal(
             recipeId: e.recipeId!,
             date: e.date,
             mealType: e.mealType,
-            // Si no se guardó el nº de raciones, cocinamos al menos 1.
-            servings: e.servings ?? 1,
+            servings: e.servings!,
           ),
     ];
     return const MealPrepPlanner().buildPlan(
@@ -751,9 +785,36 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// Línea de raciones por comida: "4 raciones: tú, Pablo". Si no hay miembros
   /// del hogar cargados, no mostramos nada.
   Widget _servingsLine(_PlanData data, MealPlanEntry e) {
-    if (data.members.isEmpty) return const SizedBox.shrink();
-    final result = servingsForMeal(data.members, e.mealType, e.date.weekday);
-    if (result.count == 0) return const SizedBox.shrink();
+    // Fuente de verdad: el nº de raciones PERSISTIDO en la entrada (e.servings),
+    // que es el mismo que usa la logística de meal prep. Así la etiqueta visible
+    // y el número almacenado no divergen. Solo si la entrada no trae raciones
+    // (planes antiguos) caemos al cálculo en vivo según quién come en casa.
+    final computed = data.members.isEmpty
+        ? null
+        : servingsForMeal(data.members, e.mealType, e.date.weekday);
+    final persisted = e.servings;
+
+    final String text;
+    if (persisted != null) {
+      if (persisted <= 0) return const SizedBox.shrink();
+      // Mostramos el número persistido. Si el cálculo en vivo coincide, lo
+      // acompañamos de los nombres ("tú, Pablo") para que quede cozy.
+      if (computed != null &&
+          computed.count == persisted &&
+          computed.names.isNotEmpty) {
+        text = computed.label;
+      } else {
+        final unit = persisted == 1 ? 'ración' : 'raciones';
+        text = '$persisted $unit';
+      }
+    } else {
+      // Sin raciones guardadas: fallback al cálculo en vivo.
+      if (computed == null || computed.count == 0) {
+        return const SizedBox.shrink();
+      }
+      text = computed.label;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Row(
@@ -766,7 +827,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           const SizedBox(width: 4),
           Expanded(
             child: Text(
-              result.label,
+              text,
               style: TextStyle(fontSize: 11, color: Colors.grey[600]),
             ),
           ),

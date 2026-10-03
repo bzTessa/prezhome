@@ -90,6 +90,32 @@ void main() {
       expect(res.label, '3 raciones: tú, Pablo, Ana');
     });
 
+    test('con VARIOS no-isMe el orden de entrada se respeta de forma '
+        'determinista (no depende de la estabilidad de List.sort)', () {
+      // "tú" aparece en medio; el resto (Pablo, Ana, Luis) debe salir en el
+      // MISMO orden en que se recibió, con "tú" delante. Este caso fallaría si
+      // el comparador antiguo (que devolvía 0 para los no-isMe) reordenara.
+      final members = [
+        const HouseholdMember(name: 'Pablo'),
+        const HouseholdMember(name: 'Ana'),
+        const HouseholdMember(name: 'Tessa', isMe: true),
+        const HouseholdMember(name: 'Luis'),
+      ];
+      final res = servingsForMeal(members, 'lunch', 2);
+      expect(res.count, 4);
+      expect(res.names, ['tú', 'Pablo', 'Ana', 'Luis']);
+      expect(res.label, '4 raciones: tú, Pablo, Ana, Luis');
+    });
+
+    test('sin isMe, el orden de los no-isMe es exactamente el de entrada', () {
+      final members = [
+        const HouseholdMember(name: 'Ana'),
+        const HouseholdMember(name: 'Pablo'),
+      ];
+      final res = servingsForMeal(members, 'dinner', 5);
+      expect(res.names, ['Ana', 'Pablo']);
+    });
+
     test('una sola persona usa "ración" en singular', () {
       final members = [const HouseholdMember(name: 'Tessa', isMe: true)];
       final res = servingsForMeal(members, 'breakfast', 2);
