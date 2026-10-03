@@ -6,6 +6,7 @@ import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'services/household_servings.dart';
 import 'services/meal_planner.dart';
+import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
@@ -85,8 +86,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .select()
         .eq('home_id', homeId);
     final members = <HouseholdMember>[];
+    // El plan de cocción (meal prep) solo se activa si ALGÚN perfil del hogar
+    // cocina en modo 'mealprep'. En modo 'daily' no mostramos nada nuevo.
+    var isMealPrep = myProfile.isMealPrep;
     for (final m in (profilesRes as List)) {
       final p = NutritionProfile.fromMap(m);
+      if (p.isMealPrep) isMealPrep = true;
       final isMe = p.id == user.id;
       members.add(
         HouseholdMember(
@@ -135,6 +140,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       recipesById: {for (final r in recipes) r.id: r},
       entries: entries,
       members: members,
+      isMealPrep: isMealPrep,
     );
   }
 
@@ -460,6 +466,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       children: [
         _energyCard(),
         const SizedBox(height: 12),
+        if (data.isMealPrep) ...[
+          _mealPrepCard(data),
+          const SizedBox(height: 12),
+        ],
         ...days.map((date) {
           final key = date.toIso8601String().split('T').first;
           final dayEntries = byDate[key] ?? [];
@@ -598,6 +608,102 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
+  /// Construye el plan de cocción (meal prep) a partir de las entradas y las
+  /// recetas ya cargadas en [_load]. No hace consultas: reutiliza todo.
+  MealPrepPlan _buildMealPrepPlan(_PlanData data) {
+    final prepRecipes = <String, PrepRecipe>{
+      for (final r in data.recipes)
+        r.id: PrepRecipe(
+          id: r.id,
+          title: r.title,
+          freezable: r.freezable,
+          freezerDays: r.freezerDays,
+          prepTimeMinutes: r.prepTimeMinutes,
+          cookTimeMinutes: r.cookTimeMinutes,
+        ),
+    };
+    final meals = <PrepMeal>[
+      for (final e in data.entries)
+        if (!e.skipped && e.recipeId != null)
+          PrepMeal(
+            recipeId: e.recipeId!,
+            date: e.date,
+            mealType: e.mealType,
+            // Si no se guardó el nº de raciones, cocinamos al menos 1.
+            servings: e.servings ?? 1,
+          ),
+    ];
+    return const MealPrepPlanner().buildPlan(
+      meals: meals,
+      recipesById: prepRecipes,
+      weekStart: _weekStart,
+      energyLevel: _energyLevel,
+    );
+  }
+
+  /// Tarjeta "Plan de cocción" con el resumen cozy de Miau. Solo se muestra en
+  /// modo 'mealprep' (ver [_buildPlan]).
+  Widget _mealPrepCard(_PlanData data) {
+    final plan = _buildMealPrepPlan(data);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const MiauCharacter(mood: MiauMood.cooking, size: 44),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Plan de cocción',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (plan.isEmpty)
+            Text(
+              'Cuando tengas plan de la semana te digo qué cocinar en lote, '
+              'qué guardar en la nevera y qué congelar.',
+              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+            )
+          else
+            ...plan.cookingDays.map(
+              (day) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2, right: 8),
+                      child: Icon(
+                        Icons.outdoor_grill,
+                        size: 16,
+                        color: Color(0xFFB58A3C),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        resumenDiaCoccion(day),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.35,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _energyCard() {
     const labels = ['Cocinar poco', 'Normal', 'Cocinar mucho'];
     const subtitle = 'Con "cocinar poco" el plan tira más del congelador.';
@@ -683,6 +789,10 @@ class _PlanData {
   final Map<String, Recipe> recipesById;
   final List<MealPlanEntry> entries;
   final List<HouseholdMember> members;
+
+  /// true si algún perfil del hogar cocina en modo 'mealprep' (en lote). Solo
+  /// entonces mostramos la sección "Plan de cocción".
+  final bool isMealPrep;
   _PlanData({
     required this.homeId,
     this.activeMeals = const ['lunch', 'dinner'],
@@ -690,5 +800,6 @@ class _PlanData {
     this.recipesById = const {},
     this.entries = const [],
     this.members = const [],
+    this.isMealPrep = false,
   });
 }
