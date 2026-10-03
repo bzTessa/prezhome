@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
 import 'models/shopping_list_item.dart';
-import 'services/food_photo_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
@@ -26,7 +25,6 @@ class ShoppingListScreen extends StatefulWidget {
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final SupabaseClient _client = Supabase.instance.client;
-  late final FoodPhotoService _photoService = FoodPhotoService(_client);
   late Future<List<ShoppingListItem>> _itemsFuture;
   bool _generating = false;
 
@@ -195,20 +193,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
     try {
       final homeId = await _homeId();
-      // Resolvemos la foto real por nombre (best-effort: nunca lanza y cachea
-      // por hogar). Si no hay foto o clave, image_url queda null y la UI
-      // muestra la ilustración cozy.
-      final imageUrl = await _photoService.resolvePhotoUrl(
-        homeId: homeId,
-        name: name,
-      );
+      // En la lista de la compra mostramos la ilustración cozy por categoría
+      // (no foto real), así que no gastamos cuota buscando fotos.
       final item = ShoppingListItem(
         homeId: homeId,
         name: name,
         quantity: qty,
         unit: unit.isEmpty ? null : unit,
         source: 'manual',
-        imageUrl: imageUrl,
       );
       await _client.from('shopping_list_items').insert(item.toInsertMap());
       _reload();
@@ -381,33 +373,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         }
       }
 
-      // Fotos reales best-effort para los items generados. Resolvemos UNA sola
-      // vez por nombre normalizado (clave compartida con la caché por hogar de
-      // FoodPhotoService), de modo que una lista con N items no dispara N
-      // búsquedas sino tantas como nombres distintos; además la caché por hogar
-      // evita repetir búsquedas entre generaciones. Si falla, image_url queda
-      // null y se ve la ilustración cozy (nunca bloquea ni rompe la generación).
-      final fotosPorClave = <String, String?>{};
-      for (final item in faltan) {
-        final key = FoodPhotoService.cacheKey(item.name);
-        if (fotosPorClave.containsKey(key)) continue;
-        fotosPorClave[key] = await _photoService.resolvePhotoUrl(
-          homeId: homeId,
-          name: item.name,
-        );
-      }
-      final faltanConFoto = faltan
-          .map(
-            (i) => ShoppingListItem(
-              homeId: i.homeId,
-              name: i.name,
-              quantity: i.quantity,
-              unit: i.unit,
-              source: i.source,
-              imageUrl: fotosPorClave[FoodPhotoService.cacheKey(i.name)],
-            ),
-          )
-          .toList();
+      // La lista de la compra usa ilustración cozy por categoría (no fotos
+      // reales), así que no resolvemos fotos aquí: ahorra cuota de Unsplash y
+      // evita las fotos genéricas/aleatorias de básicos abstractos.
 
       // Regeneracion sin duplicar: borramos solo los items 'auto' pendientes.
       // No tocamos los manuales ni los ya marcados como comprados.
@@ -418,10 +386,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           .eq('source', 'auto')
           .eq('checked', false);
 
-      if (faltanConFoto.isNotEmpty) {
+      if (faltan.isNotEmpty) {
         await _client
             .from('shopping_list_items')
-            .insert(faltanConFoto.map((i) => i.toInsertMap()).toList());
+            .insert(faltan.map((i) => i.toInsertMap()).toList());
       }
 
       _reload();
@@ -618,6 +586,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               imageUrl: item.imageUrl,
               size: 38,
               radius: 10,
+              // En la compra mostramos siempre la ilustración cozy por
+              // categoría: las fotos reales de básicos abstractos salían
+              // genéricas/aleatorias y restaban claridad.
+              forceIllustration: true,
             ),
             const SizedBox(width: 10),
             Expanded(

@@ -41,6 +41,12 @@ class FoodImage extends StatelessWidget {
   /// Radio de las esquinas redondeadas.
   final double radius;
 
+  /// Si es true, ignora [imageUrl] y pinta SIEMPRE la ilustración cozy de la
+  /// categoría. Útil en contextos como la lista de la compra, donde las fotos
+  /// reales de básicos abstractos ("sal", "aceite") salen genéricas/aleatorias
+  /// y la ilustración por categoría queda más limpia y coherente.
+  final bool forceIllustration;
+
   const FoodImage({
     super.key,
     required this.name,
@@ -50,9 +56,11 @@ class FoodImage extends StatelessWidget {
     this.width,
     this.height,
     this.radius = 14,
+    this.forceIllustration = false,
   });
 
-  bool get _hasPhoto => imageUrl != null && imageUrl!.trim().isNotEmpty;
+  bool get _hasPhoto =>
+      !forceIllustration && imageUrl != null && imageUrl!.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {

@@ -232,6 +232,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final nevera = <InventoryItem>[];
     final congelador = <InventoryItem>[];
     final despensa = <InventoryItem>[];
+    final especias = <InventoryItem>[];
     final hogar = <InventoryItem>[];
 
     for (final item in items) {
@@ -248,6 +249,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
           break;
         case 'Despensa':
           despensa.add(item);
+          break;
+        case 'Especias':
+          especias.add(item);
           break;
         default:
           // Cualquier otra ubicación de comida se trata como despensa.
@@ -271,6 +275,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     sortByExpiry(nevera);
     sortByExpiry(congelador);
     sortByExpiry(despensa);
+    // Las especias no se ordenan por caducidad (no suele aplicar); las dejamos
+    // en su orden natural de llegada.
 
     final sections = <_InventorySection>[
       _InventorySection(
@@ -290,6 +296,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
         icon: Icons.inventory_2,
         isFood: true,
         items: despensa,
+      ),
+      // Especias y condimentos: básicos que no caducan rápido ni van a la
+      // compra. Sin semáforo de caducidad (isFood: false) para no mostrar
+      // chips de "sin fecha" en algo que no lo necesita.
+      _InventorySection(
+        title: 'Especias y condimentos',
+        icon: Icons.grass,
+        isFood: false,
+        items: especias,
       ),
       _InventorySection(
         title: 'Hogar y limpieza',
@@ -446,7 +461,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _itemCard(InventoryItem item) {
-    final isFood = item.itemType == 'comida';
+    // Las especias son 'comida' pero no mostramos chip de caducidad (no suele
+    // aplicar y ensucia la tarjeta con "Sin fecha").
+    final isFood = item.itemType == 'comida' && item.category != 'Especias';
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: AppTheme.cardDecoration(radius: 16),
@@ -458,6 +475,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
           imageUrl: item.imageUrl,
           size: 56,
           radius: 14,
+          // Especias: ilustración cozy (🧂) en vez de foto real genérica.
+          forceIllustration: item.category == 'Especias',
         ),
         title: Row(
           children: [
