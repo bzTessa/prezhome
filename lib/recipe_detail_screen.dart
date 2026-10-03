@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -22,8 +23,10 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final SupabaseClient _client = Supabase.instance.client;
+  final ImagePicker _picker = ImagePicker();
   late Recipe _recipe;
   late Future<List<Ingredient>> _ingredientsFuture;
+  bool _changingPhoto = false; // true mientras se regenera/sube una foto
   List<NutritionProfile> _profiles =
       []; // miembros del hogar con perfil visible
   NutritionProfile? _myProfile; // perfil del usuario logueado (para el modo)
@@ -129,6 +132,166 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  /// Menú de foto: regenerar automática (Unsplash) o elegir de la galería.
+  Future<void> _openPhotoMenu() async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Text(
+                'Foto de la receta',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.auto_awesome,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Buscar otra foto automática'),
+              subtitle: const Text('Busca una imagen nueva por el nombre'),
+              onTap: () => Navigator.of(ctx).pop('regenerate'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Elegir de la galería'),
+              onTap: () => Navigator.of(ctx).pop('gallery'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'regenerate') {
+      await _regeneratePhoto();
+    } else if (action == 'gallery') {
+      await _pickPhotoFromGallery();
+    }
+  }
+
+  /// Vuelve a buscar una foto automática por el nombre de la receta y la
+  /// guarda como foto externa (image_url). Degrada con elegancia.
+  Future<void> _regeneratePhoto() async {
+    setState(() => _changingPhoto = true);
+    try {
+      final res = await _client.functions.invoke(
+        'recipe-photo',
+        body: {'query': _recipe.title},
+      );
+      String? url;
+      final data = res.data;
+      if (data is Map) {
+        final u = data['url']?.toString();
+        if (u != null && u.isNotEmpty) url = u;
+      }
+      if (url == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No encontré una foto mejor ahora mismo. Prueba de nuevo o '
+                'elige una de la galería.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      // Guardamos como foto externa. Al poner una externa nueva, quitamos la
+      // manual (image_path) para que esta sea la que se vea.
+      await _client
+          .from('recipes')
+          .update({'image_url': url, 'image_path': null})
+          .eq('id', _recipe.id);
+      await _refreshRecipe();
+      _changed = true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo cambiar la foto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _changingPhoto = false);
+    }
+  }
+
+  /// Elige una foto de la galería, la sube al bucket y la fija como foto manual
+  /// (image_path), que tiene prioridad sobre la externa.
+  Future<void> _pickPhotoFromGallery() async {
+    try {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        imageQuality: 82,
+      );
+      if (file == null) return;
+      setState(() => _changingPhoto = true);
+      final bytes = await file.readAsBytes();
+      final ext = file.name.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+      final path =
+          '${_recipe.homeId}/${DateTime.now().millisecondsSinceEpoch}.$ext';
+      await _client.storage
+          .from('recipe-images')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
+              upsert: false,
+            ),
+          );
+      await _client
+          .from('recipes')
+          .update({'image_path': path})
+          .eq('id', _recipe.id);
+      await _refreshRecipe();
+      _changed = true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo subir la foto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _changingPhoto = false);
+    }
+  }
+
+  /// Relee la receta de la BD y refresca la UI (tras cambiar la foto).
+  Future<void> _refreshRecipe() async {
+    final r = await _client
+        .from('recipes')
+        .select()
+        .eq('id', _recipe.id)
+        .maybeSingle();
+    if (r != null && mounted) {
+      setState(() => _recipe = Recipe.fromMap(r));
     }
   }
 
@@ -345,7 +508,60 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            RecipeImage(recipe: r, height: 200, radius: 24),
+            // Foto con botón para cambiarla (regenerar automática o galería).
+            Stack(
+              children: [
+                RecipeImage(recipe: r, height: 200, radius: 24),
+                if (_changingPhoto)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        color: Colors.black26,
+                        alignment: Alignment.center,
+                        child: const CircularProgressIndicator(),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: Material(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    shape: const StadiumBorder(),
+                    child: InkWell(
+                      customBorder: const StadiumBorder(),
+                      onTap: _changingPhoto ? null : _openPhotoMenu,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.photo_camera_outlined,
+                              size: 16,
+                              color: AppColors.woodDark,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Cambiar foto',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             // Chips de tipo/aparato/tiempo/congelable
             Wrap(

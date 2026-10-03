@@ -278,6 +278,110 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     }
   }
 
+  /// Importa una receta desde un enlace de TikTok/Instagram (o web). Pide la
+  /// URL, llama a la edge function import-recipe-link (que lee el texto público
+  /// del post y lo estructura con IA) y rellena el formulario. Además guarda el
+  /// enlace en el campo de vídeo para tenerlo a mano.
+  Future<void> _importFromLink() async {
+    final url = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFDF8E1),
+          title: const Text('Importar de TikTok/Instagram'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Pega el enlace del vídeo o post. Leeré la receta de su '
+                'descripción.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.url,
+                decoration: InputDecoration(
+                  hintText: 'https://...',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE2C792),
+                foregroundColor: const Color(0xFF1E1E1E),
+                elevation: 0,
+              ),
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
+              child: const Text('Importar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (url == null || url.isEmpty) return;
+    if (!mounted) return;
+    if (!_looksLikeUrl(url)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Eso no parece un enlace válido.')),
+      );
+      return;
+    }
+
+    setState(() => _aiLoading = true);
+    try {
+      final res = await _client.functions.invoke(
+        'import-recipe-link',
+        body: {'url': url},
+      );
+      final data = res.data;
+      if (data is Map && data['recipe'] is Map) {
+        _applyAIRecipe(Map<String, dynamic>.from(data['recipe'] as Map));
+        // Guardamos el enlace en el campo de vídeo para conservar la fuente.
+        _videoController.text = url;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Receta importada. Revísala antes de guardar.'),
+            ),
+          );
+        }
+      } else {
+        final msg = (data is Map && data['error'] != null)
+            ? data['error'].toString()
+            : 'No pude importar la receta de ese enlace';
+        throw msg;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo importar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
+    }
+  }
+
   void _applyAIRecipe(Map<String, dynamic> r) {
     String s(dynamic v) => v == null ? '' : v.toString();
 
@@ -646,6 +750,28 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       label: Text(
                         _aiLoading ? 'Generando…' : 'Rellenar con IA',
                         style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Importar desde un enlace de TikTok/Instagram (lee la
+                    // receta de la descripción del post con IA).
+                    OutlinedButton.icon(
+                      onPressed: _aiLoading ? null : _importFromLink,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1E1E1E),
+                        minimumSize: const Size.fromHeight(48),
+                        side: const BorderSide(
+                          color: Color(0xFFE2C792),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: const Icon(Icons.link),
+                      label: const Text(
+                        'Importar de TikTok/Instagram',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(height: 20),
