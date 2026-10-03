@@ -1,0 +1,7 @@
+{
+  "task_id": "task-nevera-caducidades",
+  "task_description": "Implement the nevera/caducidades mechanism for PrezHome: control food expiration across Nevera/Congelador/Despensa with clear visual states (Fresco / Caduca pronto / Caducado), a redesigned location-grouped inventory screen, and expiration awareness surfaced on the Inicio dashboard. Cozy Spanish UI, mascot Miau preserved. No migration expected (all DB columns already exist). Work on a new branch feat/nevera-caducidades off main; do not push or open a PR.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add the pure expiration-status domain logic that is the heart of the feature, expose it from the InventoryItem model, add cozy status colors to the central theme, and make it possible to set a caducidad date when adding/editing an item. This feature introduces NO migration: all required DB columns already exist (expiration_date, best_before, frozen_on). It establishes a single, coherent, user-simple semantics documented in code: Nevera/Despensa items use expiration_date as their caducidad; Congelador items use best_before, which is computed as frozen_on + a default freezer window (default 90 days) when the user does not provide one. The pure logic and thresholds are unit-tested.",
+  "status": "pending",
+  "steps": [
+    "In lib/models/inventory_item.dart add a documented expiry-status API. Define an enum ExpiryStatus { fresco, pronto, caducado, sinFecha }. Add a getter 'DateTime? get effectiveExpiry' with this documented semantics: if category == 'Congelador', return best_before if set, else (frozenOn != null ? frozenOn + default freezer window : null); otherwise (Nevera/Despensa and any other) return expirationDate ?? bestBefore. Define a const default freezer window of 90 days as a named static const (e.g. defaultFreezerDays) with a comment explaining it is a safe generic default so the non-technical user does not have to think about freezer durations.",
+    "Add 'int? get daysUntilExpiry' computed from effectiveExpiry using the SAME date-normalization already used by daysUntilBestBefore (difference against DateTime(today.year, today.month, today.day) in whole days). Keep the existing daysUntilBestBefore getter intact for backward compatibility.",
+    "Add 'ExpiryStatus get expiryStatus' with documented thresholds: no effectiveExpiry => sinFecha; daysUntilExpiry < 0 => caducado; daysUntilExpiry <= 3 => pronto (caduca pronto); otherwise => fresco. Expose a human label map or getter 'String get expiryLabel' returning Spanish text: Fresco / Caduca pronto / Caducado / Sin fecha, and keep the day-aware phrasing available for the UI (the UI will format 'Caduca hoy', 'Caduca mañana', 'Caduca en N días', 'Caducado' from daysUntilExpiry).",
+    "In lib/theme/app_theme.dart add three cozy status color pairs to AppColors following the existing *Bg + accent convention (e.g. freshBg/fresh green, soonBg/soon amber, expiredBg/expired red). Choose soft, warm, cozy tones consistent with the existing sage/terracotta palette (do not use raw Colors.red). Add a short comment grouping them as 'Estados de caducidad'.",
+    "In lib/add_inventory_item_screen.dart add a 'Fecha de caducidad' date picker for food items that are NOT in the Congelador (Nevera/Despensa), wiring it into expirationDate on save. Keep the existing 'Congelado el' frozen_on picker for Congelador. Make the UI simple: a single optional date field labeled clearly in Spanish ('Caduca el (opcional)'), using the same InkWell+InputDecorator pattern already present for frozen_on, and a short helper line. Remember setState must use a block body (never arrow returning a Future). Ensure expirationDate is included in the InventoryItem passed to toMap() on save for non-frozen food items.",
+    "Add a pure-logic unit test file test/inventory_expiry_test.dart mirroring the style of test/food_category_icon_test.dart. Cover: caducado when expiration_date is in the past; pronto for 0/1/3 days ahead; fresco for far future (e.g. 10 days); sinFecha when no dates; Congelador uses best_before when set; Congelador falls back to frozen_on + defaultFreezerDays when best_before is null; Nevera/Despensa use expiration_date and fall back to best_before when expiration_date is null. Build InventoryItem instances directly (constructor) with relative dates computed from DateTime.now() so the tests are not time-brittle."
+  ],
+  "acceptance_criteria": [
+    "InventoryItem exposes ExpiryStatus, effectiveExpiry, daysUntilExpiry, expiryStatus and a Spanish expiryLabel; existing daysUntilBestBefore getter still exists.",
+    "AppColors contains three documented cozy status color pairs for fresco/pronto/caducado (green/amber/red tones) in app_theme.dart.",
+    "Adding a Nevera or Despensa food item lets the user set a 'Caduca el' date that persists to expiration_date; Congelador still offers the 'Congelado el' date.",
+    "test/inventory_expiry_test.dart exists and all new tests pass, exercising each ExpiryStatus branch and the Congelador best_before/frozen_on fallback and the Nevera/Despensa expiration_date/best_before fallback.",
+    "No new Supabase migration is created (confirm all needed columns already exist).",
+    "flutter analyze is 0 issues and dart format reports no changes."
+  ],
+  "verification": [
+    "flutter analyze",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter test test/inventory_expiry_test.dart",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

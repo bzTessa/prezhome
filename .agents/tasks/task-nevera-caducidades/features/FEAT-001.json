@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Prepare the environment and confirm a green baseline before any changes. Flutter/Dart are NOT preinstalled in the sandbox; pub.dev and storage.googleapis.com are reachable so the SDK and packages can be installed. This feature installs the toolchain and runs the exact CI checks on clean main so later features start from a known-good state.",
+  "status": "completed",
+  "steps": [
+    "Ensure the Flutter stable SDK is available on PATH. If 'flutter' is not found, install the stable channel (Dart SDK constraint is ^3.11.1 in pubspec.yaml, so the stable channel ~3.35+ is required). Options: git clone https://github.com/flutter/flutter.git -b stable into a tools dir and export its bin to PATH, or download the stable tarball from storage.googleapis.com.",
+    "From /projects/sandbox/prezhome run 'flutter pub get' to fetch dependencies.",
+    "Run the three CI checks against the current clean main to confirm the baseline is green: 'dart format --output=none --set-exit-if-changed .' (expect no changes), 'flutter analyze' (expect 0 issues), 'flutter test' (expect all tests pass).",
+    "Create a new branch off main named feat/nevera-caducidades (git checkout -b feat/nevera-caducidades). Do NOT touch the recetas branch. Do NOT push.",
+    "Record in findings: the Flutter and Dart versions used, and the baseline results of format/analyze/test."
+  ],
+  "acceptance_criteria": [
+    "'flutter --version' succeeds and reports a stable channel with Dart ^3.11.1 compatible version.",
+    "'flutter pub get' completes without error.",
+    "'dart format --output=none --set-exit-if-changed .' reports no formatting changes on clean main.",
+    "'flutter analyze' reports 0 issues on clean main.",
+    "'flutter test' passes all existing tests on clean main.",
+    "Current git branch is feat/nevera-caducidades, created from main, with no commits yet beyond main."
+  ],
+  "verification": [
+    "flutter --version",
+    "flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test",
+    "git rev-parse --abbrev-ref HEAD  (should print feat/nevera-caducidades)"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter/Dart were NOT preinstalled. Installed Flutter stable via 'git clone --depth 1 -b stable https://github.com/flutter/flutter.git' into /opt/tools/flutter and put /opt/tools/flutter/bin on PATH. Versions: Flutter 3.47.6 (channel stable, revision 5fc346839b), Dart 3.13.5, DevTools 2.60.0 (Dart 3.13.5 satisfies the pubspec constraint ^3.11.1). Baseline CI checks on clean main all GREEN: (1) 'flutter pub get' OK (Changed 21 dependencies). (2) 'dart format --output=none --set-exit-if-changed .' -> 'Formatted 51 files (0 changed)', exit 0, no formatting changes. (3) 'flutter analyze' -> 'No issues found!', exit 0. (4) 'flutter test' -> 'All tests passed!' (62 tests across widget_test.dart, task_schedule_test.dart, food_category_icon_test.dart, recipe_image_url_test.dart), exit 0. NOTE: running 'flutter pub get' with this newer stable auto-upgraded analysis_options.yaml (added an analyzer 'exclude:' list) and regenerated plugin registrants (linux/macos/windows) plus pubspec.lock. These are environment-generated and were reverted with 'git checkout --' so the branch starts from a clean, unmodified main; CI installs its own Flutter and regenerates as needed. Note the tool warns about running flutter as root (harmless here). Branch 'feat/nevera-caducidades' created off main with no commits beyond main. flutter is on PATH only within a shell that exports /opt/tools/flutter/bin; subsequent features must prepend 'export PATH=\"/opt/tools/flutter/bin:$PATH\"' before flutter/dart commands."
+}

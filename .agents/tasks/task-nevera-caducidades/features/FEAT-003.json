@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Redesign lib/inventory_screen.dart into the visual nevera/caducidades mechanism: group items by location (Nevera / Congelador / Despensa) with a per-section header showing an icon and counts, order items within each section by soonest expiry first, and show a per-item status chip Fresco / Caduca pronto / Caducado with cozy color + icon using the status colors added in FEAT-002. Keep ALL existing functionality: add, delete, comida/hogar type filter, is_staple toggle and 'Siempre en casa' badge, the CategoryIcons.badge emoji leading, the empty-state Miau, and the 'fab-inventory' FloatingActionButton heroTag. Replace hardcoded colors with AppColors / AppTheme.cardDecoration.",
+  "status": "pending",
+  "steps": [
+    "Depends on FEAT-002 (uses InventoryItem.expiryStatus / daysUntilExpiry / effectiveExpiry and the new AppColors status pairs). In lib/inventory_screen.dart, keep the existing data flow (_fetchItems, _reload, _deleteItem, _toggleStaple, _openAddItem, _typeFilter and the type filter SegmentedButton, the FutureBuilder, the empty-state with MiauCharacter).",
+    "After applying the comida/hogar filter, group the resulting list by location. For food items use category ('Nevera','Congelador','Despensa'); hogar items (Limpieza/Hogar) should still appear when the filter includes them, grouped under a sensible non-food section header (e.g. 'Hogar y limpieza') since they have no expiry. Define a fixed section order: Nevera, Congelador, Despensa, then Hogar/limpieza. Within each food section, sort items by daysUntilExpiry ascending with items that have no expiry (sinFecha) placed last; keep a stable order for the hogar section.",
+    "Build the list as sections: render a section header for each non-empty location showing an icon (e.g. Icons.kitchen for Nevera, Icons.ac_unit for Congelador, Icons.shelves/Icons.inventory_2 for Despensa) and a count line like 'Nevera · 4' and, for food sections, a small summary of how many caducan pronto / caducados if any. Use AppColors and AppTheme.cardDecoration; no hardcoded hex colors.",
+    "For each food item card, show a status chip (pill) using the FEAT-002 status colors and an icon: Fresco (green, e.g. Icons.check_circle), Caduca pronto (amber, e.g. Icons.schedule), Caducado (red, e.g. Icons.warning_amber_rounded). The chip text should be day-aware and Spanish: 'Caducado', 'Caduca hoy', 'Caduca mañana', 'Caduca en N días', or a plain date for far-off fresco items. Items with no expiry show a neutral 'Sin fecha' chip or no chip. Keep the quantity/category/kind/servings subtitle line.",
+    "Preserve the trailing actions: the push_pin is_staple toggle (only for comida) and the delete button. Preserve the 'Siempre en casa' and 'hogar' badges in the title row. Keep the FloatingActionButton heroTag 'fab-inventory'. Replace the screen background and all hardcoded Color(0xFF...) usages with AppColors equivalents (cream, wood, woodDark, ink) and AppTheme.cardDecoration() for card containers.",
+    "Keep behavior identical when embedded (widget.embedded) vs standalone (AppBar shown). Ensure setState uses block bodies.",
+    "If any reusable small widget helps (e.g. an ExpiryChip), it may live in lib/widgets/ but is optional; prefer private helpers in the screen to keep scope tight."
+  ],
+  "acceptance_criteria": [
+    "Inventory screen groups items under Nevera / Congelador / Despensa section headers (and a Hogar/limpieza section for non-food when shown), in that fixed order, each header showing a count.",
+    "Within food sections, items are ordered by soonest expiry first, with no-expiry items last.",
+    "Each food item shows a Fresco / Caduca pronto / Caducado status chip with the cozy green/amber/red colors from AppColors and an icon, with Spanish day-aware text.",
+    "Add, delete, comida/hogar filter, is_staple toggle, 'Siempre en casa' and hogar badges, CategoryIcons.badge leading, and empty-state Miau all still work.",
+    "FloatingActionButton heroTag is still 'fab-inventory'. No raw hardcoded hex colors remain in inventory_screen.dart (uses AppColors / AppTheme).",
+    "flutter analyze 0 issues, dart format clean, flutter test green."
+  ],
+  "verification": [
+    "flutter analyze",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
