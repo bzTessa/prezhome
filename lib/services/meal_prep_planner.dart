@@ -189,8 +189,16 @@ class MealPrepPlanner {
     mealDays.sort();
 
     // Repartimos los días con comida en como mucho [maxCookingDays] bloques
-    // consecutivos y cada bloque se cuece el primer día del bloque.
-    final cookDates = _chooseCookDates(mealDays, maxCookingDays);
+    // consecutivos y cada bloque se cuece el primer día del bloque. El primer
+    // bloque arranca en [weekStart] (inicio de semana), no en el primer día con
+    // comida: así, con energía baja se cocina PRONTO y lo lejano (y congelable)
+    // tira del congelador.
+    final weekStartDay = DateTime(
+      weekStart.year,
+      weekStart.month,
+      weekStart.day,
+    );
+    final cookDates = _chooseCookDates(mealDays, maxCookingDays, weekStartDay);
 
     // Para cada día de cocción, asignamos las comidas del bloque que arranca en
     // ese día de cocción y acaba antes del siguiente día de cocción.
@@ -228,23 +236,41 @@ class MealPrepPlanner {
 
   /// Elige las fechas de cocción repartiendo [mealDays] (días con comida en
   /// casa) en como mucho [maxDays] bloques consecutivos. El día de cocción de
-  /// cada bloque es el primer día del bloque.
-  List<DateTime> _chooseCookDates(List<DateTime> mealDays, int maxDays) {
+  /// cada bloque es el PRIMER día del bloque. El primer bloque arranca en
+  /// [weekStart] (inicio de semana) y no en el primer día con comida, para que
+  /// con energía baja se cocine pronto. Nunca se cuece después de la comida
+  /// (el día de cocción no es posterior al primer consumo del bloque).
+  List<DateTime> _chooseCookDates(
+    List<DateTime> mealDays,
+    int maxDays,
+    DateTime weekStart,
+  ) {
     if (mealDays.isEmpty) return const [];
     final blocks = maxDays < 1 ? 1 : maxDays;
+
+    // Día de cocción de cada bloque: el primer día con comida del bloque.
+    final blockStarts = <DateTime>[];
     if (blocks >= mealDays.length) {
       // Caben todos: cada día con comida es su propio día de cocción (fresco).
-      return List<DateTime>.from(mealDays);
+      blockStarts.addAll(mealDays);
+    } else {
+      // Repartimos los días en [blocks] trozos lo más equilibrados posible y
+      // cogemos el primer día de cada trozo como día de cocción.
+      final n = mealDays.length;
+      for (var b = 0; b < blocks; b++) {
+        final startIdx = (b * n) ~/ blocks;
+        blockStarts.add(mealDays[startIdx]);
+      }
     }
-    // Repartimos los días en [blocks] trozos lo más equilibrados posible y
-    // cogemos el primer día de cada trozo como día de cocción.
-    final cookDates = <DateTime>[];
-    final n = mealDays.length;
-    for (var b = 0; b < blocks; b++) {
-      final startIdx = (b * n) ~/ blocks;
-      cookDates.add(mealDays[startIdx]);
+
+    // El primer bloque se cuece al INICIO de la semana (o antes del primer
+    // consumo), no el primer día que casualmente tiene comida. Solo adelantamos
+    // (nunca retrasamos) y sin pasar del primer día con comida.
+    if (blockStarts.isNotEmpty && weekStart.isBefore(blockStarts.first)) {
+      blockStarts[0] = weekStart;
     }
-    return cookDates;
+
+    return blockStarts;
   }
 
   /// Construye las tandas (una por receta) para un día de cocción, repartiendo
