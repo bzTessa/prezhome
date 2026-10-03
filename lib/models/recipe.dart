@@ -161,6 +161,35 @@ class Recipe {
     return (prepTimeMinutes ?? 0) + (cookTimeMinutes ?? 0);
   }
 
+  /// Copia de la receta cambiando solo el flag de favorita. Útil para
+  /// actualizar la UI tras un toggle rápido sin volver a leer de la BD.
+  Recipe copyWithFavorite(bool value) {
+    return Recipe(
+      id: id,
+      homeId: homeId,
+      title: title,
+      description: description,
+      instructions: instructions,
+      servings: servings,
+      prepTimeMinutes: prepTimeMinutes,
+      cookTimeMinutes: cookTimeMinutes,
+      calories: calories,
+      protein: protein,
+      carbs: carbs,
+      fat: fat,
+      appliance: appliance,
+      mealTypes: mealTypes,
+      isFavorite: value,
+      freezable: freezable,
+      gramsPerServing: gramsPerServing,
+      externalImageUrl: externalImageUrl,
+      imagePath: imagePath,
+      videoUrl: videoUrl,
+      components: components,
+      freezerDays: freezerDays,
+    );
+  }
+
   static const Map<String, String> applianceLabels = {
     'none': 'Ninguno',
     'oven': 'Horno',

@@ -91,6 +91,133 @@ class _RecipesScreenState extends State<RecipesScreen> {
     if (added == true) _reload();
   }
 
+  /// Alterna favorita de una receta directamente desde la rejilla, con un solo
+  /// toque en la estrella. Actualiza is_favorite y recarga la lista.
+  Future<void> _toggleFavorite(Recipe recipe) async {
+    final newValue = !recipe.isFavorite;
+    try {
+      await supabase
+          .from('recipes')
+          .update({'is_favorite': newValue})
+          .eq('id', recipe.id);
+      _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo actualizar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Menú rápido (pulsación larga) sobre una tarjeta: favorita o eliminar.
+  Future<void> _openQuickActions(Recipe recipe) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                recipe.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(
+                recipe.isFavorite
+                    ? Icons.star_border_rounded
+                    : Icons.star_rounded,
+                color: AppColors.favorite,
+              ),
+              title: Text(
+                recipe.isFavorite
+                    ? 'Quitar de favoritas'
+                    : 'Marcar como favorita',
+              ),
+              onTap: () => Navigator.of(ctx).pop('favorite'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: Colors.redAccent,
+              ),
+              title: const Text('Eliminar receta'),
+              onTap: () => Navigator.of(ctx).pop('delete'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (action == 'favorite') {
+      await _toggleFavorite(recipe);
+    } else if (action == 'delete') {
+      await _confirmDelete(recipe);
+    }
+  }
+
+  /// Confirma y borra una receta desde la rejilla. Limpia también sus comidas
+  /// del plan (la FK es SET NULL y quedarían como "Receta" fantasma).
+  Future<void> _confirmDelete(Recipe recipe) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.cream,
+        title: const Text('¿Eliminar receta?'),
+        content: Text('Se borrará "${recipe.title}" y sus ingredientes.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await supabase
+          .from('meal_plan_entries')
+          .delete()
+          .eq('recipe_id', recipe.id);
+      await supabase.from('recipes').delete().eq('id', recipe.id);
+      _reload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${recipe.title}" eliminada.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo eliminar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _setFilter(_RecipeFilter f) {
     setState(() {
       _filter = f;
@@ -196,7 +323,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 onSelected: _setFilter,
                 recipes: allRecipes,
               ),
-              // Contador de resultados: ayuda a orientarse al filtrar/buscar.
+              // Contador de resultados + pista de pulsación larga.
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 2, 20, 6),
                 child: Row(
@@ -212,6 +339,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
                         color: AppColors.ink.withValues(alpha: 0.6),
                       ),
                     ),
+                    const Spacer(),
+                    if (visible.isNotEmpty)
+                      Text(
+                        'Mantén pulsado para más opciones',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.ink.withValues(alpha: 0.4),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -238,6 +374,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
                           return _RecipeCard(
                             recipe: recipe,
                             caloriesPerMeal: perMeal,
+                            onToggleFavorite: () => _toggleFavorite(recipe),
+                            onLongPress: () => _openQuickActions(recipe),
                             onTap: () async {
                               final changed = await Navigator.of(context)
                                   .push<bool>(
@@ -427,8 +565,16 @@ class _RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final int? caloriesPerMeal;
   final VoidCallback? onTap;
+  final VoidCallback? onToggleFavorite;
+  final VoidCallback? onLongPress;
 
-  const _RecipeCard({required this.recipe, this.caloriesPerMeal, this.onTap});
+  const _RecipeCard({
+    required this.recipe,
+    this.caloriesPerMeal,
+    this.onTap,
+    this.onToggleFavorite,
+    this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -438,6 +584,7 @@ class _RecipeCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         clipBehavior: Clip.antiAlias,
@@ -449,23 +596,32 @@ class _RecipeCard extends StatelessWidget {
             Stack(
               children: [
                 RecipeImage(recipe: recipe, height: 120, radius: 20),
-                if (recipe.isFavorite)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.star_rounded,
-                        color: AppColors.favorite,
-                        size: 18,
+                // Estrella SIEMPRE visible y pulsable: llena si favorita,
+                // contorno si no. Toque directo para marcar/desmarcar.
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onToggleFavorite,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Icon(
+                          recipe.isFavorite
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: recipe.isFavorite
+                              ? AppColors.favorite
+                              : AppColors.woodDark,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
+                ),
               ],
             ),
             Expanded(

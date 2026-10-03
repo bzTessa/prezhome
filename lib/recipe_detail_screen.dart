@@ -107,6 +107,31 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
   }
 
+  /// Marca/desmarca la receta como favorita con un solo toque, sin abrir el
+  /// formulario de edición. Actualiza is_favorite en la BD y refresca la UI.
+  Future<void> _toggleFavorite() async {
+    final newValue = !_recipe.isFavorite;
+    try {
+      await _client
+          .from('recipes')
+          .update({'is_favorite': newValue})
+          .eq('id', _recipe.id);
+      if (!mounted) return;
+      setState(() {
+        _recipe = _recipe.copyWithFavorite(newValue);
+        _changed = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo actualizar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _delete() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -133,6 +158,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
     if (confirm != true) return;
     try {
+      // Antes de borrar la receta, quitamos sus comidas del plan. La FK de
+      // meal_plan_entries es ON DELETE SET NULL, así que sin esto quedarían
+      // entradas con recipe_id null que se verían como "Receta" fantasma en
+      // el plan y en el Inicio. Las borramos para dejar el plan limpio.
+      await _client
+          .from('meal_plan_entries')
+          .delete()
+          .eq('recipe_id', _recipe.id);
       await _client.from('recipes').delete().eq('id', _recipe.id);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -289,6 +322,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             onPressed: () => Navigator.of(context).pop(_changed),
           ),
           actions: [
+            IconButton(
+              icon: Icon(
+                r.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                color: r.isFavorite ? AppColors.favorite : null,
+              ),
+              tooltip: r.isFavorite ? 'Quitar de favoritas' : 'Marcar favorita',
+              onPressed: _toggleFavorite,
+            ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               tooltip: 'Editar',
