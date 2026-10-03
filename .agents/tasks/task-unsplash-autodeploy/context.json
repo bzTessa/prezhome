@@ -1,0 +1,27 @@
+{
+  "project_type": "Flutter mobile app (Dart) with Supabase backend (Postgres + Deno Edge Functions). Spanish-language UI for a non-technical user (Tessa).",
+  "language": "Dart (Flutter) for the app; TypeScript/Deno for Supabase edge functions; YAML for GitHub Actions; Markdown for docs.",
+  "build_system": "Flutter SDK (dart/flutter CLI). Deno runtime for edge functions (not installed in sandbox, no test runner in repo). GitHub Actions for CI/CD.",
+  "test_framework": "flutter test (test/ dir with *_test.dart). No Deno test runner for edge functions.",
+  "build_command": "flutter pub get",
+  "test_command": "flutter test",
+  "verification_instructions": "Install Flutter stable (not present in sandbox; network is open enough to fetch it from storage.googleapis.com / github). Then from repo root run: 1) flutter pub get, 2) dart format --output=none --set-exit-if-changed . (must report no changes), 3) flutter analyze (must be 0 issues), 4) flutter test (all green). For the edge function (Deno/TS) there is NO test runner: verify by reasoning through cases (no key, Unsplash success, Pexels fallback, network failure, no results, download-trigger failure) and that it still degrades to {url:null} status 200. Validate workflow YAML syntax (e.g. python3 -c 'import yaml,sys; yaml.safe_load(open(f))' on each workflow file, or a yaml linter).",
+  "snapshot_or_generated_files": "None relevant. Do NOT add new migrations unless strictly necessary (migrations are immutable; next number would be 0032+). This task should need NO new migration.",
+  "setup_instructions": "Flutter is not pre-installed. Install Flutter stable via git clone of flutter repo or the flutter-action equivalent, add to PATH, run flutter pub get. Network reachability confirmed: github.com 200, storage.googleapis.com flutter releases 200.",
+  "environment_constraints": "Network appears OPEN (github, pypi, flutter release storage, api.unsplash.com all reachable). Flutter/Dart/Deno NOT pre-installed on host - must install Flutter to verify Dart changes. Edge functions cannot be executed/tested locally (no Deno, no Supabase stack, no secrets). Workflow changes are published via PR by the orchestrator, never pushed to main directly.",
+  "contribution_requirements": "Work ON existing branch feat/recetas-rediseno (PR #69, open, not merged). Do NOT create a new branch or PR. Verify with `git branch --show-current` == feat/recetas-rediseno before committing. Commit on top of that branch. Do NOT push, do NOT open a PR (orchestrator handles that). HARD SECURITY RULE: workflow files must NEVER dump the full environment (no `env`, `printenv`, no echoing secrets); reference only the specific secrets needed. Never log secret values.",
+  "key_patterns": "Edge functions follow Deno.serve + CORS headers + validate JWT via admin.auth.getUser(jwt) + fetch home_id from profiles + read secrets with Deno.env.get. recipe-photo degrades to {url:null} status 200 on any missing-key/provider failure and does NOT consume AI credit. Flutter client (lib/add_recipe_screen.dart _save ~line 475-525, lib/discover_recipes_screen.dart _saveIdea ~line 125-160) calls _client.functions.invoke('recipe-photo', body:{query:title}) and reads ONLY data['url'] (string). The Recipe model (lib/models/recipe.dart) stores external photo URL in externalImageUrl -> column image_url; getter imageUrl prioritizes manual photo (image_path -> bucket) over externalImageUrl. Flutter pitfalls: setState(()=>x=future) with arrow body breaks (use block body); heroTag must be unique on FABs; fromMap must tolerate nulls; empty strings treated as absent.",
+  "relevant_files": [
+    "supabase/functions/recipe-photo/index.ts (MODIFY: add Unsplash support with Pexels fallback + download trigger + attribution fields)",
+    "supabase/functions/generate-recipe/index.ts (PATTERN reference for JWT/home_id/secrets)",
+    ".github/workflows/deploy.yml (MODIFY: add functions deploy + widen paths trigger to supabase/functions/**)",
+    ".github/workflows/ci.yml (reference: do not break; validates migrations and runs flutter checks)",
+    "lib/add_recipe_screen.dart (consumer; reads data['url'] only - likely NO change needed)",
+    "lib/discover_recipes_screen.dart (consumer; reads data['url'] only - likely NO change needed)",
+    "lib/models/recipe.dart (externalImageUrl/image_url - likely NO change needed)",
+    "test/recipe_image_url_test.dart (existing tests covering image_url logic - must stay green)",
+    "docs/CI_CD_SECRETS.md (UPDATE: auto-deploy of functions, UNSPLASH_ACCESS_KEY secret in Supabase web panel)",
+    "docs/RECETAS_FOTOS.md (UPDATE: switch from Pexels to Unsplash, no terminal, auto-deploy)"
+  ],
+  "directory_structure": "lib/ = Flutter app screens + models/ + services/ + widgets/ + theme/. supabase/functions/<name>/index.ts = Deno edge functions. supabase/migrations/ = immutable SQL migrations. .github/workflows/ = ci.yml, deploy.yml, ai-development.yml. docs/ = Spanish user-facing docs. test/ = flutter tests."
+}
