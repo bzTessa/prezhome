@@ -9,20 +9,6 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
-analyzer:
-  # `flutter analyze` (sin flags) devuelve codigo de error ante CUALQUIER aviso,
-  # incluidos los de severidad "info". Aqui degradamos a "ignore" dos avisos
-  # informativos concretos para que el CI no falle por ellos, manteniendo que
-  # los errores y warnings de verdad SI tumben el analisis.
-  errors:
-    # Estilo (llaves en estructuras de control de una sola linea). Es solo
-    # informativo y no afecta al comportamiento.
-    curly_braces_in_flow_control_structures: ignore
-    # Uso de miembros marcados como deprecados en versiones de Flutter mas
-    # nuevas que la del proyecto (p.ej. groupValue/onChanged de Radio). Se
-    # ignora para no bloquear el CI mientras no migremos a la nueva API.
-    deprecated_member_use: ignore
-
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
