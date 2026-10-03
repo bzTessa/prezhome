@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
+import 'services/household_servings.dart';
 import 'services/meal_planner.dart';
 import 'services/plan_adjuster.dart';
 import 'theme/app_theme.dart';
@@ -77,6 +78,39 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .where((k) => (myProfile.mealSplit[k] ?? 0) > 0)
         .toList();
 
+    // Todos los perfiles del hogar, para calcular raciones por comida según
+    // quién come en casa cada día. El usuario actual se muestra como "tú".
+    final profilesRes = await _client
+        .from('profiles')
+        .select()
+        .eq('home_id', homeId);
+    final members = <HouseholdMember>[];
+    for (final m in (profilesRes as List)) {
+      final p = NutritionProfile.fromMap(m);
+      final isMe = p.id == user.id;
+      members.add(
+        HouseholdMember(
+          name: (p.fullName?.trim().isNotEmpty ?? false)
+              ? p.fullName!.trim()
+              : 'Alguien',
+          isMe: isMe,
+          mealsAtHome: p.mealsAtHome,
+        ),
+      );
+    }
+    // Garantizamos al menos al usuario actual (si profiles no lo devolviera).
+    if (!members.any((m) => m.isMe)) {
+      members.add(
+        HouseholdMember(
+          name: (myProfile.fullName?.trim().isNotEmpty ?? false)
+              ? myProfile.fullName!.trim()
+              : 'Alguien',
+          isMe: true,
+          mealsAtHome: myProfile.mealsAtHome,
+        ),
+      );
+    }
+
     // Recetas del hogar
     final recRes = await _client.from('recipes').select().eq('home_id', homeId);
     final recipes = (recRes as List).map((m) => Recipe.fromMap(m)).toList();
@@ -100,6 +134,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       recipes: recipes,
       recipesById: {for (final r in recipes) r.id: r},
       entries: entries,
+      members: members,
     );
   }
 
@@ -177,6 +212,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           if (pool != null && pool.isNotEmpty) {
             frozen = pool.removeAt(0);
           }
+          // Raciones = personas que comen en casa ese día/comida.
+          final servings = servingsCountForMeal(
+            data.members,
+            type,
+            date.weekday,
+          );
           rows.add(
             MealPlanEntry(
               homeId: data.homeId!,
@@ -185,6 +226,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               recipeId: recipeId,
               fromFreezer: frozen != null,
               inventoryItemId: frozen?.itemId,
+              servings: servings,
             ).toMap(),
           );
         });
@@ -506,6 +548,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                                         : AppColors.ink,
                                   ),
                                 ),
+                                _servingsLine(data, e),
                                 if (e.fromFreezer)
                                   Row(
                                     children: [
@@ -598,6 +641,33 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Línea de raciones por comida: "4 raciones: tú, Pablo". Si no hay miembros
+  /// del hogar cargados, no mostramos nada.
+  Widget _servingsLine(_PlanData data, MealPlanEntry e) {
+    if (data.members.isEmpty) return const SizedBox.shrink();
+    final result = servingsForMeal(data.members, e.mealType, e.date.weekday);
+    if (result.count == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.people_outline,
+            size: 12,
+            color: Color(0xFFB58A3C),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              result.label,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FrozenMeal {
@@ -612,11 +682,13 @@ class _PlanData {
   final List<Recipe> recipes;
   final Map<String, Recipe> recipesById;
   final List<MealPlanEntry> entries;
+  final List<HouseholdMember> members;
   _PlanData({
     required this.homeId,
     this.activeMeals = const ['lunch', 'dinner'],
     this.recipes = const [],
     this.recipesById = const {},
     this.entries = const [],
+    this.members = const [],
   });
 }

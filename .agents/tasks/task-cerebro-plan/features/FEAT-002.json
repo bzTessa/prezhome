@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "CANTIDADES POR PERSONA / PLAN DEL HOGAR. Calcular, para cada comida planificada, cuántas RACIONES cocinar según cuántos miembros del hogar comen en casa ese día/comida, usando eatsAtHome(type, weekday) de TODOS los perfiles del hogar (profiles filtrando por home_id). Semántica sencilla y flexible: por defecto todos comen en casa salvo que su meals_at_home diga lo contrario. Mostrar en la UI del plan las raciones por comida ('4 raciones: tú, Pablo...'). Persistir las raciones en meal_plan_entries con una columna nueva (migración 0033).",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Crear migración supabase/migrations/0033_meal_plan_servings.sql: idempotente, 'alter table public.meal_plan_entries add column if not exists servings integer;' (nullable; sin valor = usar fallback de la receta). NO tocar RLS ni policies. Comentario de cabecera en español explicando el propósito. Terminar en punto y coma. Paréntesis balanceados.",
     "Actualizar lib/models/meal_plan_entry.dart: añadir campo 'int? servings', leerlo en fromMap de forma tolerante ((map['servings'] as int?)) y escribirlo en toMap ('servings': servings). Mantener el constructor retrocompatible (parámetro opcional).",
@@ -23,5 +23,5 @@
     "CI de GitHub ejecutará analyze+test al abrir PR."
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementado sobre feat/cerebro-plan (encima de FEAT-001). Cambios: (1) supabase/migrations/0033_meal_plan_servings.sql con 'add column if not exists servings integer' nullable, idempotente, sin tocar RLS, cabecera en español, termina en ';' y 0 paréntesis (balanceado) -> pasa la validación ligera de ci.yml. (2) lib/models/meal_plan_entry.dart: nuevo campo 'int? servings' opcional en el constructor, leído tolerante con (map['servings'] as num?)?.toInt() en fromMap y escrito en toMap. (3) lib/services/household_servings.dart: lógica PURA (sin flutter/supabase), con HouseholdMember (name/isMe/mealsAtHome + eatsAtHome), servingsForMeal -> ServingsResult (count+names con 'tú' primero y .label '4 raciones: tú, Pablo') y servingsCountForMeal. Por defecto (mealsAtHome vacío) todos cuentan; singular 'ración' cuando count==1; 0 raciones si nadie. (4) test/household_servings_test.dart cubre defecto, restricción por días {'lunch':[6,7]}, suma multi-miembro y etiqueta de nombres. (5) lib/meal_plan_screen.dart: _load carga TODOS los perfiles del hogar (from('profiles').eq('home_id', homeId)) y los mapea a HouseholdMember (usuario actual isMe='tú', fallback 'Alguien'); _generatePlan calcula servings por entrada y lo persiste; nueva _servingsLine muestra en la UI 'N raciones: tú, Pablo' bajo cada comida. heroTag del FAB sigue siendo único ('fab-meal-plan'). NO verificado localmente: en el sandbox no hay flutter/dart; formato cuidado a mano (2 espacios, comas finales). La verificación real (dart format/analyze/test) la hace el CI de GitHub al abrir PR."
 }
