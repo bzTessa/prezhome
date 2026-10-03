@@ -147,11 +147,16 @@ jobs:
             # Postgres admite dos formas de borrar una columna:
             #   ALTER TABLE t DROP COLUMN c;   (forma larga)
             #   ALTER TABLE t DROP c;          (forma corta, sin COLUMN)
-            # Por eso hacemos la palabra COLUMN opcional, para no dejar escapar
-            # la forma corta (que es igual de destructiva). Toleramos espacios y
-            # el posible IF EXISTS entre DROP y COLUMN.
-            if grep -iqE 'drop[[:space:]]+(column[[:space:]]+)?(if[[:space:]]+exists[[:space:]]+)?' "$FICHERO" \
-               && grep -iqE 'alter[[:space:]]+table' "$FICHERO"; then
+            # Evitamos falsos positivos como DROP CONSTRAINT exigiendo que,
+            # cuando no aparece COLUMN, no sea un DROP de otro tipo de objeto.
+            if grep -iqE 'alter[[:space:]]+table' "$FICHERO" \
+               && (
+                 grep -iqE 'drop[[:space:]]+(if[[:space:]]+exists[[:space:]]+)?column[[:space:]]+' "$FICHERO" \
+                 || (
+                   grep -iqE 'drop[[:space:]]+(if[[:space:]]+exists[[:space:]]+)?[[:alpha:]_][[:alnum:]_]*' "$FICHERO" \
+                   && ! grep -iqE 'drop[[:space:]]+(if[[:space:]]+exists[[:space:]]+)?(constraint|primary|foreign|check|unique|trigger|rule|policy)([[:space:]]|;|$)' "$FICHERO"
+                 )
+               ); then
               echo "  AVISO: posible borrado de columna (DROP COLUMN o forma corta DROP col). Requiere aprobacion manual."
               REQUIERE_MANUAL=1
             fi
