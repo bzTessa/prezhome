@@ -4,7 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
+import 'services/household_servings.dart';
 import 'services/meal_planner.dart';
+import 'services/meal_prep_planner.dart';
+import 'services/plan_adjuster.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 
@@ -76,6 +79,43 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .where((k) => (myProfile.mealSplit[k] ?? 0) > 0)
         .toList();
 
+    // Todos los perfiles del hogar, para calcular raciones por comida según
+    // quién come en casa cada día. El usuario actual se muestra como "tú".
+    final profilesRes = await _client
+        .from('profiles')
+        .select()
+        .eq('home_id', homeId);
+    final members = <HouseholdMember>[];
+    // El plan de cocción (meal prep) solo se activa si ALGÚN perfil del hogar
+    // cocina en modo 'mealprep'. En modo 'daily' no mostramos nada nuevo.
+    var isMealPrep = myProfile.isMealPrep;
+    for (final m in (profilesRes as List)) {
+      final p = NutritionProfile.fromMap(m);
+      if (p.isMealPrep) isMealPrep = true;
+      final isMe = p.id == user.id;
+      members.add(
+        HouseholdMember(
+          name: (p.fullName?.trim().isNotEmpty ?? false)
+              ? p.fullName!.trim()
+              : 'Alguien',
+          isMe: isMe,
+          mealsAtHome: p.mealsAtHome,
+        ),
+      );
+    }
+    // Garantizamos al menos al usuario actual (si profiles no lo devolviera).
+    if (!members.any((m) => m.isMe)) {
+      members.add(
+        HouseholdMember(
+          name: (myProfile.fullName?.trim().isNotEmpty ?? false)
+              ? myProfile.fullName!.trim()
+              : 'Alguien',
+          isMe: true,
+          mealsAtHome: myProfile.mealsAtHome,
+        ),
+      );
+    }
+
     // Recetas del hogar
     final recRes = await _client.from('recipes').select().eq('home_id', homeId);
     final recipes = (recRes as List).map((m) => Recipe.fromMap(m)).toList();
@@ -99,6 +139,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       recipes: recipes,
       recipesById: {for (final r in recipes) r.id: r},
       entries: entries,
+      members: members,
+      isMealPrep: isMealPrep,
     );
   }
 
@@ -176,6 +218,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           if (pool != null && pool.isNotEmpty) {
             frozen = pool.removeAt(0);
           }
+          // Raciones = personas que comen en casa ese día/comida.
+          final servings = servingsCountForMeal(
+            data.members,
+            type,
+            date.weekday,
+          );
           rows.add(
             MealPlanEntry(
               homeId: data.homeId!,
@@ -184,6 +232,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               recipeId: recipeId,
               fromFreezer: frozen != null,
               inventoryItemId: frozen?.itemId,
+              servings: servings,
             ).toMap(),
           );
         });
@@ -204,13 +253,130 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   /// Marca una comida como "hoy como fuera" (skip) o la reactiva.
-  Future<void> _toggleSkip(MealPlanEntry e) async {
+  ///
+  /// Al marcar "fuera" no se pierde el plato: el cerebro ([PlanAdjuster]) lo
+  /// recoloca al primer hueco posterior libre del mismo tipo de comida y Miau
+  /// explica qué hizo. Al reactivar simplemente se vuelve a dejar activo.
+  Future<void> _toggleSkip(_PlanData data, MealPlanEntry e) async {
     if (e.id == null) return;
-    await _client
-        .from('meal_plan_entries')
-        .update({'skipped': !e.skipped})
-        .eq('id', e.id!);
-    _reload();
+    final willSkip = !e.skipped;
+    try {
+      if (!willSkip) {
+        // Reactivar: dejamos la comida de nuevo activa.
+        await _client
+            .from('meal_plan_entries')
+            .update({'skipped': false})
+            .eq('id', e.id!);
+        if (mounted) {
+          _showMiau('Vuelve a estar en casa, ¡qué bien!');
+        }
+        _reload();
+        return;
+      }
+
+      // Marcar "fuera" + reajuste con la lógica pura del cerebro.
+      final slots = _buildSlots(data);
+      final before = {for (final s in slots) s.id: s};
+      final adjustment = const PlanAdjuster().adjustForSkipped(slots, e.id!);
+
+      // Metadatos del congelador del plato que se mueve (el del origen). Al
+      // recolocarlo, deben VIAJAR al día destino y limpiarse en el origen, para
+      // que no queden `from_freezer`/`inventory_item_id` huérfanos apuntando a
+      // un plato que ya no está ahí. Las raciones NO viajan: cada día conserva
+      // las suyas (calculadas para quién come en casa ese día).
+      final movedToDate = adjustment.movedToDate;
+      final movedFromFreezer = e.fromFreezer;
+      final movedInventoryItemId = e.inventoryItemId;
+
+      // Persistir solo las entradas que cambiaron (recipe_id/skipped y, si
+      // procede, los metadatos del congelador).
+      for (final slot in adjustment.slots) {
+        final prev = before[slot.id];
+        if (prev == null) continue;
+        final recipeChanged = prev.recipeId != slot.recipeId;
+        final skipChanged = prev.skipped != slot.skipped;
+        final isOrigin = slot.id == e.id;
+        final isDestination =
+            movedToDate != null &&
+            _isSameDay(slot.date, movedToDate) &&
+            slot.mealType == e.mealType &&
+            slot.recipeId == adjustment.movedRecipeId;
+        if (!recipeChanged && !skipChanged && !isOrigin && !isDestination) {
+          continue;
+        }
+        final update = <String, dynamic>{
+          'recipe_id': slot.recipeId,
+          'skipped': slot.skipped,
+        };
+        if (isOrigin) {
+          // El plato deja de estar en el origen: limpiamos su vínculo con el
+          // congelador/inventario para no dejar datos colgando.
+          update['from_freezer'] = false;
+          update['inventory_item_id'] = null;
+        } else if (isDestination) {
+          // El plato (y su posible origen congelado) viaja al destino.
+          update['from_freezer'] = movedFromFreezer;
+          update['inventory_item_id'] = movedInventoryItemId;
+        }
+        await _client
+            .from('meal_plan_entries')
+            .update(update)
+            .eq('id', slot.id!);
+      }
+
+      if (mounted) {
+        final title = data.recipesById[adjustment.movedRecipeId]?.title;
+        _showMiau(miauMoveMessage(adjustment, recipeTitle: title));
+      }
+      _reload();
+    } catch (err) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $err'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// Convierte las entradas de la semana en huecos para el cerebro puro.
+  /// Solo incluye las entradas reales (con id); el reajuste busca entre ellas
+  /// el primer hueco posterior libre del mismo tipo de comida.
+  List<PlanSlot> _buildSlots(_PlanData data) {
+    return [
+      for (final entry in data.entries)
+        if (entry.id != null)
+          PlanSlot(
+            id: entry.id,
+            date: entry.date,
+            mealType: entry.mealType,
+            recipeId: entry.recipeId,
+            skipped: entry.skipped,
+          ),
+    ];
+  }
+
+  /// Muestra un mensaje cozy de Miau en un SnackBar.
+  void _showMiau(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.wood,
+        content: Row(
+          children: [
+            const MiauCharacter(mood: MiauMood.celebrating, size: 36),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -332,6 +498,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       children: [
         _energyCard(),
         const SizedBox(height: 12),
+        if (data.isMealPrep) ...[
+          _mealPrepCard(data),
+          const SizedBox(height: 12),
+        ],
         ...days.map((date) {
           final key = date.toIso8601String().split('T').first;
           final dayEntries = byDate[key] ?? [];
@@ -420,6 +590,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                                         : AppColors.ink,
                                   ),
                                 ),
+                                _servingsLine(data, e),
                                 if (e.fromFreezer)
                                   Row(
                                     children: [
@@ -455,7 +626,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                                   ? AppColors.woodDark
                                   : Colors.grey,
                             ),
-                            onPressed: () => _toggleSkip(e),
+                            onPressed: () => _toggleSkip(data, e),
                           ),
                         ],
                       ),
@@ -466,6 +637,105 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           );
         }),
       ],
+    );
+  }
+
+  /// Construye el plan de cocción (meal prep) a partir de las entradas y las
+  /// recetas ya cargadas en [_load]. No hace consultas: reutiliza todo.
+  MealPrepPlan _buildMealPrepPlan(_PlanData data) {
+    final prepRecipes = <String, PrepRecipe>{
+      for (final r in data.recipes)
+        r.id: PrepRecipe(
+          id: r.id,
+          title: r.title,
+          freezable: r.freezable,
+          freezerDays: r.freezerDays,
+          prepTimeMinutes: r.prepTimeMinutes,
+          cookTimeMinutes: r.cookTimeMinutes,
+        ),
+    };
+    final meals = <PrepMeal>[
+      for (final e in data.entries)
+        // Solo entran comidas activas, con receta y con raciones > 0. Si una
+        // entrada no tiene raciones (nulo o <=0) significa que no come nadie en
+        // casa (o es un plan antiguo sin la columna): no la metemos en la
+        // logística para no cocinar algo que no se va a comer.
+        if (!e.skipped && e.recipeId != null && (e.servings ?? 0) > 0)
+          PrepMeal(
+            recipeId: e.recipeId!,
+            date: e.date,
+            mealType: e.mealType,
+            servings: e.servings!,
+          ),
+    ];
+    return const MealPrepPlanner().buildPlan(
+      meals: meals,
+      recipesById: prepRecipes,
+      weekStart: _weekStart,
+      energyLevel: _energyLevel,
+    );
+  }
+
+  /// Tarjeta "Plan de cocción" con el resumen cozy de Miau. Solo se muestra en
+  /// modo 'mealprep' (ver [_buildPlan]).
+  Widget _mealPrepCard(_PlanData data) {
+    final plan = _buildMealPrepPlan(data);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const MiauCharacter(mood: MiauMood.cooking, size: 44),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Plan de cocción',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (plan.isEmpty)
+            Text(
+              'Cuando tengas plan de la semana te digo qué cocinar en lote, '
+              'qué guardar en la nevera y qué congelar.',
+              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+            )
+          else
+            ...plan.cookingDays.map(
+              (day) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2, right: 8),
+                      child: Icon(
+                        Icons.outdoor_grill,
+                        size: 16,
+                        color: Color(0xFFB58A3C),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        resumenDiaCoccion(day),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.35,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -512,6 +782,56 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Línea de raciones por comida: "4 raciones: tú, Pablo". Si no hay miembros
+  /// del hogar cargados, no mostramos nada.
+  Widget _servingsLine(_PlanData data, MealPlanEntry e) {
+    // Fuente de verdad: el nº de raciones PERSISTIDO en la entrada (e.servings),
+    // que es el mismo que usa la logística de meal prep. Así la etiqueta visible
+    // y el número almacenado no divergen. Solo si la entrada no trae raciones
+    // (planes antiguos) caemos al cálculo en vivo según quién come en casa.
+    final computed = data.members.isEmpty
+        ? null
+        : servingsForMeal(data.members, e.mealType, e.date.weekday);
+    final persisted = e.servings;
+
+    final String text;
+    if (persisted != null) {
+      if (persisted <= 0) return const SizedBox.shrink();
+      // Mostramos el número persistido. Si el cálculo en vivo coincide, lo
+      // acompañamos de los nombres ("tú, Pablo") para que quede cozy.
+      if (computed != null &&
+          computed.count == persisted &&
+          computed.names.isNotEmpty) {
+        text = computed.label;
+      } else {
+        final unit = persisted == 1 ? 'ración' : 'raciones';
+        text = '$persisted $unit';
+      }
+    } else {
+      // Sin raciones guardadas: fallback al cálculo en vivo.
+      if (computed == null || computed.count == 0) {
+        return const SizedBox.shrink();
+      }
+      text = computed.label;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          const Icon(Icons.people_outline, size: 12, color: Color(0xFFB58A3C)),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FrozenMeal {
@@ -526,11 +846,18 @@ class _PlanData {
   final List<Recipe> recipes;
   final Map<String, Recipe> recipesById;
   final List<MealPlanEntry> entries;
+  final List<HouseholdMember> members;
+
+  /// true si algún perfil del hogar cocina en modo 'mealprep' (en lote). Solo
+  /// entonces mostramos la sección "Plan de cocción".
+  final bool isMealPrep;
   _PlanData({
     required this.homeId,
     this.activeMeals = const ['lunch', 'dinner'],
     this.recipes = const [],
     this.recipesById = const {},
     this.entries = const [],
+    this.members = const [],
+    this.isMealPrep = false,
   });
 }

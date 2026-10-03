@@ -1,0 +1,27 @@
+{
+  "project_type": "App Flutter (móvil) con backend Supabase (Postgres + Auth + Edge Functions). UI en español, usuaria no técnica (Tessa). Personaje cozy 'Miau' que explica las decisiones.",
+  "language": "Dart (Flutter) para la app; SQL para migraciones de Supabase.",
+  "build_system": "Flutter SDK (canal stable). Dependencias con 'flutter pub get'. CI en GitHub Actions (.github/workflows/ci.yml) corre: dart format --set-exit-if-changed, flutter analyze, flutter test, y una validación ligera de migraciones.",
+  "test_framework": "flutter_test (package:flutter_test). Tests puros en test/*.dart con fechas/datos concretos. Patrón de referencia: test/inventory_expiry_test.dart y test/task_occurrences_test.dart (lógica pura, sin red ni Supabase).",
+  "build_command": "flutter pub get (no hay build de release en CI; CI usa analyze + test). NOTA: en este sandbox NO hay flutter/dart instalados, así que la verificación local se limita a revisión de código/AST; el CI de GitHub ejecuta analyze+test al abrir PR.",
+  "test_command": "flutter test (en CI). En el sandbox no se puede ejecutar; validar por lectura y lógica.",
+  "verification_instructions": "1) Las funciones del 'cerebro' deben ser PURAS (sin Supabase, sin DateTime.now() interno salvo parámetro) y vivir en lib/services/. 2) Añadir tests unitarios en test/ con datos concretos (fechas fijas) siguiendo test/inventory_expiry_test.dart. 3) El código debe pasar 'flutter analyze' (0 issues; recuerda que analysis_options degrada a ignore curly_braces_in_flow_control_structures y deprecated_member_use) y 'dart format --set-exit-if-changed .' (sin cambios). 4) Las migraciones nuevas deben seguir NNNN_nombre.sql con 4 dígitos, ser idempotentes, paréntesis balanceados (ignorando comentarios) y terminar en punto y coma.",
+  "snapshot_or_generated_files": "null (no hay snapshots). Flutter genera .dart_tool/ pero no se commitea.",
+  "setup_instructions": "No hace falta setup extra en el sandbox (no se puede compilar). En entorno real: flutter pub get. Las migraciones se despliegan solas al mergear a main (deploy.yml).",
+  "environment_constraints": "En el sandbox NO están instalados flutter ni dart; no se puede ejecutar 'flutter test'/'flutter analyze' localmente. La verificación real la hace el CI de GitHub al abrir el PR (lo hace el orquestador). Por eso: priorizar lógica PURA y bien testeada, respetar formato (dart format) a mano, y no introducir imports no usados ni warnings. Supabase no accesible localmente.",
+  "contribution_requirements": "Migraciones INMUTABLES: no editar las existentes; siguiente número 0033. Nombre NNNN_nombre.sql (4 dígitos). Idempotentes (add column if not exists, etc.). No tocar RLS salvo necesidad (si se toca, ai-development.yml pide aprobación manual, es esperado y no bloquea). ci.yml valida nombre, no-vacío, paréntesis balanceados (ignora comentarios '--') y avisa si no termina en ';'.",
+  "key_patterns": "setState: nunca con arrow que devuelve Future (usar cuerpo de bloque { }). FloatingActionButton heroTag ÚNICO por pantalla (IndexedStack); meal_plan_screen usa 'fab-meal-plan'. fromMap tolerante a nulls (ver meal_plan_entry.dart, recipe.dart). RLS por hogar: home_id = public.auth_home_id(); GRANTs a authenticated. Comidas: breakfast/lunch/dinner/snack/dessert con labels en NutritionProfile.mealLabels y Recipe.mealTypeLabels. Días 1=Lun..7=Dom. Miau: widgets/miau_character.dart (MiauCharacter, MiauMood).",
+  "relevant_files": [
+    "lib/services/meal_planner.dart (planner existente: generate() con pesos, frozenBoost por energyLevel, ventana de recientes; AMPLIAR, no reescribir)",
+    "lib/meal_plan_screen.dart (UI del plan semanal, sub-tab 'Plan' en comidas_tab; _toggleSkip actualmente PIERDE el plato; _generatePlan lee feedback y cola de congelados)",
+    "lib/models/meal_plan_entry.dart (modelo entry: skipped, from_freezer, inventory_item_id; añadir servings si hace falta)",
+    "lib/models/nutrition_profile.dart (perfil: cooking_mode/isMealPrep, portion_mode, meals_at_home + eatsAtHome(type,weekday), mealSplit, mealLabels)",
+    "lib/models/recipe.dart (freezable, freezerDays, prepTimeMinutes, cookTimeMinutes, servings, components, appliance)",
+    "lib/models/inventory_item.dart (category=ubicación, kind=ingredient/prep/dish, servings, recipeId, frozenOn, bestBefore, effectiveExpiry/ExpiryStatus, defaultFreezerDays=90)",
+    "test/inventory_expiry_test.dart (patrón de test puro con fechas relativas)",
+    "test/task_occurrences_test.dart (patrón de test puro)",
+    "supabase/migrations/0018_cooking_mode.sql y 0019_plan_from_freezer.sql (patrón de migración idempotente)",
+    ".github/workflows/ci.yml (reglas de validación de migraciones y de Flutter)"
+  ],
+  "directory_structure": "lib/ (app Flutter): lib/services/ (lógica: meal_planner.dart), lib/models/ (modelos), lib/tabs/ (pestañas incl. comidas_tab.dart), lib/widgets/ (miau_character.dart y otros), lib/meal_plan_screen.dart (pantalla del plan). test/ (tests puros). supabase/migrations/ (SQL, última 0032). .github/workflows/ (ci.yml, deploy.yml, ai-development.yml)."
+}

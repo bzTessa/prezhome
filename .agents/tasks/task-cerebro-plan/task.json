@@ -1,0 +1,19 @@
+{
+  "task_id": "task-cerebro-plan",
+  "task_description": "Construir el 'cerebro' del plan de comidas vivo y auto-reajustable + logística de meal prep, sobre la rama feat/cerebro-plan a partir de main. Piezas: (1) reajuste por 'comer fuera' que recoloca el plato en vez de perderlo; (2) plan del HOGAR con raciones por persona según quién come en casa cada día/comida; (3) logística de meal prep (plan de cocción: qué cocinar en lote, qué va a nevera y qué al congelador y cuándo sacarlo) + refuerzo del sesgo de energía hacia el congelador. Filosofía: flexibilidad por encima de perfección, no pasa nada por repetir; todo en español y cozy con Miau. Lógica pura y testeable.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "review": {
+    "v1": "NEEDS_CHANGES (orden no determinista de nombres; metadatos de congelador huérfanos al recolocar; divergencia raciones mostradas/persistidas; servings ?? 1; cobertura)",
+    "v2": "APPROVED. Único hallazgo no bloqueante: el test (f) de meal_prep_planner_test.dart no ejercita de verdad la rama batches.isNotEmpty (parámetros caen en la rama 1-día-por-comida); el código de producción sigue protegido. Mejora opcional para una tanda futura: añadir un caso con más días de comida que maxDays para forzar la rama de reparto.",
+    "iterations": 1
+  },
+  "verification": {
+    "build": "skipped",
+    "tests": "skipped",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "En el sandbox NO hay flutter/dart instalados, por lo que no se pudo ejecutar 'flutter analyze'/'flutter test'/'dart format'; la verificación real (analyze+test) la ejecuta el CI de GitHub al abrir el PR. Verificación estática realizada: (1) los tres servicios del cerebro (plan_adjuster.dart, household_servings.dart, meal_prep_planner.dart) son puros, sin imports de package:flutter ni supabase; (2) la migración 0033 cumple las reglas de ci.yml (nombre NNNN_, no vacía, paréntesis balanceados 0/0, termina en ';', idempotente, no toca RLS); (3) los MiauMood usados (celebrating/curious/greeting/cooking) existen en el enum; (4) el call site de _toggleSkip se actualizó a la nueva firma; (5) revisión de los tests: plan_adjuster_test, household_servings_test y meal_prep_planner_test ejercitan la lógica nueva con fechas/datos fijos y fallarían si se revierte el comportamiento (clasificación nevera/congelador, fecha de sacar, efecto de energyLevel, recolocación por tipo, conteo por miembro). test_quality=pass. Correcciones del review 2026-10-03-132257: (a) servingsForMeal ahora ordena de forma EXPLÍCITA (isMe primero, resto en orden de entrada) sin depender de la estabilidad de List.sort; (b) _toggleSkip arrastra from_freezer/inventory_item_id al día destino y los limpia en el origen al marcar 'fuera'; (c) _servingsLine usa e.servings como fuente de verdad con fallback al cálculo; (d) _buildMealPrepPlan excluye entradas con servings nulo/<=0 en vez de forzar 1; (e) nuevos tests: orden determinista con varios no-isMe y día de cocción con energía alta y días dispersos sin tandas vacías."
+  }
+}

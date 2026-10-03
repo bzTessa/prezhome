@@ -13,6 +13,16 @@ class MealPlanner {
   final Random _random;
   MealPlanner({int? seed}) : _random = Random(seed);
 
+  /// Sesgo (boost de peso) hacia recetas con platos congelados disponibles,
+  /// según la energía de la semana. Con energía baja (cocinar poco) el boost es
+  /// MUY alto para que el plan tire con fuerza del congelador y así cocinar
+  /// menos; con energía normal es moderado; con energía alta no hay sesgo
+  /// (preferimos cocinar fresco). Son constantes nombradas para que el umbral
+  /// sea explícito y fácil de ajustar/testear.
+  static const double frozenBoostEnergiaBaja = 12.0; // energyLevel = 0
+  static const double frozenBoostEnergiaNormal = 2.0; // energyLevel = 1
+  static const double frozenBoostEnergiaAlta = 0.0; // energyLevel = 2
+
   /// Genera un plan para [days] días a partir de [startDate].
   ///
   /// [mealTypes]: comidas activas a planificar (ej. ['lunch','dinner']).
@@ -35,12 +45,14 @@ class MealPlanner {
   }) {
     final plan = <DateTime, Map<String, String>>{};
 
-    // Sesgo hacia recetas con congelado según la energía.
-    final frozenBoost = energyLevel == 0
-        ? 6.0
+    // Sesgo hacia recetas con congelado según la energía. Con energía baja el
+    // boost es claramente mayor (ver constantes) para que "cocinar poco" tire
+    // de verdad del congelador en vez de proponer cocinar de cero.
+    final frozenBoost = energyLevel <= 0
+        ? frozenBoostEnergiaBaja
         : energyLevel == 1
-        ? 2.0
-        : 0.0;
+        ? frozenBoostEnergiaNormal
+        : frozenBoostEnergiaAlta;
 
     // Agrupar recetas por tipo de comida.
     final byType = <String, List<Recipe>>{};
