@@ -432,12 +432,13 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   title: const Text(
-                    'Siempre en casa',
+                    'No añadir a la compra',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: const Text(
-                    'Básico o especia que das por supuesto. No se añadirá a '
-                    'la lista de la compra aunque una receta lo pida.',
+                    'Para básicos que siempre tienes (sal, aceite, '
+                    'especias...). No aparecerán en la lista de la compra '
+                    'aunque una receta los pida.',
                   ),
                   onChanged: (v) => setState(() => _isStaple = v),
                 ),

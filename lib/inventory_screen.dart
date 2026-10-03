@@ -95,8 +95,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
         SnackBar(
           content: Text(
             value
-                ? '${item.name} marcado como "siempre en casa".'
-                : '${item.name} ya no es "siempre en casa".',
+                ? '${item.name} ya no aparecerá en la compra.'
+                : '${item.name} volverá a aparecer en la compra.',
           ),
         ),
       );
@@ -504,10 +504,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.push_pin, size: 12, color: AppColors.woodDark),
+                    Icon(
+                      Icons.remove_shopping_cart,
+                      size: 12,
+                      color: AppColors.woodDark,
+                    ),
                     SizedBox(width: 3),
                     Text(
-                      'Siempre en casa',
+                      'No se compra',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -551,16 +555,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Toggle rapido de "siempre en casa" (solo para comida).
+            // Toggle rápido "no añadir a la compra" (solo para comida).
             if (item.itemType == 'comida')
               IconButton(
                 icon: Icon(
-                  item.isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                  item.isStaple
+                      ? Icons.remove_shopping_cart
+                      : Icons.remove_shopping_cart_outlined,
                   color: item.isStaple ? AppColors.woodDark : Colors.grey,
                 ),
                 tooltip: item.isStaple
-                    ? 'Quitar de "siempre en casa"'
-                    : 'Marcar como "siempre en casa"',
+                    ? 'Volver a añadir a la compra'
+                    : 'No añadir a la compra',
                 onPressed: () => _toggleStaple(item, !item.isStaple),
               ),
             IconButton(
