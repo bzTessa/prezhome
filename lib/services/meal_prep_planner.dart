@@ -116,6 +116,11 @@ class PrepBatch {
   /// temprana entre las raciones congeladas). null si no hay congelador.
   final DateTime? takeOutDate;
 
+  /// true si alguna ración congelada se consumirá DESPUÉS de la ventana segura
+  /// de congelación de la receta (freezerDays, o el valor por defecto). Sirve
+  /// para avisar a la usuaria de que ese plato se comerá un poco tarde.
+  final bool freezerExpiryRisk;
+
   const PrepBatch({
     required this.recipeId,
     required this.title,
@@ -123,6 +128,7 @@ class PrepBatch {
     required this.fridgeServings,
     required this.freezerServings,
     this.takeOutDate,
+    this.freezerExpiryRisk = false,
   });
 }
 
@@ -293,6 +299,7 @@ class MealPrepPlanner {
       var fridge = 0;
       var freezer = 0;
       DateTime? earliestFreezerConsumption;
+      DateTime? latestFreezerConsumption;
 
       for (final meal in recipeMeals) {
         final daysAhead = meal._day.difference(cookDate).inDays;
@@ -306,6 +313,10 @@ class MealPrepPlanner {
               meal._day.isBefore(earliestFreezerConsumption)) {
             earliestFreezerConsumption = meal._day;
           }
+          if (latestFreezerConsumption == null ||
+              meal._day.isAfter(latestFreezerConsumption)) {
+            latestFreezerConsumption = meal._day;
+          }
         }
         total += meal.servings;
       }
@@ -317,6 +328,16 @@ class MealPrepPlanner {
               cookDate: cookDate,
             );
 
+      // Riesgo de caducidad en el congelador: la ventana segura es la de la
+      // receta (freezerDays) o la por defecto. Si la ración congelada más
+      // tardía se consume después de ese límite, avisamos.
+      var expiryRisk = false;
+      if (latestFreezerConsumption != null) {
+        final window = recipe.freezerDays ?? kDiasCongeladorPorDefecto;
+        final limit = cookDate.add(Duration(days: window));
+        expiryRisk = latestFreezerConsumption.isAfter(limit);
+      }
+
       batches.add(
         PrepBatch(
           recipeId: recipeId,
@@ -325,6 +346,7 @@ class MealPrepPlanner {
           fridgeServings: fridge,
           freezerServings: freezer,
           takeOutDate: takeOut,
+          freezerExpiryRisk: expiryRisk,
         ),
       );
     });
@@ -399,6 +421,18 @@ String resumenDiaCoccion(CookingDay day) {
   }
   for (final s in sacar) {
     buffer.write(' Saca $s.');
+  }
+
+  // Aviso de caducidad: alguna tanda congelada se consume un poco tarde.
+  final enRiesgo = day.batches
+      .where((b) => b.freezerExpiryRisk)
+      .map((b) => b.title)
+      .toList();
+  if (enRiesgo.isNotEmpty) {
+    buffer.write(
+      ' Ojo: ${_unirConY(enRiesgo)} se consumirá un poco tarde para '
+      'estar congelado; procura adelantarlo.',
+    );
   }
 
   return buffer.toString();
