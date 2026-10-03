@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "LOGÍSTICA DE MEAL PREP (solo cuando cooking_mode='mealprep'). A partir del plan semanal, generar un PLAN DE COCCIÓN entendible: qué día(s) cocinar y qué cocinar en lote, agrupando por tiempos (prep_minutes/cook_minutes) y respetando la conservación: lo que se come en los próximos ~2-3 días va a NEVERA, lo que es para más adelante y es freezable va a CONGELADOR; indicar CUÁNDO sacar del congelador (según freezer_days / defaultFreezerDays). Resumen cozy ('Domingo cocinas: lentejas (x6) y pollo (x4). 3 raciones a la nevera, 3 al congelador. Saca el pollo el miércoles.'). Para modo 'daily' NO se activa (experiencia simple intacta). Refuerza también el sesgo de energía hacia el congelador para que 'cocinar poco' agrupe de verdad la cocción.",
+  "status": "pending",
+  "steps": [
+    "Crear lib/services/meal_prep_planner.dart con lógica PURA (sin Supabase/Flutter). Entrada: las entradas del plan de la semana (fecha, tipo, recipeId, servings), un mapa recipeId->Recipe (para freezable, freezerDays, prepTimeMinutes, cookTimeMinutes), una fecha de inicio de semana, y el energyLevel. Salida: un modelo de 'plan de cocción' que describa, por cada DÍA de cocción propuesto, qué recetas cocinar en lote y con cuántas raciones totales, cuántas raciones van a NEVERA (consumo en <= ~3 días) y cuántas a CONGELADOR (resto, solo si recipe.freezable), y para las de congelador la fecha sugerida de SACAR (día de consumo menos ~1 día, o según bestBefore/freezerDays). Documentar en español las heurísticas y el umbral (días a nevera = 3) como constantes nombradas.",
+    "Heurística de agrupación de días de cocción (simple y flexible): proponer cocinar en los días con más comidas de la semana por delante, o concentrar la cocción en 1-2 días (p.ej. el primer día de la semana con comidas en casa y, si hay muchas, un segundo día a mitad de semana). Con energyLevel=0 (cocinar poco) preferir MENOS días de cocción (agrupar más, tirar más del congelador); con energyLevel=2 (cocinar mucho) permitir más días (más fresco). No buscar optimalidad: un reparto razonable y entendible basta.",
+    "Generar un resumen humano/cozy (función pura que devuelva texto en español por día de cocción), estilo el ejemplo de la descripción, listando recetas con raciones (xN), cuántas a nevera y al congelador, y cuándo sacar del congelador cada cosa.",
+    "Integrar en lib/meal_plan_screen.dart: SOLO si el perfil del usuario (o alguno del hogar) tiene cooking_mode='mealprep' (NutritionProfile.isMealPrep), mostrar una sección/tarjeta 'Plan de cocción' con el resumen cozy de Miau. En 'daily' no mostrar nada nuevo (mantener la pantalla como está). Reutilizar las recetas y entradas ya cargadas en _load; no añadir consultas pesadas si se puede evitar. Si se añade un FloatingActionButton o acción nueva, mantener heroTag único (no reutilizar 'fab-meal-plan').",
+    "Reforzar el sesgo de energía/congelador: revisar el frozenBoost en lib/services/meal_planner.dart y, si procede, exponer/ajustar constantes para que 'cocinar poco' tire con fuerza del congelador. Mantener compatibilidad con la firma actual de generate() y no romper el comportamiento existente (los valores por defecto deben seguir dando un plan razonable).",
+    "Añadir tests en test/meal_prep_planner_test.dart (patrón puro, semana fija): (a) un plato freezable con consumo lejano va a congelador con fecha de sacar correcta; (b) un plato con consumo en <=3 días va a nevera; (c) un plato no freezable nunca va a congelador aunque el consumo sea lejano; (d) energyLevel=0 agrupa en menos días de cocción que energyLevel=2; (e) el resumen cozy menciona las raciones (xN) y el día de sacar del congelador."
+  ],
+  "acceptance_criteria": [
+    "Existe lib/services/meal_prep_planner.dart con lógica pura y constantes nombradas para los umbrales (días a nevera, offset de sacar del congelador).",
+    "test/meal_prep_planner_test.dart cubre nevera vs congelador, no-freezable, efecto del energyLevel y contenido del resumen; fallaría si se revierte la lógica.",
+    "La sección 'Plan de cocción' aparece SOLO en cooking_mode='mealprep' y no altera la experiencia 'daily'.",
+    "meal_planner.dart conserva su firma pública y sigue generando planes razonables; el sesgo de congelador en energía baja es claramente mayor."
+  ],
+  "verification": [
+    "Confirmar que meal_prep_planner.dart no importa Flutter ni Supabase.",
+    "Leer test/meal_prep_planner_test.dart y confirmar que ejercita la clasificación nevera/congelador y el efecto de energyLevel y fallaría si se revierte.",
+    "Verificar en meal_plan_screen.dart que la sección de cocción está condicionada a isMealPrep y que ningún heroTag se duplica.",
+    "CI de GitHub ejecutará analyze+test al abrir PR."
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

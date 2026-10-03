@@ -5,6 +5,7 @@ import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'services/meal_planner.dart';
+import 'services/plan_adjuster.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 
@@ -204,13 +205,98 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   /// Marca una comida como "hoy como fuera" (skip) o la reactiva.
-  Future<void> _toggleSkip(MealPlanEntry e) async {
+  ///
+  /// Al marcar "fuera" no se pierde el plato: el cerebro ([PlanAdjuster]) lo
+  /// recoloca al primer hueco posterior libre del mismo tipo de comida y Miau
+  /// explica qué hizo. Al reactivar simplemente se vuelve a dejar activo.
+  Future<void> _toggleSkip(_PlanData data, MealPlanEntry e) async {
     if (e.id == null) return;
-    await _client
-        .from('meal_plan_entries')
-        .update({'skipped': !e.skipped})
-        .eq('id', e.id!);
-    _reload();
+    final willSkip = !e.skipped;
+    try {
+      if (!willSkip) {
+        // Reactivar: dejamos la comida de nuevo activa.
+        await _client
+            .from('meal_plan_entries')
+            .update({'skipped': false})
+            .eq('id', e.id!);
+        if (mounted) {
+          _showMiau('Vuelve a estar en casa, ¡qué bien!');
+        }
+        _reload();
+        return;
+      }
+
+      // Marcar "fuera" + reajuste con la lógica pura del cerebro.
+      final slots = _buildSlots(data);
+      final before = {for (final s in slots) s.id: s};
+      final adjustment = const PlanAdjuster().adjustForSkipped(slots, e.id!);
+
+      // Persistir solo las entradas que cambiaron (recipe_id/skipped).
+      for (final slot in adjustment.slots) {
+        final prev = before[slot.id];
+        if (prev == null) continue;
+        final recipeChanged = prev.recipeId != slot.recipeId;
+        final skipChanged = prev.skipped != slot.skipped;
+        if (!recipeChanged && !skipChanged) continue;
+        await _client
+            .from('meal_plan_entries')
+            .update({'recipe_id': slot.recipeId, 'skipped': slot.skipped})
+            .eq('id', slot.id!);
+      }
+
+      if (mounted) {
+        final title = data.recipesById[adjustment.movedRecipeId]?.title;
+        _showMiau(miauMoveMessage(adjustment, recipeTitle: title));
+      }
+      _reload();
+    } catch (err) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $err'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// Convierte las entradas de la semana en huecos para el cerebro puro.
+  /// Solo incluye las entradas reales (con id); el reajuste busca entre ellas
+  /// el primer hueco posterior libre del mismo tipo de comida.
+  List<PlanSlot> _buildSlots(_PlanData data) {
+    return [
+      for (final entry in data.entries)
+        if (entry.id != null)
+          PlanSlot(
+            id: entry.id,
+            date: entry.date,
+            mealType: entry.mealType,
+            recipeId: entry.recipeId,
+            skipped: entry.skipped,
+          ),
+    ];
+  }
+
+  /// Muestra un mensaje cozy de Miau en un SnackBar.
+  void _showMiau(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.wood,
+        content: Row(
+          children: [
+            const MiauCharacter(mood: MiauMood.celebrating, size: 36),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -455,7 +541,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                                   ? AppColors.woodDark
                                   : Colors.grey,
                             ),
-                            onPressed: () => _toggleSkip(e),
+                            onPressed: () => _toggleSkip(data, e),
                           ),
                         ],
                       ),

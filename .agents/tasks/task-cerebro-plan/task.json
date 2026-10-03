@@ -1,0 +1,7 @@
+{
+  "task_id": "task-cerebro-plan",
+  "task_description": "Construir el 'cerebro' del plan de comidas vivo y auto-reajustable + logística de meal prep, sobre la rama feat/cerebro-plan a partir de main. Piezas: (1) reajuste por 'comer fuera' que recoloca el plato en vez de perderlo; (2) plan del HOGAR con raciones por persona según quién come en casa cada día/comida; (3) logística de meal prep (plan de cocción: qué cocinar en lote, qué va a nevera y qué al congelador y cuándo sacarlo) + refuerzo del sesgo de energía hacia el congelador. Filosofía: flexibilidad por encima de perfección, no pasa nada por repetir; todo en español y cozy con Miau. Lógica pura y testeable.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

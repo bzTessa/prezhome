@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "CANTIDADES POR PERSONA / PLAN DEL HOGAR. Calcular, para cada comida planificada, cuántas RACIONES cocinar según cuántos miembros del hogar comen en casa ese día/comida, usando eatsAtHome(type, weekday) de TODOS los perfiles del hogar (profiles filtrando por home_id). Semántica sencilla y flexible: por defecto todos comen en casa salvo que su meals_at_home diga lo contrario. Mostrar en la UI del plan las raciones por comida ('4 raciones: tú, Pablo...'). Persistir las raciones en meal_plan_entries con una columna nueva (migración 0033).",
+  "status": "pending",
+  "steps": [
+    "Crear migración supabase/migrations/0033_meal_plan_servings.sql: idempotente, 'alter table public.meal_plan_entries add column if not exists servings integer;' (nullable; sin valor = usar fallback de la receta). NO tocar RLS ni policies. Comentario de cabecera en español explicando el propósito. Terminar en punto y coma. Paréntesis balanceados.",
+    "Actualizar lib/models/meal_plan_entry.dart: añadir campo 'int? servings', leerlo en fromMap de forma tolerante ((map['servings'] as int?)) y escribirlo en toMap ('servings': servings). Mantener el constructor retrocompatible (parámetro opcional).",
+    "Crear una función PURA de cálculo de raciones por día/comida, p.ej. en lib/services/household_servings.dart (sin Supabase/Flutter). Firma sugerida: dado una lista de perfiles (cada uno con su mealsAtHome) y una fecha+tipo de comida, devolver el número de personas que comen en casa (contar perfiles cuyo eatsAtHome(type, weekday) sea true). weekday = date.weekday (1=Lun..7=Dom). Debe permitir recibir también los nombres para construir la etiqueta ('tú, Pablo'). Documentar que por defecto (meals_at_home vacío) todos cuentan.",
+    "Integrar en lib/meal_plan_screen.dart: en _load, cargar TODOS los perfiles del hogar (from('profiles').select().eq('home_id', homeId)) y mapear a NutritionProfile. En _generatePlan, al construir cada MealPlanEntry, calcular servings con la función pura (nº de personas que comen en casa ese día/comida) y guardarlo. En la UI de cada comida mostrar las raciones y, si es sencillo, los nombres de quienes comen ('4 raciones: tú, Pablo'). Usar el nombre del usuario actual como 'tú'.",
+    "Añadir tests en test/household_servings_test.dart (patrón puro): (a) sin configuración, todos los miembros cuentan todos los días; (b) un miembro con meals_at_home {'lunch':[6,7]} solo cuenta en comida de sábado/domingo; (c) hogar con varios miembros suma correctamente por día/comida; (d) la etiqueta de nombres se construye en el orden esperado."
+  ],
+  "acceptance_criteria": [
+    "Migración 0033_meal_plan_servings.sql existe, es idempotente, no toca RLS y pasa la validación de ci.yml (nombre, no vacío, paréntesis balanceados, termina en ';').",
+    "MealPlanEntry tiene 'servings' leído/escrito de forma tolerante a nulls.",
+    "Existe household_servings.dart con lógica pura y test/household_servings_test.dart cubre defecto, restricción por días, suma multi-miembro y etiqueta.",
+    "La UI del plan muestra las raciones por comida; el plan generado persiste servings."
+  ],
+  "verification": [
+    "Revisar la migración 0033 contra las reglas de ci.yml (patrón de nombre, ';' final, paréntesis).",
+    "Leer test/household_servings_test.dart y confirmar que ejercita eatsAtHome y la suma por hogar y fallaría si se revierte.",
+    "Confirmar que household_servings.dart no importa Flutter ni Supabase.",
+    "CI de GitHub ejecutará analyze+test al abrir PR."
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
