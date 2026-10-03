@@ -9,26 +9,55 @@ import '../theme/app_theme.dart';
 /// El objetivo es estético y organizativo: dar un toque visual tipo "apps de
 /// la compra" y permitir agrupar la lista por secciones legibles.
 enum FoodCategory {
-  verdura('🥦', 'Verduras'),
-  fruta('🍎', 'Frutas'),
-  carne('🥩', 'Carne'),
-  pescado('🐟', 'Pescado'),
-  lacteos('🧀', 'Lácteos'),
-  bebidas('🥤', 'Bebidas'),
-  panaderia('🥖', 'Panadería/Cereales'),
-  limpieza('🧽', 'Limpieza'),
-  hogar('🏠', 'Hogar'),
+  verdura('🥦', 'Verduras', Icons.eco),
+  fruta('🍎', 'Frutas', Icons.apple),
+  carne('🥩', 'Carne', Icons.set_meal),
+  pescado('🐟', 'Pescado', Icons.phishing),
+  lacteos('🧀', 'Lácteos', Icons.icecream),
+  bebidas('🥤', 'Bebidas', Icons.local_drink),
+  panaderia('🥖', 'Panadería/Cereales', Icons.bakery_dining),
+  limpieza('🧽', 'Limpieza', Icons.cleaning_services),
+  hogar('🏠', 'Hogar', Icons.home),
   // Neutro: carrito de la compra. Es el fallback cuando no hay match claro,
   // para no forzar una categoría dudosa.
-  otros('🛒', 'Otros');
+  otros('🛒', 'Otros', Icons.shopping_cart);
 
-  const FoodCategory(this.emoji, this.label);
+  const FoodCategory(this.emoji, this.label, this.icon);
 
   /// Emoji representativo de la categoría.
   final String emoji;
 
   /// Nombre legible de la sección (para encabezados en la lista de la compra).
   final String label;
+
+  /// Icono vectorial Material representativo de la categoría. Es el respaldo
+  /// "cozy" cuando no hay foto real del alimento: una ilustración coherente y
+  /// cuidada en lugar del emoji genérico del sistema.
+  final IconData icon;
+}
+
+/// Estilo visual "cozy" de una categoría: su icono vectorial Material y el par
+/// de colores (fondo suave + color del icono) con el que se dibuja. Se usa como
+/// ilustración de respaldo cuando no hay foto real del alimento.
+///
+/// Los colores salen de [AppColors] (paleta Cozy) para mantener coherencia con
+/// el resto de la app (chips, estados de caducidad, etc.).
+class CategoryStyle {
+  const CategoryStyle({
+    required this.icon,
+    required this.background,
+    required this.foreground,
+  });
+
+  /// Icono vectorial Material de la categoría.
+  final IconData icon;
+
+  /// Color de fondo suave (relleno del círculo/tarjeta).
+  final Color background;
+
+  /// Color del icono (y texto si procede), con contraste cálido sobre
+  /// [background].
+  final Color foreground;
 }
 
 /// Helper reutilizable para asignar un emoji/icono de categoría a un producto
@@ -350,6 +379,49 @@ class CategoryIcons {
   /// Emoji directo para un nombre de producto.
   static String emojiFor(String name, {String? itemType}) =>
       categoryFor(name, itemType: itemType).emoji;
+
+  /// Par de colores cozy (fondo suave + color del icono) por categoría, tomados
+  /// de [AppColors]. Pensado como ilustración cálida de respaldo, no como
+  /// semáforo de estado (eso lo cubren los colores de caducidad aparte).
+  static const Map<FoodCategory, (Color, Color)> _palette = {
+    FoodCategory.verdura: (AppColors.sageBg, AppColors.sage),
+    FoodCategory.fruta: (AppColors.peachBg, AppColors.peach),
+    FoodCategory.carne: (AppColors.terracottaBg, AppColors.terracotta),
+    FoodCategory.pescado: (AppColors.frostBg, AppColors.frost),
+    FoodCategory.lacteos: (AppColors.cream, AppColors.woodDark),
+    FoodCategory.bebidas: (AppColors.frostBg, AppColors.frost),
+    FoodCategory.panaderia: (AppColors.peachBg, AppColors.peach),
+    FoodCategory.limpieza: (AppColors.sageBg, AppColors.sage),
+    FoodCategory.hogar: (AppColors.cream, AppColors.woodDark),
+    FoodCategory.otros: (AppColors.cream, AppColors.woodDark),
+  };
+
+  /// Devuelve el estilo visual cozy (icono + fondo + color del icono) para la
+  /// categoría inferida del nombre. Es la fuente única de la ilustración de
+  /// respaldo que sustituye al emoji genérico del sistema.
+  static CategoryStyle styleFor(String name, {String? itemType}) {
+    final category = categoryFor(name, itemType: itemType);
+    final (background, foreground) =
+        _palette[category] ?? _palette[FoodCategory.otros]!;
+    return CategoryStyle(
+      icon: category.icon,
+      background: background,
+      foreground: foreground,
+    );
+  }
+
+  /// Icono vectorial Material representativo del producto (ilustración cozy de
+  /// respaldo cuando no hay foto real).
+  static IconData iconFor(String name, {String? itemType}) =>
+      categoryFor(name, itemType: itemType).icon;
+
+  /// Color de fondo suave (cozy) para el distintivo del producto.
+  static Color backgroundColorFor(String name, {String? itemType}) =>
+      styleFor(name, itemType: itemType).background;
+
+  /// Color del icono (contraste cálido sobre el fondo) para el producto.
+  static Color foregroundColorFor(String name, {String? itemType}) =>
+      styleFor(name, itemType: itemType).foreground;
 
   /// Pequeño distintivo visual (emoji dentro de un círculo cozy) listo para
   /// usar como leading de un ListTile. Consistente entre compra e inventario.

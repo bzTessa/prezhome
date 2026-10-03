@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Preparar entorno y confirmar baseline verde. Es la base para el resto: deja claros los comandos reales y que la suite pasa antes de tocar nada.",
+  "status": "completed",
+  "steps": [
+    "Añadir Flutter al PATH: export PATH=\"/opt/tools/flutter/bin:$PATH\" (avisa 'running flutter as root', es inofensivo).",
+    "Ejecutar flutter pub get.",
+    "Ejecutar flutter analyze y confirmar 0 issues.",
+    "Ejecutar flutter test y confirmar que toda la suite pasa (baseline ~98 tests).",
+    "Ejecutar dart format --output=none --set-exit-if-changed . y confirmar 0 cambios.",
+    "Revertir cualquier fichero autogenerado que flutter pub get/test haya tocado y que NO forme parte de la feature: git checkout -- analysis_options.yaml pubspec.lock linux/flutter/generated_plugin_registrant.cc linux/flutter/generated_plugins.cmake macos/Flutter/GeneratedPluginRegistrant.swift windows/flutter/generated_plugin_registrant.cc windows/flutter/generated_plugins.cmake. Confirmar git status limpio."
+  ],
+  "acceptance_criteria": [
+    "flutter analyze devuelve 'No issues found!'",
+    "flutter test termina con 'All tests passed!'",
+    "dart format --set-exit-if-changed no reporta cambios",
+    "git status --short no muestra ficheros autogenerados pendientes"
+  ],
+  "verification": [
+    "export PATH=\"/opt/tools/flutter/bin:$PATH\"; flutter analyze && flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": "Baseline verde confirmado en rama feat/despensa-visual. Flutter 3.47.6 (PATH=/opt/tools/flutter/bin; avisa 'running flutter as root', inofensivo). flutter pub get OK. flutter analyze: 'No issues found!' (0 issues). flutter test: 'All tests passed!' = 98 tests (baseline). dart format --output=none --set-exit-if-changed .: 'Formatted 58 files (0 changed)', exit 0. flutter pub get regeneró y se revirtieron con git checkout: analysis_options.yaml, pubspec.lock, linux/flutter/generated_plugin_registrant.cc, linux/flutter/generated_plugins.cmake, macos/Flutter/GeneratedPluginRegistrant.swift, windows/flutter/generated_plugin_registrant.cc, windows/flutter/generated_plugins.cmake. git status --short limpio (solo el dir de task state sin trackear). Sin commit (feature de verificación de baseline). Nota: 'flutter pub get' avisa que 22 paquetes tienen versiones nuevas incompatibles con las constraints (no afecta al baseline)."
+}
