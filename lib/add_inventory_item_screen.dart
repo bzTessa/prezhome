@@ -7,7 +7,13 @@ import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 
 class AddInventoryItemScreen extends StatefulWidget {
-  const AddInventoryItemScreen({super.key});
+  /// Si se pasa un item, la pantalla funciona en modo EDICIÓN (precarga sus
+  /// campos y hace UPDATE en vez de INSERT).
+  final InventoryItem? item;
+
+  const AddInventoryItemScreen({super.key, this.item});
+
+  bool get isEditing => item != null;
 
   @override
   State<AddInventoryItemScreen> createState() => _AddInventoryItemScreenState();
@@ -59,6 +65,29 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
     // Al escribir el nombre recalculamos la caducidad estimada (si la usuaria
     // no la ha fijado a mano). Con un pequeño debounce implícito: solo
     // recalculamos cuando cambia el texto.
+    final it = widget.item;
+    if (it != null) {
+      // Modo edición: precargamos los campos del item existente.
+      _nameController.text = it.name;
+      _quantityController.text = it.quantity % 1 == 0
+          ? it.quantity.toStringAsFixed(0)
+          : it.quantity.toString();
+      _itemType = it.itemType;
+      _selectedCategory = it.category;
+      _selectedUnit = _units.contains(it.unit) ? it.unit : 'unidades';
+      _kind = it.kind;
+      _frozenOn = it.frozenOn;
+      _expirationDate = it.expirationDate;
+      _bestBefore = it.bestBefore;
+      _isStaple = it.isStaple;
+      // No pisamos la fecha ya guardada con la estimación automática.
+      _expirationManual = true;
+      if (it.servings != null) {
+        _servingsController.text = it.servings! % 1 == 0
+            ? it.servings!.toStringAsFixed(0)
+            : it.servings!.toString();
+      }
+    }
     _nameController.addListener(_recalcEstimatedExpiry);
   }
 
@@ -124,19 +153,26 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       // acierte: p. ej. pollo crudo, no un plato cocinado). Best-effort: si no
       // hay clave/match, image_url queda null y se muestra la ilustración cozy.
       // Las especias no buscan foto (salen genéricas; mejor su ilustración).
-      String? imageUrl;
-      if (isFood && name.isNotEmpty && _selectedCategory != 'Especias') {
+      // En EDICIÓN solo re-buscamos si cambió el nombre; si no, conservamos la
+      // foto que ya tenía (no gastamos cuota ni perdemos foto).
+      final editing = widget.item;
+      String? imageUrl = editing?.imageUrl;
+      final nameChanged = editing == null || editing.name.trim() != name;
+      if (isFood &&
+          name.isNotEmpty &&
+          _selectedCategory != 'Especias' &&
+          nameChanged) {
         try {
           imageUrl = await FoodPhotoService(
             Supabase.instance.client,
           ).resolvePhotoUrl(homeId: homeId, name: name, mode: 'ingredient');
         } catch (_) {
-          imageUrl = null;
+          imageUrl = editing?.imageUrl;
         }
       }
 
       final item = InventoryItem(
-        id: '',
+        id: editing?.id ?? '',
         homeId: homeId,
         name: name,
         category: _selectedCategory,
@@ -167,9 +203,16 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         imageUrl: imageUrl,
       );
 
-      await Supabase.instance.client
-          .from('inventory_items')
-          .insert(item.toMap());
+      if (editing != null) {
+        await Supabase.instance.client
+            .from('inventory_items')
+            .update(item.toMap())
+            .eq('id', editing.id);
+      } else {
+        await Supabase.instance.client
+            .from('inventory_items')
+            .insert(item.toMap());
+      }
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -202,7 +245,11 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
     final isFrozen = isFood && _selectedCategory == 'Congelador';
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Añadir al inventario')),
+      appBar: AppBar(
+        title: Text(
+          widget.isEditing ? 'Editar producto' : 'Añadir al inventario',
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: ListView(
@@ -463,7 +510,11 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               onPressed: _isLoading ? null : _saveItem,
               child: _isLoading
                   ? const CircularProgressIndicator()
-                  : const Text('Guardar en el inventario'),
+                  : Text(
+                      widget.isEditing
+                          ? 'Guardar cambios'
+                          : 'Guardar en el inventario',
+                    ),
             ),
           ],
         ),

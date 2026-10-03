@@ -637,6 +637,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
               ),
             ),
+            ListTile(
+              leading: const Icon(
+                Icons.edit_outlined,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Editar'),
+              onTap: () => Navigator.of(ctx).pop('edit'),
+            ),
             if (item.itemType == 'comida')
               ListTile(
                 leading: Icon(
@@ -669,7 +677,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
     );
     if (!mounted || action == null) return;
-    if (action == 'staple') {
+    if (action == 'edit') {
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => AddInventoryItemScreen(item: item)),
+      );
+      if (changed == true) _reload();
+    } else if (action == 'staple') {
       await _toggleStaple(item, !item.isStaple);
     } else if (action == 'delete') {
       await _deleteItem(item);

@@ -209,6 +209,74 @@ class ShelfLife {
     }
   }
 
+  /// Alimentos concretos cuya UBICACIÓN natural no es la de su categoría
+  /// genérica. P. ej. muchas frutas/verduras aguantan en despensa, pero estas
+  /// van mejor en la nevera. Mapea nombre normalizado -> ubicación sugerida.
+  static const Map<String, String> _locationByFood = {
+    // Van a la nevera aunque su categoría sea fruta/verdura genérica.
+    'lechuga': 'Nevera',
+    'espinaca': 'Nevera',
+    'espinacas': 'Nevera',
+    'zanahoria': 'Nevera',
+    'brocoli': 'Nevera',
+    'champinon': 'Nevera',
+    'champinones': 'Nevera',
+    'fresa': 'Nevera',
+    'fresas': 'Nevera',
+    'arandano': 'Nevera',
+    'arandanos': 'Nevera',
+    // Van a la despensa aunque sean "fruta".
+    'platano': 'Despensa',
+    'banana': 'Despensa',
+    'manzana': 'Despensa',
+    'naranja': 'Despensa',
+    'cebolla': 'Despensa',
+    'ajo': 'Despensa',
+    'patata': 'Despensa',
+    'patatas': 'Despensa',
+  };
+
+  /// Ubicación sugerida por CATEGORÍA cuando no hay regla por alimento.
+  static const Map<FoodCategory, String> _locationByCategory = {
+    FoodCategory.verdura: 'Nevera',
+    FoodCategory.fruta: 'Despensa',
+    FoodCategory.carne: 'Nevera',
+    FoodCategory.pescado: 'Nevera',
+    FoodCategory.lacteos: 'Nevera',
+    FoodCategory.bebidas: 'Despensa',
+    FoodCategory.panaderia: 'Despensa',
+    FoodCategory.especias: 'Especias',
+    FoodCategory.otros: 'Despensa',
+  };
+
+  /// Sugiere la UBICACIÓN lógica ('Nevera' | 'Congelador' | 'Despensa' |
+  /// 'Especias') para un alimento recién comprado, según su nombre. Nunca
+  /// sugiere 'Congelador' automáticamente (congelar es una decisión del
+  /// usuario). Por defecto 'Despensa'.
+  static String suggestLocation(String name) {
+    final normalized = CategoryIcons.normalize(name);
+    final tokens = normalized
+        .split(RegExp(r'[^a-z0-9]+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
+
+    // "congelad(o/a/os)" en el nombre -> congelador.
+    if (tokens.any((t) => t.startsWith('congelad'))) return 'Congelador';
+
+    // 1. Regla por alimento concreto.
+    for (final entry in _locationByFood.entries) {
+      final kw = entry.key;
+      final matches = tokens.any(
+        (t) => t == kw || (kw.length >= 4 && t.startsWith(kw)),
+      );
+      if (matches) return entry.value;
+    }
+
+    // 2. Por categoría inferida.
+    final cat = CategoryIcons.categoryFor(name);
+    return _locationByCategory[cat] ?? 'Despensa';
+  }
+
   /// Fecha de caducidad estimada a partir de HOY para [name] en [category],
   /// o null si no se puede estimar. La fecha se normaliza a medianoche.
   static DateTime? estimateDate(
