@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
-import 'services/food_photo_service.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 
@@ -120,23 +119,9 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       final isFood = _itemType == 'comida';
       final name = _nameController.text.trim();
 
-      // Combo visual: solo para COMIDA intentamos resolver una foto real por
-      // nombre (Unsplash vía recipe-photo, con caché por hogar). Best-effort:
-      // si no hay clave, falla o no hay match, devuelve null y el item se
-      // guarda sin foto (la UI mostrará la ilustración cozy de la categoría).
-      String? imageUrl;
-      // Para especias/condimentos no buscamos foto real: salen genéricas y la
-      // ilustración cozy (🧂) queda más limpia. Resto de comida sí.
-      if (isFood && name.isNotEmpty && _selectedCategory != 'Especias') {
-        try {
-          imageUrl = await FoodPhotoService(
-            Supabase.instance.client,
-          ).resolvePhotoUrl(homeId: homeId, name: name);
-        } catch (_) {
-          // Nunca bloquea el guardado por la foto.
-          imageUrl = null;
-        }
-      }
+      // La despensa muestra SIEMPRE la ilustración cozy por categoría (no fotos
+      // reales): las fotos de ingredientes crudos casi nunca acertaban. Así que
+      // no buscamos foto al guardar (ahorra cuota y evita fotos sin sentido).
 
       final item = InventoryItem(
         id: '',
@@ -167,7 +152,6 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             : null,
         // Solo tiene sentido marcar basicos de comida como "siempre en casa".
         isStaple: isFood && _isStaple,
-        imageUrl: imageUrl,
       );
 
       await Supabase.instance.client

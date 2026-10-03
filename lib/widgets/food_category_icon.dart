@@ -11,8 +11,8 @@ import '../theme/app_theme.dart';
 enum FoodCategory {
   verdura('🥦', 'Verduras', Icons.eco),
   fruta('🍎', 'Frutas', Icons.apple),
-  carne('🥩', 'Carne', Icons.set_meal),
-  pescado('🐟', 'Pescado', Icons.phishing),
+  carne('🥩', 'Carne', Icons.kebab_dining),
+  pescado('🐟', 'Pescado', Icons.set_meal),
   lacteos('🧀', 'Lácteos', Icons.icecream),
   bebidas('🥤', 'Bebidas', Icons.local_drink),
   panaderia('🥖', 'Panadería/Cereales', Icons.bakery_dining),
