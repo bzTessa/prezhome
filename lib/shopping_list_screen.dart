@@ -128,12 +128,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             .update({'quantity': foundQty + addQty})
             .eq('id', foundId);
       } else {
-        final estimated = ShelfLife.estimateDate(item.name, 'Despensa');
+        // Ubicación lógica según el alimento (nevera/despensa/condimentos),
+        // y caducidad estimada para esa ubicación. Nunca congelador automático.
+        final location = ShelfLife.suggestLocation(item.name);
+        final estimated = ShelfLife.estimateDate(item.name, location);
         final inv = InventoryItem(
           id: '',
           homeId: homeId,
           name: item.name,
-          category: 'Despensa',
+          category: location,
           itemType: 'comida',
           quantity: addQty,
           unit: item.unit ?? 'unidades',

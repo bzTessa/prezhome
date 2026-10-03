@@ -245,8 +245,6 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   /// por nombre, así que un producto ya ubicado en Nevera/Congelador igualmente
   /// recibe la suma y no se duplica.
   Future<void> _addItemsToPantry(dynamic homeId) async {
-    const category = 'Despensa';
-
     // Inventario actual del hogar (RLS ya filtra; el eq es explícito y barato).
     final existing = await _client
         .from('inventory_items')
@@ -316,14 +314,16 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             .update({'quantity': newQty})
             .eq('id', found['id']);
       } else {
-        // Caducidad orientativa automática según el producto (entra en
-        // Despensa). La usuaria puede ajustarla luego desde el inventario.
-        final estimated = ShelfLife.estimateDate(name, category);
+        // Ubicación lógica según el producto (nevera/despensa/condimentos) y
+        // caducidad estimada para esa ubicación. La usuaria puede ajustarla
+        // luego desde el inventario (ahora los productos son editables).
+        final location = ShelfLife.suggestLocation(name);
+        final estimated = ShelfLife.estimateDate(name, location);
         final item = InventoryItem(
           id: '',
           homeId: homeId,
           name: name,
-          category: category,
+          category: location,
           itemType: 'comida',
           quantity: qty,
           unit: 'unidades',
