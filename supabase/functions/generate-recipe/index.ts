@@ -86,7 +86,11 @@ realistas, como quien hace la compra en el supermercado. Reglas por defecto:
      latas, lonchas) pueden ir en "unidad" / "diente" / "loncha" / "lata".
 Mantén números REDONDOS y cantidades tipo supermercado (paquetes de 250/500 g o
 1 kg, botellas de 1 L, latas); nada de decimales raros (mejor "500 g" que
-"512.3 g"). Ejemplos del estilo que quiero:
+"512.3 g"). Cuando un ingrediente se vende en FORMATO cerrado (bote, lata,
+paquete) ajusta la cantidad a ese formato aunque sobre un poco: p. ej. un bote
+de garbanzos cocidos escurrido son ~400 g, una lata de atún ~80 g; es mejor
+pedir "400 g de garbanzos (1 bote)" que "250 g". El ajo en DIENTES enteros, los
+huevos en unidades enteras. Ejemplos del estilo que quiero:
   - "200 g de arroz"         -> quantity 200, unit "g"
   - "150 g de pollo"         -> quantity 150, unit "g"
   - "500 ml de caldo"        -> quantity 500, unit "ml"
