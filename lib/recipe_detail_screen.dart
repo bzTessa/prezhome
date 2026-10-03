@@ -4,9 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
-import 'services/food_facts_service.dart';
 import 'utils/measure_format.dart';
-import 'utils/nutrition_calc.dart';
 import 'utils/practical_quantity.dart';
 import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
@@ -28,12 +26,9 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   final ImagePicker _picker = ImagePicker();
-  late final FoodFactsService _foodFacts = FoodFactsService(_client);
   late Recipe _recipe;
   late Future<List<Ingredient>> _ingredientsFuture;
   bool _changingPhoto = false; // true mientras se regenera/sube una foto
-  bool _recalculating = false; // true mientras recalcula nutrición con OFF
-  bool _nutritionFromOFF = false; // true si la nutrición se afinó con OFF
   String? _homeSupermarketLabel; // etiqueta del súper del hogar (chip)
   List<NutritionProfile> _profiles =
       []; // miembros del hogar con perfil visible
@@ -298,93 +293,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     } finally {
       if (mounted) setState(() => _changingPhoto = false);
     }
-  }
-
-  /// Recalcula las calorías y macros POR RACIÓN sumando los ingredientes con
-  /// datos reales de Open Food Facts (más fiable que la estimación de la IA).
-  /// Consulta OFF por cada ingrediente (cacheado), calcula y, si cubre una
-  /// mayoría razonable, actualiza la receta. Afina por el súper del hogar si lo
-  /// hay. Degrada con elegancia: si no cubre bastante, avisa y no cambia nada.
-  Future<void> _recalcNutrition() async {
-    setState(() => _recalculating = true);
-    try {
-      final ings = await _fetchIngredients();
-      if (ings.isEmpty) {
-        _snack('Esta receta no tiene ingredientes para calcular.');
-        return;
-      }
-
-      // Súper del hogar (para afinar la búsqueda a sus productos).
-      final supermarket = await _firstHomeSupermarket();
-
-      final nutriIngs = <NutriIngredient>[];
-      for (final ing in ings) {
-        final facts = await _foodFacts.lookup(
-          ing.name,
-          supermarket: supermarket,
-        );
-        Per100g? per;
-        if (facts.found && facts.kcal100 != null) {
-          per = Per100g(
-            kcal: facts.kcal100!,
-            protein: facts.protein100 ?? 0,
-            carbs: facts.carbs100 ?? 0,
-            fat: facts.fat100 ?? 0,
-          );
-        }
-        nutriIngs.add(
-          NutriIngredient(quantity: ing.quantity, unit: ing.unit, per100g: per),
-        );
-      }
-
-      final servings = _recipe.servings < 1 ? 1 : _recipe.servings;
-      final result = computeRecipeNutrition(nutriIngs, servings);
-
-      if (result.covered == 0) {
-        _snack(
-          'Open Food Facts aún no tiene estos ingredientes. '
-          'Mantengo la estimación actual.',
-        );
-        return;
-      }
-
-      await _client
-          .from('recipes')
-          .update({
-            'calories_per_serving': result.kcal,
-            'protein_grams': result.protein,
-            'carbs_grams': result.carbs,
-            'fat_grams': result.fat,
-          })
-          .eq('id', _recipe.id);
-      await _refreshRecipe();
-      _changed = true;
-      if (mounted) setState(() => _nutritionFromOFF = true);
-
-      if (!mounted) return;
-      final msg = result.isReliable
-          ? 'Nutrición actualizada con Open Food Facts '
-                '(${result.covered}/${result.total} ingredientes).'
-          : 'Nutrición aproximada: solo encontré datos de '
-                '${result.covered}/${result.total} ingredientes.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No se pudo recalcular: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _recalculating = false);
-    }
-  }
-
-  void _snack(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   /// Primer supermercado del hogar (clave), o '' si no hay. Best-effort.
@@ -908,48 +816,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Text(
-                        'Por ración',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      if (_nutritionFromOFF) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.sageBg,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.verified_outlined,
-                                size: 13,
-                                color: AppColors.sage,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                'Open Food Facts',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.sage,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
+                  const Text(
+                    'Por ración',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 12),
                   if (r.calories != null || r.protein != null)
@@ -968,37 +837,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           _macro('${r.fat!.toStringAsFixed(0)}g', 'Grasa'),
                       ],
                     ),
-                  const SizedBox(height: 12),
-                  // Recalcular la nutrición sumando ingredientes con datos
-                  // reales de Open Food Facts (más fiable que la IA a ojo).
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _recalculating ? null : _recalcNutrition,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.woodDark,
-                        side: const BorderSide(
-                          color: AppColors.wood,
-                          width: 1.4,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: _recalculating
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.calculate_outlined, size: 18),
-                      label: Text(
-                        _recalculating
-                            ? 'Calculando…'
-                            : 'Afinar con Open Food Facts',
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
