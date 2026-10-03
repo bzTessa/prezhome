@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
 import 'utils/measure_format.dart';
+import 'utils/practical_quantity.dart';
 import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
@@ -450,20 +451,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
   }
 
-  String _fmtQty(double? q) {
-    if (q == null) return '';
-    // Los ingredientes se escalan respecto a la "comida de hogar": cuántas
-    // raciones-base equivale esa comida × el multiplicador.
-    final scaled = q * _servingsFactor;
-    // Redondeo natural: cantidades grandes a enteros; pequeñas con 1 decimal.
-    if (scaled >= 10) return scaled.round().toString();
-    if (scaled >= 1) {
-      final r1 = (scaled * 2).round() / 2; // medios (1, 1.5, 2...)
-      return r1 % 1 == 0 ? r1.toStringAsFixed(0) : r1.toStringAsFixed(1);
-    }
-    return scaled.toStringAsFixed(1);
-  }
-
   @override
   Widget build(BuildContext context) {
     final r = _recipe;
@@ -868,15 +855,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       }
                       return Column(
                         children: ings.map((ing) {
-                          final qty = _fmtQty(ing.quantity);
-                          final rawUnit = ing.unit?.trim() ?? '';
-                          // Concordamos el plural con la cantidad ya escalada
-                          // (p.ej. "2 unidades" en vez de "2 unidad").
-                          final scaledQty =
-                              (ing.quantity ?? 0) * _servingsFactor;
+                          // Escalamos a la cantidad del hogar y la volvemos
+                          // PRÁCTICA (nada de 1060 g, 53 ml, 5,5 dientes).
+                          final scaledRaw = ing.quantity == null
+                              ? null
+                              : ing.quantity! * _servingsFactor;
+                          final practical = makePractical(
+                            ing.name,
+                            scaledRaw,
+                            ing.unit,
+                          );
+                          // Texto de cantidad práctica (sin decimales si es
+                          // entera) y plural concordado con la unidad final.
+                          final pq = practical.quantity;
+                          final qty = pq == null
+                              ? ''
+                              : (pq % 1 == 0
+                                    ? pq.toStringAsFixed(0)
+                                    : pq.toStringAsFixed(1));
+                          final rawUnit = practical.unit.trim();
                           final unit = rawUnit.isEmpty
                               ? ''
-                              : pluralizeUnit(rawUnit, scaledQty);
+                              : pluralizeUnit(rawUnit, pq ?? 0);
                           // Caso "al gusto"/"a ojo" sin cantidad: queda mas
                           // natural leer "Sal (al gusto)" que "al gusto Sal".
                           final isLooseMeasure = qty.isEmpty && unit.isNotEmpty;

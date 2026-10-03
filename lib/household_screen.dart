@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'economy_screen.dart';
+import 'models/supermarket.dart';
 import 'nutrition_profile_screen.dart';
-import 'profile_wizard_screen.dart';
 import 'login_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
@@ -50,7 +50,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
 
     final home = await _client
         .from('homes')
-        .select('id, name')
+        .select('id, name, supermarkets')
         .eq('id', homeId)
         .maybeSingle();
 
@@ -81,10 +81,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       );
     }).toList();
 
+    final rawSupers = home?['supermarkets'];
+    final supermarkets = rawSupers is List
+        ? rawSupers.map((e) => e.toString()).toList()
+        : <String>[];
+
     return _HouseholdData(
       homeId: homeId,
       homeName: (home?['name'] as String?) ?? 'Mi Hogar',
       members: members,
+      supermarkets: supermarkets,
     );
   }
 
@@ -381,6 +387,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           ),
         ),
         const SizedBox(height: 16),
+        _supermarketsCard(data),
+        const SizedBox(height: 16),
         _card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,7 +466,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               _settingTile(
                 icon: Icons.favorite_outline,
                 title: 'Mi perfil nutricional',
-                subtitle: 'Objetivo de calorías y preferencias',
+                subtitle: 'Objetivo de calorías, preferencias y asistente',
                 iconBg: AppColors.terracottaBg,
                 iconFg: AppColors.terracotta,
                 onTap: () => Navigator.of(context).push(
@@ -467,23 +475,161 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   ),
                 ),
               ),
-              _settingTile(
-                icon: Icons.quiz_outlined,
-                title: 'Cuestionario de perfil',
-                subtitle: 'Recalcula tu objetivo paso a paso',
-                iconBg: AppColors.peachBg,
-                iconFg: AppColors.peach,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ProfileWizardScreen(),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  /// Tarjeta de supermercados del hogar: chips de los elegidos (o un texto si
+  /// no hay ninguno) y un botón para editarlos.
+  Widget _supermarketsCard(_HouseholdData data) {
+    final labels = Supermarket.labelsFor(data.supermarkets);
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.sageBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.storefront_outlined,
+                  color: AppColors.sage,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Supermercados',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              TextButton(
+                onPressed: () => _editSupermarkets(data),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.woodDark,
+                ),
+                child: Text(labels.isEmpty ? 'Elegir' : 'Editar'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Las recetas se adaptarán a lo que haya en tus súper. Es opcional.',
+            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          if (labels.isEmpty)
+            Text(
+              'Sin supermercado elegido.',
+              style: TextStyle(color: Colors.grey[500], fontSize: 13),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: labels
+                  .map(
+                    (l) => Chip(
+                      label: Text(l),
+                      backgroundColor: AppColors.sageBg,
+                      side: BorderSide.none,
+                      labelStyle: const TextStyle(
+                        color: AppColors.sage,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Bottom sheet para elegir uno o varios supermercados (opcional). Guarda la
+  /// selección en homes.supermarkets. Cualquier miembro del hogar puede
+  /// editarla (igual que el nombre del hogar).
+  Future<void> _editSupermarkets(_HouseholdData data) async {
+    final selected = {...data.supermarkets};
+    final result = await showModalBottomSheet<List<String>>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '¿Dónde compráis?',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Puedes elegir varios. Es opcional.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: Supermarket.all.map((s) {
+                      final isSel = selected.contains(s.key);
+                      return CheckboxListTile(
+                        value: isSel,
+                        activeColor: AppColors.woodDark,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(s.label),
+                        onChanged: (v) => setSheet(() {
+                          if (v == true) {
+                            selected.add(s.key);
+                          } else {
+                            selected.remove(s.key);
+                          }
+                        }),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(selected.toList()),
+                    child: const Text('Guardar'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (result == null) return;
+    try {
+      await _client
+          .from('homes')
+          .update({'supermarkets': result})
+          .eq('id', data.homeId!);
+      _reload();
+    } catch (e) {
+      _snack('No se pudo guardar: $e', error: true);
+    }
   }
 
   /// Avatar circular con la inicial del nombre y un color cálido estable
@@ -548,10 +694,12 @@ class _HouseholdData {
   final String? homeId;
   final String? homeName;
   final List<_Member> members;
+  final List<String> supermarkets; // claves canónicas de súper del hogar
   _HouseholdData({
     required this.homeId,
     this.homeName,
     this.members = const [],
+    this.supermarkets = const [],
   });
 }
 

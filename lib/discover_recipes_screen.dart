@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/recipe.dart';
+import 'models/supermarket.dart';
 import 'theme/app_theme.dart';
 
 /// "Ideas personalizadas" (estilo mise): eliges parámetros y la IA propone
@@ -16,11 +17,15 @@ class DiscoverRecipesScreen extends StatefulWidget {
 class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   final SupabaseClient _client = Supabase.instance.client;
 
-  final _supermarketController = TextEditingController();
   final _budgetController = TextEditingController();
   String _goal = 'mantener';
   String _diet = 'sin restricción';
   final Set<String> _appliances = {};
+
+  // Supermercados elegidos para esta generación. Se precargan con los del
+  // hogar (homes.supermarkets) pero se pueden ajustar aquí sin cambiar los del
+  // hogar. Opcional: si está vacío, la IA no se ciñe a ningún súper.
+  final Set<String> _supermarkets = {};
 
   bool _loading = false;
   bool _savedAny = false;
@@ -50,8 +55,44 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _loadHomeSupermarkets();
+  }
+
+  /// Precarga los supermercados del hogar como selección inicial (sin bloquear
+  /// la UI; si falla, simplemente arranca vacío).
+  Future<void> _loadHomeSupermarkets() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null) return;
+      final home = await _client
+          .from('homes')
+          .select('supermarkets')
+          .eq('id', homeId)
+          .maybeSingle();
+      final raw = home?['supermarkets'];
+      if (raw is List && mounted) {
+        setState(() {
+          _supermarkets
+            ..clear()
+            ..addAll(raw.map((e) => e.toString()));
+        });
+      }
+    } catch (_) {
+      // Sin preselección si falla; no es crítico.
+    }
+  }
+
+  @override
   void dispose() {
-    _supermarketController.dispose();
     _budgetController.dispose();
     super.dispose();
   }
@@ -65,7 +106,11 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       final res = await _client.functions.invoke(
         'discover-recipes',
         body: {
-          'supermarket': _supermarketController.text.trim(),
+          // Enviamos los supermercados elegidos como etiquetas legibles
+          // (p. ej. "Mercadona, Lidl"); vacío si no se eligió ninguno.
+          'supermarket': Supermarket.labelsFor(
+            _supermarkets.toList(),
+          ).join(', '),
           'goal': _goal,
           'diet': _diet,
           'appliances': _appliances.toList(),
@@ -259,9 +304,27 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: _supermarketController,
-                    decoration: _dec('Supermercado (opcional)'),
+                  const Text('Supermercados (opcional):'),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: Supermarket.all.map((s) {
+                      final sel = _supermarkets.contains(s.key);
+                      return FilterChip(
+                        label: Text(s.label),
+                        selected: sel,
+                        selectedColor: AppColors.wood,
+                        backgroundColor: Colors.white,
+                        onSelected: (v) => setState(() {
+                          if (v) {
+                            _supermarkets.add(s.key);
+                          } else {
+                            _supermarkets.remove(s.key);
+                          }
+                        }),
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(

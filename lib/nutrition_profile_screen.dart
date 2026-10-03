@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'food_diary_screen.dart';
 import 'models/nutrition_profile.dart';
+import 'profile_wizard_screen.dart';
 
 class NutritionProfileScreen extends StatefulWidget {
   const NutritionProfileScreen({super.key});
@@ -237,6 +238,75 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
           : ListView(
               padding: const EdgeInsets.all(24),
               children: [
+                // Acceso al cuestionario guiado paso a paso. Es el MISMO perfil
+                // (no un dato aparte): al volver, recargamos para reflejar lo
+                // que haya cambiado. Así desaparece la antigua entrada
+                // "Cuestionario de perfil" separada y redundante.
+                InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileWizardScreen(),
+                      ),
+                    );
+                    if (mounted) _load();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFE2C792),
+                        width: 1.4,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF6E6CC),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: Color(0xFF9B6B2E),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Configurar paso a paso',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Un asistente te hace unas preguntas y calcula '
+                                'tu objetivo.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.black26),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // --- Modo de cocina ---
                 const Text(
                   '¿Cómo cocinas?',
