@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/recipe.dart';
 import 'models/supermarket.dart';
+import 'services/food_facts_service.dart';
+import 'services/recipe_refiner.dart';
 import 'theme/app_theme.dart';
 
 /// "Ideas personalizadas" (estilo mise): eliges parámetros y la IA propone
@@ -185,19 +187,40 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         }
       }
 
+      final servings = i(r['servings']) ?? 1;
+
+      // Refinar la receta con Open Food Facts: cantidades prácticas (formatos
+      // de súper reales) y nutrición recalculada sumando ingredientes. Afina
+      // por el primer súper elegido. Best-effort: si OFF no sabe, las
+      // cantidades igualmente salen más limpias y la nutrición queda la de IA.
+      final rawIngredients = (r['ingredients'] is List)
+          ? (r['ingredients'] as List)
+                .whereType<Map>()
+                .map((m) => Map<String, dynamic>.from(m))
+                .toList()
+          : <Map<String, dynamic>>[];
+      final supermarket = _supermarkets.isNotEmpty ? _supermarkets.first : '';
+      final refined = await RecipeRefiner(FoodFactsService(_client)).refine(
+        raw: rawIngredients,
+        servings: servings,
+        supermarket: supermarket,
+      );
+      final nut = refined.nutrition;
+
       final recipe = Recipe(
         id: '',
         homeId: homeId,
         title: title,
         description: r['description']?.toString(),
         instructions: r['instructions']?.toString(),
-        servings: i(r['servings']) ?? 1,
+        servings: servings,
         prepTimeMinutes: i(r['prep_minutes']),
         cookTimeMinutes: i(r['cook_minutes']),
-        calories: i(r['calories_per_serving']),
-        protein: d(r['protein_grams']),
-        carbs: d(r['carbs_grams']),
-        fat: d(r['fat_grams']),
+        // Si OFF dio una nutrición fiable, la usamos; si no, la de la IA.
+        calories: nut?.kcal ?? i(r['calories_per_serving']),
+        protein: nut?.protein.toDouble() ?? d(r['protein_grams']),
+        carbs: nut?.carbs.toDouble() ?? d(r['carbs_grams']),
+        fat: nut?.fat.toDouble() ?? d(r['fat_grams']),
         appliance: (r['appliance'] ?? 'none').toString(),
         mealTypes: types.isEmpty ? ['lunch'] : types,
         gramsPerServing: d(r['grams_per_serving']),
@@ -221,26 +244,21 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           .single();
       final recipeId = inserted['id'] as String;
 
-      final ings = r['ingredients'];
-      if (ings is List && ings.isNotEmpty) {
+      if (refined.ingredients.isNotEmpty) {
         var pos = 0;
-        final rows = ings
-            .map((raw) {
-              final m = raw is Map ? raw : {};
-              return {
+        final rows = refined.ingredients
+            .map(
+              (ing) => {
                 'recipe_id': recipeId,
                 'home_id': homeId,
-                'name': (m['name'] ?? '').toString(),
-                'quantity': d(m['quantity']),
-                'unit': m['unit']?.toString(),
+                'name': ing.name,
+                'quantity': ing.quantity,
+                'unit': ing.unit,
                 'position': pos++,
-              };
-            })
-            .where((m) => (m['name'] as String).isNotEmpty)
+              },
+            )
             .toList();
-        if (rows.isNotEmpty) {
-          await _client.from('recipe_ingredients').insert(rows);
-        }
+        await _client.from('recipe_ingredients').insert(rows);
       }
 
       setState(() {

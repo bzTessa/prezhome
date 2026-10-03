@@ -6,6 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
 import 'models/recipe.dart';
+import 'services/food_facts_service.dart';
+import 'services/recipe_refiner.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -250,7 +252,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {
-        _applyAIRecipe(Map<String, dynamic>.from(data['recipe'] as Map));
+        await _applyAIRecipeRefined(
+          Map<String, dynamic>.from(data['recipe'] as Map),
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -352,7 +356,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       );
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {
-        _applyAIRecipe(Map<String, dynamic>.from(data['recipe'] as Map));
+        await _applyAIRecipeRefined(
+          Map<String, dynamic>.from(data['recipe'] as Map),
+        );
         // Guardamos el enlace en el campo de vídeo para conservar la fuente.
         _videoController.text = url;
         if (mounted) {
@@ -380,6 +386,74 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     } finally {
       if (mounted) setState(() => _aiLoading = false);
     }
+  }
+
+  /// Refina una receta recién recibida de la IA con Open Food Facts (cantidades
+  /// prácticas con formatos de súper reales + nutrición sumando ingredientes) y
+  /// luego rellena el formulario. Best-effort: si OFF no responde, cae a la
+  /// receta tal cual la dio la IA (nunca bloquea el rellenado).
+  Future<void> _applyAIRecipeRefined(Map<String, dynamic> r) async {
+    try {
+      final servings = int.tryParse((r['servings'] ?? '').toString()) ?? 1;
+      final rawIngredients = (r['ingredients'] is List)
+          ? (r['ingredients'] as List)
+                .whereType<Map>()
+                .map((m) => Map<String, dynamic>.from(m))
+                .toList()
+          : <Map<String, dynamic>>[];
+      if (rawIngredients.isNotEmpty) {
+        final supermarket = await _firstHomeSupermarket();
+        final refined = await RecipeRefiner(FoodFactsService(_client)).refine(
+          raw: rawIngredients,
+          servings: servings,
+          supermarket: supermarket,
+        );
+        // Sustituimos los ingredientes por los prácticos.
+        r['ingredients'] = refined.ingredients
+            .map(
+              (ing) => {
+                'name': ing.name,
+                'quantity': ing.quantity,
+                'unit': ing.unit,
+              },
+            )
+            .toList();
+        // Si OFF dio nutrición fiable, pisamos la estimación de la IA.
+        final nut = refined.nutrition;
+        if (nut != null) {
+          r['calories_per_serving'] = nut.kcal;
+          r['protein_grams'] = nut.protein;
+          r['carbs_grams'] = nut.carbs;
+          r['fat_grams'] = nut.fat;
+        }
+      }
+    } catch (_) {
+      // Si algo falla, seguimos con la receta original.
+    }
+    if (mounted) _applyAIRecipe(r);
+  }
+
+  /// Primer supermercado del hogar (clave) o '' si no hay. Best-effort.
+  Future<String> _firstHomeSupermarket() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return '';
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null) return '';
+      final home = await _client
+          .from('homes')
+          .select('supermarkets')
+          .eq('id', homeId)
+          .maybeSingle();
+      final raw = home?['supermarkets'];
+      if (raw is List && raw.isNotEmpty) return raw.first.toString();
+    } catch (_) {}
+    return '';
   }
 
   void _applyAIRecipe(Map<String, dynamic> r) {
