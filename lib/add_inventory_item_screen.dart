@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
 import 'services/food_photo_service.dart';
+import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 
 class AddInventoryItemScreen extends StatefulWidget {
@@ -22,8 +23,14 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   String _kind = 'ingredient';
   DateTime? _frozenOn;
   DateTime? _expirationDate;
+  DateTime? _bestBefore; // consumo preferente estimado (congelador)
   bool _isStaple = false;
   bool _isLoading = false;
+
+  // ¿La usuaria ha fijado la fecha a mano? Si es así, no la pisamos con la
+  // estimación automática. Al escribir el nombre o cambiar de ubicación, si la
+  // fecha sigue siendo automática, la recalculamos.
+  bool _expirationManual = false;
 
   static const List<String> _foodCategories = [
     'Despensa',
@@ -47,11 +54,45 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Al escribir el nombre recalculamos la caducidad estimada (si la usuaria
+    // no la ha fijado a mano). Con un pequeño debounce implícito: solo
+    // recalculamos cuando cambia el texto.
+    _nameController.addListener(_recalcEstimatedExpiry);
+  }
+
+  @override
   void dispose() {
+    _nameController.removeListener(_recalcEstimatedExpiry);
     _nameController.dispose();
     _quantityController.dispose();
     _servingsController.dispose();
     super.dispose();
+  }
+
+  /// Recalcula una fecha de caducidad/consumo preferente ORIENTATIVA a partir
+  /// del nombre del producto y la ubicación, salvo que la usuaria la haya
+  /// fijado a mano (_expirationManual). Para nevera/despensa rellena
+  /// _expirationDate; para congelador rellena _bestBefore (y _frozenOn=hoy si
+  /// no hay). Para especias no pone fecha.
+  void _recalcEstimatedExpiry() {
+    if (_expirationManual) return;
+    if (_itemType != 'comida') return;
+
+    final name = _nameController.text.trim();
+    final estimated = name.isEmpty
+        ? null
+        : ShelfLife.estimateDate(name, _selectedCategory);
+
+    setState(() {
+      if (_selectedCategory == 'Congelador') {
+        _frozenOn ??= DateTime.now();
+        _bestBefore = estimated;
+      } else {
+        _expirationDate = estimated;
+      }
+    });
   }
 
   Future<void> _saveItem() async {
@@ -113,6 +154,11 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             : null,
         frozenOn: (isFood && _selectedCategory == 'Congelador')
             ? _frozenOn
+            : null,
+        // Consumo preferente estimado para el congelador (si lo hay). El modelo
+        // usa best_before como caducidad efectiva en el congelador.
+        bestBefore: (isFood && _selectedCategory == 'Congelador')
+            ? _bestBefore
             : null,
         // La fecha de caducidad solo aplica a comida fuera del congelador
         // (Nevera/Despensa); el congelador usa la fecha de congelación.
@@ -233,13 +279,18 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               items: _categories
                   .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                   .toList(),
-              onChanged: (val) => setState(() {
-                _selectedCategory = val!;
-                // Las especias son básicos que no deben acabar en la lista de
-                // la compra: activamos "siempre en casa" por defecto al
-                // elegir esta ubicación (la usuaria puede desmarcarlo).
-                if (_selectedCategory == 'Especias') _isStaple = true;
-              }),
+              onChanged: (val) {
+                setState(() {
+                  _selectedCategory = val!;
+                  // Las especias son básicos que no deben acabar en la lista
+                  // de la compra: activamos "siempre en casa" por defecto al
+                  // elegir esta ubicación (la usuaria puede desmarcarlo).
+                  if (_selectedCategory == 'Especias') _isStaple = true;
+                });
+                // Al cambiar de ubicación, la caducidad típica cambia: la
+                // reestimamos (si no está fijada a mano).
+                _recalcEstimatedExpiry();
+              },
             ),
             const SizedBox(height: 16),
             Row(
@@ -295,7 +346,25 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     lastDate: now,
                     helpText: 'Fecha de congelación',
                   );
-                  if (picked != null) setState(() => _frozenOn = picked);
+                  if (picked != null) {
+                    setState(() => _frozenOn = picked);
+                    // Reestimar el consumo preferente desde la nueva fecha de
+                    // congelación (si no está fijado a mano).
+                    if (!_expirationManual) {
+                      final name = _nameController.text.trim();
+                      final days = name.isEmpty
+                          ? ShelfLife.defaultFreezerDays
+                          : (ShelfLife.estimateDays(name, 'Congelador') ??
+                                ShelfLife.defaultFreezerDays);
+                      setState(() {
+                        _bestBefore = DateTime(
+                          picked.year,
+                          picked.month,
+                          picked.day + days,
+                        );
+                      });
+                    }
+                  }
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: InputDecorator(
@@ -308,6 +377,16 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                               '${_frozenOn!.year}',
                   ),
                 ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _bestBefore == null
+                    ? 'Calcularemos cuánto aguanta en el congelador.'
+                    : 'Mejor consumir antes del '
+                          '${_bestBefore!.day.toString().padLeft(2, '0')}/'
+                          '${_bestBefore!.month.toString().padLeft(2, '0')}/'
+                          '${_bestBefore!.year} (aprox.).',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
             ],
 
@@ -327,12 +406,13 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                   if (picked != null) {
                     setState(() {
                       _expirationDate = picked;
+                      _expirationManual = true; // la usuaria la fijó a mano
                     });
                   }
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: InputDecorator(
-                  decoration: _dec('Caduca el (opcional)'),
+                  decoration: _dec('Caduca el (estimado, editable)'),
                   child: Text(
                     _expirationDate == null
                         ? 'Sin fecha'
@@ -344,7 +424,9 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Te avisaremos en el Inicio cuando esté a punto de caducar.',
+                _expirationManual || _expirationDate == null
+                    ? 'Te avisaremos en el Inicio cuando esté a punto de caducar.'
+                    : 'Fecha aproximada calculada automáticamente. Puedes ajustarla.',
                 style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
             ],
