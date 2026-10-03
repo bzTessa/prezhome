@@ -1,7 +1,14 @@
 {
   "task_id": "task-nevera-caducidades",
   "task_description": "Implement the nevera/caducidades mechanism for PrezHome: control food expiration across Nevera/Congelador/Despensa with clear visual states (Fresco / Caduca pronto / Caducado), a redesigned location-grouped inventory screen, and expiration awareness surfaced on the Inicio dashboard. Cozy Spanish UI, mascot Miau preserved. No migration expected (all DB columns already exist). Work on a new branch feat/nevera-caducidades off main; do not push or open a PR.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "On branch feat/nevera-caducidades: dart format --output=none --set-exit-if-changed . reports 0 changed; flutter analyze No issues found!; flutter test 75/75 pass including 13 new tests in test/inventory_expiry_test.dart. No Supabase migration created (migrations still end at 0032; all needed columns already existed). No app Dockerfile so docker build is not applicable. Test quality: the new tests construct InventoryItem directly and assert expiryStatus/effectiveExpiry/daysUntilExpiry across all branches (caducado/pronto/fresco/sinFecha) and both fallback paths (Congelador best_before vs frozen_on+90d; Nevera expiration_date vs best_before) using now-relative dates; they would fail if the logic were reverted."
+  }
 }
