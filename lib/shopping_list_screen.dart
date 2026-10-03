@@ -6,6 +6,7 @@ import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
 import 'services/food_photo_service.dart';
+import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 import 'widgets/food_category_icon.dart';
@@ -33,6 +34,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   late Future<List<ShoppingListItem>> _itemsFuture;
   bool _generating = false;
 
+  // Precios conocidos del hogar (para estimar el coste de la compra).
+  Map<String, ProductPrice> _prices = {};
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +51,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         .select()
         .order('checked', ascending: true)
         .order('created_at', ascending: true);
+
+    // Cargamos los precios conocidos del hogar (best-effort) para estimar el
+    // coste de la compra. No bloquea la lista si falla.
+    try {
+      final homeId = await _homeId();
+      _prices = await PriceMemory(_client).loadAll(homeId);
+    } catch (_) {
+      _prices = {};
+    }
 
     return (res as List)
         .map((m) => ShoppingListItem.fromMap(m as Map<String, dynamic>))
@@ -786,6 +799,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
             children: [
               _CompraCelebracion(visible: compraTerminada),
+              if (pendientes.isNotEmpty) _costEstimateCard(pendientes),
               if (pendientes.isNotEmpty)
                 ..._buildPendientesPorCategoria(pendientes),
               if (comprados.isNotEmpty) ...[
@@ -824,6 +838,65 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  /// Tarjeta con el COSTE ESTIMADO de la compra pendiente, usando los precios
+  /// aprendidos de los tickets. Solo aparece si conocemos el precio de alguna
+  /// cosa; si no, no molesta.
+  Widget _costEstimateCard(List<ShoppingListItem> pendientes) {
+    final est = PriceMemory.estimateCost([
+      for (final i in pendientes) (name: i.name, quantity: i.quantity),
+    ], _prices);
+    if (est.priced == 0) return const SizedBox.shrink();
+
+    final total = est.total.toStringAsFixed(2).replaceAll('.', ',');
+    final aprox = est.priced < est.totalItems; // faltan precios de algunos
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(radius: 18),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.sageBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.euro_rounded, color: AppColors.sage),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  aprox ? 'Coste estimado (aprox.)' : 'Coste estimado',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$total €',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
+                Text(
+                  aprox
+                      ? 'Con precios de ${est.priced} de ${est.totalItems} '
+                            'productos. Escanea tickets para afinarlo.'
+                      : 'Según tus últimas compras.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

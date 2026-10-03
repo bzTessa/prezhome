@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
+import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 
@@ -166,6 +167,21 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       }
       if (rows.isNotEmpty) {
         await _client.from('ticket_items').insert(rows);
+      }
+
+      // 2b. Aprender PRECIOS de los productos (memoria de precios por hogar),
+      //     para estimar costes de la compra y de las comidas. Best-effort.
+      final priceLines = <({String name, double quantity, double totalPrice})>[
+        for (final it in _items)
+          if (it.name.text.trim().isNotEmpty && _num(it.totalPrice.text) > 0)
+            (
+              name: it.name.text.trim(),
+              quantity: _num(it.quantity.text),
+              totalPrice: _num(it.totalPrice.text),
+            ),
+      ];
+      if (priceLines.isNotEmpty) {
+        await PriceMemory(_client).learnFromTicket(homeId, priceLines);
       }
 
       // 3. Aprender correcciones: si el nombre corregido difiere del original,
