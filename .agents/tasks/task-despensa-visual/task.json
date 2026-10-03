@@ -1,0 +1,14 @@
+{
+  "task_id": "task-despensa-visual",
+  "task_description": "Hacer la Despensa (inventario) y la Lista de la compra mucho más visuales con un combo foto-real (Unsplash vía la edge function recipe-photo reutilizada, con caché por hogar) + ilustración-cozy vectorial de respaldo por categoría, sustituyendo los emojis genéricos del sistema. Rediseño estilo apps de control de caducidad de nevera (tarjetas con foto, resúmenes con números por estado, chips de días limpios, pestañas por ubicación) manteniendo identidad Cozy + Miau, español y todas las funciones existentes. Rama feat/despensa-visual desde main. Sin push ni PR.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "flutter pub get OK; dart format --set-exit-if-changed sin cambios; flutter analyze 'No issues found!' (0 issues); flutter test 109/109 verde (98 baseline + 11 nuevos). Calidad de tests: food_image_style_test.dart ejercita de verdad la lógica pura nueva (iconFor/backgroundColorFor/foregroundColorFor/styleFor por categoría inferida y FoodPhotoService.cacheKey == CategoryIcons.normalize) y guarda la no-regresión de la API de emoji; fallarían si se revirtiera la lógica. FoodImage es solo UI (sin lógica pura testeable sin red). FoodImage se usa en inventario y lista de la compra; no quedan usos de CategoryIcons.badge ni render de emoji del sistema en esas pantallas; heroTags 'fab-inventory'/'fab-compra-generar'/'fab-compra-add' intactos. Docker no aplica (proyecto Flutter sin Dockerfile). Edge functions no desplegables localmente; se reutiliza recipe-photo sin cambios."
+  }
+}
