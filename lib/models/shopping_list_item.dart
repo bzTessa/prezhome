@@ -10,6 +10,14 @@ class ShoppingListItem {
   final String source; // 'manual' o 'auto'
   final DateTime? createdAt;
 
+  /// Tipo: 'comida' (por defecto) | 'hogar'. Define a qué parte del inventario
+  /// va al comprarlo.
+  final String itemType;
+
+  /// Ubicación/categoría elegida (Nevera/Congelador/Despensa/Especias/
+  /// Limpieza/Hogar) o null para que el sistema la deduzca.
+  final String? category;
+
   /// URL http(s) COMPLETA de la foto real del artículo (banco de imágenes vía
   /// la edge function recipe-photo). NULL = sin foto; la UI muestra la
   /// ilustración cozy de la categoría en su lugar.
@@ -24,6 +32,8 @@ class ShoppingListItem {
     this.checked = false,
     this.source = 'manual',
     this.createdAt,
+    this.itemType = 'comida',
+    this.category,
     this.imageUrl,
   });
 
@@ -47,6 +57,8 @@ class ShoppingListItem {
       checked: (map['checked'] as bool?) ?? false,
       source: (map['source'] ?? 'manual') as String,
       createdAt: _parseDate(map['created_at']),
+      itemType: (map['item_type'] ?? 'comida') as String,
+      category: map['category'] as String?,
       imageUrl: _nonEmptyString(map['image_url']),
     );
   }
@@ -68,6 +80,8 @@ class ShoppingListItem {
       'unit': unit,
       'checked': checked,
       'source': source,
+      'item_type': itemType,
+      'category': category,
       'image_url': imageUrl,
     };
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/inventory_item.dart';
 import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
@@ -920,37 +921,158 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               style: TextStyle(color: Colors.grey[700], fontSize: 13),
             )
           else
-            ...plan.cookingDays.map(
-              (day) => Padding(
+            ...plan.cookingDays.map((day) {
+              // Tandas con raciones destinadas al congelador: se podrán pasar
+              // a 'Congelados' con un toque (con foto y nombre de receta).
+              final toFreeze = day.batches
+                  .where((b) => b.freezerServings > 0)
+                  .toList();
+              return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2, right: 8),
-                      child: Icon(
-                        Icons.outdoor_grill,
-                        size: 16,
-                        color: Color(0xFFB58A3C),
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2, right: 8),
+                          child: Icon(
+                            Icons.outdoor_grill,
+                            size: 16,
+                            color: Color(0xFFB58A3C),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            resumenDiaCoccion(day),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.35,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: Text(
-                        resumenDiaCoccion(day),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.35,
-                          color: AppColors.ink,
+                    if (toFreeze.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _freezeBatches(data, toFreeze),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.woodDark,
+                            side: const BorderSide(
+                              color: AppColors.wood,
+                              width: 1.3,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.ac_unit, size: 16),
+                          label: const Text(
+                            'Ya cocinado · al congelador',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
-              ),
-            ),
+              );
+            }),
         ],
       ),
     );
+  }
+
+  /// Pasa a 'Congelados' las tandas indicadas: por cada receta congelable
+  /// inserta un plato listo en el congelador con su FOTO y nombre de receta,
+  /// las raciones calculadas y el consumo preferente (freezerDays). Deduplica
+  /// contra platos ya congelados de la misma receta sumando raciones.
+  Future<void> _freezeBatches(_PlanData data, List<PrepBatch> batches) async {
+    try {
+      final now = DateTime.now();
+      // Platos ya congelados de estas recetas (para no duplicar).
+      final existing = await _client
+          .from('inventory_items')
+          .select('id, recipe_id, quantity, servings')
+          .eq('home_id', data.homeId!)
+          .eq('category', 'Congelador')
+          .eq('kind', 'dish');
+
+      var count = 0;
+      for (final b in batches) {
+        final recipe = data.recipesById[b.recipeId];
+        if (recipe == null) continue;
+        final days = recipe.freezerDays ?? 90;
+        final bestBefore = days > 0
+            ? DateTime(now.year, now.month, now.day + days)
+            : null;
+
+        // ¿Ya hay un plato congelado de esta receta? Sumamos sus raciones.
+        Map<String, dynamic>? found;
+        for (final row in (existing as List)) {
+          final m = row as Map<String, dynamic>;
+          if (m['recipe_id'] == recipe.id) {
+            found = m;
+            break;
+          }
+        }
+
+        if (found != null) {
+          final prevQty = (found['quantity'] as num?)?.toDouble() ?? 0;
+          final prevServ = (found['servings'] as num?)?.toDouble() ?? 0;
+          await _client
+              .from('inventory_items')
+              .update({
+                'quantity': prevQty + 1,
+                'servings': prevServ + b.freezerServings,
+              })
+              .eq('id', found['id']);
+        } else {
+          final inv = InventoryItem(
+            id: '',
+            homeId: data.homeId!,
+            name: recipe.title,
+            category: 'Congelador',
+            quantity: 1,
+            unit: 'comidas',
+            kind: 'dish',
+            recipeId: recipe.id,
+            servings: b.freezerServings.toDouble(),
+            frozenOn: now,
+            bestBefore: bestBefore,
+            imageUrl: recipe.imageUrl,
+          );
+          await _client.from('inventory_items').insert(inv.toMap());
+        }
+        count++;
+      }
+
+      _reload();
+      if (!mounted) return;
+      _showMiau(
+        count == 1
+            ? 'Guardado en el congelador con su foto.'
+            : '$count platos guardados en el congelador.',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _energyCard() {
