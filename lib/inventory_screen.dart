@@ -36,9 +36,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   final SupabaseClient supabase = Supabase.instance.client;
   late Future<List<InventoryItem>> _itemsFuture;
 
-  // Filtro por tipo: 'todo' | 'comida' | 'hogar'. Se aplica en cliente sobre la
-  // lista ya cargada, sin recargar el Future.
-  String _typeFilter = 'todo';
+  // Filtro por sección: 'todo' | 'Nevera' | 'Congelador' | 'Despensa' |
+  // 'Especias' | 'Hogar'. Se aplica en cliente sobre la lista ya cargada.
+  String _sectionFilter = 'todo';
 
   @override
   void initState() {
@@ -180,14 +180,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
             );
           }
 
-          // Filtrado en cliente sobre la lista ya cargada (sin recargar).
-          final filtered = _typeFilter == 'todo'
+          // Filtrado en cliente por sección (ubicación / tipo).
+          final filtered = _sectionFilter == 'todo'
               ? items
-              : items.where((i) => i.itemType == _typeFilter).toList();
+              : items.where(_matchesSectionFilter).toList();
 
           return Column(
             children: [
-              _typeFilterBar(),
+              _sectionFilterBar(),
               Expanded(child: _buildSections(filtered)),
             ],
           );
@@ -196,29 +196,82 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _typeFilterBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: SegmentedButton<String>(
-        segments: const [
-          ButtonSegment(value: 'todo', label: Text('Todo')),
-          ButtonSegment(value: 'comida', label: Text('Comida')),
-          ButtonSegment(value: 'hogar', label: Text('Hogar')),
-        ],
-        selected: {_typeFilter},
-        showSelectedIcon: false,
-        style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.selected)
-                ? AppColors.wood
-                : AppColors.card,
-          ),
-          foregroundColor: const WidgetStatePropertyAll(AppColors.ink),
-        ),
-        onSelectionChanged: (selection) {
-          setState(() {
-            _typeFilter = selection.first;
-          });
+  /// ¿El item encaja con el filtro de sección seleccionado?
+  bool _matchesSectionFilter(InventoryItem i) {
+    switch (_sectionFilter) {
+      case 'Hogar':
+        return i.itemType != 'comida';
+      case 'Nevera':
+        return i.itemType == 'comida' && i.category == 'Nevera';
+      case 'Congelador':
+        return i.itemType == 'comida' && i.category == 'Congelador';
+      case 'Especias':
+        return i.itemType == 'comida' && i.category == 'Especias';
+      case 'Despensa':
+        return i.itemType == 'comida' &&
+            i.category != 'Nevera' &&
+            i.category != 'Congelador' &&
+            i.category != 'Especias';
+      default:
+        return true;
+    }
+  }
+
+  /// Barra de filtros por sección: scroll horizontal de chips (Todo, Nevera,
+  /// Congelador, Despensa, Condimentos, Hogar). Da más divisiones que el viejo
+  /// Todo/Comida/Hogar sin tocar la base de datos.
+  Widget _sectionFilterBar() {
+    const filters = <(String, String, IconData)>[
+      ('todo', 'Todo', Icons.apps_rounded),
+      ('Nevera', 'Nevera', Icons.kitchen),
+      ('Congelador', 'Congelador', Icons.ac_unit),
+      ('Despensa', 'Despensa', Icons.inventory_2),
+      ('Especias', 'Condimentos', Icons.grass),
+      ('Hogar', 'Hogar y limpieza', Icons.cleaning_services),
+    ];
+    return SizedBox(
+      height: 46,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        itemCount: filters.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final (value, label, icon) = filters[i];
+          final selected = _sectionFilter == value;
+          return GestureDetector(
+            onTap: () => setState(() => _sectionFilter = value),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.woodDark : AppColors.card,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: selected ? AppColors.woodDark : AppColors.wood,
+                  width: 1.4,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: selected ? Colors.white : AppColors.woodDark,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? Colors.white : AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         },
       ),
     );
@@ -469,17 +522,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
       decoration: AppTheme.cardDecoration(radius: 16),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        onLongPress: () => _openItemActions(item),
         leading: FoodImage(
           name: item.name,
           itemType: item.itemType,
           imageUrl: item.imageUrl,
           size: 56,
           radius: 14,
-          // Ilustración cozy por categoría SIEMPRE: las fotos reales de
-          // ingredientes crudos casi nunca acertaban (p. ej. "pechuga de pollo"
-          // salía como un plato cocinado). La ilustración es coherente y
-          // limpia, nunca falla.
-          forceIllustration: true,
+          // Muestra la FOTO real del alimento si la hay (buscada en modo
+          // "ingrediente crudo" para que acierte: pollo crudo, no un plato);
+          // si no hay foto, cae a la ilustración cozy por categoría. Las
+          // especias usan siempre ilustración (sus fotos salen genéricas).
+          forceIllustration: item.category == 'Especias',
         ),
         title: Row(
           children: [
@@ -552,31 +606,74 @@ class _InventoryScreenState extends State<InventoryScreen> {
             if (isFood) ...[const SizedBox(height: 6), _ExpiryChip(item: item)],
           ],
         ),
-        trailing: Row(
+        // Las acciones (no comprar / eliminar) van por pulsación larga, para no
+        // ensuciar la fila con iconos. Un punto de "más" lo insinúa.
+        trailing: Icon(Icons.more_vert, size: 20, color: Colors.grey[400]),
+      ),
+    );
+  }
+
+  /// Menú de acciones de un producto (pulsación larga): marcar/quitar "no
+  /// comprar" y eliminar.
+  Future<void> _openItemActions(InventoryItem item) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Toggle rápido "no añadir a la compra" (solo para comida).
-            if (item.itemType == 'comida')
-              IconButton(
-                icon: Icon(
-                  item.isStaple
-                      ? Icons.remove_shopping_cart
-                      : Icons.remove_shopping_cart_outlined,
-                  color: item.isStaple ? AppColors.woodDark : Colors.grey,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                item.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.ink,
                 ),
-                tooltip: item.isStaple
-                    ? 'Volver a añadir a la compra'
-                    : 'No añadir a la compra',
-                onPressed: () => _toggleStaple(item, !item.isStaple),
               ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.expired),
-              onPressed: () => _deleteItem(item),
             ),
+            if (item.itemType == 'comida')
+              ListTile(
+                leading: Icon(
+                  item.isStaple
+                      ? Icons.add_shopping_cart
+                      : Icons.remove_shopping_cart,
+                  color: AppColors.woodDark,
+                ),
+                title: Text(
+                  item.isStaple
+                      ? 'Volver a añadir a la compra'
+                      : 'No añadir a la compra',
+                ),
+                subtitle: item.isStaple
+                    ? null
+                    : const Text('Para básicos que siempre tienes'),
+                onTap: () => Navigator.of(ctx).pop('staple'),
+              ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: AppColors.expired,
+              ),
+              title: const Text('Eliminar'),
+              onTap: () => Navigator.of(ctx).pop('delete'),
+            ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
     );
+    if (!mounted || action == null) return;
+    if (action == 'staple') {
+      await _toggleStaple(item, !item.isStaple);
+    } else if (action == 'delete') {
+      await _deleteItem(item);
+    }
   }
 }
 

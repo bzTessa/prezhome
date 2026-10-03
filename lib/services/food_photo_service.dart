@@ -47,6 +47,7 @@ class FoodPhotoService {
   Future<String?> resolvePhotoUrl({
     required String homeId,
     required String name,
+    String mode = 'ingredient',
   }) async {
     final key = cacheKey(name);
     if (key.isEmpty || homeId.isEmpty) return null;
@@ -72,7 +73,7 @@ class FoodPhotoService {
       try {
         final res = await _client.functions.invoke(
           _photoFunction,
-          body: {'query': name},
+          body: {'query': name, 'mode': mode},
         );
         final data = res.data;
         if (data is Map) {
