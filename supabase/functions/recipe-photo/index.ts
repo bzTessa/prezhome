@@ -81,16 +81,47 @@ async function searchUnsplash(query: string, key: string): Promise<unknown> {
 
     // Requisito de la API de Unsplash: hay que "disparar" el endpoint de
     // descarga (links.download_location) cuando se usa/selecciona una foto.
-    // Es BEST-EFFORT y va en su propio try/catch: si falla, solo lo registramos
-    // y seguimos devolviendo la foto con normalidad.
+    // Es BEST-EFFORT: si falla, solo lo registramos y seguimos devolviendo la
+    // foto con normalidad.
+    //
+    // IMPORTANTE: NO bloqueamos la respuesta al cliente con este disparo. Antes
+    // se hacía `await fetch(...)` en el camino crítico, de modo que un endpoint
+    // lento o colgado añadía latencia a CADA búsqueda de foto. Ahora:
+    //   1. Acotamos el fetch con un AbortController (~2.5s) para que nunca
+    //      quede colgado indefinidamente.
+    //   2. Lo lanzamos en modo fire-and-forget. En edge functions de Deno una
+    //      promesa sin await puede cortarse al devolver la respuesta, así que
+    //      usamos `EdgeRuntime.waitUntil(...)` si existe para que el disparo
+    //      termine en segundo plano SIN retener la respuesta. Si no existe,
+    //      caemos a un await con el mismo timeout corto (cota aceptable).
+    // En cualquier caso, un fallo o timeout del disparo NUNCA afecta a la foto
+    // devuelta ni lanza hacia el handler.
     const downloadLocation = first?.links?.download_location;
     if (typeof downloadLocation === "string" && downloadLocation.length > 0) {
-      try {
-        await fetch(downloadLocation, {
-          headers: { Authorization: `Client-ID ${key}` },
-        });
-      } catch (e) {
-        console.error("Unsplash download trigger exception:", e);
+      const triggerDownload = async () => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2500);
+        try {
+          await fetch(downloadLocation, {
+            headers: { Authorization: `Client-ID ${key}` },
+            signal: controller.signal,
+          });
+        } catch (e) {
+          console.error("Unsplash download trigger exception:", e);
+        } finally {
+          clearTimeout(timeout);
+        }
+      };
+
+      const edgeRuntime = (globalThis as {
+        EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
+      }).EdgeRuntime;
+      if (edgeRuntime && typeof edgeRuntime.waitUntil === "function") {
+        // Fire-and-forget sin retener la respuesta del usuario.
+        edgeRuntime.waitUntil(triggerDownload());
+      } else {
+        // Sin EdgeRuntime: await acotado por el timeout corto como cota.
+        await triggerDownload();
       }
     }
 
