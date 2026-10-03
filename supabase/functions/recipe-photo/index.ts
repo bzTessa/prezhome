@@ -58,9 +58,29 @@ function json(body: unknown, status = 200): Response {
 //      fotos de PLATOS DE COMIDA y no de ingredientes sueltos o paisajes.
 // Devuelve una lista de queries a probar en orden (de más específica a más
 // genérica) para maximizar el acierto sin dejar de degradar con elegancia.
-function buildFoodQueries(raw: string): string[] {
+function buildFoodQueries(raw: string, mode = "dish"): string[] {
   const original = raw.trim();
   if (!original) return [];
+
+  // Modo INGREDIENTE (despensa): buscamos el alimento CRUDO/fresco, no un plato
+  // cocinado. Añadimos términos que empujan a Unsplash hacia el producto tal
+  // cual se compra, evitando que "pechuga de pollo" salga como un plato hecho.
+  if (mode === "ingredient") {
+    const clean = original
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 0)
+      .join(" ");
+    const base = clean || original;
+    return [
+      ...new Set([
+        `${base} raw fresh ingredient`,
+        `${base} fresh food ingredient`,
+        `${base} food`,
+      ]),
+    ];
+  }
 
   // Palabras de "relleno" culinario y conectores que no aportan a la búsqueda
   // visual (en español). Se eliminan para quedarnos con los ingredientes.
@@ -101,8 +121,12 @@ function buildFoodQueries(raw: string): string[] {
 // Prueba varias queries refinadas (orientadas a comida) en orden hasta que una
 // devuelva resultado. Cualquier excepción de red, respuesta no OK o ausencia de
 // resultados se degrada a { url: null }: NUNCA lanza hacia el flujo principal.
-async function searchUnsplash(rawQuery: string, key: string): Promise<unknown> {
-  const queries = buildFoodQueries(rawQuery);
+async function searchUnsplash(
+  rawQuery: string,
+  key: string,
+  mode = "dish",
+): Promise<unknown> {
+  const queries = buildFoodQueries(rawQuery, mode);
   if (queries.length === 0) return { url: null };
   for (const q of queries) {
     const result = await searchUnsplashOnce(q, key);
@@ -253,9 +277,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 3. Leer y validar la petición
+    // 3. Leer y validar la petición. 'mode' puede ser 'dish' (receta, por
+    //    defecto) o 'ingredient' (despensa: busca el alimento crudo/fresco).
     const body = await req.json().catch(() => ({}));
     const query = (body?.query ?? "").toString().trim();
+    const mode = (body?.mode ?? "dish").toString().trim();
     if (!query) {
       return json({ error: "Falta el nombre del plato" }, 400);
     }
@@ -268,7 +294,7 @@ Deno.serve(async (req: Request) => {
     // 4a. Camino PRINCIPAL: Unsplash. searchUnsplash ya degrada a { url: null }
     //     ante cualquier fallo, por lo que nunca rompe el alta de receta.
     if (unsplashKey) {
-      return json(await searchUnsplash(query, unsplashKey));
+      return json(await searchUnsplash(query, unsplashKey, mode));
     }
 
     // 4b. Camino de RESPALDO: Pexels (comportamiento previo, sin cambios).
