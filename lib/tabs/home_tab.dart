@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../add_inventory_item_screen.dart';
+import '../add_recipe_chooser.dart';
 import '../food_diary_screen.dart';
 import '../inventory_screen.dart';
+import '../meal_plan_screen.dart';
 import '../month_calendar_screen.dart';
 import '../profile_wizard_screen.dart';
+import '../scan_ticket_screen.dart';
+import '../shopping_list_screen.dart';
+import '../models/dashboard_prefs.dart';
 import '../models/inventory_item.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/nutrition_profile.dart';
@@ -49,6 +55,10 @@ class HomeTabState extends State<HomeTab> {
   int _expiringSoon = 0;
   int _expired = 0;
 
+  // Preferencias de personalización del dashboard (orden/visibilidad de
+  // tarjetas y accesos rápidos). Por usuario, en profiles.dashboard_prefs.
+  DashboardPrefs _prefs = DashboardPrefs.defaults();
+
   static const _mealLabels = {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
@@ -79,12 +89,49 @@ class HomeTabState extends State<HomeTab> {
   /// try/catch, de modo que un fallo en una no impide ver las demás.
   Future<void> _loadDashboard() async {
     await Future.wait([
+      _loadPrefs(),
       _loadTodayPlan(),
       _loadTasksSummary(),
       _loadEconomySummary(),
       _loadCaloriesSummary(),
       _loadExpirySummary(),
     ]);
+  }
+
+  /// Carga las preferencias del dashboard del usuario (orden/visibilidad de
+  /// tarjetas y accesos rápidos). Si no hay, usa las por defecto.
+  Future<void> _loadPrefs() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final row = await _client
+          .from('profiles')
+          .select('dashboard_prefs')
+          .eq('id', user.id)
+          .maybeSingle();
+      final raw = row?['dashboard_prefs'];
+      final prefs = raw is Map
+          ? DashboardPrefs.fromJson(Map<String, dynamic>.from(raw))
+          : DashboardPrefs.defaults();
+      if (mounted) setState(() => _prefs = prefs);
+    } catch (e) {
+      debugPrint('HomeTab._loadPrefs error: $e');
+    }
+  }
+
+  /// Guarda las preferencias del dashboard en el perfil del usuario.
+  Future<void> _savePrefs(DashboardPrefs prefs) async {
+    setState(() => _prefs = prefs);
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      await _client
+          .from('profiles')
+          .update({'dashboard_prefs': prefs.toJson()})
+          .eq('id', user.id);
+    } catch (e) {
+      debugPrint('HomeTab._savePrefs error: $e');
+    }
   }
 
   Future<void> _loadTodayPlan() async {
@@ -383,7 +430,16 @@ class HomeTabState extends State<HomeTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('PrezHome')),
+      appBar: AppBar(
+        title: const Text('PrezHome'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.tune_rounded),
+            tooltip: 'Personalizar Inicio',
+            onPressed: _openCustomize,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -418,7 +474,13 @@ class HomeTabState extends State<HomeTab> {
               ],
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
+
+          // Accesos rápidos a lo que más usas (personalizables).
+          if (_prefs.quick.isNotEmpty) ...[
+            _quickAccessRow(),
+            const SizedBox(height: 20),
+          ],
 
           Text(
             'Hoy',
@@ -431,31 +493,137 @@ class HomeTabState extends State<HomeTab> {
           ),
           const SizedBox(height: 12),
 
-          // Resumen de las comidas planificadas para hoy.
-          _mealsCard(),
-          const SizedBox(height: 12),
-          // Aviso de caducidades: alto en la lista porque es útil verlo pronto.
-          _expiryCard(),
-          const SizedBox(height: 12),
           // Si el perfil no está completo o aún no hay objetivo de calorías,
-          // invitamos a calcularlo con el cuestionario guiado antes de mostrar
-          // la tarjeta de calorías del día.
+          // invitamos a calcularlo (independiente de la personalización).
           if (!_profileComplete ||
               _targetCalories == null ||
               _targetCalories! <= 0) ...[
             _calorieGoalPrompt(),
             const SizedBox(height: 12),
           ],
-          _caloriesCard(),
-          const SizedBox(height: 12),
-          _tasksCard(),
-          const SizedBox(height: 12),
-          _spendingCard(),
-          const SizedBox(height: 12),
-          _calendarCard(),
+
+          // Tarjetas en el orden y visibilidad elegidos por el usuario.
+          for (final card in _prefs.visibleCards) ...[
+            _cardWidget(card),
+            const SizedBox(height: 12),
+          ],
         ],
       ),
     );
+  }
+
+  /// Devuelve el widget de una tarjeta del dashboard por su tipo.
+  Widget _cardWidget(DashboardCard card) {
+    switch (card) {
+      case DashboardCard.meals:
+        return _mealsCard();
+      case DashboardCard.expiry:
+        return _expiryCard();
+      case DashboardCard.calories:
+        return _caloriesCard();
+      case DashboardCard.tasks:
+        return _tasksCard();
+      case DashboardCard.spending:
+        return _spendingCard();
+      case DashboardCard.calendar:
+        return _calendarCard();
+    }
+  }
+
+  /// Fila horizontal de accesos rápidos elegidos por el usuario.
+  Widget _quickAccessRow() {
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _prefs.quick.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, i) => _quickAccessButton(_prefs.quick[i]),
+      ),
+    );
+  }
+
+  Widget _quickAccessButton(QuickAction action) {
+    return GestureDetector(
+      onTap: () => _runQuickAction(action),
+      child: Container(
+        width: 84,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: AppTheme.cardDecoration(radius: 18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: AppColors.wood,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(action.icon, color: AppColors.ink, size: 22),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              action.label,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10.5,
+                height: 1.1,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Ejecuta la navegación de un acceso rápido y refresca al volver.
+  Future<void> _runQuickAction(QuickAction action) async {
+    switch (action) {
+      case QuickAction.addInventory:
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AddInventoryItemScreen()),
+        );
+        break;
+      case QuickAction.scanTicket:
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
+        break;
+      case QuickAction.shopping:
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ShoppingListScreen()));
+        break;
+      case QuickAction.addRecipe:
+        if (!mounted) return;
+        await AddRecipeChooser.show(context);
+        break;
+      case QuickAction.mealPlan:
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const MealPlanScreen()));
+        break;
+      case QuickAction.diary:
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
+        break;
+    }
+    if (mounted) _loadDashboard();
+  }
+
+  /// Abre el editor de personalización del dashboard y guarda al volver.
+  Future<void> _openCustomize() async {
+    final result = await Navigator.of(context).push<DashboardPrefs>(
+      MaterialPageRoute(
+        builder: (_) => _CustomizeDashboardScreen(initial: _prefs),
+      ),
+    );
+    if (result != null) await _savePrefs(result);
   }
 
   /// Tarjeta 'Caducidades': resume cuántos alimentos caducan pronto y cuántos
@@ -1035,4 +1203,145 @@ class _PlanItem {
     required this.title,
     required this.skipped,
   });
+}
+
+/// Pantalla para PERSONALIZAR el Inicio: reordenar y mostrar/ocultar tarjetas
+/// (arrastrando) y elegir los accesos rápidos. Devuelve las nuevas
+/// preferencias con Navigator.pop al guardar.
+class _CustomizeDashboardScreen extends StatefulWidget {
+  final DashboardPrefs initial;
+  const _CustomizeDashboardScreen({required this.initial});
+
+  @override
+  State<_CustomizeDashboardScreen> createState() =>
+      _CustomizeDashboardScreenState();
+}
+
+class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
+  late List<DashboardCard> _order;
+  late Set<DashboardCard> _hidden;
+  late List<QuickAction> _quick;
+
+  @override
+  void initState() {
+    super.initState();
+    _order = [...widget.initial.order];
+    _hidden = {...widget.initial.hidden};
+    _quick = [...widget.initial.quick];
+  }
+
+  void _save() {
+    Navigator.of(
+      context,
+    ).pop(DashboardPrefs(order: _order, hidden: _hidden, quick: _quick));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      appBar: AppBar(
+        title: const Text('Personalizar Inicio'),
+        actions: [
+          TextButton(
+            onPressed: _save,
+            child: const Text(
+              'Guardar',
+              style: TextStyle(
+                color: AppColors.woodDark,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        children: [
+          _sectionLabel('Tarjetas (arrastra para ordenar)'),
+          const SizedBox(height: 8),
+          // Reordenable; cada fila tiene un switch para mostrar/ocultar.
+          ReorderableListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: true,
+            onReorder: (oldIndex, newIndex) {
+              setState(() {
+                if (newIndex > oldIndex) newIndex -= 1;
+                final item = _order.removeAt(oldIndex);
+                _order.insert(newIndex, item);
+              });
+            },
+            children: [
+              for (final card in _order)
+                Container(
+                  key: ValueKey(card.id),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: AppTheme.cardDecoration(radius: 14),
+                  child: SwitchListTile(
+                    value: !_hidden.contains(card),
+                    activeThumbColor: AppColors.woodDark,
+                    secondary: Icon(card.icon, color: AppColors.woodDark),
+                    title: Text(
+                      card.label,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    onChanged: (visible) => setState(() {
+                      if (visible) {
+                        _hidden.remove(card);
+                      } else {
+                        _hidden.add(card);
+                      }
+                    }),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _sectionLabel('Accesos rápidos'),
+          const SizedBox(height: 4),
+          Text(
+            'Elige los atajos que verás arriba del Inicio.',
+            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: QuickAction.values.map((q) {
+              final sel = _quick.contains(q);
+              return FilterChip(
+                label: Text(q.label),
+                avatar: Icon(
+                  q.icon,
+                  size: 18,
+                  color: sel ? AppColors.ink : AppColors.woodDark,
+                ),
+                selected: sel,
+                selectedColor: AppColors.wood,
+                backgroundColor: AppColors.card,
+                onSelected: (v) => setState(() {
+                  if (v) {
+                    _quick.add(q);
+                  } else {
+                    _quick.remove(q);
+                  }
+                }),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text) => Text(
+    text.toUpperCase(),
+    style: TextStyle(
+      fontSize: 12,
+      letterSpacing: 0.6,
+      fontWeight: FontWeight.w800,
+      color: AppColors.ink.withValues(alpha: 0.6),
+    ),
+  );
 }
