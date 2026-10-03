@@ -10,6 +10,11 @@ class ShoppingListItem {
   final String source; // 'manual' o 'auto'
   final DateTime? createdAt;
 
+  /// URL http(s) COMPLETA de la foto real del artículo (banco de imágenes vía
+  /// la edge function recipe-photo). NULL = sin foto; la UI muestra la
+  /// ilustración cozy de la categoría en su lugar.
+  final String? imageUrl;
+
   ShoppingListItem({
     this.id,
     required this.homeId,
@@ -19,7 +24,16 @@ class ShoppingListItem {
     this.checked = false,
     this.source = 'manual',
     this.createdAt,
+    this.imageUrl,
   });
+
+  // Devuelve el valor como String si no es null ni vacío; si no, null. Trata
+  // la cadena vacía como ausencia de foto (igual que Recipe._nonEmptyString).
+  static String? _nonEmptyString(dynamic value) {
+    if (value == null) return null;
+    final s = value.toString();
+    return s.isEmpty ? null : s;
+  }
 
   factory ShoppingListItem.fromMap(Map<String, dynamic> map) {
     // Parseo tolerante: algunas consultas pueden no traer todas las columnas.
@@ -33,6 +47,7 @@ class ShoppingListItem {
       checked: (map['checked'] as bool?) ?? false,
       source: (map['source'] ?? 'manual') as String,
       createdAt: _parseDate(map['created_at']),
+      imageUrl: _nonEmptyString(map['image_url']),
     );
   }
 
@@ -53,6 +68,7 @@ class ShoppingListItem {
       'unit': unit,
       'checked': checked,
       'source': source,
+      'image_url': imageUrl,
     };
   }
 

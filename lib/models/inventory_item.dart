@@ -35,6 +35,11 @@ class InventoryItem {
   final DateTime? frozenOn; // fecha de congelación
   final DateTime? bestBefore; // consumo preferente
 
+  /// URL http(s) COMPLETA de la foto real del alimento (banco de imágenes vía
+  /// la edge function recipe-photo). NULL = sin foto; la UI muestra la
+  /// ilustración cozy de la categoría en su lugar.
+  final String? imageUrl;
+
   InventoryItem({
     required this.id,
     required this.homeId,
@@ -50,7 +55,16 @@ class InventoryItem {
     this.servings,
     this.frozenOn,
     this.bestBefore,
+    this.imageUrl,
   });
+
+  // Devuelve el valor como String si no es null ni vacío; si no, null. Trata
+  // la cadena vacía como ausencia de foto (igual que Recipe._nonEmptyString).
+  static String? _nonEmptyString(dynamic value) {
+    if (value == null) return null;
+    final s = value.toString();
+    return s.isEmpty ? null : s;
+  }
 
   factory InventoryItem.fromMap(Map<String, dynamic> map) {
     return InventoryItem(
@@ -74,6 +88,7 @@ class InventoryItem {
       bestBefore: map['best_before'] != null
           ? DateTime.parse(map['best_before'])
           : null,
+      imageUrl: _nonEmptyString(map['image_url']),
     );
   }
 
@@ -92,6 +107,7 @@ class InventoryItem {
       'servings': servings,
       'frozen_on': frozenOn?.toIso8601String().split('T').first,
       'best_before': bestBefore?.toIso8601String().split('T').first,
+      'image_url': imageUrl,
     };
   }
 
