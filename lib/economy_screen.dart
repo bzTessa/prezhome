@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'product_stats_screen.dart';
 import 'scan_ticket_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
@@ -237,7 +238,18 @@ class _EconomyScreenState extends State<EconomyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Economía')),
+      appBar: AppBar(
+        title: const Text('Economía'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.insights_rounded),
+            tooltip: 'Estadísticas de la compra',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProductStatsScreen()),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-economy',
         onPressed: _openScan,
