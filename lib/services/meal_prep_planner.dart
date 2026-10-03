@@ -170,10 +170,11 @@ class MealPrepPlanner {
     int energyLevel = 1,
   }) {
     // Solo nos interesan comidas con receta conocida y al menos una ración.
-    final relevant = meals
-        .where((m) => recipesById.containsKey(m.recipeId) && m.servings > 0)
-        .toList()
-      ..sort((a, b) => a._day.compareTo(b._day));
+    final relevant =
+        meals
+            .where((m) => recipesById.containsKey(m.recipeId) && m.servings > 0)
+            .toList()
+          ..sort((a, b) => a._day.compareTo(b._day));
     if (relevant.isEmpty) {
       return const MealPrepPlan(cookingDays: []);
     }

@@ -296,7 +296,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         final recipeChanged = prev.recipeId != slot.recipeId;
         final skipChanged = prev.skipped != slot.skipped;
         final isOrigin = slot.id == e.id;
-        final isDestination = movedToDate != null &&
+        final isDestination =
+            movedToDate != null &&
             _isSameDay(slot.date, movedToDate) &&
             slot.mealType == e.mealType &&
             slot.recipeId == adjustment.movedRecipeId;
@@ -819,11 +820,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
-          const Icon(
-            Icons.people_outline,
-            size: 12,
-            color: Color(0xFFB58A3C),
-          ),
+          const Icon(Icons.people_outline, size: 12, color: Color(0xFFB58A3C)),
           const SizedBox(width: 4),
           Expanded(
             child: Text(

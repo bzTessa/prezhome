@@ -113,36 +113,38 @@ void main() {
   group('Efecto del nivel de energía en los días de cocción', () {
     // Comidas repartidas por toda la semana (lunes a domingo).
     List<PrepMeal> semanaCompleta() => [
-          for (var i = 0; i < 7; i++)
-            PrepMeal(
-              recipeId: i.isEven ? 'lentejas' : 'pollo',
-              date: day(i),
-              mealType: 'lunch',
-              servings: 2,
-            ),
-        ];
+      for (var i = 0; i < 7; i++)
+        PrepMeal(
+          recipeId: i.isEven ? 'lentejas' : 'pollo',
+          date: day(i),
+          mealType: 'lunch',
+          servings: 2,
+        ),
+    ];
 
-    test('(d) energyLevel=0 agrupa en menos días de cocción que energyLevel=2',
-        () {
-      final planBajo = const MealPrepPlanner().buildPlan(
-        meals: semanaCompleta(),
-        recipesById: recipes,
-        weekStart: weekStart,
-        energyLevel: 0,
-      );
-      final planAlto = const MealPrepPlanner().buildPlan(
-        meals: semanaCompleta(),
-        recipesById: recipes,
-        weekStart: weekStart,
-        energyLevel: 2,
-      );
+    test(
+      '(d) energyLevel=0 agrupa en menos días de cocción que energyLevel=2',
+      () {
+        final planBajo = const MealPrepPlanner().buildPlan(
+          meals: semanaCompleta(),
+          recipesById: recipes,
+          weekStart: weekStart,
+          energyLevel: 0,
+        );
+        final planAlto = const MealPrepPlanner().buildPlan(
+          meals: semanaCompleta(),
+          recipesById: recipes,
+          weekStart: weekStart,
+          energyLevel: 2,
+        );
 
-      expect(planBajo.cookingDays.length, 1);
-      expect(
-        planAlto.cookingDays.length,
-        greaterThan(planBajo.cookingDays.length),
-      );
-    });
+        expect(planBajo.cookingDays.length, 1);
+        expect(
+          planAlto.cookingDays.length,
+          greaterThan(planBajo.cookingDays.length),
+        );
+      },
+    );
 
     test('(f) energía alta con días de comida muy dispersos: ningún día de '
         'cocción queda sin tandas', () {

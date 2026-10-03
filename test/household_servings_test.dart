@@ -3,21 +3,24 @@ import 'package:prezhome/services/household_servings.dart';
 
 void main() {
   group('servingsForMeal · por defecto (todos cuentan)', () {
-    test('sin configuración, todos los miembros comen en casa cualquier día', () {
-      final members = [
-        const HouseholdMember(name: 'Tessa', isMe: true),
-        const HouseholdMember(name: 'Pablo'),
-      ];
-      // Lunes (1) y domingo (7): da igual, no hay restricciones.
-      for (final weekday in [1, 7]) {
-        for (final type in ['breakfast', 'lunch', 'dinner']) {
-          expect(servingsCountForMeal(members, type, weekday), 2);
+    test(
+      'sin configuración, todos los miembros comen en casa cualquier día',
+      () {
+        final members = [
+          const HouseholdMember(name: 'Tessa', isMe: true),
+          const HouseholdMember(name: 'Pablo'),
+        ];
+        // Lunes (1) y domingo (7): da igual, no hay restricciones.
+        for (final weekday in [1, 7]) {
+          for (final type in ['breakfast', 'lunch', 'dinner']) {
+            expect(servingsCountForMeal(members, type, weekday), 2);
+          }
         }
-      }
-      final res = servingsForMeal(members, 'lunch', 1);
-      expect(res.count, 2);
-      expect(res.names, ['tú', 'Pablo']);
-    });
+        final res = servingsForMeal(members, 'lunch', 1);
+        expect(res.count, 2);
+        expect(res.names, ['tú', 'Pablo']);
+      },
+    );
 
     test('lista vacía para una comida equivale a todos los días', () {
       final members = [
