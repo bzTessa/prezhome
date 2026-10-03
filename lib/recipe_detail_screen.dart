@@ -425,6 +425,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         servings: double.parse(servings.toStringAsFixed(1)),
         frozenOn: now,
         bestBefore: bestBefore,
+        // El plato congelado lleva la FOTO y el nombre de la receta, para que
+        // en el congelador se vea igual que en el recetario.
+        imageUrl: r.imageUrl,
       );
       await _client.from('inventory_items').insert(item.toMap());
 

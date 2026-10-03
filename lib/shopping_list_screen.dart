@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
+import 'services/food_photo_service.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 import 'widgets/food_category_icon.dart';
+import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
@@ -26,6 +29,7 @@ class ShoppingListScreen extends StatefulWidget {
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final SupabaseClient _client = Supabase.instance.client;
+  final ImagePicker _picker = ImagePicker();
   late Future<List<ShoppingListItem>> _itemsFuture;
   bool _generating = false;
 
@@ -103,17 +107,20 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     try {
       final homeId = await _homeId();
       final nKey = CategoryIcons.normalize(item.name);
+      final isHome = item.itemType == 'hogar';
 
       final existing = await _client
           .from('inventory_items')
           .select('id, name, quantity, item_type')
           .eq('home_id', homeId);
 
+      // Dedup por nombre DENTRO del mismo tipo (no fusionar comida con hogar).
       String? foundId;
       double foundQty = 0;
       for (final row in (existing as List)) {
         final m = row as Map<String, dynamic>;
-        if ((m['item_type'] ?? 'comida').toString() == 'hogar') continue;
+        final rowIsHome = (m['item_type'] ?? 'comida').toString() == 'hogar';
+        if (rowIsHome != isHome) continue;
         if (CategoryIcons.normalize((m['name'] ?? '').toString()) == nKey) {
           foundId = m['id'] as String?;
           foundQty = (m['quantity'] as num?)?.toDouble() ?? 0;
@@ -128,20 +135,28 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             .update({'quantity': foundQty + addQty})
             .eq('id', foundId);
       } else {
-        // Ubicación lógica según el alimento (nevera/despensa/condimentos),
-        // y caducidad estimada para esa ubicación. Nunca congelador automático.
-        final location = ShelfLife.suggestLocation(item.name);
-        final estimated = ShelfLife.estimateDate(item.name, location);
+        // Ubicación: hogar -> 'Hogar'; comida -> la elegida (item.category) o,
+        // si no hay, la deducida por el alimento. Caducidad solo para comida.
+        final String location;
+        if (isHome) {
+          location = item.category ?? 'Hogar';
+        } else {
+          location = item.category ?? ShelfLife.suggestLocation(item.name);
+        }
+        final estimated = isHome
+            ? null
+            : ShelfLife.estimateDate(item.name, location);
         final inv = InventoryItem(
           id: '',
           homeId: homeId,
           name: item.name,
           category: location,
-          itemType: 'comida',
+          itemType: item.itemType,
           quantity: addQty,
           unit: item.unit ?? 'unidades',
           kind: 'ingredient',
           expirationDate: estimated,
+          imageUrl: item.imageUrl,
         );
         await _client.from('inventory_items').insert(inv.toMap());
       }
@@ -166,66 +181,283 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  /// Dialog de alta manual: nombre obligatorio, cantidad y unidad opcionales.
+  /// Menú de acciones de un artículo (pulsación larga): cambiar foto o borrar.
+  Future<void> _openItemActions(ShoppingListItem item) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                item.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Elegir foto de la galería'),
+              onTap: () => Navigator.of(ctx).pop('gallery'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.auto_awesome,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Buscar otra foto automática'),
+              onTap: () => Navigator.of(ctx).pop('auto'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: Colors.redAccent,
+              ),
+              title: const Text('Quitar de la lista'),
+              onTap: () => Navigator.of(ctx).pop('delete'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case 'gallery':
+        await _pickPhoto(item);
+        break;
+      case 'auto':
+        await _regenPhoto(item);
+        break;
+      case 'delete':
+        await _deleteItem(item);
+        break;
+    }
+  }
+
+  /// Sube una foto de la galería al bucket y la fija como foto del artículo.
+  /// El bucket recipe-images se reutiliza (ya tiene políticas públicas).
+  Future<void> _pickPhoto(ShoppingListItem item) async {
+    if (item.id == null) return;
+    try {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1000,
+        imageQuality: 82,
+      );
+      if (file == null) return;
+      final homeId = await _homeId();
+      final bytes = await file.readAsBytes();
+      final ext = file.name.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+      final path = '$homeId/shop_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      await _client.storage
+          .from('recipe-images')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
+              upsert: false,
+            ),
+          );
+      final url = _client.storage.from('recipe-images').getPublicUrl(path);
+      await _client
+          .from('shopping_list_items')
+          .update({'image_url': url})
+          .eq('id', item.id!);
+      // Memorizamos la foto para ese alimento en la caché del hogar, de modo
+      // que la próxima vez (y en la despensa) se reutilice.
+      await FoodPhotoService(
+        _client,
+      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
+      _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo subir la foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Vuelve a buscar una foto automática para el artículo.
+  Future<void> _regenPhoto(ShoppingListItem item) async {
+    if (item.id == null) return;
+    try {
+      final homeId = await _homeId();
+      final url = await FoodPhotoService(_client).resolvePhotoUrl(
+        homeId: homeId,
+        name: item.name,
+        mode: item.itemType == 'comida' ? 'ingredient' : 'dish',
+      );
+      if (url == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No encontré una foto. Puedes poner una tuya.'),
+          ),
+        );
+        return;
+      }
+      await _client
+          .from('shopping_list_items')
+          .update({'image_url': url})
+          .eq('id', item.id!);
+      _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo cambiar la foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Botón de elección de tipo (comida/hogar) para el diálogo de alta.
+  Widget _typeChoice(
+    String value,
+    String label,
+    IconData icon,
+    String current,
+    ValueChanged<String> onTap,
+  ) {
+    final selected = current == value;
+    return GestureDetector(
+      onTap: () => onTap(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.wood : AppColors.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? AppColors.woodDark : AppColors.wood,
+            width: 1.3,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: AppColors.ink),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Dialog de alta manual: nombre + cantidad/unidad + tipo (comida/hogar).
   Future<void> _openAddItem() async {
     final nameCtrl = TextEditingController();
     final qtyCtrl = TextEditingController();
     final unitCtrl = TextEditingController();
+    var itemType = 'comida';
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: AppColors.cream,
-          title: const Text('Anadir a la lista'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre',
-                  hintText: 'Ej. Tomates',
+        return StatefulBuilder(
+          builder: (ctx, setDialog) => AlertDialog(
+            backgroundColor: AppColors.cream,
+            title: const Text('Añadir a la lista'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Tipo: comida u hogar/limpieza. Decide a qué parte del
+                // inventario irá al comprarlo.
+                Row(
+                  children: [
+                    Expanded(
+                      child: _typeChoice(
+                        'comida',
+                        'Comida',
+                        Icons.restaurant,
+                        itemType,
+                        (v) => setDialog(() => itemType = v),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _typeChoice(
+                        'hogar',
+                        'Hogar/Limpieza',
+                        Icons.cleaning_services,
+                        itemType,
+                        (v) => setDialog(() => itemType = v),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameCtrl,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre',
+                    hintText: 'Ej. Tomates / Detergente',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: qtyCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Cantidad (opcional)',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: unitCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Unidad (opcional)',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancelar'),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: qtyCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Cantidad (opcional)',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: unitCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Unidad (opcional)',
-                      ),
-                    ),
-                  ),
-                ],
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Añadir'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Anadir'),
-            ),
-          ],
         );
       },
     );
@@ -247,21 +479,33 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (name.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El nombre no puede estar vacio.')),
+        const SnackBar(content: Text('El nombre no puede estar vacío.')),
       );
       return;
     }
 
     try {
       final homeId = await _homeId();
-      // En la lista de la compra mostramos la ilustración cozy por categoría
-      // (no foto real), así que no gastamos cuota buscando fotos.
+      // Foto real del artículo. Para comida en modo "ingrediente crudo"; para
+      // hogar como producto tal cual. Best-effort y cacheado por hogar.
+      String? imageUrl;
+      try {
+        imageUrl = await FoodPhotoService(_client).resolvePhotoUrl(
+          homeId: homeId,
+          name: name,
+          mode: itemType == 'comida' ? 'ingredient' : 'dish',
+        );
+      } catch (_) {
+        imageUrl = null;
+      }
       final item = ShoppingListItem(
         homeId: homeId,
         name: name,
         quantity: qty,
         unit: unit.isEmpty ? null : unit,
         source: 'manual',
+        itemType: itemType,
+        imageUrl: imageUrl,
       );
       await _client.from('shopping_list_items').insert(item.toInsertMap());
       _reload();
@@ -662,7 +906,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// deslizar para borrar. Lo comprado se tacha y atenúa.
   Widget _buildRow(ShoppingListItem item) {
     final done = item.checked;
-    final style = CategoryIcons.styleFor(item.name);
     return Dismissible(
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
       direction: DismissDirection.endToStart,
@@ -679,6 +922,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       onDismissed: (_) => _deleteItem(item),
       child: InkWell(
         onTap: () => _toggleChecked(item, !done),
+        onLongPress: () => _openItemActions(item),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -693,18 +937,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 size: 24,
               ),
               const SizedBox(width: 12),
-              // Distintivo de categoría pequeño (icono vectorial, no emoji).
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: done ? Colors.grey[200] : style.background,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  style.icon,
-                  size: 18,
-                  color: done ? Colors.grey[500] : style.foreground,
+              // Foto real del artículo (si la hay) o ilustración por categoría.
+              Opacity(
+                opacity: done ? 0.5 : 1,
+                child: FoodImage(
+                  name: item.name,
+                  itemType: item.itemType,
+                  imageUrl: item.imageUrl,
+                  size: 38,
+                  radius: 10,
                 ),
               ),
               const SizedBox(width: 12),

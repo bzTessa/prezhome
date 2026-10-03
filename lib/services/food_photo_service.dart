@@ -42,6 +42,28 @@ class FoodPhotoService {
   /// categorización visual.
   static String cacheKey(String name) => CategoryIcons.normalize(name);
 
+  /// Memoriza una foto (p. ej. elegida por el usuario de su galería) para
+  /// [name] en el hogar [homeId], de modo que se reutilice en futuras
+  /// búsquedas (lista de la compra y despensa). Best-effort: nunca lanza.
+  Future<void> rememberPhoto({
+    required String homeId,
+    required String name,
+    required String url,
+  }) async {
+    final key = cacheKey(name);
+    if (key.isEmpty || homeId.isEmpty || url.isEmpty) return;
+    try {
+      await _client.from(_cacheTable).upsert({
+        'home_id': homeId,
+        'name_normalized': key,
+        'url': url,
+        'fetched_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'home_id,name_normalized');
+    } catch (_) {
+      // Si falla el cacheo, no pasa nada: la foto ya está en el item.
+    }
+  }
+
   /// Resuelve la URL de foto para [name] en el hogar [homeId]. Devuelve la URL
   /// si hay foto, o null si no la hay (o no se pudo resolver). Nunca lanza.
   Future<String?> resolvePhotoUrl({
