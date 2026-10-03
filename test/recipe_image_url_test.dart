@@ -156,4 +156,91 @@ void main() {
       expect(roundTrip.imageUrl, pexelsUrl);
     });
   });
+
+  // Blindaje de la regresión del review: al EDITAR una receta sin subir foto
+  // nueva, no debe perderse la foto existente (manual o de Pexels). La pantalla
+  // de edición reconstruye el Recipe reinyectando la foto previa; aquí
+  // reproducimos esa construcción y verificamos que toMap NO escribe un
+  // image_url null destructivo cuando la receta ya tenía foto externa.
+  group('Edición: conservar la foto existente al guardar (no borrar image_url)', () {
+    // Reproduce lo que hace _AddRecipeScreenState._save al editar: no se busca
+    // foto nueva (autoImageUrl == null), así que se reinyecta la externa previa
+    // y se conserva el image_path manual previo.
+    Recipe rebuiltOnEdit({
+      String? autoImageUrl,
+      String? existingExternalImageUrl,
+      String? existingImagePath,
+    }) {
+      return Recipe(
+        id: 'rec-1',
+        homeId: 'home-1',
+        title: 'Lentejas editadas',
+        servings: 2,
+        externalImageUrl: autoImageUrl ?? existingExternalImageUrl,
+        imagePath: existingImagePath,
+      );
+    }
+
+    test(
+      'receta con foto de Pexels (sin manual): toMap conserva image_url',
+      () {
+        final recipe = rebuiltOnEdit(
+          autoImageUrl: null, // al editar NO se re-busca foto
+          existingExternalImageUrl: pexelsUrl,
+          existingImagePath: null,
+        );
+
+        final map = recipe.toMap();
+        // La foto de Pexels NO se pierde: image_url conserva la URL externa.
+        expect(map['image_url'], pexelsUrl);
+        expect(recipe.imageUrl, pexelsUrl);
+      },
+    );
+
+    test(
+      'receta con foto manual (sin externa): image_url sigue null y gana la manual',
+      () {
+        final recipe = rebuiltOnEdit(
+          autoImageUrl: null,
+          existingExternalImageUrl: null,
+          existingImagePath: 'home-1/manual.jpg',
+        );
+
+        final map = recipe.toMap();
+        // No hay URL externa que persistir...
+        expect(map['image_url'], isNull);
+        // ...y el getter sigue resolviendo la foto manual del bucket.
+        expect(recipe.imageUrl, '$bucketBase/home-1/manual.jpg');
+      },
+    );
+
+    test(
+      'receta con ambas fotos: image_url conserva la externa y gana la manual en lectura',
+      () {
+        final recipe = rebuiltOnEdit(
+          autoImageUrl: null,
+          existingExternalImageUrl: pexelsUrl,
+          existingImagePath: 'home-1/manual.jpg',
+        );
+
+        final map = recipe.toMap();
+        // Se conservan ambas: image_url (externa) persiste...
+        expect(map['image_url'], pexelsUrl);
+        // ...y en lectura la foto manual tiene prioridad.
+        expect(recipe.imageUrl, '$bucketBase/home-1/manual.jpg');
+      },
+    );
+
+    test('receta sin ninguna foto previa: image_url se mantiene null', () {
+      final recipe = rebuiltOnEdit(
+        autoImageUrl: null,
+        existingExternalImageUrl: null,
+        existingImagePath: null,
+      );
+
+      final map = recipe.toMap();
+      expect(map['image_url'], isNull);
+      expect(recipe.imageUrl, isNull);
+    });
+  });
 }

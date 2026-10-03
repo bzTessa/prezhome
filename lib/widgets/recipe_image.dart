@@ -40,18 +40,37 @@ class RecipeImage extends StatelessWidget {
         width: width ?? double.infinity,
         height: height,
         child: recipe.imageUrl != null
-            ? Image.network(
-                recipe.imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stack) => _placeholder(),
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return _placeholder(loading: true);
-                },
+            ? LayoutBuilder(
+                builder: (context, constraints) => Image.network(
+                  recipe.imageUrl!,
+                  fit: BoxFit.cover,
+                  // Acotamos la resolución de decodificado al ancho real que se
+                  // va a pintar (en píxeles físicos). Así la foto de Pexels no
+                  // se decodifica a resolución completa en una miniatura de la
+                  // rejilla, ahorrando memoria y datos en el móvil.
+                  cacheWidth: _cacheWidthFor(context, constraints),
+                  errorBuilder: (context, error, stack) => _placeholder(),
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return _placeholder(loading: true);
+                  },
+                ),
               )
             : _placeholder(),
       ),
     );
+  }
+
+  /// Ancho objetivo de decodificado en píxeles físicos: el ancho pintado por
+  /// el devicePixelRatio. Si el ancho es ilimitado (double.infinity), caemos a
+  /// un valor razonable para una tarjeta a pantalla completa.
+  int? _cacheWidthFor(BuildContext context, BoxConstraints constraints) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final logicalWidth = constraints.maxWidth.isFinite
+        ? constraints.maxWidth
+        : (width ?? 400.0);
+    if (logicalWidth <= 0) return null;
+    return (logicalWidth * dpr).round();
   }
 
   Widget _placeholder({bool loading = false}) {

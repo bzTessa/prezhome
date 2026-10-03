@@ -3,5 +3,12 @@
   "task_description": "Rediseñar el apartado de Recetas de PrezHome (Flutter + Supabase, en espanol) para que sea mas estetico, cozy y profesional estilo Yazio / apps de caducidad de nevera: foto automatica via Pexels (edge function nueva recipe-photo + columna image_url), placeholder cozy por tipo de plato, rejilla de 2 columnas, barra de filtros (tipo de comida/favoritas/tiempo), chips con color e icono, y estados vacio/carga cuidados; manteniendo la identidad Cozy + Miau y sin romper el resto de la app. Degradar con elegancia si no hay PEXELS_API_KEY.",
   "status": "in_progress",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "Revision 2026-10-03 (NEEDS_CHANGES) atendida. Issue #1 (BLOQUEANTE, perdida de datos): al editar una receta con foto de Pexels se borraba image_url; corregido conservando por separado image_path/image_url previos (_existingImagePath/_existingExternalImageUrl) y reinyectando externalImageUrl al reconstruir el Recipe en _save. Issue #2: politica de re-foto al editar definida: NO se re-busca foto al editar (needsAutoPhoto exige !isEditing); se conserva la que haya. Issue #3 (no bloqueante): Image.network de RecipeImage ahora pasa cacheWidth acotado al ancho pintado * devicePixelRatio via LayoutBuilder. Blindaje: 4 tests nuevos en test/recipe_image_url_test.dart que reproducen la construccion del Recipe en edicion y verifican que image_url no se pierde. Flutter stable en $HOME/flutter: 'dart format --output=none --set-exit-if-changed .' sin cambios; 'flutter analyze' 0 issues; 'flutter test' 62/62. Artefactos del SDK local revertidos; arbol limpio. Sin push ni PR."
+  }
 }

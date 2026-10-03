@@ -59,7 +59,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _picker = ImagePicker();
   Uint8List? _newImageBytes; // imagen recién elegida (aún sin subir)
   String? _newImageExt;
-  String? _existingImageUrl; // la que ya tenía la receta (en edición)
+  String?
+  _existingImageUrl; // la que ya tenía la receta (en edición), para previsualizar
+  // Al editar conservamos POR SEPARADO la foto manual (image_path, bucket) y la
+  // externa (image_url, Pexels) que ya tenía la receta, para no perder ninguna
+  // al guardar. El getter combinado `imageUrl` solo sirve para previsualizar.
+  String? _existingImagePath; // foto manual previa (bucket)
+  String? _existingExternalImageUrl; // foto externa previa (Pexels)
 
   final List<_IngredientControllers> _ingredients = [_IngredientControllers()];
 
@@ -107,6 +113,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _components = r.components;
     _freezerDays = r.freezerDays;
     _existingImageUrl = r.imageUrl;
+    _existingImagePath = r.imagePath;
+    _existingExternalImageUrl = r.externalImageUrl;
     // Cargar ingredientes existentes de la receta.
     _loadingInitial = true;
     _loadIngredients(r.id);
@@ -452,16 +460,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         debugPrint('AddRecipeScreen._uploadImageIfAny error: $e');
       }
 
-      // Foto automática (Pexels) SOLO si no hay foto manual y, en edición, no
-      // había ya una imagen. La foto manual (uploadedPath -> image_path) tiene
-      // prioridad. Degrada con elegancia: si falla o viene null, se guarda sin
-      // foto (se verá el placeholder cozy).
+      // Foto automática (Pexels) SOLO al CREAR una receta nueva sin foto manual.
+      // Política de edición: NUNCA re-buscamos foto al editar; conservamos la
+      // que hubiera (manual o Pexels). Así una edición (cambiar título, marcar
+      // favorita, ajustar raciones...) nunca pierde ni reemplaza la foto.
+      // La foto manual (uploadedPath -> image_path) tiene prioridad. Degrada
+      // con elegancia: si falla o viene null, se guarda sin foto (placeholder).
       String? autoImageUrl;
       final title = _titleController.text.trim();
       final needsAutoPhoto =
+          !widget.isEditing &&
           _newImageBytes == null &&
           uploadedPath == null &&
-          (!widget.isEditing || _existingImageUrl == null) &&
           title.isNotEmpty;
       if (needsAutoPhoto) {
         try {
@@ -502,7 +512,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         mealTypes: _mealTypes.toList(),
         isFavorite: _isFavorite,
         freezable: _freezable,
-        externalImageUrl: autoImageUrl,
+        // Al crear: la foto recién obtenida de Pexels (o null). Al editar:
+        // conservamos la externa previa para que toMap no la pise con null.
+        externalImageUrl: autoImageUrl ?? _existingExternalImageUrl,
+        imagePath: _existingImagePath,
         videoUrl: _videoController.text.trim().isEmpty
             ? null
             : _videoController.text.trim(),
