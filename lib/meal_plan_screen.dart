@@ -338,6 +338,208 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
   }
 
+  // --- EDICIÓN MANUAL DEL PLAN ----------------------------------------------
+
+  /// Menú de acciones al tocar una comida del plan: cambiar receta, quitarla
+  /// del plan o marcarla como fuera/en casa.
+  Future<void> _openEntryActions(_PlanData data, MealPlanEntry e) async {
+    final recipe = data.recipesById[e.recipeId];
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Text(
+                '${_mealLabels[e.mealType] ?? e.mealType} · '
+                '${recipe?.title ?? 'Sin receta'}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.swap_horiz_rounded,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Cambiar receta'),
+              onTap: () => Navigator.of(ctx).pop('change'),
+            ),
+            ListTile(
+              leading: Icon(
+                e.skipped ? Icons.restore : Icons.no_meals_outlined,
+                color: AppColors.woodDark,
+              ),
+              title: Text(e.skipped ? 'Marcar en casa' : 'Marcar como fuera'),
+              onTap: () => Navigator.of(ctx).pop('skip'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: Colors.redAccent,
+              ),
+              title: const Text('Quitar del plan'),
+              onTap: () => Navigator.of(ctx).pop('remove'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case 'change':
+        await _changeRecipe(data, e);
+        break;
+      case 'skip':
+        await _toggleSkip(data, e);
+        break;
+      case 'remove':
+        await _removeEntry(e);
+        break;
+    }
+  }
+
+  /// Abre un selector de recetas y asigna la elegida a la comida [e]. Al cambiar
+  /// la receta a mano, limpiamos el vínculo con el congelador (deja de ser "del
+  /// congelador") porque el plato ya no es el mismo.
+  Future<void> _changeRecipe(_PlanData data, MealPlanEntry e) async {
+    if (e.id == null) return;
+    final chosen = await _pickRecipe(data, title: 'Elige una receta');
+    if (chosen == null) return;
+    try {
+      await _client
+          .from('meal_plan_entries')
+          .update({
+            'recipe_id': chosen.id,
+            'from_freezer': false,
+            'inventory_item_id': null,
+            // Al reasignar, la comida vuelve a estar "en casa".
+            'skipped': false,
+          })
+          .eq('id', e.id!);
+      _reload();
+    } catch (err) {
+      _showError(err);
+    }
+  }
+
+  /// Elimina una comida del plan.
+  Future<void> _removeEntry(MealPlanEntry e) async {
+    if (e.id == null) return;
+    try {
+      await _client.from('meal_plan_entries').delete().eq('id', e.id!);
+      _reload();
+    } catch (err) {
+      _showError(err);
+    }
+  }
+
+  /// Añade una comida nueva a un día concreto. Pide tipo de comida (solo entre
+  /// los que no existen ya ese día, por el UNIQUE home/día/tipo) y una receta.
+  Future<void> _addEntryToDay(
+    _PlanData data,
+    DateTime date,
+    List<MealPlanEntry> dayEntries,
+  ) async {
+    final usados = dayEntries.map((e) => e.mealType).toSet();
+    final disponibles = _mealLabels.keys
+        .where((t) => !usados.contains(t))
+        .toList();
+    if (disponibles.isEmpty) {
+      _showMiau('Ese día ya tiene todas las comidas.');
+      return;
+    }
+
+    final mealType = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Text(
+                '¿Qué comida añades?',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            for (final t in disponibles)
+              ListTile(
+                title: Text(_mealLabels[t] ?? t),
+                onTap: () => Navigator.of(ctx).pop(t),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || mealType == null) return;
+
+    final chosen = await _pickRecipe(data, title: 'Elige una receta');
+    if (chosen == null) return;
+
+    try {
+      final servings = servingsCountForMeal(
+        data.members,
+        mealType,
+        date.weekday,
+      );
+      await _client
+          .from('meal_plan_entries')
+          .insert(
+            MealPlanEntry(
+              homeId: data.homeId!,
+              date: date,
+              mealType: mealType,
+              recipeId: chosen.id,
+              servings: servings,
+            ).toMap(),
+          );
+      _reload();
+    } catch (err) {
+      _showError(err);
+    }
+  }
+
+  /// Bottom sheet con buscador para elegir una receta del hogar. Devuelve la
+  /// receta elegida o null si se cancela.
+  Future<Recipe?> _pickRecipe(_PlanData data, {required String title}) {
+    return showModalBottomSheet<Recipe>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _RecipePickerSheet(title: title, recipes: data.recipes),
+    );
+  }
+
+  void _showError(Object err) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $err'), backgroundColor: Colors.red),
+    );
+  }
+
   /// Convierte las entradas de la semana en huecos para el cerebro puro.
   /// Solo incluye las entradas reales (con id); el reajuste busca entre ellas
   /// el primer hueco posterior libre del mismo tipo de comida.
@@ -560,78 +762,90 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 else
                   ...dayEntries.map((e) {
                     final recipe = data.recipesById[e.recipeId];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 80,
-                            child: Text(
-                              _mealLabels[e.mealType] ?? e.mealType,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 13,
+                    // Toda la fila es pulsable: abre el menú de edición
+                    // (cambiar receta / fuera / quitar).
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _openEntryActions(data, e),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 80,
+                              child: Text(
+                                _mealLabels[e.mealType] ?? e.mealType,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  recipe?.title ?? 'Receta',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    decoration: e.skipped
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color: e.skipped
-                                        ? Colors.grey
-                                        : AppColors.ink,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    recipe?.title ?? 'Receta',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      decoration: e.skipped
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                      color: e.skipped
+                                          ? Colors.grey
+                                          : AppColors.ink,
+                                    ),
                                   ),
-                                ),
-                                _servingsLine(data, e),
-                                if (e.fromFreezer)
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.ac_unit,
-                                        size: 12,
-                                        color: Color(0xFFB58A3C),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Del congelador',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey[600],
+                                  _servingsLine(data, e),
+                                  if (e.fromFreezer)
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.ac_unit,
+                                          size: 12,
+                                          color: Color(0xFFB58A3C),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                              ],
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Del congelador',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                          // Botón "como fuera" para reajuste dinámico
-                          IconButton(
-                            tooltip: e.skipped
-                                ? 'Reactivar (como en casa)'
-                                : 'Hoy como fuera',
-                            icon: Icon(
-                              e.skipped
-                                  ? Icons.restore
-                                  : Icons.no_meals_outlined,
+                            // Pista visual de que la fila es editable.
+                            Icon(
+                              Icons.more_horiz,
                               size: 20,
-                              color: e.skipped
-                                  ? AppColors.woodDark
-                                  : Colors.grey,
+                              color: Colors.grey[500],
                             ),
-                            onPressed: () => _toggleSkip(data, e),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }),
+                // Añadir una comida nueva a este día.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => _addEntryToDay(data, date, dayEntries),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.woodDark,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                    ),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Añadir comida'),
+                  ),
+                ),
               ],
             ),
           );
@@ -860,4 +1074,147 @@ class _PlanData {
     this.members = const [],
     this.isMealPrep = false,
   });
+}
+
+/// Bottom sheet para elegir una receta del hogar, con buscador por nombre.
+/// Devuelve la receta elegida (Navigator.pop) o null si se cierra.
+class _RecipePickerSheet extends StatefulWidget {
+  final String title;
+  final List<Recipe> recipes;
+  const _RecipePickerSheet({required this.title, required this.recipes});
+
+  @override
+  State<_RecipePickerSheet> createState() => _RecipePickerSheetState();
+}
+
+class _RecipePickerSheetState extends State<_RecipePickerSheet> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _query.trim().toLowerCase();
+    final visible = q.isEmpty
+        ? widget.recipes
+        : widget.recipes
+              .where((r) => r.title.toLowerCase().contains(q))
+              .toList();
+
+    return Padding(
+      // Deja espacio para el teclado al buscar.
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        builder: (context, scrollController) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (v) => setState(() => _query = v),
+                decoration: InputDecoration(
+                  hintText: 'Buscar receta...',
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.woodDark,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.card,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.wood,
+                      width: 1.4,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.woodDark,
+                      width: 1.8,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: visible.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Sin recetas que coincidan.',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                      itemCount: visible.length,
+                      itemBuilder: (context, i) {
+                        final r = visible[i];
+                        return Card(
+                          color: AppColors.card,
+                          elevation: 0,
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.restaurant_menu,
+                              color: AppColors.woodDark,
+                            ),
+                            title: Text(
+                              r.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: r.calories != null
+                                ? Text('${r.calories} kcal')
+                                : null,
+                            onTap: () => Navigator.of(context).pop(r),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

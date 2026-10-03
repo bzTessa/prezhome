@@ -6,6 +6,8 @@ import 'economy_screen.dart';
 import 'nutrition_profile_screen.dart';
 import 'profile_wizard_screen.dart';
 import 'login_screen.dart';
+import 'theme/app_theme.dart';
+import 'widgets/miau_character.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({super.key});
@@ -100,7 +102,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final id = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFFDF8E1),
+        backgroundColor: AppColors.cream,
         title: const Text('Unirme a un hogar'),
         content: TextField(
           controller: controller,
@@ -122,8 +124,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE2C792),
-              foregroundColor: const Color(0xFF1E1E1E),
+              backgroundColor: AppColors.wood,
+              foregroundColor: AppColors.ink,
               elevation: 0,
             ),
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
@@ -146,7 +148,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFFDF8E1),
+        backgroundColor: AppColors.cream,
         title: const Text('Nombre del hogar'),
         content: TextField(
           controller: controller,
@@ -167,8 +169,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE2C792),
-              foregroundColor: const Color(0xFF1E1E1E),
+              backgroundColor: AppColors.wood,
+              foregroundColor: AppColors.ink,
               elevation: 0,
             ),
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
@@ -206,13 +208,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF8E1),
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: const Text(
           'Mi Hogar',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFFFDF8E1),
+        backgroundColor: AppColors.cream,
         elevation: 0,
         actions: [
           IconButton(
@@ -250,7 +252,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.home_outlined, size: 64, color: Color(0xFFE2C792)),
+            const MiauCharacter(mood: MiauMood.curious, size: 110),
             const SizedBox(height: 16),
             const Text(
               'Aún no perteneces a ningún hogar.',
@@ -259,8 +261,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE2C792),
-                foregroundColor: const Color(0xFF1E1E1E),
+                backgroundColor: AppColors.wood,
+                foregroundColor: AppColors.ink,
                 minimumSize: const Size.fromHeight(50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -273,7 +275,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             const SizedBox(height: 12),
             OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1E1E1E),
+                foregroundColor: AppColors.ink,
                 minimumSize: const Size.fromHeight(50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -292,30 +294,49 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        _card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        // Cabecera cozy: Miau saluda y presenta el hogar.
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: AppTheme.cardDecoration(),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Nombre del hogar',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+              const MiauCharacter(mood: MiauMood.greeting, size: 64),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            data.homeName!,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.edit,
+                            size: 20,
+                            color: AppColors.woodDark,
+                          ),
+                          tooltip: 'Renombrar hogar',
+                          onPressed: () =>
+                              _renameHome(data.homeId!, data.homeName!),
+                        ),
+                      ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    onPressed: () => _renameHome(data.homeId!, data.homeName!),
-                  ),
-                ],
-              ),
-              Text(
-                data.homeName!,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E1E1E),
+                    Text(
+                      data.members.length == 1
+                          ? 'Tu hogar, de momento para ti.'
+                          : 'Un hogar de ${data.members.length} personas.',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -348,7 +369,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.copy, color: Color(0xFFB58A3C)),
+                    icon: const Icon(Icons.copy, color: AppColors.woodDark),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: data.homeId!));
                       _snack('Código copiado');
@@ -372,29 +393,42 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              ...data.members.map(
-                (m) => ListTile(
+              ...data.members.map((m) {
+                final displayName = (m.name != null && m.name!.isNotEmpty)
+                    ? m.name!
+                    : 'Miembro';
+                return ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFFE2C792),
-                    child: Icon(Icons.person, color: Color(0xFF1E1E1E)),
-                  ),
+                  leading: _memberAvatar(displayName),
                   title: Text(
-                    (m.name != null && m.name!.isNotEmpty)
-                        ? m.name!
-                        : 'Miembro',
+                    displayName,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
                     m.role == 'owner' ? 'Administrador' : 'Miembro',
                   ),
                   trailing: m.isMe
-                      ? const Chip(
-                          label: Text('Tú'),
-                          backgroundColor: Color(0xFFFDF8E1),
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.wood,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Tú',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.ink,
+                              fontSize: 12,
+                            ),
+                          ),
                         )
                       : null,
-                ),
-              ),
+                );
+              }),
             ],
           ),
         ),
@@ -415,6 +449,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 icon: Icons.savings_outlined,
                 title: 'Economía',
                 subtitle: 'Presupuesto y gastos del hogar',
+                iconBg: AppColors.sageBg,
+                iconFg: AppColors.sage,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const EconomyScreen()),
                 ),
@@ -423,6 +459,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 icon: Icons.favorite_outline,
                 title: 'Mi perfil nutricional',
                 subtitle: 'Objetivo de calorías y preferencias',
+                iconBg: AppColors.terracottaBg,
+                iconFg: AppColors.terracotta,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const NutritionProfileScreen(),
@@ -433,6 +471,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 icon: Icons.quiz_outlined,
                 title: 'Cuestionario de perfil',
                 subtitle: 'Recalcula tu objetivo paso a paso',
+                iconBg: AppColors.peachBg,
+                iconFg: AppColors.peach,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const ProfileWizardScreen(),
@@ -446,18 +486,47 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     );
   }
 
+  /// Avatar circular con la inicial del nombre y un color cálido estable
+  /// derivado del propio nombre (misma persona = mismo color).
+  Widget _memberAvatar(String name) {
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?';
+    // Paleta cozy de fondos y sus colores de texto a juego.
+    const palette = <(Color, Color)>[
+      (AppColors.sageBg, AppColors.sage),
+      (AppColors.peachBg, AppColors.peach),
+      (AppColors.terracottaBg, AppColors.terracotta),
+      (AppColors.frostBg, AppColors.frost),
+    ];
+    final idx = name.hashCode.abs() % palette.length;
+    final (bg, fg) = palette[idx];
+    return CircleAvatar(
+      backgroundColor: bg,
+      child: Text(
+        initial,
+        style: TextStyle(fontWeight: FontWeight.bold, color: fg),
+      ),
+    );
+  }
+
   /// Fila táctil de un acceso dentro de la tarjeta de hogar/ajustes.
   Widget _settingTile({
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    Color? iconBg,
+    Color? iconFg,
   }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: const Color(0xFFFDF8E1),
-        child: Icon(icon, color: const Color(0xFF1E1E1E)),
+      leading: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: iconBg ?? AppColors.cream,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: iconFg ?? AppColors.woodDark),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(subtitle),
@@ -469,17 +538,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Widget _card({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: AppTheme.cardDecoration(),
       child: child,
     );
   }
