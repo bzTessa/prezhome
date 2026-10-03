@@ -62,10 +62,13 @@ function buildPrompt(p: Record<string, unknown>): string {
   const count = Number(p.count ?? 5);
 
   const superLine = supermarket
-    ? `- Supermercado(s) donde se compra: ${supermarket}. Usa productos y
-     FORMATOS DE VENTA típicos de ese(os) supermercado(s) español(es) (p. ej.
-     en Mercadona la marca Hacendado; botes/latas/paquetes y tamaños reales que
-     se venden ahí). Elige ingredientes fáciles de encontrar en ese súper.`
+    ? `- Supermercado(s) donde se compra: ${supermarket}. Ten en cuenta ese(os)
+     supermercado(s) español(es) para elegir ingredientes FÁCILES de encontrar
+     ahí y usar FORMATOS DE VENTA reales (botes/latas/paquetes y tamaños que se
+     venden en ese súper). MUY IMPORTANTE: en el nombre de cada ingrediente usa
+     el nombre GENÉRICO del alimento (p. ej. "garbanzos cocidos", "queso de
+     cabra", "aceite de oliva"); NO escribas marcas comerciales ni de
+     distribuidor (nada de "Hacendado", "Hacendado...", etc.) en los nombres.`
     : `- Supermercado: cualquiera (usa ingredientes comunes de súper español).`;
 
   return `Eres un chef que propone ideas de comidas prácticas. Genera ${count}

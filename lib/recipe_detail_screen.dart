@@ -12,6 +12,7 @@ import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
+import 'models/supermarket.dart';
 import 'theme/app_theme.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
@@ -32,6 +33,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late Future<List<Ingredient>> _ingredientsFuture;
   bool _changingPhoto = false; // true mientras se regenera/sube una foto
   bool _recalculating = false; // true mientras recalcula nutrición con OFF
+  bool _nutritionFromOFF = false; // true si la nutrición se afinó con OFF
+  String? _homeSupermarketLabel; // etiqueta del súper del hogar (chip)
   List<NutritionProfile> _profiles =
       []; // miembros del hogar con perfil visible
   NutritionProfile? _myProfile; // perfil del usuario logueado (para el modo)
@@ -60,6 +63,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _recipe = widget.recipe;
     _ingredientsFuture = _fetchIngredients();
     _loadProfile();
+    _loadHomeSupermarketLabel();
+  }
+
+  /// Carga la etiqueta del primer súper del hogar para mostrarla como chip
+  /// junto al resto (Comida/Cena/kcal). Best-effort.
+  Future<void> _loadHomeSupermarketLabel() async {
+    final key = await _firstHomeSupermarket();
+    if (key.isEmpty || !mounted) return;
+    setState(() => _homeSupermarketLabel = Supermarket.labelFor(key));
   }
 
   Future<void> _loadProfile() async {
@@ -329,7 +341,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       final result = computeRecipeNutrition(nutriIngs, servings);
 
       if (result.covered == 0) {
-        _snack('No encontré datos en Open Food Facts para estos ingredientes.');
+        _snack(
+          'Open Food Facts aún no tiene estos ingredientes. '
+          'Mantengo la estimación actual.',
+        );
         return;
       }
 
@@ -344,6 +359,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           .eq('id', _recipe.id);
       await _refreshRecipe();
       _changed = true;
+      if (mounted) setState(() => _nutritionFromOFF = true);
 
       if (!mounted) return;
       final msg = result.isReliable
@@ -692,6 +708,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     icon: Icons.star_rounded,
                     style: RecipeChipStyle.favorite,
                   ),
+                // Súper del hogar, junto al resto de chips (Comida/Cena/kcal).
+                if (_homeSupermarketLabel != null)
+                  RecipeChip(
+                    text: _homeSupermarketLabel!,
+                    icon: Icons.storefront_rounded,
+                    style: RecipeChipStyle.type,
+                  ),
               ],
             ),
             if (r.description != null && r.description!.isNotEmpty) ...[
@@ -885,9 +908,48 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Por ración',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Row(
+                    children: [
+                      const Text(
+                        'Por ración',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      if (_nutritionFromOFF) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.sageBg,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.verified_outlined,
+                                size: 13,
+                                color: AppColors.sage,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Open Food Facts',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.sage,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 12),
                   if (r.calories != null || r.protein != null)

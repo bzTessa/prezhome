@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
+import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
+import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 import 'widgets/food_category_icon.dart';
-import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
@@ -77,6 +78,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           .from('shopping_list_items')
           .update({'checked': value})
           .eq('id', item.id!);
+      // Al marcar como comprado, el producto pasa SOLO a la despensa (dedup por
+      // nombre). Al desmarcar no lo quitamos del inventario (ya está en casa).
+      if (value) {
+        await _addToPantry(item);
+      }
       _reload();
     } catch (e) {
       if (!mounted) return;
@@ -86,6 +92,58 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  /// Mete un artículo comprado en el inventario (despensa). Deduplica por
+  /// nombre normalizado: si ya existe (en cualquier ubicación de comida), suma
+  /// la cantidad; si no, crea uno nuevo en Despensa con caducidad estimada.
+  /// Best-effort: si algo falla, no rompe el marcado como comprado.
+  Future<void> _addToPantry(ShoppingListItem item) async {
+    try {
+      final homeId = await _homeId();
+      final nKey = CategoryIcons.normalize(item.name);
+
+      final existing = await _client
+          .from('inventory_items')
+          .select('id, name, quantity, item_type')
+          .eq('home_id', homeId);
+
+      String? foundId;
+      double foundQty = 0;
+      for (final row in (existing as List)) {
+        final m = row as Map<String, dynamic>;
+        if ((m['item_type'] ?? 'comida').toString() == 'hogar') continue;
+        if (CategoryIcons.normalize((m['name'] ?? '').toString()) == nKey) {
+          foundId = m['id'] as String?;
+          foundQty = (m['quantity'] as num?)?.toDouble() ?? 0;
+          break;
+        }
+      }
+
+      final addQty = item.quantity ?? 1;
+      if (foundId != null) {
+        await _client
+            .from('inventory_items')
+            .update({'quantity': foundQty + addQty})
+            .eq('id', foundId);
+      } else {
+        final estimated = ShelfLife.estimateDate(item.name, 'Despensa');
+        final inv = InventoryItem(
+          id: '',
+          homeId: homeId,
+          name: item.name,
+          category: 'Despensa',
+          itemType: 'comida',
+          quantity: addQty,
+          unit: item.unit ?? 'unidades',
+          kind: 'ingredient',
+          expirationDate: estimated,
+        );
+        await _client.from('inventory_items').insert(inv.toMap());
+      }
+    } catch (e) {
+      debugPrint('ShoppingList._addToPantry error: $e');
     }
   }
 
@@ -484,27 +542,41 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               if (pendientes.isNotEmpty)
                 ..._buildPendientesPorCategoria(pendientes),
               if (comprados.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _sectionTitle('Comprados'),
-                ...comprados.map(_buildRow),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                  decoration: AppTheme.cardDecoration(radius: 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 18,
+                            color: AppColors.ink.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'YA EN EL CARRO · ${comprados.length}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              letterSpacing: 0.6,
+                              color: AppColors.ink.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      ...comprados.map(_buildRow),
+                    ],
+                  ),
+                ),
               ],
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _sectionTitle(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 4),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          color: AppColors.ink,
-        ),
       ),
     );
   }
@@ -524,9 +596,31 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     for (final cat in FoodCategory.values) {
       final items = grupos[cat];
       if (items == null || items.isEmpty) continue;
-      widgets.add(_categoryHeader(cat, items.length));
-      widgets.addAll(items.map(_buildRow));
-      widgets.add(const SizedBox(height: 8));
+      // Cada categoría es UNA tarjeta: cabecera + sus filas con divisores. Es
+      // el patrón limpio de las apps de compra (menos ruido que una tarjeta
+      // con sombra por cada producto).
+      widgets.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+          decoration: AppTheme.cardDecoration(radius: 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _categoryHeader(cat, items.length),
+              const SizedBox(height: 2),
+              for (var i = 0; i < items.length; i++) ...[
+                if (i > 0)
+                  Divider(
+                    height: 1,
+                    color: AppColors.cream.withValues(alpha: 1),
+                  ),
+                _buildRow(items[i]),
+              ],
+            ],
+          ),
+        ),
+      );
     }
     return widgets;
   }
@@ -534,89 +628,109 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Encabezado de seccion con el emoji de la categoria, su nombre legible y un
   /// contador de items. Mantiene la estetica Cozy (tonos madera sobre crema).
   Widget _categoryHeader(FoodCategory category, int count) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 8),
-      child: Row(
-        children: [
-          Icon(category.icon, size: 20, color: AppColors.woodDark),
-          const SizedBox(width: 8),
-          Text(
-            category.label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: AppColors.ink,
-            ),
+    return Row(
+      children: [
+        Icon(category.icon, size: 18, color: AppColors.woodDark),
+        const SizedBox(width: 8),
+        Text(
+          category.label.toUpperCase(),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+            letterSpacing: 0.6,
+            color: AppColors.ink.withValues(alpha: 0.65),
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-            decoration: BoxDecoration(
-              color: AppColors.wood,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.ink,
-              ),
-            ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '· $count',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink.withValues(alpha: 0.35),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
+  /// Fila de la lista estilo "app de compra": compacta, con checkbox a la
+  /// izquierda, un distintivo de categoría pequeño y limpio, y gesto de
+  /// deslizar para borrar. Lo comprado se tacha y atenúa.
   Widget _buildRow(ShoppingListItem item) {
     final done = item.checked;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: AppTheme.cardDecoration(radius: 16),
-      child: CheckboxListTile(
-        value: done,
-        onChanged: (v) => _toggleChecked(item, v ?? false),
-        activeColor: AppColors.woodDark,
-        controlAffinity: ListTileControlAffinity.leading,
-        title: Row(
-          children: [
-            FoodImage(
-              name: item.name,
-              imageUrl: item.imageUrl,
-              size: 38,
-              radius: 10,
-              // En la compra mostramos siempre la ilustración cozy por
-              // categoría: las fotos reales de básicos abstractos salían
-              // genéricas/aleatorias y restaban claridad.
-              forceIllustration: true,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                item.display,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  decoration: done ? TextDecoration.lineThrough : null,
-                  color: done ? Colors.grey : AppColors.ink,
+    final style = CategoryIcons.styleFor(item.name);
+    return Dismissible(
+      key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: AppColors.expiredBg,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete_outline, color: AppColors.expired),
+      ),
+      onDismissed: (_) => _deleteItem(item),
+      child: InkWell(
+        onTap: () => _toggleChecked(item, !done),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            children: [
+              // Checkbox redondo tipo lista de tareas.
+              Icon(
+                done
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked,
+                color: done ? AppColors.woodDark : Colors.grey[400],
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              // Distintivo de categoría pequeño (icono vectorial, no emoji).
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: done ? Colors.grey[200] : style.background,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  style.icon,
+                  size: 18,
+                  color: done ? Colors.grey[500] : style.foreground,
                 ),
               ),
-            ),
-          ],
-        ),
-        subtitle: item.source == 'auto'
-            ? Text(
-                'Del plan de la semana',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: done ? Colors.grey : Colors.grey[600],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.display,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        decoration: done ? TextDecoration.lineThrough : null,
+                        color: done ? Colors.grey : AppColors.ink,
+                      ),
+                    ),
+                    if (item.source == 'auto')
+                      Text(
+                        'Del plan de la semana',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: done ? Colors.grey[400] : Colors.grey[500],
+                        ),
+                      ),
+                  ],
                 ),
-              )
-            : null,
-        secondary: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-          tooltip: 'Borrar',
-          onPressed: () => _deleteItem(item),
+              ),
+            ],
+          ),
         ),
       ),
     );
