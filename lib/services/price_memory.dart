@@ -176,3 +176,57 @@ class PriceMemory {
     return CostEstimate(total: total, priced: priced, totalItems: items.length);
   }
 }
+
+/// Coste estimado de una receta por ración.
+class RecipeCost {
+  /// Coste total de la receta (todas las raciones).
+  final double total;
+
+  /// Coste por ración.
+  final double perServing;
+
+  /// true si ALGÚN ingrediente usó precio aproximado (no de ticket real).
+  final bool approx;
+
+  const RecipeCost({
+    required this.total,
+    required this.perServing,
+    required this.approx,
+  });
+}
+
+/// Un ingrediente para calcular el coste de la receta.
+typedef CostIngredient = ({String name, double? quantity, String? unit});
+
+/// Calcula el coste de una receta sumando sus ingredientes. Para cada uno:
+///   1. si hay PRECIO REAL del ticket (prices) -> precio por unidad × cantidad;
+///   2. si no, PRECIO APROXIMADO por tipo de alimento ([ApproxPrice]).
+/// Devuelve el total y por ración, y marca approx=true si se usó alguna
+/// estimación. Lógica PURA (recibe la función de aproximado inyectada para no
+/// acoplar con utils en el test).
+RecipeCost computeRecipeCost({
+  required List<CostIngredient> ingredients,
+  required Map<String, ProductPrice> prices,
+  required int servings,
+  required double? Function(String name, double? quantity, String? unit)
+  approxOf,
+}) {
+  double total = 0;
+  var usedApprox = false;
+  for (final ing in ingredients) {
+    final p = prices[PriceMemory.keyFor(ing.name)];
+    final real = p?.bestPrice;
+    if (real != null) {
+      // Precio real por unidad del ticket × cantidad (o 1 si no hay cantidad).
+      total += real * (ing.quantity ?? 1);
+    } else {
+      final approx = approxOf(ing.name, ing.quantity, ing.unit);
+      if (approx != null) {
+        total += approx;
+        usedApprox = true;
+      }
+    }
+  }
+  final s = servings < 1 ? 1 : servings;
+  return RecipeCost(total: total, perServing: total / s, approx: usedApprox);
+}
