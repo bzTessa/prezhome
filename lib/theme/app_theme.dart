@@ -33,6 +33,23 @@ class AppColors {
 
   /// Dorado/estrella: favorita.
   static const favorite = Color(0xFFE0A52E);
+
+  // --- Estados de caducidad --------------------------------------------------
+  // Pares fondo + acento cálidos y suaves (nada de rojos chillones) para que
+  // la usuaria entienda de un vistazo si algo está fresco, caduca pronto o ya
+  // ha caducado. Consistentes con el resto de la paleta cozy.
+
+  /// Verde suave: alimento fresco, aún queda tiempo.
+  static const freshBg = Color(0xFFE6EFE0);
+  static const fresh = Color(0xFF5C7A4F);
+
+  /// Ámbar suave: caduca pronto, conviene usarlo ya.
+  static const soonBg = Color(0xFFF8ECCF);
+  static const soon = Color(0xFFB5863C);
+
+  /// Rojo terroso suave: caducado (cálido, no alarmante).
+  static const expiredBg = Color(0xFFF4DAD4);
+  static const expired = Color(0xFFB24A3C);
 }
 
 class AppTheme {

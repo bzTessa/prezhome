@@ -1,0 +1,29 @@
+{
+  "project_type": "Flutter mobile app (Android/iOS/web) with Supabase (Postgres + RLS) backend. UI in Spanish, cozy pastel theme, mascot 'Miau'. Non-technical end user (Tessa).",
+  "language": "Dart (Flutter). SQL for Supabase migrations.",
+  "build_system": "Flutter SDK (pub). Dart SDK ^3.11.1, Flutter stable channel (~3.35+). Not preinstalled in sandbox; pub.dev and storage.googleapis.com ARE reachable (network allows install).",
+  "test_framework": "flutter_test. Pure-logic unit tests live in test/*.dart (e.g. test/food_category_icon_test.dart, test/task_schedule_test.dart). No external fixtures; tests import package:prezhome/...",
+  "build_command": "flutter pub get (install deps). There is no app build step required for verification beyond analyze; CI runs: dart format --output=none --set-exit-if-changed . ; flutter analyze ; flutter test",
+  "test_command": "flutter test",
+  "verification_instructions": "Mirror CI (.github/workflows/ci.yml) exactly: 1) flutter pub get; 2) dart format --output=none --set-exit-if-changed . (must report no changes); 3) flutter analyze (0 issues); 4) flutter test (all green). If Flutter is not installed, install the stable SDK first (network to pub.dev/googleapis is available).",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "If flutter is not on PATH, download Flutter stable SDK (e.g. git clone https://github.com/flutter/flutter.git -b stable, or the tarball from storage.googleapis.com) and add bin to PATH, then run 'flutter pub get' in /projects/sandbox/prezhome. Dart SDK constraint is ^3.11.1 so stable channel is required.",
+  "environment_constraints": "Flutter/Dart not preinstalled; must be installed by the coder. Network reaches pub.dev and googleapis (OK to install SDK + pub packages). No Supabase local stack / no Docker: migrations are validated only by the lightweight CI check (naming NNNN_nombre.sql with 4 digits, non-empty, balanced parentheses ignoring comments, trailing semicolon). DO NOT run supabase CLI.",
+  "contribution_requirements": "Migrations are IMMUTABLE and append-only; next number is 0033 if one is truly needed. deploy.yml runs 'supabase db push' on merge of supabase/migrations/** to main (deploy is automatic; no manual action for the user). ai-development.yml intentionally fails (does NOT block merge) for migrations touching RLS/policies/auth. ci.yml validates migration filename + balanced parens ignoring comments + trailing semicolon.",
+  "key_patterns": "Theme is centralized in lib/theme/app_theme.dart: AppColors (cream, wood, woodDark, ink, card, sage/sageBg, terracotta/terracottaBg, peach/peachBg, frost/frostBg, favorite) and AppTheme.cardDecoration(). Dashboard cards in lib/tabs/home_tab.dart follow a Container(decoration: AppTheme.cardDecoration()) with a 48x48 rounded colored icon box + title + text; InkWell-wrapped cards push a MaterialPageRoute and call a reload on return. FloatingActionButton heroTags must be unique (inventory uses 'fab-inventory'). InventoryItem.fromMap is null-tolerant. setState must use block body, never arrow returning a Future. CategoryIcons.badge(name, itemType:) gives the leading emoji badge. MiauMood enum: greeting, celebrating, sleeping, cooking, curious, neutral.",
+  "relevant_files": [
+    "lib/models/inventory_item.dart (model: category=ubicacion Despensa|Nevera|Congelador, expiration_date, best_before, frozen_on, is_staple, itemType comida|hogar; daysUntilBestBefore getter)",
+    "lib/inventory_screen.dart (screen to REDESIGN: currently a flat ListView with hardcoded colors; embedded in despensa_tab)",
+    "lib/add_inventory_item_screen.dart (alta/edicion: currently NEVER sets expiration_date; only sets frozen_on for Congelador)",
+    "lib/tabs/home_tab.dart (Dashboard; ADD an expiration card following existing card pattern; cards push screens via MaterialPageRoute)",
+    "lib/tabs/despensa_tab.dart (hosts InventoryScreen(embedded:true))",
+    "lib/theme/app_theme.dart (AppColors + cardDecoration; add cozy status green/amber/red here if needed)",
+    "lib/widgets/food_category_icon.dart (CategoryIcons.badge/emojiFor/categoryFor)",
+    "lib/widgets/miau_character.dart (MiauCharacter widget + MiauMood enum)",
+    "lib/main_shell.dart (IndexedStack tabs; Despensa=index1; no cross-tab nav helper exists)",
+    "supabase/migrations/0020_freezer_expiry.sql (freezer best_before semantics; last migration is 0032_recipe_image_url.sql)",
+    "test/food_category_icon_test.dart (pure-logic unit test pattern to mirror)",
+    "test/task_schedule_test.dart"
+  ],
+  "directory_structure": "lib/ holds screens at root (inventory_screen.dart, add_inventory_item_screen.dart) and lib/tabs/ holds the 5 bottom-nav tabs. lib/models/ data models. lib/widgets/ shared widgets. lib/theme/app_theme.dart central theme. lib/services/ business logic. supabase/migrations/ append-only SQL (0001..0032). test/ pure-logic + widget tests. .github/workflows/ CI (ci.yml), deploy (deploy.yml), ai-development.yml."
+}

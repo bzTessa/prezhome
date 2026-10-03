@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Surface expiration awareness on the Inicio dashboard: add a 'Caducidades' card to lib/tabs/home_tab.dart that loads the home inventory and shows how many foods caducan pronto and how many are caducados, with direct access to the Despensa inventory. The card follows the exact visual pattern of the existing dashboard cards (cardDecoration + 48x48 rounded icon box + title + text), keeps Miau's presence/style, and reloads on return like the other InkWell cards.",
+  "status": "completed",
+  "steps": [
+    "Depends on FEAT-002 (InventoryItem.expiryStatus) and FEAT-003 (redesigned InventoryScreen to open). In lib/tabs/home_tab.dart add state for the expiry summary (e.g. int _expiringSoon, int _expired, loaded from inventory_items). Add a private _loadExpirySummary() method following the pattern of the existing _load* methods: resolve home_id from profiles, query inventory_items (RLS filters by home), map with InventoryItem.fromMap, and count items whose itemType == 'comida' and expiryStatus == ExpiryStatus.pronto (soon) and == ExpiryStatus.caducado (expired). Use a block-body setState to store the counts. Add the call to the Future.wait([...]) in _loadDashboard.",
+    "Add a _expiryCard() widget mirroring _caloriesCard()/_calendarCard(): an InkWell wrapping a Container(decoration: AppTheme.cardDecoration()) with a 48x48 rounded colored icon box (use a cozy tone, e.g. AppColors soonBg/expiredBg or an existing pastel) and Icons.event_busy or Icons.schedule, a bold title 'Caducidades', and a status line. Text logic: if _expired > 0 show 'Y alimentos caducados' (singular/plural), if _expiringSoon > 0 show 'X alimentos caducan pronto' (singular/plural), combine both when both > 0, and show a reassuring 'Todo fresco por aquí' with Miau's cozy tone when both are 0. Keep it in Spanish and friendly.",
+    "On tap, push the full-screen InventoryScreen (const InventoryScreen(), i.e. embedded:false so it shows its own AppBar) via MaterialPageRoute, and after it returns call _loadExpirySummary() (or _loadDashboard()) to refresh, exactly like _caloriesCard refreshes on return. Import inventory_screen.dart in home_tab.dart.",
+    "Place the card in the dashboard build() list among the existing cards (e.g. right after _mealsCard or near _tasksCard) with the existing SizedBox(height: 12) spacing. Keep the ordering sensible: expiry awareness is useful high up, so insert it after the meals card.",
+    "Make the counts resilient: a load error must not break the dashboard (wrap in try/catch with debugPrint like the other _load* methods), and the card should simply show the reassuring empty state when counts are zero."
+  ],
+  "acceptance_criteria": [
+    "The Inicio dashboard shows a 'Caducidades' card styled like the other cards (cardDecoration + rounded icon box) with Miau-consistent cozy tone.",
+    "The card text reports the number of foods that caducan pronto and the number caducados (correct singular/plural), and a reassuring message when there are none.",
+    "Tapping the card opens the Despensa inventory (full InventoryScreen) and the card refreshes its counts on return.",
+    "The expiry summary load is part of _loadDashboard's Future.wait and fails gracefully without breaking other cards.",
+    "flutter analyze 0 issues, dart format clean, flutter test green."
+  ],
+  "verification": [
+    "flutter analyze",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": "Added _expiringSoon/_expired state and _loadExpirySummary() to lib/tabs/home_tab.dart, following the existing _load* pattern (resolve home_id from profiles, query inventory_items filtered by home_id, map with InventoryItem.fromMap, count itemType=='comida' with expiryStatus pronto/caducado via block-body setState, wrapped in try/catch + debugPrint). Hooked into Future.wait in _loadDashboard. Added _expiryCard() (InkWell + cardDecoration + 48x48 AppColors.soonBg box with Icons.event_busy, bold 'Caducidades' title, singular/plural status line combining 'X alimento(s) caducan pronto' and 'Y alimento(s) caducado(s)', reassuring 'Todo fresco por aquí 🐾' when both are 0). On tap pushes const InventoryScreen() (embedded:false, full AppBar) and calls _loadExpirySummary() on return. Card placed in build() right after _mealsCard() with SizedBox(height:12). Imported ../inventory_screen.dart and ../models/inventory_item.dart. Verification (PATH to /opt/tools/flutter/bin): flutter pub get OK, dart format clean (0 changed), flutter analyze 0 issues, flutter test 75 passed. pub get regenerated env-local files (analysis_options.yaml, pubspec.lock, linux/macos/windows plugin registrants); reverted them with git checkout so only lib/tabs/home_tab.dart and this feature file are committed."
+}
