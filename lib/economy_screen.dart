@@ -4,7 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'product_stats_screen.dart';
 import 'scan_ticket_screen.dart';
+import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
+import 'widgets/animations/animated_counter.dart';
+import 'widgets/animations/celebrate.dart';
+import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 
 class EconomyScreen extends StatefulWidget {
@@ -154,6 +158,62 @@ class _EconomyScreenState extends State<EconomyScreen> {
       );
     }
 
+    // --- Marketplace de Recompensas ----------------------------------------
+    // Miembros del hogar (id -> nombre) para la balanza de puntos.
+    final profs = await _client
+        .from('profiles')
+        .select('id, full_name')
+        .eq('home_id', homeId);
+    final memberNames = <String, String>{};
+    for (final p in (profs as List)) {
+      memberNames[p['id']
+          as String] = (p['full_name'] as String?)?.trim().isNotEmpty == true
+          ? p['full_name'] as String
+          : 'Miembro';
+    }
+
+    // Puntos ganados por usuario (suma de task_points.points).
+    final earnedRes = await _client
+        .from('task_points')
+        .select('user_id, points')
+        .eq('home_id', homeId);
+    final earned = <String, int>{};
+    for (final row in (earnedRes as List)) {
+      final uid = row['user_id'] as String;
+      earned[uid] =
+          (earned[uid] ?? 0) + ((row['points'] as num?)?.toInt() ?? 0);
+    }
+
+    // Puntos canjeados por usuario (suma de reward_redemptions.cost_points).
+    final redeemedRes = await _client
+        .from('reward_redemptions')
+        .select('redeemed_by, cost_points')
+        .eq('home_id', homeId);
+    final redeemed = <String, int>{};
+    for (final row in (redeemedRes as List)) {
+      final uid = row['redeemed_by'] as String;
+      redeemed[uid] =
+          (redeemed[uid] ?? 0) + ((row['cost_points'] as num?)?.toInt() ?? 0);
+    }
+
+    // Saldo disponible por usuario con el helper puro de FEAT-003.
+    final balances = <String, int>{};
+    for (final uid in memberNames.keys) {
+      balances[uid] = PointsBalance.forUser(
+        earned: earned[uid] ?? 0,
+        redeemed: redeemed[uid] ?? 0,
+      );
+    }
+
+    // Catalogo de recompensas activas del hogar, ordenado por coste.
+    final rewardsRes = await _client
+        .from('rewards')
+        .select('id, title, description, cost_points')
+        .eq('home_id', homeId)
+        .eq('is_active', true)
+        .order('cost_points');
+    final rewards = (rewardsRes as List).cast<Map<String, dynamic>>();
+
     return _EconomyData(
       homeId: homeId,
       budget: budget,
@@ -162,6 +222,10 @@ class _EconomyScreenState extends State<EconomyScreen> {
       historicalTotal: historicalTotal,
       historicalTicketCount: all.length,
       last6Months: last6Months,
+      memberNames: memberNames,
+      balances: balances,
+      rewards: rewards,
+      currentUserId: user.id,
     );
   }
 
@@ -234,6 +298,115 @@ class _EconomyScreenState extends State<EconomyScreen> {
     _reload();
   }
 
+  /// Canjea una recompensa mediante la RPC SECURITY DEFINER redeem_reward, que
+  /// valida el saldo en el servidor. Metodo con cuerpo de bloque para no caer
+  /// en el fallo conocido de setState tras el await.
+  Future<void> _redeem(Map<String, dynamic> reward) async {
+    try {
+      await _client.rpc('redeem_reward', params: {'p_reward_id': reward['id']});
+      if (mounted) {
+        Celebrate.show(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('¡Has canjeado "${reward['title']}"!')),
+        );
+      }
+      _reload();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se ha podido canjear. Puede que te falte saldo.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Dialogo para crear una recompensa nueva en el catalogo del hogar. Inserta
+  /// en rewards {home_id, title, description?, cost_points, created_by}; el
+  /// resto de campos los pone la base de datos por defecto (is_active, etc.).
+  Future<void> _createReward(String homeId) async {
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    final costController = TextEditingController(text: '50');
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cream,
+        title: const Text('Nueva recompensa'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              autofocus: true,
+              decoration: _rewardFieldDecoration('Título'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descController,
+              decoration: _rewardFieldDecoration('Descripción (opcional)'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: costController,
+              keyboardType: TextInputType.number,
+              decoration: _rewardFieldDecoration('Coste en puntos'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (saved != true) return;
+    final title = titleController.text.trim();
+    final desc = descController.text.trim();
+    final cost = int.tryParse(costController.text.trim()) ?? 0;
+    if (title.isEmpty) return;
+
+    final user = _client.auth.currentUser;
+    try {
+      await _client.from('rewards').insert({
+        'home_id': homeId,
+        'title': title,
+        if (desc.isNotEmpty) 'description': desc,
+        'cost_points': cost < 0 ? 0 : cost,
+        'created_by': user?.id,
+      });
+      _reload();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  InputDecoration _rewardFieldDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: AppColors.card,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -250,16 +423,41 @@ class _EconomyScreenState extends State<EconomyScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fab-economy',
-        onPressed: _openScan,
-        backgroundColor: AppColors.wood,
-        foregroundColor: AppColors.ink,
-        icon: const Icon(Icons.document_scanner_outlined),
-        label: const Text(
-          'Escanear ticket',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+      floatingActionButton: FutureBuilder<_EconomyData>(
+        future: _future,
+        builder: (context, snap) {
+          final homeId = snap.data?.homeId;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (homeId != null)
+                FloatingActionButton.extended(
+                  heroTag: 'fab-reward',
+                  onPressed: () => _createReward(homeId),
+                  backgroundColor: AppColors.card,
+                  foregroundColor: AppColors.ink,
+                  icon: const Icon(Icons.card_giftcard_outlined),
+                  label: const Text(
+                    'Nueva recompensa',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              FloatingActionButton.extended(
+                heroTag: 'fab-economy',
+                onPressed: _openScan,
+                backgroundColor: AppColors.wood,
+                foregroundColor: AppColors.ink,
+                icon: const Icon(Icons.document_scanner_outlined),
+                label: const Text(
+                  'Escanear ticket',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
       ),
       body: FutureBuilder<_EconomyData>(
         future: _future,
@@ -276,8 +474,17 @@ class _EconomyScreenState extends State<EconomyScreen> {
           }
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
             children: [
+              // --- Marketplace de Recompensas (contenido principal) ----------
+              _balanceCard(data),
+              const SizedBox(height: 12),
+              _rewardsCard(data),
+              const SizedBox(height: 24),
+
+              // --- Gastos y tickets (funcionalidad existente preservada) -----
+              _sectionLabel('GASTOS Y TICKETS'),
+              const SizedBox(height: 8),
               _monthNavigator(),
               const SizedBox(height: 12),
               _budgetCard(data),
@@ -289,14 +496,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
               const SizedBox(height: 12),
               _historicalCard(data),
               const SizedBox(height: 16),
-              Text(
+              _sectionLabel(
                 'TICKETS DE ${_monthNames[_viewMonth.month - 1].toUpperCase()}',
-                style: TextStyle(
-                  fontSize: 12,
-                  letterSpacing: 1,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[500],
-                ),
               ),
               const SizedBox(height: 8),
               if (data.tickets.isEmpty)
@@ -307,6 +508,280 @@ class _EconomyScreenState extends State<EconomyScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12,
+        letterSpacing: 1,
+        fontWeight: FontWeight.w700,
+        color: AppColors.inkMuted,
+      ),
+    );
+  }
+
+  /// Tarjeta "Balanza de puntos": comparacion visual del saldo disponible de
+  /// cada miembro del hogar con barras de color madera y un contador animado.
+  /// Si nadie tiene saldo todavia, muestra un estado amable con Miau.
+  Widget _balanceCard(_EconomyData data) {
+    final entries = data.memberNames.entries.toList()
+      ..sort(
+        (a, b) =>
+            (data.balances[b.key] ?? 0).compareTo(data.balances[a.key] ?? 0),
+      );
+    final maxBalance = entries.fold<int>(
+      0,
+      (a, e) =>
+          (data.balances[e.key] ?? 0) > a ? (data.balances[e.key] ?? 0) : a,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Balanza de puntos',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Saldo disponible de cada miembro para canjear recompensas.',
+            style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          if (entries.isEmpty || maxBalance == 0)
+            _balanceEmpty()
+          else
+            ...entries.map(
+              (e) => _balanceRow(
+                name: e.value,
+                balance: data.balances[e.key] ?? 0,
+                maxBalance: maxBalance,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _balanceRow({
+    required String name,
+    required int balance,
+    required int maxBalance,
+  }) {
+    final ratio = maxBalance > 0 ? (balance / maxBalance).clamp(0.0, 1.0) : 0.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 16,
+            backgroundColor: AppColors.wood,
+            child: Icon(Icons.person, size: 18, color: AppColors.ink),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: 10,
+                    backgroundColor: AppColors.cream,
+                    color: AppColors.wood,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          AnimatedCounter(
+            value: balance.toDouble(),
+            formatter: (v) => '${v.round()} pts',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.woodDark,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _balanceEmpty() {
+    return Row(
+      children: [
+        const MiauCharacter(mood: MiauMood.curious, size: 72),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Aún no hay puntos que repartir',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Completad tareas del hogar para llenar la balanza.',
+                style: TextStyle(color: AppColors.inkMuted),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tarjeta "Recompensas": catalogo canjeable del hogar. Cada recompensa
+  /// muestra titulo, descripcion opcional y coste, con un boton "Canjear" que
+  /// solo se habilita cuando el saldo del usuario actual alcanza el coste. Si
+  /// el catalogo esta vacio, invita a crear la primera recompensa.
+  Widget _rewardsCard(_EconomyData data) {
+    final myBalance = data.balances[data.currentUserId] ?? 0;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recompensas',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tu saldo: $myBalance pts',
+            style: const TextStyle(
+              color: AppColors.woodDark,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (data.rewards.isEmpty)
+            _rewardsEmpty()
+          else
+            ...data.rewards.map(
+              (r) => _rewardRow(reward: r, myBalance: myBalance),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _rewardRow({
+    required Map<String, dynamic> reward,
+    required int myBalance,
+  }) {
+    final title = (reward['title'] as String?)?.trim() ?? 'Recompensa';
+    final desc = (reward['description'] as String?)?.trim();
+    final cost = (reward['cost_points'] as num?)?.toInt() ?? 0;
+    final canRedeem = myBalance >= cost;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.cardDecoration(radius: 18),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                if (desc != null && desc.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    desc,
+                    style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text(
+                  '$cost pts',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.woodDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          PressScale(
+            onTap: canRedeem ? () => _redeem(reward) : null,
+            child: Opacity(
+              opacity: canRedeem ? 1 : 0.4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.wood,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: const Text(
+                  'Canjear',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _rewardsEmpty() {
+    return Row(
+      children: [
+        const MiauCharacter(mood: MiauMood.curious, size: 72),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Todavía no hay recompensas',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Crea la primera con el botón "Nueva recompensa".',
+                style: TextStyle(color: AppColors.inkMuted),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -691,6 +1166,11 @@ class _EconomyData {
   final double historicalTotal;
   final int historicalTicketCount;
   final List<_MonthSpend> last6Months;
+  // Marketplace de Recompensas.
+  final Map<String, String> memberNames;
+  final Map<String, int> balances;
+  final List<Map<String, dynamic>> rewards;
+  final String? currentUserId;
   _EconomyData({
     required this.homeId,
     this.budget = 0,
@@ -699,6 +1179,10 @@ class _EconomyData {
     this.historicalTotal = 0,
     this.historicalTicketCount = 0,
     this.last6Months = const [],
+    this.memberNames = const {},
+    this.balances = const {},
+    this.rewards = const [],
+    this.currentUserId,
   });
 }
 

@@ -7,6 +7,7 @@ import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
+import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 
 class TasksScreen extends StatefulWidget {
@@ -83,6 +84,15 @@ class _TasksScreenState extends State<TasksScreen> {
         .order('created_at', ascending: false);
     final tasks = (tasksRes as List).map((m) => HomeTask.fromMap(m)).toList();
 
+    // Bolsa Comun: tareas sin responsable asignado y aun pendientes. Cualquiera
+    // del hogar puede reclamarlas con "Yo me encargo".
+    final pool = tasks.where((t) => t.isInPool && !t.isDone).toList();
+
+    // Lista principal: todo MENOS lo que ya se muestra en la Bolsa Comun, para
+    // que cada tarea sin asignar aparezca una sola vez. Las asignadas y las ya
+    // completadas siguen apareciendo aqui como siempre.
+    final listTasks = tasks.where((t) => !(t.isInPool && !t.isDone)).toList();
+
     // Puntos por usuario
     final pointsRes = await _client
         .from('task_points')
@@ -98,6 +108,8 @@ class _TasksScreenState extends State<TasksScreen> {
       homeId: homeId,
       members: members,
       tasks: tasks,
+      listTasks: listTasks,
+      pool: pool,
       scores: scores,
       currentUserId: user.id,
       pointsEnabled: pointsEnabled,
@@ -111,6 +123,29 @@ class _TasksScreenState extends State<TasksScreen> {
       // Registra puntos y reprograma (recurrentes) o marca hecha ('once')
       // con la misma logica compartida que usa el Dashboard de Inicio.
       await TaskScheduler(_client).complete(task);
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('¡+${task.points} puntos!')));
+      }
+      _reload();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// Flujo "Yo me encargo" de la Bolsa Comun: reclama la tarea para el usuario
+  /// actual, la completa y suma sus puntos en un solo gesto. Metodo con cuerpo
+  /// de bloque (NO arrow que devuelva un Future) para no caer en el fallo
+  /// conocido de setState tras el await.
+  Future<void> _claim(HomeTask task) async {
+    try {
+      await TaskScheduler(_client).claimAndComplete(task);
 
       if (mounted) {
         ScaffoldMessenger.of(
@@ -165,34 +200,41 @@ class _TasksScreenState extends State<TasksScreen> {
           final hayTareas = data.tasks.isNotEmpty;
           final todoHecho = hayTareas && data.tasks.every((t) => t.isDone);
 
-          return Column(
+          // Todo el contenido va dentro de UN solo scroll (incluida la Bolsa
+          // Comun) para que ninguna seccion desborde el viewport cuando hay
+          // muchas tarjetas. La cabecera (marcador, grafica, celebracion y
+          // bolsa) son los primeros items de la lista; el resto son las tareas.
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 96),
             children: [
               // Marcador y gráfica de puntos solo con el "Modo Puntos"
-              // activado. El resto (lista de tareas, celebración) permanece.
+              // activado. El resto (bolsa comun, lista de tareas, celebración)
+              // permanece visible aunque el modo este desactivado.
               if (data.pointsEnabled) ...[
                 _Scoreboard(members: data.members, scores: data.scores),
                 _PointsChart(members: data.members, scores: data.scores),
               ],
               _TareasCelebracion(visible: todoHecho),
-              Expanded(
-                child: data.tasks.isEmpty
-                    ? _empty()
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                        itemCount: data.tasks.length,
-                        itemBuilder: (context, i) {
-                          final t = data.tasks[i];
-                          return _TaskCard(
-                            task: t,
-                            memberName: t.assignedTo == null
-                                ? 'Cualquiera'
-                                : (data.members[t.assignedTo] ?? 'Miembro'),
-                            onComplete: () => _complete(t),
-                            onDelete: () => _delete(t),
-                          );
-                        },
-                      ),
-              ),
+              _BolsaComun(pool: data.pool, onClaim: _claim),
+              if (data.listTasks.isEmpty)
+                _empty()
+              else
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Column(
+                    children: [
+                      for (final t in data.listTasks)
+                        _TaskCard(
+                          task: t,
+                          memberName: t.assignedTo == null
+                              ? 'Cualquiera'
+                              : (data.members[t.assignedTo] ?? 'Miembro'),
+                          onComplete: () => _complete(t),
+                          onDelete: () => _delete(t),
+                        ),
+                    ],
+                  ),
+                ),
             ],
           );
         },
@@ -291,10 +333,161 @@ class _TareasCelebracion extends StatelessWidget {
   }
 }
 
+/// Seccion "Bolsa Comun" (Task Pool): lista las tareas sin responsable que
+/// cualquiera del hogar puede reclamar. Cada tarea muestra su recurrencia, los
+/// puntos que suma al completarla y un chip informativo con el esfuerzo
+/// estimado, mas un boton "Yo me encargo" que reclama+completa la tarea.
+///
+/// Si la bolsa esta vacia muestra un estado amable con Miau curioso. Se mantiene
+/// como seccion autocontenida y local para no reorganizar el resto del fichero.
+class _BolsaComun extends StatelessWidget {
+  final List<HomeTask> pool;
+  final Future<void> Function(HomeTask) onClaim;
+  const _BolsaComun({required this.pool, required this.onClaim});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'BOLSA COMÚN',
+            style: TextStyle(
+              fontSize: 12,
+              letterSpacing: 1,
+              fontWeight: FontWeight.w700,
+              color: AppColors.inkMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (pool.isEmpty)
+            _empty()
+          else
+            ...pool.map((t) => _poolCard(context, t)),
+        ],
+      ),
+    );
+  }
+
+  Widget _poolCard(BuildContext context, HomeTask task) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            task.title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              _mini(task.recurrenceLabel),
+              if (task.dueTime != null) _mini(task.dueTime!),
+              _mini('${task.points} pts'),
+              _mini('Esfuerzo: ${task.effortPoints}'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          PressScale(
+            onTap: () => onClaim(task),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.wood,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.pan_tool_alt_outlined, color: AppColors.ink),
+                  SizedBox(width: 8),
+                  Text(
+                    'Yo me encargo',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mini(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _empty() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Row(
+        children: [
+          const MiauCharacter(mood: MiauMood.curious, size: 72),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'La bolsa común está vacía',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Cuando haya tareas sin dueño aparecerán aquí para que '
+                  'cualquiera se encargue.',
+                  style: TextStyle(color: AppColors.inkMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TasksData {
   final String? homeId;
   final Map<String, String> members;
   final List<HomeTask> tasks;
+  // Tareas de la lista principal (todas menos las que se muestran en la Bolsa
+  // Comun, para no duplicar las no asignadas pendientes).
+  final List<HomeTask> listTasks;
+  final List<HomeTask> pool;
   final Map<String, int> scores;
   final String? currentUserId;
 
@@ -304,6 +497,8 @@ class _TasksData {
     required this.homeId,
     this.members = const {},
     this.tasks = const [],
+    this.listTasks = const [],
+    this.pool = const [],
     this.scores = const {},
     this.currentUserId,
     this.pointsEnabled = true,
