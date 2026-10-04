@@ -86,12 +86,30 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Ante cualquier insert/update/delete recarga la lista de forma idempotente
   /// (reusa _reload, que vuelve a consultar la BD): así la escritura propia y
   /// su "eco" Realtime convergen al MISMO estado, sin duplicados ni parpadeo.
+  ///
+  /// Esta pantalla se instancia DOS veces: embebida en DespensaTab (IndexedStack
+  /// siempre vivo) y como ruta propia empujada desde HomeTab. Para que cada
+  /// estado tenga SU canal (y no compartan topic, lo que haría que un
+  /// removeChannel tirara el canal del otro), el topic incluye un id único por
+  /// instancia (identityHashCode): cada estado abre y cierra el suyo.
   Future<void> _subscribeRealtime() async {
     try {
-      final homeId = await _homeId();
-      if (!mounted) return;
+      // Resolvemos el hogar SIN pasar por el aviso de "sin conexión": que no
+      // haya sesión o perfil no es un fallo de conectividad, solo significa que
+      // no hay nada que escuchar todavía (igual que en tasks_screen).
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null || !mounted) return;
       final channel = _client
-          .channel('public:shopping_list_items:$homeId')
+          .channel(
+            'public:shopping_list_items:$homeId:${identityHashCode(this)}',
+          )
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -111,9 +129,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           });
       _channel = channel;
     } catch (_) {
-      // Resolver el hogar o abrir el canal puede fallar sin red: no pasa nada,
-      // la pantalla sigue funcionando vía FutureBuilder/_reload. Avisamos una
-      // sola vez con el gate puro.
+      // Abrir el canal puede fallar sin red: no pasa nada, la pantalla sigue
+      // funcionando vía FutureBuilder/_reload. Avisamos una sola vez con el
+      // gate puro. (La ausencia de sesión/hogar ya se trató arriba con un
+      // return silencioso: no es un fallo de conectividad.)
       _notifyRealtimeDown();
     }
   }
@@ -160,7 +179,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         content: const Text(
-          'Sin conexion en vivo ahora mismo; se actualizara al recargar.',
+          'Sin conexión en vivo ahora mismo; se actualizará al recargar.',
         ),
       ),
     );

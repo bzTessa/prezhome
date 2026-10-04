@@ -54,8 +54,11 @@ class _TasksScreenState extends State<TasksScreen> {
           .maybeSingle();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null || !mounted) return;
+      // TasksScreen es instancia única (main_shell), así que no hay colisión de
+      // topic posible; aun así hacemos el topic único por instancia por
+      // consistencia con la lista de la compra y robustez futura.
       final channel = _client
-          .channel('public:tasks:$homeId')
+          .channel('public:tasks:$homeId:${identityHashCode(this)}')
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -119,7 +122,7 @@ class _TasksScreenState extends State<TasksScreen> {
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         content: const Text(
-          'Sin conexion en vivo ahora mismo; se actualizara al recargar.',
+          'Sin conexión en vivo ahora mismo; se actualizará al recargar.',
         ),
       ),
     );
