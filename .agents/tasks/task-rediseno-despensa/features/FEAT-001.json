@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Ampliar los helpers puros de presentación y preparar la base de datos de UX. (1) Añadir a lib/utils/shopping_display.dart una función nueva `inventoryQtyLabel(double? quantity, String? unit)` que devuelva una etiqueta LARGA con concordancia singular/plural para el inventario (p. ej. '1 unidad', '2 unidades', '300 g', '1 bote', '2 botes', '1,5 kg'), sin mostrar nunca '1.0'. NO duplicar la lógica de normalización de unidades: refactorizar el mapa de unidades para que tanto la etiqueta corta ('ud') de la compra como la larga ('unidad'/'unidades') del inventario compartan la base, respetando que `shoppingQtyLabel` siga devolviendo EXACTAMENTE lo que ya testea shopping_display_test.dart (4 'unidad' -> '4 ud'). (2) Añadir tests en test/shopping_display_test.dart para `inventoryQtyLabel` cubriendo singular/plural de unidades y gramos/kg/decimales. Es una feature independiente que habilita FEAT-002 y FEAT-003.",
+  "status": "completed",
+  "steps": [
+    "Leer lib/utils/shopping_display.dart y entender _shortUnit, _fmtNum, shoppingQtyLabel, shoppingCleanName.",
+    "Añadir una función pública `inventoryQtyLabel(double? quantity, String? unit)` que: con quantity null devuelva '' (o la expresión suelta 'al gusto'/'a ojo' como shoppingQtyLabel); formatee el número con _fmtNum (sin '1.0'); y use una etiqueta de unidad LARGA con concordancia: 'unidad'/'unidades', 'g', 'kg', 'ml', 'L', 'diente'/'dientes', 'loncha'/'lonchas', 'lata'/'latas', 'bote'/'botes', 'bolsa'/'bolsas', 'cucharada'/'cucharadas', 'cucharadita'/'cucharaditas'. Para 'unidad'/'unidades'/'ud' debe dar '1 unidad' / '2 unidades' (NO 'ud', esa es la corta de la compra).",
+    "Evitar duplicar lógica: extraer un helper interno compartido (p. ej. una tabla/switch que dé singular+plural por clave de unidad) del que deriven tanto _shortUnit (compra, abreviado) como la etiqueta larga del inventario. No cambiar la salida pública de shoppingQtyLabel (los tests existentes deben seguir pasando).",
+    "Documentar con comentarios en español el propósito de inventoryQtyLabel (fila del inventario) frente a shoppingQtyLabel (pastilla compacta de la compra).",
+    "Añadir en test/shopping_display_test.dart un group('inventoryQtyLabel') con casos: (1,'unidad')->'1 unidad'; (2,'unidades')->'2 unidades'; (1,'ud')->'1 unidad'; (300,'g')->'300 g'; (1.5,'kg')->'1,5 kg'; (1,'bote')->'1 bote'; (2,'bote')->'2 botes'; (null,'g')->''; (null,'al gusto')->'al gusto'. Confirmar que los tests de shoppingQtyLabel siguen intactos."
+  ],
+  "acceptance_criteria": [
+    "`dart format --output=none --set-exit-if-changed .` no reporta cambios.",
+    "`flutter analyze` dice 'No issues found!'.",
+    "`flutter test test/shopping_display_test.dart` pasa, incluidos los nuevos casos de inventoryQtyLabel y los existentes de shoppingQtyLabel sin modificar.",
+    "inventoryQtyLabel nunca devuelve '1.0' ni '1 unidades' (concordancia correcta)."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test test/shopping_display_test.dart"
+  ],
+  "blocked_reason": null,
+  "findings": "Refactorizada la base de unidades en lib/utils/shopping_display.dart: nuevo helper interno `_unitKey(String)` que normaliza cualquier variante de unidad a una clave canónica (unidad/g/kg/ml/l/diente/loncha/lata/bote/bolsa/cucharada/cucharadita, '' para al gusto/a ojo, null si desconocida), y mapa `_unitForms` con los pares (singular, plural). `_shortUnit` ahora deriva de `_unitKey` (sin duplicar el mapeo de variantes) y sigue dando la abreviatura de la compra (unidad->ud, cucharada->cda, cucharadita->cdta); `shoppingQtyLabel` conserva su salida pública exacta. Añadida la funcion publica `inventoryQtyLabel(double?, String?)` con etiqueta larga y concordancia singular/plural (1 unidad / 2 unidades, 1 bote / 2 botes, 300 g, 1,5 kg), nunca '1.0' ni '1 unidades'; con quantity null devuelve '' o la expresion suelta (al gusto/a ojo), y con unidad desconocida muestra el texto tal cual. Añadido group('inventoryQtyLabel') con 10 casos en test/shopping_display_test.dart; los 7 casos previos de shoppingQtyLabel quedan intactos. Validacion CI verde: dart format (0 cambios), flutter analyze 'No issues found!', suite completa 177 tests pasan (baseline 167 + 10 nuevos). Autogenerados de pub get (pubspec.lock, analysis_options.yaml, linux/macos/windows) descartados con git checkout; working tree solo con los 2 ficheros fuente. Sin commit (segun briefing). NOTA: solo FEAT-001 implementado; FEAT-002 (UI despensa: desplegables, dashboard, filas limpias usando inventoryQtyLabel) y FEAT-003 quedan pendientes para abordar la queja de UX del usuario."
+}

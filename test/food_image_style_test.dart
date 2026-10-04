@@ -26,10 +26,17 @@ void main() {
       expect(CategoryIcons.iconFor('xyzzy'), Icons.shopping_cart);
     });
 
-    test('item de hogar sin match claro usa el icono de hogar', () {
+    test('item de hogar sin match claro usa el icono de limpieza', () {
+      // Decisión UX: para productos de hogar el fallback usa el icono de
+      // limpieza (escoba/esponja) en vez de la casa vacía, que la usuaria
+      // percibía como genérica (p. ej. "Bastoncillos").
       expect(
         CategoryIcons.iconFor('cosa rara', itemType: 'hogar'),
-        FoodCategory.hogar.icon,
+        FoodCategory.limpieza.icon,
+      );
+      expect(
+        CategoryIcons.iconFor('cosa rara', itemType: 'hogar'),
+        Icons.cleaning_services,
       );
     });
 

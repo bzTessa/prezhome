@@ -208,11 +208,21 @@ class CategoryIcons {
       'friegaplatos',
       'lavavajillas',
       'papel higienico',
+      'papel',
+      'rollo',
+      'rollos',
       'servilleta',
       'servilletas',
+      'bastoncillos',
+      'bastoncillo',
+      'algodon',
+      'algodones',
+      'disco desmaquillante',
       'basura',
       'escoba',
       'ambientador',
+      'friegasuelos',
+      'quitamanchas',
     ],
     FoodCategory.hogar: [
       'bombilla',
@@ -404,8 +414,10 @@ class CategoryIcons {
   /// Devuelve la categoría inferida del nombre del producto.
   ///
   /// Si no hay match claro de alimentos y [itemType] es 'hogar', usamos
-  /// [FoodCategory.hogar] como respaldo razonable; en cualquier otro caso
-  /// devolvemos [FoodCategory.otros] (emoji neutro).
+  /// [FoodCategory.limpieza] como respaldo (icono de limpieza), que para los
+  /// productos de hogar queda más coherente que la casa vacía de
+  /// [FoodCategory.hogar]; en cualquier otro caso devolvemos
+  /// [FoodCategory.otros] (emoji neutro).
   static FoodCategory categoryFor(String name, {String? itemType}) {
     final tokens = _tokens(normalize(name));
     if (tokens.isNotEmpty) {
@@ -415,7 +427,7 @@ class CategoryIcons {
         }
       }
     }
-    if (itemType == 'hogar') return FoodCategory.hogar;
+    if (itemType == 'hogar') return FoodCategory.limpieza;
     return FoodCategory.otros;
   }
 
@@ -440,11 +452,11 @@ class CategoryIcons {
     FoodCategory.otros: (AppColors.cream, AppColors.woodDark),
   };
 
-  /// Devuelve el estilo visual cozy (icono + fondo + color del icono) para la
-  /// categoría inferida del nombre. Es la fuente única de la ilustración de
-  /// respaldo que sustituye al emoji genérico del sistema.
-  static CategoryStyle styleFor(String name, {String? itemType}) {
-    final category = categoryFor(name, itemType: itemType);
+  /// Devuelve el estilo visual cozy (icono + fondo + color del icono) para el
+  /// enum de categoría directamente. Útil en cabeceras de sección (compra e
+  /// inventario) donde ya conocemos la categoría y queremos su tono cozy sin
+  /// pasar por el nombre de un producto.
+  static CategoryStyle styleForCategory(FoodCategory category) {
     final (background, foreground) =
         _palette[category] ?? _palette[FoodCategory.otros]!;
     return CategoryStyle(
@@ -452,6 +464,13 @@ class CategoryIcons {
       background: background,
       foreground: foreground,
     );
+  }
+
+  /// Devuelve el estilo visual cozy (icono + fondo + color del icono) para la
+  /// categoría inferida del nombre. Es la fuente única de la ilustración de
+  /// respaldo que sustituye al emoji genérico del sistema.
+  static CategoryStyle styleFor(String name, {String? itemType}) {
+    return styleForCategory(categoryFor(name, itemType: itemType));
   }
 
   /// Icono vectorial Material representativo del producto (ilustración cozy de
