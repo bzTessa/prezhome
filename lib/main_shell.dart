@@ -56,6 +56,22 @@ class _TabDescriptor {
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
+  /// Clave global del shell vivo. HomeSessionScreen construye el shell con esta
+  /// clave, de modo que cualquier flujo que necesite avisar al shell (p. ej. el
+  /// wizard de perfil, que puede cambiar los módulos activados) pueda alcanzar
+  /// su State sin acoplarse a la posición en el árbol de widgets. Es necesario
+  /// porque las rutas que empuja Navigator.push (como el wizard abierto desde
+  /// la pantalla de perfil) son hermanas del shell bajo el Navigator raíz, no
+  /// descendientes, así que findAncestorStateOfType no las alcanzaría.
+  static final GlobalKey<MainShellState> shellKey = GlobalKey<MainShellState>();
+
+  /// Recarga las prefs del shell vivo y reconstruye la barra de navegación para
+  /// reflejar un cambio de módulos. No hace nada si el shell no está montado
+  /// (p. ej. durante tests que no usan el shell). Lo llaman las entradas al
+  /// wizard que no pasan por refreshHome() (aviso de calorías en Inicio y la
+  /// pantalla de perfil nutricional).
+  static void reloadModules() => shellKey.currentState?.reloadModules();
+
   @override
   State<MainShell> createState() => MainShellState();
 }

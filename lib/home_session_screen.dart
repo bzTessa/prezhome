@@ -33,8 +33,11 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
 
   // Clave de MainShell para refrescar la pestana Inicio cuando el wizard
   // automatico se cierra, de modo que el dashboard refleje el objetivo recien
-  // calculado sin que el usuario tenga que cambiar de pestana.
-  final GlobalKey<MainShellState> _shellKey = GlobalKey<MainShellState>();
+  // calculado sin que el usuario tenga que cambiar de pestana. Es la clave
+  // compartida del shell (MainShell.shellKey) para que otras entradas al wizard
+  // (aviso de calorias en Inicio, perfil nutricional) tambien puedan avisar al
+  // shell del cambio de modulos.
+  final GlobalKey<MainShellState> _shellKey = MainShell.shellKey;
 
   @override
   void initState() {
