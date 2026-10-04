@@ -11,8 +11,9 @@
 ///   [LocalStore] que se inyecte (en tests).
 /// - Un solo [SupabaseRemoteSender] (o el [RemoteSender] inyectado).
 /// - Un [OfflineRepository] por tabla: `shopping_list_items` e
-///   `inventory_items`, que comparten store y sender y, por tanto, la MISMA
-///   cola namespaced por hogar.
+///   `inventory_items`, que comparten store y sender pero mantienen colas
+///   SEPARADAS en disco (clave `queue:<table>:<homeId>`), de modo que una
+///   escritura en un repo nunca sobrescribe las ops pendientes del otro.
 ///
 /// El `home_id` real lo resuelve el `SupabaseRemoteSender` al hablar con la
 /// red; aquí usamos una clave de hogar LOCAL para namespacear la caché/cola en
@@ -96,6 +97,15 @@ class OfflineProvider {
 
   /// Cambia el hogar activo: separa (borra) la caché/cola del hogar anterior en
   /// ambos repositorios y pasa a operar sobre [newHomeId] con estado limpio.
+  ///
+  /// DECISIÓN DELIBERADA: al cambiar de hogar se DESCARTAN las ops pendientes
+  /// del hogar anterior (no se drenan antes de salir). El flujo real de PrezHome
+  /// es un usuario con un único hogar activo, así que esta ruta solo se dispara
+  /// al RESOLVER el hogar en el arranque (de la etiqueta local por defecto al
+  /// `home_id` real), momento en el que la caché del hogar anterior o está
+  /// vacía o no debe mezclarse con la del nuevo (steering de seguridad: la
+  /// caché local nunca cruza hogares). No drenamos antes para no filtrar datos
+  /// de un hogar al confirmarlos justo cuando dejamos de operar sobre él.
   Future<void> switchHome(String newHomeId) async {
     if (newHomeId == _homeId) return;
     _homeId = newHomeId;

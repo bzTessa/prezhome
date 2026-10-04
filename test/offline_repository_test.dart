@@ -306,7 +306,7 @@ void main() {
 
       expect(repo.pendingCount, 0);
       expect(await store.read('cache:$kTable:home-A'), isNull);
-      expect(await store.read('queue:home-A'), isNull);
+      expect(await store.read('queue:$kTable:home-A'), isNull);
       final rows = await repo.readCached();
       expect(rows, isEmpty);
     });
@@ -329,8 +329,144 @@ void main() {
 
       // Y la caché/cola del hogar A quedó eliminada (no se mezclan hogares).
       expect(await store.read('cache:$kTable:home-A'), isNull);
-      expect(await store.read('queue:home-A'), isNull);
+      expect(await store.read('queue:$kTable:home-A'), isNull);
     });
+  });
+
+  group('durabilidad de la cola con DOS repos sobre el MISMO store', () {
+    // Reproduce el issue 1 de la revisión: shopping e inventory comparten
+    // LocalStore; si usaran la misma clave de cola en disco, una escritura en
+    // un repo pisaría las ops pendientes del otro y se perderían al reiniciar
+    // la app. Con claves namespaced por tabla (queue:<table>:<homeId>) cada
+    // cola es independiente en disco y NINGUNA op se pierde.
+    OfflineRepository buildTableRepo(
+      String table,
+      InMemoryLocalStore store,
+      RemoteSender sender,
+    ) {
+      return OfflineRepository(
+        table: table,
+        store: store,
+        sender: sender,
+        homeId: 'home-A',
+        gate: DrainGate(minRetryGapMs: 0, nowMillis: () => 0),
+      );
+    }
+
+    test(
+      'encolar en ambos repos no pierde ninguna op en disco al reiniciar',
+      () async {
+        const shoppingTable = 'shopping_list_items';
+        const inventoryTable = 'inventory_items';
+        final store = InMemoryLocalStore();
+        final sender = FakeRemoteSender()..online = false;
+
+        final shopping = buildTableRepo(shoppingTable, store, sender);
+        final inventory = buildTableRepo(inventoryTable, store, sender);
+
+        // Ambos cargan la cola (una vez) y luego cada uno encola una op
+        // ESTANDO OFFLINE: queda en la cola en disco sin enviarse.
+        await shopping.applyLocalWrite(
+          PendingOp(
+            table: shoppingTable,
+            type: SyncOpType.insert,
+            id: 'tmp-S',
+            payload: {'id': 'tmp-S', 'name': 'Pan'},
+            timestamp: 100,
+            seq: 100,
+          ),
+        );
+        await inventory.applyLocalWrite(
+          PendingOp(
+            table: inventoryTable,
+            type: SyncOpType.insert,
+            id: 'tmp-I',
+            payload: {'id': 'tmp-I', 'name': 'Leche'},
+            timestamp: 200,
+            seq: 200,
+          ),
+        );
+
+        // Simulamos un REINICIO de la app: repos nuevos sobre el MISMO store.
+        // Cada uno debe recuperar SU op de disco; ninguna se perdió.
+        final shopping2 = buildTableRepo(shoppingTable, store, sender);
+        final inventory2 = buildTableRepo(inventoryTable, store, sender);
+
+        final shopRows = await shopping2.readCached();
+        final invRows = await inventory2.readCached();
+
+        expect(
+          shopRows.map((r) => r['name']),
+          contains('Pan'),
+          reason: 'la op de la compra sobrevive al reinicio',
+        );
+        expect(
+          invRows.map((r) => r['name']),
+          contains('Leche'),
+          reason: 'la op del inventario sobrevive al reinicio',
+        );
+        expect(shopping2.pendingCount, 1);
+        expect(inventory2.pendingCount, 1);
+      },
+    );
+  });
+
+  group('estado efectivo tras un drenado con éxito (ventana del issue 2)', () {
+    test(
+      'un insert recién drenado sigue visible y un delete no reaparece',
+      () async {
+        final store = InMemoryLocalStore();
+        final sender = FakeRemoteSender();
+        // El servidor arranca con una fila que luego borraremos offline.
+        sender.tables[kTable] = [
+          {'id': 'srv-del', 'name': 'A borrar', 'updated_at': 1},
+        ];
+        final repo = buildRepo(store, sender);
+        // Primer refresco con red: deja 'A borrar' en caché.
+        await repo.refreshFromRemote();
+
+        // SIN cobertura: insertamos una fila nueva y borramos la existente.
+        sender.online = false;
+        await repo.applyLocalWrite(insertOp('tmp-new', {'name': 'Nuevo'}, 500));
+        await repo.applyLocalWrite(deleteOp('srv-del', 600));
+        expect(repo.pendingCount, 2);
+
+        // Vuelve la red: refreshFromRemote drena AMBAS ops y debe devolver el
+        // estado efectivo YA sincronizado (sin ventana de inconsistencia).
+        sender.online = true;
+        final rows = await repo.refreshFromRemote();
+        final names = rows.map((r) => r['name']).toList();
+
+        // La cola quedó vacía (todo drenado).
+        expect(repo.pendingCount, 0);
+        // El insert drenado sigue visible (no desaparece).
+        expect(names, contains('Nuevo'));
+        // El delete drenado NO reaparece.
+        expect(names, isNot(contains('A borrar')));
+      },
+    );
+
+    test(
+      'readCached inmediato tras refreshFromRemote refleja lo drenado',
+      () async {
+        final store = InMemoryLocalStore();
+        final sender = FakeRemoteSender();
+        final repo = buildRepo(store, sender);
+        await repo.refreshFromRemote();
+
+        sender.online = false;
+        await repo.applyLocalWrite(insertOp('tmp-x', {'name': 'Café'}, 700));
+        sender.online = true;
+        await repo.refreshFromRemote();
+
+        // La caché persistida ya incluye lo drenado: una lectura instantánea
+        // (sin red) desde otro repo "reiniciado" lo ve sin cola pendiente.
+        final repo2 = buildRepo(store, sender);
+        final rows = await repo2.readCached();
+        expect(rows.map((r) => r['name']), contains('Café'));
+        expect(repo2.pendingCount, 0);
+      },
+    );
   });
 
   group('DrainGate (gate puro de reintentos)', () {

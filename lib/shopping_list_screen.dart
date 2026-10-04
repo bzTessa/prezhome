@@ -1026,6 +1026,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
       // Regeneracion sin duplicar: borramos solo los items 'auto' pendientes.
       // No tocamos los manuales ni los ya marcados como comprados.
+      //
+      // NOTA OFFLINE (deliberado): esta regeneracion REQUIERE CONEXION. Ya ha
+      // leido el plan, los ingredientes y el inventario de la red (lineas de
+      // arriba), asi que sin cobertura habria lanzado mucho antes. Este borrado
+      // es masivo por filtro (home_id + source='auto' + checked=false), no por
+      // id, por lo que NO encaja en la cola optimista por fila; va directo por
+      // _client. Si no hay red, lanza y el catch de abajo aborta toda la
+      // generacion sin dejar a medias (las altas optimistas solo ocurren
+      // DESPUES, si este borrado tuvo exito). Es una operacion online-only por
+      // naturaleza, no una omision.
       await _client
           .from('shopping_list_items')
           .delete()

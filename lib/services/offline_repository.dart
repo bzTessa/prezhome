@@ -27,6 +27,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'local_store.dart';
 import 'offline_merge.dart';
@@ -174,10 +175,14 @@ class OfflineRepository {
   /// Clave de caché de la lista remota, namespaced por hogar.
   String get _cacheKey => 'cache:$table:$_homeId';
 
-  /// Clave de la cola de sincronización, namespaced por hogar. La cola es
-  /// compartida por todas las tablas del mismo hogar, pero cada repositorio
-  /// solo drena/mezcla las ops de SU tabla.
-  String get _queueKey => 'queue:$_homeId';
+  /// Clave de la cola de sincronización, namespaced por TABLA y hogar. Cada
+  /// repositorio (uno por tabla) persiste su PROPIA cola en disco: aunque
+  /// `shopping` e `inventory` comparten el mismo [LocalStore], NO comparten la
+  /// clave de cola, por lo que una escritura en un repo nunca sobrescribe en
+  /// disco las ops pendientes del otro (durabilidad de la cola, garantía
+  /// central del Paso 7). La clave era `queue:<homeId>` y provocaba que ambos
+  /// repos se pisaran la cola en disco; ahora es `queue:<table>:<homeId>`.
+  String get _queueKey => 'queue:$table:$_homeId';
 
   // --------------------------------------------------------------------------
   // Carga/persistencia de la cola
@@ -192,8 +197,16 @@ class OfflineRepository {
         if (decoded is List) {
           _queue = SyncQueue.fromJson(decoded);
         }
-      } catch (_) {
-        // Cola corrupta: empezamos limpio en lugar de romper el arranque.
+      } catch (error, stackTrace) {
+        // Cola corrupta: empezamos limpio en lugar de romper el arranque, pero
+        // DEJAMOS SEÑAL (antes se tragaba en silencio) para que un fallo de
+        // serialización no pase inadvertido en diagnósticos.
+        developer.log(
+          'Cola de sincronización corrupta en "$_queueKey"; se descarta.',
+          name: 'OfflineRepository',
+          error: error,
+          stackTrace: stackTrace,
+        );
         _queue = SyncQueue();
       }
     }
@@ -218,8 +231,15 @@ class OfflineRepository {
             .map((e) => e.cast<String, dynamic>())
             .toList();
       }
-    } catch (_) {
-      // Caché corrupta: devolvemos vacío (la red la repondrá).
+    } catch (error, stackTrace) {
+      // Caché corrupta: devolvemos vacío (la red la repondrá), pero dejamos
+      // SEÑAL para que el fallo de serialización no pase inadvertido.
+      developer.log(
+        'Caché local corrupta en "$_cacheKey"; se descarta.',
+        name: 'OfflineRepository',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
     return [];
   }
@@ -253,10 +273,30 @@ class OfflineRepository {
       await _persistCache(remote);
       // El fetch funcionó: la red está disponible, aprovechamos para drenar.
       gate.reset();
-      await _drainInternal();
+      final drain = await _drainInternal();
+
+      // Si el drenado envió algo con éxito, el remoto que acabamos de leer YA
+      // NO refleja lo recién sincronizado (los inserts drenados no estaban en
+      // ese fetch; los deletes drenados aún aparecían). Volver a leer el remoto
+      // cierra esa ventana: así la lista efectiva incluye lo recién
+      // sincronizado y no "desaparecen" inserts ni "reaparecen" deletes hasta
+      // el siguiente fetch.
+      var effectiveRemote = remote;
+      if (drain.sent > 0 && !drain.stoppedByFailure) {
+        try {
+          effectiveRemote = await sender.fetch(table);
+          await _persistCache(effectiveRemote);
+        } catch (_) {
+          // Si el re-fetch falla, nos quedamos con el remoto previo + merge de
+          // pendientes (que tras un drenado completo está vacío): peor caso, el
+          // mismo que antes, pero sin romper la UI.
+          effectiveRemote = remote;
+        }
+      }
+
       return mergeRemoteWithPending(
         table: table,
-        remote: remote,
+        remote: effectiveRemote,
         pending: _queue.pending,
         remoteTimestampKey: remoteTimestampKey,
       );
