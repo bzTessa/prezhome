@@ -86,6 +86,31 @@ class ShoppingListItem {
     };
   }
 
+  /// Serialización COMPLETA (incluye id y created_at) para CACHEAR la fila
+  /// entera en disco y poder releerla con [ShoppingListItem.fromMap] al abrir
+  /// la app sin conexión. A diferencia de [toInsertMap] (que omite id y
+  /// created_at porque los pone la base de datos), aquí conservamos TODO el
+  /// estado para reconstruir la fila tal cual. Útil también para el merge
+  /// caché<->remoto. Usa las mismas claves snake_case que Supabase.
+  Map<String, dynamic> toCacheMap() {
+    return {
+      'id': id,
+      'home_id': homeId,
+      'name': name,
+      'quantity': quantity,
+      'unit': unit,
+      'checked': checked,
+      'source': source,
+      'created_at': createdAt?.toIso8601String(),
+      'item_type': itemType,
+      'category': category,
+      'image_url': imageUrl,
+    };
+  }
+
+  /// Alias de [toCacheMap] para serializar a JSON (misma forma completa).
+  Map<String, dynamic> toJson() => toCacheMap();
+
   /// Texto legible: "2 unidades Cebolla" o "Sal".
   ///
   /// Usa [formatQuantityUnit] (el mismo helper que [Ingredient.display]) para

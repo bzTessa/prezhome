@@ -132,15 +132,21 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) throw 'No hay usuario autenticado';
 
-      final profile = await Supabase.instance.client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .single();
-
-      final homeId = profile['home_id'];
-      if (homeId == null) {
-        throw 'El usuario no está asignado a ningún hogar.';
+      // Resolvemos el home_id de la fila. En edición ya lo trae el item; en
+      // alta nueva lo leemos del perfil (best-effort: si no hay red usamos el
+      // del item editado o lo dejamos vacío para que el repositorio lo rellene
+      // al enviar). Así el alta funciona también de forma optimista sin red.
+      String? homeId = widget.item?.homeId;
+      try {
+        final profile = await Supabase.instance.client
+            .from('profiles')
+            .select('home_id')
+            .eq('id', user.id)
+            .single();
+        homeId = (profile['home_id'] as String?) ?? homeId;
+      } catch (_) {
+        // Sin conexión: conservamos el homeId que tuviéramos (puede ser null en
+        // un alta nueva; el SupabaseRemoteSender lo resolverá al drenar).
       }
 
       final qty = double.tryParse(
@@ -163,7 +169,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       if (isFood &&
           name.isNotEmpty &&
           _selectedCategory != 'Especias' &&
-          nameChanged) {
+          nameChanged &&
+          homeId != null) {
         try {
           imageUrl = await FoodPhotoService(
             Supabase.instance.client,
@@ -175,7 +182,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
 
       final item = InventoryItem(
         id: editing?.id ?? '',
-        homeId: homeId,
+        homeId: homeId ?? '',
         name: name,
         category: _selectedCategory,
         itemType: _itemType,
@@ -205,18 +212,11 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         imageUrl: imageUrl,
       );
 
-      if (editing != null) {
-        await Supabase.instance.client
-            .from('inventory_items')
-            .update(item.toMap())
-            .eq('id', editing.id);
-      } else {
-        await Supabase.instance.client
-            .from('inventory_items')
-            .insert(item.toMap());
-      }
-
-      if (mounted) Navigator.of(context).pop(true);
+      // OFFLINE-FIRST: ya NO escribimos aquí en Supabase. Devolvemos el item
+      // construido a InventoryScreen, que aplica la op (insert/update) de forma
+      // OPTIMISTA a la caché, la encola y la drena a Supabase en segundo plano.
+      // Así el alta/edición funciona igual sin conexión.
+      if (mounted) Navigator.of(context).pop(item);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
