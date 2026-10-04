@@ -1,0 +1,14 @@
+{
+  "task_id": "task-orquestador-batch-cooking",
+  "task_description": "Paso 5 de la épica 'Asistente de Vida Proactivo': orquestador de batch cooking. Crear lib/services/meal_prep_orchestrator.dart (lógica PURA que fusiona los pasos de varias recetas planificadas en UNA línea de tiempo de cocción, agrupando pasos compatibles por aparato -ej. horno para dos platos a la vez- y marcando lo paralelizable) y lib/batch_prep_timeline_screen.dart (pantalla cozy que renderiza esa timeline con temporizadores en vivo iniciar/pausar/reiniciar, Timers cancelados en dispose). Enganchar un acceso 'Modo cocina' desde lib/meal_plan_screen.dart con Navigator.push; NO tocar main_shell.dart (colisión con Paso 2). Rama feat/paso5-orquestador-batch-cooking desde main. Verificar CI exacto (format sobre '.', analyze, test, guard del mapa).",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "CI exacto reproducido en verde: 'dart format --output=none --set-exit-if-changed .' 0 changed; 'flutter analyze' No issues found!; 'flutter test' 215 passed (201 baseline + 14 nuevos del orquestador); 'dart run tool/architecture/dependency_map.dart --check' actualizado. main_shell.dart NO tocado (git diff main vacío); sin cambios de backend/migraciones. Calidad de tests: los 15 bloques de test/meal_prep_orchestrator_test.dart ejercitan buildTimeline con datos fijos (agrupación por aparato duración=máx, no fusión de aparatos distintos, paralelismo, orden determinista, totalEstimatedMinutes con cota de solape incl. caso prep-dominante 5b, derivación con/sin instructions, bordes); revertir la lógica central los rompería. Revisión semántica v1 y v2 ambas APPROVED (observaciones no bloqueantes abordadas: fórmula del total acotada y campo componentNames muerto eliminado). No docker: proyecto Flutter sin Dockerfile de build relevante para este paso. Rama feat/paso5-orquestador-batch-cooking, árbol limpio, sin push ni PR."
+  }
+}

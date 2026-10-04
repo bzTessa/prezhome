@@ -1,0 +1,31 @@
+{
+  "project_type": "Flutter + Supabase mobile app (español, usuaria no técnica). PrezHome: app de hogar.",
+  "language": "Dart (Flutter)",
+  "build_system": "Flutter SDK en ~/flutter_sdk (clonado tag 3.47.6, Dart 3.13.5). pubspec SDK ^3.11.1. dart format usa el 'tall style' por defecto.",
+  "test_framework": "flutter_test (package:flutter_test). Tests de lógica pura importan directamente el servicio: import 'package:prezhome/services/<x>.dart'. Patrón: semana FIJA con DateTime fijo para determinismo (ver test/meal_prep_planner_test.dart). 21 ficheros de test en test/.",
+  "build_command": "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get (y descartar autogenerados: git checkout -- pubspec.lock analysis_options.yaml linux macos windows)",
+  "test_command": "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter test",
+  "verification_instructions": "Reproducir el CI EXACTO (con el PUNTO): 1) 'dart format --output=none --set-exit-if-changed .' -> 0 changed. 2) 'flutter analyze' -> 'No issues found!'. 3) 'flutter test' -> todos verdes (baseline main = 201; añadir los del orquestador, no bajar). 4) 'dart run tool/architecture/dependency_map.dart --check'; si falla, regenerar con 'dart run tool/architecture/dependency_map.dart' y commitear docs/architecture/dependency-map.md. Tras 'flutter pub get', descartar autogenerados con 'git checkout --' (pubspec.lock, analysis_options.yaml, registrants de linux/macos/windows).",
+  "snapshot_or_generated_files": "docs/architecture/dependency-map.md se genera con 'dart run tool/architecture/dependency_map.dart' (recorre lib/ y mapea módulos/imports). AÑADIR lib/services/meal_prep_orchestrator.dart y lib/batch_prep_timeline_screen.dart CAMBIA el mapa -> hay que regenerar y commitear el .md. El guard '--check' falla si está desactualizado.",
+  "setup_instructions": "Rama ya creada: feat/paso5-orquestador-batch-cooking (desde main). Flutter SDK ya presente en ~/flutter_sdk. Ejecutar flutter pub get y descartar autogenerados.",
+  "environment_constraints": "Sandbox SIN Flutter/Dart en PATH por defecto -> usar ~/flutter_sdk/bin. NO push ni PR (lo hace el orquestador). NO tocar main_shell.dart (colisión con Paso 2 que aún no está en main). NO tocar backend/migraciones (este paso NO necesita BD). El enum HomeModule.batchCooking NO existe en esta rama (Paso 2 no está en main): NO depender de él.",
+  "contribution_requirements": "Steering .kiro/steering/security.md aplica a cambios de backend/datos (este paso no toca BD, así que no aplica directamente). Reglas de diseño del briefing (design-system): PROHIBIDO texto visible 'IA'/'AI'/'Inteligencia Artificial' -> usar 'Modo cocina'/'Tu asistente de cocina'/'Plan de cocina'. Radio 16 = AppRadius.md. Tokens del tema (nada de Colors.grey[xxx] ni literales 0xFF en código nuevo; usar AppColors.inkMuted etc.). Motion suave y reduce-motion respetado (PressScale, AppMotion). Español cercano, botones grandes.",
+  "key_patterns": "LÓGICA PURA en lib/services/*.dart: sin import de Flutter/Supabase, solo dart:core; recibe datos y devuelve modelos; determinista y testeable (ejemplo canónico: lib/services/meal_prep_planner.dart con PrepRecipe espejo reducido de Recipe, structs inmutables con const, heurística 'razonable no óptima', funciones puras de resumen en español). Modelo Recipe (lib/models/recipe.dart): instructions (String? texto multilínea de pasos), prepTimeMinutes, cookTimeMinutes, appliance ('none'|'oven'|'stovetop'|'pot'|'airfryer'|'microwave'), components (List<RecipeComponent>), servings, applianceLabels (mapa es->etiqueta). Pantallas StatefulWidget con Scaffold(backgroundColor: AppColors.cream), AppTheme.cardDecoration/surfaceDecoration, MiauCharacter(mood: ...). Widgets animación en lib/widgets/animations/: PressScale, StaggeredEntrance, AnimatedCounter, Celebrate (Celebrate.show(context) respeta reduce-motion). AppMotion para duraciones/curvas. heroTag único en FABs.",
+  "relevant_files": [
+    "lib/models/recipe.dart (Recipe: instructions, prep/cookTimeMinutes, appliance, components, applianceLabels; FUENTE de los pasos)",
+    "lib/services/meal_prep_planner.dart (patrón canónico de servicio PURO; PrepRecipe espejo reducido; heurística razonable; a imitar en espíritu)",
+    "lib/models/meal_plan_entry.dart (MealPlanEntry: date, mealType, recipeId, skipped, fromFreezer, servings)",
+    "lib/meal_plan_screen.dart (ya carga plan semanal + recetas (_PlanData.recipesById, entries), ya usa meal_prep_planner y construye PrepRecipe; PUNTO DE ENTRADA: añadir acceso 'Modo cocina' con Navigator.push a BatchPrepTimelineScreen pasando las recetas planificadas)",
+    "lib/theme/app_theme.dart (AppColors incl. inkMuted, sageBg/sage, peachBg/peach, frostBg/frost, terracottaBg/terracotta; AppTheme.cardDecoration/surfaceDecoration)",
+    "lib/theme/app_radius.dart (AppRadius.md=16, lg=24, sm=12, pill)",
+    "lib/theme/app_spacing.dart (AppSpacing xs/sm/md/lg/xl/xxl/xxxl)",
+    "lib/theme/app_text_styles.dart (AppTextStyles.title/body/label/labelMuted/bodyMuted)",
+    "lib/theme/app_motion.dart (AppMotion.fast/base/slow, easeOut, reduceMotionOf, effectiveDuration)",
+    "lib/widgets/miau_character.dart (MiauMood.cooking/celebrating/curious/sleeping)",
+    "lib/widgets/animations/press_scale.dart, celebrate.dart (PressScale, Celebrate.show)",
+    "test/meal_prep_planner_test.dart (patrón de tests de lógica pura con datos fijos)",
+    "tool/architecture/dependency_map.dart (guard del mapa de dependencias)",
+    "docs/architecture/dependency-map.md (artefacto a regenerar)"
+  ],
+  "directory_structure": "lib/ pantallas en raíz (meal_plan_screen.dart, main_shell.dart...). lib/models/ modelos. lib/services/ lógica pura. lib/theme/ tokens de diseño. lib/widgets/ y lib/widgets/animations/. test/ tests. tool/architecture/ guard del mapa. docs/architecture/ artefacto generado."
+}
