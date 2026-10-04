@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "UI: (A) add a visible 'Bolsa comun' (common pool) section to lib/tasks_screen.dart listing unassigned, not-done tasks, each with a 'Yo me encargo' button that calls TaskScheduler.claimAndComplete and refreshes; (B) refactor lib/economy_screen.dart into a 'Marketplace de Recompensas' centered on a visual points balance between household members and a redeemable rewards catalog, while preserving access to the existing tickets/budget/stats functionality. Depends on FEAT-002 (DB) and FEAT-003 (model/service). Honors the design system: theme tokens only, radius via AppRadius/cardDecoration, PressScale on action buttons, AnimatedCounter for balances, Celebrate.show on redeem, Miau empty states, Spanish cozy copy, and NO visible 'IA'/'AI' text.",
+  "status": "pending",
+  "steps": [
+    "lib/tasks_screen.dart (_load): also compute the pool list = tasks where assignedTo == null and !isDone (use the new HomeTask.isInPool). Keep members, scores and the full tasks list loading as-is so the scoreboard/_PointsChart/_TaskCard keep working.",
+    "lib/tasks_screen.dart (build): add a 'Bolsa comun' section above or near the task list. For each pool task render a cozy card (AppTheme.cardDecoration, radius via existing pattern) showing title, recurrence label, points, and effort_points as an informational chip, plus a 'Yo me encargo' button wrapped in PressScale that calls a new _claim(task) handler. If the pool is empty, show a small cozy empty state with MiauCharacter (mood curious) and Spanish copy like 'La bolsa comun esta vacia'.",
+    "lib/tasks_screen.dart: add Future<void> _claim(HomeTask task) that calls TaskScheduler(_client).claimAndComplete(task) inside try/catch, shows a '+N puntos' SnackBar on success and an error SnackBar on failure, then _reload(). IMPORTANT: use a block-bodied async handler (not an arrow returning a Future) to avoid the known setState/arrow pitfall. Keep points-related widgets (_Scoreboard, _PointsChart) grouped/co-located so a later step can gate them behind the 'points' module without reorganizing the file.",
+    "lib/tasks_screen.dart: do NOT heavily reorganize the file (minimize merge friction with Paso 2). Add the pool section and claim handler locally.",
+    "lib/economy_screen.dart: restructure so the Marketplace is the central content. Load, in addition to the existing economy data: members (profiles id->full_name for the home), per-user earned points (sum task_points.points grouped by user_id), per-user redeemed points (sum reward_redemptions.cost_points grouped by redeemed_by), the active rewards catalog (rewards where home_id = home and is_active, ordered by cost_points), and the current user id. Compute each member's balance using the pure helper from FEAT-003 (earned - redeemed).",
+    "lib/economy_screen.dart: build a 'Balanza de puntos' card: a visual comparison of balances between household members using cozy bars/avatars (fl_chart BarChart is already used in this file and in tasks_screen; reuse that pattern with AppColors.wood bars) or avatar+bar rows. Use AnimatedCounter for each member's balance number. If no one has points yet, show a Miau empty state.",
+    "lib/economy_screen.dart: build a 'Recompensas' catalog section listing each reward (title, optional description, cost_points) with a 'Canjear' button wrapped in PressScale. The button is enabled only when the current user's balance >= cost_points. On tap, call the SECURITY DEFINER RPC via _client.rpc('redeem_reward', params: {'p_reward_id': reward.id}); on success call Celebrate.show(context) and reload; on failure (e.g. insufficient balance raised by the RPC) show a cozy Spanish SnackBar. If the catalog is empty, show a Miau empty state inviting the user to create rewards (do NOT seed invented data; empty state is acceptable).",
+    "lib/economy_screen.dart: add a way to CREATE a reward (e.g. a dialog or small form reachable from the Recompensas section / an AppBar action or secondary FAB) that inserts into rewards {home_id, title, description?, cost_points, created_by}. Ensure any second FloatingActionButton has a UNIQUE heroTag (existing one is 'fab-economy'); if you add another FAB use a distinct heroTag to avoid the Hero collision pitfall.",
+    "lib/economy_screen.dart: PRESERVE tickets/budget/ProductStatsScreen. Keep the existing 'Escanear ticket' flow and budget/spend/trend cards reachable. Acceptable structure: keep the Marketplace (balance + catalog) as the primary cards at the top of the ListView, and move the existing tickets/budget/stats UI into a clearly labeled sub-section further down OR behind a 'Gastos y tickets' entry (AppBar action or sub-screen) linked from economy_screen. Choose the cleaner structure; do not delete or break the existing tickets/budget/stats code paths (_editBudget, _openScan, _deleteTicket, month navigator, spend chart, historical card, ProductStatsScreen access).",
+    "Use only theme tokens (AppColors incl. inkMuted, AppTheme.cardDecoration/surfaceDecoration, AppRadius, AppMotion). Note: the existing files already use some Colors.grey[...] literals; do not introduce NEW raw literals (0xFF... or Colors.grey[...]) in the code you add; prefer AppColors.inkMuted and existing tokens. No visible 'IA'/'AI' strings.",
+    "Run format/analyze/test. If adding or changing a widget breaks any existing test, fix the test meaningfully (do not weaken assertions). Regenerate the dependency map if the guard flags new internal imports: dart run tool/architecture/dependency_map.dart, then commit docs/architecture/dependency-map.md."
+  ],
+  "acceptance_criteria": [
+    "tasks_screen shows a 'Bolsa comun' section listing only unassigned not-done tasks, each with a working 'Yo me encargo' button that assigns+completes+awards points and refreshes",
+    "The pool empty state uses MiauCharacter and cozy Spanish copy",
+    "economy_screen's primary content is the Marketplace: a visual points balance between members (with AnimatedCounter) and a redeemable rewards catalog with 'Canjear' buttons that call the redeem_reward RPC",
+    "Redeeming triggers Celebrate.show on success and a cozy error message on failure (e.g. insufficient balance)",
+    "Users can create a reward; a redeem button is disabled when balance < cost_points",
+    "Tickets, budget, spend trend, historical card and ProductStatsScreen remain reachable and functional (no deleted functionality); any extra FAB has a unique heroTag",
+    "No visible 'IA'/'AI' text added; new code uses theme tokens (no new raw color literals)",
+    "dart format reports 0 changes, flutter analyze reports 'No issues found!', flutter test is all green with count >= baseline, and the dependency-map --check passes (regenerated if needed)"
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; dart format --output=none --set-exit-if-changed . && flutter analyze && flutter test && dart run tool/architecture/dependency_map.dart --check",
+    "Grep the two touched screens for forbidden visible strings 'IA'/'AI' and for the 'Yo me encargo'/'Canjear' buttons to confirm wiring",
+    "Confirm economy_screen still references ScanTicketScreen/ProductStatsScreen/budgets so tickets+stats remain accessible"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Database migration 0042: add tasks.effort_points column and create the Rewards Marketplace tables (rewards catalog + reward_redemptions history) with per-home RLS, plus a SECURITY DEFINER RPC that performs reward redemption atomically and validates the user's point balance so the client cannot falsify its balance. Pool semantics require NO new column (a task in the common pool is simply assigned_to IS NULL); document this in the migration header. Static-only validation (no live DB); the migration must be idempotent, well-formed (balanced parentheses ignoring '--' comments, ends with ';'), and follow .kiro/steering/security.md.",
+  "status": "pending",
+  "steps": [
+    "Create supabase/migrations/0042_task_effort_points_y_marketplace_recompensas.sql. Follow the idempotent style of 0009_tasks.sql and 0011_task_time_and_economy.sql exactly (create table if not exists, add column if not exists, drop policy if exists + create policy, grants to authenticated).",
+    "Header comment: explain (a) effort_points added to tasks, (b) that the common pool = tasks with assigned_to IS NULL (no schema change needed), (c) the rewards marketplace tables and the redeem RPC.",
+    "tasks column: alter table public.tasks add column if not exists effort_points integer not null default 10. (Operative data; tasks already has per-home RLS, so no policy change needed. Default 10 keeps existing rows valid.)",
+    "Create table public.rewards (id uuid pk default gen_random_uuid(), home_id uuid not null references public.homes(id) on delete cascade, title text not null, description text, cost_points integer not null default 50 check (cost_points >= 0), is_active boolean not null default true, created_by uuid references auth.users(id) on delete set null, created_at timestamptz not null default now()). Add index on home_id.",
+    "Create table public.reward_redemptions (id uuid pk default gen_random_uuid(), home_id uuid not null references public.homes(id) on delete cascade, reward_id uuid references public.rewards(id) on delete set null, redeemed_by uuid not null references auth.users(id) on delete cascade, cost_points integer not null, redeemed_at timestamptz not null default now()). Add index on home_id and on redeemed_by.",
+    "Enable RLS on both tables. Policies keyed on public.auth_home_id(): rewards select/insert/update/delete all gated by home_id = public.auth_home_id() (both parents can manage the catalog). reward_redemptions: select gated by home_id = public.auth_home_id(); keep INSERT narrow so a user cannot redeem on someone else's behalf: with check (home_id = public.auth_home_id() and redeemed_by = auth.uid()). No client UPDATE/DELETE policy on redemptions (append-only ledger) OR a delete policy only for own-home rows if a cancel feature is desired; prefer append-only and note it.",
+    "Grants: grant select, insert, update, delete on public.rewards to authenticated; grant select, insert on public.reward_redemptions to authenticated (append-only; omit update/delete grants to reinforce immutability).",
+    "Create a SECURITY DEFINER function public.redeem_reward(p_reward_id uuid) with 'set search_path = public, pg_temp'. It must: resolve the caller's home via public.auth_home_id() and auth.uid(); load the reward and verify it belongs to the caller's home and is_active; compute the caller's balance = coalesce(sum(task_points.points for this user+home),0) - coalesce(sum(reward_redemptions.cost_points for this user+home),0); raise an exception if balance < reward.cost_points; otherwise insert a reward_redemptions row (home_id, reward_id, redeemed_by=auth.uid(), cost_points=reward.cost_points). Return the new redemption id (or void). This guarantees the balance check happens server-side and the client cannot falsify it. grant execute on function public.redeem_reward(uuid) to authenticated.",
+    "Ensure the file ends with a single ';'-terminated statement and parentheses are balanced OUTSIDE of '--' comments (the CI counts parentheses after stripping '--' line comments, so avoid unbalanced parens inside comments too).",
+    "Document in the header that the 'revision manual' workflow will fail on purpose because this migration touches policies/RLS, and that this is expected."
+  ],
+  "acceptance_criteria": [
+    "File supabase/migrations/0042_task_effort_points_y_marketplace_recompensas.sql exists and matches the CI name pattern ^[0-9]{4}_.+\\.sql$",
+    "Parentheses are balanced after stripping '--' comments, and the last non-comment line ends with ';'",
+    "Migration is idempotent (re-runnable): uses 'if not exists' for tables/columns/indexes and 'drop policy if exists' before each 'create policy'",
+    "tasks.effort_points is integer NOT NULL default 10",
+    "rewards and reward_redemptions have home_id + RLS keyed on public.auth_home_id(); reward_redemptions INSERT also requires redeemed_by = auth.uid()",
+    "public.redeem_reward(uuid) is SECURITY DEFINER with a fixed search_path, validates the caller's balance server-side before inserting a redemption, and is granted to authenticated"
+  ],
+  "verification": [
+    "Run the project's CI migration validation locally on the file: strip '--' comments and confirm '(' count == ')' count; confirm the last non-blank non-comment line ends with ';'; confirm the filename matches ^[0-9]{4}_.+\\.sql$.",
+    "Re-read the migration against .kiro/steering/security.md checklist: client cannot modify control fields, no cross-home leakage, balance not client-falsifiable (RPC enforces it)."
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

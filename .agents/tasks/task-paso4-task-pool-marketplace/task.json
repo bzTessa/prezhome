@@ -1,0 +1,7 @@
+{
+  "task_id": "task-paso4-task-pool-marketplace",
+  "task_description": "Paso 4 of the PrezHome 'Asistente de Vida Proactivo' epic: build the Task Pool (common pool of unassigned tasks) and the Rewards Marketplace economy. Add effort_points to HomeTask (backward compatible), formalize pool semantics (assigned_to IS NULL), add a 'Yo me encargo' scheduler flow (assign+complete+points) without breaking the existing complete() used by the Inicio dashboard, surface the pool with a 'Yo me encargo' button in tasks_screen, and refactor economy_screen into a Marketplace de Recompensas (visual points balance between members + redeemable rewards catalog) while preserving tickets/budget/stats. Includes DB migration 0042 (tasks.effort_points column + rewards + reward_redemptions tables + per-home RLS + SECURITY DEFINER redeem_reward RPC that server-side validates balance so the client cannot falsify it). Branch: feat/paso4-task-pool-marketplace (from main, no push/PR). Verify with the exact CI: dart format on '.', flutter analyze, flutter test (baseline 201), dependency-map --check, and static migration validation.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}
