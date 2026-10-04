@@ -26,10 +26,12 @@ class MainShellState extends State<MainShell> {
   // las demás pestañas del IndexedStack.
   final GlobalKey<HomeTabState> _homeKey = GlobalKey<HomeTabState>();
 
+  static const _despensaIndex = 1; // Despensa (Inventario/Compra)
+
   late final List<Widget> _pages = [
     const ComidasTab(),
     const DespensaTab(),
-    HomeTab(key: _homeKey),
+    HomeTab(key: _homeKey, onNavigateToDespensa: _goToDespensa),
     const TasksScreen(),
     const HouseholdScreen(),
   ];
@@ -42,6 +44,19 @@ class MainShellState extends State<MainShell> {
       _homeKey.currentState?.refreshActiveView();
     }
   }
+
+  /// Cambia la pestaña activa. Lo usan las tarjetas de Inicio que son una vista
+  /// de estado de otra sección (p. ej. 'Caducidades' lleva a Despensa) para
+  /// aterrizar donde esa función vive de verdad, en lugar de abrir una copia
+  /// suelta a pantalla completa.
+  void goToTab(int index) {
+    setState(() => _index = index);
+  }
+
+  /// Lleva a la pestaña Despensa (sub-tab Inventario por defecto, que es el
+  /// sitio real del inventario). Se inyecta a HomeTab para la tarjeta de
+  /// caducidades.
+  void _goToDespensa() => goToTab(_despensaIndex);
 
   /// Refresca la vista activa de la pestaña Inicio. Lo usa HomeSessionScreen
   /// tras cerrarse el cuestionario automatico, para que el dashboard refleje el

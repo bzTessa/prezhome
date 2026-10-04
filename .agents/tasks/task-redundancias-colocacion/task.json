@@ -1,0 +1,23 @@
+{
+  "task_id": "task-redundancias-colocacion",
+  "task_description": "Punto (1) de la hoja de ruta acordada: auditar redundancias y problemas de colocacion/usabilidad en las pantallas de PrezHome e implementar mejoras concretas de reorganizacion que hagan la app mas intuitiva, sin romper funcionalidad ni perder la identidad Cozy/Miau. Hallazgos principales de la auditoria: (a) DOS calendarios mensuales de comidas casi iguales (vista 'Mes' de Comidas>Plan vs MonthCalendarScreen escondido en una tarjeta de Inicio) -> consolidar en el completo dentro de Comidas>Plan; (b) boton 'Gestionar plan semanal' duplicado dentro de la sub-pestana Plan; (c) la tarjeta 'Caducidades' de Inicio abre una InventoryScreen paralela en vez de llevar a la pestana Despensa; (d) accesos al Diario de calorias repartidos sin etiquetas coherentes. Nota de descarte: ProfileWizardScreen y NutritionProfileScreen NO son redundantes (ya resuelto: mismo perfil, un unico editor + asistente), no se tocan.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "review": {
+    "verdict": "APPROVED",
+    "iterations": 1,
+    "file": ".agents/tasks/task-redundancias-colocacion/2026-10-04-132716-review.md",
+    "non_blocking_issues": [
+      "La vista 'Mes' embebida ya no ofrece acceso a MealPlanScreen; el boton 'Gestionar plan semanal' queda solo en la vista 'Semana' (intencionado: se elimino el duplicado).",
+      "La navegacion entre pestanas de FEAT-003 no tiene test (coherente con el estilo del repo: esos widgets dependen de Supabase.instance.client)."
+    ]
+  },
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "flutter pub get OK; dart format --set-exit-if-changed lib/ -> 0 changed; flutter analyze -> No issues found!; flutter test -> 171/171 passed (167 baseline + 4 nuevos en dashboard_prefs_test.dart). El test nuevo es significativo: falla si se reintroduce DashboardCard.calendar o si fromJson pierde su tolerancia al id heredado. No hay Dockerfile para la app Flutter (CI es GitHub Actions), docker build no aplica. Arbol limpio tras descartar los 7 autogenerados de pub get."
+  }
+}

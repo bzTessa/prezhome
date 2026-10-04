@@ -12,8 +12,7 @@ enum DashboardCard {
   expiry('expiry', 'Caducidades', Icons.schedule),
   calories('calories', 'Calorías de hoy', Icons.local_fire_department),
   tasks('tasks', 'Tareas', Icons.check_circle_outline),
-  spending('spending', 'Gasto del mes', Icons.savings_outlined),
-  calendar('calendar', 'Calendario', Icons.calendar_month_rounded);
+  spending('spending', 'Gasto del mes', Icons.savings_outlined);
 
   const DashboardCard(this.id, this.label, this.icon);
   final String id;

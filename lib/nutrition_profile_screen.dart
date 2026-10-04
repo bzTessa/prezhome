@@ -225,8 +225,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: 'Mi diario de hoy',
-            icon: const Icon(Icons.menu_book_outlined),
+            tooltip: 'Diario de calorías',
+            icon: const Icon(Icons.local_fire_department_outlined),
             onPressed: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen())),

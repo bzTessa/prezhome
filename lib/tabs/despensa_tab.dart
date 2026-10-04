@@ -9,12 +9,15 @@ import '../widgets/miau_character.dart';
 /// como hacen las apps de nevera/despensa. Tiene dos sub-tabs: Inventario
 /// (Despensa/Nevera/Congelador) y Compra (lista de la compra).
 class DespensaTab extends StatelessWidget {
-  const DespensaTab({super.key});
+  /// Sub-tab inicial: 0 = Inventario (por defecto), 1 = Compra.
+  final int initialTab;
+  const DespensaTab({super.key, this.initialTab = 0});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
+      initialIndex: initialTab,
       child: Scaffold(
         backgroundColor: AppColors.cream,
         appBar: AppBar(
