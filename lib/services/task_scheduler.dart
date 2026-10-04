@@ -31,9 +31,16 @@ class TaskScheduler {
 
   /// Flujo "Yo me encargo" de la Bolsa Comun: el usuario reclama una tarea sin
   /// asignar y la completa en el mismo gesto. Primero fija assigned_to al
-  /// usuario actual (la tarea deja de estar en el pool y pasa a ser suya) y
-  /// despues reutiliza EXACTAMENTE la misma logica de puntos + reprogramacion
-  /// que complete(), sin duplicarla.
+  /// usuario actual (la tarea deja de estar en el pool y queda atribuida a quien
+  /// la reclama) y despues reutiliza EXACTAMENTE la misma logica de puntos +
+  /// reprogramacion que complete(), sin duplicarla.
+  ///
+  /// Diferencia clave con complete(): si la tarea es RECURRENTE, al reprogramar
+  /// su proxima ocurrencia la devolvemos a la Bolsa Comun (assigned_to=null) en
+  /// vez de dejarla asignada para siempre al primero que la reclamo. Asi una
+  /// recurrente de la bolsa vuelve a estar disponible para cualquiera en su
+  /// siguiente aparicion. Para 'once' la asignacion persiste (queda completada
+  /// y atribuida a quien la hizo).
   Future<void> claimAndComplete(HomeTask task) async {
     final user = _client.auth.currentUser;
     if (user == null) throw 'No autenticado';
@@ -45,7 +52,7 @@ class TaskScheduler {
         .update({'assigned_to': user.id})
         .eq('id', task.id);
 
-    await _awardAndReschedule(task, user.id);
+    await _awardAndReschedule(task, user.id, releaseToPool: true);
   }
 
   /// Paso compartido por complete() y claimAndComplete(): registra los puntos
@@ -56,7 +63,16 @@ class TaskScheduler {
   /// Los puntos del marcador salen de [HomeTask.points] (puntuacion existente,
   /// sin cambios). El campo effort_points es solo informativo por ahora y no
   /// participa en el calculo del marcador.
-  Future<void> _awardAndReschedule(HomeTask task, String userId) async {
+  ///
+  /// [releaseToPool] solo lo activa claimAndComplete(): cuando una recurrente
+  /// se reprograma, limpia assigned_to para que vuelva a la Bolsa Comun. En el
+  /// flujo normal de complete() queda en false y NO se toca assigned_to, de
+  /// modo que su comportamiento observable es identico al de antes.
+  Future<void> _awardAndReschedule(
+    HomeTask task,
+    String userId, {
+    bool releaseToPool = false,
+  }) async {
     // 1. Puntos ganados (igual que antes).
     await _client.from('task_points').insert({
       'home_id': task.homeId,
@@ -83,7 +99,13 @@ class TaskScheduler {
     } else {
       await _client
           .from('tasks')
-          .update(HomeTask.rescheduleMap(next: next, completedBy: userId))
+          .update(
+            HomeTask.rescheduleMap(
+              next: next,
+              completedBy: userId,
+              releaseToPool: releaseToPool,
+            ),
+          )
           .eq('id', task.id);
     }
   }

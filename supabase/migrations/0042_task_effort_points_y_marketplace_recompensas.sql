@@ -134,6 +134,14 @@ begin
     raise exception 'Recompensa no disponible';
   end if;
 
+  -- Serializacion por usuario para evitar doble gasto concurrente: dos canjes
+  -- disparados a la vez por el mismo usuario podrian leer ambos el saldo previo
+  -- y pasar los dos la comprobacion, dejando el saldo en negativo. El cerrojo
+  -- consultivo a nivel de transaccion (se libera solo al terminar la RPC) hace
+  -- que el segundo canje espere al primero y recalcule el saldo ya actualizado.
+  -- La clave es un hash estable del usuario para no bloquear a usuarios ajenos.
+  perform pg_advisory_xact_lock(hashtextextended(v_user_id::text, 0));
+
   -- Saldo = puntos ganados - puntos ya canjeados (de este usuario en el hogar).
   v_balance :=
     coalesce((

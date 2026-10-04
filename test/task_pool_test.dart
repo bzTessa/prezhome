@@ -77,6 +77,42 @@ void main() {
     });
   });
 
+  group('HomeTask.rescheduleMap y la Bolsa Comun', () {
+    final next = DateTime(2026, 1, 15);
+
+    test('por defecto NO toca assigned_to (complete() intacto)', () {
+      // El flujo normal de completar una recurrente conserva al responsable:
+      // rescheduleMap no debe incluir la clave assigned_to.
+      final map = HomeTask.rescheduleMap(next: next, completedBy: 'u1');
+      expect(map.containsKey('assigned_to'), isFalse);
+      expect(map['is_done'], isFalse);
+    });
+
+    test(
+      'releaseToPool=true devuelve la tarea a la bolsa (assigned_to=null)',
+      () {
+        // Una recurrente reclamada con "Yo me encargo" vuelve al pool en su
+        // proxima ocurrencia para que cualquiera pueda reclamarla de nuevo.
+        final map = HomeTask.rescheduleMap(
+          next: next,
+          completedBy: 'u1',
+          releaseToPool: true,
+        );
+        expect(map.containsKey('assigned_to'), isTrue);
+        expect(map['assigned_to'], isNull);
+        expect(map['is_done'], isFalse);
+      },
+    );
+
+    test('completeOnceMap no reasigna: una once reclamada queda asignada', () {
+      // Las tareas puntuales reclamadas se quedan atribuidas a quien las hizo
+      // (completeOnceMap no toca assigned_to), no vuelven a la bolsa.
+      final map = HomeTask.completeOnceMap(completedBy: 'u1');
+      expect(map.containsKey('assigned_to'), isFalse);
+      expect(map['is_done'], isTrue);
+    });
+  });
+
   group('PointsBalance.forUser', () {
     test('saldo = ganados - canjeados', () {
       expect(PointsBalance.forUser(earned: 100, redeemed: 30), 70);

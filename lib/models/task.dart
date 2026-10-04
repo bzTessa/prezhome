@@ -109,9 +109,16 @@ class HomeTask {
   /// Datos de reprogramacion al completar una recurrente. Avanza due_date y
   /// next_due a [next], marca la ultima vez completada y deja is_done=false
   /// para que la tarea reaparezca en su proxima ocurrencia.
+  ///
+  /// Si [releaseToPool] es true, ademas devuelve assigned_to=null para que la
+  /// proxima ocurrencia vuelva a la Bolsa Comun y cualquiera pueda reclamarla
+  /// de nuevo (caso de una recurrente reclamada con "Yo me encargo"). Por
+  /// defecto es false, de modo que el flujo normal de complete() conserva su
+  /// comportamiento exacto y no toca assigned_to.
   static Map<String, dynamic> rescheduleMap({
     required DateTime next,
     required String completedBy,
+    bool releaseToPool = false,
   }) {
     final nextKey = DateTime(
       next.year,
@@ -126,6 +133,10 @@ class HomeTask {
       'completed_by': completedBy,
       'completed_at': nowIso,
       'last_completed_at': nowIso,
+      // Solo cuando se reclama una recurrente desde la Bolsa Comun: la soltamos
+      // de nuevo al pool para la siguiente ocurrencia en lugar de dejarla
+      // asignada para siempre al primero que la reclamo.
+      if (releaseToPool) 'assigned_to': null,
     };
   }
 
