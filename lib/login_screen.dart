@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoginMode = true;
   bool _isLoading = false;
   bool _googleLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -95,13 +96,57 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Escribe primero tu correo y te enviaré el enlace para '
+            'restablecer tu contraseña.',
+          ),
+        ),
+      );
+      return;
+    }
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Te he enviado un correo para restablecer tu contraseña.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo enviar el correo: $e'),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
+  InputDecoration _dec(String label, {Widget? suffixIcon}) => InputDecoration(
     labelText: label,
+    labelStyle: AppTextStyles.bodyMuted,
     filled: true,
-    fillColor: Colors.white,
+    fillColor: AppColors.card,
+    suffixIcon: suffixIcon,
+    enabledBorder: OutlineInputBorder(
+      borderRadius: AppRadius.mdRadius,
+      borderSide: const BorderSide(color: AppColors.wood),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: AppRadius.mdRadius,
+      borderSide: const BorderSide(color: AppColors.woodDark, width: 2),
+    ),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
+      borderRadius: AppRadius.mdRadius,
+      borderSide: const BorderSide(color: AppColors.wood),
     ),
   );
 
@@ -109,108 +154,143 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const MiauCharacter(mood: MiauMood.greeting, size: 120),
-                const SizedBox(height: 20),
-                Text(
-                  _isLoginMode ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'PrezHome, tu hogar organizado',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 28),
-
-                // Botón de Google
-                _GoogleButton(
-                  loading: _googleLoading,
-                  onPressed: _googleLoading ? null : _signInWithGoogle,
-                ),
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'o con tu correo',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: 24 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const MiauCharacter(mood: MiauMood.greeting, size: 120),
+                  const SizedBox(height: 20),
+                  Text(
+                    _isLoginMode ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'PrezHome, tu hogar organizado',
+                    style: AppTextStyles.bodyMuted,
+                  ),
+                  const SizedBox(height: 28),
 
-                Form(
-                  key: _formKey,
-                  child: Column(
+                  // Botón de Google
+                  _GoogleButton(
+                    loading: _googleLoading,
+                    onPressed: _googleLoading ? null : _signInWithGoogle,
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
                     children: [
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: _dec('Correo electrónico'),
-                        validator: (value) {
-                          if (value == null ||
-                              value.isEmpty ||
-                              !value.contains('@')) {
-                            return 'Introduce un correo válido';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: _dec('Contraseña'),
-                        validator: (value) {
-                          if (value == null || value.length < 6) {
-                            return 'Mínimo 6 caracteres';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submitAuth,
-                          child: _isLoading
-                              ? const CircularProgressIndicator()
-                              : Text(_isLoginMode ? 'Entrar' : 'Registrarme'),
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'o con tu correo',
+                          style: AppTextStyles.bodyMuted,
                         ),
                       ),
+                      const Expanded(child: Divider()),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => setState(() => _isLoginMode = !_isLoginMode),
-                  child: Text(
-                    _isLoginMode
-                        ? '¿No tienes cuenta? Regístrate'
-                        : '¿Ya tienes cuenta? Inicia sesión',
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: 16),
+
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: _dec('Correo electrónico'),
+                          validator: (value) {
+                            if (value == null ||
+                                value.isEmpty ||
+                                !value.contains('@')) {
+                              return 'Introduce un correo válido';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          decoration: _dec(
+                            'Contraseña',
+                            suffixIcon: IconButton(
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: AppColors.inkMuted,
+                              ),
+                              tooltip: _obscurePassword
+                                  ? 'Mostrar contraseña'
+                                  : 'Ocultar contraseña',
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.length < 6) {
+                              return 'Mínimo 6 caracteres';
+                            }
+                            return null;
+                          },
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _resetPassword,
+                            child: Text(
+                              '¿Has olvidado tu contraseña?',
+                              style: AppTextStyles.labelMuted,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _submitAuth,
+                            child: _isLoading
+                                ? const CircularProgressIndicator()
+                                : Text(_isLoginMode ? 'Entrar' : 'Registrarme'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () =>
+                        setState(() => _isLoginMode = !_isLoginMode),
+                    child: Text(
+                      _isLoginMode
+                          ? '¿No tienes cuenta? Regístrate'
+                          : '¿Ya tienes cuenta? Inicia sesión',
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
