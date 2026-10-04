@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'app_elevation.dart';
+import 'app_radius.dart';
+
+// Reexportamos los tokens del sistema de diseño para que un único import de
+// `app_theme.dart` dé acceso a toda la paleta y escalas (sin dependencias
+// circulares: estos ficheros no importan de vuelta a AppTheme).
+export 'app_elevation.dart';
+export 'app_radius.dart';
+export 'app_spacing.dart';
+export 'app_text_styles.dart';
+
 /// Paleta y estilo "Cozy" de PrezHome, centralizados.
 class AppColors {
   static const cream = Color(0xFFFDF8E1); // fondo amarillo pastel cálido
@@ -9,6 +20,21 @@ class AppColors {
   static const ink = Color(0xFF1E1E1E); // gris muy oscuro (texto)
   static const card = Colors.white;
   static const softShadow = Color(0x14000000);
+
+  /// Gris de marca para texto secundario / apoyo.
+  ///
+  /// Reemplaza los `Colors.grey[500/600/700]` sueltos repartidos por la app.
+  /// Derivado del tono `ink` pero más claro para dar jerarquía sin perder
+  /// la calidez de la paleta.
+  static const inkMuted = Color(0xFF6B6B6B);
+
+  /// Sombra aún más suave que `softShadow`, para superficies en reposo que
+  /// necesitan apenas una pizca de profundidad (nivel 1 de [AppElevation]).
+  static const faintShadow = Color(0x0D000000);
+
+  /// Sombra algo más marcada para elementos elevados / interactivos
+  /// (nivel 2 de [AppElevation]).
+  static const mediumShadow = Color(0x1F000000);
 
   // --- Tonos para chips e identificadores con jerarquía visual ---------------
   // Mantienen la calidez de la paleta pero dan contraste suave entre tipos de
@@ -101,6 +127,10 @@ class AppTheme {
   }
 
   /// Decoración estándar de tarjeta (para Containers).
+  ///
+  /// Se conserva por compatibilidad con el código existente. Para nuevas
+  /// pantallas prefiere [surfaceDecoration], que usa la escala [AppRadius] y
+  /// los niveles [AppElevation].
   static BoxDecoration cardDecoration({double radius = 24}) => BoxDecoration(
     color: AppColors.card,
     borderRadius: BorderRadius.circular(radius),
@@ -112,4 +142,30 @@ class AppTheme {
       ),
     ],
   );
+
+  /// Decoración de superficie recomendada de aquí en adelante.
+  ///
+  /// Combina la escala de radios [AppRadius] con los niveles de sombra
+  /// intencionados de [AppElevation]:
+  /// - `elevation: 0` → plano (sin sombra).
+  /// - `elevation: 1` → tarjeta en reposo (por defecto).
+  /// - `elevation: 2` → elemento elevado / interactivo.
+  ///
+  /// Ejemplo: `AppTheme.surfaceDecoration(elevation: 2)`.
+  static BoxDecoration surfaceDecoration({
+    double radius = AppRadius.lg,
+    int elevation = 1,
+    Color color = AppColors.card,
+  }) {
+    final List<BoxShadow> shadow = switch (elevation) {
+      0 => AppElevation.level0,
+      1 => AppElevation.level1,
+      _ => AppElevation.level2,
+    };
+    return BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(radius),
+      boxShadow: shadow,
+    );
+  }
 }
