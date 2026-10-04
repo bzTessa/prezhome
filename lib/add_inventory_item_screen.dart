@@ -5,6 +5,7 @@ import 'models/inventory_item.dart';
 import 'services/food_photo_service.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
+import 'widgets/food_image.dart';
 
 class AddInventoryItemScreen extends StatefulWidget {
   /// Si se pasa un item, la pantalla funciona en modo EDICIÓN (precarga sus
@@ -255,6 +256,26 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         padding: const EdgeInsets.all(24.0),
         child: ListView(
           children: [
+            // DESTINO del Hero: al EDITAR un item con id mostramos un preview
+            // de su imagen envuelto en Hero(tag: 'inv-<id>') con el MISMO tag
+            // que la tarjeta del grid, para que la transición case. En alta
+            // nueva (sin item/id) no hay Hero.
+            if (widget.item != null && widget.item!.id.isNotEmpty) ...[
+              Center(
+                child: Hero(
+                  tag: 'inv-${widget.item!.id}',
+                  child: FoodImage(
+                    name: widget.item!.name,
+                    itemType: widget.item!.itemType,
+                    imageUrl: widget.item!.imageUrl,
+                    size: 120,
+                    radius: AppRadius.md,
+                    forceIllustration: widget.item!.category == 'Especias',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             // Tipo de producto (comida u hogar/limpieza)
             const Text(
               'Tipo de producto',

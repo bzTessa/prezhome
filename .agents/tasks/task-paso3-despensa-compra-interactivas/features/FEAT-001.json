@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Preparar el entorno y la rama de trabajo del Paso 3. Instalar/usar el Flutter SDK pineado, crear la rama feat/paso3-despensa-compra-interactivas desde main y confirmar que el baseline del CI esta verde ANTES de tocar codigo.",
+  "status": "completed",
+  "steps": [
+    "Asegurar el SDK: si ~/flutter_sdk/bin/flutter no existe, 'git clone --depth 1 --branch 3.47.6 https://github.com/flutter/flutter.git ~/flutter_sdk'. (El orquestador ya lanzo este clone; espera a que termine si hace falta.)",
+    "En /projects/sandbox/prezhome: estar en main limpio y crear la rama de trabajo: 'git checkout main' y luego 'git checkout -b feat/paso3-despensa-compra-interactivas'. NO hacer push ni PR.",
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; luego 'flutter pub get'.",
+    "Correr el baseline del CI EXACTO: 'dart format --output=none --set-exit-if-changed .' (debe dar 0 changed), 'flutter analyze' (No issues found!), 'flutter test' (todos verdes; anota el numero, ~201) y 'dart run tool/architecture/dependency_map.dart --check' (actualizado).",
+    "Descartar autogenerados que 'flutter pub get' pueda tocar y que NO forman parte del cambio: 'git checkout -- pubspec.lock analysis_options.yaml' y los plugin registrants bajo linux/ macos/ windows/ si aparecen modificados. Dejar el arbol limpio ('git status' sin cambios sin commitear que no sean los ficheros .agents del plan).",
+    "Registrar en findings el numero exacto de tests del baseline para no bajarlo despues."
+  ],
+  "acceptance_criteria": [
+    "La rama feat/paso3-despensa-compra-interactivas existe y esta creada desde main.",
+    "'dart format --output=none --set-exit-if-changed .' termina sin cambios.",
+    "'flutter analyze' imprime 'No issues found!'.",
+    "'flutter test' pasa todos los tests y queda anotado el numero del baseline.",
+    "'dart run tool/architecture/dependency_map.dart --check' indica que esta actualizado.",
+    "git status no muestra autogenerados de pub get sin descartar."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test",
+    "dart run tool/architecture/dependency_map.dart --check",
+    "git branch --show-current && git status --short"
+  ],
+  "blocked_reason": null,
+  "findings": "Baseline del CI en verde sobre la rama feat/paso3-despensa-compra-interactivas (creada desde main, HEAD b0d534e). Flutter 3.47.6, Dart 3.13.5 (SDK en ~/flutter_sdk; el clone del orquestador no estaba presente, lo clone yo con 'git clone --depth 1 --branch 3.47.6'). Resultados: 'dart format --output=none --set-exit-if-changed .' -> Formatted 92 files (0 changed), exit 0. 'flutter analyze' -> 'No issues found!'. 'flutter test' -> 201 tests, 'All tests passed!' (BASELINE = 201 tests, NO bajar). 'dart run tool/architecture/dependency_map.dart --check' -> 'dependency-map.md esta actualizado', exit 0. 'flutter pub get' modifico autogenerados (analysis_options.yaml, pubspec.lock, plugin registrants de linux/macos/windows) que se descartaron con 'git checkout --'; NO se añadieron paquetes, pubspec.yaml/pubspec.lock sin cambios. Arbol limpio salvo ficheros de plan en .agents/tasks/. Nota: flutter corre como root y emite el aviso 'running flutter as root' (inocuo, exit 0)."
+}

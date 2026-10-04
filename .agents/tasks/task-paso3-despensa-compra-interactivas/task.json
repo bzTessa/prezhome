@@ -1,0 +1,14 @@
+{
+  "task_id": "task-paso3-despensa-compra-interactivas",
+  "task_description": "Paso 3 de la epica PrezHome: Lista de la Compra y Despensa interactivas. Despensa: grid de tarjetas visuales dentro de cada seccion desplegable, con barra de progreso de color de caducidad y Hero animations (tag 'inv-<id>'). Compra: CustomScrollView por pasillos, Dismissible que tacha+atenua (marca comprado), y al vaciar (0 pendientes) Miau celebrando con rebote elastico + confeti por codigo. Evolucionar el rediseno existente sin perder apertura inteligente, contadores, filtros, coste estimado, generar-del-plan ni comprar->despensa. Rama feat/paso3-despensa-compra-interactivas desde main; sin push ni PR.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "CI exacto en verde sobre la rama feat/paso3-despensa-compra-interactivas: 'dart format --output=none --set-exit-if-changed .' -> 0 changed (97 files); 'flutter analyze' -> No issues found!; 'flutter test' -> 222/222 (baseline 201 + 12 expiry_bar + 9 confetti); 'dart run tool/architecture/dependency_map.dart --check' -> actualizado. test_quality: los 21 tests nuevos ejercitan funciones puras reales de produccion (expiryBarFraction/expiryBarFractionFor en lib/utils/expiry_bar.dart; generateConfetti + ConfettiParticle.localProgress/verticalAt en lib/widgets/animations/confetti.dart); revertir esa logica romperia los tests. docker_build: no aplica (proyecto Flutter sin Dockerfile de build). Arbol limpio tras descartar autogenerados de pub get (analysis_options.yaml, registrants linux/macos/windows). flutter_animate NO añadido (resuelto con utilidades nativas). Sin cambios de backend/migraciones."
+  }
+}

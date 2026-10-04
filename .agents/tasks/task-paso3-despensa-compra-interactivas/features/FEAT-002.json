@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Logica PURA y testable de la BARRA DE CADUCIDAD que usara el grid de la despensa (FEAT-003). Nueva utilidad sin dependencias de Flutter salvo el tipo Color/el enum ExpiryStatus, que convierte el estado de caducidad de un InventoryItem en (a) una FRACCION 0..1 de vida util restante para pintar la barra y (b) una clave de color/estado. Extraer esto a funcion pura permite testearlo y mantener el widget delgado.",
+  "status": "completed",
+  "steps": [
+    "Crear lib/utils/expiry_bar.dart (libreria de logica de presentacion, igual estilo que lib/utils/shopping_display.dart). Debe depender SOLO de models/inventory_item.dart (para ExpiryStatus/daysUntilExpiry); NO importar material.dart (los colores concretos se eligen en el widget a partir del estado para no acoplar la util al tema). Exponer: una funcion pura 'double expiryBarFraction(ExpiryStatus status, int? daysUntilExpiry, {int freshWindowDays = 14})' que devuelva la proporcion 0..1 de barra a pintar, y 'ExpiryStatus expiryBarStatusFor(InventoryItem item)' o un helper que tome el item; valora un modelo claro y documentado en comentarios en espanol.",
+    "Semantica de la fraccion (documentarla en comentarios): la barra representa 'vida util restante'. Propuesta (ajustable si el coder la mejora, pero mantener monotonia y bordes): sinFecha -> 0.0 (el widget pintara una barra neutra o ninguna); caducado -> 1.0 pintado en color 'expired' (barra llena = alarma/agotado, no proporcion); pronto (0..3 dias) -> fraccion pequena que CRECE con los dias, por ejemplo clamp(days,0,3)/freshWindowDays acotada a un minimo visible (p. ej. 0.08) para que 'caduca hoy' se vea como casi vacia pero no invisible; fresco -> min(days/freshWindowDays, 1.0). La funcion debe ser determinista, monotona no decreciente respecto a los dias dentro de fresco/pronto y estar siempre en [0,1].",
+    "No introducir literales de color 0xFF: el mapeo estado->color (fresh/soon/expired/neutral) se resolvera en el widget usando AppColors en FEAT-003. Esta util solo da fraccion y estado.",
+    "Crear test/expiry_bar_test.dart siguiendo el patron de test/inventory_expiry_test.dart (construir InventoryItem minimo o pasar status/dias directos). Cubrir: sinFecha -> 0; caducado -> 1; pronto (hoy=0 dias) -> fraccion pequena > 0 y <= pronto(3 dias); monotonia pronto (0<1<3 dias) no decreciente; fresco cerca del limite de freshWindowDays -> ~1 y nunca > 1; fresco muy lejano -> clamp a 1.0; valores siempre dentro de [0,1].",
+    "Si el coder decide que la fraccion debe depender tambien de la ventana por ubicacion (p. ej. Congelador con defaultFreezerDays), documentarlo y testearlo; de lo contrario, mantener freshWindowDays uniforme y simple. No inventar cifras no justificadas: dejar freshWindowDays como constante nombrada y comentada."
+  ],
+  "acceptance_criteria": [
+    "Existe lib/utils/expiry_bar.dart con una funcion pura que devuelve una fraccion en [0,1] y el estado/color-key, sin importar package:flutter/material.dart.",
+    "Existe test/expiry_bar_test.dart con casos para sinFecha(0), caducado(1), pronto(fraccion pequena creciente) y fresco(clamp a 1), todos verdes.",
+    "La funcion es determinista y nunca devuelve valores fuera de [0,1].",
+    "El numero total de tests AUMENTA respecto al baseline de FEAT-001 (no baja)."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter test test/expiry_bar_test.dart",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze"
+  ],
+  "blocked_reason": null,
+  "findings": "Creado lib/utils/expiry_bar.dart (logica pura, sin material.dart; solo importa models/inventory_item.dart). Modelo de la fraccion: sinFecha->0.0; caducado->1.0 (barra llena = alarma); pronto (0..3 dias)-> max(dias/freshWindowDays, kProntoMinFraction=0.08) acotado a [0,1] (crece con los dias, minimo visible para 'caduca hoy'); fresco-> min(dias/freshWindowDays, 1.0). Constante kFreshWindowDays=14 (nombrada y comentada); freshWindowDays es parametro opcional reescalable. API expuesta: expiryBarFraction(status, days, {freshWindowDays}), expiryBarStatusFor(item) (reenvio a item.expiryStatus como clave de color) y expiryBarFractionFor(item). Monotona no decreciente en pronto/fresco, determinista, siempre en [0,1]. test/expiry_bar_test.dart sigue el patron de inventory_expiry_test.dart (helper _item + _daysFromNow). Verificacion CI verde: dart format (0 changed), flutter analyze ('No issues found!'), flutter test = 213 pasados (baseline 201 -> +12). Guard dependency-map regenerado y commiteado (docs/architecture/dependency-map.md). Autogenerados de pub get/analyze (analysis_options.yaml, registrants linux/macos/windows) descartados con git checkout. No se anadieron paquetes."
+}
