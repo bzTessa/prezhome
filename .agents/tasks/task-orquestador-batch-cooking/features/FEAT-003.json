@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Enganchar el acceso a BatchPrepTimelineScreen desde lib/meal_plan_screen.dart (que ya carga el plan semanal y las recetas) con un botón/acceso 'Modo cocina' que haga Navigator.push pasándole las recetas planificadas pertinentes. NO tocar main_shell.dart (colisión con Paso 2). Documentar en comentario el enganche futuro gateado por el módulo batchCooking. Regenerar el mapa de dependencias y verificación final completa. Depende de FEAT-002.",
+  "status": "pending",
+  "steps": [
+    "En lib/meal_plan_screen.dart importar 'batch_prep_timeline_screen.dart'. Añadir un acceso visible 'Modo cocina' (botón/tarjeta con PressScale e icono válido tipo Icons.restaurant_menu o Icons.outdoor_grill) dentro de _buildPlan (p. ej. junto al _mealPrepCard o encima de la lista de días) que recoja las recetas planificadas pertinentes y haga Navigator.push(MaterialPageRoute(builder: (_) => BatchPrepTimelineScreen(recipes: <recetas>))).",
+    "Elegir las recetas a pasar de forma coherente con lo que ya hay: a partir de data.entries (no skipped, con recipeId) resolver las Recipe vía data.recipesById, deduplicadas, de la sesión/día relevante (p. ej. las recetas con comidas planificadas esta semana, o del día elegido). Mantenerlo simple y determinista; reutilizar _PlanData.",
+    "Si no hay recetas planificadas, el acceso puede ocultarse o mostrar un aviso cozy; la pantalla destino ya tiene empty state, así que basta con no romper.",
+    "Añadir un comentario claro en el punto de enganche explicando: 'Cuando el Paso 2 (HomeModule.batchCooking) esté en main, además de este acceso se podrá exponer como pestaña en main_shell.dart gateada por prefs.isModuleEnabled(HomeModule.batchCooking). En este paso no se toca main_shell.dart para evitar colisión con el Paso 2.'",
+    "NO modificar lib/main_shell.dart en absoluto.",
+    "Regenerar el mapa de dependencias: 'dart run tool/architecture/dependency_map.dart' y dejar docs/architecture/dependency-map.md actualizado (incluye los nuevos ficheros). Confirmar con '--check'.",
+    "Verificación final completa reproduciendo el CI con el PUNTO: dart format sobre '.', flutter analyze, flutter test, y el guard del mapa."
+  ],
+  "acceptance_criteria": [
+    "lib/meal_plan_screen.dart tiene un acceso 'Modo cocina' que hace Navigator.push a BatchPrepTimelineScreen con las recetas planificadas resueltas desde _PlanData.",
+    "lib/main_shell.dart NO está modificado (git diff main -- lib/main_shell.dart vacío).",
+    "Hay un comentario que documenta el enganche futuro por el módulo batchCooking.",
+    "docs/architecture/dependency-map.md está regenerado e incluye meal_prep_orchestrator.dart y batch_prep_timeline_screen.dart; 'dart run tool/architecture/dependency_map.dart --check' pasa.",
+    "Verificación final: dart format sobre '.' sin cambios, 'flutter analyze' = 'No issues found!', 'flutter test' verde con total >= 210.",
+    "Árbol de trabajo limpio salvo los ficheros intencionados (sin autogenerados de pub get colados)."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; dart format --output=none --set-exit-if-changed . (0 cambios)",
+    "flutter analyze (No issues found!)",
+    "flutter test (todos verdes, total >= 210)",
+    "dart run tool/architecture/dependency_map.dart --check (actualizado)",
+    "git diff --name-only main -- lib/main_shell.dart (sin salida)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

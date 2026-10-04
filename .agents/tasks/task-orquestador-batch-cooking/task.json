@@ -1,0 +1,7 @@
+{
+  "task_id": "task-orquestador-batch-cooking",
+  "task_description": "Paso 5 de la épica 'Asistente de Vida Proactivo': orquestador de batch cooking. Crear lib/services/meal_prep_orchestrator.dart (lógica PURA que fusiona los pasos de varias recetas planificadas en UNA línea de tiempo de cocción, agrupando pasos compatibles por aparato -ej. horno para dos platos a la vez- y marcando lo paralelizable) y lib/batch_prep_timeline_screen.dart (pantalla cozy que renderiza esa timeline con temporizadores en vivo iniciar/pausar/reiniciar, Timers cancelados en dispose). Enganchar un acceso 'Modo cocina' desde lib/meal_plan_screen.dart con Navigator.push; NO tocar main_shell.dart (colisión con Paso 2). Rama feat/paso5-orquestador-batch-cooking desde main. Verificar CI exacto (format sobre '.', analyze, test, guard del mapa).",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
