@@ -1,14 +1,18 @@
 {
   "task_id": "task-modulos-adaptables",
   "task_description": "Paso 2 de la épica PrezHome 'Asistente de Vida Proactivo': personalización y módulos adaptables. Modelar módulos on/off (Modo Puntos, Tareas, Batch Cooking) y estilo/ritmo de cocina dentro de profiles.dashboard_prefs (sin migración); añadir al wizard de perfil selectores on/off de módulos y un selector VISUAL de estilo de cocina (precargando y guardando sin pisar otros campos); y en main_shell ocultar de forma robusta las piezas de navegación de los módulos desactivados (recalcular índices, arranque en Inicio, callbacks intactos). Rama feat/paso2-modulos-adaptables desde main. Verificación CI: dart format sobre '.', flutter analyze, flutter test (>=201), guard del dependency-map.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
   "blocked_reason": null,
   "verification": {
     "build": "pass",
     "tests": "pass",
-    "test_quality": "pending",
+    "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "dart format sobre '.' 0 changed; flutter analyze 'No issues found!'; flutter test 219 verdes (baseline main 201, +18); guard dependency-map actualizado. Docker no aplica (proyecto Flutter sin Dockerfile de build). test_quality pendiente de revisión semántica."
+    "summary": "dart format sobre '.' 0 changed; flutter analyze 'No issues found!'; flutter test 219 verdes (baseline main 201, +18); guard dependency-map actualizado. Docker no aplica (proyecto Flutter sin Dockerfile de build). Revisión semántica: v1 NEEDS_CHANGES (propagación de módulos al shell incompleta) corregida; v2 APPROVED; residual no bloqueante (shell del alta de hogar sin shellKey) también corregido en commit da5887d. Tests nuevos (serialización tolerante de módulos/estilo y cómputo de índices por identidad) ejercen la lógica nueva y fallarían si se revirtiera."
+  },
+  "review": {
+    "v1": "NEEDS_CHANGES - 2026-10-04-155957-review.md",
+    "v2": "APPROVED - 2026-10-04-160624-review.md"
   }
 }
