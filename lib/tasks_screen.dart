@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_task_screen.dart';
+import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
@@ -41,7 +42,24 @@ class _TasksScreenState extends State<TasksScreen> {
         .eq('id', user.id)
         .maybeSingle();
     final homeId = profile?['home_id'] as String?;
-    if (homeId == null) return _TasksData(homeId: null);
+
+    // Preferencias del hogar para saber si el "Modo Puntos" está activado y
+    // mostrar/ocultar el marcador y la gráfica de puntos. Mismo patrón
+    // tolerante que HomeTab._loadPrefs.
+    final prefsRow = await _client
+        .from('profiles')
+        .select('dashboard_prefs')
+        .eq('id', user.id)
+        .maybeSingle();
+    final rawPrefs = prefsRow?['dashboard_prefs'];
+    final prefs = rawPrefs is Map
+        ? DashboardPrefs.fromJson(Map<String, dynamic>.from(rawPrefs))
+        : DashboardPrefs.defaults();
+    final pointsEnabled = prefs.isModuleEnabled(HomeModule.points);
+
+    if (homeId == null) {
+      return _TasksData(homeId: null, pointsEnabled: pointsEnabled);
+    }
 
     // Miembros del hogar (id -> nombre)
     final profs = await _client
@@ -82,6 +100,7 @@ class _TasksScreenState extends State<TasksScreen> {
       tasks: tasks,
       scores: scores,
       currentUserId: user.id,
+      pointsEnabled: pointsEnabled,
     );
   }
 
@@ -148,8 +167,12 @@ class _TasksScreenState extends State<TasksScreen> {
 
           return Column(
             children: [
-              _Scoreboard(members: data.members, scores: data.scores),
-              _PointsChart(members: data.members, scores: data.scores),
+              // Marcador y gráfica de puntos solo con el "Modo Puntos"
+              // activado. El resto (lista de tareas, celebración) permanece.
+              if (data.pointsEnabled) ...[
+                _Scoreboard(members: data.members, scores: data.scores),
+                _PointsChart(members: data.members, scores: data.scores),
+              ],
               _TareasCelebracion(visible: todoHecho),
               Expanded(
                 child: data.tasks.isEmpty
@@ -274,12 +297,16 @@ class _TasksData {
   final List<HomeTask> tasks;
   final Map<String, int> scores;
   final String? currentUserId;
+
+  /// "Modo Puntos" activado: controla si se muestran el marcador y la gráfica.
+  final bool pointsEnabled;
   _TasksData({
     required this.homeId,
     this.members = const {},
     this.tasks = const [],
     this.scores = const {},
     this.currentUserId,
+    this.pointsEnabled = true,
   });
 }
 

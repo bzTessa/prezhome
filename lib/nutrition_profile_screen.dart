@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'food_diary_screen.dart';
+import 'main_shell.dart';
 import 'models/nutrition_profile.dart';
 import 'profile_wizard_screen.dart';
 
@@ -251,6 +252,11 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                       ),
                     );
                     if (mounted) _load();
+                    // El wizard puede cambiar los módulos activados: avisamos al
+                    // shell para que recargue prefs y reconstruya la barra de
+                    // navegación (p. ej. ocultar Tareas) sin esperar a un
+                    // reinicio de la app.
+                    MainShell.reloadModules();
                   },
                   child: Container(
                     padding: const EdgeInsets.all(14),

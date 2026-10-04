@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/dashboard_prefs.dart';
 import 'models/nutrition_profile.dart';
 import 'theme/app_theme.dart';
+import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 
 /// Cuestionario guiado paso a paso para crear el perfil nutricional la primera
@@ -40,9 +42,9 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   // Numero total de pasos:
   // 0 bienvenida, 1 sexo, 2 fecha, 3 altura, 4 peso, 5 actividad, 6 objetivo,
   // 7 dieta, 8 alergias, 9 ingredientes a evitar, 10 tiempo de cocina,
-  // 11 resultado.
-  static const int _totalPages = 12;
-  static const int _resultPage = 11;
+  // 11 estilo de cocina, 12 modulos, 13 resultado.
+  static const int _totalPages = 14;
+  static const int _resultPage = 13;
 
   int _page = 0;
 
@@ -55,6 +57,18 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   String? _diet;
   final Set<String> _allergies = {};
   String? _cookTimePref;
+
+  // Preferencias del dashboard: fuente de verdad para no pisar las tarjetas,
+  // ocultas y accesos rápidos que la usuaria configuró en Inicio. Se carga en
+  // _loadExisting y se fusiona (copyWith) al guardar.
+  DashboardPrefs _dashboardPrefs = DashboardPrefs.defaults();
+
+  // Estado de trabajo de los dos pasos nuevos (módulos activados y estilo de
+  // cocina), precargado desde _dashboardPrefs.
+  final Set<HomeModule> _enabledModules = {
+    ...DashboardPrefs.defaults().enabledModules,
+  };
+  CookingStyle _cookingStyle = CookingStyle.defaultStyle;
 
   bool _saving = false;
 
@@ -87,12 +101,17 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           .from('profiles')
           .select(
             'sex, birth_date, height_cm, weight_kg, activity_level, goal, '
-            'diet, allergies, disliked, cook_time_pref',
+            'diet, allergies, disliked, cook_time_pref, dashboard_prefs',
           )
           .eq('id', user.id)
           .maybeSingle();
       if (data == null || !mounted) return;
       final p = NutritionProfile.fromMap({'id': user.id, ...data});
+      // Preferencias del dashboard: igual que HomeTab._loadPrefs, tolerante.
+      final rawPrefs = data['dashboard_prefs'];
+      final prefs = rawPrefs is Map
+          ? DashboardPrefs.fromJson(Map<String, dynamic>.from(rawPrefs))
+          : DashboardPrefs.defaults();
       setState(() {
         _sex = p.sex;
         _birthDate = p.birthDate;
@@ -110,6 +129,11 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           ..addAll(p.allergies);
         _dislikedController.text = p.disliked.join(', ');
         _cookTimePref = p.cookTimePref;
+        _dashboardPrefs = prefs;
+        _enabledModules
+          ..clear()
+          ..addAll(prefs.enabledModules);
+        _cookingStyle = prefs.cookingStyle;
       });
     } catch (_) {
       // Si falla la precarga, el wizard sigue funcionando con los valores por
@@ -249,9 +273,16 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) throw 'No autenticado';
-      // Update PARCIAL: solo los seis campos que recoge el wizard. Asi no
+      // Fusionar módulos y estilo de cocina sobre las preferencias cargadas,
+      // SIN pisar las tarjetas/ocultas/accesos que la usuaria configuró en
+      // Inicio (cards/hidden/quick siguen igual gracias a copyWith).
+      final mergedPrefs = _dashboardPrefs.copyWith(
+        enabledModules: {..._enabledModules},
+        cookingStyle: _cookingStyle,
+      );
+      // Update PARCIAL: solo los campos que recoge el wizard. Asi no
       // sobreescribimos otros datos del perfil (nombre, reparto de comidas,
-      // modo de cocina, etc.) que el usuario pudiera tener ya configurados.
+      // etc.) que el usuario pudiera tener ya configurados.
       await _client
           .from('profiles')
           .update({
@@ -265,6 +296,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             'allergies': _allergies.toList(),
             'disliked': _parseDisliked(),
             'cook_time_pref': _cookTimePref,
+            'dashboard_prefs': mergedPrefs.toJson(),
           })
           .eq('id', user.id);
       if (!mounted) return;
@@ -339,6 +371,8 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                   _buildAllergiesStep(),
                   _buildDislikedStep(),
                   _buildCookTimeStep(),
+                  _buildCookingStyleStep(),
+                  _buildModulesStep(),
                   _buildResultStep(),
                 ],
               ),
@@ -763,6 +797,73 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     );
   }
 
+  /// Paso de estilo/ritmo de cocina: selector VISUAL con tarjetas
+  /// seleccionables (icono + título + subtítulo), nunca un desplegable.
+  Widget _buildCookingStyleStep() {
+    return _stepScroll(
+      children: [
+        _stepHeader(
+          '¿Cómo prefieres cocinar?',
+          'Elige el ritmo que mejor va contigo. Así adaptamos las propuestas a '
+              'tu día a día. Puedes cambiarlo cuando quieras.',
+        ),
+        ...CookingStyle.values.map(
+          (style) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: PressScale(
+              onTap: () => setState(() {
+                _cookingStyle = style;
+              }),
+              child: _SelectCard(
+                title: style.label,
+                subtitle: style.subtitle,
+                icon: style.icon,
+                selected: _cookingStyle == style,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Paso de módulos del hogar: controles on/off para activar o desactivar
+  /// Modo Puntos, Tareas y Batch Cooking.
+  Widget _buildModulesStep() {
+    const descriptions = {
+      HomeModule.points: 'Gana puntos y recompensas por tus tareas.',
+      HomeModule.tasks: 'Organiza las tareas del hogar.',
+      HomeModule.batchCooking: 'Cocina en tandas y planifica preparaciones.',
+    };
+    return _stepScroll(
+      children: [
+        _stepHeader(
+          '¿Qué quieres activar?',
+          'Enciende solo lo que vayas a usar. Lo que apagues se ocultará para '
+              'que la app sea más tuya.',
+        ),
+        ...HomeModule.values.map(
+          (module) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _ModuleToggleCard(
+              title: module.label,
+              subtitle: descriptions[module] ?? '',
+              icon: module.icon,
+              value: _enabledModules.contains(module),
+              onChanged: (on) => setState(() {
+                if (on) {
+                  _enabledModules.add(module);
+                } else {
+                  _enabledModules.remove(module);
+                }
+              }),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildResultStep() {
     final profile = _buildProfile();
     final kcal = profile.targetCalories;
@@ -933,6 +1034,136 @@ class _OptionCard extends StatelessWidget {
             if (selected)
               const Icon(Icons.check_circle, color: AppColors.woodDark),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta seleccionable visual para los pasos nuevos (estilo de cocina).
+/// Sigue el patrón de [_OptionCard] pero con radio 16 (AppRadius.md) según el
+/// sistema de diseño para piezas nuevas. El tap lo gestiona el envoltorio.
+class _SelectCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool selected;
+
+  const _SelectCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.wood : AppColors.card,
+        borderRadius: AppRadius.mdRadius,
+        border: Border.all(
+          color: selected ? AppColors.woodDark : Colors.transparent,
+          width: 1.5,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.softShadow,
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.woodDark),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: selected ? Colors.black87 : AppColors.inkMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (selected)
+            const Icon(Icons.check_circle, color: AppColors.woodDark),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tarjeta con un interruptor on/off para activar o desactivar un módulo del
+/// hogar. Radio 16 (AppRadius.md) y tokens de color del sistema de diseño.
+class _ModuleToggleCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _ModuleToggleCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: AppRadius.mdRadius,
+        border: Border.all(
+          color: value ? AppColors.woodDark : Colors.transparent,
+          width: 1.5,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.softShadow,
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: SwitchListTile(
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: AppColors.card,
+        activeTrackColor: AppColors.wood,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+        secondary: Icon(icon, color: AppColors.woodDark),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.ink,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
         ),
       ),
     );

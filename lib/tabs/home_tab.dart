@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../add_inventory_item_screen.dart';
 import '../add_recipe_chooser.dart';
 import '../food_diary_screen.dart';
+import '../main_shell.dart';
 import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../scan_ticket_screen.dart';
@@ -1247,7 +1248,9 @@ class HomeTabState extends State<HomeTab> {
 
   /// Aviso amable para calcular el objetivo de calorías con el cuestionario
   /// guiado. Aparece mientras el perfil no está completo. Al pulsarlo abre el
-  /// ProfileWizardScreen y, al volver, refresca el resumen de calorías.
+  /// ProfileWizardScreen y, al volver, refresca el resumen de calorías y avisa
+  /// al shell por si el wizard cambió los módulos activados (p. ej. desactivar
+  /// Tareas debe ocultar su pestaña sin esperar a un reinicio).
   Widget _calorieGoalPrompt() {
     return InkWell(
       borderRadius: AppRadius.lgRadius,
@@ -1256,6 +1259,9 @@ class HomeTabState extends State<HomeTab> {
           context,
         ).push(MaterialPageRoute(builder: (_) => const ProfileWizardScreen()));
         _loadCaloriesSummary(); // refrescar al volver del cuestionario
+        // El wizard puede cambiar los módulos: que el shell recargue prefs y
+        // reconstruya la barra de navegación.
+        MainShell.reloadModules();
       },
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -1460,9 +1466,11 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
   }
 
   void _save() {
-    Navigator.of(
-      context,
-    ).pop(DashboardPrefs(order: _order, hidden: _hidden, quick: _quick));
+    // Conservar módulos y estilo de cocina del perfil; este editor solo
+    // cambia orden/ocultas/accesos rápidos.
+    Navigator.of(context).pop(
+      widget.initial.copyWith(order: _order, hidden: _hidden, quick: _quick),
+    );
   }
 
   @override
