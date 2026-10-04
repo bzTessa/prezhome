@@ -111,6 +111,35 @@ class InventoryItem {
     };
   }
 
+  /// Serialización COMPLETA (incluye id) para CACHEAR la fila entera en disco y
+  /// poder releerla con [InventoryItem.fromMap] al abrir la app sin conexión. A
+  /// diferencia de [toMap] (que omite id porque lo pone la base de datos), aquí
+  /// conservamos TODO el estado para reconstruir la fila tal cual. Útil también
+  /// para el merge caché<->remoto. Usa las mismas claves snake_case que
+  /// Supabase.
+  Map<String, dynamic> toCacheMap() {
+    return {
+      'id': id,
+      'home_id': homeId,
+      'name': name,
+      'category': category,
+      'item_type': itemType,
+      'quantity': quantity,
+      'unit': unit,
+      'expiration_date': expirationDate?.toIso8601String().split('T').first,
+      'is_staple': isStaple,
+      'kind': kind,
+      'recipe_id': recipeId,
+      'servings': servings,
+      'frozen_on': frozenOn?.toIso8601String().split('T').first,
+      'best_before': bestBefore?.toIso8601String().split('T').first,
+      'image_url': imageUrl,
+    };
+  }
+
+  /// Alias de [toCacheMap] para serializar a JSON (misma forma completa).
+  Map<String, dynamic> toJson() => toCacheMap();
+
   /// Días que quedan hasta el consumo preferente (null si no tiene fecha).
   int? get daysUntilBestBefore {
     if (bestBefore == null) return null;

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-paso7-offline-first",
+  "task_description": "PASO 7: Arquitectura Offline-First para PrezHome. Repositorio local (caché) para la lista de la compra (shopping_list_items) y la despensa (inventory_items) con carga instantánea desde caché al abrir la app, escritura optimista + cola de sincronización offline, detección de conexión por el resultado de las llamadas y drenado automático en segundo plano al reconectar, resolución de conflictos last-write-wins, aislamiento por hogar, e integración sin romper el comportamiento actual (Dismissible, confeti, _addToPantry, _generarDesdePlan, Realtime del Paso 6). Almacenamiento file-based JSON tras una interfaz LocalStore inyectable (InMemoryLocalStore para tests) para que la lógica pura (cola, colapso por id, merge, conflictos) sea testeable en Dart VM sin emulador ni Supabase. Rama feat/paso7-offline-first.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

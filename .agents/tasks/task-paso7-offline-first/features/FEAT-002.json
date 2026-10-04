@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "CAPA DE REPOSITORIO OFFLINE-FIRST que une el núcleo puro (FEAT-001) con Supabase y el disco: carga instantánea desde caché, escritura optimista (caché + encolar), persistencia de caché y cola en LocalStore, detección de online/offline por el resultado de las llamadas, y DRENADO automático de la cola en segundo plano al recuperar conexión. Incluye FileLocalStore (único punto que toca path_provider) y el aislamiento por hogar (clave namespaced por home_id, limpieza al cambiar de hogar/cerrar sesión). La lógica pura ya está testeada; aquí se testea lo que se pueda sin red usando un cliente/sender inyectable falso.",
+  "status": "pending",
+  "steps": [
+    "Crear lib/services/file_local_store.dart con 'FileLocalStore implements LocalStore' que use path_provider (getApplicationDocumentsDirectory) para resolver un directorio y guardar cada clave como un fichero JSON. Este es el ÚNICO archivo que importa path_provider. Debe degradar con elegancia: si el directorio no está disponible, no romper (devolver null en read, no lanzar en write). No se testea en VM (requiere binding); su lógica trivial queda cubierta por el contrato de LocalStore vía InMemoryLocalStore.",
+    "Crear lib/services/offline_repository.dart con una clase 'OfflineRepository' (o un repositorio por tabla si queda más limpio: ShoppingCacheRepository / InventoryCacheRepository compartiendo infraestructura) que reciba por constructor: un LocalStore (inyectable; InMemoryLocalStore en tests), un 'RemoteSender' (interfaz inyectable que abstrae las llamadas a Supabase: Future<void> sendInsert/sendUpdate/sendDelete(table,payload,id) y Future<List<Map<String,dynamic>>> fetch(table) ), y el home_id actual. La clave de caché incluye SIEMPRE el home_id (p. ej. 'cache:shopping_list_items:<homeId>' y 'queue:<homeId>') para no mezclar hogares.",
+    "Implementar en OfflineRepository: (a) readCached(table) -> List<Map> leído del LocalStore AL INSTANTE (para pintar antes que la red); (b) refreshFromRemote(table) -> hace fetch remoto, guarda en caché la lista remota, y devuelve la lista EFECTIVA aplicando offline_merge sobre las ops pendientes; (c) applyLocalWrite(op) -> aplica la op de forma optimista a la caché (usando offline_merge), la encola en SyncQueue, persiste caché+cola en LocalStore, e intenta drenar; (d) drain() -> recorre la cola en orden y envía cada op con el RemoteSender; si una op tiene éxito, la quita de la cola y persiste; si FALLA (sin red), DETIENE el drenado (asume offline) sin perder las ops restantes y sin spamear reintentos. Documentar en español.",
+    "DETECCIÓN DE CONEXIÓN Y DRENADO AUTOMÁTICO (sin connectivity_plus): inferir online/offline del éxito/fallo de las llamadas Supabase. Exponer un método tryDrain() idempotente que las pantallas invocan en momentos naturales (al refrescar, al recibir evento Realtime, al reconectar el canal, al volver la app a primer plano) y que, si hay ops pendientes, intenta drenar; si falla, lo deja para el próximo disparo. Un éxito de drenado o de fetch cuenta como 'online'. Evitar reintentos en bucle: un solo intento por disparo, con backoff simple opcional (p. ej. no reintentar más de una vez por N segundos). Mantener la lógica de 'cuándo intentar / cuándo parar' lo más PURA posible (un pequeño gate con estado, estilo RealtimeNoticeGate, testeable).",
+    "AISLAMIENTO POR HOGAR Y LIMPIEZA DE SESIÓN: añadir un método clearForLogout()/switchHome(newHomeId) que borre o separe la caché y la cola del hogar anterior (LocalStore.clearAll o remove de las claves del hogar) para cumplir security.md (no mezclar hogares). Documentar que al cerrar sesión o cambiar de hogar se invoca esta limpieza.",
+    "Crear un RemoteSender real respaldado por Supabase en el mismo archivo o en lib/services/supabase_remote_sender.dart (importa supabase_flutter; traduce send* a update/insert/delete y fetch a select). Mantenerlo FINO: toda la lógica vive en OfflineRepository/núcleo puro; este solo hace las llamadas. Resolver home_id con el patrón currentUser + profiles.home_id como en las pantallas.",
+    "Tests PUROS en test/offline_repository_test.dart usando InMemoryLocalStore y un RemoteSender FALSO (fake en memoria que puede simular 'sin red' lanzando en send*/fetch, y registrar qué se envió y en qué orden). Cubrir: (a) readCached devuelve lo último persistido sin tocar la red; (b) applyLocalWrite estando 'offline' aplica optimista a caché, encola y NO pierde el cambio; (c) al volver 'online', tryDrain envía las ops EN ORDEN y vacía la cola; (d) si una op falla a mitad, el drenado se detiene y conserva las restantes; (e) refreshFromRemote mezcla las pendientes sobre el remoto (un item encolado offline sigue visible aunque el remoto no lo traiga); (f) clearForLogout/switchHome deja el hogar nuevo sin datos del anterior. No usar binding de Flutter ni Supabase real.",
+    "Regenerar docs/architecture/dependency-map.md con dart run tool/architecture/dependency_map.dart (se commitea)."
+  ],
+  "acceptance_criteria": [
+    "Existen lib/services/file_local_store.dart (único que importa path_provider), lib/services/offline_repository.dart y el RemoteSender (interfaz pura + implementación Supabase separada).",
+    "OfflineRepository depende de LocalStore y RemoteSender por INYECCIÓN; no importa supabase_flutter directamente (la implementación Supabase sí, pero aislada).",
+    "test/offline_repository_test.dart cubre lectura de caché sin red, escritura optimista offline, drenado en orden al reconectar, parada ante fallo sin perder ops, merge pendientes sobre remoto y aislamiento por hogar; los tests fallarían si se revierte la lógica.",
+    "La caché y la cola se guardan bajo claves que incluyen el home_id; existe limpieza al cerrar sesión / cambiar de hogar.",
+    "'flutter analyze' limpio, 'dart format' sin cambios, 'flutter test' verde con total > el de FEAT-001."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter analyze (No issues found!).",
+    "flutter test (verde; total crece respecto a FEAT-001).",
+    "dart format --output=none --set-exit-if-changed . (0 changed).",
+    "dart run tool/architecture/dependency_map.dart --check (al día).",
+    "grep -n \"import 'package:supabase_flutter\" lib/services/offline_repository.dart -> sin coincidencias (solo la implementación RemoteSender Supabase lo importa)."
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

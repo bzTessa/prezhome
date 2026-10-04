@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "INTEGRACIÓN en shopping_list_screen.dart e inventory_screen.dart SIN romper nada: ambas pantallas pintan PRIMERO desde la caché (carga instantánea), luego refrescan con Supabase (y por Realtime), y todas las escrituras pasan por OfflineRepository (optimista a caché + encolar + drenar en segundo plano). Convivencia caché<->Realtime: un evento remoto refresca caché+UI; una escritura local actualiza caché+UI+encola. Limpieza de caché al cerrar sesión/cambiar de hogar en el arranque. Indicador discreto y cozy de 'cambios pendientes de sincronizar' (radio 16, sin tecnicismos, sin 'IA'). Mantener TODO el comportamiento actual: Dismissible, confeti/celebración, _addToPantry comprar->despensa, _generarDesdePlan, Realtime del Paso 6, agrupaciones/colapsos y gating.",
+  "status": "pending",
+  "steps": [
+    "shopping_list_screen.dart: instanciar OfflineRepository para la tabla shopping_list_items (LocalStore = FileLocalStore en producción; RemoteSender = el respaldado por Supabase). En initState, pintar INMEDIATO desde readCached (sin esperar red) y luego lanzar refreshFromRemote para actualizar. Mantener el FutureBuilder/_reload actuales pero alimentándolos desde el repositorio: el primer frame usa caché, el refresh remoto reemplaza. OJO patrón setState: calcular el Future/datos antes y luego setState con cuerpo de bloque { } (NUNCA arrow que devuelva Future).",
+    "shopping_list_screen.dart: redirigir TODAS las escrituras por el repositorio en forma de PendingOp optimista: _toggleChecked (update checked; y _addToPantry al marcar comprado, que es un insert/update en inventory_items -> también vía repositorio de inventario o una op encolada a esa tabla), _deleteItem (delete), alta manual (_openAddItem -> insert con id temporal local), y _generarDesdePlan (inserts). Tras aplicar la op, la UI ya refleja el cambio desde la caché optimista; en segundo plano se drena a Supabase. Conservar EXACTAMENTE el comportamiento observable con conexión (dedup de _addToPantry por nombre, source='auto'/'manual', estimación de caducidad, etc.).",
+    "shopping_list_screen.dart: convivencia con Realtime del Paso 6: el callback de Realtime debe seguir refrescando, pero ahora vía refreshFromRemote (fetch remoto + merge con ops pendientes + guardar caché) para que un eco remoto NO borre un cambio local aún no sincronizado. En el status del canal, además de RealtimeNoticeGate, disparar tryDrain() al (re)conectar (subscribed) para vaciar la cola al volver la conexión. No duplicar celebración/confeti: ShoppingCelebrationGate sigue registrando los conteos al completar el refresh.",
+    "inventory_screen.dart: mismo patrón: OfflineRepository para inventory_items; initState pinta desde readCached al instante y luego refreshFromRemote. Escrituras por el repositorio: _deleteItem (delete), _toggleStaple (update is_staple), y el alta/edición vía AddInventoryItemScreen (insert/update; al volver con true, aplicar la op optimista + encolar). Mantener agrupación por secciones, apertura inteligente, filtros y empty state con Miau.",
+    "INDICADOR DE PENDIENTES (cozy, opcional pero deseable): un chip/badge discreto que aparece SOLO cuando hay ops pendientes de sincronizar, con texto cercano SIN tecnicismos ni 'IA' (p. ej. 'Guardado. Se sincronizará al volver la conexión.' o un pequeño pill 'Cambios por sincronizar'). Usar AppColors (inkMuted/tonos cozy), AppRadius.md (16) y AppTheme.surfaceDecoration. Honrar reduce-motion (sin animación en bucle; estado estático si disableAnimations). Debe desaparecer cuando la cola se vacía tras el drenado.",
+    "LIMPIEZA POR SESIÓN/HOGAR: en el arranque/_AuthGate (lib/main.dart) o en HomeSessionScreen, invocar la limpieza de caché del repositorio al detectar cierre de sesión (onAuthStateChange -> signedOut) para no mezclar hogares. Si se detecta un home_id distinto al cacheado, limpiar el anterior (switchHome). Documentar en comentarios en español. No romper el flujo de _AuthGate existente.",
+    "Verificar que ninguna cadena visible nueva contiene 'IA'/'AI'; que los radios de UI del indicador son 16; que setState usa cuerpo de bloque; que se mantienen heroTag únicos (fab-inventory, y el de la compra si lo hubiera) y los topics Realtime por identityHashCode.",
+    "Añadir/ajustar tests que se puedan hacer en VM: si se extrae alguna lógica pura nueva de presentación (p. ej. 'hay pendientes -> mostrar indicador', o la decisión de qué PendingOp genera cada acción de la pantalla), testearla en test/*.dart puro. No añadir tests que requieran binding nativo. Regenerar docs/architecture/dependency-map.md."
+  ],
+  "acceptance_criteria": [
+    "Al abrir la app sin red, la lista de la compra y la despensa muestran el ÚLTIMO estado conocido desde la caché al instante (sin spinner infinito), y al volver la conexión se refrescan y la cola se drena sola.",
+    "Un cambio hecho offline (tachar/añadir/borrar en compra; añadir/editar/borrar/staple en despensa) se ve inmediatamente, no se pierde, y se envía a Supabase automáticamente al reconectar, en orden.",
+    "Con conexión, el comportamiento observable es prácticamente igual al actual: Dismissible, confeti al vaciar la compra, _addToPantry comprar->despensa, _generarDesdePlan, Realtime del Paso 6, agrupaciones y gating siguen funcionando.",
+    "Existe un indicador discreto de 'cambios pendientes' con radio 16, tokens, sin 'IA' ni tecnicismos, que aparece solo con cola no vacía y desaparece al sincronizar; honra reduce-motion.",
+    "La caché se limpia/separa al cerrar sesión o cambiar de hogar (sin fugas entre hogares).",
+    "'flutter analyze' limpio, 'dart format' sin cambios, 'flutter test' verde con total >= FEAT-002, mapa de dependencias al día."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter analyze (No issues found!).",
+    "flutter test (todos verdes; total no baja respecto a FEAT-002).",
+    "dart format --output=none --set-exit-if-changed . (0 changed).",
+    "dart run tool/architecture/dependency_map.dart --check (al día).",
+    "grep -niE \"\\bIA\\b|\\bAI\\b\" en las cadenas visibles nuevas de shopping_list_screen.dart e inventory_screen.dart -> sin coincidencias en texto de UI.",
+    "Revisar que shopping_list_screen.dart e inventory_screen.dart leen de readCached en initState antes del refresh remoto y que las escrituras pasan por OfflineRepository."
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
