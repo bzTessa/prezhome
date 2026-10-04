@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "LISTA DE LA COMPRA interactiva: reconstruir lib/shopping_list_screen.dart con CustomScrollView + slivers, agrupada por 'pasillos' (= categorias actuales via CategoryIcons.categoryFor) con cabeceras de pasillo. Dismissible por item que al deslizar TACHE el texto y baje la opacidad (marcar como comprado/hecho), coherente con _toggleChecked/_addToPantry. Al llegar a 0 PENDIENTES, detonar la animacion de miau_celebrando.png con rebote elastico + CONFETI POR CODIGO (CustomPainter propio, sin paquete de confeti ni assets). Conservar la tarjeta de coste estimado, los dos FAB y el flujo generar-del-plan.",
+  "status": "pending",
+  "steps": [
+    "Sustituir el ListView del build() por un CustomScrollView con slivers, manteniendo el padding inferior amplio (hoy 160) para no tapar los FAB. Orden de slivers: celebracion (cuando aplica), tarjeta de coste estimado (si est.priced>0), grupos de pasillos de pendientes, y el panel 'YA EN EL CARRO' de comprados al final.",
+    "PASILLOS: reutilizar _buildPendientesPorCategoria agrupando por CategoryIcons.categoryFor(item.name) en el orden del enum FoodCategory. Para cada grupo no vacio emitir una CABECERA DE PASILLO (SliverToBoxAdapter con el _categoryHeader existente -icono en pastilla del tono de la categoria + etiqueta + contador + chevron-, o un SliverPersistentHeader si se quiere que quede fijada; SliverToBoxAdapter es suficiente y mas simple) seguida del contenido del grupo (SliverList/SliverToBoxAdapter con las filas). Conservar el colapsado por categoria (_catCollapsed) y el AnimatedCrossFade/chevron ya existentes.",
+    "DISMISSIBLE 'tachar + opacidad': cambiar el gesto de deslizar de la fila. Hoy el Dismissible endToStart BORRA el item; el requisito del usuario es que el swipe MARQUE COMO COMPRADO/HECHO (tachado + opacidad bajada), coherente con _toggleChecked (que ademas mete el item en la despensa via _addToPantry). Implementacion: en _buildRow, para items PENDIENTES el swipe endToStart llama a _toggleChecked(item, true) (confirmDismiss que ejecute el toggle y devuelva false para no desmontar la fila, ya que _reload reconstruira la lista) de modo que el item queda tachado y atenuado y pasa a 'YA EN EL CARRO'. El fondo del swipe debe comunicar 'hecho/comprado' (icono de check sobre AppColors.sageBg/sage), no 'borrar'. El line-through + Opacity(done?0.5) ya existente se mantiene para el estado comprado. Mantener el borrado del item accesible via el menu de acciones (_openItemActions -> 'Quitar de la lista'), que NO debe perderse.",
+    "No romper NADA del flujo existente: _toggleChecked/_addToPantry (comprar->despensa, dedup por nombre), _generarDesdePlan, _costEstimateCard (coste estimado con PriceMemory), _openAddItem, _pickPhoto/_regenPhoto, los dos FloatingActionButton con heroTag unicos ('fab-compra-generar','fab-compra-add'), el panel colapsable 'YA EN EL CARRO' y el empty state (lista totalmente vacia). Respetar el pitfall de setState: nunca arrow que devuelva Future.",
+    "CELEBRACION AL VACIAR (0 pendientes con comprados.isNotEmpty, 'compraTerminada'): sustituir/mejorar _CompraCelebracion para que muestre MiauCharacter(mood: celebrating) con un REBOTE ELASTICO (ScaleTransition/AnimatedScale con curva tipo Curves.elasticOut o AppMotion.easeOutBack) MAS un CONFETI POR CODIGO. El confeti se dibuja con un CustomPainter propio (particulas con posicion/color/rotacion animadas por un AnimationController), SIN paquete externo ni assets de imagen; colores desde AppColors (sage/terracotta/peach/frost/woodDark). Acotar el confeti (duracion corta ~1.2-2s, numero de particulas limitado) y que no bloquee la interaccion (IgnorePointer). DEBE respetar reduce-motion: con AppMotion.reduceMotionOf(context)==true, mostrar el estado final estatico (Miau celebrando + tarjeta de 'Compra completada') SIN confeti ni rebote. Valorar reutilizar el patron de Celebrate (overlay) para el burst; el confeti puede vivir en un nuevo widget, p. ej. lib/widgets/animations/confetti.dart.",
+    "La celebracion debe detonarse SOLO en la transicion a 0 pendientes (no en cada rebuild). Como la pantalla es un StatefulWidget que recarga via Future, usar un flag/guarda para disparar el confeti una vez cuando pendientes pasa de >0 a 0 (p. ej. recordar el conteo anterior o un bool _celebrado y resetearlo cuando vuelva a haber pendientes). Evitar re-disparos en IndexedStack (pantalla viva): la guarda de 'solo en transicion' lo cubre.",
+    "Mantener coherencia de diseno: cabeceras y tarjetas con radio 16 (AppRadius.md) y tokens AppColors; prohibido texto visible 'IA'/'AI'/'Inteligencia Artificial' (el boton es 'Generar del plan', correcto). Nada de literales 0xFF ni Colors.grey[xxx] en codigo nuevo (usar AppColors.inkMuted); el codigo preexistente que ya usa Colors.grey puede quedarse salvo que lo reescribas, pero el codigo NUEVO debe usar tokens.",
+    "Si cambia la logica de confeti a algo testable (p. ej. generacion determinista de particulas o progreso de caida en funcion pura), añadir un test en test/ (p. ej. test/confetti_test.dart) para no bajar el numero de tests y cubrir la logica nueva. Si todo es puramente visual, al menos NO reducir el numero de tests existentes.",
+    "flutter_animate: añadir el paquete a pubspec.yaml SOLO si se usa de verdad para el shimmer/shake/elastic/confeti y simplifica el codigo frente a las utilidades nativas (AppMotion/PressScale/StaggeredEntrance/Celebrate/CustomPainter). Preferir resolver con utilidades nativas. Si NO se usa, NO añadirlo. Si se añade, commitear pubspec.yaml y pubspec.lock (son el cambio) pero NO los plugin registrants de plataforma.",
+    "Tras los cambios, si cambian imports internos de lib/, REGENERAR 'dart run tool/architecture/dependency_map.dart' y commitear docs/architecture/dependency-map.md."
+  ],
+  "acceptance_criteria": [
+    "La lista de la compra se renderiza con CustomScrollView + slivers, agrupada por pasillos (categorias de CategoryIcons) con cabeceras de pasillo por grupo no vacio y en el orden del enum FoodCategory.",
+    "El gesto de deslizar sobre un item PENDIENTE lo marca como comprado/hecho (texto tachado + opacidad bajada) via _toggleChecked, que ademas mete el item en la despensa; el fondo del swipe comunica 'hecho/comprado'.",
+    "Se conservan: coste estimado, dos FAB con heroTag unicos, generar-del-plan, panel 'YA EN EL CARRO' colapsable, borrado via menu de acciones y empty state de lista vacia.",
+    "Al pasar a 0 pendientes (con items comprados) se detona Miau celebrando con rebote elastico y confeti dibujado por codigo (CustomPainter), sin paquete de confeti ni assets, acotado y sin bloquear toques.",
+    "La celebracion se dispara solo en la transicion a 0 pendientes, no en cada rebuild ni al cambiar de tab en el IndexedStack.",
+    "Todo respeta reduce-motion: con disableAnimations se muestra el estado final estatico sin confeti ni rebote.",
+    "flutter_animate solo aparece en pubspec si realmente se usa; de lo contrario no se añade.",
+    "No hay literales 0xFF ni Colors.grey[xxx] en el codigo NUEVO (se usan AppColors)."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test",
+    "dart run tool/architecture/dependency_map.dart --check"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

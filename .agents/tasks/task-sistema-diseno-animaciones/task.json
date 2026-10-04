@@ -1,0 +1,24 @@
+{
+  "task_id": "task-sistema-diseno-animaciones",
+  "task_description": "Fase 1 fundacional del nuevo lenguaje visual de PrezHome: crear un SISTEMA DE DISENO (tokens de espaciado/radios/elevacion/tipografia sobre la paleta Cozy existente) y una LIBRERIA DE ANIMACIONES reutilizable y suave (press-scale, aparicion escalonada, contador animado, micro-celebracion) con el framework de Flutter y respeto a reduce-motion, y aplicarlo a la pantalla de INICIO (lib/tabs/home_tab.dart) como pantalla de referencia, manteniendo toda la funcionalidad (DashboardPrefs, navegacion, completar tareas, prompts, refresco). Tarea de UI/animacion PURA: no toca backend ni migraciones. Rama feat/sistema-diseno-animaciones (sin push/PR).",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "review": {
+    "verdict": "APPROVED",
+    "pass": "v1",
+    "file": "2026-10-04-150000-review.md",
+    "non_blocking_issues": [
+      "AnimatedCounter uses Tween(begin:value,end:value) so it does not count-up on first mount (animates on subsequent value changes only); doc comment slightly misleading.",
+      "AppMotion.lerpDouble is covered by tests but not called by any production widget (AnimatedCounter uses TweenAnimationBuilder).",
+      "StaggeredEntrance is stateless/un-keyed so a _loadDashboard setState mid-entrance can restart the fade/slide (low impact on this screen)."
+    ]
+  },
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "flutter pub get OK; dart format --output=none --set-exit-if-changed . -> 90 files, 0 changed; flutter analyze -> 'No issues found!'; flutter test -> 185 passed (baseline 167 + 18 new pure-logic tests in app_motion_test.dart). Test quality: the 18 new tests exercise the real pure functions AppMotion.effectiveDuration/staggerDelay/lerpDouble and would fail if reverted (assert reduce-motion zeroing, index growth, maxItems clamp, interpolation and euro/kcal format rounding). No Dockerfile for the Flutter app; docker build not applicable."
+  }
+}

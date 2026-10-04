@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "DESPENSA interactiva: dentro de cada seccion desplegable del inventario, mostrar los productos en una CUADRICULA de tarjetas visuales (GridView/SliverGrid) en vez de filas ListTile. Cada tarjeta: FoodImage, nombre limpio, cantidad y una BARRA DE PROGRESO DE COLOR de caducidad (usando FEAT-002). Hero animations entre la tarjeta del grid y la pantalla de detalle/edicion (AddInventoryItemScreen), con tag unico por item 'inv-<id>'. EVOLUCIONAR el rediseno existente: conservar apertura inteligente de secciones, contadores Frescos/Pronto/Caducados, filtro por seccion, long-press de acciones, dashboard-resumen global y el empty state con Miau.",
+  "status": "pending",
+  "steps": [
+    "En lib/inventory_screen.dart, sustituir _sectionBody (que hoy pinta Column de _itemRow ListTile) por un GRID de tarjetas DENTRO de cada seccion desplegable. Mantener _sectionCard, _sectionHeader, AnimatedCrossFade/chevron y la logica _isExpanded/_toggleSection/_expandedOverrides sin cambios de comportamiento. El grid va como contenido del firstChild del AnimatedCrossFade de cada seccion.",
+    "Como las secciones viven dentro de un ListView (scroll exterior) y el numero de items por seccion es acotado, usar un GridView.builder/count con 'shrinkWrap: true' y 'physics: const NeverScrollableScrollPhysics()' DENTRO de cada seccion (no un CustomScrollView global, para no romper el ListView de secciones ni el dashboard). Grid responsivo: 2 columnas en movil usando SliverGridDelegateWithMaxCrossAxisExtent (maxCrossAxisExtent ~ 180) o GridView.count con crossAxisCount derivado del ancho (LayoutBuilder); childAspectRatio ajustado para que quepan imagen + nombre + cantidad + barra sin overflow.",
+    "Crear un widget de tarjeta de producto (p. ej. _InventoryCard dentro del fichero, o lib/widgets/inventory_item_card.dart si queda mas limpio y lo refleja el dependency-map). Contenido de la tarjeta: (1) FoodImage(name,itemType,imageUrl,forceIllustration: item.category=='Especias') ocupando la zona superior, ENVUELTA en un Hero(tag: 'inv-<id>') para la animacion; (2) nombre via shoppingCleanName(item.name); (3) cantidad via inventoryQtyLabel(item.quantity,item.unit); (4) la BARRA DE CADUCIDAD. Reutilizar el chip _ExpiryChip o una version compacta si cabe. Decoracion con AppTheme.cardDecoration(radius: AppRadius.md) o surfaceDecoration; radio 16; colores desde AppColors (sin literales 0xFF ni Colors.grey[xxx] en codigo nuevo).",
+    "BARRA DE CADUCIDAD: un widget (p. ej. _ExpiryBar) que use expiryBarFraction (FEAT-002) para el ancho relleno y mapee el estado a color: fresco->AppColors.fresh sobre freshBg, pronto->soon sobre soonBg, caducado->expired sobre expiredBg, sinFecha->barra neutra (AppColors.wood/cream) o sin barra. Fondo de la pista con el *Bg correspondiente y relleno con el color de estado; esquinas redondeadas (pill). Puede animar el relleno con AppMotion.base pero DEBE respetar reduce-motion (AppMotion.reduceMotionOf -> pintar directamente el estado final). Para 'Especias' (isFood=false en seccion) NO mostrar barra (igual que hoy no muestran chip de caducidad).",
+    "HERO en el destino: en lib/add_inventory_item_screen.dart, envolver la imagen/preview del alimento (cuando se edita un item con id) en un Hero(tag: 'inv-<id>') con el MISMO tag, para que la transicion case origen->destino. Si la pantalla de alta no muestra imagen del item, añadir un pequeno preview con FoodImage del item en edicion envuelto en el Hero. Usar el id del item (unico); para items sin id (alta nueva) NO poner Hero. Recordar: MainShell usa IndexedStack, por eso el tag DEBE ser unico por item (derivado del id) y no un literal fijo.",
+    "Conservar interacciones: toque/long-press en la tarjeta abre _openItemActions (editar/no comprar/eliminar) igual que hoy; al elegir 'Editar' se navega a AddInventoryItemScreen(item: item) y la animacion Hero debe dispararse. Mantener el icono/indicador de 'mas acciones' de forma coherente con el nuevo layout de tarjeta.",
+    "Empty states con Miau: la despensa VACIA debe mostrar Miau en pose 'pensando' (MiauMood.curious -> assets/images/miau_pensando.png) con balanceo suave (MiauCharacter float:true), respetando reduce-motion. Conservar tambien el mensaje por categoria vacia existente. No romper el dashboard-resumen global ni el _sectionFilterBar.",
+    "Opcional de pulido (solo si no añade riesgo): aparicion escalonada de las tarjetas con StaggeredEntrance(index: i) y/o PressScale al pulsar, SIEMPRE respetando reduce-motion. No es obligatorio para aceptar la feature.",
+    "Tras los cambios, si cambian los imports internos de lib/, REGENERAR el mapa: 'dart run tool/architecture/dependency_map.dart' y commitear docs/architecture/dependency-map.md.",
+    "Verificar rendimiento basico: el scroll del inventario con varias secciones y grids debe seguir fluido (grids internos con shrinkWrap pero numero de items acotado por seccion)."
+  ],
+  "acceptance_criteria": [
+    "Dentro de cada seccion desplegable del inventario los productos se muestran en una CUADRICULA de tarjetas (no ListTile), con 2 columnas en movil.",
+    "Cada tarjeta muestra FoodImage, nombre limpio (shoppingCleanName), cantidad (inventoryQtyLabel) y una barra de progreso de color coherente con el estado de caducidad (fresh/soon/expired/neutral) usando expiryBarFraction de FEAT-002.",
+    "Existe una Hero animation con tag 'inv-<id>' entre la tarjeta del grid y la imagen en AddInventoryItemScreen al editar un item; no hay dos Hero con el mismo tag vivos a la vez.",
+    "Se conservan: apertura inteligente de secciones, contadores Frescos/Pronto/Caducados, filtro por seccion (_sectionFilterBar), long-press de acciones (editar/no comprar/eliminar), dashboard-resumen global y empty state (Miau 'pensando' con balanceo).",
+    "No se muestra barra de caducidad en 'Especias y condimentos' (coherente con no mostrar chip hoy).",
+    "No hay literales de color 0xFF ni Colors.grey[xxx] en el codigo nuevo (se usan AppColors / AppColors.inkMuted).",
+    "Las animaciones respetan reduce-motion (estado final estatico sin perder funcion)."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+    "dart format --output=none --set-exit-if-changed .",
+    "flutter analyze",
+    "flutter test",
+    "dart run tool/architecture/dependency_map.dart --check"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
