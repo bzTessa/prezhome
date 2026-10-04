@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'batch_prep_timeline_screen.dart';
 import 'models/inventory_item.dart';
 import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
@@ -10,6 +11,7 @@ import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
 import 'theme/app_theme.dart';
+import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 
 /// Planificador semanal de comidas (v1).
@@ -705,6 +707,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           _mealPrepCard(data),
           const SizedBox(height: 12),
         ],
+        if (_plannedRecipes(data).isNotEmpty) ...[
+          _cookModeCard(data),
+          const SizedBox(height: 12),
+        ],
         ...days.map((date) {
           final key = date.toIso8601String().split('T').first;
           final dayEntries = byDate[key] ?? [];
@@ -857,6 +863,88 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   /// Construye el plan de cocción (meal prep) a partir de las entradas y las
   /// recetas ya cargadas en [_load]. No hace consultas: reutiliza todo.
+  /// Recetas con comidas planificadas esta semana (no "fuera", con receta),
+  /// resueltas vía [_PlanData.recipesById] y DEDUPLICADAS por id. Es lo que
+  /// alimenta el "Modo cocina" (orquestador de batch cooking). Determinista:
+  /// recorre [data.entries] en orden y conserva la primera aparición de cada
+  /// receta.
+  List<Recipe> _plannedRecipes(_PlanData data) {
+    final seen = <String>{};
+    final result = <Recipe>[];
+    for (final e in data.entries) {
+      if (e.skipped) continue;
+      final id = e.recipeId;
+      if (id == null || !seen.add(id)) continue;
+      final recipe = data.recipesById[id];
+      if (recipe != null) result.add(recipe);
+    }
+    return result;
+  }
+
+  /// Acceso cozy al "Modo cocina": abre [BatchPrepTimelineScreen] con las
+  /// recetas planificadas de la semana para cocinarlas en lote con una línea de
+  /// tiempo unificada y temporizadores en vivo. Solo se muestra cuando hay
+  /// recetas planificadas (ver [_buildPlan]); la pantalla destino tiene su
+  /// propio empty state de todos modos.
+  ///
+  /// Cuando el Paso 2 (HomeModule.batchCooking) esté en main, además de este
+  /// acceso se podrá exponer como pestaña en main_shell.dart gateada por
+  /// prefs.isModuleEnabled(HomeModule.batchCooking). En este paso no se toca
+  /// main_shell.dart para evitar colisión con el Paso 2.
+  Widget _cookModeCard(_PlanData data) {
+    final recipes = _plannedRecipes(data);
+    return PressScale(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => BatchPrepTimelineScreen(recipes: recipes),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: AppTheme.cardDecoration(radius: 20),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: AppColors.sageBg,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.outdoor_grill, color: AppColors.woodDark),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Modo cocina',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Cocina en lote las recetas de la semana con una línea de '
+                    'tiempo y temporizadores.',
+                    style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right, color: Colors.grey[500]),
+          ],
+        ),
+      ),
+    );
+  }
+
   MealPrepPlan _buildMealPrepPlan(_PlanData data) {
     final prepRecipes = <String, PrepRecipe>{
       for (final r in data.recipes)
