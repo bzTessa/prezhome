@@ -11,7 +11,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 | `services` | 11 |
 | `tabs` | 3 |
 | `theme` | 6 |
-| `utils` | 6 |
+| `utils` | 7 |
 | `widgets` | 12 |
 
 ## Dependencias entre módulos
@@ -34,7 +34,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `widgets` -> `theme`: 12
 - `tabs` -> `widgets`: 7
 - `tabs` -> `models`: 6
-- `screens` -> `utils`: 4
+- `screens` -> `utils`: 5
 - `screens` -> `tabs`: 3
 - `services` -> `widgets`: 3
 - `tabs` -> `theme`: 3

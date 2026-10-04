@@ -10,6 +10,7 @@ import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'utils/shopping_celebration.dart';
 import 'utils/shopping_display.dart';
 import 'widgets/animations/confetti.dart';
 import 'widgets/food_category_icon.dart';
@@ -53,11 +54,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   // Guarda para disparar la celebración (Miau + confeti) SOLO en la transición
   // a 0 pendientes (de >0 a 0), no en cada rebuild ni al cambiar de tab en el
-  // IndexedStack. Recordamos el conteo anterior de pendientes y, cuando pasa de
-  // >0 a 0 teniendo comprados, activamos _celebrar una vez; se resetea cuando
-  // vuelve a haber pendientes.
-  int? _prevPendientes;
-  bool _celebrar = false;
+  // IndexedStack. La detección de la transición es lógica PURA
+  // (ShoppingCelebrationGate) y ocurre al COMPLETAR el fetch, NO dentro de
+  // build(): así un rebuild que no cambia el conteo (p. ej. borrar un comprado
+  // estando ya en 0 pendientes) no reproduce el confeti. El flag se CONSUME al
+  // construir el sliver para no repetir el rebote.
+  final ShoppingCelebrationGate _celebrationGate = ShoppingCelebrationGate();
 
   @override
   void initState() {
@@ -83,9 +85,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       _prices = {};
     }
 
-    return (res as List)
+    final items = (res as List)
         .map((m) => ShoppingListItem.fromMap(m as Map<String, dynamic>))
         .toList();
+
+    // Detección de la transición a 0 pendientes FUERA de build(): al resolver
+    // el fetch registramos los conteos en el gate puro. Si representa la
+    // transición de >0 a 0 con comprados, queda una celebración pendiente que
+    // build() consumirá UNA sola vez (sin replay en rebuilds posteriores).
+    final nPend = items.where((i) => !i.checked).length;
+    final hayComprados = items.any((i) => i.checked);
+    _celebrationGate.registerFetch(
+      currentPending: nPend,
+      hasPurchased: hayComprados,
+    );
+
+    return items;
   }
 
   void _reload() {
@@ -817,23 +832,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           // Miau celebrando (rebote + confeti al vaciar).
           final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
 
-          // Guarda "solo en la transición a 0": si antes había pendientes
-          // (>0) y ahora no, y hay comprados, activamos la celebración una
-          // vez. Si vuelve a haber pendientes, la rearmamos. Se calcula aquí
-          // (dentro de build, con el conteo real) pero sin re-disparar en
-          // rebuilds que no cambian el conteo.
-          final nPend = pendientes.length;
-          if (_prevPendientes != null && _prevPendientes! > 0 && nPend == 0) {
-            if (compraTerminada) _celebrar = true;
-          }
-          if (nPend > 0) _celebrar = false;
-          _prevPendientes = nPend;
+          // La detección de la transición a 0 ya se hizo al resolver el fetch
+          // (gate puro). Aquí solo CONSUMIMOS la celebración pendiente: devuelve
+          // true una sola vez tras la transición y se apaga, de modo que un
+          // rebuild posterior (p. ej. borrar un comprado estando en 0
+          // pendientes) ya NO reproduce el rebote ni el confeti.
+          final celebrar = _celebrationGate.consume();
 
           final slivers = <Widget>[
             if (compraTerminada)
-              SliverToBoxAdapter(
-                child: _CompraCelebracion(celebrar: _celebrar),
-              ),
+              SliverToBoxAdapter(child: _CompraCelebracion(celebrar: celebrar)),
             if (pendientes.isNotEmpty)
               SliverToBoxAdapter(child: _costEstimateCard(pendientes)),
             ..._buildPendientesSlivers(pendientes),

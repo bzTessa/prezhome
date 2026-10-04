@@ -65,9 +65,11 @@ class InventoryItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Zona superior: imagen cuadrada + indicador de "más acciones".
-          AspectRatio(
-            aspectRatio: 1,
+          // Zona superior: imagen + indicador de "más acciones". Va en Expanded
+          // (no en AspectRatio fijo) para que, con fuente del sistema grande, la
+          // imagen CEDA altura al bloque de texto en vez de desbordar la celda;
+          // con fuente normal ocupa casi todo el alto disponible (≈ cuadrada).
+          Expanded(
             child: Stack(
               fit: StackFit.expand,
               children: [
