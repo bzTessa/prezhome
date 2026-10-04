@@ -6,6 +6,7 @@ import 'main_shell.dart';
 import 'login_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'profile_wizard_screen.dart';
+import 'services/offline_provider.dart';
 
 /// Resultado de evaluar el estado del usuario para decidir a donde llevarlo:
 /// si pertenece a un hogar y si su perfil nutricional esta completo.
@@ -64,6 +65,14 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
     final hasHome = homeId is String && homeId.isNotEmpty;
     final profileComplete =
         profile != null && NutritionProfile.fromMap(profile).isComplete;
+
+    // OFFLINE-FIRST (Paso 7): namespaceamos la caché local por hogar. Si el
+    // hogar resuelto difiere del cacheado, switchHome separa (borra) la caché y
+    // la cola del hogar anterior para no mezclar datos entre hogares (ver
+    // steering de seguridad). Es idempotente si el hogar no cambió.
+    if (hasHome) {
+      await OfflineProvider.instance.switchHome(homeId);
+    }
 
     return _SessionState(hasHome: hasHome, profileComplete: profileComplete);
   }

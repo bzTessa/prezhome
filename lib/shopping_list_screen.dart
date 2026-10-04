@@ -6,10 +6,13 @@ import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
 import 'services/food_photo_service.dart';
+import 'services/offline_provider.dart';
+import 'services/offline_repository.dart';
 import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'utils/offline_actions.dart';
 import 'utils/realtime_sync.dart';
 import 'utils/shopping_celebration.dart';
 import 'utils/shopping_display.dart';
@@ -17,6 +20,7 @@ import 'widgets/animations/confetti.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
+import 'widgets/pending_sync_indicator.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
 ///
@@ -36,8 +40,24 @@ class ShoppingListScreen extends StatefulWidget {
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   final ImagePicker _picker = ImagePicker();
+
+  // Repositorios offline-first COMPARTIDOS (singletons): esta pantalla y su
+  // gemela embebida/ruta comparten la misma caché y la misma cola en memoria.
+  // La compra escribe en el repo de shopping_list_items; _addToPantry al marcar
+  // comprado encola una op en el repo de inventory_items.
+  final OfflineRepository _repo = OfflineProvider.instance.shopping;
+  final OfflineRepository _inventoryRepo = OfflineProvider.instance.inventory;
+
   late Future<List<ShoppingListItem>> _itemsFuture;
   bool _generating = false;
+
+  // Nº de cambios pendientes de sincronizar (cola no vacía) para el indicador
+  // discreto. Se recalcula tras cada carga/escritura.
+  int _pendingCount = 0;
+
+  // Contador monótono para desempatar de forma estable el orden de las ops
+  // encoladas (y para generar ids temporales de inserts offline).
+  int _opSeq = 0;
 
   // Panel "YA EN EL CARRO" colapsable: arranca COLAPSADO porque lo ya comprado
   // deja de ser urgente (NN/g: lo que no apremia no debe ocupar scroll). La
@@ -77,8 +97,92 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   @override
   void initState() {
     super.initState();
-    _itemsFuture = _fetch();
+    // OFFLINE-FIRST: pintamos AL INSTANTE desde la caché local (sin esperar a
+    // la red, aunque no haya cobertura) y, en paralelo, lanzamos el refresco
+    // remoto que, al llegar, reemplaza la lista por la ya sincronizada.
+    _itemsFuture = _loadFromCache();
+    _refreshFromRemote();
     _subscribeRealtime();
+  }
+
+  /// Siguiente número de secuencia para encolar/identificar ops de forma
+  /// estable (monótono mientras viva la pantalla).
+  int _nextSeq() => _opSeq++;
+
+  /// Convierte las filas crudas (de la caché o del remoto) en modelos,
+  /// aplicando el MISMO orden que usaba la consulta a Supabase: primero los
+  /// pendientes y, dentro de cada grupo, por fecha de creación ascendente.
+  List<ShoppingListItem> _rowsToItems(List<Map<String, dynamic>> rows) {
+    final items = rows.map(ShoppingListItem.fromMap).toList();
+    items.sort((a, b) {
+      // checked=false antes que checked=true.
+      final byChecked = (a.checked ? 1 : 0).compareTo(b.checked ? 1 : 0);
+      if (byChecked != 0) return byChecked;
+      final da = a.createdAt;
+      final db = b.createdAt;
+      if (da == null && db == null) return 0;
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return da.compareTo(db);
+    });
+    return items;
+  }
+
+  /// Carga INSTANTÁNEA desde la caché local (último estado conocido + ops
+  /// pendientes aplicadas de forma optimista). No toca la red.
+  Future<List<ShoppingListItem>> _loadFromCache() async {
+    final rows = await _repo.readCached();
+    _pendingCount = _repo.pendingCount + _inventoryRepo.pendingCount;
+    final items = _rowsToItems(rows);
+    _registerCelebration(items);
+    // Los precios conocidos del hogar son best-effort y no bloquean la carga
+    // instantánea: se intentan al refrescar desde el remoto.
+    return items;
+  }
+
+  /// Registra en el gate puro la transición a 0 pendientes (celebración) FUERA
+  /// de build(), igual que hacía el fetch original.
+  void _registerCelebration(List<ShoppingListItem> items) {
+    final nPend = items.where((i) => !i.checked).length;
+    final hayComprados = items.any((i) => i.checked);
+    _celebrationGate.registerFetch(
+      currentPending: nPend,
+      hasPurchased: hayComprados,
+    );
+  }
+
+  /// Refresca desde Supabase (fetch + merge con pendientes + guardar caché) y,
+  /// de paso, drena la cola si hay red. Si falla (sin cobertura) cae de vuelta
+  /// a la caché sin romper la UI. Nunca usamos arrow con Future en setState:
+  /// calculamos los datos antes y luego setState con cuerpo de bloque.
+  Future<void> _refreshFromRemote() async {
+    try {
+      final rows = await _repo.refreshFromRemote();
+      // Aprovechamos que hay red para intentar drenar también el inventario
+      // (p. ej. los artículos que pasaron de la compra a la despensa offline).
+      await _inventoryRepo.tryDrain();
+      final items = _rowsToItems(rows);
+      await _loadPrices();
+      if (!mounted) return;
+      _registerCelebration(items);
+      final pending = _repo.pendingCount + _inventoryRepo.pendingCount;
+      setState(() {
+        _itemsFuture = Future.value(items);
+        _pendingCount = pending;
+      });
+    } catch (_) {
+      // Sin conexión: nos quedamos con lo que ya pintamos desde la caché.
+    }
+  }
+
+  /// Carga best-effort de los precios conocidos del hogar para estimar coste.
+  Future<void> _loadPrices() async {
+    try {
+      final homeId = await _homeId();
+      _prices = await PriceMemory(_client).loadAll(homeId);
+    } catch (_) {
+      _prices = {};
+    }
   }
 
   /// Abre el canal Realtime filtrado por el hogar del usuario. Resuelve el
@@ -121,7 +225,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             callback: (_) {
               if (!mounted) return;
-              _reload();
+              // Un eco remoto refresca vía refreshFromRemote (fetch + merge con
+              // pendientes), de modo que NO borre un cambio local todavía sin
+              // sincronizar.
+              _refreshFromRemote();
             },
           )
           .subscribe((status, [error]) {
@@ -144,6 +251,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     switch (status) {
       case RealtimeSubscribeStatus.subscribed:
         state = RealtimeChannelState.subscribed;
+        // Al (re)conectar el canal, la red responde: intentamos vaciar la cola
+        // de cambios pendientes en segundo plano.
+        _drainOnReconnect();
         break;
       case RealtimeSubscribeStatus.channelError:
         state = RealtimeChannelState.error;
@@ -158,6 +268,24 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (_noticeGate.registerStatus(state)) {
       _showRealtimeDownNotice();
     }
+  }
+
+  /// Al (re)conectar el canal Realtime, intenta drenar las colas de compra e
+  /// inventario (force para saltar la ventana de espera del gate) y refresca el
+  /// contador de pendientes del indicador. No usamos arrow con Future en
+  /// setState: calculamos antes y aplicamos en bloque.
+  Future<void> _drainOnReconnect() async {
+    try {
+      await _repo.tryDrain(force: true);
+      await _inventoryRepo.tryDrain(force: true);
+    } catch (_) {
+      // Si el drenado falla seguimos offline: la cola se conserva intacta.
+    }
+    if (!mounted) return;
+    final pending = _repo.pendingCount + _inventoryRepo.pendingCount;
+    setState(() {
+      _pendingCount = pending;
+    });
   }
 
   /// Marca el fallo en el gate y muestra el aviso una sola vez (usado cuando ni
@@ -195,48 +323,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     super.dispose();
   }
 
-  Future<List<ShoppingListItem>> _fetch() async {
-    // RLS filtra por el hogar del usuario. Primero los pendientes y, dentro de
-    // cada grupo, por orden de creacion.
-    final res = await _client
-        .from('shopping_list_items')
-        .select()
-        .order('checked', ascending: true)
-        .order('created_at', ascending: true);
-
-    // Cargamos los precios conocidos del hogar (best-effort) para estimar el
-    // coste de la compra. No bloquea la lista si falla.
-    try {
-      final homeId = await _homeId();
-      _prices = await PriceMemory(_client).loadAll(homeId);
-    } catch (_) {
-      _prices = {};
-    }
-
-    final items = (res as List)
-        .map((m) => ShoppingListItem.fromMap(m as Map<String, dynamic>))
-        .toList();
-
-    // Detección de la transición a 0 pendientes FUERA de build(): al resolver
-    // el fetch registramos los conteos en el gate puro. Si representa la
-    // transición de >0 a 0 con comprados, queda una celebración pendiente que
-    // build() consumirá UNA sola vez (sin replay en rebuilds posteriores).
-    final nPend = items.where((i) => !i.checked).length;
-    final hayComprados = items.any((i) => i.checked);
-    _celebrationGate.registerFetch(
-      currentPending: nPend,
-      hasPurchased: hayComprados,
-    );
-
-    return items;
-  }
-
-  void _reload() {
-    // Nunca usar arrow con un Future: calculamos antes y luego setState.
-    final f = _fetch();
+  /// Recarga tras una escritura optimista: repinta AL INSTANTE desde la caché
+  /// (que ya incluye el cambio) y, en segundo plano, refresca desde el remoto
+  /// para converger con el servidor y drenar la cola. Nunca usamos arrow con un
+  /// Future en setState: calculamos los datos antes y aplicamos en bloque.
+  Future<void> _reload() async {
+    final rows = await _repo.readCached();
+    final items = _rowsToItems(rows);
+    final pending = _repo.pendingCount + _inventoryRepo.pendingCount;
+    if (!mounted) return;
+    _registerCelebration(items);
     setState(() {
-      _itemsFuture = f;
+      _itemsFuture = Future.value(items);
+      _pendingCount = pending;
     });
+    // Convergencia con el servidor y drenado en segundo plano.
+    _refreshFromRemote();
   }
 
   /// Obtiene el home_id del usuario autenticado leyendo su perfil.
@@ -256,16 +358,24 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Future<void> _toggleChecked(ShoppingListItem item, bool value) async {
     if (item.id == null) return;
     try {
-      await _client
-          .from('shopping_list_items')
-          .update({'checked': value})
-          .eq('id', item.id!);
+      // Escritura OPTIMISTA vía el repositorio: parcheamos solo 'checked'. La
+      // caché refleja el cambio al instante; el envío a Supabase se drena en
+      // segundo plano. Encolamos antes de _addToPantry para conservar el orden.
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'checked': value},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
       // Al marcar como comprado, el producto pasa SOLO a la despensa (dedup por
       // nombre). Al desmarcar no lo quitamos del inventario (ya está en casa).
       if (value) {
         await _addToPantry(item);
       }
-      _reload();
+      await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -287,16 +397,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       final nKey = CategoryIcons.normalize(item.name);
       final isHome = item.itemType == 'hogar';
 
-      final existing = await _client
-          .from('inventory_items')
-          .select('id, name, quantity, item_type')
-          .eq('home_id', homeId);
+      // Dedup contra la DESPENSA CACHEADA (que ya incluye las ops pendientes):
+      // así funciona también sin conexión y no se pierde el merge por nombre.
+      final existing = await _inventoryRepo.readCached();
 
       // Dedup por nombre DENTRO del mismo tipo (no fusionar comida con hogar).
       String? foundId;
       double foundQty = 0;
-      for (final row in (existing as List)) {
-        final m = row as Map<String, dynamic>;
+      for (final m in existing) {
         final rowIsHome = (m['item_type'] ?? 'comida').toString() == 'hogar';
         if (rowIsHome != isHome) continue;
         if (CategoryIcons.normalize((m['name'] ?? '').toString()) == nKey) {
@@ -308,10 +416,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
       final addQty = item.quantity ?? 1;
       if (foundId != null) {
-        await _client
-            .from('inventory_items')
-            .update({'quantity': foundQty + addQty})
-            .eq('id', foundId);
+        // Ya existe en la despensa: sumamos cantidad vía UPDATE optimista.
+        await _inventoryRepo.applyLocalWrite(
+          buildUpdateOp(
+            table: kInventoryTable,
+            id: foundId,
+            changes: {'quantity': foundQty + addQty},
+            nowMillis: DateTime.now().millisecondsSinceEpoch,
+            seq: _nextSeq(),
+          ),
+        );
       } else {
         // Ubicación: hogar -> 'Hogar'; comida -> la elegida (item.category) o,
         // si no hay, la deducida por el alimento. Caducidad solo para comida.
@@ -324,8 +438,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         final estimated = isHome
             ? null
             : ShelfLife.estimateDate(item.name, location);
+        // Insert OPTIMISTA con id temporal local: la fila se ve en la despensa
+        // al instante y se enviará a Supabase al drenar la cola.
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final localId = newLocalId(nowMillis: now, seq: _nextSeq());
         final inv = InventoryItem(
-          id: '',
+          id: localId,
           homeId: homeId,
           name: item.name,
           category: location,
@@ -336,7 +454,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           expirationDate: estimated,
           imageUrl: item.imageUrl,
         );
-        await _client.from('inventory_items').insert(inv.toMap());
+        await _inventoryRepo.applyLocalWrite(
+          buildInsertOp(
+            table: kInventoryTable,
+            id: localId,
+            payload: inv.toCacheMap(),
+            nowMillis: now,
+            seq: _nextSeq(),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('ShoppingList._addToPantry error: $e');
@@ -346,8 +472,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Future<void> _deleteItem(ShoppingListItem item) async {
     if (item.id == null) return;
     try {
-      await _client.from('shopping_list_items').delete().eq('id', item.id!);
-      _reload();
+      // Delete OPTIMISTA: desaparece de la caché al instante y se envía al
+      // drenar. Si el id era local (insert aún no sincronizado), la cola
+      // colapsa ambas ops y no se manda nada al servidor.
+      await _repo.applyLocalWrite(
+        buildDeleteOp(
+          table: kShoppingTable,
+          id: item.id!,
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -451,16 +587,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
           );
       final url = _client.storage.from('recipe-images').getPublicUrl(path);
-      await _client
-          .from('shopping_list_items')
-          .update({'image_url': url})
-          .eq('id', item.id!);
+      // La foto ya está subida (requiere red); el cambio de image_url pasa por
+      // el repositorio para que la caché lo refleje al instante.
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'image_url': url},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
       // Memorizamos la foto para ese alimento en la caché del hogar, de modo
       // que la próxima vez (y en la despensa) se reutilice.
       await FoodPhotoService(
         _client,
       ).rememberPhoto(homeId: homeId, name: item.name, url: url);
-      _reload();
+      await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -491,11 +634,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         );
         return;
       }
-      await _client
-          .from('shopping_list_items')
-          .update({'image_url': url})
-          .eq('id', item.id!);
-      _reload();
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'image_url': url},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -676,17 +824,33 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       } catch (_) {
         imageUrl = null;
       }
+      // Alta OPTIMISTA con id temporal local y created_at = ahora: la fila
+      // aparece en la lista al instante (ordenada por fecha de creación) y se
+      // enviará a Supabase al drenar la cola.
+      final now = DateTime.now();
+      final nowMillis = now.millisecondsSinceEpoch;
+      final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
       final item = ShoppingListItem(
+        id: localId,
         homeId: homeId,
         name: name,
         quantity: qty,
         unit: unit.isEmpty ? null : unit,
         source: 'manual',
+        createdAt: now,
         itemType: itemType,
         imageUrl: imageUrl,
       );
-      await _client.from('shopping_list_items').insert(item.toInsertMap());
-      _reload();
+      await _repo.applyLocalWrite(
+        buildInsertOp(
+          table: kShoppingTable,
+          id: localId,
+          payload: item.toCacheMap(),
+          nowMillis: nowMillis,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -870,12 +1034,38 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           .eq('checked', false);
 
       if (faltan.isNotEmpty) {
-        await _client
-            .from('shopping_list_items')
-            .insert(faltan.map((i) => i.toInsertMap()).toList());
+        // Altas OPTIMISTAS por el repositorio: cada item 'auto' entra con un id
+        // temporal local y created_at = ahora. Aparecen al instante y se drenan
+        // a Supabase en segundo plano (y el refresco posterior converge con el
+        // borrado de los 'auto' previos ya hecho en el servidor).
+        for (final i in faltan) {
+          final nowMillis = DateTime.now().millisecondsSinceEpoch;
+          final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
+          final withId = ShoppingListItem(
+            id: localId,
+            homeId: i.homeId,
+            name: i.name,
+            quantity: i.quantity,
+            unit: i.unit,
+            source: i.source,
+            createdAt: DateTime.fromMillisecondsSinceEpoch(nowMillis),
+            itemType: i.itemType,
+            category: i.category,
+            imageUrl: i.imageUrl,
+          );
+          await _repo.applyLocalWrite(
+            buildInsertOp(
+              table: kShoppingTable,
+              id: localId,
+              payload: withId.toCacheMap(),
+              nowMillis: nowMillis,
+              seq: _nextSeq(),
+            ),
+          );
+        }
       }
 
-      _reload();
+      await _reload();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -968,6 +1158,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           final celebrar = _celebrationGate.consume();
 
           final slivers = <Widget>[
+            if (shouldShowPendingIndicator(_pendingCount))
+              SliverToBoxAdapter(
+                child: PendingSyncIndicator(pendingCount: _pendingCount),
+              ),
             if (compraTerminada)
               SliverToBoxAdapter(child: _CompraCelebracion(celebrar: celebrar)),
             if (pendientes.isNotEmpty)

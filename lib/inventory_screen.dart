@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
+import 'services/offline_provider.dart';
+import 'services/offline_repository.dart';
 import 'theme/app_theme.dart';
+import 'utils/offline_actions.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/inventory_item_card.dart';
 import 'widgets/miau_character.dart';
+import 'widgets/pending_sync_indicator.dart';
 
 /// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
 /// Despensa, Bebidas, Especias o Hogar y limpieza). Agrupa los items y lleva su
@@ -78,8 +81,18 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
-  final SupabaseClient supabase = Supabase.instance.client;
+  // Repositorio offline-first COMPARTIDO del inventario (singleton): la caché y
+  // la cola se comparten con la instancia gemela (embebida/ruta) y con el
+  // _addToPantry de la lista de la compra.
+  final OfflineRepository _repo = OfflineProvider.instance.inventory;
+
   late Future<List<InventoryItem>> _itemsFuture;
+
+  // Nº de cambios pendientes de sincronizar, para el indicador discreto.
+  int _pendingCount = 0;
+
+  // Contador monótono para encolar/identificar ops de forma estable.
+  int _opSeq = 0;
 
   // Filtro por sección: 'todo' | 'Nevera' | 'Congelador' | 'Despensa' |
   // 'Bebidas' | 'Especias' | 'Hogar'. Se aplica en cliente sobre la lista ya
@@ -93,32 +106,94 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void initState() {
     super.initState();
-    _itemsFuture = _fetchItems();
+    // OFFLINE-FIRST: pintamos AL INSTANTE desde la caché local y, en paralelo,
+    // refrescamos desde Supabase (que, al llegar, reemplaza la lista).
+    _itemsFuture = _loadFromCache();
+    _refreshFromRemote();
   }
 
-  Future<List<InventoryItem>> _fetchItems() async {
-    // RLS filtra automáticamente por el home_id del usuario autenticado.
-    final response = await supabase
-        .from('inventory_items')
-        .select()
-        .order('created_at', ascending: false);
+  /// Siguiente número de secuencia para encolar/identificar ops de forma
+  /// estable (monótono mientras viva la pantalla).
+  int _nextSeq() => _opSeq++;
 
-    return (response as List)
-        .map((item) => InventoryItem.fromMap(item))
-        .toList();
-  }
-
-  void _reload() {
-    final future = _fetchItems();
-    setState(() {
-      _itemsFuture = future;
+  /// Convierte filas crudas (caché o remoto) en modelos, con el MISMO orden que
+  /// la consulta original: por fecha de creación descendente (lo más nuevo
+  /// arriba). created_at no está en el modelo, así que ordenamos sobre la fila
+  /// cruda; las filas sin fecha quedan al final de forma estable.
+  List<InventoryItem> _rowsToItems(List<Map<String, dynamic>> rows) {
+    final sorted = List<Map<String, dynamic>>.from(rows);
+    sorted.sort((a, b) {
+      final da = _rowCreatedAt(a);
+      final db = _rowCreatedAt(b);
+      if (da == null && db == null) return 0;
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return db.compareTo(da); // descendente
     });
+    return sorted.map(InventoryItem.fromMap).toList();
+  }
+
+  /// Lee created_at de una fila cruda (ISO-8601 o DateTime). Null si falta.
+  DateTime? _rowCreatedAt(Map<String, dynamic> row) {
+    final raw = row['created_at'];
+    if (raw is DateTime) return raw;
+    if (raw is String && raw.isNotEmpty) return DateTime.tryParse(raw);
+    return null;
+  }
+
+  /// Carga INSTANTÁNEA desde la caché local (último estado + ops pendientes).
+  Future<List<InventoryItem>> _loadFromCache() async {
+    final rows = await _repo.readCached();
+    _pendingCount = _repo.pendingCount;
+    return _rowsToItems(rows);
+  }
+
+  /// Refresca desde Supabase (fetch + merge con pendientes + guardar caché) e
+  /// intenta drenar la cola si hay red. Si falla (sin cobertura) nos quedamos
+  /// con la caché. setState con cuerpo de bloque (nunca arrow con Future).
+  Future<void> _refreshFromRemote() async {
+    try {
+      final rows = await _repo.refreshFromRemote();
+      final items = _rowsToItems(rows);
+      if (!mounted) return;
+      final pending = _repo.pendingCount;
+      setState(() {
+        _itemsFuture = Future.value(items);
+        _pendingCount = pending;
+      });
+    } catch (_) {
+      // Sin conexión: conservamos lo pintado desde la caché.
+    }
+  }
+
+  /// Recarga tras una escritura optimista: repinta al instante desde la caché y
+  /// refresca en segundo plano. setState con cuerpo de bloque.
+  Future<void> _reload() async {
+    final rows = await _repo.readCached();
+    final items = _rowsToItems(rows);
+    final pending = _repo.pendingCount;
+    if (!mounted) return;
+    setState(() {
+      _itemsFuture = Future.value(items);
+      _pendingCount = pending;
+    });
+    _refreshFromRemote();
   }
 
   Future<void> _deleteItem(InventoryItem item) async {
     try {
-      await supabase.from('inventory_items').delete().eq('id', item.id);
-      _reload();
+      // Delete OPTIMISTA por el repositorio: desaparece al instante y se envía
+      // al drenar. Si el id era local (insert sin sincronizar), la cola colapsa
+      // ambas ops y no manda nada al servidor.
+      await _repo.applyLocalWrite(
+        buildDeleteOp(
+          table: kInventoryTable,
+          id: item.id,
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -135,11 +210,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
   /// usuaria pueda gestionar sus basicos de un vistazo desde el inventario.
   Future<void> _toggleStaple(InventoryItem item, bool value) async {
     try {
-      await supabase
-          .from('inventory_items')
-          .update({'is_staple': value})
-          .eq('id', item.id);
-      _reload();
+      // UPDATE OPTIMISTA de is_staple vía el repositorio.
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: {'is_staple': value},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -162,10 +243,60 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Future<void> _openAddItem() async {
-    final added = await Navigator.of(context).push<bool>(
+    // La pantalla de alta devuelve el item construido (o null si se cancela);
+    // aquí lo aplicamos de forma optimista + encolamos.
+    final result = await Navigator.of(context).push<InventoryItem>(
       MaterialPageRoute(builder: (_) => const AddInventoryItemScreen()),
     );
-    if (added == true) _reload();
+    if (result != null) await _applyUpsert(result, editing: false);
+  }
+
+  /// Aplica un alta/edición de inventario de forma OPTIMISTA: para un alta
+  /// nueva genera un id temporal local e INSERTA; para una edición, UPDATE
+  /// sobre el id real. En ambos casos la UI refleja el cambio al instante y la
+  /// cola lo envía a Supabase en segundo plano.
+  Future<void> _applyUpsert(InventoryItem item, {required bool editing}) async {
+    final nowMillis = DateTime.now().millisecondsSinceEpoch;
+    if (editing && item.id.isNotEmpty) {
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: item.toCacheMap(),
+          nowMillis: nowMillis,
+          seq: _nextSeq(),
+        ),
+      );
+    } else {
+      final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
+      final withId = InventoryItem(
+        id: localId,
+        homeId: item.homeId,
+        name: item.name,
+        category: item.category,
+        itemType: item.itemType,
+        quantity: item.quantity,
+        unit: item.unit,
+        expirationDate: item.expirationDate,
+        isStaple: item.isStaple,
+        kind: item.kind,
+        recipeId: item.recipeId,
+        servings: item.servings,
+        frozenOn: item.frozenOn,
+        bestBefore: item.bestBefore,
+        imageUrl: item.imageUrl,
+      );
+      await _repo.applyLocalWrite(
+        buildInsertOp(
+          table: kInventoryTable,
+          id: localId,
+          payload: withId.toCacheMap(),
+          nowMillis: nowMillis,
+          seq: _nextSeq(),
+        ),
+      );
+    }
+    await _reload();
   }
 
   @override
@@ -240,6 +371,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
           return Column(
             children: [
               _sectionFilterBar(),
+              // Indicador discreto de "cambios por sincronizar": aparece solo
+              // con cola no vacía y desaparece al drenar.
+              if (shouldShowPendingIndicator(_pendingCount))
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                  child: PendingSyncIndicator(pendingCount: _pendingCount),
+                ),
               // El dashboard recibe SIEMPRE la lista COMPLETA (sin filtrar): es
               // un resumen GLOBAL de toda la despensa que no debe encogerse al
               // tocar un chip. Las secciones de abajo sí usan la lista filtrada.
@@ -775,10 +913,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
     if (!mounted || action == null) return;
     if (action == 'edit') {
-      final changed = await Navigator.of(context).push<bool>(
+      final changed = await Navigator.of(context).push<InventoryItem>(
         MaterialPageRoute(builder: (_) => AddInventoryItemScreen(item: item)),
       );
-      if (changed == true) _reload();
+      if (changed != null) await _applyUpsert(changed, editing: true);
     } else if (action == 'staple') {
       await _toggleStaple(item, !item.isStaple);
     } else if (action == 'delete') {
