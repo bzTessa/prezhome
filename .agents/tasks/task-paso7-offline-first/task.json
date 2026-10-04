@@ -9,6 +9,11 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "CI reproducido con el SDK ~/flutter_sdk (Flutter 3.47.6). dart format --output=none --set-exit-if-changed . -> 0 changed. flutter analyze -> No issues found!. flutter test -> 335 verdes (baseline main 288 + 47 nuevos: 22 FEAT-001, 14 FEAT-002, 11 FEAT-003). dart run tool/architecture/dependency_map.dart --check -> al día. No hay Dockerfile (proyecto Flutter), docker_build no aplica. Calidad de tests revisada: test/offline_repository_test.dart y test/sync_queue_test.dart ejercitan la lógica real (escritura optimista offline, orden FIFO del drenado, colapso/dedup por id, parada ante fallo conservando ops, merge pendientes sobre remoto con last-write-wins, aislamiento por hogar) con fakes en memoria; fallarían si se revirtiera la lógica. Autogenerados de pub get (analysis_options.yaml, pubspec.lock, registrants linux/macos/windows) descartados; árbol limpio."
+    "summary": "CI reproducido con el SDK ~/flutter_sdk (Flutter 3.47.6). dart format --output=none --set-exit-if-changed . -> 0 changed. flutter analyze -> No issues found!. flutter test -> 338 verdes (baseline main 288 + 50 nuevos). dart run tool/architecture/dependency_map.dart --check -> al día. No hay Dockerfile (proyecto Flutter), docker_build no aplica. Calidad de tests revisada: test/offline_repository_test.dart, test/sync_queue_test.dart y test/offline_merge_test.dart ejercitan la lógica real (escritura optimista offline, orden FIFO del drenado, colapso/dedup por id, parada ante fallo conservando ops, merge pendientes sobre remoto con last-write-wins, aislamiento por hogar, durabilidad de dos colas sobre el mismo store, ventana post-drenado) con fakes en memoria; fallarían si se revirtiera la lógica. Autogenerados de pub get descartados; árbol limpio."
+  },
+  "review": {
+    "verdict": "APPROVED",
+    "iterations": 2,
+    "detail": "v1 (2026-10-04-211626) NEEDS_CHANGES: durabilidad de cola compartida, ventana post-drenado, duplicado por dedup, más 3 menores. v2 (2026-10-04-212532) APPROVED tras corregir clave de cola por tabla (queue:<table>:<homeId>) y re-fetch post-drenado en refreshFromRemote, y documentar/instrumentar los menores. Único hallazgo residual no bloqueante: falta un test de UI directo de _addToPantry tras drenar (la garantía es indirecta vía la convergencia de la caché, ya testeada)."
   }
 }
