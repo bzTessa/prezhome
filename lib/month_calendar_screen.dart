@@ -12,12 +12,15 @@ import 'widgets/miau_character.dart';
 /// semanal y el resumen de Inicio) y las tareas, incluidas las APARICIONES
 /// FUTURAS (proyectadas en cliente con [TaskOccurrences]) de las recurrentes.
 ///
-/// No existia ninguna vista de mes en la app: esta es nueva y se engancha en
-/// Inicio desde una tarjeta 'Calendario del mes'. Al tocar un dia se muestran
-/// sus comidas y tareas en un panel inferior. Estetica Cozy (celdas
-/// redondeadas, acento madera, 'Hoy' resaltado).
+/// Es el UNICO calendario mensual de la app y vive en Comidas > Plan (vista
+/// 'Mes'), embebido dentro de esa pestana. Al tocar un dia se muestran sus
+/// comidas y tareas en un panel inferior. Estetica Cozy (celdas redondeadas,
+/// acento madera, 'Hoy' resaltado).
 class MonthCalendarScreen extends StatefulWidget {
-  const MonthCalendarScreen({super.key});
+  /// Cuando va dentro de una pestana con su propio AppBar, lo ocultamos (mismo
+  /// patron que RecipesScreen/FoodDiaryScreen/InventoryScreen/ShoppingListScreen).
+  final bool embedded;
+  const MonthCalendarScreen({super.key, this.embedded = false});
 
   @override
   State<MonthCalendarScreen> createState() => _MonthCalendarScreenState();
@@ -165,7 +168,9 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Calendario del mes')),
+      appBar: widget.embedded
+          ? null
+          : AppBar(title: const Text('Calendario del mes')),
       body: FutureBuilder<_MonthData>(
         future: _future,
         builder: (context, snapshot) {

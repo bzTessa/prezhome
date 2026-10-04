@@ -6,7 +6,6 @@ import '../add_recipe_chooser.dart';
 import '../food_diary_screen.dart';
 import '../inventory_screen.dart';
 import '../meal_plan_screen.dart';
-import '../month_calendar_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../scan_ticket_screen.dart';
 import '../shopping_list_screen.dart';
@@ -622,8 +621,6 @@ class HomeTabState extends State<HomeTab> {
         return _tasksCard();
       case DashboardCard.spending:
         return _spendingCard();
-      case DashboardCard.calendar:
-        return _calendarCard();
     }
   }
 
@@ -938,57 +935,6 @@ class HomeTabState extends State<HomeTab> {
                           : FontWeight.normal,
                       color: hasAlerts ? AppColors.ink : Colors.grey[700],
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.black26),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Tarjeta 'Calendario del mes': abre la vista mensual con comidas y tareas
-  /// (incluidas las apariciones futuras de las recurrentes). Al volver,
-  /// refresca el resumen del dashboard.
-  Widget _calendarCard() {
-    const color = Color(0xFFE2DAF0);
-    return InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: () async {
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const MonthCalendarScreen()));
-        _loadDashboard(); // refrescar al volver del calendario
-      },
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: AppTheme.cardDecoration(),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(Icons.calendar_month, color: AppColors.ink),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Calendario del mes',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Comidas y tareas de todo el mes, día a día.',
-                    style: TextStyle(color: Colors.grey[700], fontSize: 14),
                   ),
                 ],
               ),
