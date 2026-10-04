@@ -17,7 +17,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
   /// Sugerencias de caducidad ya calculadas (no vacías cuando se muestra).
   final List<ExpiringSuggestion> suggestions;
 
-  /// Acción del botón: lleva a la pestaña donde vive el plan / Modo cocina.
+  /// Acción del botón: lleva a la pestaña Comidas, donde vive el plan.
   final VoidCallback onAction;
 
   /// Descarta el banner (oculta hasta la próxima recarga del shell).
@@ -99,8 +99,11 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                       ),
+                      // El botón navega a la pestaña Comidas (ahí vive el plan
+                      // y el acceso al Modo cocina), así que la etiqueta es
+                      // honesta con el destino real.
                       child: const Text(
-                        'Ir al Modo cocina',
+                        'Ir a Comidas',
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),

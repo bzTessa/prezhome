@@ -256,9 +256,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Future<void> _markDepleted(InventoryItem item) async {
     // Guardamos la cantidad previa para poder restaurarla con "Deshacer".
     final previousQty = item.quantity;
+
+    // (1) UPDATE OPTIMISTA de la cantidad a 0 vía el repositorio del
+    // inventario (mismo patrón exacto que _toggleStaple). Si ESTE paso falla,
+    // no se ha escrito nada: el mensaje refleja justo eso.
     try {
-      // (1) UPDATE OPTIMISTA de la cantidad a 0 vía el repositorio del
-      // inventario (mismo patrón exacto que _toggleStaple).
       await _repo.applyLocalWrite(
         buildUpdateOp(
           table: kInventoryTable,
@@ -269,26 +271,42 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       );
       await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo marcar ${item.name} como agotado: $e'),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+      return;
+    }
 
-      // (2) Reposición inteligente SOLO para básicos agotados. La regla la
-      // decide el servicio puro (isDepletedStaple) para que UI y motor usen el
-      // mismo criterio testeado.
-      if (!isDepletedStaple(item.isStaple, 0)) {
-        if (!mounted) return;
-        // No es básico: dejamos la cantidad a 0 sin tocar la compra y avisamos
-        // de forma simple.
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('He marcado ${item.name} como agotado.')),
-        );
-        return;
-      }
+    // (2) Reposición inteligente SOLO para básicos agotados. La regla la
+    // decide el servicio puro (isDepletedStaple) para que UI y motor usen el
+    // mismo criterio testeado.
+    if (!isDepletedStaple(item.isStaple, 0)) {
+      if (!mounted) return;
+      // No es básico: dejamos la cantidad a 0 sin tocar la compra y avisamos
+      // de forma simple.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('He marcado ${item.name} como agotado.')),
+      );
+      return;
+    }
 
+    // La despensa YA se actualizó con éxito; si la reposición falla, el
+    // mensaje debe dejar claro que lo que no pudo completarse fue añadirlo a
+    // la compra (no confundirlo con el agotado, que sí quedó registrado).
+    try {
       await _restockDepletedStaple(item, previousQty: previousQty);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar: $e'),
+          content: Text(
+            '${item.name} quedó agotado, pero no pude añadirlo a la compra: $e',
+          ),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -303,8 +321,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
     InventoryItem item, {
     required double previousQty,
   }) async {
-    // home_id del usuario (replica el helper _homeId() de la lista de la compra).
-    final homeId = await _homeId();
+    // home_id del hogar: lo tomamos del PROPIO item agotado (item.homeId), que
+    // ya viene de la caché offline-first (home_id de su fila), así la
+    // reposición no depende de red. Es correcto porque el item pertenece al
+    // hogar del usuario y la línea de la compra debe ir a ese mismo hogar. Solo
+    // si por algún motivo llegara vacío (dato incompleto) caemos al helper de
+    // red _homeId() como último recurso.
+    final homeId = item.homeId.isNotEmpty ? item.homeId : await _homeId();
 
     // Nombres ya presentes en la compra (caché incluye ops pendientes) para
     // deduplicar y no crear líneas repetidas.
