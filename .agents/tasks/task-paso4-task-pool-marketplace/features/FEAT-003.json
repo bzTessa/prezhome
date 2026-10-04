@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Model + service layer: add effort_points to HomeTask with backward-compatible fromMap/toInsertMap, formalize the common-pool concept (assigned_to == null), add the 'Yo me encargo' flow to TaskScheduler (assign the task to the current user + complete + award points) without breaking the existing complete() used by the Inicio dashboard, and add a pure, testable points-balance helper for the marketplace (sum of task_points minus redemptions). Cover the new pure logic with unit tests. This feature keeps the codebase compiling and all tests green; it is the data/logic foundation for the UI in FEAT-004.",
+  "status": "completed",
+  "steps": [
+    "lib/models/task.dart: add 'final int effortPoints;' to HomeTask with a sensible default in the constructor (default 10, consistent with the migration default). In fromMap read map['effort_points'] with a null-tolerant fallback: 'map['effort_points'] ?? map['points'] ?? 10' so old rows without the column still get a sensible value. In toInsertMap include 'effort_points': effortPoints. Do NOT break any existing field or method (points, recurrence, computeNextDue, rescheduleMap, completeOnceMap, toInsertMap, fromMap, TaskOccurrences usage).",
+    "lib/models/task.dart: add a small, documented convenience getter 'bool get isInPool => assignedTo == null;' (or similarly named) to formalize the common-pool concept as pure logic. Add a brief doc comment stating that a pool task is one with assigned_to == null and not done.",
+    "lib/services/task_scheduler.dart: add a method, e.g. 'Future<void> claimAndComplete(HomeTask task)' (the 'Yo me encargo' flow). It must: get the current user (throw 'No autenticado' if null); set assigned_to = user.id on the task row (update tasks set assigned_to = user.id where id = task.id) so the pool task becomes owned by the claimer; then reuse the SAME points + reschedule/complete logic as complete() (insert task_points then rescheduleMap/completeOnceMap). Factor the shared points+reschedule steps into a private helper so complete() and claimAndComplete() do not duplicate logic and complete() keeps its exact current behavior for the dashboard. Award points using task.points (the existing scoring field) to avoid changing the scoreboard meaning; effort_points is informational for now (note this in a comment).",
+    "lib/services/task_scheduler.dart: add a PURE static helper for the marketplace balance so the UI and tests share it, e.g. 'class PointsBalance { static int forUser({required int earned, required int redeemed}) => earned - redeemed; }' OR a top-level pure function. Keep it UI-free (no Supabase calls) so it is unit-testable. Document that earned = sum(task_points.points) and redeemed = sum(reward_redemptions.cost_points) for that user+home.",
+    "test/: add a new test file (e.g. test/task_pool_test.dart) covering: fromMap defaults effort_points to points when the column is missing; fromMap reads an explicit effort_points value; toInsertMap includes effort_points; isInPool is true when assignedTo is null and false otherwise; PointsBalance.forUser math (earned - redeemed, including the case where redeemed > earned giving a negative/zero clamp if you choose to clamp - test whatever behavior you implement). Follow the style of test/task_schedule_test.dart.",
+    "Keep the number of tests from going DOWN: only add tests. Run format/analyze/test after the change."
+  ],
+  "acceptance_criteria": [
+    "HomeTask has effortPoints (int) with default 10; fromMap falls back to points then 10 when effort_points is absent; toInsertMap serializes effort_points",
+    "HomeTask exposes a pure pool predicate (e.g. isInPool) equal to (assignedTo == null)",
+    "TaskScheduler.complete() behavior is unchanged (still inserts task_points and reschedules/completes) and TaskScheduler has a new claimAndComplete() that additionally assigns the task to the current user",
+    "A pure, Supabase-free points-balance helper exists and is unit tested",
+    "New unit tests exist and all tests pass with a count >= the FEAT-001 baseline (no reduction)",
+    "flutter analyze reports 'No issues found!' and dart format reports 0 changes"
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; dart format --output=none --set-exit-if-changed . && flutter analyze && flutter test",
+    "Confirm the test count is >= baseline (201) and that the new task_pool tests appear in the run"
+  ],
+  "blocked_reason": null,
+  "findings": "Implemented model + service layer. HomeTask: added 'final int effortPoints' (default 10), fromMap fallback map['effort_points'] ?? map['points'] ?? 10, toInsertMap serializes effort_points, and pure getter 'bool get isInPool => assignedTo == null'. TaskScheduler: factored shared points+reschedule logic into private _awardAndReschedule(task, userId); complete() keeps exact observable behavior (dashboard-safe); added claimAndComplete() which first sets assigned_to=user.id then reuses the shared helper (awards task.points; effort_points is informational, noted in comment). Added pure Supabase-free PointsBalance.forUser({earned, redeemed}) => earned-redeemed clamped to 0. New test/task_pool_test.dart adds 11 tests covering effort_points fallback/explicit/default, toInsertMap, isInPool true/false, and PointsBalance math (incl. redeemed>earned clamp). Verification: dart format 0 changed; flutter analyze 'No issues found!'; flutter test = 212 passed (baseline 201, +11); dependency-map --check OK. Autogenerated files (analysis_options.yaml, linux/macos/windows plugin registrants) discarded; pubspec.lock untouched. Committed lib/ + test/ + FEAT-003.json only."
+}

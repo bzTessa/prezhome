@@ -4,6 +4,10 @@ class HomeTask {
   final String title;
   final String? notes;
   final int points;
+  // Esfuerzo estimado de la tarea (informativo). Independiente de 'points',
+  // que es el valor que suma al marcador al completarla. Se usa en la Bolsa
+  // Comun para orientar sobre cuanto cuesta cada tarea.
+  final int effortPoints;
   // once | daily | weekly | custom_interval | custom_weekdays
   final String recurrence;
   final int? intervalCount; // para custom_interval (ej. 3)
@@ -27,6 +31,7 @@ class HomeTask {
     required this.title,
     this.notes,
     this.points = 10,
+    this.effortPoints = 10,
     this.recurrence = 'once',
     this.intervalCount,
     this.intervalUnit,
@@ -49,6 +54,9 @@ class HomeTask {
       title: map['title'],
       notes: map['notes'],
       points: map['points'] ?? 10,
+      // Filas antiguas no tienen la columna effort_points: caemos a points y
+      // en ultimo caso a 10 para mantener fromMap tolerante a nulos.
+      effortPoints: map['effort_points'] ?? map['points'] ?? 10,
       recurrence: map['recurrence'] ?? 'once',
       intervalCount: map['interval_count'],
       intervalUnit: map['interval_unit'],
@@ -80,6 +88,7 @@ class HomeTask {
       'title': title,
       'notes': notes,
       'points': points,
+      'effort_points': effortPoints,
       'recurrence': recurrence,
       'interval_count': recurrence == 'custom_interval' ? intervalCount : null,
       'interval_unit': recurrence == 'custom_interval' ? intervalUnit : null,
@@ -100,9 +109,16 @@ class HomeTask {
   /// Datos de reprogramacion al completar una recurrente. Avanza due_date y
   /// next_due a [next], marca la ultima vez completada y deja is_done=false
   /// para que la tarea reaparezca en su proxima ocurrencia.
+  ///
+  /// Si [releaseToPool] es true, ademas devuelve assigned_to=null para que la
+  /// proxima ocurrencia vuelva a la Bolsa Comun y cualquiera pueda reclamarla
+  /// de nuevo (caso de una recurrente reclamada con "Yo me encargo"). Por
+  /// defecto es false, de modo que el flujo normal de complete() conserva su
+  /// comportamiento exacto y no toca assigned_to.
   static Map<String, dynamic> rescheduleMap({
     required DateTime next,
     required String completedBy,
+    bool releaseToPool = false,
   }) {
     final nextKey = DateTime(
       next.year,
@@ -117,6 +133,10 @@ class HomeTask {
       'completed_by': completedBy,
       'completed_at': nowIso,
       'last_completed_at': nowIso,
+      // Solo cuando se reclama una recurrente desde la Bolsa Comun: la soltamos
+      // de nuevo al pool para la siguiente ocurrencia en lugar de dejarla
+      // asignada para siempre al primero que la reclamo.
+      if (releaseToPool) 'assigned_to': null,
     };
   }
 
@@ -201,6 +221,12 @@ class HomeTask {
     'Sábado',
     'Domingo',
   ];
+
+  /// Predicado puro de la "Bolsa Comun": una tarea esta en el pool cuando no
+  /// tiene responsable asignado (assigned_to == null), es decir, cualquiera del
+  /// hogar puede reclamarla con "Yo me encargo". No contempla is_done aqui: la
+  /// capa de datos ya filtra las tareas hechas al cargar la Bolsa Comun.
+  bool get isInPool => assignedTo == null;
 
   /// Etiqueta legible de la recurrencia (para mostrar en la lista).
   String get recurrenceLabel {
