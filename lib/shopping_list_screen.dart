@@ -8,8 +8,10 @@ import 'models/shopping_list_item.dart';
 import 'services/food_photo_service.dart';
 import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
+import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/shopping_display.dart';
+import 'widgets/animations/confetti.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
@@ -48,6 +50,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   // Precios conocidos del hogar (para estimar el coste de la compra).
   Map<String, ProductPrice> _prices = {};
+
+  // Guarda para disparar la celebración (Miau + confeti) SOLO en la transición
+  // a 0 pendientes (de >0 a 0), no en cada rebuild ni al cambiar de tab en el
+  // IndexedStack. Recordamos el conteo anterior de pendientes y, cuando pasa de
+  // >0 a 0 teniendo comprados, activamos _celebrar una vez; se resetea cuando
+  // vuelve a haber pendientes.
+  int? _prevPendientes;
+  bool _celebrar = false;
 
   @override
   void initState() {
@@ -804,17 +814,39 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           final comprados = items.where((i) => i.checked).toList();
 
           // Compra terminada: hay items y todos están marcados. Mostramos a
-          // Miau celebrando con una animación de aparición sutil.
+          // Miau celebrando (rebote + confeti al vaciar).
           final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
-            children: [
-              _CompraCelebracion(visible: compraTerminada),
-              if (pendientes.isNotEmpty) _costEstimateCard(pendientes),
-              if (pendientes.isNotEmpty)
-                ..._buildPendientesPorCategoria(pendientes),
-              if (comprados.isNotEmpty) _cartCard(comprados),
+          // Guarda "solo en la transición a 0": si antes había pendientes
+          // (>0) y ahora no, y hay comprados, activamos la celebración una
+          // vez. Si vuelve a haber pendientes, la rearmamos. Se calcula aquí
+          // (dentro de build, con el conteo real) pero sin re-disparar en
+          // rebuilds que no cambian el conteo.
+          final nPend = pendientes.length;
+          if (_prevPendientes != null && _prevPendientes! > 0 && nPend == 0) {
+            if (compraTerminada) _celebrar = true;
+          }
+          if (nPend > 0) _celebrar = false;
+          _prevPendientes = nPend;
+
+          final slivers = <Widget>[
+            if (compraTerminada)
+              SliverToBoxAdapter(
+                child: _CompraCelebracion(celebrar: _celebrar),
+              ),
+            if (pendientes.isNotEmpty)
+              SliverToBoxAdapter(child: _costEstimateCard(pendientes)),
+            ..._buildPendientesSlivers(pendientes),
+            if (comprados.isNotEmpty)
+              SliverToBoxAdapter(child: _cartCard(comprados)),
+          ];
+
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                sliver: SliverMainAxisGroup(slivers: slivers),
+              ),
             ],
           );
         },
@@ -881,63 +913,68 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  /// Agrupa los pendientes por categoria (CategoryIcons.categoryFor) y los
-  /// pinta con un encabezado de seccion legible por cada grupo no vacio. El
-  /// orden de las secciones sigue el del enum FoodCategory (verduras, frutas,
-  /// carne... y "Otros" al final), que ya va de alimentos frescos a genericos.
-  List<Widget> _buildPendientesPorCategoria(List<ShoppingListItem> pendientes) {
+  /// Agrupa los pendientes por "pasillo" (= categoria via
+  /// CategoryIcons.categoryFor) y emite, por cada grupo no vacio, una CABECERA
+  /// DE PASILLO (SliverToBoxAdapter con _categoryHeader) seguida del contenido
+  /// del grupo. El orden de los pasillos sigue el del enum FoodCategory
+  /// (verduras, frutas, carne... y "Otros" al final), que ya va de alimentos
+  /// frescos a genericos. Conserva el colapsado por categoria (_catCollapsed) y
+  /// el chevron/AnimatedCrossFade.
+  List<Widget> _buildPendientesSlivers(List<ShoppingListItem> pendientes) {
     final grupos = <FoodCategory, List<ShoppingListItem>>{};
     for (final item in pendientes) {
       final cat = CategoryIcons.categoryFor(item.name);
       grupos.putIfAbsent(cat, () => []).add(item);
     }
 
-    final widgets = <Widget>[];
+    final slivers = <Widget>[];
     for (final cat in FoodCategory.values) {
       final items = grupos[cat];
       if (items == null || items.isEmpty) continue;
-      // Cada categoría es UNA tarjeta cozy COLAPSABLE, con el MISMO lenguaje
+      // Cada pasillo es UNA tarjeta cozy COLAPSABLE, con el MISMO lenguaje
       // visual que las secciones del inventario rediseñado: cabecera-toggle con
       // icono en pastilla del tono de la categoría + etiqueta + contador +
       // chevron animado, y debajo las filas separadas por divisores suaves.
       // Arranca EXPANDIDA (lo que falta por comprar apremia); la usuaria puede
       // plegarla y se recuerda en _catCollapsed.
       final expanded = !(_catCollapsed[cat.name] ?? false);
-      widgets.add(
-        Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          decoration: AppTheme.cardDecoration(radius: 18),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _categoryHeader(cat, items.length, expanded),
-              AnimatedCrossFade(
-                duration: const Duration(milliseconds: 220),
-                sizeCurve: Curves.easeInOut,
-                crossFadeState: expanded
-                    ? CrossFadeState.showFirst
-                    : CrossFadeState.showSecond,
-                firstChild: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < items.length; i++) ...[
-                        if (i > 0)
-                          const Divider(height: 1, color: AppColors.cream),
-                        _buildRow(items[i]),
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: AppTheme.cardDecoration(radius: AppRadius.md),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _categoryHeader(cat, items.length, expanded),
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 220),
+                  sizeCurve: Curves.easeInOut,
+                  crossFadeState: expanded
+                      ? CrossFadeState.showFirst
+                      : CrossFadeState.showSecond,
+                  firstChild: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < items.length; i++) ...[
+                          if (i > 0)
+                            const Divider(height: 1, color: AppColors.cream),
+                          _buildRow(items[i]),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
+                  secondChild: const SizedBox(width: double.infinity),
                 ),
-                secondChild: const SizedBox(width: double.infinity),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
-    return widgets;
+    return slivers;
   }
 
   /// Cabecera-toggle de sección coherente con la del inventario: icono dentro
@@ -1111,17 +1148,28 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return Dismissible(
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
       direction: DismissDirection.endToStart,
+      // Fondo que comunica "hecho/comprado" (check sobre sage), NO "borrar".
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: AppColors.expiredBg,
+          color: AppColors.sageBg,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete_outline, color: AppColors.expired),
+        child: const Icon(Icons.check_circle_rounded, color: AppColors.sage),
       ),
-      onDismissed: (_) => _deleteItem(item),
+      // Deslizar un item PENDIENTE lo MARCA COMO COMPRADO/HECHO (lo tacha,
+      // baja la opacidad y lo mete en la despensa via _toggleChecked), NO lo
+      // borra. confirmDismiss ejecuta el toggle y devuelve false para no
+      // desmontar la fila: _reload reconstruye la lista y el item pasa a "YA
+      // EN EL CARRO". El borrado del item sigue accesible por _openItemActions.
+      confirmDismiss: (_) async {
+        if (!done) {
+          await _toggleChecked(item, true);
+        }
+        return false;
+      },
       child: InkWell(
         onTap: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
@@ -1241,54 +1289,122 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 }
 
-/// Tarjeta de celebración cuando no quedan items por comprar. Aparece con una
-/// animación sutil (opacidad + escala) y muestra a Miau celebrando.
-class _CompraCelebracion extends StatelessWidget {
-  final bool visible;
-  const _CompraCelebracion({required this.visible});
+/// Celebración cuando no quedan items por comprar. Muestra la tarjeta de
+/// "Compra completada" con Miau celebrando y, cuando [celebrar] es `true` (solo
+/// en la TRANSICIÓN a 0 pendientes), un REBOTE ELÁSTICO de Miau MÁS un CONFETI
+/// POR CÓDIGO (CustomPainter, sin paquete ni assets).
+///
+/// Respeta "reducir movimiento": con [AppMotion.reduceMotionOf] en `true`
+/// muestra solo el estado final estático (Miau + tarjeta) sin rebote ni
+/// confeti. El confeti se autodestruye al terminar el burst.
+class _CompraCelebracion extends StatefulWidget {
+  /// `true` únicamente en la transición a 0 pendientes: dispara rebote+confeti.
+  /// `false` para mostrar la tarjeta ya asentada (p. ej. al volver al tab).
+  final bool celebrar;
+  const _CompraCelebracion({required this.celebrar});
+
+  @override
+  State<_CompraCelebracion> createState() => _CompraCelebracionState();
+}
+
+class _CompraCelebracionState extends State<_CompraCelebracion>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  // Muestra el confeti mientras dura su burst; se apaga al completarse.
+  bool _confetiActivo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppMotion.slow,
+      value: widget.celebrar ? 0 : 1,
+    );
+    // Rebote elástico de entrada de Miau.
+    _scale = Tween<double>(
+      begin: 0.6,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.celebrar && !AppMotion.reduceMotionOf(context)) {
+      _confetiActivo = true;
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: visible ? 1 : 0,
-        child: visible
-            ? Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration(),
-                child: Row(
-                  children: [
-                    const MiauCharacter(mood: MiauMood.celebrating, size: 72),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Compra completada',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Ya tienes todo lo de la lista. Miau esta orgulloso.',
-                            style: TextStyle(color: AppColors.ink),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+    final reduceMotion = AppMotion.reduceMotionOf(context);
+    final animar = widget.celebrar && !reduceMotion;
+
+    final miau = animar
+        ? ScaleTransition(
+            scale: _scale,
+            child: const MiauCharacter(mood: MiauMood.celebrating, size: 72),
+          )
+        : const MiauCharacter(mood: MiauMood.celebrating, size: 72);
+
+    final tarjeta = Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(radius: AppRadius.md),
+      child: Row(
+        children: [
+          miau,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Compra completada',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.ink,
+                  ),
                 ),
-              )
-            : const SizedBox(width: double.infinity),
+                SizedBox(height: 4),
+                Text(
+                  'Ya tienes todo lo de la lista. Miau esta orgulloso.',
+                  style: TextStyle(color: AppColors.ink),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+
+    // El confeti se dibuja ENCIMA de la tarjeta pero sin ocupar hueco ni
+    // bloquear toques (IgnorePointer dentro de ConfettiBurst). Solo cuando
+    // procede y no hay reduce-motion.
+    if (!_confetiActivo || reduceMotion) return tarjeta;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        tarjeta,
+        Positioned.fill(
+          child: ConfettiBurst(
+            onCompleted: () {
+              if (mounted) setState(() => _confetiActivo = false);
+            },
+          ),
+        ),
+      ],
     );
   }
 }
