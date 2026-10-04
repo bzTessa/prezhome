@@ -55,6 +55,10 @@ jobs:
       - name: Ejecutar tests
         run: flutter test
 
+      # Verifica que el mapa de dependencias internas de lib/ esté al día.
+      - name: Verificar mapa de dependencias de arquitectura
+        run: dart run tool/architecture/dependency_map.dart --check
+
   # Validacion de las migraciones de Supabase.
   #
   # IMPORTANTE: aqui NO usamos `supabase db lint` ni `supabase db reset`.

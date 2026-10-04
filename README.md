@@ -32,3 +32,18 @@ Las recetas pueden mostrar una foto automatica (de Unsplash) cuando se crean con
 la IA. La app funciona igual sin configurarlo (con dibujos cozy por tipo de
 plato), y la guia sencilla para activarlo esta en
 [docs/RECETAS_FOTOS.md](docs/RECETAS_FOTOS.md).
+
+## Arquitectura y refactor
+
+Para apoyar el rediseño de la app hay una base de arquitectura en:
+
+- [docs/architecture/review.md](docs/architecture/review.md)
+- [docs/architecture/refactor-plan.md](docs/architecture/refactor-plan.md)
+- [docs/architecture/dependency-map.md](docs/architecture/dependency-map.md)
+
+Comandos útiles:
+
+- Generar mapa de dependencias:
+  `dart run tool/architecture/dependency_map.dart`
+- Verificar en local que el mapa está actualizado:
+  `dart run tool/architecture/dependency_map.dart --check`
