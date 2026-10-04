@@ -8,7 +8,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 | --- | ---: |
 | `models` | 10 |
 | `screens` | 27 |
-| `services` | 19 |
+| `services` | 20 |
 | `tabs` | 3 |
 | `theme` | 6 |
 | `utils` | 9 |
@@ -36,10 +36,10 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `tabs` -> `widgets`: 7
 - `tabs` -> `models`: 6
 - `screens` -> `tabs`: 3
+- `services` -> `models`: 3
 - `services` -> `widgets`: 3
 - `tabs` -> `theme`: 3
 - `models` -> `utils`: 2
-- `services` -> `models`: 2
 - `services` -> `utils`: 2
 - `tabs` -> `services`: 2
 - `widgets` -> `models`: 2

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-paso8-motor-predictivo",
+  "task_description": "PASO 8 (último): Motor Predictivo LOCAL para el 'Asistente Proactivo' de PrezHome, sin APIs externas ni 'IA' visible. Crear lib/services/proactive_suggestions_service.dart (lógica pura) con dos sugerencias: (a) alimentos de comida que caducan en <=2 días -> tarjeta en main_shell que invita a aprovecharlos en el próximo Batch Cooking; (b) básico (isStaple) marcado como 'agotado' (quantity 0) en la despensa -> reposición AUTOMÁTICA a la lista de la compra (source 'auto', con dedup). Toda escritura pasa por la capa offline-first del Paso 7 (OfflineRepository.applyLocalWrite), nunca inserts directos. Complementario a smart_reminders (que sigue siendo el panel informativo de Inicio), no duplicado. Tests de lógica pura; sin bajar de 338. Rama feat/paso8-motor-predictivo, sin push ni PR.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
