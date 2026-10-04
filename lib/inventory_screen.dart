@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
+import 'models/shopping_list_item.dart';
 import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
+import 'services/proactive_suggestions_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/offline_actions.dart';
 import 'widgets/animations/staggered_entrance.dart';
@@ -240,6 +243,196 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       );
     }
+  }
+
+  /// Marca un alimento como "agotado": pone su cantidad a 0 (UPDATE optimista
+  /// vía la capa offline-first, igual que [_toggleStaple]) y, si además es un
+  /// BÁSICO ("siempre en casa"), lo repone automáticamente en la lista de la
+  /// compra con el motor predictivo local (FEAT-002), deduplicando por nombre.
+  ///
+  /// Todas las escrituras pasan por applyLocalWrite (inventario y compra), de
+  /// modo que funciona sin conexión: se encolan y la UI repinta al instante.
+  /// setState con cuerpo de bloque (nunca arrow con Future).
+  Future<void> _markDepleted(InventoryItem item) async {
+    // Guardamos la cantidad previa para poder restaurarla con "Deshacer".
+    final previousQty = item.quantity;
+    try {
+      // (1) UPDATE OPTIMISTA de la cantidad a 0 vía el repositorio del
+      // inventario (mismo patrón exacto que _toggleStaple).
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: {'quantity': 0},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
+
+      // (2) Reposición inteligente SOLO para básicos agotados. La regla la
+      // decide el servicio puro (isDepletedStaple) para que UI y motor usen el
+      // mismo criterio testeado.
+      if (!isDepletedStaple(item.isStaple, 0)) {
+        if (!mounted) return;
+        // No es básico: dejamos la cantidad a 0 sin tocar la compra y avisamos
+        // de forma simple.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('He marcado ${item.name} como agotado.')),
+        );
+        return;
+      }
+
+      await _restockDepletedStaple(item, previousQty: previousQty);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo actualizar: $e'),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
+  /// Reponer un básico agotado en la lista de la compra: construye el
+  /// ShoppingListItem con el motor puro (source 'auto', dedup por nombre contra
+  /// la compra cacheada) y, si procede, lo inserta vía la capa offline-first
+  /// (mismo patrón que _addToPantry pero en sentido despensa -> compra).
+  Future<void> _restockDepletedStaple(
+    InventoryItem item, {
+    required double previousQty,
+  }) async {
+    // home_id del usuario (replica el helper _homeId() de la lista de la compra).
+    final homeId = await _homeId();
+
+    // Nombres ya presentes en la compra (caché incluye ops pendientes) para
+    // deduplicar y no crear líneas repetidas.
+    final shoppingRepo = OfflineProvider.instance.shopping;
+    final existingRows = await shoppingRepo.readCached();
+    final existingNames = existingRows
+        .map((m) => (m['name'] ?? '').toString())
+        .where((n) => n.isNotEmpty);
+
+    final restock = buildRestockItem(
+      homeId: homeId,
+      name: item.name,
+      itemType: item.itemType,
+      category: item.category,
+      unit: item.unit,
+      imageUrl: item.imageUrl,
+      existingShoppingNames: existingNames,
+    );
+
+    if (restock == null) {
+      // Ya estaba en la compra: nada que insertar, pero confirmamos el agotado.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${item.name} ya está en tu lista de la compra.'),
+        ),
+      );
+      return;
+    }
+
+    // Insert OPTIMISTA con id temporal local, igual que _addToPantry: se
+    // reconstruye el item con el localId antes de cachear (toCacheMap incluye id).
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final localId = newLocalId(nowMillis: now, seq: _nextSeq());
+    final withId = ShoppingListItem(
+      id: localId,
+      homeId: restock.homeId,
+      name: restock.name,
+      quantity: restock.quantity,
+      unit: restock.unit,
+      checked: restock.checked,
+      source: restock.source,
+      itemType: restock.itemType,
+      category: restock.category,
+      imageUrl: restock.imageUrl,
+    );
+    await shoppingRepo.applyLocalWrite(
+      buildInsertOp(
+        table: kShoppingTable,
+        id: localId,
+        payload: withId.toCacheMap(),
+        nowMillis: now,
+        seq: _nextSeq(),
+      ),
+    );
+
+    if (!mounted) return;
+    // SnackBar cozy con acción Deshacer: borra de la compra el item recién
+    // creado y restaura la cantidad previa del inventario (ambas por la capa
+    // offline-first).
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('He añadido ${item.name} a la compra'),
+        action: SnackBarAction(
+          label: 'Deshacer',
+          onPressed: () => _undoRestock(
+            item: item,
+            shoppingLocalId: localId,
+            previousQty: previousQty,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Revierte una reposición automática: borra de la compra la línea insertada
+  /// y restaura la cantidad previa del item en el inventario. Ambas escrituras
+  /// pasan por applyLocalWrite. setState con cuerpo de bloque (vía _reload).
+  Future<void> _undoRestock({
+    required InventoryItem item,
+    required String shoppingLocalId,
+    required double previousQty,
+  }) async {
+    try {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await OfflineProvider.instance.shopping.applyLocalWrite(
+        buildDeleteOp(
+          table: kShoppingTable,
+          id: shoppingLocalId,
+          nowMillis: now,
+          seq: _nextSeq(),
+        ),
+      );
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: {'quantity': previousQty},
+          nowMillis: now,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo deshacer: $e'),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
+  /// Obtiene el home_id del usuario autenticado leyendo su perfil (mismo helper
+  /// que _homeId() en shopping_list_screen.dart).
+  Future<String> _homeId() async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) throw 'No hay usuario autenticado';
+    final profile = await client
+        .from('profiles')
+        .select('home_id')
+        .eq('id', user.id)
+        .single();
+    final homeId = profile['home_id'] as String?;
+    if (homeId == null) throw 'El usuario no esta asignado a ningun hogar.';
+    return homeId;
   }
 
   Future<void> _openAddItem() async {
@@ -898,6 +1091,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     : const Text('Para básicos que siempre tienes'),
                 onTap: () => Navigator.of(ctx).pop('staple'),
               ),
+            // "Se ha agotado": solo para comida (coherente con el ListTile de
+            // staple). Pone la cantidad a 0 y, si es básico, lo repone en la
+            // compra automáticamente.
+            if (item.itemType == 'comida')
+              ListTile(
+                leading: const Icon(
+                  Icons.production_quantity_limits,
+                  color: AppColors.woodDark,
+                ),
+                title: const Text('Se ha agotado'),
+                subtitle: item.isStaple
+                    ? const Text('Lo añadiré a la compra')
+                    : null,
+                onTap: () => Navigator.of(ctx).pop('depleted'),
+              ),
             ListTile(
               leading: const Icon(
                 Icons.delete_outline,
@@ -919,6 +1127,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (changed != null) await _applyUpsert(changed, editing: true);
     } else if (action == 'staple') {
       await _toggleStaple(item, !item.isStaple);
+    } else if (action == 'depleted') {
+      await _markDepleted(item);
     } else if (action == 'delete') {
       await _deleteItem(item);
     }
