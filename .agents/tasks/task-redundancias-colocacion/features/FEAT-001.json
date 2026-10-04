@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Preparar el entorno Flutter y confirmar baseline verde antes de tocar nada. Clonar el SDK exacto del CI, instalar dependencias y correr format + analyze + test para fijar el punto de partida (167 tests verdes esperados).",
+  "status": "completed",
+  "steps": [
+    "Clonar el toolchain exacto del CI: `git clone --depth 1 --branch 3.47.6 https://github.com/flutter/flutter.git ~/flutter_sdk` (tarda ~5-7 min). Trae Dart 3.13.5. NO usar un Flutter 3.35/Dart 3.9 si estuviera preinstalado: el pubspec exige SDK ^3.11.1 y romperia.",
+    "Exportar PATH y suprimir analytics: `export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true`.",
+    "Desde /projects/sandbox/prezhome ejecutar `flutter pub get`.",
+    "Ejecutar la secuencia de verificacion del CI y confirmar que TODO queda verde: `dart format --output=none --set-exit-if-changed lib/`, luego `flutter analyze`, luego `flutter test`.",
+    "Descartar los cambios autogenerados por pub get antes de dar el arbol por limpio: `git checkout -- pubspec.lock analysis_options.yaml` y cualquier plugin registrant tocado en linux/ macos/ windows/. Confirmar con `git status` que el working tree queda limpio."
+  ],
+  "acceptance_criteria": [
+    "`flutter pub get` completa sin errores.",
+    "`dart format --output=none --set-exit-if-changed lib/` sale con exit code 0 (sin reformateos pendientes).",
+    "`flutter analyze` no reporta errores.",
+    "`flutter test` pasa los 167 tests existentes.",
+    "`git status` queda limpio tras descartar autogenerados (no quedan cambios no intencionados)."
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; cd /projects/sandbox/prezhome; flutter pub get && dart format --output=none --set-exit-if-changed lib/ && flutter analyze && flutter test"
+  ],
+  "blocked_reason": null,
+  "findings": "Entorno Flutter preparado y baseline verde confirmado. SDK clonado: `git clone --depth 1 --branch 3.47.6` en ~/flutter_sdk -> Flutter 3.47.6, Dart 3.13.5 (coincide con CI). Verificacion CI completa: (1) `flutter pub get` OK, cambio 21 dependencias; (2) `dart format --output=none --set-exit-if-changed lib/` exit 0, 'Formatted 62 files (0 changed)' -> sin reformateos pendientes; (3) `flutter analyze` -> 'No issues found!' (0 errores); (4) `flutter test` -> 'All tests passed!' 167/167 verdes. Descartados con `git checkout --` los 7 archivos autogenerados por pub get (analysis_options.yaml, pubspec.lock, linux/windows generated_plugin_registrant.cc + generated_plugins.cmake, macos GeneratedPluginRegistrant.swift). `git status` queda limpio salvo la carpeta de estado de la tarea (.agents/tasks/task-redundancias-colocacion/). No se toco codigo de produccion; FEAT-002/FEAT-003 pueden proceder. Nota operativa para siguientes features: exportar `PATH=\"$HOME/flutter_sdk/bin:$PATH\"` y `FLUTTER_SUPPRESS_ANALYTICS=true` en cada sesion; recordar re-descartar los autogenerados tras cada pub get."
+}

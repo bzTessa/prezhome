@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../add_inventory_item_screen.dart';
 import '../add_recipe_chooser.dart';
 import '../food_diary_screen.dart';
-import '../inventory_screen.dart';
 import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../scan_ticket_screen.dart';
@@ -23,7 +22,11 @@ import '../widgets/miau_character.dart';
 /// hoy, calorías, tareas y gasto). El plan semanal/mensual vive ahora en la
 /// pestaña Comidas > Plan, así que Inicio solo muestra el resumen.
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  /// Petición de cambiar a la pestaña Despensa (sub-tab Inventario). La inyecta
+  /// MainShell para que la tarjeta de caducidades aterrice donde el inventario
+  /// vive de verdad, en lugar de abrir una InventoryScreen suelta.
+  final VoidCallback? onNavigateToDespensa;
+  const HomeTab({super.key, this.onNavigateToDespensa});
 
   @override
   State<HomeTab> createState() => HomeTabState();
@@ -865,9 +868,10 @@ class HomeTabState extends State<HomeTab> {
   }
 
   /// Tarjeta 'Caducidades': resume cuántos alimentos caducan pronto y cuántos
-  /// ya han caducado. Al tocarla abre la Despensa (InventoryScreen a pantalla
-  /// completa) y, al volver, refresca el recuento. Si no hay nada que avisar,
-  /// muestra un mensaje tranquilizador con el tono cozy de Miau.
+  /// ya han caducado. Al tocarla cambia a la pestaña Despensa > Inventario, que
+  /// es donde el inventario vive de verdad, y al volver a Inicio MainShell
+  /// refresca el recuento. Si no hay nada que avisar, muestra un mensaje
+  /// tranquilizador con el tono cozy de Miau.
   Widget _expiryCard() {
     const color = AppColors.soonBg;
     final hasAlerts = _expiringSoon > 0 || _expired > 0;
@@ -896,11 +900,13 @@ class HomeTabState extends State<HomeTab> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(24),
-      onTap: () async {
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const InventoryScreen()));
-        _loadExpirySummary(); // refrescar al volver de la despensa
+      onTap: () {
+        // El inventario vive en la pestaña Despensa > Inventario; en vez de
+        // abrir una InventoryScreen suelta a pantalla completa, cambiamos a esa
+        // pestaña (sub-tab Inventario por defecto). Al volver a Inicio,
+        // MainShell refresca la vista activa, así que el recuento de
+        // caducidades se actualiza solo.
+        widget.onNavigateToDespensa?.call();
       },
       child: Container(
         padding: const EdgeInsets.all(18),

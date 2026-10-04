@@ -1,0 +1,7 @@
+{
+  "task_id": "task-redundancias-colocacion",
+  "task_description": "Punto (1) de la hoja de ruta acordada: auditar redundancias y problemas de colocacion/usabilidad en las pantallas de PrezHome e implementar mejoras concretas de reorganizacion que hagan la app mas intuitiva, sin romper funcionalidad ni perder la identidad Cozy/Miau. Hallazgos principales de la auditoria: (a) DOS calendarios mensuales de comidas casi iguales (vista 'Mes' de Comidas>Plan vs MonthCalendarScreen escondido en una tarjeta de Inicio) -> consolidar en el completo dentro de Comidas>Plan; (b) boton 'Gestionar plan semanal' duplicado dentro de la sub-pestana Plan; (c) la tarjeta 'Caducidades' de Inicio abre una InventoryScreen paralela en vez de llevar a la pestana Despensa; (d) accesos al Diario de calorias repartidos sin etiquetas coherentes. Nota de descarte: ProfileWizardScreen y NutritionProfileScreen NO son redundantes (ya resuelto: mismo perfil, un unico editor + asistente), no se tocan.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
