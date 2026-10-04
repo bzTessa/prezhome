@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/widgets/food_category_icon.dart';
 
@@ -64,10 +65,16 @@ void main() {
       expect(CategoryIcons.categoryFor('leche'), FoodCategory.lacteos);
     });
 
-    test('item de hogar sin match claro usa categoria hogar', () {
+    test('item de hogar sin match claro cae en limpieza (no casa vacia)', () {
+      // Fallback cozy: para hogar usamos el icono de limpieza, no la casa
+      // generica de FoodCategory.hogar.
       expect(
         CategoryIcons.categoryFor('cosa rara', itemType: 'hogar'),
-        FoodCategory.hogar,
+        FoodCategory.limpieza,
+      );
+      expect(
+        CategoryIcons.categoryFor('cosa rara', itemType: 'hogar').icon,
+        Icons.cleaning_services,
       );
     });
 
@@ -76,6 +83,30 @@ void main() {
         CategoryIcons.categoryFor('detergente', itemType: 'hogar'),
         FoodCategory.limpieza,
       );
+    });
+
+    test('productos de limpieza/hogar nuevos se clasifican como limpieza', () {
+      // Casos del feedback real de la usuaria: "Bastoncillos" ya no debe caer
+      // en la casa generica.
+      expect(CategoryIcons.categoryFor('Bastoncillos'), FoodCategory.limpieza);
+      expect(
+        CategoryIcons.categoryFor('bastoncillos', itemType: 'hogar'),
+        FoodCategory.limpieza,
+      );
+      expect(CategoryIcons.categoryFor('algodon'), FoodCategory.limpieza);
+      expect(
+        CategoryIcons.categoryFor('papel de cocina'),
+        FoodCategory.limpieza,
+      );
+      expect(
+        CategoryIcons.categoryFor('rollo de cocina'),
+        FoodCategory.limpieza,
+      );
+    });
+
+    test('un producto de limpieza NO muestra el icono de casa generica', () {
+      expect(CategoryIcons.iconFor('Bastoncillos'), isNot(Icons.home));
+      expect(CategoryIcons.iconFor('Bastoncillos'), Icons.cleaning_services);
     });
 
     test('normalize ignora acentos y mayusculas', () {

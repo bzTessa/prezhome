@@ -4,12 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
 import 'theme/app_theme.dart';
+import 'utils/shopping_display.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 
 /// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
-/// Despensa o Hogar y limpieza). Agrupa los items y lleva su presentación
-/// (icono + título) para pintar la cabecera.
+/// Despensa, Bebidas, Especias o Hogar y limpieza). Agrupa los items y lleva su
+/// presentación (icono + título) para pintar la cabecera.
 class _InventorySection {
   final String title;
   final IconData icon;
@@ -22,6 +23,30 @@ class _InventorySection {
     required this.isFood,
     required this.items,
   });
+
+  /// Clave estable para recordar el estado expandido/colapsado entre rebuilds.
+  String get key => title;
+
+  int get frescos =>
+      items.where((i) => i.expiryStatus == ExpiryStatus.fresco).length;
+  int get pronto =>
+      items.where((i) => i.expiryStatus == ExpiryStatus.pronto).length;
+  int get caducados =>
+      items.where((i) => i.expiryStatus == ExpiryStatus.caducado).length;
+
+  /// Secciones "tranquilas" que arrancan colapsadas aunque no tengan urgencias:
+  /// condimentos y hogar no suelen caducar y abultan el scroll.
+  bool get isCalmByDefault =>
+      title == 'Especias y condimentos' || title == 'Hogar y limpieza';
+
+  /// Apertura inteligente (NN/g: no esconder lo urgente). Una sección arranca
+  /// EXPANDIDA si contiene algún item que caduca pronto o ya caducado; en caso
+  /// contrario, y siempre para las secciones tranquilas, arranca COLAPSADA.
+  bool get defaultExpanded {
+    if (isCalmByDefault) return false;
+    if (!isFood) return false;
+    return pronto > 0 || caducados > 0;
+  }
 }
 
 class InventoryScreen extends StatefulWidget {
@@ -37,8 +62,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
   late Future<List<InventoryItem>> _itemsFuture;
 
   // Filtro por sección: 'todo' | 'Nevera' | 'Congelador' | 'Despensa' |
-  // 'Especias' | 'Hogar'. Se aplica en cliente sobre la lista ya cargada.
+  // 'Bebidas' | 'Especias' | 'Hogar'. Se aplica en cliente sobre la lista ya
+  // cargada.
   String _sectionFilter = 'todo';
+
+  // Overrides manuales de expandido/colapsado por sección (clave = título). Lo
+  // que la usuaria toca manda sobre la apertura inteligente por defecto.
+  final Map<String, bool> _expandedOverrides = {};
 
   @override
   void initState() {
@@ -221,8 +251,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   /// Barra de filtros por sección: scroll horizontal de chips (Todo, Nevera,
-  /// Congelador, Despensa, Condimentos, Hogar). Da más divisiones que el viejo
-  /// Todo/Comida/Hogar sin tocar la base de datos.
+  /// Congelador, Despensa, Bebidas, Condimentos, Hogar). Da más divisiones que
+  /// el viejo Todo/Comida/Hogar sin tocar la base de datos.
   Widget _sectionFilterBar() {
     const filters = <(String, String, IconData)>[
       ('todo', 'Todo', Icons.apps_rounded),
@@ -244,7 +274,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
           final (value, label, icon) = filters[i];
           final selected = _sectionFilter == value;
           return GestureDetector(
-            onTap: () => setState(() => _sectionFilter = value),
+            // Al tocar un filtro concreto limpiamos los overrides manuales para
+            // que la sección enfocada aplique su apertura inteligente de nuevo
+            // (y la sección filtrada se muestre expandida).
+            onTap: () {
+              setState(() {
+                _sectionFilter = value;
+                _expandedOverrides.clear();
+              });
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -282,7 +320,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   /// Agrupa la lista por ubicación en secciones de orden fijo:
-  /// Nevera, Congelador, Despensa y, al final, Hogar y limpieza.
+  /// Nevera, Congelador, Despensa, Bebidas, Especias y, al final, Hogar y
+  /// limpieza.
   List<_InventorySection> _groupIntoSections(List<InventoryItem> items) {
     // Las comidas se agrupan por su ubicación (category). El resto (hogar) va
     // a una sección propia porque no tiene caducidad.
@@ -403,14 +442,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     final sections = _groupIntoSections(items);
 
-    // Construimos una lista plana de widgets: cabecera + tarjetas por sección.
-    final children = <Widget>[];
+    // Resumen superior tipo dashboard + una tarjeta colapsable por sección.
+    final children = <Widget>[
+      _DashboardSummary(sections: sections),
+      const SizedBox(height: 16),
+    ];
     for (final section in sections) {
-      children.add(_sectionHeader(section));
-      for (final item in section.items) {
-        children.add(_itemCard(item));
-      }
-      children.add(const SizedBox(height: 8));
+      children.add(_sectionCard(section));
+      children.add(const SizedBox(height: 14));
     }
 
     return ListView(
@@ -419,109 +458,114 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _sectionHeader(_InventorySection section) {
-    // Resumen de la sección estilo "app de nevera": título + total y, para las
-    // secciones de comida, una fila de números grandes por estado
-    // (Frescos / Pronto / Caducados) con los colores de estado de AppColors.
-    final int frescos;
-    final int pronto;
-    final int caducados;
-    if (section.isFood) {
-      frescos = section.items
-          .where((i) => i.expiryStatus == ExpiryStatus.fresco)
-          .length;
-      pronto = section.items
-          .where((i) => i.expiryStatus == ExpiryStatus.pronto)
-          .length;
-      caducados = section.items
-          .where((i) => i.expiryStatus == ExpiryStatus.caducado)
-          .length;
-    } else {
-      frescos = 0;
-      pronto = 0;
-      caducados = 0;
-    }
+  /// ¿Está la sección expandida? Si el usuario la tocó manualmente respetamos
+  /// su decisión; si no, aplicamos la apertura inteligente por defecto. Cuando
+  /// hay un filtro de sección activo (distinto de 'todo'), la sección mostrada
+  /// se fuerza a expandida para que no quede escondida.
+  bool _isExpanded(_InventorySection section) {
+    final override = _expandedOverrides[section.key];
+    if (override != null) return override;
+    if (_sectionFilter != 'todo') return true;
+    return section.defaultExpanded;
+  }
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 10),
+  void _toggleSection(_InventorySection section) {
+    final current = _isExpanded(section);
+    setState(() {
+      _expandedOverrides[section.key] = !current;
+    });
+  }
+
+  /// Una sección = UNA tarjeta cozy colapsable: cabecera-toggle (icono + título
+  /// + contador + resumen compacto de estado + chevron) y, debajo, las filas de
+  /// producto separadas por divisores suaves. Reduce el ruido visual frente a
+  /// una tarjeta con sombra por producto.
+  Widget _sectionCard(_InventorySection section) {
+    final expanded = _isExpanded(section);
+    return Container(
+      decoration: AppTheme.cardDecoration(radius: 18),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.wood,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(section.icon, color: AppColors.ink, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  '${section.title} · ${section.items.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-            ],
+          _sectionHeader(section, expanded),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeInOut,
+            crossFadeState: expanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: _sectionBody(section),
+            secondChild: const SizedBox(width: double.infinity),
           ),
-          if (section.isFood) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _statSummary('Frescos', frescos, AppColors.fresh),
-                const SizedBox(width: 8),
-                _statSummary('Pronto', pronto, AppColors.soon),
-                const SizedBox(width: 8),
-                _statSummary('Caducados', caducados, AppColors.expired),
-              ],
-            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionBody(_InventorySection section) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+      child: Column(
+        children: [
+          for (var i = 0; i < section.items.length; i++) ...[
+            if (i > 0)
+              Divider(height: 1, color: AppColors.cream.withValues(alpha: 1)),
+            _itemRow(section.items[i], section),
           ],
         ],
       ),
     );
   }
 
-  /// Tarjeta-resumen con un NÚMERO grande y su etiqueta de estado, con el color
-  /// cálido correspondiente (fresco/pronto/caducado). Pensada para que la
-  /// usuaria vea de un vistazo cómo está cada ubicación.
-  Widget _statSummary(String label, int count, Color color) {
-    final active = count > 0;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: active ? color.withValues(alpha: 0.45) : AppColors.wood,
-            width: 1.2,
-          ),
-        ),
-        child: Column(
+  /// Cabecera-toggle de la sección: actúa como botón para plegar/desplegar.
+  Widget _sectionHeader(_InventorySection section, bool expanded) {
+    return InkWell(
+      onTap: () => _toggleSection(section),
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        child: Row(
           children: [
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: active ? color : AppColors.woodDark,
-                height: 1,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.wood,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(section.icon, color: AppColors.ink, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${section.title} · ${section.items.length}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  // Resumen compacto de estado para ver de un vistazo si una
+                  // sección colapsada esconde urgencias.
+                  if (section.isFood &&
+                      (section.pronto > 0 || section.caducados > 0)) ...[
+                    const SizedBox(height: 4),
+                    _miniStatusRow(section),
+                  ],
+                ],
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: active ? color : AppColors.woodDark,
+            AnimatedRotation(
+              turns: expanded ? 0.5 : 0,
+              duration: const Duration(milliseconds: 220),
+              child: Icon(
+                Icons.expand_more,
+                color: AppColors.woodDark,
+                size: 26,
               ),
             ),
           ],
@@ -530,108 +574,155 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _itemCard(InventoryItem item) {
-    // Las especias son 'comida' pero no mostramos chip de caducidad (no suele
-    // aplicar y ensucia la tarjeta con "Sin fecha").
-    final isFood = item.itemType == 'comida' && item.category != 'Especias';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: AppTheme.cardDecoration(radius: 16),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        onLongPress: () => _openItemActions(item),
-        leading: FoodImage(
-          name: item.name,
-          itemType: item.itemType,
-          imageUrl: item.imageUrl,
-          size: 56,
-          radius: 14,
-          // Muestra la FOTO real del alimento si la hay (buscada en modo
-          // "ingrediente crudo" para que acierte: pollo crudo, no un plato);
-          // si no hay foto, cae a la ilustración cozy por categoría. Las
-          // especias usan siempre ilustración (sus fotos salen genéricas).
-          forceIllustration: item.category == 'Especias',
+  /// Fila compacta de estado (pronto / caducados) para la cabecera de sección.
+  Widget _miniStatusRow(_InventorySection section) {
+    final chips = <Widget>[];
+    if (section.caducados > 0) {
+      chips.add(
+        _miniStatusChip(
+          '${section.caducados} caducados',
+          AppColors.expiredBg,
+          AppColors.expired,
         ),
-        title: Row(
+      );
+    }
+    if (section.pronto > 0) {
+      chips.add(
+        _miniStatusChip(
+          '${section.pronto} caducan pronto',
+          AppColors.soonBg,
+          AppColors.soon,
+        ),
+      );
+    }
+    return Wrap(spacing: 6, runSpacing: 4, children: chips);
+  }
+
+  Widget _miniStatusChip(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
+      ),
+    );
+  }
+
+  /// Fila de producto limpia y táctil dentro de la tarjeta de sección. Sin
+  /// triple redundancia de ubicación: no repetimos la ubicación en el subtítulo
+  /// (la da la sección) ni la pastilla 'Hogar/Limpieza'. Conservamos la pastilla
+  /// 'No se compra' (is_staple), la cantidad legible y el chip de caducidad.
+  Widget _itemRow(InventoryItem item, _InventorySection section) {
+    // Las especias son 'comida' pero no mostramos chip de caducidad (no suele
+    // aplicar y ensucia la fila con "Sin fecha").
+    final isFood = item.itemType == 'comida' && item.category != 'Especias';
+    final qty = inventoryQtyLabel(item.quantity, item.unit);
+    final subtitleParts = <String>[
+      if (qty.isNotEmpty) qty,
+      if (item.kind != 'ingredient') item.kindLabel,
+      if (item.servings != null) '${item.servings!.toStringAsFixed(0)} rac.',
+    ];
+
+    return InkWell(
+      onTap: () => _openItemActions(item),
+      onLongPress: () => _openItemActions(item),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
           children: [
-            Expanded(
-              child: Text(
-                item.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.ink,
-                ),
-              ),
+            FoodImage(
+              name: item.name,
+              itemType: item.itemType,
+              imageUrl: item.imageUrl,
+              size: 52,
+              radius: 14,
+              // Muestra la FOTO real del alimento si la hay; si no, cae a la
+              // ilustración cozy por categoría. Las especias usan siempre
+              // ilustración (sus fotos salen genéricas).
+              forceIllustration: item.category == 'Especias',
             ),
-            if (item.isStaple)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                margin: const EdgeInsets.only(left: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.cream,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.woodDark),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.remove_shopping_cart,
-                      size: 12,
-                      color: AppColors.woodDark,
-                    ),
-                    SizedBox(width: 3),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          shoppingCleanName(item.name),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ),
+                      if (item.isStaple) _stapleBadge(),
+                    ],
+                  ),
+                  if (subtitleParts.isNotEmpty) ...[
+                    const SizedBox(height: 2),
                     Text(
-                      'No se compra',
+                      subtitleParts.join(' • '),
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.woodDark,
+                        fontSize: 13,
+                        color: AppColors.ink.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
-                ),
+                  if (isFood) ...[
+                    const SizedBox(height: 6),
+                    _ExpiryChip(item: item),
+                  ],
+                ],
               ),
-            if (item.itemType == 'hogar')
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                margin: const EdgeInsets.only(left: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.wood,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  item.itemTypeLabel,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 2),
-            Text(
-              '${item.quantity} ${item.unit} • ${item.category}'
-              '${item.kind != 'ingredient' ? ' • ${item.kindLabel}' : ''}'
-              '${item.servings != null ? ' • ${item.servings!.toStringAsFixed(0)} rac.' : ''}',
             ),
-            if (isFood) ...[const SizedBox(height: 6), _ExpiryChip(item: item)],
+            // Las acciones (editar / no comprar / eliminar) van por pulsación;
+            // un punto de "más" lo insinúa.
+            Icon(Icons.more_vert, size: 20, color: Colors.grey[400]),
           ],
         ),
-        // Las acciones (no comprar / eliminar) van por pulsación larga, para no
-        // ensuciar la fila con iconos. Un punto de "más" lo insinúa.
-        trailing: Icon(Icons.more_vert, size: 20, color: Colors.grey[400]),
       ),
     );
   }
 
-  /// Menú de acciones de un producto (pulsación larga): marcar/quitar "no
-  /// comprar" y eliminar.
+  /// Pastilla "No se compra" (is_staple). Esta información NO la da la sección,
+  /// por eso se conserva en la fila.
+  Widget _stapleBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      margin: const EdgeInsets.only(left: 4),
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.woodDark),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.remove_shopping_cart, size: 12, color: AppColors.woodDark),
+          SizedBox(width: 3),
+          Text(
+            'No se compra',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.woodDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Menú de acciones de un producto (pulsación larga o toque): marcar/quitar
+  /// "no comprar", editar y eliminar.
   Future<void> _openItemActions(InventoryItem item) async {
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -704,6 +795,161 @@ class _InventoryScreenState extends State<InventoryScreen> {
     } else if (action == 'delete') {
       await _deleteItem(item);
     }
+  }
+}
+
+/// Resumen superior tipo dashboard de TODA la despensa (ya filtrada): totales
+/// de Frescos / Caducan pronto / Caducados en números grandes con los colores
+/// de estado de AppColors, más un Miau cozy con un mensaje que cambia según la
+/// urgencia. Pensado para que "entre por los ojos" y sirva de vistazo rápido.
+class _DashboardSummary extends StatelessWidget {
+  final List<_InventorySection> sections;
+  const _DashboardSummary({required this.sections});
+
+  @override
+  Widget build(BuildContext context) {
+    var frescos = 0;
+    var pronto = 0;
+    var caducados = 0;
+    for (final s in sections) {
+      if (!s.isFood) continue;
+      frescos += s.frescos;
+      pronto += s.pronto;
+      caducados += s.caducados;
+    }
+
+    // Miau reacciona a lo que de verdad importa: alarma suave si hay caducados,
+    // aviso si algo caduca pronto, y tranquilidad si todo está en orden.
+    final MiauMood mood;
+    final String message;
+    if (caducados > 0) {
+      mood = MiauMood.neutral;
+      message = caducados == 1
+          ? '¡Miau! Hay 1 producto caducado, échale un ojo.'
+          : '¡Miau! Hay $caducados productos caducados, échales un ojo.';
+    } else if (pronto > 0) {
+      mood = MiauMood.curious;
+      message = pronto == 1
+          ? 'Ojo: 1 producto caduca pronto. ¡A cocinarlo!'
+          : 'Ojo: $pronto productos caducan pronto. ¡A cocinarlos!';
+    } else {
+      mood = MiauMood.celebrating;
+      message = 'Todo bajo control en tu despensa, ¡bien hecho!';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.cardDecoration(radius: 18),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              MiauCharacter(mood: mood, size: 52),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _DashboardStat(
+                label: 'Frescos',
+                count: frescos,
+                color: AppColors.fresh,
+                background: AppColors.freshBg,
+                icon: Icons.check_circle,
+              ),
+              const SizedBox(width: 8),
+              _DashboardStat(
+                label: 'Caducan pronto',
+                count: pronto,
+                color: AppColors.soon,
+                background: AppColors.soonBg,
+                icon: Icons.schedule,
+              ),
+              const SizedBox(width: 8),
+              _DashboardStat(
+                label: 'Caducados',
+                count: caducados,
+                color: AppColors.expired,
+                background: AppColors.expiredBg,
+                icon: Icons.warning_amber_rounded,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tarjeta-resumen del dashboard: un NÚMERO grande y su etiqueta de estado con
+/// el color cálido correspondiente (fresco/pronto/caducado).
+class _DashboardStat extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+  final Color background;
+  final IconData icon;
+
+  const _DashboardStat({
+    required this.label,
+    required this.count,
+    required this.color,
+    required this.background,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final active = count > 0;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: active ? background : AppColors.cream,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: active ? color.withValues(alpha: 0.45) : AppColors.wood,
+            width: 1.2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: active ? color : AppColors.woodDark),
+            const SizedBox(height: 4),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: active ? color : AppColors.woodDark,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: active ? color : AppColors.woodDark,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
