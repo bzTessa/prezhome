@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Enganchar el acceso a BatchPrepTimelineScreen desde lib/meal_plan_screen.dart (que ya carga el plan semanal y las recetas) con un botón/acceso 'Modo cocina' que haga Navigator.push pasándole las recetas planificadas pertinentes. NO tocar main_shell.dart (colisión con Paso 2). Documentar en comentario el enganche futuro gateado por el módulo batchCooking. Regenerar el mapa de dependencias y verificación final completa. Depende de FEAT-002.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "En lib/meal_plan_screen.dart importar 'batch_prep_timeline_screen.dart'. Añadir un acceso visible 'Modo cocina' (botón/tarjeta con PressScale e icono válido tipo Icons.restaurant_menu o Icons.outdoor_grill) dentro de _buildPlan (p. ej. junto al _mealPrepCard o encima de la lista de días) que recoja las recetas planificadas pertinentes y haga Navigator.push(MaterialPageRoute(builder: (_) => BatchPrepTimelineScreen(recipes: <recetas>))).",
     "Elegir las recetas a pasar de forma coherente con lo que ya hay: a partir de data.entries (no skipped, con recipeId) resolver las Recipe vía data.recipesById, deduplicadas, de la sesión/día relevante (p. ej. las recetas con comidas planificadas esta semana, o del día elegido). Mantenerlo simple y determinista; reutilizar _PlanData.",
@@ -28,5 +28,5 @@
     "git diff --name-only main -- lib/main_shell.dart (sin salida)"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementado en lib/meal_plan_screen.dart: import de 'batch_prep_timeline_screen.dart' y de 'widgets/animations/press_scale.dart'. Añadido helper _plannedRecipes(data) que resuelve las Recipe desde data.entries (no skipped, con recipeId) vía data.recipesById, deduplicadas por id y deterministas (primera aparición). Nueva tarjeta _cookModeCard con PressScale e Icons.outdoor_grill que hace Navigator.push a BatchPrepTimelineScreen(recipes: ...). Insertada en _buildPlan encima de la lista de días y SOLO cuando _plannedRecipes no está vacío (la pantalla destino ya tiene empty state). Comentario de doc en _cookModeCard explicando el enganche futuro por HomeModule.batchCooking en main_shell.dart (no tocado en este paso). Verificación CI completa: dart format --set-exit-if-changed . = 0 cambios; flutter analyze = No issues found!; flutter test = 214 verdes; dependency_map.dart --check = actualizado (regenerado docs/architecture/dependency-map.md, counts screens 26->27 y services 11->12 reflejan los dos ficheros nuevos); git diff main -- lib/main_shell.dart vacío. Nota de entorno: flutter corre como root (warning inofensivo); flutter pub get / analyze / test regeneran autogenerados (analysis_options.yaml, linux/macos/windows, pubspec.lock) que hay que descartar con git checkout -- antes de commitear. Tokens AppColors.sageBg/woodDark confirmados en app_theme.dart. Commit: 07a30b3."
 }
