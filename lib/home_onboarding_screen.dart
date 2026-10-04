@@ -40,7 +40,11 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
       await action();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MainShell()),
+          // Clave compartida del shell para que, tras crear/unirse a un hogar,
+          // los cambios de módulos hechos en el wizard (p. ej. desde el aviso
+          // de calorías de Inicio) refresquen la barra de navegación vía
+          // MainShell.reloadModules(), igual que en el flujo post-login.
+          MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey)),
           (_) => false,
         );
       }
