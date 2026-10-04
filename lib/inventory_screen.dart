@@ -4,8 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
 import 'theme/app_theme.dart';
-import 'utils/shopping_display.dart';
-import 'widgets/food_image.dart';
+import 'widgets/animations/staggered_entrance.dart';
+import 'widgets/inventory_item_card.dart';
 import 'widgets/miau_character.dart';
 
 /// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
@@ -215,7 +215,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  MiauCharacter(mood: MiauMood.curious, size: 120),
+                  // Despensa VACÍA: Miau en pose "pensando" (miau_pensando.png)
+                  // con balanceo suave; MiauCharacter respeta reduce-motion.
+                  MiauCharacter(mood: MiauMood.curious, size: 120, float: true),
                   SizedBox(height: 16),
                   Text(
                     '¡Todo está vacío por aquí, Miau!',
@@ -538,16 +540,40 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
+  /// Cuerpo de una sección: CUADRÍCULA de tarjetas de producto. Vive dentro del
+  /// ListView exterior de secciones, así que el grid usa shrinkWrap y desactiva
+  /// su propio scroll (el número de items por sección es acotado). En móvil se
+  /// pintan 2 columnas (ancho máximo por celda ~180).
   Widget _sectionBody(_InventorySection section) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-      child: Column(
-        children: [
-          for (var i = 0; i < section.items.length; i++) ...[
-            if (i > 0) const Divider(height: 1, color: AppColors.cream),
-            _itemRow(section.items[i], section),
-          ],
-        ],
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 180,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          // Alto para imagen cuadrada + nombre + cantidad + barra sin overflow.
+          childAspectRatio: 0.74,
+        ),
+        itemCount: section.items.length,
+        itemBuilder: (context, i) {
+          final item = section.items[i];
+          // Las especias son 'comida' pero no muestran caducidad (igual que no
+          // mostraban chip): sin barra. Hogar (isFood=false) tampoco.
+          final showExpiryBar = section.isFood && item.category != 'Especias';
+          return StaggeredEntrance(
+            index: i,
+            child: InventoryItemCard(
+              item: item,
+              showExpiryBar: showExpiryBar,
+              onTap: () => _openItemActions(item),
+              onLongPress: () => _openItemActions(item),
+            ),
+          );
+        },
       ),
     );
   }
@@ -680,115 +706,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
       child: Text(
         text,
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
-      ),
-    );
-  }
-
-  /// Fila de producto limpia y táctil dentro de la tarjeta de sección. Sin
-  /// triple redundancia de ubicación: no repetimos la ubicación en el subtítulo
-  /// (la da la sección) ni la pastilla 'Hogar/Limpieza'. Conservamos la pastilla
-  /// 'No se compra' (is_staple), la cantidad legible y el chip de caducidad.
-  Widget _itemRow(InventoryItem item, _InventorySection section) {
-    // Las especias son 'comida' pero no mostramos chip de caducidad (no suele
-    // aplicar y ensucia la fila con "Sin fecha").
-    final isFood = item.itemType == 'comida' && item.category != 'Especias';
-    final qty = inventoryQtyLabel(item.quantity, item.unit);
-    final subtitleParts = <String>[
-      if (qty.isNotEmpty) qty,
-      if (item.kind != 'ingredient') item.kindLabel,
-      if (item.servings != null) '${item.servings!.toStringAsFixed(0)} rac.',
-    ];
-
-    return InkWell(
-      onTap: () => _openItemActions(item),
-      onLongPress: () => _openItemActions(item),
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          children: [
-            FoodImage(
-              name: item.name,
-              itemType: item.itemType,
-              imageUrl: item.imageUrl,
-              size: 52,
-              radius: 14,
-              // Muestra la FOTO real del alimento si la hay; si no, cae a la
-              // ilustración cozy por categoría. Las especias usan siempre
-              // ilustración (sus fotos salen genéricas).
-              forceIllustration: item.category == 'Especias',
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          shoppingCleanName(item.name),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ),
-                      if (item.isStaple) _stapleBadge(),
-                    ],
-                  ),
-                  if (subtitleParts.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitleParts.join(' • '),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.ink.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                  if (isFood) ...[
-                    const SizedBox(height: 6),
-                    _ExpiryChip(item: item),
-                  ],
-                ],
-              ),
-            ),
-            // Las acciones (editar / no comprar / eliminar) van por pulsación;
-            // un punto de "más" lo insinúa.
-            Icon(Icons.more_vert, size: 20, color: Colors.grey[400]),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Pastilla "No se compra" (is_staple). Esta información NO la da la sección,
-  /// por eso se conserva en la fila.
-  Widget _stapleBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      margin: const EdgeInsets.only(left: 4),
-      decoration: BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.woodDark),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.remove_shopping_cart, size: 12, color: AppColors.woodDark),
-          SizedBox(width: 3),
-          Text(
-            'No se compra',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.woodDark,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1040,88 +957,5 @@ class _DashboardStat extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Chip (pastilla) de estado de caducidad con color e icono cálidos y texto en
-/// español sensible al día: 'Caducado', 'Caduca hoy', 'Caduca mañana',
-/// 'Caduca en N días', o una fecha para los que están lejos; 'Sin fecha' si no
-/// tiene caducidad conocida.
-class _ExpiryChip extends StatelessWidget {
-  final InventoryItem item;
-  const _ExpiryChip({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final status = item.expiryStatus;
-    final Color bg;
-    final Color fg;
-    final IconData icon;
-
-    switch (status) {
-      case ExpiryStatus.fresco:
-        bg = AppColors.freshBg;
-        fg = AppColors.fresh;
-        icon = Icons.check_circle;
-        break;
-      case ExpiryStatus.pronto:
-        bg = AppColors.soonBg;
-        fg = AppColors.soon;
-        icon = Icons.schedule;
-        break;
-      case ExpiryStatus.caducado:
-        bg = AppColors.expiredBg;
-        fg = AppColors.expired;
-        icon = Icons.warning_amber_rounded;
-        break;
-      case ExpiryStatus.sinFecha:
-        bg = AppColors.cream;
-        fg = AppColors.woodDark;
-        icon = Icons.help_outline;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 4),
-          Text(
-            _label(),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: fg,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _label() {
-    final status = item.expiryStatus;
-    if (status == ExpiryStatus.sinFecha) return 'Sin fecha';
-
-    final days = item.daysUntilExpiry;
-    if (days == null) return 'Sin fecha';
-
-    if (days < 0) return 'Caducado';
-    if (days == 0) return 'Caduca hoy';
-    if (days == 1) return 'Caduca mañana';
-    if (status == ExpiryStatus.pronto) return 'Caduca en $days días';
-
-    // Fresco y lejano: mostramos una fecha completa dd/mm/yyyy para que no
-    // sea ambigua al cruzar el cambio de año.
-    final expiry = item.effectiveExpiry!;
-    return 'Caduca ${expiry.day.toString().padLeft(2, '0')}/'
-        '${expiry.month.toString().padLeft(2, '0')}/'
-        '${expiry.year}';
   }
 }
