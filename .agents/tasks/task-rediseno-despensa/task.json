@@ -1,0 +1,7 @@
+{
+  "task_id": "task-rediseno-despensa",
+  "task_description": "Rediseño de producto de la sección DESPENSA de PrezHome (sub-tabs Inventario y Compra) dirigido por el feedback de la usuaria: la despensa 'se ve rara' y la lista de la compra 'sigue sin convencerme'. Objetivo: diseño y practicidad para uso en MÓVIL, estética cozy agradable que llame la atención, y decisión razonada sobre desplegables (acordeones). Decisión de UX tomada (basada en NN/g): desplegables SÍ pero inteligentes (secciones urgentes -caduca pronto/caducado- abiertas por defecto, tranquilas colapsadas), resumen superior tipo dashboard, filas limpias sin triple redundancia de ubicación, cantidades con concordancia ('1 unidad'/'2 unidades'), icono específico para hogar/limpieza, y lista de la compra de la misma familia visual. Es UI/UX puro: NO requiere migración de base de datos.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

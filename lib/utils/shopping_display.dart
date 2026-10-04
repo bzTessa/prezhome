@@ -25,15 +25,17 @@ const Set<String> _brandWords = {
   'eliges',
 };
 
-/// Abreviatura corta de una unidad para la pastilla de cantidad.
-String _shortUnit(String unit, num quantity) {
-  final u = unit.trim().toLowerCase();
-  final plural = quantity != 1;
-  switch (u) {
+/// Normaliza una unidad (en cualquiera de sus variantes de entrada) a una
+/// CLAVE canónica interna. Así la lógica de concordancia singular/plural y de
+/// abreviaturas vive en un único sitio y la comparten la etiqueta corta de la
+/// compra (`_shortUnit`) y la larga del inventario (`inventoryQtyLabel`).
+/// Devuelve null si la unidad no es conocida (p. ej. una medida libre).
+String? _unitKey(String unit) {
+  switch (unit.trim().toLowerCase()) {
     case 'unidad':
     case 'unidades':
     case 'ud':
-      return 'ud';
+      return 'unidad';
     case 'g':
     case 'gr':
     case 'gramo':
@@ -46,33 +48,73 @@ String _shortUnit(String unit, num quantity) {
     case 'l':
     case 'litro':
     case 'litros':
-      return 'L';
+      return 'l';
     case 'diente':
     case 'dientes':
-      return plural ? 'dientes' : 'diente';
+      return 'diente';
     case 'loncha':
     case 'lonchas':
-      return plural ? 'lonchas' : 'loncha';
+      return 'loncha';
     case 'lata':
     case 'latas':
-      return plural ? 'latas' : 'lata';
+      return 'lata';
     case 'bote':
     case 'botes':
-      return plural ? 'botes' : 'bote';
+      return 'bote';
     case 'bolsa':
     case 'bolsas':
-      return plural ? 'bolsas' : 'bolsa';
+      return 'bolsa';
     case 'cucharada':
     case 'cucharadas':
-      return 'cda';
+      return 'cucharada';
     case 'cucharadita':
     case 'cucharaditas':
-      return 'cdta';
+      return 'cucharadita';
     case 'al gusto':
     case 'a ojo':
       return '';
     default:
-      return unit.trim();
+      return null;
+  }
+}
+
+/// Formas (singular, plural) de cada unidad canónica para la etiqueta LARGA
+/// del inventario. Las unidades métricas no varían con el número.
+const Map<String, (String, String)> _unitForms = {
+  'unidad': ('unidad', 'unidades'),
+  'g': ('g', 'g'),
+  'kg': ('kg', 'kg'),
+  'ml': ('ml', 'ml'),
+  'l': ('L', 'L'),
+  'diente': ('diente', 'dientes'),
+  'loncha': ('loncha', 'lonchas'),
+  'lata': ('lata', 'latas'),
+  'bote': ('bote', 'botes'),
+  'bolsa': ('bolsa', 'bolsas'),
+  'cucharada': ('cucharada', 'cucharadas'),
+  'cucharadita': ('cucharadita', 'cucharaditas'),
+};
+
+/// Abreviatura CORTA de una unidad para la pastilla de cantidad de la compra.
+/// Deriva de la clave canónica (`_unitKey`) para no duplicar el mapeo de
+/// variantes; solo cambia la forma mostrada (p. ej. 'unidad' -> 'ud').
+String _shortUnit(String unit, num quantity) {
+  final key = _unitKey(unit);
+  if (key == null) return unit.trim();
+  final plural = quantity != 1;
+  switch (key) {
+    case 'unidad':
+      return 'ud';
+    case 'cucharada':
+      return 'cda';
+    case 'cucharadita':
+      return 'cdta';
+    case '':
+      return '';
+    default:
+      final forms = _unitForms[key];
+      if (forms == null) return key;
+      return plural ? forms.$2 : forms.$1;
   }
 }
 
@@ -97,6 +139,38 @@ String shoppingQtyLabel(double? quantity, String? unit) {
   final num q = quantity;
   if (short.isEmpty) return _fmtNum(q);
   return '${_fmtNum(q)} $short';
+}
+
+/// Etiqueta LARGA de cantidad para la fila del inventario de la despensa.
+/// A diferencia de `shoppingQtyLabel` (pastilla compacta de la compra: '4 ud'),
+/// aquí mostramos la unidad completa con concordancia singular/plural para que
+/// la fila se lea natural: '1 unidad', '2 unidades', '300 g', '1,5 kg',
+/// '1 bote', '2 botes'. Nunca devuelve '1.0' ni '1 unidades'.
+/// Ej: (1,'unidad') -> "1 unidad"; (2,'ud') -> "2 unidades"; (null,'al gusto')
+/// -> "al gusto"; (null,'g') -> "".
+String inventoryQtyLabel(double? quantity, String? unit) {
+  final u = (unit ?? '').trim();
+  if (quantity == null) {
+    // Sin cantidad solo tiene sentido una expresión suelta (al gusto / a ojo).
+    final lu = u.toLowerCase();
+    if (lu == 'al gusto' || lu == 'a ojo') return u;
+    return '';
+  }
+  final num q = quantity;
+  final key = _unitKey(u);
+  // Unidad desconocida: mostramos el texto tal cual (p. ej. una medida libre).
+  if (key == null) {
+    final raw = u;
+    if (raw.isEmpty) return _fmtNum(q);
+    return '${_fmtNum(q)} $raw';
+  }
+  // Expresión suelta sin unidad real (al gusto / a ojo): solo el número.
+  if (key.isEmpty) return _fmtNum(q);
+  final forms = _unitForms[key];
+  if (forms == null) return _fmtNum(q);
+  final plural = q != 1;
+  final label = plural ? forms.$2 : forms.$1;
+  return '${_fmtNum(q)} $label';
 }
 
 /// Limpia el NOMBRE del producto para mostrarlo: quita palabras de marca
