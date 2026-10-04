@@ -40,6 +40,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // usuaria puede desplegarlo para desmarcar o borrar.
   bool _cartExpanded = false;
 
+  // Overrides manuales de expandido/colapsado por categoría de la compra
+  // (clave = FoodCategory.name). Las categorías de pendientes arrancan TODAS
+  // expandidas (lo que falta por comprar sí apremia); lo que la usuaria plega a
+  // mano se recuerda aquí mientras la pantalla viva.
+  final Map<String, bool> _catCollapsed = {};
+
   // Precios conocidos del hogar (para estimar el coste de la compra).
   Map<String, ProductPrice> _prices = {};
 
@@ -890,10 +896,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     for (final cat in FoodCategory.values) {
       final items = grupos[cat];
       if (items == null || items.isEmpty) continue;
-      // Cada categoría es UNA tarjeta cozy, con el MISMO lenguaje visual que
-      // las secciones del inventario rediseñado: cabecera con icono en pastilla
-      // de madera + "ETIQUETA · N", y debajo las filas separadas por divisores
-      // suaves. Menos ruido que una tarjeta con sombra por cada producto.
+      // Cada categoría es UNA tarjeta cozy COLAPSABLE, con el MISMO lenguaje
+      // visual que las secciones del inventario rediseñado: cabecera-toggle con
+      // icono en pastilla del tono de la categoría + etiqueta + contador +
+      // chevron animado, y debajo las filas separadas por divisores suaves.
+      // Arranca EXPANDIDA (lo que falta por comprar apremia); la usuaria puede
+      // plegarla y se recuerda en _catCollapsed.
+      final expanded = !(_catCollapsed[cat.name] ?? false);
       widgets.add(
         Container(
           margin: const EdgeInsets.only(bottom: 14),
@@ -902,21 +911,26 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _categoryHeader(cat, items.length),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-                child: Column(
-                  children: [
-                    for (var i = 0; i < items.length; i++) ...[
-                      if (i > 0)
-                        Divider(
-                          height: 1,
-                          color: AppColors.cream.withValues(alpha: 1),
-                        ),
-                      _buildRow(items[i]),
+              _categoryHeader(cat, items.length, expanded),
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 220),
+                sizeCurve: Curves.easeInOut,
+                crossFadeState: expanded
+                    ? CrossFadeState.showFirst
+                    : CrossFadeState.showSecond,
+                firstChild: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < items.length; i++) ...[
+                        if (i > 0)
+                          const Divider(height: 1, color: AppColors.cream),
+                        _buildRow(items[i]),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
+                secondChild: const SizedBox(width: double.infinity),
               ),
             ],
           ),
@@ -926,36 +940,78 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return widgets;
   }
 
-  /// Cabecera de sección coherente con la del inventario: icono dentro de una
-  /// pastilla de madera (40x40), título "ETIQUETA · N" y tono cálido sobre
-  /// crema. Da el mismo "mini-índice" de un vistazo que las secciones de la
-  /// despensa.
-  Widget _categoryHeader(FoodCategory category, int count) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.wood,
-              borderRadius: BorderRadius.circular(12),
+  /// Cabecera-toggle de sección coherente con la del inventario: icono dentro
+  /// de una pastilla con el TONO cozy de la categoría, etiqueta, contador en
+  /// pastilla y chevron animado. Pliega/despliega la categoría al tocarla.
+  Widget _categoryHeader(FoodCategory category, int count, bool expanded) {
+    final style = CategoryIcons.styleForCategory(category);
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _catCollapsed[category.name] = expanded;
+        });
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: style.background,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(style.icon, color: style.foreground, size: 22),
             ),
-            child: Icon(category.icon, color: AppColors.ink, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '${category.label} · $count',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: AppColors.ink,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      category.label,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: style.background,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: style.foreground,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            AnimatedRotation(
+              turns: expanded ? 0.5 : 0,
+              duration: const Duration(milliseconds: 220),
+              child: const Icon(
+                Icons.expand_more,
+                color: AppColors.woodDark,
+                size: 26,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1034,11 +1090,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               child: Column(
                 children: [
                   for (var i = 0; i < comprados.length; i++) ...[
-                    if (i > 0)
-                      Divider(
-                        height: 1,
-                        color: AppColors.cream.withValues(alpha: 1),
-                      ),
+                    if (i > 0) const Divider(height: 1, color: AppColors.cream),
                     _buildRow(comprados[i]),
                   ],
                 ],

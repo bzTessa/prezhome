@@ -24,6 +24,26 @@ class _InventorySection {
     required this.items,
   });
 
+  /// Par de colores cozy (fondo suave + icono) para la pastilla de la cabecera,
+  /// de forma que cada ubicación tenga su propio tono y la vista "entre por los
+  /// ojos" sin recargar. Todos salen de AppColors.
+  (Color, Color) get accent {
+    switch (title) {
+      case 'Nevera':
+        return (AppColors.frostBg, AppColors.frost);
+      case 'Congelador':
+        return (AppColors.frostBg, AppColors.frost);
+      case 'Bebidas':
+        return (AppColors.sageBg, AppColors.sage);
+      case 'Especias y condimentos':
+        return (AppColors.terracottaBg, AppColors.terracotta);
+      case 'Hogar y limpieza':
+        return (AppColors.sageBg, AppColors.sage);
+      default:
+        return (AppColors.peachBg, AppColors.peach);
+    }
+  }
+
   /// Clave estable para recordar el estado expandido/colapsado entre rebuilds.
   String get key => title;
 
@@ -218,7 +238,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
           return Column(
             children: [
               _sectionFilterBar(),
-              Expanded(child: _buildSections(filtered)),
+              // El dashboard recibe SIEMPRE la lista COMPLETA (sin filtrar): es
+              // un resumen GLOBAL de toda la despensa que no debe encogerse al
+              // tocar un chip. Las secciones de abajo sí usan la lista filtrada.
+              Expanded(child: _buildSections(filtered, allItems: items)),
             ],
           );
         },
@@ -427,26 +450,38 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return sections.where((s) => s.items.isNotEmpty).toList();
   }
 
-  Widget _buildSections(List<InventoryItem> items) {
+  Widget _buildSections(
+    List<InventoryItem> items, {
+    required List<InventoryItem> allItems,
+  }) {
+    final sections = _groupIntoSections(items);
+
+    // El dashboard es un resumen GLOBAL: se calcula SIEMPRE sobre toda la
+    // despensa (allItems, antes de filtrar), por eso sigue presente aunque la
+    // sección filtrada esté vacía. Debajo pintamos solo las secciones filtradas.
+    final children = <Widget>[
+      _DashboardSummary(allItems: allItems),
+      const SizedBox(height: 16),
+    ];
+
     if (items.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'No hay productos en esta categoría.',
-            style: TextStyle(color: AppColors.ink, fontSize: 15),
+      children.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+            child: Text(
+              'No hay productos en esta categoría.',
+              style: TextStyle(color: AppColors.ink, fontSize: 15),
+            ),
           ),
         ),
       );
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+        children: children,
+      );
     }
 
-    final sections = _groupIntoSections(items);
-
-    // Resumen superior tipo dashboard + una tarjeta colapsable por sección.
-    final children = <Widget>[
-      _DashboardSummary(sections: sections),
-      const SizedBox(height: 16),
-    ];
     for (final section in sections) {
       children.add(_sectionCard(section));
       children.add(const SizedBox(height: 14));
@@ -509,8 +544,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       child: Column(
         children: [
           for (var i = 0; i < section.items.length; i++) ...[
-            if (i > 0)
-              Divider(height: 1, color: AppColors.cream.withValues(alpha: 1)),
+            if (i > 0) const Divider(height: 1, color: AppColors.cream),
             _itemRow(section.items[i], section),
           ],
         ],
@@ -520,6 +554,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   /// Cabecera-toggle de la sección: actúa como botón para plegar/desplegar.
   Widget _sectionHeader(_InventorySection section, bool expanded) {
+    final (accentBg, accentFg) = section.accent;
+    final showUrgencias =
+        section.isFood && (section.pronto > 0 || section.caducados > 0);
+    // En una sección de comida colapsada SIN urgencias, un sello verde de
+    // "Todo al día" tranquiliza: plegar no esconde nada que apremie.
+    final showTodoAlDia = section.isFood && !expanded && !showUrgencias;
     return InkWell(
       onTap: () => _toggleSection(section),
       borderRadius: BorderRadius.circular(18),
@@ -528,33 +568,50 @@ class _InventoryScreenState extends State<InventoryScreen> {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: AppColors.wood,
-                borderRadius: BorderRadius.circular(12),
+                color: accentBg,
+                borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(section.icon, color: AppColors.ink, size: 22),
+              child: Icon(section.icon, color: accentFg, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${section.title} · ${section.items.length}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.ink,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          section.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Contador en pastilla con el tono de la sección: más
+                      // legible que el "· N" pegado al título.
+                      _countPill(section.items.length, accentBg, accentFg),
+                    ],
                   ),
                   // Resumen compacto de estado para ver de un vistazo si una
-                  // sección colapsada esconde urgencias.
-                  if (section.isFood &&
-                      (section.pronto > 0 || section.caducados > 0)) ...[
+                  // sección colapsada esconde urgencias; si no las hay y está
+                  // plegada, un sello verde de tranquilidad.
+                  if (showUrgencias) ...[
                     const SizedBox(height: 4),
                     _miniStatusRow(section),
+                  ] else if (showTodoAlDia) ...[
+                    const SizedBox(height: 4),
+                    _miniStatusChip(
+                      'Todo al día',
+                      AppColors.freshBg,
+                      AppColors.fresh,
+                    ),
                   ],
                 ],
               ),
@@ -570,6 +627,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Pastilla con el número de items de la sección, en el tono de la ubicación.
+  Widget _countPill(int count, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$count',
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: fg),
       ),
     );
   }
@@ -798,24 +870,42 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 }
 
-/// Resumen superior tipo dashboard de TODA la despensa (ya filtrada): totales
-/// de Frescos / Caducan pronto / Caducados en números grandes con los colores
-/// de estado de AppColors, más un Miau cozy con un mensaje que cambia según la
-/// urgencia. Pensado para que "entre por los ojos" y sirva de vistazo rápido.
+/// Resumen superior tipo dashboard, SIEMPRE GLOBAL: totales de Frescos /
+/// Caducan pronto / Caducados de TODA la despensa (todos los items de comida
+/// cargados, sin aplicar el filtro de sección), en números grandes con los
+/// colores de estado de AppColors, más un Miau cozy con un mensaje que cambia
+/// según la urgencia. Al ser global, NO cambia al tocar un chip de filtro: da
+/// un vistazo estable del estado real de toda la despensa.
 class _DashboardSummary extends StatelessWidget {
-  final List<_InventorySection> sections;
-  const _DashboardSummary({required this.sections});
+  /// Lista COMPLETA de items (sin filtrar). El dashboard solo cuenta los de
+  /// comida con fecha de caducidad relevante.
+  final List<InventoryItem> allItems;
+  const _DashboardSummary({required this.allItems});
 
   @override
   Widget build(BuildContext context) {
     var frescos = 0;
     var pronto = 0;
     var caducados = 0;
-    for (final s in sections) {
-      if (!s.isFood) continue;
-      frescos += s.frescos;
-      pronto += s.pronto;
-      caducados += s.caducados;
+    // Totales sobre TODA la comida con semáforo de caducidad. Igual que en las
+    // secciones, las especias quedan fuera (no se les muestra caducidad) y los
+    // 'sin fecha' no suman en ninguno de los tres estados.
+    for (final item in allItems) {
+      if (item.itemType != 'comida') continue;
+      if (item.category == 'Especias') continue;
+      switch (item.expiryStatus) {
+        case ExpiryStatus.fresco:
+          frescos++;
+          break;
+        case ExpiryStatus.pronto:
+          pronto++;
+          break;
+        case ExpiryStatus.caducado:
+          caducados++;
+          break;
+        case ExpiryStatus.sinFecha:
+          break;
+      }
     }
 
     // Miau reacciona a lo que de verdad importa: alarma suave si hay caducados,
