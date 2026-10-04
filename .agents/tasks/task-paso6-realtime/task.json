@@ -1,0 +1,7 @@
+{
+  "task_id": "task-paso6-realtime",
+  "task_description": "PASO 6: Add Supabase Realtime (additive, non-breaking) to lib/shopping_list_screen.dart and lib/tasks_screen.dart so a household member's checking of a shopping item or claiming of a Bolsa Comun task reflects instantly on the other member's screen without manual reload. Manage channels in initState/dispose within the always-alive IndexedStack, avoid own-echo/duplicates via idempotent DB-authoritative reload, handle realtime failures silently with a discreet card-style SnackBar (BorderRadius 16, floating) shown once, add idempotent migration 0043 putting both tables in supabase_realtime, and unit-test the extracted pure logic. Keep test count >= 281.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}
