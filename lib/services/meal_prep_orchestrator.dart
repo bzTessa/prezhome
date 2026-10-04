@@ -58,10 +58,6 @@ class OrchestratorRecipe {
   /// derivan los pasos de ahí; si no, se genera un único paso genérico.
   final String? instructions;
 
-  /// Nombres de componentes/sub-recetas (opcional). Solo se usan para
-  /// enriquecer títulos, nunca para inventar pasos.
-  final List<String> componentNames;
-
   const OrchestratorRecipe({
     required this.id,
     required this.title,
@@ -69,7 +65,6 @@ class OrchestratorRecipe {
     this.prepTimeMinutes,
     this.cookTimeMinutes,
     this.instructions,
-    this.componentNames = const [],
   });
 
   /// Tiempo total estimado (prep + cook) en minutos; 0 si no se conoce ninguno.
@@ -152,20 +147,46 @@ class TimelinePlan {
   bool get isEmpty => steps.isEmpty;
   bool get isNotEmpty => steps.isNotEmpty;
 
-  /// Minutos totales estimados de forma REALISTA. Los pasos que pueden correr
-  /// en paralelo ([TimelineStep.canRunInParallel] true) NO se suman en serie:
-  /// se asume que solapan con lo que ya está ocurriendo (p. ej. preparas un
-  /// plato mientras otro está en el horno). El resto se suma en serie.
+  /// Minutos totales estimados de forma REALISTA, acotando el solape para no
+  /// prometer tiempos irreales.
   ///
-  /// Fórmula: total = suma de las duraciones de los pasos NO paralelos. Un
-  /// bloque de cocción agrupado aporta una sola vez su duración (el máximo del
-  /// grupo), no la suma de cada receta, porque comparten aparato y tiempo.
+  /// Dos "carriles" discurren a la vez: los pasos que ocupan un aparato
+  /// (cocción, en serie porque hay que esperar a que cada uno termine) y las
+  /// preparaciones manuales que pueden adelantarse mientras algo cuece. Esas
+  /// preparaciones SOLO caben dentro del tiempo que los aparatos están
+  /// ocupados; lo que no quepa en esa ventana se hace después, en serie.
+  ///
+  /// Fórmula (simple y explicable):
+  ///   - `tiempoAparatos` = suma en serie de los pasos de cocción (los bloques
+  ///     agrupados cuentan una sola vez su máximo, no la suma del grupo).
+  ///   - `prepParalela`  = suma de las preparaciones marcadas solapables.
+  ///   - `prepSerie`     = suma de las preparaciones que van en serie.
+  ///   - total = prepSerie + max(tiempoAparatos, prepParalela)
+  ///
+  /// Así, cuando la cocción domina (caso típico: dos platos al horno) la prep
+  /// se "esconde" dentro del tiempo de aparato y no suma; pero cuando la
+  /// preparación manual es mucho mayor que la cocción, el total NO baja de la
+  /// preparación real: el solape no puede inventar tiempo que no existe.
   int get totalEstimatedMinutes {
-    var total = 0;
+    var tiempoAparatos = 0;
+    var prepParalela = 0;
+    var prepSerie = 0;
     for (final step in steps) {
-      if (!step.canRunInParallel) total += step.durationMinutes;
+      if (step.isPrep) {
+        if (step.canRunInParallel) {
+          prepParalela += step.durationMinutes;
+        } else {
+          prepSerie += step.durationMinutes;
+        }
+      } else {
+        // Paso de cocción: ocupa un aparato y se hace en serie.
+        tiempoAparatos += step.durationMinutes;
+      }
     }
-    return total;
+    final solapado = tiempoAparatos > prepParalela
+        ? tiempoAparatos
+        : prepParalela;
+    return prepSerie + solapado;
   }
 }
 

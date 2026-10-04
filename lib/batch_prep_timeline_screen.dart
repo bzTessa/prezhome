@@ -71,7 +71,6 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
             prepTimeMinutes: r.prepTimeMinutes,
             cookTimeMinutes: r.cookTimeMinutes,
             instructions: r.instructions,
-            componentNames: r.components.map((c) => c.name).toList(),
           ),
         )
         .toList();

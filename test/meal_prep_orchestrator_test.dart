@@ -117,6 +117,27 @@ void main() {
       // El bloque de cocción (50) sí cuenta; las preparaciones solapan y no.
       expect(plan.totalEstimatedMinutes, 50);
     });
+
+    test('(5b) con preparación dominante el total NO baja del tiempo de prep '
+        'real (el solape se acota al tiempo de aparato disponible)', () {
+      // Mucha preparación (60 min) y poca cocción (10 min): la prep no cabe
+      // en los 10 min de aparato, así que el total debe reflejar la prep real,
+      // no quedarse en los 10 min de cocción.
+      const prepDominante = OrchestratorRecipe(
+        id: 'guiso',
+        title: 'guiso lento',
+        appliance: 'pot',
+        prepTimeMinutes: 60,
+        cookTimeMinutes: 10,
+        instructions: 'Pica mucha verdura',
+      );
+      final plan = orquestador.buildTimeline(recipes: const [prepDominante]);
+
+      // Solo cabe solapar 10 min de prep dentro de la cocción; el resto va en
+      // serie. total = max(cocción 10, prep 60) = 60, nunca 10.
+      expect(plan.totalEstimatedMinutes, 60);
+      expect(plan.totalEstimatedMinutes, greaterThan(10));
+    });
   });
 
   group('Derivación de pasos sin inventar', () {
