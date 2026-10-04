@@ -69,12 +69,13 @@ class _DependencyGraph {
     final crossImports = <_ModulePair, int>{};
     final libAbsolute = Directory(libPath).absolute.path;
 
-    final files = Directory(libAbsolute)
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.dart'))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
+    final files =
+        Directory(libAbsolute)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.dart'))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
 
     for (final file in files) {
       final relative = _relativeToLib(libAbsolute, file.path);
@@ -134,7 +135,8 @@ class _DependencyGraph {
       ..writeln();
 
     for (final module in modules) {
-      final targets = (moduleDependencies[module] ?? <String>{}).toList()..sort();
+      final targets = (moduleDependencies[module] ?? <String>{}).toList()
+        ..sort();
       final printable = targets.isEmpty
           ? '(sin dependencias internas)'
           : targets.map((target) => '`$target`').join(', ');
@@ -319,9 +321,7 @@ List<List<String>> _findCycles(
     }
   }
 
-  final cycles = canonicalCycles
-      .map((cycle) => cycle.split('->'))
-      .toList()
+  final cycles = canonicalCycles.map((cycle) => cycle.split('->')).toList()
     ..sort((a, b) => a.join(',').compareTo(b.join(',')));
   return cycles;
 }
