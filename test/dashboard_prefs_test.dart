@@ -25,15 +25,18 @@ void main() {
       expect(prefs.order, contains(DashboardCard.tasks));
     });
 
-    test('fromJson ignora un id "calendar" guardado en "hidden" sin romper', () {
-      final prefs = DashboardPrefs.fromJson({
-        'cards': [],
-        'hidden': ['calendar'],
-        'quick': [],
-      });
-      expect(prefs.hidden.map((c) => c.id), isNot(contains('calendar')));
-      // Un perfil antiguo con solo 'calendar' oculto no oculta nada real.
-      expect(prefs.hidden, isEmpty);
-    });
+    test(
+      'fromJson ignora un id "calendar" guardado en "hidden" sin romper',
+      () {
+        final prefs = DashboardPrefs.fromJson({
+          'cards': [],
+          'hidden': ['calendar'],
+          'quick': [],
+        });
+        expect(prefs.hidden.map((c) => c.id), isNot(contains('calendar')));
+        // Un perfil antiguo con solo 'calendar' oculto no oculta nada real.
+        expect(prefs.hidden, isEmpty);
+      },
+    );
   });
 }
