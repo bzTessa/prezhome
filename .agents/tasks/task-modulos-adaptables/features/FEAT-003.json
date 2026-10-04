@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Hacer que lib/main_shell.dart respete los módulos desactivados ocultando sus piezas de navegación de forma ROBUSTA: cargar las prefs (profiles.dashboard_prefs) al construir el shell; recalcular la lista de pestañas e índices de forma que la app siga arrancando en Inicio y que la navegación 'Caducidades -> Despensa' siga funcionando aunque falte una pestaña; reaccionar a cambios al volver del wizard. 'Tareas' off -> oculta la pestaña Tareas. 'Modo Puntos' off -> oculta la parte de puntos/recompensas en Tareas y Economía sin romper el resto. 'Batch Cooking' off -> flag persistido y preparado para el Paso 5 (si no hay pieza visible aún, dejarlo documentado). Depende de FEAT-001.",
+  "status": "pending",
+  "steps": [
+    "Convertir MainShellState para que cargue DashboardPrefs al iniciar: añadir estado 'DashboardPrefs _prefs = DashboardPrefs.defaults();' y un método _loadPrefs() que haga el select de 'dashboard_prefs' en profiles para el usuario actual y DashboardPrefs.fromJson tolerante (mismo patrón que HomeTab._loadPrefs en lib/tabs/home_tab.dart). Llamarlo en initState. Importar models/dashboard_prefs.dart y supabase_flutter.",
+    "Reemplazar los índices hardcodeados (_homeIndex=2, _despensaIndex=1) por un cálculo ROBUSTO basado en una lista de pestañas construida dinámicamente. Definir un orden fijo de pestañas candidatas (Comidas, Despensa, Inicio, Tareas, Hogar) donde SOLO la pestaña Tareas es condicional (se incluye si _prefs.isModuleEnabled(HomeModule.tasks)). Construir una lista de descriptores (p. ej. una pequeña clase/record con el widget-builder, el NavigationDestination y un identificador semántico como enum TabId{comidas,despensa,inicio,tareas,hogar}).",
+    "Calcular los índices por identidad semántica, no por número: el índice de Inicio = posición de inicio en la lista construida; el de Despensa igual. Usar estos índices calculados para: _index inicial (= índice de Inicio, para que arranque en Inicio), el callback onNavigateToDespensa (goToDespensa -> índice calculado de Despensa), y el refresco al volver a Inicio (_onDestinationSelected comparando contra el índice calculado de Inicio). Nunca hardcodear un número que se rompa al quitar Tareas.",
+    "Reconstruir _pages y las NavigationDestination desde la MISMA lista de descriptores para que estén siempre alineados en orden y longitud (evitar desajustes entre children del IndexedStack y destinos del NavigationBar). HomeTab debe seguir recibiendo key: _homeKey y onNavigateToDespensa apuntando al índice de Despensa calculado.",
+    "Mantener goToTab(int) y el refresco (refreshHome / refreshActiveView) funcionando con los índices calculados. Al volver del wizard (donde se cambian los módulos), las prefs del shell deben refrescarse: añadir recarga de _prefs cuando corresponda (p. ej. volver a Inicio dispara refreshActiveView en HomeTab; además, si el wizard puede cambiar la visibilidad de pestañas, exponer un método público para recargar _prefs y reconstruir la navegación, y/o recargar _prefs en el punto donde el flujo de onboarding/wizard retorna al shell). Documentar en comentario cómo se propaga el cambio.",
+    "Clampear _index tras recomputar la lista: si Tareas estaba seleccionada y se desactiva, _index podría quedar fuera de rango; recalcular/clamp al índice de Inicio o al válido más cercano para no crashear el IndexedStack.",
+    "Modo Puntos (HomeModule.points) off: ocultar la parte de puntos/recompensas en lib/tasks_screen.dart y la Economía/puntos en lib/household_screen.dart SIN romper el resto. Localizar en esas pantallas las secciones de puntos/recompensas (grep por 'punto'/'recompensa'/'reward'/'points') y envolver su render en una comprobación del flag. Para que esas pantallas conozcan el flag sin acoplarse al shell, cargar el DashboardPrefs del perfil dentro de cada pantalla (mismo patrón _loadPrefs) o pasarlo; elegir la opción menos invasiva que no rompa tests existentes. Si una pantalla no muestra puntos actualmente, dejar documentado y no forzar cambios.",
+    "Batch Cooking (HomeModule.batchCooking) off: no hay aún pestaña propia de batch cooking (llega en Paso 5). Si existen piezas visibles de batch cooking ya en la app, gobernar su visibilidad con el flag; si no las hay, dejar el flag persistido y añadir un comentario claro en main_shell.dart (o donde proceda) indicando que el Paso 5 (batch_prep_timeline_screen) consumirá _prefs.isModuleEnabled(HomeModule.batchCooking) para mostrar/ocultar su entrada de navegación.",
+    "Verificar que la app arranca en Inicio con módulos por defecto (todos activados) y que con Tareas desactivado la barra muestra 4 pestañas, sigue arrancando en Inicio y 'Caducidades -> Despensa' sigue llevando a Despensa.",
+    "Ejecutar dart format, flutter analyze (No issues found!) y flutter test (todos verdes). Si hay un widget test que dependa del número/orden de pestañas, ajustarlo sin bajar el total de tests."
+  ],
+  "acceptance_criteria": [
+    "Con prefs por defecto (todos los módulos activados) la app arranca en Inicio y muestra las 5 pestañas como antes",
+    "Con el módulo Tareas desactivado, la pestaña Tareas desaparece, la app sigue arrancando en Inicio y la navegación 'Caducidades -> Despensa' sigue funcionando (índices recalculados, sin hardcodear)",
+    "Desactivar Tareas no provoca RangeError ni crash del IndexedStack (índice clampeado)",
+    "Con Modo Puntos desactivado, la parte de puntos/recompensas no se muestra en Tareas ni en Economía, y el resto de esas pantallas sigue funcionando",
+    "El flag de Batch Cooking queda persistido y documentado para el Paso 5 (no rompe nada hoy)",
+    "flutter analyze -> No issues found! y flutter test -> todos verdes (>=201)"
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+    "dart format --output=none --set-exit-if-changed lib/main_shell.dart lib/tasks_screen.dart lib/household_screen.dart",
+    "flutter analyze (esperar 'No issues found!')",
+    "flutter test (todos verdes, total >= 201)",
+    "Revisión del diff: índices de pestañas calculados por identidad semántica (no números hardcodeados), _index clampeado tras recomputar, arranque en Inicio, callback de Despensa intacto"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

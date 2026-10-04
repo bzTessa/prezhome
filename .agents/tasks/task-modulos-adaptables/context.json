@@ -1,0 +1,26 @@
+{
+  "project_type": "Flutter + Supabase app (español, usuaria no técnica). PrezHome: asistente de hogar/cocina.",
+  "language": "Dart (Flutter)",
+  "build_system": "Flutter 3.47.6 / Dart 3.13.5 (SDK ^3.11.1). SDK ya clonado en ~/flutter_sdk. dart format usa el 'tall style'.",
+  "test_framework": "flutter_test (widget + unit). Tests puros en test/*.dart. Baseline main = 201 tests verdes.",
+  "build_command": "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get; flutter analyze (debe decir 'No issues found!')",
+  "test_command": "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; flutter test (todos verdes)",
+  "verification_instructions": "Reproducir CI EXACTO (con el PUNTO): 1) dart format --output=none --set-exit-if-changed . -> 0 changed; 2) flutter analyze -> No issues found!; 3) flutter test -> todos verdes (>=201, no bajar); 4) dart run tool/architecture/dependency_map.dart --check. Si el guard del mapa falla al terminar, regenerar con 'dart run tool/architecture/dependency_map.dart' (sin --check) y commitear docs/architecture/dependency-map.md.",
+  "snapshot_or_generated_files": "docs/architecture/dependency-map.md se genera con 'dart run tool/architecture/dependency_map.dart'. El CI lo valida con --check. flutter pub get modifica autogenerados (analysis_options.yaml, pubspec.lock, linux/macos/windows plugin registrants) -> descartarlos con 'git checkout --' antes de dar el árbol por limpio.",
+  "setup_instructions": "git checkout -b feat/paso2-modulos-adaptables origin/main (YA HECHO). export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get.",
+  "environment_constraints": "Sandbox SIN Flutter/Dart de sistema: usar siempre ~/flutter_sdk/bin en PATH. Flutter corre como root (warning inofensivo). Icons.nutrition NO existe en 3.47.6. heroTag único en FABs. setState con arrow que devuelve Future rompe -> usar cuerpo {}. fromJson/fromMap tolerante a nulls.",
+  "contribution_requirements": "NO push ni PR (lo hace el orquestador). NO tocar la rama feat/paso1-login-profesional ni sus archivos (login_screen.dart, .kiro/steering/design-system.md). Dejar el árbol commiteado y limpio en feat/paso2-modulos-adaptables.",
+  "key_patterns": "DashboardPrefs (lib/models/dashboard_prefs.dart) se serializa a/desde profiles.dashboard_prefs (JSONB) con fromJson/toJson TOLERANTE (ids desconocidos ignorados, defaults si falta). HomeTab (lib/tabs/home_tab.dart) carga con _loadPrefs ('select dashboard_prefs' + DashboardPrefs.fromJson) y guarda con _savePrefs ('update dashboard_prefs' = toJson). El wizard (profile_wizard_screen.dart) hace update PARCIAL de columnas concretas sin pisar otras; para Paso 2 debe leer el dashboard_prefs existente, fusionar módulos+estilo y guardarlo SIN pisar cards/hidden/quick. Diseño: steering design-system.md (radio 16 = AppRadius.md/mdRadius, tokens AppColors/AppSpacing/AppRadius, nada de Colors.grey[xxx] ni 0xFF, PROHIBIDO 'IA'/'AI', tono Cozy español). Selectores de estilo = VISUALES (tarjetas/chips con icono+label, estado seleccionado claro, no dropdown). Patrón _OptionCard ya existe en el wizard. Animaciones: AppMotion, PressScale, StaggeredEntrance (lib/widgets/animations/) respetando reduce-motion (MediaQuery.disableAnimations).",
+  "relevant_files": [
+    "lib/models/dashboard_prefs.dart (AMPLIAR: enums HomeModule + CookingStyle, campos enabledModules/cookingStyle, fromJson/toJson/copyWith tolerantes, defaults = todo activado)",
+    "lib/profile_wizard_screen.dart (AÑADIR pasos: selectores on/off de módulos y selector visual de estilo de cocina; precargar y guardar en dashboard_prefs sin pisar cards/hidden/quick)",
+    "lib/main_shell.dart (RECALCULAR navegación robusta según módulos activados: ocultar pestaña Tareas; cargar prefs; refrescar al volver del wizard)",
+    "lib/tabs/home_tab.dart (patrón _loadPrefs/_savePrefs y fromJson con Map; estudiar como ejemplo)",
+    "lib/tasks_screen.dart (pestaña Tareas; parte de puntos/recompensas = 'Modo Puntos')",
+    "lib/household_screen.dart (pestaña Hogar; Economía/puntos)",
+    "lib/widgets/animations/press_scale.dart, staggered_entrance.dart (feedback al seleccionar)",
+    "lib/theme/app_theme.dart, lib/theme/app_radius.dart (tokens)",
+    "test/dashboard_prefs_test.dart (patrón de tests de serialización tolerante)"
+  ],
+  "directory_structure": "lib/ pantallas raíz + lib/tabs/ (home_tab, comidas_tab, despensa_tab) + lib/models/ + lib/theme/ (tokens) + lib/widgets/animations/. lib/main_shell.dart = NavigationBar de 5 pestañas en IndexedStack (0 Comidas, 1 Despensa, 2 Inicio centro arranca aquí, 3 Tareas, 4 Hogar). supabase/migrations/ (última 0041). test/ unit+widget. tool/architecture/dependency_map.dart genera docs/architecture/dependency-map.md (guard CI)."
+}

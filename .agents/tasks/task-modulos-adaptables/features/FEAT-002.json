@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Añadir al wizard de perfil (lib/profile_wizard_screen.dart) dos pasos nuevos: (a) selectores on/off de los módulos Modo Puntos, Tareas y Batch Cooking, y (b) selector VISUAL de ritmo/estilo de cocina (Batch Cooking vs Diario, y Mixto si se modeló). Precargar lo ya guardado desde profiles.dashboard_prefs y guardarlo al terminar SIN pisar el resto del dashboard_prefs (cards/hidden/quick) ni los demás campos del perfil. Depende de FEAT-001 (enums HomeModule/CookingStyle y DashboardPrefs ampliado).",
+  "status": "pending",
+  "steps": [
+    "Importar lib/models/dashboard_prefs.dart en profile_wizard_screen.dart. Añadir estado en _ProfileWizardScreenState: 'DashboardPrefs _dashboardPrefs = DashboardPrefs.defaults();' (fuente de verdad para no pisar cards/hidden/quick al guardar), más estado de trabajo si procede (p. ej. un Set<HomeModule> _enabledModules y CookingStyle _cookingStyle), o mutar _dashboardPrefs con copyWith directamente al togglear.",
+    "En _loadExisting(): además de los campos actuales, hacer un select de 'dashboard_prefs' (puede ser el mismo o un segundo select) y, con el raw Map, hacer DashboardPrefs.fromJson(Map<String, dynamic>.from(raw)) tolerante (igual que HomeTab._loadPrefs en lib/tabs/home_tab.dart lineas ~113-133). Guardar el resultado en _dashboardPrefs e inicializar el estado de los selectores (enabledModules y cookingStyle) desde ahí. Si no hay prefs, usar DashboardPrefs.defaults() (todo activado).",
+    "Aumentar _totalPages y _resultPage en 2 (de 12 a 14 y de 11 a 13) y actualizar el comentario de numeración de pasos. Insertar los dos pasos NUEVOS antes del paso de resultado (p. ej. como pasos 11 'estilo de cocina' y 12 'módulos', dejando el resultado como último). Añadir las dos nuevas entradas _buildCookingStyleStep() y _buildModulesStep() a la lista children del PageView EN LA MISMA posición relativa, cuidando que el índice del resultado siga coincidiendo con _resultPage.",
+    "Implementar _buildCookingStyleStep(): selector VISUAL siguiendo el estilo Cozy. Reutilizar o replicar el patrón _OptionCard existente (tarjetas seleccionables con icono + título + subtítulo y check de seleccionado) para listar CookingStyle.values con su label/subtitle/icon. Estado seleccionado claro (color AppColors.wood/woodDark, borde). Radio 16 (usar AppRadius.md/mdRadius o BorderRadius.circular(16); el repo tiene _OptionCard a 18 pero el steering pide 16 para nuevas piezas: usar 16). Al tocar, actualizar el estilo elegido en estado con setState (cuerpo {}, no arrow que devuelva Future). Cabecera con _stepHeader('¿Cómo prefieres cocinar?', '...') en español cercano. Opcional: envolver cada tarjeta en PressScale (lib/widgets/animations/press_scale.dart) para feedback, respetando reduce-motion.",
+    "Implementar _buildModulesStep(): lista de los 3 HomeModule con un control on/off por módulo. Puede ser SwitchListTile dentro de tarjetas Cozy o tarjetas toggle con icono+label+estado. Precargar el estado desde enabledModules. Texto por módulo claro y en español (p. ej. 'Modo Puntos' con subtítulo 'Gana puntos y recompensas por tus tareas'; 'Tareas' con 'Organiza las tareas del hogar'; 'Batch Cooking' con 'Cocina en tandas y planifica preparaciones'). Al togglear, añadir/quitar el módulo del Set con setState (cuerpo {}). PROHIBIDO el término 'IA'/'AI'. Radio 16, tokens de color, sin Colors.grey[xxx] (usar AppColors.inkMuted).",
+    "Actualizar _save(): tras el update parcial de columnas, incluir 'dashboard_prefs' con el JSON fusionado SIN pisar cards/hidden/quick. Construir prefs finales con _dashboardPrefs.copyWith(enabledModules: <estado>, cookingStyle: <estado>) y añadir al mapa de update 'dashboard_prefs': prefs.toJson(). IMPORTANTE: _dashboardPrefs debe venir del fromJson de lo cargado en _loadExisting para preservar las tarjetas/accesos que la usuaria configuró en Inicio. Mantener el resto del update parcial igual.",
+    "Verificar que _currentStepValid y _missingDataMessage NO exijan nada obligatorio en los dos pasos nuevos (son opcionales con defaults), para que el botón Siguiente nunca se bloquee ahí.",
+    "Respetar SafeArea y que el teclado no tape acciones (ya hay patrón). No introducir literales de color 0xFF; usar tokens de app_theme.dart. Sin dropdowns para el estilo de cocina (debe ser visual)."
+  ],
+  "acceptance_criteria": [
+    "El wizard muestra un paso de estilo de cocina con tarjetas VISUALES seleccionables (no dropdown) y un paso de módulos con controles on/off para Modo Puntos, Tareas y Batch Cooking",
+    "Al abrir el wizard con un perfil que ya tenía dashboard_prefs (cards/hidden/quick), esos valores NO se pierden al guardar; se conservan junto a modules y cooking_style",
+    "El estado de módulos y estilo se precarga desde profiles.dashboard_prefs si existe (defaults = todo activado si no)",
+    "Guardar escribe profiles.dashboard_prefs con 'modules' y 'cooking_style' además de 'cards'/'hidden'/'quick'",
+    "No aparece el término 'IA'/'AI'/'Inteligencia Artificial' en los textos nuevos; radios 16 y tokens de color",
+    "flutter analyze -> No issues found! y flutter test -> todos verdes (>=201)"
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get",
+    "dart format --output=none --set-exit-if-changed lib/profile_wizard_screen.dart",
+    "flutter analyze (esperar 'No issues found!')",
+    "flutter test (todos verdes, total >= 201)",
+    "Revisión manual del diff: _save incluye dashboard_prefs fusionado desde _dashboardPrefs (sin pisar cards/hidden/quick); _totalPages/_resultPage coherentes; sin texto 'IA'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

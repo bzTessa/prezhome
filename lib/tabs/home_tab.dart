@@ -1460,9 +1460,11 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
   }
 
   void _save() {
-    Navigator.of(
-      context,
-    ).pop(DashboardPrefs(order: _order, hidden: _hidden, quick: _quick));
+    // Conservar módulos y estilo de cocina del perfil; este editor solo
+    // cambia orden/ocultas/accesos rápidos.
+    Navigator.of(context).pop(
+      widget.initial.copyWith(order: _order, hidden: _hidden, quick: _quick),
+    );
   }
 
   @override
