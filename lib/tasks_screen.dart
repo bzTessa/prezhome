@@ -7,6 +7,7 @@ import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
+import 'utils/realtime_sync.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 
@@ -21,10 +22,120 @@ class _TasksScreenState extends State<TasksScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   late Future<_TasksData> _future;
 
+  // Canal Realtime de las tareas del hogar. Se abre UNA sola vez en initState
+  // (filtrado por home_id) y se cierra en dispose. Si el otro miembro del hogar
+  // reclama una tarea de la Bolsa Común o completa algo, recargamos al instante.
+  // TasksScreen es hijo directo del IndexedStack siempre vivo: abrir una vez,
+  // cerrar en dispose, nunca dejar canales colgando.
+  RealtimeChannel? _channel;
+
+  // Guarda PURA que decide avisar de "sin conexión en vivo" una sola vez.
+  final RealtimeNoticeGate _noticeGate = RealtimeNoticeGate();
+
   @override
   void initState() {
     super.initState();
     _future = _load();
+    _subscribeRealtime();
+  }
+
+  /// Abre el canal Realtime filtrado por el hogar. Resuelve el home_id sin
+  /// bloquear la UI; ante cualquier cambio en 'tasks' recarga de forma
+  /// idempotente (reusa _reload, que vuelve a consultar la BD), de modo que la
+  /// escritura propia y su eco Realtime convergen al mismo estado sin duplicar.
+  Future<void> _subscribeRealtime() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null || !mounted) return;
+      // TasksScreen es instancia única (main_shell), así que no hay colisión de
+      // topic posible; aun así hacemos el topic único por instancia por
+      // consistencia con la lista de la compra y robustez futura.
+      final channel = _client
+          .channel('public:tasks:$homeId:${identityHashCode(this)}')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'tasks',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'home_id',
+              value: homeId,
+            ),
+            callback: (_) {
+              if (!mounted) return;
+              _reload();
+            },
+          )
+          .subscribe((status, [error]) {
+            _onChannelStatus(status);
+          });
+      _channel = channel;
+    } catch (_) {
+      _notifyRealtimeDown();
+    }
+  }
+
+  /// Traduce el estado de Supabase a nuestro estado PURO y, si el gate decide
+  /// avisar, muestra el SnackBar discreto una sola vez.
+  void _onChannelStatus(RealtimeSubscribeStatus status) {
+    final RealtimeChannelState state;
+    switch (status) {
+      case RealtimeSubscribeStatus.subscribed:
+        state = RealtimeChannelState.subscribed;
+        break;
+      case RealtimeSubscribeStatus.channelError:
+        state = RealtimeChannelState.error;
+        break;
+      case RealtimeSubscribeStatus.closed:
+        state = RealtimeChannelState.closed;
+        break;
+      case RealtimeSubscribeStatus.timedOut:
+        state = RealtimeChannelState.timedOut;
+        break;
+    }
+    if (_noticeGate.registerStatus(state)) {
+      _showRealtimeDownNotice();
+    }
+  }
+
+  void _notifyRealtimeDown() {
+    if (_noticeGate.registerStatus(RealtimeChannelState.error)) {
+      _showRealtimeDownNotice();
+    }
+  }
+
+  /// Aviso DISCRETO con diseño de tarjeta de que no hay sincronización en vivo.
+  /// La pantalla sigue funcionando con el FutureBuilder/_reload.
+  void _showRealtimeDownNotice() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        content: const Text(
+          'Sin conexión en vivo ahora mismo; se actualizará al recargar.',
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    final channel = _channel;
+    if (channel != null) {
+      _client.removeChannel(channel);
+      _channel = null;
+    }
+    super.dispose();
   }
 
   void _reload() {

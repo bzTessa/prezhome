@@ -10,6 +10,7 @@ import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'utils/realtime_sync.dart';
 import 'utils/shopping_celebration.dart';
 import 'utils/shopping_display.dart';
 import 'widgets/animations/confetti.dart';
@@ -61,10 +62,137 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // construir el sliver para no repetir el rebote.
   final ShoppingCelebrationGate _celebrationGate = ShoppingCelebrationGate();
 
+  // Canal Realtime de la lista de la compra del hogar. Se abre UNA sola vez en
+  // initState (filtrado por home_id) y se cierra en dispose. Si el otro miembro
+  // del hogar tacha o cambia un producto, recargamos la lista al instante. La
+  // pantalla va embebida en DespensaTab dentro de un IndexedStack siempre vivo,
+  // así que basta con abrirlo una vez y cerrarlo al destruir el estado.
+  RealtimeChannel? _channel;
+
+  // Guarda PURA que decide mostrar el aviso de "sin conexión en vivo" una sola
+  // vez (sin spamear) y lo rearma al reconectar. La red vive aquí; la decisión,
+  // en lib/utils/realtime_sync.dart (testeable).
+  final RealtimeNoticeGate _noticeGate = RealtimeNoticeGate();
+
   @override
   void initState() {
     super.initState();
     _itemsFuture = _fetch();
+    _subscribeRealtime();
+  }
+
+  /// Abre el canal Realtime filtrado por el hogar del usuario. Resuelve el
+  /// home_id sin bloquear la UI (la lista ya se está cargando por su cuenta).
+  /// Ante cualquier insert/update/delete recarga la lista de forma idempotente
+  /// (reusa _reload, que vuelve a consultar la BD): así la escritura propia y
+  /// su "eco" Realtime convergen al MISMO estado, sin duplicados ni parpadeo.
+  ///
+  /// Esta pantalla se instancia DOS veces: embebida en DespensaTab (IndexedStack
+  /// siempre vivo) y como ruta propia empujada desde HomeTab. Para que cada
+  /// estado tenga SU canal (y no compartan topic, lo que haría que un
+  /// removeChannel tirara el canal del otro), el topic incluye un id único por
+  /// instancia (identityHashCode): cada estado abre y cierra el suyo.
+  Future<void> _subscribeRealtime() async {
+    try {
+      // Resolvemos el hogar SIN pasar por el aviso de "sin conexión": que no
+      // haya sesión o perfil no es un fallo de conectividad, solo significa que
+      // no hay nada que escuchar todavía (igual que en tasks_screen).
+      final user = _client.auth.currentUser;
+      if (user == null) return;
+      final profile = await _client
+          .from('profiles')
+          .select('home_id')
+          .eq('id', user.id)
+          .maybeSingle();
+      final homeId = profile?['home_id'] as String?;
+      if (homeId == null || !mounted) return;
+      final channel = _client
+          .channel(
+            'public:shopping_list_items:$homeId:${identityHashCode(this)}',
+          )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'shopping_list_items',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'home_id',
+              value: homeId,
+            ),
+            callback: (_) {
+              if (!mounted) return;
+              _reload();
+            },
+          )
+          .subscribe((status, [error]) {
+            _onChannelStatus(status);
+          });
+      _channel = channel;
+    } catch (_) {
+      // Abrir el canal puede fallar sin red: no pasa nada, la pantalla sigue
+      // funcionando vía FutureBuilder/_reload. Avisamos una sola vez con el
+      // gate puro. (La ausencia de sesión/hogar ya se trató arriba con un
+      // return silencioso: no es un fallo de conectividad.)
+      _notifyRealtimeDown();
+    }
+  }
+
+  /// Traduce el estado real de Supabase a nuestro estado PURO y, si el gate
+  /// decide que hay que avisar, muestra el SnackBar discreto una sola vez.
+  void _onChannelStatus(RealtimeSubscribeStatus status) {
+    final RealtimeChannelState state;
+    switch (status) {
+      case RealtimeSubscribeStatus.subscribed:
+        state = RealtimeChannelState.subscribed;
+        break;
+      case RealtimeSubscribeStatus.channelError:
+        state = RealtimeChannelState.error;
+        break;
+      case RealtimeSubscribeStatus.closed:
+        state = RealtimeChannelState.closed;
+        break;
+      case RealtimeSubscribeStatus.timedOut:
+        state = RealtimeChannelState.timedOut;
+        break;
+    }
+    if (_noticeGate.registerStatus(state)) {
+      _showRealtimeDownNotice();
+    }
+  }
+
+  /// Marca el fallo en el gate y muestra el aviso una sola vez (usado cuando ni
+  /// siquiera llegamos a suscribirnos).
+  void _notifyRealtimeDown() {
+    if (_noticeGate.registerStatus(RealtimeChannelState.error)) {
+      _showRealtimeDownNotice();
+    }
+  }
+
+  /// Aviso DISCRETO con diseño de tarjeta (sin fondo de error, sin tecnicismos)
+  /// de que no hay sincronización en vivo. La app sigue funcionando al recargar.
+  void _showRealtimeDownNotice() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        content: const Text(
+          'Sin conexión en vivo ahora mismo; se actualizará al recargar.',
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    final channel = _channel;
+    if (channel != null) {
+      _client.removeChannel(channel);
+      _channel = null;
+    }
+    super.dispose();
   }
 
   Future<List<ShoppingListItem>> _fetch() async {
