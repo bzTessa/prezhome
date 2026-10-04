@@ -156,5 +156,44 @@ void main() {
       expect(CookingStyle.byId('daily'), CookingStyle.daily);
       expect(CookingStyle.byId('nope'), isNull);
     });
+
+    test(
+      'merge estilo wizard: copyWith(módulos+estilo) no pisa cards/hidden/quick',
+      () {
+        // Simula lo que hace el wizard en _save: parte de las prefs ya
+        // guardadas por la usuaria en Inicio y solo fusiona módulos + estilo.
+        final existentes = DashboardPrefs.fromJson({
+          'cards': ['meals', 'expiry', 'tasks'],
+          'hidden': ['tasks'],
+          'quick': ['shopping', 'scan_ticket'],
+          'modules': ['points', 'tasks', 'batch_cooking'],
+          'cooking_style': 'daily',
+        });
+
+        final fusionadas = existentes.copyWith(
+          enabledModules: {HomeModule.tasks},
+          cookingStyle: CookingStyle.batch,
+        );
+
+        // Lo nuevo del wizard se aplica.
+        expect(fusionadas.enabledModules, {HomeModule.tasks});
+        expect(fusionadas.cookingStyle, CookingStyle.batch);
+        // La personalización de Inicio se conserva intacta.
+        expect(fusionadas.order, existentes.order);
+        expect(fusionadas.hidden, existentes.hidden);
+        expect(fusionadas.quick, existentes.quick);
+
+        // El JSON resultante sigue teniendo todas las claves.
+        final json = fusionadas.toJson();
+        expect(
+          json.keys,
+          containsAll(['cards', 'hidden', 'quick', 'modules', 'cooking_style']),
+        );
+        expect(json['hidden'], contains('tasks'));
+        expect(json['quick'], containsAll(['shopping', 'scan_ticket']));
+        expect(json['modules'], ['tasks']);
+        expect(json['cooking_style'], 'batch');
+      },
+    );
   });
 }
