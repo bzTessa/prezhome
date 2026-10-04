@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Preparar el entorno y confirmar el baseline verde ANTES de tocar nada. Reproduce el CI exacto del proyecto para dejar constancia de que main (ya en la rama feat/paso8-motor-predictivo) parte con 338 tests verdes, analyze limpio, format sin cambios y el guard del mapa de dependencias actualizado. Esto evita atribuir al Paso 8 roturas preexistentes.",
+  "status": "completed",
+  "steps": [
+    "Exportar el toolchain: `export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true`. El SDK ya existe en ~/flutter_sdk (branch 3.47.6, Dart 3.13.5).",
+    "Ejecutar `flutter pub get` en /projects/sandbox/prezhome.",
+    "Descartar los autogenerados que toca pub get para no ensuciar el diff: `git checkout -- pubspec.lock analysis_options.yaml` y los plugin registrants si cambian (`git checkout -- linux/ macos/ windows/`). Comprobar con `git status` que el árbol queda limpio.",
+    "Ejecutar la verificación CI exacta y anotar resultados: `dart format --output=none --set-exit-if-changed .` (0 changed), `flutter analyze` ('No issues found!'), `flutter test` (debe reportar 338 tests, todos verdes), `dart run tool/architecture/dependency_map.dart --check` (actualizado).",
+    "Registrar el número exacto de tests del baseline en el campo findings de este feature para comparar al final."
+  ],
+  "acceptance_criteria": [
+    "`flutter analyze` imprime 'No issues found!'",
+    "`dart format --output=none --set-exit-if-changed .` termina sin archivos cambiados",
+    "`flutter test` pasa con 338 tests verdes (baseline registrado en findings)",
+    "`dart run tool/architecture/dependency_map.dart --check` reporta que el mapa está actualizado",
+    "`git status` muestra el árbol limpio (sin autogenerados colgando)"
+  ],
+  "verification": [
+    "export PATH=\"$HOME/flutter_sdk/bin:$PATH\"; export FLUTTER_SUPPRESS_ANALYTICS=true; flutter pub get; dart format --output=none --set-exit-if-changed .; flutter analyze; flutter test; dart run tool/architecture/dependency_map.dart --check"
+  ],
+  "blocked_reason": null,
+  "findings": "BASELINE VERDE confirmado en rama feat/paso8-motor-predictivo (HEAD 382792e, merge PR #108 paso7 offline-first). Toolchain: Flutter 3.47.6 (user-branch), Dart 3.13.5. Resultados CI exacto: (1) `dart format --output=none --set-exit-if-changed .` -> 'Formatted 120 files (0 changed)', exit 0. (2) `flutter analyze` -> 'No issues found!', exit 0. (3) `flutter test` -> 'All tests passed!', TOTAL = 338 tests verdes (contador +338). (4) `dart run tool/architecture/dependency_map.dart --check` -> 'dependency-map.md está actualizado.', exit 0. git status limpio tras descartar autogenerados. NOTAS: `flutter pub get` (y tambien `flutter analyze`, que lo re-ejecuta) modifica analysis_options.yaml ('Upgrading analysis_options.yaml to exclude build and platform directories') y puede tocar pubspec.lock / plugin registrants; descartar siempre con `git checkout -- pubspec.lock analysis_options.yaml linux/ macos/ windows/`. No se instaló nada nuevo; sin acceso a internet mas allá de lo ya presente. BASELINE DE TESTS A COMPARAR AL FINAL DEL PASO 8 = 338."
+}

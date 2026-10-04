@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
+import 'models/inventory_item.dart';
+import 'services/offline_provider.dart';
+import 'services/proactive_suggestions_service.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/comidas_tab.dart';
 import 'tabs/despensa_tab.dart';
 import 'household_screen.dart';
 import 'tasks_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/proactive_suggestions_banner.dart';
 
 /// Identidad semántica de cada pestaña del shell. Se usa para calcular los
 /// índices por identidad (no por número) de forma que la navegación siga
@@ -94,12 +98,62 @@ class MainShellState extends State<MainShell> {
   // las demás pestañas del IndexedStack.
   final GlobalKey<HomeTabState> _homeKey = GlobalKey<HomeTabState>();
 
+  // Asistente Proactivo (Paso 8, motor LOCAL sin IA): sugerencias de alimentos
+  // a punto de caducar (<= 2 días) para aprovechar en el próximo Batch Cooking.
+  // Se calculan best-effort desde la caché del inventario (instantáneo) y se
+  // muestran en un banner descartable sobre el body del IndexedStack.
+  List<ExpiringSuggestion> _suggestions = const [];
+
+  // La usuaria puede descartar el banner; se vuelve a evaluar en la próxima
+  // recarga del shell.
+  bool _suggestionsDismissed = false;
+
   @override
   void initState() {
     super.initState();
     // Arrancar en Inicio con el índice calculado por identidad semántica.
     _index = _indexOf(TabId.inicio);
     _loadPrefs();
+    _loadSuggestions();
+  }
+
+  /// Carga best-effort las sugerencias de caducidad del Asistente Proactivo.
+  ///
+  /// Lee el inventario desde la CACHÉ local (instantáneo, offline-first del
+  /// Paso 7), lo mapea a [ProactiveStockItem] (isFood = comida y no especia,
+  /// que no caducan de forma relevante) y llama al motor puro
+  /// [buildExpiringSuggestions]. Refresca en segundo plano sin bloquear. Si
+  /// algo falla, simplemente no se muestra el banner.
+  Future<void> _loadSuggestions() async {
+    final repo = OfflineProvider.instance.inventory;
+    try {
+      final rows = await repo.readCached();
+      _applySuggestionsFromRows(rows);
+      // Refresco best-effort: si hay red, actualizamos con el estado remoto.
+      repo.refreshFromRemote().then(_applySuggestionsFromRows).catchError((_) {
+        // Sin red: nos quedamos con lo calculado desde la caché.
+      });
+    } catch (_) {
+      // Sin caché todavía: no mostramos banner.
+    }
+  }
+
+  /// Mapea filas crudas del inventario a sugerencias de caducidad y las guarda
+  /// en estado. setState con cuerpo de bloque (nunca arrow con Future).
+  void _applySuggestionsFromRows(List<Map<String, dynamic>> rows) {
+    final stock = rows.map((row) {
+      final item = InventoryItem.fromMap(row);
+      return ProactiveStockItem(
+        name: item.name,
+        daysUntilExpiry: item.daysUntilExpiry,
+        isFood: item.itemType == 'comida' && item.category != 'Especias',
+      );
+    }).toList();
+    final suggestions = buildExpiringSuggestions(stock);
+    if (!mounted) return;
+    setState(() {
+      _suggestions = suggestions;
+    });
   }
 
   /// Carga las preferencias del hogar (profiles.dashboard_prefs) para el
@@ -262,13 +316,42 @@ class MainShellState extends State<MainShell> {
   /// cambio de módulos sin recrear MainShell.
   void reloadModules() => _loadPrefs();
 
+  /// Acción del banner del Asistente Proactivo.
+  ///
+  /// DECISIÓN (FEAT-003): el ingrediente que caduca NO es una receta, así que
+  /// no existe una integración directa ingrediente -> receta que abrir. La
+  /// opción realista y honesta es llevar a la pestaña Comidas, donde vive el
+  /// plan y el acceso al "Modo cocina" (meal_plan_screen abre
+  /// BatchPrepTimelineScreen). Desde ahí la usuaria aprovecha lo que caduca en
+  /// su próximo Batch Cooking. No inventamos un atajo que no existe.
+  void _onSuggestionsAction() {
+    setState(() => _suggestionsDismissed = true);
+    goToTab(_indexOf(TabId.comidas));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final showBanner = _suggestions.isNotEmpty && !_suggestionsDismissed;
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: IndexedStack(
-        index: _index,
-        children: [for (final t in _tabs) t.page],
+      // Banner descartable del Asistente Proactivo ARRIBA + IndexedStack abajo.
+      // El IndexedStack conserva su index y children intactos; la barra de
+      // navegación no se toca.
+      body: Column(
+        children: [
+          if (showBanner)
+            ProactiveSuggestionsBanner(
+              suggestions: _suggestions,
+              onAction: _onSuggestionsAction,
+              onDismiss: () => setState(() => _suggestionsDismissed = true),
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: _index,
+              children: [for (final t in _tabs) t.page],
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
