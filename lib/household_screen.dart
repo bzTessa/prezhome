@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'economy_screen.dart';
+import 'models/dashboard_prefs.dart';
 import 'models/supermarket.dart';
 import 'nutrition_profile_screen.dart';
 import 'login_screen.dart';
@@ -44,8 +45,21 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         .maybeSingle();
     final homeId = profile?['home_id'] as String?;
 
+    // Preferencias del hogar: deciden si el "Modo Puntos" (acceso a Economía)
+    // está visible. Mismo patrón tolerante que HomeTab._loadPrefs.
+    final prefsRow = await _client
+        .from('profiles')
+        .select('dashboard_prefs')
+        .eq('id', user.id)
+        .maybeSingle();
+    final rawPrefs = prefsRow?['dashboard_prefs'];
+    final prefs = rawPrefs is Map
+        ? DashboardPrefs.fromJson(Map<String, dynamic>.from(rawPrefs))
+        : DashboardPrefs.defaults();
+    final pointsEnabled = prefs.isModuleEnabled(HomeModule.points);
+
     if (homeId == null || homeId.isEmpty) {
-      return _HouseholdData(homeId: null);
+      return _HouseholdData(homeId: null, pointsEnabled: pointsEnabled);
     }
 
     final home = await _client
@@ -91,6 +105,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       homeName: (home?['name'] as String?) ?? 'Mi Hogar',
       members: members,
       supermarkets: supermarkets,
+      pointsEnabled: pointsEnabled,
     );
   }
 
@@ -453,16 +468,20 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 4),
-              _settingTile(
-                icon: Icons.savings_outlined,
-                title: 'Economía',
-                subtitle: 'Presupuesto y gastos del hogar',
-                iconBg: AppColors.sageBg,
-                iconFg: AppColors.sage,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const EconomyScreen()),
+              // Economía (presupuesto/gastos + puntos) es la pieza ligada al
+              // "Modo Puntos": solo se muestra si el módulo está activado. El
+              // resto de la tarjeta (Mi perfil nutricional, etc.) permanece.
+              if (data.pointsEnabled)
+                _settingTile(
+                  icon: Icons.savings_outlined,
+                  title: 'Economía',
+                  subtitle: 'Presupuesto y gastos del hogar',
+                  iconBg: AppColors.sageBg,
+                  iconFg: AppColors.sage,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const EconomyScreen()),
+                  ),
                 ),
-              ),
               _settingTile(
                 icon: Icons.favorite_outline,
                 title: 'Mi perfil nutricional',
@@ -695,11 +714,15 @@ class _HouseholdData {
   final String? homeName;
   final List<_Member> members;
   final List<String> supermarkets; // claves canónicas de súper del hogar
+
+  /// "Modo Puntos" activado: controla si se muestra el acceso a Economía.
+  final bool pointsEnabled;
   _HouseholdData({
     required this.homeId,
     this.homeName,
     this.members = const [],
     this.supermarkets = const [],
+    this.pointsEnabled = true,
   });
 }
 
