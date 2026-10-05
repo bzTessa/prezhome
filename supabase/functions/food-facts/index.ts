@@ -52,6 +52,10 @@ interface FoodFacts {
   protein100?: number | null;
   carbs100?: number | null;
   fat100?: number | null;
+  // Eco del código escaneado (si la consulta fue por barcode) y una pista de
+  // categoría derivada de categories/categories_tags (puede faltar).
+  barcode?: string | null;
+  categoryHint?: string | null;
 }
 
 // Mapea una clave de súper de PrezHome a su marca/term de búsqueda en OFF.
@@ -132,6 +136,78 @@ async function searchOFF(
   }
 }
 
+// Deriva una pista de categoría legible a partir de categories (texto libre,
+// separado por comas) o del primer categories_tags (p. ej. "en:breakfast-
+// cereals"). Devuelve null si no hay nada aprovechable.
+function categoryHintFrom(
+  categories: unknown,
+  categoriesTags: unknown,
+): string | null {
+  if (typeof categories === "string" && categories.trim()) {
+    const first = categories.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  if (Array.isArray(categoriesTags) && categoriesTags.length > 0) {
+    const tag = categoriesTags[0];
+    if (typeof tag === "string" && tag.trim()) {
+      // "en:breakfast-cereals" -> "breakfast cereals"
+      const bare = tag.includes(":") ? tag.split(":").pop()! : tag;
+      return bare.replace(/-/g, " ").trim() || null;
+    }
+  }
+  return null;
+}
+
+// Consulta OFF por CÓDIGO DE BARRAS (EAN/UPC) con el endpoint v2 directo del
+// producto. Degrada SIEMPRE a { found: false } (status != 1, producto ausente,
+// red caída o excepción): nunca lanza. Prefiere product_name_es sobre
+// product_name. Mapea al MISMO shape FoodFacts, añadiendo barcode y categoryHint.
+async function lookupByBarcode(barcode: string): Promise<FoodFacts> {
+  try {
+    const fields = [
+      "product_name",
+      "product_name_es",
+      "brands",
+      "quantity",
+      "product_quantity",
+      "product_quantity_unit",
+      "categories",
+      "categories_tags",
+      "nutriments",
+    ].join(",");
+    const url =
+      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=${fields}`;
+    const res = await fetch(url, { headers: { "User-Agent": OFF_UA } });
+    if (!res.ok) return { found: false };
+    const data = await res.json();
+    if (data?.status !== 1 || !data?.product) return { found: false };
+
+    const p = data.product;
+    const n = p?.nutriments ?? {};
+    const nameEs = typeof p.product_name_es === "string"
+      ? p.product_name_es.trim()
+      : "";
+    const name = typeof p.product_name === "string" ? p.product_name.trim() : "";
+    return {
+      found: true,
+      productName: nameEs || name,
+      brand: typeof p.brands === "string" ? p.brands : "",
+      packageQuantity: num(p.product_quantity),
+      packageUnit: typeof p.product_quantity_unit === "string"
+        ? p.product_quantity_unit
+        : null,
+      kcal100: num(n["energy-kcal_100g"]) ?? num(n["energy-kcal"]),
+      protein100: num(n["proteins_100g"]),
+      carbs100: num(n["carbohydrates_100g"]),
+      fat100: num(n["fat_100g"]),
+      barcode,
+      categoryHint: categoryHintFrom(p.categories, p.categories_tags),
+    };
+  } catch (_e) {
+    return { found: false };
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -157,8 +233,17 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    const barcode = (body?.barcode ?? "").toString().trim();
     const name = (body?.name ?? "").toString().trim();
     const supermarket = (body?.supermarket ?? "").toString().trim();
+
+    // Si viene un código de barras, usamos el endpoint directo de producto de
+    // OFF (no requiere nombre). Nunca 500 por un fallo de lookup: devolvemos
+    // { found: false } con HTTP 200 y la app cae al alta manual.
+    if (barcode) {
+      return json(await lookupByBarcode(barcode));
+    }
+
     if (!name) return json({ error: "Falta el nombre del alimento" }, 400);
 
     // 1) Si hay súper, probamos primero con su marca (producto real del súper).

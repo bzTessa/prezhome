@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cámara: necesaria para escanear códigos de barras de productos. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:label="prezhome"
         android:name="${applicationName}"
