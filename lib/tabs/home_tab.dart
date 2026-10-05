@@ -536,17 +536,29 @@ class HomeTabState extends State<HomeTab> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text('PrezHome'),
+        titleSpacing: AppSpacing.xl,
+        title: Text(
+          'Tu hogar',
+          style: AppTextStyles.headline.copyWith(fontSize: 21),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.tune_rounded),
             tooltip: 'Personalizar Inicio',
             onPressed: _openCustomize,
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            visualDensity: VisualDensity.compact,
           ),
+          const SizedBox(width: AppSpacing.sm),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.xxxl,
+        ),
         children: [
           // Cabecera con Presidente Miau como personaje. Entra la primera
           // (index 0) con la aparición escalonada, con elevación de tarjeta.
@@ -580,14 +592,64 @@ class HomeTabState extends State<HomeTab> {
             const SizedBox(height: AppSpacing.md),
           ],
 
-          // Tarjetas en el orden y visibilidad elegidos por el usuario. Entran
-          // de forma escalonada para que "entren por los ojos" al abrir.
-          for (final (i, card) in _prefs.visibleCards.indexed) ...[
-            StaggeredEntrance(index: 4 + i, child: _cardWidget(card)),
+          // Las dos decisiones del día quedan agrupadas y separadas
+          // visualmente: primero qué comer y después qué hacer.
+          if (_prefs.visibleCards.contains(DashboardCard.meals) ||
+              _prefs.visibleCards.contains(DashboardCard.tasks)) ...[
+            StaggeredEntrance(index: 4, child: _priorityCards()),
+            const SizedBox(height: AppSpacing.xl),
+          ],
+
+          // El resto de tarjetas conserva el orden y visibilidad elegidos por
+          // el usuario. Comidas y tareas ya viven arriba como resumen diario.
+          for (final (i, card)
+              in _prefs.visibleCards
+                  .where(
+                    (card) =>
+                        card != DashboardCard.meals &&
+                        card != DashboardCard.tasks,
+                  )
+                  .indexed) ...[
+            StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
             const SizedBox(height: AppSpacing.md),
           ],
         ],
       ),
+    );
+  }
+
+  /// Bloque prioritario del día. En pantallas anchas muestra comidas y tareas
+  /// en paralelo; en móvil se apilan para mantener controles cómodos.
+  Widget _priorityCards() {
+    final cards = <Widget>[
+      if (_prefs.visibleCards.contains(DashboardCard.meals)) _mealsCard(),
+      if (_prefs.visibleCards.contains(DashboardCard.tasks)) _tasksCard(),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sideBySide = constraints.maxWidth >= 720 && cards.length > 1;
+        if (!sideBySide) {
+          return Column(
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.md),
+                cards[i],
+              ],
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.md),
+              Expanded(child: cards[i]),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -679,24 +741,23 @@ class HomeTabState extends State<HomeTab> {
   /// aparece de forma escalonada (StaggeredEntrance por index) y da feedback
   /// táctil al pulsar (PressScale), sin tocar la navegación _runQuickAction.
   Widget _quickAccessRow() {
-    // Reparte los accesos rápidos a lo ancho (Expanded) para que quepan todos
-    // sin scroll horizontal; con pocos (4) se ven de un vistazo y con más
-    // siguen cabiendo repartidos. Se mantiene la entrada escalonada por index.
+    // Mantiene una fila compacta y desplazable: los accesos siguen siendo
+    // fáciles de tocar incluso si el usuario fija más de tres.
     final items = _prefs.quick;
     return SizedBox(
       height: 112,
-      child: Row(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: StaggeredEntrance(
-                index: i,
-                child: _quickAccessButton(items[i]),
-              ),
-            ),
-          ],
-        ],
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+        itemBuilder: (context, i) => SizedBox(
+          width: 104,
+          child: StaggeredEntrance(
+            index: i,
+            child: _quickAccessButton(items[i]),
+          ),
+        ),
       ),
     );
   }
@@ -1039,7 +1100,14 @@ class HomeTabState extends State<HomeTab> {
     final accent = _cardAccent(DashboardCard.meals);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        elevation: 2,
+        color: Color.alphaBlend(
+          accent.$1.withValues(alpha: 0.28),
+          Colors.white,
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1109,7 +1177,14 @@ class HomeTabState extends State<HomeTab> {
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        elevation: 2,
+        color: Color.alphaBlend(
+          accent.$1.withValues(alpha: 0.24),
+          Colors.white,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

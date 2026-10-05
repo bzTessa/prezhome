@@ -18,21 +18,19 @@ import 'widgets/proactive_suggestions_banner.dart';
 /// funcionando aunque alguna pestaña opcional desaparezca.
 enum TabId { comidas, despensa, inicio, tareas, hogar }
 
-/// Orden FIJO de pestañas candidatas (Comidas, Despensa, Inicio, Tareas,
-/// Hogar) filtrado por los módulos activados. Solo Tareas es condicional (se
-/// incluye si el módulo Tareas está activo). Función pura y testeable: el shell
-/// la usa para construir páginas, destinos e índices desde una ÚNICA fuente de
-/// verdad, así children del IndexedStack y destinos del NavigationBar nunca se
-/// desincronizan.
+/// Orden FIJO de pestañas candidatas (Hoy, Meal Prep, Tareas, Despensa, Hogar)
+/// filtrado por los módulos activados. Las tres primeras son las secciones de
+/// uso diario y quedan agrupadas al principio de la navegación; Despensa y
+/// Hogar conservan sus flujos existentes.
 ///
 /// Nota Paso 5: batch_prep_timeline_screen añadirá aquí su TabId condicionado a
 /// HomeModule.batchCooking.
 List<TabId> computeVisibleTabIds(DashboardPrefs prefs) {
   return [
-    TabId.comidas,
-    TabId.despensa,
     TabId.inicio,
     if (prefs.isModuleEnabled(HomeModule.tasks)) TabId.tareas,
+    TabId.comidas,
+    TabId.despensa,
     TabId.hogar,
   ];
 }
@@ -54,9 +52,8 @@ class _TabDescriptor {
 }
 
 /// Estructura principal de la app con barra de navegación inferior.
-/// Secciones agrupadas por momento de uso: Comidas (plan, recetas y diario) ·
-/// Despensa (inventario y compra) · Inicio (resumen del día, centro) · Tareas ·
-/// Hogar (miembros, economía, perfil y ajustes).
+/// Secciones agrupadas por momento de uso: Hoy (resumen del día) · Meal Prep
+/// (plan, recetas y diario) · Tareas · Despensa · Hogar.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -184,7 +181,7 @@ class MainShellState extends State<MainShell> {
   }
 
   /// Construye la lista ordenada de pestañas candidatas en un orden FIJO
-  /// (Comidas, Despensa, Inicio, Tareas, Hogar). Solo Tareas es condicional:
+  /// (Hoy, Tareas, Meal Prep, Despensa, Hogar). Solo Tareas es condicional:
   /// se incluye únicamente si el módulo está activado. Páginas y destinos
   /// salen de aquí para no desincronizarse nunca.
   ///
@@ -207,7 +204,7 @@ class MainShellState extends State<MainShell> {
           destination: const NavigationDestination(
             icon: Icon(Icons.restaurant_menu_outlined),
             selectedIcon: Icon(Icons.restaurant_menu),
-            label: 'Comidas',
+            label: 'Meal Prep',
           ),
         );
       case TabId.despensa:
@@ -225,9 +222,9 @@ class MainShellState extends State<MainShell> {
           id: id,
           page: HomeTab(key: _homeKey, onNavigateToDespensa: _goToDespensa),
           destination: const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Inicio',
+            icon: Icon(Icons.today_outlined),
+            selectedIcon: Icon(Icons.today_rounded),
+            label: 'Hoy',
           ),
         );
       case TabId.tareas:
@@ -320,7 +317,7 @@ class MainShellState extends State<MainShell> {
   ///
   /// DECISIÓN (FEAT-003): el ingrediente que caduca NO es una receta, así que
   /// no existe una integración directa ingrediente -> receta que abrir. La
-  /// opción realista y honesta es llevar a la pestaña Comidas, donde vive el
+  /// opción realista y honesta es llevar a la pestaña Meal Prep, donde vive el
   /// plan y el acceso al "Modo cocina" (meal_plan_screen abre
   /// BatchPrepTimelineScreen). Desde ahí la usuaria aprovecha lo que caduca en
   /// su próximo Batch Cooking. No inventamos un atajo que no existe.
@@ -353,19 +350,19 @@ class MainShellState extends State<MainShell> {
           ),
         ],
       ),
-      bottomNavigationBar: NavigationBarTheme(
-        data: NavigationBarThemeData(
-          backgroundColor: Colors.white,
-          indicatorColor: AppColors.wood,
-          labelTextStyle: WidgetStateProperty.all(
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+        child: Container(
+          decoration: AppTheme.surfaceDecoration(
+            radius: AppRadius.lg,
+            elevation: 2,
           ),
-        ),
-        child: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: _onDestinationSelected,
-          height: 68,
-          destinations: [for (final t in _tabs) t.destination],
+          child: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: _onDestinationSelected,
+            destinations: [for (final t in _tabs) t.destination],
+          ),
         ),
       ),
     );

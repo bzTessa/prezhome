@@ -4,13 +4,13 @@ import 'package:prezhome/models/dashboard_prefs.dart';
 
 void main() {
   group('computeVisibleTabIds (índices por identidad semántica)', () {
-    test('con módulos por defecto están las 5 pestañas en el orden fijo', () {
+    test('con módulos por defecto están las 5 pestañas en el orden diario', () {
       final ids = computeVisibleTabIds(DashboardPrefs.defaults());
       expect(ids, [
-        TabId.comidas,
-        TabId.despensa,
         TabId.inicio,
         TabId.tareas,
+        TabId.comidas,
+        TabId.despensa,
         TabId.hogar,
       ]);
     });
@@ -18,7 +18,7 @@ void main() {
     test('con módulos por defecto Inicio arranca y Despensa es válido', () {
       final ids = computeVisibleTabIds(DashboardPrefs.defaults());
       // La app arranca en Inicio.
-      expect(ids.indexOf(TabId.inicio), 2);
+      expect(ids.indexOf(TabId.inicio), 0);
       // La navegación 'Caducidades -> Despensa' tiene un índice válido.
       final despensa = ids.indexOf(TabId.despensa);
       expect(despensa, isNonNegative);
@@ -30,7 +30,7 @@ void main() {
         enabledModules: {HomeModule.points, HomeModule.batchCooking},
       );
       final ids = computeVisibleTabIds(prefs);
-      expect(ids, [TabId.comidas, TabId.despensa, TabId.inicio, TabId.hogar]);
+      expect(ids, [TabId.inicio, TabId.comidas, TabId.despensa, TabId.hogar]);
       expect(ids, isNot(contains(TabId.tareas)));
     });
 
@@ -55,7 +55,7 @@ void main() {
       final ids = computeVisibleTabIds(
         DashboardPrefs.defaults().copyWith(enabledModules: <HomeModule>{}),
       );
-      expect(ids, [TabId.comidas, TabId.despensa, TabId.inicio, TabId.hogar]);
+      expect(ids, [TabId.inicio, TabId.comidas, TabId.despensa, TabId.hogar]);
     });
   });
 }

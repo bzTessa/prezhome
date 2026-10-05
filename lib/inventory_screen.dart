@@ -623,7 +623,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
               // con cola no vacía y desaparece al drenar.
               if (shouldShowPendingIndicator(_pendingCount))
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.xs,
+                    AppSpacing.lg,
+                    0,
+                  ),
                   child: PendingSyncIndicator(pendingCount: _pendingCount),
                 ),
               // El dashboard recibe SIEMPRE la lista COMPLETA (sin filtrar): es
@@ -675,12 +680,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ('Hogar', 'Hogar y limpieza', Icons.cleaning_services),
     ];
     return SizedBox(
-      height: 46,
+      height: 54,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xs,
+        ),
         itemCount: filters.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        separatorBuilder: (context, index) =>
+            const SizedBox(width: AppSpacing.sm),
         itemBuilder: (context, i) {
           final (value, label, icon) = filters[i];
           final selected = _sectionFilter == value;
@@ -695,30 +706,32 @@ class _InventoryScreenState extends State<InventoryScreen> {
               });
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
-                color: selected ? AppColors.woodDark : AppColors.card,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: selected ? AppColors.woodDark : AppColors.wood,
-                  width: 1.4,
-                ),
+                color: selected ? AppColors.wood : AppColors.card,
+                borderRadius: AppRadius.pillRadius,
+                boxShadow: selected ? AppElevation.level1 : AppElevation.level0,
               ),
               child: Row(
                 children: [
                   Icon(
                     icon,
                     size: 16,
-                    color: selected ? Colors.white : AppColors.woodDark,
+                    color: selected ? AppColors.ink : AppColors.inkMuted,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.xs),
                   Text(
                     label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: selected ? Colors.white : AppColors.ink,
+                    style: AppTextStyles.label.copyWith(
+                      color: selected ? AppColors.ink : AppColors.inkMuted,
+                      fontWeight: selected
+                          ? FontWeight.w800
+                          : FontWeight.w600,
                     ),
                   ),
                 ],
@@ -865,7 +878,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       );
       return ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          96,
+        ),
         children: children,
       );
     }
@@ -876,7 +894,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        96,
+      ),
       children: children,
     );
   }
@@ -906,7 +929,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget _sectionCard(_InventorySection section) {
     final expanded = _isExpanded(section);
     return Container(
-      decoration: AppTheme.cardDecoration(radius: 18),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.md,
+        elevation: expanded ? 1 : 0,
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1248,27 +1274,31 @@ class _DashboardSummary extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: AppTheme.cardDecoration(radius: 18),
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        elevation: 1,
+        color: AppColors.card,
+      ),
       child: Column(
         children: [
           Row(
             children: [
-              MiauCharacter(mood: mood, size: 52),
-              const SizedBox(width: 12),
+              MiauCharacter(mood: mood, size: 56),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: AppColors.ink,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Estado de tu despensa', style: AppTextStyles.title),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(message, style: AppTextStyles.bodyMuted),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               _DashboardStat(
@@ -1324,36 +1354,31 @@ class _DashboardStat extends StatelessWidget {
     final active = count > 0;
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.md,
+          horizontal: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: active ? background : AppColors.cream,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: active ? color.withValues(alpha: 0.45) : AppColors.wood,
-            width: 1.2,
-          ),
+          borderRadius: AppRadius.mdRadius,
         ),
         child: Column(
           children: [
-            Icon(icon, size: 18, color: active ? color : AppColors.woodDark),
-            const SizedBox(height: 4),
+            Icon(icon, size: 18, color: active ? color : AppColors.inkMuted),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '$count',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: active ? color : AppColors.woodDark,
-                height: 1,
+              style: AppTextStyles.display.copyWith(
+                fontSize: 25,
+                color: active ? color : AppColors.inkMuted,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: active ? color : AppColors.woodDark,
+              style: AppTextStyles.label.copyWith(
+                color: active ? color : AppColors.inkMuted,
               ),
             ),
           ],
