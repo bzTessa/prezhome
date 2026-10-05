@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
 import 'services/food_photo_service.dart';
+import 'services/inventory_prefill.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 import 'widgets/food_image.dart';
@@ -12,7 +13,11 @@ class AddInventoryItemScreen extends StatefulWidget {
   /// campos y hace UPDATE en vez de INSERT).
   final InventoryItem? item;
 
-  const AddInventoryItemScreen({super.key, this.item});
+  /// Valores precargables para un ALTA NUEVA (p. ej. al escanear un código de
+  /// barras). Solo se aplican cuando [item] es null; en edición se ignoran.
+  final InventoryPrefill? prefill;
+
+  const AddInventoryItemScreen({super.key, this.item, this.prefill});
 
   bool get isEditing => item != null;
 
@@ -89,8 +94,48 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             ? it.servings!.toStringAsFixed(0)
             : it.servings!.toString();
       }
+    } else {
+      // Modo ALTA NUEVA: si llega una precarga (p. ej. de un escaneo), la
+      // aplicamos ANTES de enganchar el listener para que la primera
+      // estimación de fecha salga ya del nombre/ubicación precargados. Dejamos
+      // _expirationManual = false para que la estimación automática se dispare.
+      final pre = widget.prefill;
+      if (pre != null) {
+        if (pre.name != null) _nameController.text = pre.name!;
+        final q = pre.quantity;
+        if (q != null) {
+          _quantityController.text = q % 1 == 0
+              ? q.toStringAsFixed(0)
+              : q.toString();
+        }
+        if (pre.unit != null && _units.contains(pre.unit)) {
+          _selectedUnit = pre.unit!;
+        }
+        // La categoría del formulario es la ubicación en comida; usamos la
+        // sugerida solo si es un valor válido de la lista actual.
+        final cat = pre.location ?? pre.category;
+        if (_foodCategories.contains(cat)) _selectedCategory = cat;
+      }
     }
     _nameController.addListener(_recalcEstimatedExpiry);
+    // Si hubo precarga con nombre, calculamos la fecha estimada inicial sin
+    // setState (estamos aún en initState): el listener solo reacciona a cambios
+    // de texto posteriores, no al valor inicial del controlador.
+    if (widget.item == null &&
+        widget.prefill?.name != null &&
+        _itemType == 'comida' &&
+        _nameController.text.trim().isNotEmpty) {
+      final estimated = ShelfLife.estimateDate(
+        _nameController.text.trim(),
+        _selectedCategory,
+      );
+      if (_selectedCategory == 'Congelador') {
+        _frozenOn ??= DateTime.now();
+        _bestBefore = estimated;
+      } else {
+        _expirationDate = estimated;
+      }
+    }
   }
 
   @override

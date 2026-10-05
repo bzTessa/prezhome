@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
+import 'scan_barcode_screen.dart';
 import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
 import 'services/proactive_suggestions_service.dart';
@@ -467,6 +468,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (result != null) await _applyUpsert(result, editing: false);
   }
 
+  /// Abre el escáner de código de barras. La pantalla de escaneo busca el
+  /// producto en Open Food Facts y navega al formulario de alta (precargado o
+  /// vacío); el item construido vuelve aquí como resultado y se aplica con el
+  /// MISMO camino optimista que el alta manual.
+  Future<void> _openScanBarcode() async {
+    final result = await Navigator.of(context).push<InventoryItem>(
+      MaterialPageRoute(builder: (_) => const ScanBarcodeScreen()),
+    );
+    if (result != null) await _applyUpsert(result, editing: false);
+  }
+
   /// Aplica un alta/edición de inventario de forma OPTIMISTA: para un alta
   /// nueva genera un id temporal local e INSERTA; para una edición, UPDATE
   /// sobre el id real. En ambos casos la UI refleja el cambio al instante y la
@@ -533,16 +545,36 @@ class _InventoryScreenState extends State<InventoryScreen> {
               elevation: 0,
               iconTheme: const IconThemeData(color: AppColors.ink),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fab-inventory',
-        onPressed: _openAddItem,
-        backgroundColor: AppColors.wood,
-        foregroundColor: AppColors.ink,
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'Añadir',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Escanear código de barras: alta rápida sin ticket. heroTag propio
+          // para no colisionar con el FAB de alta manual.
+          FloatingActionButton.extended(
+            heroTag: 'fab-scan',
+            onPressed: _openScanBarcode,
+            backgroundColor: AppColors.card,
+            foregroundColor: AppColors.ink,
+            icon: const Icon(Icons.qr_code_scanner),
+            label: const Text(
+              'Escanear código',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'fab-inventory',
+            onPressed: _openAddItem,
+            backgroundColor: AppColors.wood,
+            foregroundColor: AppColors.ink,
+            icon: const Icon(Icons.add),
+            label: const Text(
+              'Añadir',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
       body: FutureBuilder<List<InventoryItem>>(
         future: _itemsFuture,

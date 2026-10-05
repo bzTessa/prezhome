@@ -19,6 +19,13 @@ class FoodFacts {
   final double? carbs100;
   final double? fat100;
 
+  /// Código de barras escaneado (eco de la consulta por barcode). Null cuando
+  /// la consulta fue por nombre.
+  final String? barcode;
+
+  /// Pista de categoría derivada de OFF (texto libre). Null si OFF no la da.
+  final String? categoryHint;
+
   const FoodFacts({
     required this.found,
     this.productName,
@@ -29,6 +36,8 @@ class FoodFacts {
     this.protein100,
     this.carbs100,
     this.fat100,
+    this.barcode,
+    this.categoryHint,
   });
 
   static const FoodFacts notFound = FoodFacts(found: false);
@@ -45,6 +54,8 @@ class FoodFacts {
       protein100: d(m['protein100']),
       carbs100: d(m['carbs100']),
       fat100: d(m['fat100']),
+      barcode: m['barcode'] as String?,
+      categoryHint: m['categoryHint'] as String?,
     );
   }
 }
@@ -79,6 +90,33 @@ class FoodFactsService {
       final res = await _client.functions.invoke(
         _function,
         body: {'name': trimmed, 'supermarket': supermarket},
+      );
+      final data = res.data;
+      final facts = data is Map
+          ? FoodFacts.fromMap(Map<String, dynamic>.from(data))
+          : FoodFacts.notFound;
+      _cache[key] = facts;
+      return facts;
+    } catch (_) {
+      return FoodFacts.notFound;
+    }
+  }
+
+  /// Resuelve los datos de OFF para un CÓDIGO DE BARRAS (EAN/UPC) a través de la
+  /// misma edge function food-facts (que acepta `barcode` en el body). Nunca
+  /// lanza; ante cualquier fallo o producto no encontrado devuelve
+  /// FoodFacts.notFound. Cachea por código para no repetir escaneos.
+  Future<FoodFacts> lookupByBarcode(String barcode) async {
+    final trimmed = barcode.trim();
+    if (trimmed.isEmpty) return FoodFacts.notFound;
+    final key = 'barcode|$trimmed';
+    final cached = _cache[key];
+    if (cached != null) return cached;
+
+    try {
+      final res = await _client.functions.invoke(
+        _function,
+        body: {'barcode': trimmed},
       );
       final data = res.data;
       final facts = data is Map
