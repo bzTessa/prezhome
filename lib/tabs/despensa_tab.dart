@@ -75,15 +75,15 @@ class _DespensaHeader extends StatelessWidget {
         color: AppColors.peachBg,
       ),
       child: Row(
-        children: const [
-          MiauCharacter(mood: MiauMood.cooking, size: 60),
-          SizedBox(width: AppSpacing.md),
+        children: [
+          const MiauCharacter(mood: MiauMood.cooking, size: 60),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Lo que hay en casa', style: AppTextStyles.title),
-                SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Revisa existencias, caducidades y tu próxima compra.',
                   style: AppTextStyles.bodyMuted,

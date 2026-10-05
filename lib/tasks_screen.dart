@@ -313,7 +313,7 @@ class _TasksScreenState extends State<TasksScreen> {
           // pendiente de completar. Mostramos a Miau celebrando.
           final hayTareas = data.tasks.isNotEmpty;
           final todoHecho = hayTareas && data.tasks.every((t) => t.isDone);
-          final visibleTasks = _filteredTasks(data.listTasks);
+          final visibleTasks = _filteredTasks(data);
 
           // Todo el contenido va dentro de UN solo scroll para que la bolsa,
           // el resumen y la lista se comporten bien con muchas tareas.
