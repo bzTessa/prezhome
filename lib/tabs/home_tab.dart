@@ -679,17 +679,24 @@ class HomeTabState extends State<HomeTab> {
   /// aparece de forma escalonada (StaggeredEntrance por index) y da feedback
   /// táctil al pulsar (PressScale), sin tocar la navegación _runQuickAction.
   Widget _quickAccessRow() {
+    // Reparte los accesos rápidos a lo ancho (Expanded) para que quepan todos
+    // sin scroll horizontal; con pocos (4) se ven de un vistazo y con más
+    // siguen cabiendo repartidos. Se mantiene la entrada escalonada por index.
+    final items = _prefs.quick;
     return SizedBox(
       height: 112,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _prefs.quick.length,
-        separatorBuilder: (context, index) =>
-            const SizedBox(width: AppSpacing.md),
-        itemBuilder: (context, i) => StaggeredEntrance(
-          index: i,
-          child: _quickAccessButton(_prefs.quick[i]),
-        ),
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: StaggeredEntrance(
+                index: i,
+                child: _quickAccessButton(items[i]),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -718,7 +725,6 @@ class HomeTabState extends State<HomeTab> {
     return PressScale(
       onTap: () => _runQuickAction(action),
       child: Container(
-        width: 84,
         padding: const EdgeInsets.symmetric(
           vertical: AppSpacing.md,
           horizontal: AppSpacing.sm,
