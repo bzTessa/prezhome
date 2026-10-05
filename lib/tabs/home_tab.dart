@@ -680,7 +680,7 @@ class HomeTabState extends State<HomeTab> {
   /// táctil al pulsar (PressScale), sin tocar la navegación _runQuickAction.
   Widget _quickAccessRow() {
     return SizedBox(
-      height: 92,
+      height: 112,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _prefs.quick.length,
@@ -741,6 +741,7 @@ class HomeTabState extends State<HomeTab> {
               action.label,
               maxLines: 2,
               textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
               style: AppTextStyles.label.copyWith(fontSize: 10.5, height: 1.1),
             ),
           ],
