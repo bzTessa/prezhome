@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../inventory_screen.dart';
 import '../shopping_list_screen.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
 import '../widgets/miau_character.dart';
 
 /// Pestaña "Despensa": agrupa lo que hay en casa y lo que falta por comprar,
@@ -25,10 +27,10 @@ class DespensaTab extends StatelessWidget {
           bottom: const TabBar(
             indicatorColor: AppColors.woodDark,
             labelColor: AppColors.ink,
-            unselectedLabelColor: Colors.grey,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+            unselectedLabelColor: AppColors.inkMuted,
+            labelStyle: TextStyle(fontWeight: FontWeight.w800),
             tabs: [
-              Tab(text: 'Inventario', icon: Icon(Icons.kitchen)),
+              Tab(text: 'En casa', icon: Icon(Icons.kitchen_outlined)),
               Tab(text: 'Compra', icon: Icon(Icons.shopping_cart_outlined)),
             ],
           ),
@@ -60,20 +62,33 @@ class _DespensaHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: AppTheme.cardDecoration(),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        0,
+      ),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        elevation: 1,
+        color: AppColors.peachBg,
+      ),
       child: Row(
         children: const [
-          MiauCharacter(mood: MiauMood.cooking, size: 56),
-          SizedBox(width: 12),
+          MiauCharacter(mood: MiauMood.cooking, size: 60),
+          SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Text(
-              'Controla lo que tienes y lo que falta por comprar.',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Lo que hay en casa', style: AppTextStyles.title),
+                SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Revisa existencias, caducidades y tu próxima compra.',
+                  style: AppTextStyles.bodyMuted,
+                ),
+              ],
             ),
           ),
         ],

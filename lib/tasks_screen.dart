@@ -7,6 +7,8 @@ import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
+import 'theme/app_spacing.dart';
+import 'theme/app_text_styles.dart';
 import 'utils/realtime_sync.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
@@ -31,6 +33,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
   // Guarda PURA que decide avisar de "sin conexión en vivo" una sola vez.
   final RealtimeNoticeGate _noticeGate = RealtimeNoticeGate();
+  String _viewFilter = 'pendientes';
 
   @override
   void initState() {
@@ -310,14 +313,19 @@ class _TasksScreenState extends State<TasksScreen> {
           // pendiente de completar. Mostramos a Miau celebrando.
           final hayTareas = data.tasks.isNotEmpty;
           final todoHecho = hayTareas && data.tasks.every((t) => t.isDone);
+          final visibleTasks = _filteredTasks(data.listTasks);
 
-          // Todo el contenido va dentro de UN solo scroll (incluida la Bolsa
-          // Comun) para que ninguna seccion desborde el viewport cuando hay
-          // muchas tarjetas. La cabecera (marcador, grafica, celebracion y
-          // bolsa) son los primeros items de la lista; el resto son las tareas.
+          // Todo el contenido va dentro de UN solo scroll para que la bolsa,
+          // el resumen y la lista se comporten bien con muchas tareas.
           return ListView(
-            padding: const EdgeInsets.only(bottom: 96),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              112,
+            ),
             children: [
+              _TasksOverview(data: data),
               // Marcador y gráfica de puntos solo con el "Modo Puntos"
               // activado. El resto (bolsa comun, lista de tareas, celebración)
               // permanece visible aunque el modo este desactivado.
@@ -327,24 +335,31 @@ class _TasksScreenState extends State<TasksScreen> {
               ],
               _TareasCelebracion(visible: todoHecho),
               _BolsaComun(pool: data.pool, onClaim: _claim),
-              if (data.listTasks.isEmpty)
+              _taskFilterBar(data),
+              if (visibleTasks.isEmpty)
                 _empty()
               else
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Column(
-                    children: [
-                      for (final t in data.listTasks)
-                        _TaskCard(
-                          task: t,
-                          memberName: t.assignedTo == null
-                              ? 'Cualquiera'
-                              : (data.members[t.assignedTo] ?? 'Miembro'),
-                          onComplete: () => _complete(t),
-                          onDelete: () => _delete(t),
-                        ),
-                    ],
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      _viewFilter == 'completadas'
+                          ? 'Ya está hecho'
+                          : 'Lo que toca',
+                      style: AppTextStyles.title,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    for (final t in visibleTasks)
+                      _TaskCard(
+                        task: t,
+                        memberName: t.assignedTo == null
+                            ? 'Cualquiera'
+                            : (data.members[t.assignedTo] ?? 'Miembro'),
+                        onComplete: () => _complete(t),
+                        onDelete: () => _delete(t),
+                      ),
+                  ],
                 ),
             ],
           );
@@ -370,6 +385,87 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
+  List<HomeTask> _filteredTasks(_TasksData data) {
+    final tasks = data.listTasks.where((task) {
+      switch (_viewFilter) {
+        case 'hoy':
+          return !task.isDone && _isDueTodayOrOverdue(task);
+        case 'completadas':
+          return task.isDone;
+        default:
+          return !task.isDone;
+      }
+    }).toList();
+
+    tasks.sort((a, b) {
+      if (_viewFilter == 'completadas') {
+        return (b.completedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+            .compareTo(a.completedAt ?? DateTime.fromMillisecondsSinceEpoch(0));
+      }
+      final urgency = _urgencyRank(a).compareTo(_urgencyRank(b));
+      if (urgency != 0) return urgency;
+      final da = a.nextDue ?? a.dueDate;
+      final db = b.nextDue ?? b.dueDate;
+      if (da == null && db == null) return 0;
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return da.compareTo(db);
+    });
+    return tasks;
+  }
+
+  bool _isDueTodayOrOverdue(HomeTask task) {
+    final due = task.nextDue ?? task.dueDate;
+    if (due == null) return true;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return !DateTime(due.year, due.month, due.day).isAfter(today);
+  }
+
+  int _urgencyRank(HomeTask task) {
+    final due = task.nextDue ?? task.dueDate;
+    if (due == null) return 2;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(due.year, due.month, due.day);
+    if (day.isBefore(today)) return 0;
+    if (day == today) return 1;
+    return 2;
+  }
+
+  Widget _taskFilterBar(_TasksData data) {
+    final pending = data.listTasks.where((t) => !t.isDone).length;
+    final today = data.listTasks
+        .where((t) => !t.isDone && _isDueTodayOrOverdue(t))
+        .length;
+    final done = data.listTasks.where((t) => t.isDone).length;
+    const filters = [
+      ('pendientes', 'Pendientes'),
+      ('hoy', 'Para hoy'),
+      ('completadas', 'Hechas'),
+    ];
+    final counts = {'pendientes': pending, 'hoy': today, 'completadas': done};
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xl),
+      child: Row(
+        children: [
+          for (var i = 0; i < filters.length; i++) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _TaskFilterChip(
+                label: filters[i].$2,
+                count: counts[filters[i].$1]!,
+                selected: _viewFilter == filters[i].$1,
+                onTap: () => setState(() => _viewFilter = filters[i].$1),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _empty() {
     return Center(
       child: Column(
@@ -384,9 +480,125 @@ class _TasksScreenState extends State<TasksScreen> {
           const SizedBox(height: 4),
           Text(
             'Añade la primera y repartíos el hogar.',
-            style: TextStyle(color: Colors.grey[600]),
+            style: AppTextStyles.bodyMuted,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TasksOverview extends StatelessWidget {
+  final _TasksData data;
+  const _TasksOverview({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final pending = data.listTasks.where((t) => !t.isDone).length;
+    final dueToday = data.listTasks.where((t) {
+      if (t.isDone) return false;
+      final due = t.nextDue ?? t.dueDate;
+      if (due == null) return true;
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      return !DateTime(due.year, due.month, due.day).isAfter(today);
+    }).length;
+    final pool = data.pool.length;
+    final mood = pending == 0 && pool == 0
+        ? MiauMood.celebrating
+        : dueToday > 0
+        ? MiauMood.curious
+        : MiauMood.neutral;
+
+    return Container(
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        elevation: 2,
+        color: AppColors.sageBg,
+      ),
+      child: Row(
+        children: [
+          MiauCharacter(mood: mood, size: 64),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Tu casa, paso a paso', style: AppTextStyles.headline),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  pending == 0 && pool == 0
+                      ? 'Todo al día. Disfruta de la calma.'
+                      : dueToday > 0
+                      ? 'Hay $dueToday ${dueToday == 1 ? 'tarea' : 'tareas'} '
+                            'que conviene resolver hoy.'
+                      : 'Tienes $pending tareas pendientes.',
+                  style: AppTextStyles.bodyMuted,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskFilterChip extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TaskFilterChip({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label, $count',
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.wood : AppColors.card,
+            borderRadius: AppRadius.mdRadius,
+            boxShadow: selected ? AppElevation.level1 : AppElevation.level0,
+          ),
+          child: Column(
+            children: [
+              Text(
+                '$count',
+                style: AppTextStyles.title.copyWith(
+                  color: selected ? AppColors.ink : AppColors.inkMuted,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.label.copyWith(
+                  color: selected ? AppColors.ink : AppColors.inkMuted,
+                  fontWeight: selected
+                      ? FontWeight.w800
+                      : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -408,29 +620,32 @@ class _TareasCelebracion extends StatelessWidget {
         opacity: visible ? 1 : 0,
         child: visible
             ? Container(
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration(),
+                margin: const EdgeInsets.only(top: AppSpacing.xl),
+                padding: AppSpacing.cardPadding,
+                decoration: AppTheme.surfaceDecoration(
+                  radius: AppRadius.lg,
+                  elevation: 1,
+                  color: AppColors.sageBg,
+                ),
                 child: Row(
-                  children: const [
-                    MiauCharacter(mood: MiauMood.celebrating, size: 72),
-                    SizedBox(width: 12),
+                  children: [
+                    const MiauCharacter(
+                      mood: MiauMood.celebrating,
+                      size: 72,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '¡Todo hecho!',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: AppColors.ink,
-                            ),
+                            style: AppTextStyles.title,
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             'No quedan tareas pendientes. Miau esta encantado.',
-                            style: TextStyle(color: AppColors.ink),
+                            style: AppTextStyles.bodyMuted,
                           ),
                         ],
                       ),
@@ -459,16 +674,14 @@ class _BolsaComun extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      padding: const EdgeInsets.only(top: AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'BOLSA COMÚN',
-            style: TextStyle(
-              fontSize: 12,
-              letterSpacing: 1,
-              fontWeight: FontWeight.w700,
+            style: AppTextStyles.label.copyWith(
+              letterSpacing: 0.8,
               color: AppColors.inkMuted,
             ),
           ),
@@ -484,21 +697,21 @@ class _BolsaComun extends StatelessWidget {
 
   Widget _poolCard(BuildContext context, HomeTask task) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration(radius: 20),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.md,
+        elevation: 1,
+        color: AppColors.peachBg,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             task.title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: AppColors.ink,
-            ),
+            style: AppTextStyles.title,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -509,28 +722,27 @@ class _BolsaComun extends StatelessWidget {
               _mini('Esfuerzo: ${task.effortPoints}'),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           PressScale(
             onTap: () => onClaim(task),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               decoration: BoxDecoration(
                 color: AppColors.wood,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.pan_tool_alt_outlined, color: AppColors.ink),
-                  SizedBox(width: 8),
+                  const Icon(
+                    Icons.pan_tool_alt_outlined,
+                    color: AppColors.ink,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     'Yo me encargo',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppColors.ink,
-                    ),
+                    style: AppTextStyles.bodyStrong,
                   ),
                 ],
               ),
@@ -543,14 +755,17 @@ class _BolsaComun extends StatelessWidget {
 
   Widget _mini(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: AppColors.cream,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.pillRadius,
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        style: AppTextStyles.label,
       ),
     );
   }
@@ -558,8 +773,8 @@ class _BolsaComun extends StatelessWidget {
   Widget _empty() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: AppTheme.cardDecoration(radius: 20),
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
       child: Row(
         children: [
           const MiauCharacter(mood: MiauMood.curious, size: 72),
@@ -891,10 +1106,15 @@ class _TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final done = task.isDone;
+    final dueLabel = _dueLabel(task);
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration(radius: 20),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.md,
+        elevation: done ? 0 : 1,
+        color: done ? AppColors.card.withValues(alpha: 0.72) : AppColors.card,
+      ),
       child: Row(
         children: [
           // Botón completar
@@ -907,7 +1127,7 @@ class _TaskCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: done ? AppColors.wood : Colors.transparent,
                 border: Border.all(
-                  color: done ? AppColors.wood : Colors.grey,
+                  color: done ? AppColors.wood : AppColors.inkMuted,
                   width: 2,
                 ),
               ),
@@ -916,25 +1136,24 @@ class _TaskCard extends StatelessWidget {
                   : null,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   task.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  style: AppTextStyles.title.copyWith(
                     decoration: done ? TextDecoration.lineThrough : null,
-                    color: done ? Colors.grey : AppColors.ink,
+                    color: done ? AppColors.inkMuted : AppColors.ink,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.sm),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
                   children: [
+                    if (dueLabel != null) _mini(dueLabel),
                     _mini(task.recurrenceLabel),
                     if (task.dueTime != null) _mini(task.dueTime!),
                     _mini(memberName),
@@ -955,15 +1174,32 @@ class _TaskCard extends StatelessWidget {
 
   Widget _mini(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: AppColors.cream,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.pillRadius,
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        style: AppTextStyles.label,
       ),
     );
+  }
+
+  String? _dueLabel(HomeTask task) {
+    final due = task.nextDue ?? task.dueDate;
+    if (due == null) return 'Sin fecha';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(due.year, due.month, due.day);
+    final diff = day.difference(today).inDays;
+    if (diff < 0) return 'Atrasada';
+    if (diff == 0) return 'Hoy';
+    if (diff == 1) return 'Mañana';
+    return '${due.day.toString().padLeft(2, '0')}/'
+        '${due.month.toString().padLeft(2, '0')}';
   }
 }
