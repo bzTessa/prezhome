@@ -10,7 +10,6 @@ import 'theme/app_theme.dart';
 import 'theme/app_spacing.dart';
 import 'theme/app_text_styles.dart';
 import 'utils/realtime_sync.dart';
-import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 
 class TasksScreen extends StatefulWidget {
@@ -26,7 +25,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
   // Canal Realtime de las tareas del hogar. Se abre UNA sola vez en initState
   // (filtrado por home_id) y se cierra en dispose. Si el otro miembro del hogar
-  // reclama una tarea de la Bolsa Común o completa algo, recargamos al instante.
+  // completa o cambia una tarea, recargamos al instante.
   // TasksScreen es hijo directo del IndexedStack siempre vivo: abrir una vez,
   // cerrar en dispose, nunca dejar canales colgando.
   RealtimeChannel? _channel;
@@ -198,15 +197,6 @@ class _TasksScreenState extends State<TasksScreen> {
         .order('created_at', ascending: false);
     final tasks = (tasksRes as List).map((m) => HomeTask.fromMap(m)).toList();
 
-    // Bolsa Comun: tareas sin responsable asignado y aun pendientes. Cualquiera
-    // del hogar puede reclamarlas con "Yo me encargo".
-    final pool = tasks.where((t) => t.isInPool && !t.isDone).toList();
-
-    // Lista principal: todo MENOS lo que ya se muestra en la Bolsa Comun, para
-    // que cada tarea sin asignar aparezca una sola vez. Las asignadas y las ya
-    // completadas siguen apareciendo aqui como siempre.
-    final listTasks = tasks.where((t) => !(t.isInPool && !t.isDone)).toList();
-
     // Puntos por usuario
     final pointsRes = await _client
         .from('task_points')
@@ -222,57 +212,145 @@ class _TasksScreenState extends State<TasksScreen> {
       homeId: homeId,
       members: members,
       tasks: tasks,
-      listTasks: listTasks,
-      pool: pool,
+      listTasks: tasks,
       scores: scores,
       currentUserId: user.id,
       pointsEnabled: pointsEnabled,
     );
   }
 
-  Future<void> _complete(HomeTask task) async {
+  /// Completa una tarea preguntando primero QUIEN la hizo. Abre un selector de
+  /// miembro (por defecto el usuario actual) y atribuye los puntos a ese
+  /// miembro vía la RPC award_task_points, no forzosamente a quien pulsa.
+  Future<void> _complete(HomeTask task, _TasksData data) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
-    try {
-      // Registra puntos y reprograma (recurrentes) o marca hecha ('once')
-      // con la misma logica compartida que usa el Dashboard de Inicio.
-      await TaskScheduler(_client).complete(task);
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('¡+${task.points} puntos!')));
-      }
+    final doneBy = await _pickMember(
+      members: data.members,
+      currentUserId: data.currentUserId ?? user.id,
+      title: '¿Quién hizo la tarea?',
+    );
+    if (doneBy == null) return; // Cancelado.
+
+    try {
+      await TaskScheduler(_client).completeAttributed(task, doneBy);
+
+      if (!mounted) return;
+      final who = data.members[doneBy] ?? 'el hogar';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('¡+${task.points} puntos para $who!')),
+      );
       _reload();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
-  /// Flujo "Yo me encargo" de la Bolsa Comun: reclama la tarea para el usuario
-  /// actual, la completa y suma sus puntos en un solo gesto. Metodo con cuerpo
-  /// de bloque (NO arrow que devuelva un Future) para no caer en el fallo
-  /// conocido de setState tras el await.
-  Future<void> _claim(HomeTask task) async {
-    try {
-      await TaskScheduler(_client).claimAndComplete(task);
+  /// Selector de miembro del hogar en un bottom sheet. Devuelve el id elegido
+  /// o null si se cierra sin elegir. El miembro actual aparece el primero y
+  /// marcado como "Tú" para que el caso normal sea un solo toque.
+  Future<String?> _pickMember({
+    required Map<String, String> members,
+    required String currentUserId,
+    required String title,
+  }) {
+    final ordered = members.entries.toList()
+      ..sort((a, b) {
+        if (a.key == currentUserId) return -1;
+        if (b.key == currentUserId) return 1;
+        return a.value.compareTo(b.value);
+      });
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('¡+${task.points} puntos!')));
-      }
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.title),
+                const SizedBox(height: AppSpacing.md),
+                for (final e in ordered)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppColors.wood,
+                      child: Icon(
+                        Icons.person,
+                        size: 20,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    title: Text(
+                      e.key == currentUserId ? '${e.value} (tú)' : e.value,
+                      style: AppTextStyles.bodyStrong,
+                    ),
+                    onTap: () => Navigator.of(sheetContext).pop(e.key),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Reinicia (borra) los puntos de un miembro del hogar tras confirmar. Se
+  /// apoya en la politica task_points_delete (0044). Metodo con cuerpo de
+  /// bloque y guardas mounted tras los awaits.
+  Future<void> _resetPoints(_TasksData data, String userId) async {
+    final name = data.members[userId] ?? 'este miembro';
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reiniciar puntos'),
+        content: Text(
+          'Se pondrán a 0 los puntos de $name. Esto no se puede deshacer. '
+          '¿Seguro?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Reiniciar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await _client
+          .from('task_points')
+          .delete()
+          .eq('home_id', data.homeId!)
+          .eq('user_id', userId);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Puntos de $name reiniciados.')),
+      );
       _reload();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -330,11 +408,14 @@ class _TasksScreenState extends State<TasksScreen> {
               // activado. El resto (bolsa comun, lista de tareas, celebración)
               // permanece visible aunque el modo este desactivado.
               if (data.pointsEnabled) ...[
-                _Scoreboard(members: data.members, scores: data.scores),
+                _Scoreboard(
+                  members: data.members,
+                  scores: data.scores,
+                  onResetPoints: (userId) => _resetPoints(data, userId),
+                ),
                 _PointsChart(members: data.members, scores: data.scores),
               ],
               _TareasCelebracion(visible: todoHecho),
-              _BolsaComun(pool: data.pool, onClaim: _claim),
               _taskFilterBar(data),
               if (visibleTasks.isEmpty)
                 _empty()
@@ -356,7 +437,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         memberName: t.assignedTo == null
                             ? 'Cualquiera'
                             : (data.members[t.assignedTo] ?? 'Miembro'),
-                        onComplete: () => _complete(t),
+                        onComplete: () => _complete(t, data),
                         onDelete: () => _delete(t),
                       ),
                   ],
@@ -503,8 +584,7 @@ class _TasksOverview extends StatelessWidget {
       final today = DateTime(now.year, now.month, now.day);
       return !DateTime(due.year, due.month, due.day).isAfter(today);
     }).length;
-    final pool = data.pool.length;
-    final mood = pending == 0 && pool == 0
+    final mood = pending == 0
         ? MiauMood.celebrating
         : dueToday > 0
         ? MiauMood.curious
@@ -528,7 +608,7 @@ class _TasksOverview extends StatelessWidget {
                 Text('Tu casa, paso a paso', style: AppTextStyles.headline),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  pending == 0 && pool == 0
+                  pending == 0
                       ? 'Todo al día. Disfruta de la calma.'
                       : dueToday > 0
                       ? 'Hay $dueToday ${dueToday == 1 ? 'tarea' : 'tareas'} '
@@ -659,161 +739,13 @@ class _TareasCelebracion extends StatelessWidget {
   }
 }
 
-/// Seccion "Bolsa Comun" (Task Pool): lista las tareas sin responsable que
-/// cualquiera del hogar puede reclamar. Cada tarea muestra su recurrencia, los
-/// puntos que suma al completarla y un chip informativo con el esfuerzo
-/// estimado, mas un boton "Yo me encargo" que reclama+completa la tarea.
-///
-/// Si la bolsa esta vacia muestra un estado amable con Miau curioso. Se mantiene
-/// como seccion autocontenida y local para no reorganizar el resto del fichero.
-class _BolsaComun extends StatelessWidget {
-  final List<HomeTask> pool;
-  final Future<void> Function(HomeTask) onClaim;
-  const _BolsaComun({required this.pool, required this.onClaim});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'BOLSA COMÚN',
-            style: AppTextStyles.label.copyWith(
-              letterSpacing: 0.8,
-              color: AppColors.inkMuted,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (pool.isEmpty)
-            _empty()
-          else
-            ...pool.map((t) => _poolCard(context, t)),
-        ],
-      ),
-    );
-  }
-
-  Widget _poolCard(BuildContext context, HomeTask task) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      padding: AppSpacing.cardPadding,
-      decoration: AppTheme.surfaceDecoration(
-        radius: AppRadius.md,
-        elevation: 1,
-        color: AppColors.peachBg,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            task.title,
-            style: AppTextStyles.title,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: [
-              _mini(task.recurrenceLabel),
-              if (task.dueTime != null) _mini(task.dueTime!),
-              _mini('${task.points} pts'),
-              _mini('Esfuerzo: ${task.effortPoints}'),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          PressScale(
-            onTap: () => onClaim(task),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.wood,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.pan_tool_alt_outlined,
-                    color: AppColors.ink,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Yo me encargo',
-                    style: AppTextStyles.bodyStrong,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _mini(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: AppRadius.pillRadius,
-      ),
-      child: Text(
-        text,
-        style: AppTextStyles.label,
-      ),
-    );
-  }
-
-  Widget _empty() {
-    return Container(
-      width: double.infinity,
-      padding: AppSpacing.cardPadding,
-      decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-      child: Row(
-        children: [
-          const MiauCharacter(mood: MiauMood.curious, size: 72),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'La bolsa común está vacía',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Cuando haya tareas sin dueño aparecerán aquí para que '
-                  'cualquiera se encargue.',
-                  style: TextStyle(color: AppColors.inkMuted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _TasksData {
   final String? homeId;
   final Map<String, String> members;
   final List<HomeTask> tasks;
-  // Tareas de la lista principal (todas menos las que se muestran en la Bolsa
-  // Comun, para no duplicar las no asignadas pendientes).
+  // Tareas de la lista principal (todas las del hogar; el filtro de la vista
+  // decide cuales se muestran).
   final List<HomeTask> listTasks;
-  final List<HomeTask> pool;
   final Map<String, int> scores;
   final String? currentUserId;
 
@@ -824,7 +756,6 @@ class _TasksData {
     this.members = const {},
     this.tasks = const [],
     this.listTasks = const [],
-    this.pool = const [],
     this.scores = const {},
     this.currentUserId,
     this.pointsEnabled = true,
@@ -834,7 +765,14 @@ class _TasksData {
 class _Scoreboard extends StatelessWidget {
   final Map<String, String> members;
   final Map<String, int> scores;
-  const _Scoreboard({required this.members, required this.scores});
+
+  /// Reinicia los puntos del miembro indicado (tras confirmar en el padre).
+  final void Function(String userId) onResetPoints;
+  const _Scoreboard({
+    required this.members,
+    required this.scores,
+    required this.onResetPoints,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -884,6 +822,15 @@ class _Scoreboard extends StatelessWidget {
                       color: AppColors.woodDark,
                       fontSize: 16,
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.restart_alt,
+                      size: 20,
+                      color: AppColors.inkMuted,
+                    ),
+                    tooltip: 'Reiniciar puntos',
+                    onPressed: () => onResetPoints(e.key),
                   ),
                 ],
               ),
