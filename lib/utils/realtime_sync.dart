@@ -2,7 +2,7 @@
 ///
 /// Las pantallas de la lista de la compra y de tareas abren un canal Realtime
 /// para refrescarse al instante cuando el OTRO miembro del hogar cambia algo
-/// (tachar un producto, reclamar una tarea de la Bolsa Común). La parte de red
+/// (tachar un producto, completar una tarea). La parte de red
 /// (canal, suscripción) vive en las pantallas; aquí queda SOLO la decisión
 /// testable: ¿debemos avisar de que no hay conexión en vivo? y ¿debemos
 /// recargar ante un evento?

@@ -393,8 +393,8 @@ class _TasksScreenState extends State<TasksScreen> {
           final todoHecho = hayTareas && data.tasks.every((t) => t.isDone);
           final visibleTasks = _filteredTasks(data);
 
-          // Todo el contenido va dentro de UN solo scroll para que la bolsa,
-          // el resumen y la lista se comporten bien con muchas tareas.
+          // Todo el contenido va dentro de UN solo scroll para que el
+          // resumen y la lista se comporten bien con muchas tareas.
           return ListView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
@@ -405,8 +405,8 @@ class _TasksScreenState extends State<TasksScreen> {
             children: [
               _TasksOverview(data: data),
               // Marcador y gráfica de puntos solo con el "Modo Puntos"
-              // activado. El resto (bolsa comun, lista de tareas, celebración)
-              // permanece visible aunque el modo este desactivado.
+              // activado. El resto (lista de tareas, celebración) permanece
+              // visible aunque el modo este desactivado.
               if (data.pointsEnabled) ...[
                 _Scoreboard(
                   members: data.members,
