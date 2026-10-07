@@ -198,7 +198,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             ListTile(
               leading: const Icon(
-                Icons.auto_awesome,
+                Icons.image_search,
                 color: AppColors.woodDark,
               ),
               title: const Text('Buscar otra foto automática'),
@@ -241,17 +241,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         final u = data['url']?.toString();
         if (u != null && u.isNotEmpty) url = u;
       }
+      if (!mounted) return;
       if (url == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'No encontré una foto mejor ahora mismo. Prueba de nuevo o '
-                'elige una de la galería.',
-              ),
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No he encontrado otra foto mejor por ahora'),
+          ),
+        );
         return;
       }
       // Guardamos como foto externa. Al poner una externa nueva, quitamos la
@@ -517,8 +513,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         appBar: AppBar(
           title: Text(
             r.title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
+          // Altura adaptativa: si el título es largo necesita 2 líneas, damos
+          // algo más de alto para que no se recorte dentro de la toolbar.
+          toolbarHeight: r.title.length > 24 ? 76 : kToolbarHeight,
           backgroundColor: const Color(0xFFFDF8E1),
           elevation: 0,
           leading: IconButton(

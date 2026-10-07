@@ -11,13 +11,21 @@ class RecipeImage extends StatelessWidget {
   final double height;
   final double radius;
 
+  /// Si es true, ignora [recipe.imageUrl] y pinta SIEMPRE el placeholder cozy.
+  /// Mismo patrón que [FoodImage.forceIllustration]: útil cuando se quiere la
+  /// ilustración coherente en vez de una foto que pueda salir poco relevante.
+  final bool forceIllustration;
+
   const RecipeImage({
     super.key,
     required this.recipe,
     this.width,
     this.height = 160,
     this.radius = 20,
+    this.forceIllustration = false,
   });
+
+  bool get _hasPhoto => !forceIllustration && recipe.imageUrl != null;
 
   /// Emoji cálido representativo del tipo de plato para el placeholder.
   /// Prioriza el tipo más "identificable" (desayuno/postre/snack) y cae a un
@@ -39,7 +47,7 @@ class RecipeImage extends StatelessWidget {
       child: SizedBox(
         width: width ?? double.infinity,
         height: height,
-        child: recipe.imageUrl != null
+        child: _hasPhoto
             ? LayoutBuilder(
                 builder: (context, constraints) => Image.network(
                   recipe.imageUrl!,

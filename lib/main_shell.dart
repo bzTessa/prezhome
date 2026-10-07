@@ -337,10 +337,16 @@ class MainShellState extends State<MainShell> {
       body: Column(
         children: [
           if (showBanner)
-            ProactiveSuggestionsBanner(
-              suggestions: _suggestions,
-              onAction: _onSuggestionsAction,
-              onDismiss: () => setState(() => _suggestionsDismissed = true),
+            // SafeArea(bottom:false) para que el banner no se meta bajo la
+            // barra de estado del dispositivo (notch/isla). La parte inferior
+            // la gestiona ya la bottomNavigationBar con su propio SafeArea.
+            SafeArea(
+              bottom: false,
+              child: ProactiveSuggestionsBanner(
+                suggestions: _suggestions,
+                onAction: _onSuggestionsAction,
+                onDismiss: () => setState(() => _suggestionsDismissed = true),
+              ),
             ),
           Expanded(
             child: IndexedStack(
