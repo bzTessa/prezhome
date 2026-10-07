@@ -88,10 +88,9 @@ String _normalizeName(String input) {
 /// letras; igualdad exacta para las muy cortas como "sal", para no casar
 /// "salmon"). Lógica PURA.
 bool isCondiment(String name) {
-  final tokens = _normalizeName(name)
-      .split(RegExp(r'[^a-z0-9]+'))
-      .where((t) => t.isNotEmpty)
-      .toList();
+  final tokens = _normalizeName(
+    name,
+  ).split(RegExp(r'[^a-z0-9]+')).where((t) => t.isNotEmpty).toList();
   if (tokens.isEmpty) return false;
   for (final kw in _condimentKeywords) {
     final parts = kw.split(' ').where((p) => p.isNotEmpty).toList();

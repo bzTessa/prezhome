@@ -33,7 +33,7 @@ class ShoppingListsOverviewScreen extends StatefulWidget {
 
 class _ShoppingListsOverviewScreenState
     extends State<ShoppingListsOverviewScreen> {
-  late List<ShoppingList> _lists = List.of(widget.lists);
+  late final List<ShoppingList> _lists = List.of(widget.lists);
 
   Future<void> _promptCreate() async {
     final name = await _promptName(context, title: 'Nueva lista');

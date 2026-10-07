@@ -7,8 +7,6 @@ import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
-import 'theme/app_spacing.dart';
-import 'theme/app_text_styles.dart';
 import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
 
@@ -287,11 +285,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     leading: const CircleAvatar(
                       radius: 18,
                       backgroundColor: AppColors.wood,
-                      child: Icon(
-                        Icons.person,
-                        size: 20,
-                        color: AppColors.ink,
-                      ),
+                      child: Icon(Icons.person, size: 20, color: AppColors.ink),
                     ),
                     title: Text(
                       e.key == currentUserId ? '${e.value} (tú)' : e.value,
@@ -342,9 +336,9 @@ class _TasksScreenState extends State<TasksScreen> {
           .eq('user_id', userId);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Puntos de $name reiniciados.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Puntos de $name reiniciados.')));
       _reload();
     } catch (e) {
       if (!mounted) return;
@@ -671,9 +665,7 @@ class _TaskFilterChip extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTextStyles.label.copyWith(
                   color: selected ? AppColors.ink : AppColors.inkMuted,
-                  fontWeight: selected
-                      ? FontWeight.w800
-                      : FontWeight.w600,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
             ],
@@ -709,19 +701,13 @@ class _TareasCelebracion extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const MiauCharacter(
-                      mood: MiauMood.celebrating,
-                      size: 72,
-                    ),
+                    const MiauCharacter(mood: MiauMood.celebrating, size: 72),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '¡Todo hecho!',
-                            style: AppTextStyles.title,
-                          ),
+                          Text('¡Todo hecho!', style: AppTextStyles.title),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
                             'No quedan tareas pendientes. Miau esta encantado.',
@@ -1129,10 +1115,7 @@ class _TaskCard extends StatelessWidget {
         color: AppColors.cream,
         borderRadius: AppRadius.pillRadius,
       ),
-      child: Text(
-        text,
-        style: AppTextStyles.label,
-      ),
+      child: Text(text, style: AppTextStyles.label),
     );
   }
 
