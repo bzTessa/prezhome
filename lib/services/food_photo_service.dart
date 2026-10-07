@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/food_category_icon.dart';
+import 'food_facts_service.dart';
 
 /// Resuelve y cachea la FOTO REAL de un alimento a partir de su nombre.
 ///
@@ -124,6 +125,85 @@ class FoodPhotoService {
       return resolved;
     } catch (_) {
       // Cualquier otra excepción (red, RLS en la lectura): sin foto.
+      return null;
+    }
+  }
+
+  /// Resuelve la FOTO REAL DE PRODUCTO para [name] priorizando Open Food Facts
+  /// (foto del producto empaquetado, p. ej. el bote de garbanzos tal cual se
+  /// vende) antes que el banco de imágenes genérico. Flujo:
+  ///   1. Caché por hogar (igual que [resolvePhotoUrl]): si hay fila, se
+  ///      respeta (incluida url NULL) para no re-buscar.
+  ///   2. Si no hay fila: consulta food-facts (OFF) por nombre y usa su
+  ///      `imageUrl` si lo trae.
+  ///   3. Si OFF no da foto: cae a la edge function recipe-photo (banco de
+  ///      imágenes), igual que [resolvePhotoUrl].
+  ///   4. Cachea el resultado (url o null) para no repetir la búsqueda.
+  /// Nunca lanza; ante cualquier fallo devuelve null y la UI muestra la
+  /// ilustración cozy. Pensado para la lista de la compra y la despensa.
+  Future<String?> resolveProductPhotoUrl({
+    required String homeId,
+    required String name,
+    String mode = 'ingredient',
+  }) async {
+    final key = cacheKey(name);
+    if (key.isEmpty || homeId.isEmpty) return null;
+
+    try {
+      // 1. Caché por hogar.
+      final cached = await _client
+          .from(_cacheTable)
+          .select('url')
+          .eq('home_id', homeId)
+          .eq('name_normalized', key)
+          .maybeSingle();
+      if (cached != null) {
+        final url = cached['url']?.toString();
+        return (url != null && url.isNotEmpty) ? url : null;
+      }
+
+      String? resolved;
+
+      // 2. Foto real de producto vía Open Food Facts (food-facts).
+      try {
+        final facts = await FoodFactsService(_client).lookup(name);
+        final offUrl = facts.imageUrl;
+        if (offUrl != null && offUrl.isNotEmpty) resolved = offUrl;
+      } catch (_) {
+        // OFF caído o sin foto: seguimos al banco de imágenes.
+      }
+
+      // 3. Respaldo al banco de imágenes (recipe-photo) si OFF no dio foto.
+      if (resolved == null) {
+        try {
+          final res = await _client.functions.invoke(
+            _photoFunction,
+            body: {'query': name, 'mode': mode},
+          );
+          final data = res.data;
+          if (data is Map) {
+            final url = data['url']?.toString();
+            if (url != null && url.isNotEmpty) resolved = url;
+          }
+        } catch (_) {
+          resolved = null;
+        }
+      }
+
+      // 4. Cachear el resultado (url o null) para no repetir la búsqueda.
+      try {
+        await _client.from(_cacheTable).upsert({
+          'home_id': homeId,
+          'name_normalized': key,
+          'url': resolved,
+          'fetched_at': DateTime.now().toUtc().toIso8601String(),
+        }, onConflict: 'home_id,name_normalized');
+      } catch (_) {
+        // Si el guardado de caché falla, devolvemos la foto igualmente.
+      }
+
+      return resolved;
+    } catch (_) {
       return null;
     }
   }

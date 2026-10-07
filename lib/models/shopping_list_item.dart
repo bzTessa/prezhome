@@ -23,6 +23,16 @@ class ShoppingListItem {
   /// ilustración cozy de la categoría en su lugar.
   final String? imageUrl;
 
+  /// Lista de la compra a la que pertenece (tabla shopping_lists, migración
+  /// 0045). NULL = "Lista principal". Nullable por compatibilidad con las
+  /// filas antiguas.
+  final String? listId;
+
+  /// Categoría/sección a la que pertenece (tabla shopping_categories, migración
+  /// 0045). NULL = "Sin categorizar". Se mantiene además la columna de texto
+  /// libre [category] para compatibilidad con items antiguos.
+  final String? categoryId;
+
   ShoppingListItem({
     this.id,
     required this.homeId,
@@ -35,6 +45,8 @@ class ShoppingListItem {
     this.itemType = 'comida',
     this.category,
     this.imageUrl,
+    this.listId,
+    this.categoryId,
   });
 
   // Devuelve el valor como String si no es null ni vacío; si no, null. Trata
@@ -60,6 +72,8 @@ class ShoppingListItem {
       itemType: (map['item_type'] ?? 'comida') as String,
       category: map['category'] as String?,
       imageUrl: _nonEmptyString(map['image_url']),
+      listId: map['list_id'] as String?,
+      categoryId: map['category_id'] as String?,
     );
   }
 
@@ -83,6 +97,8 @@ class ShoppingListItem {
       'item_type': itemType,
       'category': category,
       'image_url': imageUrl,
+      'list_id': listId,
+      'category_id': categoryId,
     };
   }
 
@@ -105,6 +121,8 @@ class ShoppingListItem {
       'item_type': itemType,
       'category': category,
       'image_url': imageUrl,
+      'list_id': listId,
+      'category_id': categoryId,
     };
   }
 

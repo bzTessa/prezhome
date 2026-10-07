@@ -31,6 +31,114 @@ bool _isSpoonableLiquid(String name) {
   return n.contains('aceite') || n.contains('vinagre');
 }
 
+/// Palabras clave de condimentos/especias (ya en minúsculas y sin acentos).
+/// Lista LOCAL a propósito: así este archivo sigue PURO (sin importar Flutter
+/// ni CategoryIcons). Se usa para que, en la lista de la compra AUTOMÁTICA, los
+/// condimentos se expresen en unidades enteras ('1 ud') en vez de cucharadas,
+/// cucharaditas, pizcas o ml de aceite, que no tiene sentido comprar así.
+const Set<String> _condimentKeywords = {
+  'sal',
+  'azucar',
+  'pimienta',
+  'pimenton',
+  'comino',
+  'oregano',
+  'curcuma',
+  'curry',
+  'canela',
+  'laurel',
+  'perejil',
+  'albahaca',
+  'tomillo',
+  'romero',
+  'jengibre',
+  'nuez moscada',
+  'clavo',
+  'cayena',
+  'guindilla',
+  'ajo en polvo',
+  'cebolla en polvo',
+  'especia',
+  'especias',
+  'condimento',
+  'aceite',
+  'vinagre',
+  'levadura',
+  'bicarbonato',
+  'vainilla',
+};
+
+/// Normaliza un nombre a minúsculas y sin acentos (local, para no importar
+/// CategoryIcons/Flutter y mantener este archivo PURO).
+String _normalizeName(String input) {
+  final lower = input.toLowerCase().trim();
+  const from = 'áàäâãéèëêíìïîóòöôõúùüûñç';
+  const to = 'aaaaaeeeeiiiiooooouuuunc';
+  final buffer = StringBuffer();
+  for (final rune in lower.runes) {
+    final char = String.fromCharCode(rune);
+    final idx = from.indexOf(char);
+    buffer.write(idx >= 0 ? to[idx] : char);
+  }
+  return buffer.toString();
+}
+
+/// ¿Es [name] un condimento o especia? Compara por PALABRAS del nombre contra
+/// [_condimentKeywords] (igualdad o prefijo claro para keywords de más de 3
+/// letras; igualdad exacta para las muy cortas como "sal", para no casar
+/// "salmon"). Lógica PURA.
+bool isCondiment(String name) {
+  final tokens = _normalizeName(name)
+      .split(RegExp(r'[^a-z0-9]+'))
+      .where((t) => t.isNotEmpty)
+      .toList();
+  if (tokens.isEmpty) return false;
+  for (final kw in _condimentKeywords) {
+    final parts = kw.split(' ').where((p) => p.isNotEmpty).toList();
+    if (parts.length == 1) {
+      final k = parts.first;
+      final exactOnly = k.length <= 3;
+      for (final token in tokens) {
+        if (token == k) return true;
+        if (!exactOnly && token.startsWith(k)) return true;
+      }
+    } else {
+      for (var i = 0; i + parts.length <= tokens.length; i++) {
+        var all = true;
+        for (var j = 0; j < parts.length; j++) {
+          final token = tokens[i + j];
+          final k = parts[j];
+          final exactOnly = k.length <= 3;
+          if (!(token == k || (!exactOnly && token.startsWith(k)))) {
+            all = false;
+            break;
+          }
+        }
+        if (all) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Ajuste práctico para la lista de la compra AUTOMÁTICA del plan: si [name] es
+/// un condimento/especia, devuelve SIEMPRE 1 unidad entera ('1 ud'), porque
+/// esas cosas se compran por envase y no tiene sentido pedirlas en cucharadas,
+/// cucharaditas, pizcas ni ml de aceite (lo que pidió la usuaria). La cantidad
+/// exacta de la receta es irrelevante al comprar: con un bote/paquete sobra.
+/// El resto de alimentos se delega en [makePractical] sin cambios. Lógica PURA.
+PracticalQuantity makePracticalForShopping(
+  String name,
+  double? quantity,
+  String? unit, {
+  double? packageGrams,
+}) {
+  if (isCondiment(name)) {
+    return const PracticalQuantity(1, 'ud');
+  }
+  return makePractical(name, quantity, unit, packageGrams: packageGrams);
+}
+
 /// Redondea [value] al múltiplo de [step] más cercano (hacia arriba a partir de
 /// la mitad), con un mínimo de un paso.
 double _roundToStep(double value, double step) {
