@@ -6,6 +6,8 @@ import 'services/food_photo_service.dart';
 import 'services/inventory_prefill.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
+import 'utils/quick_items.dart';
+import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
 
 class AddInventoryItemScreen extends StatefulWidget {
@@ -167,6 +169,22 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         _bestBefore = estimated;
       } else {
         _expirationDate = estimated;
+      }
+    });
+  }
+
+  /// Rellena el formulario con una sugerencia rápida de condimento sin que la
+  /// usuaria tenga que escribir: pone el nombre, una cantidad por defecto de 1
+  /// y la unidad del chip. Al cambiar el nombre, el listener recalcula la
+  /// caducidad estimada (que para 'Especias' no pone fecha).
+  void _applyQuickItem(QuickItem quick) {
+    setState(() {
+      _nameController.text = quick.name;
+      if (_quantityController.text.trim().isEmpty) {
+        _quantityController.text = '1';
+      }
+      if (_units.contains(quick.unit)) {
+        _selectedUnit = quick.unit;
       }
     });
   }
@@ -383,6 +401,35 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             ],
 
             TextField(controller: _nameController, decoration: _dec('Nombre')),
+
+            // Sugerencias rápidas de condimentos: al elegir la ubicación
+            // 'Especias', mostramos chips de los de siempre (sal, pimienta,
+            // comino...) que rellenan el formulario con UN toque, sin escribir.
+            if (isFood && _selectedCategory == 'Especias') ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Añade los de siempre con un toque',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: kQuickCondiments.map((quick) {
+                  final style = CategoryIcons.styleForCategory(
+                    FoodCategory.especias,
+                  );
+                  return ActionChip(
+                    backgroundColor: style.background,
+                    avatar: Icon(style.icon, size: 18, color: style.foreground),
+                    label: Text(quick.name),
+                    labelStyle: TextStyle(color: style.foreground),
+                    onPressed: () => _applyQuickItem(quick),
+                  );
+                }).toList(),
+              ),
+            ],
+
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _selectedCategory,
