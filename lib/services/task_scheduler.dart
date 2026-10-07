@@ -29,50 +29,56 @@ class TaskScheduler {
     await _awardAndReschedule(task, user.id);
   }
 
-  /// Flujo "Yo me encargo" de la Bolsa Comun: el usuario reclama una tarea sin
-  /// asignar y la completa en el mismo gesto. Primero fija assigned_to al
-  /// usuario actual (la tarea deja de estar en el pool y queda atribuida a quien
-  /// la reclama) y despues reutiliza EXACTAMENTE la misma logica de puntos +
-  /// reprogramacion que complete(), sin duplicarla.
-  ///
-  /// Diferencia clave con complete(): si la tarea es RECURRENTE, al reprogramar
-  /// su proxima ocurrencia la devolvemos a la Bolsa Comun (assigned_to=null) en
-  /// vez de dejarla asignada para siempre al primero que la reclamo. Asi una
-  /// recurrente de la bolsa vuelve a estar disponible para cualquiera en su
-  /// siguiente aparicion. Para 'once' la asignacion persiste (queda completada
-  /// y atribuida a quien la hizo).
-  Future<void> claimAndComplete(HomeTask task) async {
+  /// Completa [task] atribuyendola al miembro [doneBy] que REALMENTE la hizo,
+  /// que no tiene por que ser quien pulsa el boton. Los puntos se registran a
+  /// nombre de [doneBy] mediante la RPC SECURITY DEFINER award_task_points (la
+  /// politica de insert de task_points obliga a user_id = auth.uid(), asi que
+  /// la atribucion a otro miembro solo puede pasar por el servidor), y la tarea
+  /// queda con completed_by = doneBy. La reprogramacion de recurrentes es
+  /// identica a la de complete() (computeNextDue).
+  Future<void> completeAttributed(HomeTask task, String doneBy) async {
     final user = _client.auth.currentUser;
     if (user == null) throw 'No autenticado';
 
-    // La tarea deja de estar en la Bolsa Comun: queda asignada al que la
-    // reclama antes de registrar los puntos.
-    await _client
-        .from('tasks')
-        .update({'assigned_to': user.id})
-        .eq('id', task.id);
+    // 1. Puntos ganados, atribuidos al miembro elegido vía RPC (validada en
+    //    servidor: tarea y miembro deben ser del mismo hogar).
+    await _client.rpc(
+      'award_task_points',
+      params: {'p_task_id': task.id, 'p_done_by': doneBy},
+    );
 
-    await _awardAndReschedule(task, user.id, releaseToPool: true);
+    // 2/3. Reprogramacion segun recurrencia, dejando completed_by = doneBy.
+    if (task.recurrence == 'once') {
+      await _client
+          .from('tasks')
+          .update(HomeTask.completeOnceMap(completedBy: doneBy))
+          .eq('id', task.id);
+      return;
+    }
+
+    final next = task.computeNextDue(DateTime.now());
+    if (next == null) {
+      await _client
+          .from('tasks')
+          .update(HomeTask.completeOnceMap(completedBy: doneBy))
+          .eq('id', task.id);
+    } else {
+      await _client
+          .from('tasks')
+          .update(HomeTask.rescheduleMap(next: next, completedBy: doneBy))
+          .eq('id', task.id);
+    }
   }
 
-  /// Paso compartido por complete() y claimAndComplete(): registra los puntos
-  /// ganados y reprograma/completa la tarea segun su recurrencia. Se mantiene
-  /// como helper privado para no duplicar el flujo y para que complete()
-  /// conserve su comportamiento exacto.
+  /// Paso compartido por complete(): registra los puntos ganados y
+  /// reprograma/completa la tarea segun su recurrencia. Se mantiene como helper
+  /// privado para no duplicar el flujo y para que complete() conserve su
+  /// comportamiento exacto.
   ///
   /// Los puntos del marcador salen de [HomeTask.points] (puntuacion existente,
   /// sin cambios). El campo effort_points es solo informativo por ahora y no
   /// participa en el calculo del marcador.
-  ///
-  /// [releaseToPool] solo lo activa claimAndComplete(): cuando una recurrente
-  /// se reprograma, limpia assigned_to para que vuelva a la Bolsa Comun. En el
-  /// flujo normal de complete() queda en false y NO se toca assigned_to, de
-  /// modo que su comportamiento observable es identico al de antes.
-  Future<void> _awardAndReschedule(
-    HomeTask task,
-    String userId, {
-    bool releaseToPool = false,
-  }) async {
+  Future<void> _awardAndReschedule(HomeTask task, String userId) async {
     // 1. Puntos ganados (igual que antes).
     await _client.from('task_points').insert({
       'home_id': task.homeId,
@@ -99,13 +105,7 @@ class TaskScheduler {
     } else {
       await _client
           .from('tasks')
-          .update(
-            HomeTask.rescheduleMap(
-              next: next,
-              completedBy: userId,
-              releaseToPool: releaseToPool,
-            ),
-          )
+          .update(HomeTask.rescheduleMap(next: next, completedBy: userId))
           .eq('id', task.id);
     }
   }

@@ -12,8 +12,13 @@ import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'models/shopping_category.dart';
+import 'models/shopping_list.dart';
+import 'shopping_lists_overview_screen.dart';
 import 'utils/offline_actions.dart';
+import 'utils/practical_quantity.dart';
 import 'utils/realtime_sync.dart';
+import 'utils/shopping_categories.dart';
 import 'utils/shopping_celebration.dart';
 import 'utils/shopping_display.dart';
 import 'widgets/animations/confetti.dart';
@@ -64,6 +69,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // usuaria puede desplegarlo para desmarcar o borrar.
   bool _cartExpanded = false;
 
+  // ---- Multi-lista (migración 0045) --------------------------------------
+  // Listas de la compra del hogar y lista ACTIVA. Las operaciones de la
+  // pantalla (generar del plan, añadir, filtrar la vista) se refieren a la
+  // lista activa. listId null = "Lista principal" (filas antiguas o sin lista).
+  List<ShoppingList> _lists = [];
+  String? _activeListId; // null => "Lista principal"
+
+  // Categorías personalizadas del hogar (secciones). Se usan para la vista
+  // agrupada y el CRUD. Pueden estar vacías si el hogar aún no las ha sembrado.
+  List<ShoppingCategory> _categories = [];
+
   // Overrides manuales de expandido/colapsado por categoría de la compra
   // (clave = FoodCategory.name). Las categorías de pendientes arrancan TODAS
   // expandidas (lo que falta por comprar sí apremia); lo que la usuaria plega a
@@ -103,6 +119,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     _itemsFuture = _loadFromCache();
     _refreshFromRemote();
     _subscribeRealtime();
+    _loadListsAndCategories();
   }
 
   /// Siguiente número de secuencia para encolar/identificar ops de forma
@@ -182,6 +199,81 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       _prices = await PriceMemory(_client).loadAll(homeId);
     } catch (_) {
       _prices = {};
+    }
+  }
+
+  /// Carga best-effort las listas y categorías del hogar (migración 0045) y, si
+  /// hace falta, SIEMBRA las categorías por defecto en español (idempotente: no
+  /// duplica si ya existen). No bloquea la pantalla: si falla (sin red o sin la
+  /// migración aplicada todavía) la lista sigue funcionando con list_id null
+  /// (Lista principal) y categoría de texto libre. Nunca lanza hacia la UI.
+  Future<void> _loadListsAndCategories() async {
+    try {
+      final homeId = await _homeId();
+
+      final listRows = await _client
+          .from('shopping_lists')
+          .select()
+          .eq('home_id', homeId)
+          .order('created_at');
+      final lists = (listRows as List)
+          .map((m) => ShoppingList.fromMap(Map<String, dynamic>.from(m as Map)))
+          .toList();
+
+      var catRows = await _client
+          .from('shopping_categories')
+          .select()
+          .eq('home_id', homeId)
+          .order('position');
+      // Seed idempotente de categorías por defecto si el hogar no tiene ninguna.
+      if ((catRows as List).isEmpty) {
+        await _seedDefaultCategories(homeId);
+        catRows = await _client
+            .from('shopping_categories')
+            .select()
+            .eq('home_id', homeId)
+            .order('position');
+      }
+      final categories = (catRows as List)
+          .map(
+            (m) =>
+                ShoppingCategory.fromMap(Map<String, dynamic>.from(m as Map)),
+          )
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _lists = lists;
+        _categories = categories;
+        // Si la lista activa ya no existe, volvemos a la principal.
+        if (_activeListId != null &&
+            !lists.any((l) => l.id == _activeListId)) {
+          _activeListId = null;
+        }
+      });
+    } catch (_) {
+      // Sin migración aplicada / sin red: seguimos con Lista principal.
+    }
+  }
+
+  /// Siembra las categorías por defecto (en español) para el hogar. Best-effort
+  /// e idempotente a nivel de pantalla: solo se llama cuando no hay ninguna.
+  Future<void> _seedDefaultCategories(String homeId) async {
+    try {
+      final names = defaultCategoryNames();
+      final rows = <Map<String, dynamic>>[];
+      for (var i = 0; i < names.length; i++) {
+        rows.add(
+          ShoppingCategory(
+            homeId: homeId,
+            name: names[i],
+            position: i,
+          ).toInsertMap(),
+        );
+      }
+      await _client.from('shopping_categories').insert(rows);
+    } catch (_) {
+      // Si falla el seed, no pasa nada: la UI tolera categorías vacías.
     }
   }
 
@@ -528,10 +620,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             ListTile(
               leading: const Icon(
-                Icons.auto_awesome,
+                Icons.image_search,
                 color: AppColors.woodDark,
               ),
-              title: const Text('Buscar otra foto automática'),
+              title: const Text('Buscar otra foto'),
               onTap: () => Navigator.of(ctx).pop('auto'),
             ),
             ListTile(
@@ -620,7 +712,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (item.id == null) return;
     try {
       final homeId = await _homeId();
-      final url = await FoodPhotoService(_client).resolvePhotoUrl(
+      final url = await FoodPhotoService(_client).resolveProductPhotoUrl(
         homeId: homeId,
         name: item.name,
         mode: item.itemType == 'comida' ? 'ingredient' : 'dish',
@@ -816,7 +908,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       // hogar como producto tal cual. Best-effort y cacheado por hogar.
       String? imageUrl;
       try {
-        imageUrl = await FoodPhotoService(_client).resolvePhotoUrl(
+        // Foto REAL de producto priorizando Open Food Facts (foto del envase)
+        // y, si no hay, el banco de imágenes; respaldo final = ilustración
+        // cozy en la UI. La elección se recuerda por producto en la caché.
+        imageUrl = await FoodPhotoService(_client).resolveProductPhotoUrl(
           homeId: homeId,
           name: name,
           mode: itemType == 'comida' ? 'ingredient' : 'dish',
@@ -830,6 +925,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       final now = DateTime.now();
       final nowMillis = now.millisecondsSinceEpoch;
       final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
+      final catName = defaultCategoryFor(name);
       final item = ShoppingListItem(
         id: localId,
         homeId: homeId,
@@ -840,6 +936,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         createdAt: now,
         itemType: itemType,
         imageUrl: imageUrl,
+        category: catName,
+        categoryId: _categoryIdForName(catName),
+        listId: _activeListId,
       );
       await _repo.applyLocalWrite(
         buildInsertOp(
@@ -873,6 +972,44 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final n = name.trim().toLowerCase();
     final u = (unit ?? '').trim().toLowerCase();
     return '$n|$u';
+  }
+
+  /// Construye un item 'auto' del plan aplicando la regla PURA de condimentos:
+  /// los condimentos/especias se expresan SIEMPRE en unidades enteras ('1 ud'),
+  /// nunca en cucharadas/cucharaditas/pizca/ml de aceite (lo pidió la usuaria).
+  /// El resto de alimentos conserva su cantidad/unidad. Además asigna una
+  /// `category` de texto coherente (secciones por defecto) para que al mostrar
+  /// la lista agrupada caiga en la sección correcta; la lista activa se asigna
+  /// aparte al insertar.
+  ShoppingListItem _buildAutoItem(
+    String homeId,
+    String name,
+    double? quantity,
+    String? unit,
+  ) {
+    final practical = makePracticalForShopping(name, quantity, unit);
+    final catName = defaultCategoryFor(name);
+    return ShoppingListItem(
+      homeId: homeId,
+      name: name,
+      quantity: practical.quantity,
+      unit: practical.unit,
+      source: 'auto',
+      category: catName,
+      categoryId: _categoryIdForName(catName),
+      listId: _activeListId,
+    );
+  }
+
+  /// Devuelve el id de la categoría del hogar cuyo nombre coincide (ignorando
+  /// mayúsculas/acentos) con [name], o null si no existe (se tratará como "Sin
+  /// categorizar"). Casa la categoría de texto por defecto con la fila sembrada.
+  String? _categoryIdForName(String name) {
+    final key = normalizeCategoryText(name);
+    for (final c in _categories) {
+      if (normalizeCategoryText(c.name) == key) return c.id;
+    }
+    return null;
   }
 
   /// Genera la lista desde el plan semanal. Suma los ingredientes de las
@@ -997,25 +1134,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             // Ya tenemos suficiente, no hace falta comprarlo.
             continue;
           }
-          faltan.add(
-            ShoppingListItem(
-              homeId: homeId,
-              name: item.name,
-              quantity: restante,
-              unit: item.unit,
-              source: 'auto',
-            ),
-          );
+          faltan.add(_buildAutoItem(homeId, item.name, restante, item.unit));
         } else {
           // No es fiable descontar: lo anadimos tal cual.
           faltan.add(
-            ShoppingListItem(
-              homeId: homeId,
-              name: item.name,
-              quantity: item.quantity,
-              unit: item.unit,
-              source: 'auto',
-            ),
+            _buildAutoItem(homeId, item.name, item.quantity, item.unit),
           );
         }
       }
@@ -1036,12 +1159,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       // generacion sin dejar a medias (las altas optimistas solo ocurren
       // DESPUES, si este borrado tuvo exito). Es una operacion online-only por
       // naturaleza, no una omision.
-      await _client
+      // Scope del borrado a la LISTA ACTIVA: solo regeneramos los 'auto'
+      // pendientes de la lista en la que estamos (list_id null = Lista
+      // principal, que se filtra con .is_). No tocamos las otras listas.
+      final deleteQuery = _client
           .from('shopping_list_items')
           .delete()
           .eq('home_id', homeId)
           .eq('source', 'auto')
           .eq('checked', false);
+      if (_activeListId == null) {
+        // Filtro IS NULL vía el escape hatch .filter() (sintaxis cruda de
+        // PostgREST), estable entre versiones del cliente.
+        await deleteQuery.filter('list_id', 'is', null);
+      } else {
+        await deleteQuery.eq('list_id', _activeListId!);
+      }
 
       if (faltan.isNotEmpty) {
         // Altas OPTIMISTAS por el repositorio: cada item 'auto' entra con un id
@@ -1062,6 +1195,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             itemType: i.itemType,
             category: i.category,
             imageUrl: i.imageUrl,
+            listId: i.listId,
+            categoryId: i.categoryId,
           );
           await _repo.applyLocalWrite(
             buildInsertOp(
@@ -1102,7 +1237,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       backgroundColor: AppColors.cream,
       appBar: widget.embedded
           ? null
-          : AppBar(title: const Text('Lista de la compra')),
+          : AppBar(
+              title: const Text('Lista de la compra'),
+              actions: [
+                IconButton(
+                  tooltip: 'Mis listas',
+                  icon: const Icon(Icons.list_alt),
+                  onPressed: _openListsOverview,
+                ),
+              ],
+            ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -1118,7 +1262,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.auto_awesome),
+                : const Icon(Icons.playlist_add_check),
             label: const Text(
               'Generar del plan',
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -1148,9 +1292,28 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final items = snapshot.data ?? [];
+          final all = snapshot.data ?? [];
+          // Filtramos por la LISTA ACTIVA: list_id null = Lista principal.
+          final items = all.where((i) => i.listId == _activeListId).toList();
           if (items.isEmpty) {
-            return _emptyState();
+            // Lista activa vacía: mostramos el header (para cambiar de lista o
+            // gestionar categorías) encima del estado vacío.
+            return CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                  sliver: SliverMainAxisGroup(
+                    slivers: [
+                      SliverToBoxAdapter(child: _listHeader(0, 0)),
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _emptyState(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
           }
 
           final pendientes = items.where((i) => !i.checked).toList();
@@ -1168,6 +1331,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           final celebrar = _celebrationGate.consume();
 
           final slivers = <Widget>[
+            SliverToBoxAdapter(
+              child: _listHeader(pendientes.length, comprados.length),
+            ),
             if (shouldShowPendingIndicator(_pendingCount))
               SliverToBoxAdapter(
                 child: PendingSyncIndicator(pendingCount: _pendingCount),
@@ -1192,6 +1358,203 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         },
       ),
     );
+  }
+
+  /// Nombre visible de la lista ACTIVA ('Lista principal' si es la implícita).
+  String get _activeListName {
+    if (_activeListId == null) return 'Lista principal';
+    for (final l in _lists) {
+      if (l.id == _activeListId) return l.name;
+    }
+    return 'Lista principal';
+  }
+
+  /// Cabecera de la lista: nombre de la lista activa + contador
+  /// 'X de Y comprados', botón para cambiar/gestionar listas y acceso al CRUD
+  /// de categorías. Se muestra tanto embebida como en ruta propia.
+  Widget _listHeader(int pendientes, int comprados) {
+    final total = pendientes + comprados;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.cardDecoration(radius: AppRadius.md),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.peachBg,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: const Icon(Icons.shopping_basket, color: AppColors.peach),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _activeListName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  total == 0
+                      ? 'Lista vacía'
+                      : '$comprados de $total comprados',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Categorías',
+            icon: const Icon(Icons.tune, color: AppColors.woodDark),
+            onPressed: _openCategoriesManager,
+          ),
+          IconButton(
+            tooltip: 'Mis listas',
+            icon: const Icon(Icons.list_alt, color: AppColors.woodDark),
+            onPressed: _openListsOverview,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Abre la vista general de listas (crear/elegir lista). Al volver, aplica la
+  /// lista elegida como activa y refresca listas/categorías.
+  Future<void> _openListsOverview() async {
+    final selected = await Navigator.of(context).push<String?>(
+      MaterialPageRoute(
+        builder: (context) => ShoppingListsOverviewScreen(
+          lists: _lists,
+          activeListId: _activeListId,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    // El overview devuelve:
+    //   - null  => back sin elegir: mantenemos la lista actual.
+    //   - ''    => Lista principal (list_id null).
+    //   - 'new:NOMBRE' => crear una lista nueva y activarla.
+    //   - otro  => id de la lista elegida.
+    if (selected != null) {
+      if (selected.startsWith('new:')) {
+        final name = selected.substring(4);
+        final newId = await _createList(name);
+        if (!mounted) return;
+        setState(() => _activeListId = newId);
+      } else {
+        setState(() => _activeListId = selected.isEmpty ? null : selected);
+      }
+    }
+    // Siempre recargamos por si se crearon listas nuevas.
+    await _loadListsAndCategories();
+    if (!mounted) return;
+    await _reload();
+  }
+
+  /// Crea una lista nueva en el hogar (desde el overview). Devuelve su id o null
+  /// si falla. Best-effort; muestra error amable si no se puede.
+  Future<String?> _createList(String name, {String? color}) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return null;
+    try {
+      final homeId = await _homeId();
+      final inserted = await _client
+          .from('shopping_lists')
+          .insert(
+            ShoppingList(homeId: homeId, name: trimmed, color: color)
+                .toInsertMap(),
+          )
+          .select('id')
+          .single();
+      return inserted['id'] as String?;
+    } catch (e) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo crear la lista: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+  }
+
+  /// Abre el gestor de categorías (crear, renombrar y reordenar). Al volver,
+  /// recarga las categorías del hogar.
+  Future<void> _openCategoriesManager() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ShoppingCategoriesScreen(
+          categories: _categories,
+          onCreate: _createCategory,
+          onRename: _renameCategory,
+          onReorder: _persistCategoryOrder,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    await _loadListsAndCategories();
+  }
+
+  /// Crea una categoría nueva al final del orden. Best-effort.
+  Future<void> _createCategory(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    try {
+      final homeId = await _homeId();
+      final nextPos = _categories.length;
+      await _client.from('shopping_categories').insert(
+        ShoppingCategory(homeId: homeId, name: trimmed, position: nextPos)
+            .toInsertMap(),
+      );
+    } catch (_) {
+      // Silencioso: el gestor recargará y, si no apareció, la usuaria reintenta.
+    }
+  }
+
+  /// Renombra una categoría existente. Best-effort.
+  Future<void> _renameCategory(ShoppingCategory category, String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || category.id == null) return;
+    try {
+      await _client
+          .from('shopping_categories')
+          .update({'name': trimmed})
+          .eq('id', category.id!);
+    } catch (_) {
+      // Silencioso.
+    }
+  }
+
+  /// Persiste el nuevo orden (position) de las categorías tras reordenar.
+  /// Best-effort: actualiza fila a fila.
+  Future<void> _persistCategoryOrder(List<ShoppingCategory> ordered) async {
+    try {
+      for (var i = 0; i < ordered.length; i++) {
+        final c = ordered[i];
+        if (c.id == null) continue;
+        await _client
+            .from('shopping_categories')
+            .update({'position': i})
+            .eq('id', c.id!);
+      }
+    } catch (_) {
+      // Silencioso.
+    }
   }
 
   /// Tarjeta con el COSTE ESTIMADO de la compra pendiente, usando los precios

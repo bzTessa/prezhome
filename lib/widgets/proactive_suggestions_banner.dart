@@ -67,7 +67,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Miau te propone',
+                    'Sugerencia de hoy',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,

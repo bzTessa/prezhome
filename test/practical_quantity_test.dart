@@ -60,4 +60,48 @@ void main() {
       expect(r.quantity, 2.5);
     });
   });
+
+  group('isCondiment', () {
+    test('detecta condimentos y especias', () {
+      expect(isCondiment('Sal'), isTrue);
+      expect(isCondiment('Aceite de oliva virgen extra'), isTrue);
+      expect(isCondiment('Pimienta negra molida'), isTrue);
+      expect(isCondiment('Comino'), isTrue);
+      expect(isCondiment('Orégano'), isTrue);
+    });
+
+    test('no marca alimentos normales como condimento', () {
+      expect(isCondiment('Pechuga de pollo'), isFalse);
+      expect(isCondiment('Tomate'), isFalse);
+      // "sal" (<=3 letras) no debe casar con "salmón".
+      expect(isCondiment('Salmón'), isFalse);
+    });
+  });
+
+  group('makePracticalForShopping (lista automática)', () {
+    test('sal -> 1 ud (entero), no "al gusto" ni cucharadita', () {
+      final r = makePracticalForShopping('Sal', null, 'al gusto');
+      expect(r.unit, 'ud');
+      expect(r.quantity, 1);
+    });
+
+    test('aceite en ml -> 1 ud, no cucharadas ni ml', () {
+      final r = makePracticalForShopping('Aceite de oliva', 53, 'ml');
+      expect(r.unit, 'ud');
+      expect(r.quantity, 1);
+    });
+
+    test('pimienta en cucharaditas -> 1 ud', () {
+      final r = makePracticalForShopping('Pimienta', 2.4, 'cucharadita');
+      expect(r.unit, 'ud');
+      expect(r.quantity, 1);
+    });
+
+    test('comida normal no cambia respecto a makePractical', () {
+      final a = makePracticalForShopping('garbanzos cocidos de bote', 1060, 'g');
+      final b = makePractical('garbanzos cocidos de bote', 1060, 'g');
+      expect(a.unit, b.unit);
+      expect(a.quantity, b.quantity);
+    });
+  });
 }

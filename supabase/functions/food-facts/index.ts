@@ -56,6 +56,25 @@ interface FoodFacts {
   // categoría derivada de categories/categories_tags (puede faltar).
   barcode?: string | null;
   categoryHint?: string | null;
+  // Foto REAL del producto en OFF si existe (image_url / image_front_url /
+  // image_front_small_url). null si OFF no la da. La usan la lista de la compra
+  // (foto real del alimento) y recipe-photo como respaldo keyless.
+  imageUrl?: string | null;
+}
+
+// Extrae la mejor URL de foto de un producto OFF: prioriza la frontal pequeña
+// (ligera para miniaturas), luego la frontal grande y por último image_url.
+// Devuelve null si no hay ninguna cadena http(s) utilizable.
+function productImageUrl(p: Record<string, unknown>): string | null {
+  const candidates = [
+    p["image_front_small_url"],
+    p["image_front_url"],
+    p["image_url"],
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim().startsWith("http")) return c.trim();
+  }
+  return null;
 }
 
 // Mapea una clave de súper de PrezHome a su marca/term de búsqueda en OFF.
@@ -97,7 +116,7 @@ async function searchOFF(
       json: "1",
       page_size: "15",
       fields:
-        "product_name,brands,quantity,product_quantity,product_quantity_unit,nutriments",
+        "product_name,brands,quantity,product_quantity,product_quantity_unit,nutriments,image_url,image_front_url,image_front_small_url",
     });
     if (brand) {
       params.set("tagtype_0", "brands");
@@ -128,6 +147,7 @@ async function searchOFF(
         protein100: num(n["proteins_100g"]),
         carbs100: num(n["carbohydrates_100g"]),
         fat100: num(n["fat_100g"]),
+        imageUrl: productImageUrl(p),
       };
     }
     return null;
@@ -174,6 +194,9 @@ async function lookupByBarcode(barcode: string): Promise<FoodFacts> {
       "categories",
       "categories_tags",
       "nutriments",
+      "image_url",
+      "image_front_url",
+      "image_front_small_url",
     ].join(",");
     const url =
       `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=${fields}`;
@@ -202,6 +225,7 @@ async function lookupByBarcode(barcode: string): Promise<FoodFacts> {
       fat100: num(n["fat_100g"]),
       barcode,
       categoryHint: categoryHintFrom(p.categories, p.categories_tags),
+      imageUrl: productImageUrl(p),
     };
   } catch (_e) {
     return { found: false };

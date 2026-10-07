@@ -26,6 +26,11 @@ class FoodFacts {
   /// Pista de categoría derivada de OFF (texto libre). Null si OFF no la da.
   final String? categoryHint;
 
+  /// Foto REAL del producto en Open Food Facts (añadida en FEAT-001 a la edge
+  /// function food-facts). URL http(s) o null si OFF no la da. La usa la lista
+  /// de la compra / inventario para mostrar una foto real del producto.
+  final String? imageUrl;
+
   const FoodFacts({
     required this.found,
     this.productName,
@@ -38,6 +43,7 @@ class FoodFacts {
     this.fat100,
     this.barcode,
     this.categoryHint,
+    this.imageUrl,
   });
 
   static const FoodFacts notFound = FoodFacts(found: false);
@@ -56,6 +62,7 @@ class FoodFacts {
       fat100: d(m['fat100']),
       barcode: m['barcode'] as String?,
       categoryHint: m['categoryHint'] as String?,
+      imageUrl: m['imageUrl'] as String?,
     );
   }
 }

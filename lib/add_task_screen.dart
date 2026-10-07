@@ -128,13 +128,13 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             // Plantillas tipicas del hogar: un toque rellena titulo, periodicidad
             // y puntos sugeridos; luego se puede ajustar todo antes de guardar.
             const Text(
-              'Plantillas rápidas',
+              'Tareas típicas',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
             ),
             const SizedBox(height: 4),
             Text(
-              'Toca una para rellenarla y ajústala si quieres.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              'Toca una para rellenarla al momento y ajústala si quieres.',
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -142,16 +142,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               runSpacing: 8,
               children: _TaskTemplate.catalog
                   .map(
-                    (tpl) => ActionChip(
-                      avatar: Text(
-                        tpl.emoji,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      label: Text(tpl.title),
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: AppColors.wood),
-                      onPressed: () => _applyTemplate(tpl),
-                    ),
+                    (tpl) =>
+                        _TemplateChip(template: tpl, onTap: _applyTemplate),
                   )
                   .toList(),
             ),
@@ -370,17 +362,24 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 }
 
 /// Plantilla de tarea tipica del hogar. Prerellena titulo, periodicidad y
-/// puntos sugeridos; la usuaria puede ajustarlo todo antes de guardar.
+/// puntos sugeridos; la usuaria puede ajustarlo todo antes de guardar. Cada
+/// plantilla trae un icono y un par de colores (fondo + acento) de la paleta
+/// Cozy para que el quick-select sea reconocible sin tener que leer, usando
+/// solo tokens del tema (nada de literales de color sueltos).
 class _TaskTemplate {
-  final String emoji;
+  final IconData icon;
+  final Color bg;
+  final Color accent;
   final String title;
   final String recurrence; // once | daily | weekly | custom_interval
   final int? intervalCount;
   final String? intervalUnit; // 'day' | 'week'
-  final int points;
+  final int points; // sugeridos por dificultad: 10 fácil, 15 media, 20 pesada.
 
   const _TaskTemplate({
-    required this.emoji,
+    required this.icon,
+    required this.bg,
+    required this.accent,
     required this.title,
     required this.recurrence,
     this.intervalCount,
@@ -388,16 +387,67 @@ class _TaskTemplate {
     this.points = 10,
   });
 
-  /// Catalogo de plantillas tipicas del hogar.
+  /// Catalogo de tareas tipicas del hogar. Todos los Icons.* usados existen en
+  /// el set Material estandar (verificado): cleaning_services, wash,
+  /// bathtub_outlined, local_laundry_service, restaurant, delete_outline, bed,
+  /// countertops.
   static const List<_TaskTemplate> catalog = [
     _TaskTemplate(
-      emoji: '🍽️',
-      title: 'Fregar los platos',
+      icon: Icons.cleaning_services,
+      bg: AppColors.sageBg,
+      accent: AppColors.sage,
+      title: 'Aspirar',
+      recurrence: 'weekly',
+      points: 15,
+    ),
+    _TaskTemplate(
+      icon: Icons.wash,
+      bg: AppColors.frostBg,
+      accent: AppColors.frost,
+      title: 'Fregar suelos',
+      recurrence: 'custom_interval',
+      intervalCount: 3,
+      intervalUnit: 'day',
+      points: 15,
+    ),
+    _TaskTemplate(
+      icon: Icons.cleaning_services,
+      bg: AppColors.peachBg,
+      accent: AppColors.peach,
+      title: 'Quitar polvo',
+      recurrence: 'weekly',
+      points: 10,
+    ),
+    _TaskTemplate(
+      icon: Icons.bathtub_outlined,
+      bg: AppColors.frostBg,
+      accent: AppColors.frost,
+      title: 'Limpiar baño',
+      recurrence: 'weekly',
+      points: 20,
+    ),
+    _TaskTemplate(
+      icon: Icons.local_laundry_service,
+      bg: AppColors.sageBg,
+      accent: AppColors.sage,
+      title: 'Lavar ropa',
+      recurrence: 'custom_interval',
+      intervalCount: 3,
+      intervalUnit: 'day',
+      points: 10,
+    ),
+    _TaskTemplate(
+      icon: Icons.restaurant,
+      bg: AppColors.peachBg,
+      accent: AppColors.peach,
+      title: 'Lavar platos',
       recurrence: 'daily',
       points: 10,
     ),
     _TaskTemplate(
-      emoji: '🗑️',
+      icon: Icons.delete_outline,
+      bg: AppColors.terracottaBg,
+      accent: AppColors.terracotta,
       title: 'Sacar la basura',
       recurrence: 'custom_interval',
       intervalCount: 2,
@@ -405,44 +455,58 @@ class _TaskTemplate {
       points: 10,
     ),
     _TaskTemplate(
-      emoji: '🚽',
-      title: 'Limpiar el baño',
-      recurrence: 'weekly',
-      points: 20,
-    ),
-    _TaskTemplate(
-      emoji: '🛏️',
-      title: 'Cambiar las sábanas',
-      recurrence: 'weekly',
-      points: 20,
-    ),
-    _TaskTemplate(
-      emoji: '🧹',
-      title: 'Barrer y fregar el suelo',
-      recurrence: 'custom_interval',
-      intervalCount: 3,
-      intervalUnit: 'day',
-      points: 15,
-    ),
-    _TaskTemplate(
-      emoji: '🧺',
-      title: 'Poner la lavadora',
-      recurrence: 'custom_interval',
-      intervalCount: 3,
-      intervalUnit: 'day',
+      icon: Icons.bed,
+      bg: AppColors.peachBg,
+      accent: AppColors.peach,
+      title: 'Hacer la cama',
+      recurrence: 'daily',
       points: 10,
     ),
     _TaskTemplate(
-      emoji: '🧽',
-      title: 'Limpiar el polvo',
-      recurrence: 'weekly',
-      points: 15,
-    ),
-    _TaskTemplate(
-      emoji: '🛒',
-      title: 'Hacer la compra',
+      icon: Icons.countertops,
+      bg: AppColors.sageBg,
+      accent: AppColors.sage,
+      title: 'Limpiar cocina',
       recurrence: 'weekly',
       points: 15,
     ),
   ];
+}
+
+/// Chip de tarea tipica con icono + color (tokens del tema). Un toque aplica la
+/// plantilla al formulario. Limpio y compacto para no sobrecargar la pantalla.
+class _TemplateChip extends StatelessWidget {
+  final _TaskTemplate template;
+  final void Function(_TaskTemplate) onTap;
+  const _TemplateChip({required this.template, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => onTap(template),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: template.bg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(template.icon, size: 18, color: template.accent),
+            const SizedBox(width: 8),
+            Text(
+              template.title,
+              style: TextStyle(
+                color: template.accent,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

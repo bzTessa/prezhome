@@ -4,18 +4,13 @@ import 'package:prezhome/services/task_scheduler.dart';
 
 /// Mapa minimo de una fila de tareas tal cual la devuelve Supabase, al que
 /// podemos ir anadiendo/quitando claves por caso de prueba.
-Map<String, dynamic> _row({
-  int? points,
-  Object? effortPoints = _absent,
-  String? assignedTo,
-}) {
+Map<String, dynamic> _row({int? points, Object? effortPoints = _absent}) {
   final map = <String, dynamic>{
     'id': 't',
     'home_id': 'h',
     'title': 'Prueba',
     'points': points ?? 10,
     'recurrence': 'once',
-    'assigned_to': assignedTo,
   };
   // Solo incluimos effort_points cuando el caso lo pide, para simular filas
   // antiguas que no tienen la columna.
@@ -65,51 +60,29 @@ void main() {
     });
   });
 
-  group('HomeTask.isInPool', () {
-    test('es true cuando no hay responsable asignado', () {
-      final task = HomeTask.fromMap(_row(assignedTo: null));
-      expect(task.isInPool, isTrue);
-    });
-
-    test('es false cuando la tarea tiene responsable', () {
-      final task = HomeTask.fromMap(_row(assignedTo: 'user-1'));
-      expect(task.isInPool, isFalse);
-    });
-  });
-
-  group('HomeTask.rescheduleMap y la Bolsa Comun', () {
+  group('HomeTask.rescheduleMap (recurrentes)', () {
     final next = DateTime(2026, 1, 15);
 
-    test('por defecto NO toca assigned_to (complete() intacto)', () {
-      // El flujo normal de completar una recurrente conserva al responsable:
-      // rescheduleMap no debe incluir la clave assigned_to.
+    test('avanza la fecha y deja la tarea pendiente, con quien la hizo', () {
+      // Al completar una recurrente se reprograma a la proxima fecha, se marca
+      // quien la hizo (completed_by) y queda is_done=false para reaparecer.
       final map = HomeTask.rescheduleMap(next: next, completedBy: 'u1');
-      expect(map.containsKey('assigned_to'), isFalse);
       expect(map['is_done'], isFalse);
+      expect(map['completed_by'], 'u1');
+      expect(map['next_due'], '2026-01-15');
     });
 
-    test(
-      'releaseToPool=true devuelve la tarea a la bolsa (assigned_to=null)',
-      () {
-        // Una recurrente reclamada con "Yo me encargo" vuelve al pool en su
-        // proxima ocurrencia para que cualquiera pueda reclamarla de nuevo.
-        final map = HomeTask.rescheduleMap(
-          next: next,
-          completedBy: 'u1',
-          releaseToPool: true,
-        );
-        expect(map.containsKey('assigned_to'), isTrue);
-        expect(map['assigned_to'], isNull);
-        expect(map['is_done'], isFalse);
-      },
-    );
+    test('NO toca assigned_to al reprogramar', () {
+      // El rediseno elimina la Bolsa Comun; reprogramar nunca reasigna.
+      final map = HomeTask.rescheduleMap(next: next, completedBy: 'u1');
+      expect(map.containsKey('assigned_to'), isFalse);
+    });
 
-    test('completeOnceMap no reasigna: una once reclamada queda asignada', () {
-      // Las tareas puntuales reclamadas se quedan atribuidas a quien las hizo
-      // (completeOnceMap no toca assigned_to), no vuelven a la bolsa.
+    test('completeOnceMap marca hecha y atribuye a quien la hizo', () {
       final map = HomeTask.completeOnceMap(completedBy: 'u1');
       expect(map.containsKey('assigned_to'), isFalse);
       expect(map['is_done'], isTrue);
+      expect(map['completed_by'], 'u1');
     });
   });
 

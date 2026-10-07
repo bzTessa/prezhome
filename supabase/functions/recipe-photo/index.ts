@@ -225,6 +225,56 @@ async function searchUnsplashOnce(query: string, key: string): Promise<unknown> 
   }
 }
 
+// --- Open Food Facts (RESPALDO keyless) -------------------------------------
+// User-Agent recomendado por OFF (misma identidad que la función food-facts).
+const OFF_UA = "PrezHome/1.0 (hogar app; openfoodfacts)";
+
+// Extrae la mejor URL de foto de un producto OFF: frontal pequeña -> frontal
+// grande -> image_url. Devuelve null si no hay cadena http(s) utilizable.
+function productImageUrl(p: Record<string, unknown>): string | null {
+  const candidates = [
+    p["image_front_small_url"],
+    p["image_front_url"],
+    p["image_url"],
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim().startsWith("http")) return c.trim();
+  }
+  return null;
+}
+
+// Busca en OFF por TEXTO (misma lógica que food-facts) una foto REAL del
+// producto para usarla como RESPALDO cuando Unsplash/Pexels no dan resultado.
+// NO requiere clave. Degrada SIEMPRE a null ante fallo de red, respuesta no OK
+// o ausencia de resultados: NUNCA lanza hacia el handler.
+async function searchOFFPhoto(query: string): Promise<string | null> {
+  const q = query.trim();
+  if (!q) return null;
+  try {
+    const params = new URLSearchParams({
+      search_terms: q,
+      search_simple: "1",
+      action: "process",
+      json: "1",
+      page_size: "10",
+      fields: "image_url,image_front_url,image_front_small_url",
+    });
+    const url = `https://es.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
+    const res = await fetch(url, { headers: { "User-Agent": OFF_UA } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const products = Array.isArray(data?.products) ? data.products : [];
+    for (const p of products) {
+      const img = productImageUrl(p ?? {});
+      if (img) return img;
+    }
+    return null;
+  } catch (e) {
+    console.error("OFF fallback fetch exception:", e);
+    return null;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -292,41 +342,45 @@ Deno.serve(async (req: Request) => {
     const pexelsKey = Deno.env.get("PEXELS_API_KEY");
 
     // 4a. Camino PRINCIPAL: Unsplash. searchUnsplash ya degrada a { url: null }
-    //     ante cualquier fallo, por lo que nunca rompe el alta de receta.
+    //     ante cualquier fallo, por lo que nunca rompe el alta de receta. Si
+    //     Unsplash no da foto, caemos al RESPALDO keyless de OFF antes de rendir.
     if (unsplashKey) {
-      return json(await searchUnsplash(query, unsplashKey, mode));
+      const result = await searchUnsplash(query, unsplashKey, mode);
+      if ((result as { url?: unknown }).url) return json(result);
+      const offUrl = await searchOFFPhoto(query);
+      return json(offUrl ? { url: offUrl, provider: "openfoodfacts" } : { url: null });
     }
 
-    // 4b. Camino de RESPALDO: Pexels (comportamiento previo, sin cambios).
-    if (!pexelsKey) {
-      return json({ url: null });
+    // 4b. Camino de RESPALDO: Pexels (comportamiento previo). Si no hay clave de
+    //     Pexels, saltamos directo al RESPALDO keyless de OFF.
+    if (pexelsKey) {
+      // Consultar Pexels. Cualquier error de red o respuesta no OK se degrada
+      // a OFF (y de ahí a { url: null }) para no romper el alta de receta.
+      try {
+        const url =
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}` +
+          `&per_page=1&orientation=landscape`;
+        const res = await fetch(url, {
+          headers: { Authorization: pexelsKey },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const photos = Array.isArray(data?.photos) ? data.photos : [];
+          const src = photos.length > 0 ? (photos[0]?.src ?? {}) : {};
+          const photoUrl = src.large || src.medium || src.original || null;
+          if (photoUrl) return json({ url: photoUrl, provider: "pexels" });
+        } else {
+          console.error("Pexels error:", res.status, await res.text());
+        }
+      } catch (e) {
+        console.error("Pexels fetch exception:", e);
+      }
     }
 
-    // Consultar Pexels. Cualquier error de red o respuesta no OK se degrada
-    // a { url: null } con status 200 para no romper el alta de receta.
-    try {
-      const url =
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}` +
-        `&per_page=1&orientation=landscape`;
-      const res = await fetch(url, {
-        headers: { Authorization: pexelsKey },
-      });
-      if (!res.ok) {
-        console.error("Pexels error:", res.status, await res.text());
-        return json({ url: null });
-      }
-      const data = await res.json();
-      const photos = Array.isArray(data?.photos) ? data.photos : [];
-      if (photos.length === 0) {
-        return json({ url: null });
-      }
-      const src = photos[0]?.src ?? {};
-      const photoUrl = src.large || src.medium || src.original || null;
-      return json({ url: photoUrl });
-    } catch (e) {
-      console.error("Pexels fetch exception:", e);
-      return json({ url: null });
-    }
+    // 4c. Camino de RESPALDO KEYLESS: Open Food Facts (foto real del producto).
+    //     Último eslabón antes de rendirse: si tampoco hay, { url: null }.
+    const offUrl = await searchOFFPhoto(query);
+    return json(offUrl ? { url: offUrl, provider: "openfoodfacts" } : { url: null });
   } catch (e) {
     console.error(e);
     // Último recurso: aun ante un error inesperado, degradar sin romper el alta.
