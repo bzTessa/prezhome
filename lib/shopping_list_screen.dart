@@ -246,7 +246,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         _lists = lists;
         _categories = categories;
         // Si la lista activa ya no existe, volvemos a la principal.
-        if (_activeListId != null && !lists.any((l) => l.id == _activeListId)) {
+        if (_activeListId != null &&
+            !lists.any((l) => l.id == _activeListId)) {
           _activeListId = null;
         }
       });
@@ -1405,7 +1406,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  total == 0 ? 'Lista vacía' : '$comprados de $total comprados',
+                  total == 0
+                      ? 'Lista vacía'
+                      : '$comprados de $total comprados',
                   style: const TextStyle(
                     fontSize: 12.5,
                     color: AppColors.inkMuted,
@@ -1472,11 +1475,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       final inserted = await _client
           .from('shopping_lists')
           .insert(
-            ShoppingList(
-              homeId: homeId,
-              name: trimmed,
-              color: color,
-            ).toInsertMap(),
+            ShoppingList(homeId: homeId, name: trimmed, color: color)
+                .toInsertMap(),
           )
           .select('id')
           .single();
@@ -1517,15 +1517,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     try {
       final homeId = await _homeId();
       final nextPos = _categories.length;
-      await _client
-          .from('shopping_categories')
-          .insert(
-            ShoppingCategory(
-              homeId: homeId,
-              name: trimmed,
-              position: nextPos,
-            ).toInsertMap(),
-          );
+      await _client.from('shopping_categories').insert(
+        ShoppingCategory(homeId: homeId, name: trimmed, position: nextPos)
+            .toInsertMap(),
+      );
     } catch (_) {
       // Silencioso: el gestor recargará y, si no apareció, la usuaria reintenta.
     }

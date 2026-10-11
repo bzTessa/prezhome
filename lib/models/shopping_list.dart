@@ -42,6 +42,11 @@ class ShoppingList {
 
   // No incluimos id ni created_at: los pone la base de datos.
   Map<String, dynamic> toInsertMap() {
-    return {'home_id': homeId, 'name': name, 'color': color, 'icon': icon};
+    return {
+      'home_id': homeId,
+      'name': name,
+      'color': color,
+      'icon': icon,
+    };
   }
 }

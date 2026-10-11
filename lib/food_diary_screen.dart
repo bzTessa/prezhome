@@ -1026,36 +1026,36 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             Row(
               children: [
                 SizedBox(
-                  height: 120,
-                  width: 120,
+                  height: 180,
+                  width: 180,
                   child: PieChart(
                     PieChartData(
                       sectionsSpace: 2,
-                      centerSpaceRadius: 28,
+                      centerSpaceRadius: 40,
                       sections: [
                         PieChartSectionData(
                           value: protein,
                           color: AppColors.woodDark,
-                          radius: 26,
+                          radius: 36,
                           showTitle: false,
                         ),
                         PieChartSectionData(
                           value: carbs,
                           color: AppColors.wood,
-                          radius: 26,
+                          radius: 36,
                           showTitle: false,
                         ),
                         PieChartSectionData(
                           value: fat,
-                          color: const Color(0xFFEFE7CC),
-                          radius: 26,
+                          color: const Color(0xFF768355),
+                          radius: 36,
                           showTitle: false,
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 32),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

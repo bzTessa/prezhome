@@ -26,6 +26,10 @@ class PrezHomeApp extends StatelessWidget {
       title: 'PrezHome',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(context),
+      darkTheme: AppTheme.buildDark(context),
+      themeMode: ThemeMode.system,
+      darkTheme: AppTheme.buildDark(context),
+      themeMode: ThemeMode.system,
       home: const _AuthGate(),
     );
   }

@@ -60,7 +60,12 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Estadísticas de la compra')),
+      appBar: AppBar(
+        title: const Text(
+          'Analytics & Insights',
+          style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.bold),
+        ),
+      ),
       body: FutureBuilder<List<_ProductStat>>(
         future: _future,
         builder: (context, snapshot) {

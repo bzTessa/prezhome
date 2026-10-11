@@ -151,7 +151,7 @@ class _PlanViewToggle extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: active ? AppColors.wood : Colors.transparent,
+          color: active ? const Color(0xFFC85A32) : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
@@ -450,7 +450,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                   borderRadius: BorderRadius.circular(12),
                   border: isToday
                       ? null
-                      : Border.all(color: AppColors.wood, width: 1.2),
+                      : Border.all(color: const Color(0xFFC85A32), width: 1.2),
                 ),
                 child: Text(
                   '${_weekdayNames[date.weekday - 1]} ${date.day}',

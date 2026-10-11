@@ -886,8 +886,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
       );
     }
 
-    for (final section in sections) {
-      children.add(_sectionCard(section));
+    final spiceSectionIdx = sections.indexWhere((s) => s.title == 'Especias');
+    if (spiceSectionIdx != -1) {
+      children.add(_CondimentsBubbles(sections[spiceSectionIdx].items));
+      children.add(const SizedBox(height: 14));
+    }
+
+    for (int i = 0; i < sections.length; i++) {
+      if (i == spiceSectionIdx) continue;
+      children.add(_sectionCard(sections[i]));
       children.add(const SizedBox(height: 14));
     }
 
@@ -1381,6 +1388,172 @@ class _DashboardStat extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CondimentsBubbles extends StatelessWidget {
+  final List<InventoryItem> items;
+  const _CondimentsBubbles(this.items);
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Condimentos & Salsas',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: items.map((item) {
+              Color statusColor = AppColors.sage;
+              Color bg = AppColors.sageBg;
+              String statusText = 'Lleno';
+
+              if (item.quantity <= 1) {
+                statusColor = AppColors.expired;
+                bg = AppColors.expiredBg;
+                statusText = 'Agotado';
+              } else if (item.quantity <= 3) {
+                statusColor = AppColors.soon;
+                bg = AppColors.soonBg;
+                statusText = 'Bajo';
+              }
+
+              return Semantics(
+                label: statusText,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: statusColor.withOpacity(0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        item.name,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CondimentsBubbles extends StatelessWidget {
+  final List<InventoryItem> items;
+  const _CondimentsBubbles(this.items);
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Condimentos & Salsas',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: items.map((item) {
+              Color statusColor = AppColors.sage;
+              Color bg = AppColors.sageBg;
+              String statusText = 'Lleno';
+
+              if (item.quantity <= 1) {
+                statusColor = AppColors.expired;
+                bg = AppColors.expiredBg;
+                statusText = 'Agotado';
+              } else if (item.quantity <= 3) {
+                statusColor = AppColors.soon;
+                bg = AppColors.soonBg;
+                statusText = 'Bajo';
+              }
+
+              return Semantics(
+                label: statusText,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: statusColor.withOpacity(0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        item.name,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

@@ -36,7 +36,7 @@ class DespensaTab extends StatelessWidget {
           ),
         ),
         body: Column(
-          children: const [
+          children: [
             _DespensaHeader(),
             Expanded(
               child: TabBarView(

@@ -36,6 +36,22 @@ class AppColors {
   /// (nivel 2 de [AppElevation]).
   static const mediumShadow = Color(0x1F000000);
 
+  // Dark mode colors
+  static const darkCream = Color(0xFF1E1E1E);
+  static const darkWood = Color(0xFFC85A32);
+  static const darkWoodDark = Color(0xFF9F3C16);
+  static const darkInk = Color(0xFFFDF8E1);
+  static const darkCard = Color(0xFF2C2C2C);
+  static const darkInkMuted = Color(0xFFA0A0A0);
+
+  // Dark mode colors
+  static const darkCream = Color(0xFF1E1E1E);
+  static const darkWood = Color(0xFFC85A32);
+  static const darkWoodDark = Color(0xFF9F3C16);
+  static const darkInk = Color(0xFFFDF8E1);
+  static const darkCard = Color(0xFF2C2C2C);
+  static const darkInkMuted = Color(0xFFA0A0A0);
+
   // --- Tonos para chips e identificadores con jerarquía visual ---------------
   // Mantienen la calidez de la paleta pero dan contraste suave entre tipos de
   // información (tipo de comida, tiempo, kcal, favorita...). Se usan como pares
@@ -79,6 +95,150 @@ class AppColors {
 }
 
 class AppTheme {
+  static ThemeData buildDark(BuildContext context) {
+    final base = ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: AppColors.darkCream,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.darkWood,
+        primary: AppColors.darkWood,
+        surface: AppColors.darkCard,
+        brightness: Brightness.dark,
+      ),
+    );
+
+    return base.copyWith(
+      textTheme: GoogleFonts.nunitoTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: AppColors.darkInk, displayColor: AppColors.darkInk),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.darkCream,
+        foregroundColor: AppColors.darkInk,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: AppColors.darkInk,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.darkCard,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.darkWood,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        height: 70,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        indicatorColor: AppColors.darkWood,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            size: selected ? 24 : 22,
+            color: selected ? Colors.white : AppColors.darkInkMuted,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            color: selected ? Colors.white : AppColors.darkInkMuted,
+            fontSize: 11,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          );
+        }),
+      ),
+    );
+  }
+
+  static ThemeData buildDark(BuildContext context) {
+    final base = ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: AppColors.darkCream,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.darkWood,
+        primary: AppColors.darkWood,
+        surface: AppColors.darkCard,
+        brightness: Brightness.dark,
+      ),
+    );
+
+    return base.copyWith(
+      textTheme: GoogleFonts.nunitoTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: AppColors.darkInk, displayColor: AppColors.darkInk),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.darkCream,
+        foregroundColor: AppColors.darkInk,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: AppColors.darkInk,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.darkCard,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.darkWood,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        height: 70,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        indicatorColor: AppColors.darkWood,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            size: selected ? 24 : 22,
+            color: selected ? Colors.white : AppColors.darkInkMuted,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            color: selected ? Colors.white : AppColors.darkInkMuted,
+            fontSize: 11,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          );
+        }),
+      ),
+    );
+  }
+
   static ThemeData build(BuildContext context) {
     final base = ThemeData(
       useMaterial3: true,
