@@ -57,10 +57,13 @@ void main() {
       expect(defaultCategoryFor(''), kUncategorizedName);
     });
 
-    test('normalización estable: acentos y mayúsculas no cambian el resultado', () {
-      expect(defaultCategoryFor('plátano'), defaultCategoryFor('PLATANO'));
-      expect(defaultCategoryFor('Café'), defaultCategoryFor('cafe'));
-    });
+    test(
+      'normalización estable: acentos y mayúsculas no cambian el resultado',
+      () {
+        expect(defaultCategoryFor('plátano'), defaultCategoryFor('PLATANO'));
+        expect(defaultCategoryFor('Café'), defaultCategoryFor('cafe'));
+      },
+    );
   });
 
   group('normalizeCategoryText', () {

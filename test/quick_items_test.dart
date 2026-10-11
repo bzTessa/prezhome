@@ -68,8 +68,9 @@ void main() {
   });
 
   test('sin solapamiento entre condimentos y básicos', () {
-    final condiments =
-        kQuickCondiments.map((e) => normalizeQuickName(e.name)).toSet();
+    final condiments = kQuickCondiments
+        .map((e) => normalizeQuickName(e.name))
+        .toSet();
     final basics = kQuickBasics.map((e) => normalizeQuickName(e.name)).toSet();
     expect(condiments.intersection(basics), isEmpty);
   });

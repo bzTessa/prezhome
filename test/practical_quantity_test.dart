@@ -98,7 +98,11 @@ void main() {
     });
 
     test('comida normal no cambia respecto a makePractical', () {
-      final a = makePracticalForShopping('garbanzos cocidos de bote', 1060, 'g');
+      final a = makePracticalForShopping(
+        'garbanzos cocidos de bote',
+        1060,
+        'g',
+      );
       final b = makePractical('garbanzos cocidos de bote', 1060, 'g');
       expect(a.unit, b.unit);
       expect(a.quantity, b.quantity);
