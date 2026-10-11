@@ -729,9 +729,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     label,
                     style: AppTextStyles.label.copyWith(
                       color: selected ? AppColors.ink : AppColors.inkMuted,
-                      fontWeight: selected
-                          ? FontWeight.w800
-                          : FontWeight.w600,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                     ),
                   ),
                 ],

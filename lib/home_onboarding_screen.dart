@@ -81,10 +81,11 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
       appBar: AppBar(
         title: const Text(
           'Configura tu hogar',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600),
         ),
-        backgroundColor: const Color(0xFFFDF8E1),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
+        centerTitle: true,
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -95,70 +96,127 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  '¡Bienvenido a PrezHome!',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Crea un hogar nuevo o únete al hogar que ya comparte tu familia.',
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _createHome,
-                  style: _buttonStyle(),
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text('Crear un hogar nuevo'),
-                ),
-                const SizedBox(height: 32),
-                const Divider(),
-                const SizedBox(height: 24),
-                const Text(
-                  '¿Te han invitado a un hogar?',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  '¿Qué ambiente deseas crear en casa?',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _homeIdController,
-                  enabled: !_isLoading,
-                  decoration: InputDecoration(
-                    labelText: 'UUID del hogar',
-                    hintText: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+                const Text(
+                  'Crea tu santuario culinario o únete al hogar que comparte tu familia. Comenzaremos a diseñar tu experiencia.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, height: 1.4),
                 ),
-                const SizedBox(height: 16),
-                OutlinedButton(
-                  onPressed: _isLoading ? null : _joinHome,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1E1E1E),
-                    minimumSize: const Size.fromHeight(50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                const SizedBox(height: 48),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: const Text('Unirme al hogar'),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _createHome,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(
+                            0xFFC85A32,
+                          ), // Warm Terracotta
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(9999),
+                          ),
+                          elevation: 0,
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Comenzar un hogar nuevo'),
+                      ),
+                      const SizedBox(height: 32),
+                      const Divider(),
+                      const SizedBox(height: 24),
+                      const Text(
+                        '¿Ya tienes una invitación?',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _homeIdController,
+                        enabled: !_isLoading,
+                        decoration: InputDecoration(
+                          labelText: 'UUID del hogar',
+                          hintText: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+                          filled: true,
+                          fillColor: Theme.of(context).scaffoldBackgroundColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        onPressed: _isLoading ? null : _joinHome,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onSurface,
+                          minimumSize: const Size.fromHeight(56),
+                          side: BorderSide(
+                            color: Theme.of(
+                              context,
+                            ).dividerColor.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(9999),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        child: const Text('Unirme a un hogar'),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  ButtonStyle _buttonStyle() {
-    return ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFFE2C792),
-      foregroundColor: const Color(0xFF1E1E1E),
-      minimumSize: const Size.fromHeight(50),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0,
     );
   }
 }
