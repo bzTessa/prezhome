@@ -733,7 +733,7 @@ class _TareasCelebracion extends StatelessWidget {
                           Text('Todo hecho', style: AppTextStyles.title),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            'No quedan tareas pendientes. Miau esta encantado.',
+                            'No queda nada pendiente.',
                             style: AppTextStyles.bodyMuted,
                           ),
                         ],

@@ -9,11 +9,11 @@ import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
 import 'services/proactive_suggestions_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/empty_state.dart';
 import 'widgets/list_skeleton.dart';
 import 'utils/offline_actions.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/inventory_item_card.dart';
-import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
@@ -618,24 +618,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
           final items = snapshot.data ?? [];
           if (items.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  // Despensa VACÍA: Miau en pose "pensando" (miau_pensando.png)
-                  // con balanceo suave; MiauCharacter respeta reduce-motion.
-                  MiauCharacter(mood: MiauMood.curious, size: 120, float: true),
-                  SizedBox(height: 16),
-                  Text(
-                    'Aquí no hay nada todavía',
-                    style: TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
+            return EmptyState(
+              title: 'Tu despensa está vacía',
+              message:
+                  'Añade lo que tienes en casa o tacha la compra y '
+                  'llegará solo.',
+              actionLabel: 'Añadir producto',
+              onAction: _openAddOptions,
             );
           }
 

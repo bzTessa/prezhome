@@ -29,6 +29,7 @@ import 'utils/shopping_display.dart';
 import 'utils/shopping_quick_add.dart';
 import 'widgets/animations/confetti.dart';
 import 'widgets/food_category_icon.dart';
+import 'widgets/empty_state.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
@@ -1707,38 +1708,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _emptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MiauCharacter(mood: MiauMood.curious, size: 110),
-            const SizedBox(height: AppSpacing.lg),
-            const Text(
-              'Tu lista está vacía',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            const Text(
-              'Escribe arriba lo que necesitas o genérala desde el plan '
-              'de la semana.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.inkMuted),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            OutlinedButton.icon(
-              onPressed: _generating ? null : _generarDesdePlan,
-              icon: const Icon(Icons.event_note_rounded),
-              label: const Text('Desde el plan'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.woodDark,
-                side: const BorderSide(color: AppColors.wood),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return EmptyState(
+      title: 'Tu lista está vacía',
+      message: 'Escribe arriba lo que necesitas o trae lo del plan.',
+      actionLabel: 'Desde el plan',
+      actionIcon: Icons.event_note_rounded,
+      onAction: _generating ? null : _generarDesdePlan,
     );
   }
 }

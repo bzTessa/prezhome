@@ -7,6 +7,7 @@ import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'theme/app_theme.dart';
+import 'widgets/empty_state.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
@@ -308,7 +309,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
           final perMeal = data.profile?.caloriesPerMeal;
 
           if (allRecipes.isEmpty) {
-            return const _EmptyState();
+            return EmptyState(
+              mood: MiauMood.cooking,
+              title: 'Aún no hay recetas',
+              message: 'Crea la primera o pide ideas con lo que tienes.',
+              actionLabel: 'Nueva receta',
+              onAction: _openAdd,
+              secondaryLabel: 'Ideas con lo que tengo',
+              onSecondary: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+                ),
+              ),
+            );
           }
 
           final visible = _applyFilter(allRecipes);
@@ -778,47 +791,6 @@ class _RecipeCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Estado vacío: Miau anima a crear la primera receta.
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const MiauCharacter(mood: MiauMood.cooking, size: 120),
-            const SizedBox(height: 20),
-            const Text(
-              'Presidente Miau supervisa la cocina',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.ink,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Aún no hay recetas registradas.\n'
-              'Pulsa "Nueva receta" para empezar',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                height: 1.3,
-                color: AppColors.ink.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
         ),
       ),
     );
