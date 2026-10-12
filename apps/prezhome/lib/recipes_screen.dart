@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_recipe_chooser.dart';
+import 'discover_recipes_screen.dart';
 import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
@@ -312,91 +313,154 @@ class _RecipesScreenState extends State<RecipesScreen> {
           final visible = _applyFilter(allRecipes);
           final searching = _query.trim().isNotEmpty;
 
-          return Column(
-            children: [
-              _SearchBar(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v),
-                onClear: () => setState(() {
-                  _searchCtrl.clear();
-                  _query = '';
-                }),
-              ),
-              _FilterBar(
-                active: _filter,
-                onSelected: _setFilter,
-                recipes: allRecipes,
-              ),
-              // Contador de resultados + pista de pulsación larga.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 2, 20, 6),
-                child: Row(
-                  children: [
-                    Text(
-                      visible.isEmpty
-                          ? 'Sin resultados'
-                          : '${visible.length} '
-                                '${visible.length == 1 ? 'receta' : 'recetas'}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (visible.isNotEmpty)
-                      Text(
-                        'Mantén pulsado para más opciones',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.ink.withValues(alpha: 0.4),
-                        ),
-                      ),
-                  ],
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _SearchBar(
+                  controller: _searchCtrl,
+                  onChanged: (v) => setState(() => _query = v),
+                  onClear: () => setState(() {
+                    _searchCtrl.clear();
+                    _query = '';
+                  }),
                 ),
               ),
-              Expanded(
-                child: visible.isEmpty
-                    ? (searching
-                          ? _NoSearchResults(query: _query.trim())
-                          : const _NoMatchesState())
-                    : GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                              // Tarjetas algo menos altas: evita el gran hueco
-                              // inferior cuando hay pocas recetas y hace la
-                              // rejilla más equilibrada.
-                              childAspectRatio: 0.78,
-                            ),
-                        itemCount: visible.length,
-                        itemBuilder: (context, index) {
-                          final recipe = visible[index];
-                          return _RecipeCard(
-                            recipe: recipe,
-                            caloriesPerMeal: perMeal,
-                            onToggleFavorite: () => _toggleFavorite(recipe),
-                            onLongPress: () => _openQuickActions(recipe),
-                            onTap: () async {
-                              final changed = await Navigator.of(context)
-                                  .push<bool>(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          RecipeDetailScreen(recipe: recipe),
-                                    ),
-                                  );
-                              if (changed == true) _reload();
-                            },
-                          );
-                        },
-                      ),
+              SliverToBoxAdapter(
+                child: _FilterBar(
+                  active: _filter,
+                  onSelected: _setFilter,
+                  recipes: allRecipes,
+                ),
               ),
+              if (!searching && _filter == _RecipeFilter.all)
+                SliverToBoxAdapter(
+                  child: _PantryBanner(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const DiscoverRecipesScreen(pantryMode: true),
+                      ),
+                    ),
+                  ),
+                ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  child: Text(
+                    visible.isEmpty
+                        ? 'Sin resultados'
+                        : '${visible.length} '
+                              '${visible.length == 1 ? 'receta' : 'recetas'}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+              ),
+              if (visible.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: searching
+                      ? _NoSearchResults(query: _query.trim())
+                      : const _NoMatchesState(),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  sliver: SliverGrid.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 240,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 0.74,
+                        ),
+                    itemCount: visible.length,
+                    itemBuilder: (context, index) {
+                      final recipe = visible[index];
+                      return _RecipeCard(
+                        recipe: recipe,
+                        caloriesPerMeal: perMeal,
+                        onToggleFavorite: () => _toggleFavorite(recipe),
+                        onLongPress: () => _openQuickActions(recipe),
+                        onTap: () async {
+                          final changed = await Navigator.of(context)
+                              .push<bool>(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      RecipeDetailScreen(recipe: recipe),
+                                ),
+                              );
+                          if (changed == true) _reload();
+                        },
+                      );
+                    },
+                  ),
+                ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Acceso a "¿Qué cocino con lo que tengo?" sobre la rejilla.
+class _PantryBanner extends StatelessWidget {
+  const _PantryBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+      child: Material(
+        color: AppColors.sageBg,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: const Padding(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.card,
+                  child: Icon(Icons.kitchen_rounded, color: AppColors.sage),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¿Qué cocino con lo que tengo?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15.5,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Ideas con lo que hay en tu despensa',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.inkMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: AppColors.sage),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -523,10 +587,10 @@ class _FilterChip extends StatelessWidget {
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? AppColors.woodDark : AppColors.card,
+            color: selected ? AppColors.ink : AppColors.card,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: selected ? AppColors.woodDark : AppColors.wood,
+              color: selected ? AppColors.ink : AppColors.card,
               width: 1.4,
             ),
             boxShadow: selected
@@ -545,7 +609,7 @@ class _FilterChip extends StatelessWidget {
               Icon(
                 icon,
                 size: 16,
-                color: selected ? Colors.white : AppColors.woodDark,
+                color: selected ? AppColors.cream : AppColors.woodDark,
               ),
               const SizedBox(width: 6),
               Text(
@@ -585,98 +649,134 @@ class _RecipeCard extends StatelessWidget {
     final primaryType = recipe.mealTypes.isNotEmpty
         ? recipe.mealTypes.first
         : null;
+    final meta = [
+      if (recipe.totalTimeMinutes != null) '${recipe.totalTimeMinutes} min',
+      if (recipe.calories != null) '${recipe.calories} kcal',
+    ].join(' · ');
 
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
+    return Semantics(
+      button: true,
+      label: recipe.title,
+      child: Material(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
         clipBehavior: Clip.antiAlias,
-        decoration: AppTheme.cardDecoration(radius: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Foto (o placeholder cozy) con estrella de favorita superpuesta.
-            Stack(
-              children: [
-                RecipeImage(recipe: recipe, height: 120, radius: 20),
-                // Estrella SIEMPRE visible y pulsable: llena si favorita,
-                // contorno si no. Toque directo para marcar/desmarcar.
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Foto a sangre: la imagen manda, como en las apps de recetas.
+              LayoutBuilder(
+                builder: (context, c) =>
+                    RecipeImage(recipe: recipe, height: c.maxHeight, radius: 0),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.7),
+                    ],
+                    stops: const [0.4, 1],
+                  ),
+                ),
+              ),
+              if (primaryType != null)
                 Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Material(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: onToggleFavorite,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(
-                          recipe.isFavorite
-                              ? Icons.star_rounded
-                              : Icons.star_border_rounded,
-                          color: recipe.isFavorite
-                              ? AppColors.favorite
-                              : AppColors.woodDark,
-                          size: 20,
+                  left: 10,
+                  top: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          mealTypeIcon(primaryType),
+                          size: 13,
+                          color: AppColors.woodDark,
                         ),
+                        const SizedBox(width: 4),
+                        Text(
+                          Recipe.mealTypeLabels[primaryType] ?? primaryType,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Material(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: onToggleFavorite,
+                    child: Padding(
+                      padding: const EdgeInsets.all(7),
+                      child: Icon(
+                        recipe.isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: recipe.isFavorite
+                            ? AppColors.favorite
+                            : AppColors.ink,
+                        size: 18,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+              ),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 12,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       recipe.title,
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
                         height: 1.15,
-                        color: AppColors.ink,
+                        color: Colors.white,
                       ),
                     ),
-                    const Spacer(),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        if (primaryType != null)
-                          RecipeChip(
-                            text:
-                                Recipe.mealTypeLabels[primaryType] ??
-                                primaryType,
-                            icon: mealTypeIcon(primaryType),
-                            style: RecipeChipStyle.type,
-                          ),
-                        if (recipe.totalTimeMinutes != null)
-                          RecipeChip(
-                            text: '${recipe.totalTimeMinutes} min',
-                            icon: Icons.schedule_rounded,
-                            style: RecipeChipStyle.time,
-                          ),
-                        if (recipe.calories != null)
-                          RecipeChip(
-                            text: '${recipe.calories} kcal',
-                            icon: Icons.local_fire_department_rounded,
-                            style: RecipeChipStyle.calories,
-                          ),
-                      ],
-                    ),
+                    if (meta.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        meta,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
