@@ -33,6 +33,11 @@ la IA. La app funciona igual sin configurarlo (con dibujos cozy por tipo de
 plato), y la guia sencilla para activarlo esta en
 [docs/RECETAS_FOTOS.md](docs/RECETAS_FOTOS.md).
 
+## Producto
+
+- [docs/PREZHOME.md](docs/PREZHOME.md): visión de PrezHome (quitar carga mental).
+- [docs/PREZWALLET.md](docs/PREZWALLET.md): app hermana de gastos y patrimonio.
+
 ## Arquitectura y refactor
 
 Para apoyar el rediseño de la app hay una base de arquitectura en:

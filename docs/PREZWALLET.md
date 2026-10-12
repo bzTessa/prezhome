@@ -1,0 +1,146 @@
+# PrezWallet · Gastos y patrimonio sin esfuerzo
+
+> Documento de producto de la app hermana de [PrezHome](PREZHOME.md).
+> Mismo backend, mismo login, misma familia visual.
+
+## 1. La idea en una frase
+
+**Saber en 5 segundos cuánto gasto, cuánto tengo y si voy bien.**
+
+Fusión de tres referencias:
+
+| Referencia            | Qué cogemos                                                   |
+|-----------------------|---------------------------------------------------------------|
+| **Mis Gastos**        | Apuntar un gasto en 2 toques: rejilla de categorías con icono, teclado numérico. Resumen mensual con donut por categoría y barras de %. |
+| **Wallet (BudgetBakers)** | Varias cuentas, presupuestos, flujo de caja, tendencia de saldo, clasificación **Necesidad / Deseo / Obligación**. Importación bancaria (fase avanzada). |
+| **getquin**           | Patrimonio neto, cartera de inversión (acciones, ETF, cripto), distribución en donut, calendario y gráfico de **dividendos** por año. |
+| **Barra de @marcodev04** | Navegación flotante en píldora + botón "+" aparte (ver PREZHOME.md §5.1). |
+
+Regla de oro (igual que PrezHome): **apuntar tiene que costar menos que no
+apuntar.** Si no, no se usa.
+
+## 2. Para quién
+
+- **Personal**: mis cuentas, mis inversiones, mi patrimonio. **Privado por
+  defecto.**
+- **Hogar**: gastos compartidos con los miembros del hogar (súper, alquiler,
+  facturas). Visibles para todo el hogar, como en PrezHome.
+
+Cada movimiento es *personal* o *del hogar*; esa es la única pregunta extra.
+
+## 3. Pestañas
+
+**Inicio · Movimientos · Patrimonio · Análisis** + **[+]** (nuevo movimiento).
+
+### 3.1 Inicio
+- Saldo disponible del mes (ingresos – gastos) y patrimonio neto total.
+- Barra de presupuesto del mes ("llevas 640 € de 900 €").
+- Próximos recibos (7 días).
+- Últimos 5 movimientos.
+
+### 3.2 Movimientos
+- Lista por día con icono de categoría, nota y cuenta (estilo Mis Gastos).
+- Selector de mes arriba; filtros por cuenta, categoría, personal/hogar.
+- Recurrentes / suscripciones en una sección propia.
+
+### 3.3 Patrimonio
+- **Patrimonio neto** = activos – deudas, con gráfico de evolución.
+- Activos: cuentas, efectivo, inversiones, vivienda/vehículo (valor manual).
+- Deudas: hipoteca, préstamos, tarjetas.
+- **Cartera** (estilo getquin): posiciones, valor actual, rentabilidad,
+  distribución por tipo/sector y **dividendos** (recibidos y previstos por año).
+
+### 3.4 Análisis
+- Donut por categoría + lista con % (Mis Gastos).
+- Comparativa mes a mes / año.
+- Necesidad vs Deseo vs Obligación (Wallet).
+- Gasto en súper por tienda y evolución de precios (dato que llega de PrezHome).
+
+### 3.5 Botón [+]
+Hoja inferior: importe grande → rejilla de categorías → (opcional) nota, cuenta,
+personal/hogar. Guardar con el importe ya escrito y una categoría = 2 toques.
+Atajos: escanear ticket (reutiliza `scan-ticket` de PrezHome), repetir último.
+
+## 4. Modelo de datos (borrador)
+
+Todas las tablas con RLS: lo personal por `user_id`, lo compartido por `home_id`
+(mismo patrón que PrezHome). Prefijo `wallet_` para no chocar con tablas
+existentes.
+
+```
+wallet_accounts      id, owner_id, home_id?, name, type (bank|cash|card|
+                     investment|property|loan), currency, opening_balance,
+                     is_shared, archived
+wallet_categories    id, owner_id?, home_id?, name, icon, color, kind
+                     (expense|income), nature (need|want|must)
+wallet_transactions  id, account_id, category_id, amount, date, note,
+                     is_shared, source (manual|ticket|import|recurring),
+                     ticket_id?  -> enlace con tickets de PrezHome
+wallet_recurring     id, account_id, category_id, amount, rrule, next_date,
+                     remind_days_before
+wallet_budgets       id, scope (user|home), category_id?, month, amount
+wallet_holdings      id, account_id, symbol, name, asset_type, quantity,
+                     avg_price, currency
+wallet_dividends     id, holding_id, pay_date, amount_per_share, total
+wallet_snapshots     id, owner_id, date, net_worth, assets, liabilities
+                     (foto diaria/semanal para el gráfico de evolución)
+```
+
+Migración de lo existente: `expenses` y `budgets` de PrezHome se copian a
+`wallet_transactions` / `wallet_budgets` (cuenta "Hogar", `is_shared = true`)
+y la pantalla `economy_screen.dart` se retira de PrezHome cuando PrezWallet
+esté en uso.
+
+## 5. Fases
+
+| Fase | Contenido | Resultado |
+|------|-----------|-----------|
+| **1. Apuntar** | Cuentas manuales, categorías, [+] rápido, lista de movimientos, Inicio básico. | Ya sustituye a Mis Gastos. |
+| **2. Entender** | Análisis (donut, comparativas, necesidad/deseo), presupuestos por categoría, recurrentes + avisos. | Sabes en qué se va el dinero. |
+| **3. Conectar con PrezHome** | Tickets → movimientos, presupuesto de súper en la lista de compra, recibos → pantalla Hoy. | Las dos apps trabajan juntas. |
+| **4. Patrimonio** | Activos/deudas manuales, patrimonio neto, snapshots y gráfico de evolución. | Foto completa de tu dinero. |
+| **5. Inversiones** | Posiciones, precios automáticos (Edge Function + API de cotizaciones), dividendos, distribución. | Sustituye a getquin. |
+| **6. Automatizar** | Importar CSV/Excel del banco; más adelante agregador bancario PSD2 (Edge Function, nunca claves en la app). | Casi no hay que apuntar a mano. |
+
+## 6. Arquitectura técnica
+
+- **Flutter + Supabase**, igual que PrezHome. **Mismo proyecto Supabase** (un
+  único login para las dos apps).
+- Repositorio: recomendado convertir este repo en **monorepo**:
+
+```
+apps/
+  prezhome/        (la app actual)
+  prezwallet/      (nueva)
+packages/
+  prez_core/       auth, cliente Supabase, sesión, hogar/miembros
+  prez_ui/         tema Cozy, tokens, FloatingNavBar, Miau, tarjetas
+supabase/          migraciones y Edge Functions compartidas
+```
+
+  Con *pub workspaces* (Dart 3.6+) o `melos`. Es un movimiento de carpetas
+  grande, así que se hace en un PR propio y antes de empezar PrezWallet.
+- Claves de APIs externas (cotizaciones, bancos) solo en **Edge Functions**
+  como secrets de Supabase, nunca en el cliente (ver `AGENTS.md`).
+- Cálculos (patrimonio, presupuestos, % por categoría) como **lógica pura y
+  testeable** en `services/`, como ya se hace en PrezHome.
+
+## 7. Diseño
+
+- Misma barra flotante y tokens que PrezHome (paquete `prez_ui`).
+- Color de marca propio para distinguirlas de un vistazo: PrezHome amarillo
+  Cozy, PrezWallet **verde salvia** (en la línea de la referencia), mismo
+  fondo crema y tarjetas redondeadas.
+- Miau aparece con su versión "gato de la suerte" (maneki-neko con moneda)
+  en estados vacíos y celebraciones (presupuesto cumplido, nuevo máximo de
+  patrimonio). Sin emojis en la interfaz.
+- Cifras grandes y legibles; negativos en tono cálido suave, no rojo chillón.
+
+## 8. Preguntas abiertas
+
+- ¿Moneda única (EUR) o multimoneda desde el inicio? (Propuesta: EUR primero,
+  campo `currency` ya preparado.)
+- ¿Los miembros del hogar ven el patrimonio de los demás? (Propuesta: no,
+  solo lo marcado como compartido.)
+- ¿Qué fuente de cotizaciones? Decidir en la fase 5 según coste y cobertura de
+  ETFs europeos.
