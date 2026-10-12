@@ -310,7 +310,7 @@ class HomeTabState extends State<HomeTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e)),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -1816,8 +1816,8 @@ class HomeTabState extends State<HomeTab> {
                       child: LinearProgressIndicator(
                         value: ratio,
                         minHeight: 10,
-                        backgroundColor: const Color(0xFFEFE7CC),
-                        color: over ? Colors.redAccent : AppColors.wood,
+                        backgroundColor: AppColors.line,
+                        color: over ? AppColors.expired : AppColors.wood,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -1826,7 +1826,7 @@ class HomeTabState extends State<HomeTab> {
                           ? 'Te has pasado ${(total - target).round()} kcal'
                           : 'Te quedan ${(target - total).round()} kcal',
                       style: AppTextStyles.label.copyWith(
-                        color: over ? Colors.redAccent : AppColors.inkMuted,
+                        color: over ? AppColors.expired : AppColors.inkMuted,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1876,8 +1876,8 @@ class HomeTabState extends State<HomeTab> {
                     child: LinearProgressIndicator(
                       value: ratio,
                       minHeight: 10,
-                      backgroundColor: const Color(0xFFEFE7CC),
-                      color: over ? Colors.redAccent : AppColors.wood,
+                      backgroundColor: AppColors.line,
+                      color: over ? AppColors.expired : AppColors.wood,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -1886,7 +1886,7 @@ class HomeTabState extends State<HomeTab> {
                         ? 'Te has pasado ${(spent - budget).toStringAsFixed(2)} € del presupuesto'
                         : 'Te quedan ${(budget - spent).toStringAsFixed(2)} €',
                     style: AppTextStyles.label.copyWith(
-                      color: over ? Colors.redAccent : AppColors.inkMuted,
+                      color: over ? AppColors.expired : AppColors.inkMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

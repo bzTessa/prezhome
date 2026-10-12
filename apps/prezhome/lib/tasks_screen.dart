@@ -256,7 +256,10 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
       );
     }
   }
@@ -356,7 +359,10 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
       );
     }
   }
@@ -793,7 +799,7 @@ class _Scoreboard extends StatelessWidget {
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[500],
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -885,7 +891,7 @@ class _PointsChart extends StatelessWidget {
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[500],
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 16),
@@ -935,7 +941,7 @@ class _PointsChart extends StatelessWidget {
                           child: Text(
                             _shortName(data[i].name),
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.inkMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -994,7 +1000,7 @@ class _PointsChart extends StatelessWidget {
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[500],
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -1017,7 +1023,7 @@ class _PointsChart extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Completa tareas para ir sumando.',
-                      style: TextStyle(color: Colors.grey[700]),
+                      style: TextStyle(color: AppColors.inkMuted),
                     ),
                   ],
                 ),
@@ -1111,7 +1117,7 @@ class _TaskCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            icon: const Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: onDelete,
           ),
         ],

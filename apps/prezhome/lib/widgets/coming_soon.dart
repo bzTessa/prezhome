@@ -53,7 +53,7 @@ class ComingSoon extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[700],
+                color: AppColors.inkMuted,
                 fontSize: 15,
                 height: 1.4,
               ),

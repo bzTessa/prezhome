@@ -548,7 +548,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo actualizar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -611,7 +611,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo eliminar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -667,7 +667,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ListTile(
               leading: const Icon(
                 Icons.delete_outline,
-                color: Colors.redAccent,
+                color: AppColors.expired,
               ),
               title: const Text('Quitar de la lista'),
               onTap: () => Navigator.of(ctx).pop('delete'),
@@ -742,7 +742,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo subir la foto')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -1053,7 +1053,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo añadir')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -1115,7 +1115,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
       );
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -1273,7 +1276,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo crear la lista')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
       return null;

@@ -97,7 +97,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al analizar la foto: $msg'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -106,7 +106,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al analizar la foto')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -233,7 +233,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -291,7 +291,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
               'Calculamos los alimentos y sus calorías. Podrás corregirlo antes '
               'de guardar.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -339,7 +339,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Las calorías son aproximadas.',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                     if (_note.isNotEmpty) ...[
                       const SizedBox(height: 8),
@@ -362,7 +362,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                               child: Text(
                                 _note,
                                 style: TextStyle(
-                                  color: Colors.grey[700],
+                                  color: AppColors.inkMuted,
                                   fontSize: 13,
                                 ),
                               ),
@@ -432,7 +432,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     'No se ha reconocido ningún alimento. Añádelos a mano.',
-                    style: TextStyle(color: Colors.grey[700]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ),
               Row(
@@ -443,7 +443,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                       fontSize: 12,
                       letterSpacing: 1,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[500],
+                      color: AppColors.inkMuted,
                     ),
                   ),
                   const Spacer(),
@@ -482,7 +482,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: Colors.redAccent),
+                icon: const Icon(Icons.close, color: AppColors.expired),
                 onPressed: () => setState(() {
                   _items.removeAt(index);
                   it.dispose();
@@ -563,7 +563,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
+            color: AppColors.softShadow,
             blurRadius: 10,
             offset: Offset(0, -2),
           ),
@@ -576,7 +576,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Total', style: TextStyle(color: Colors.grey[600])),
+                Text('Total', style: TextStyle(color: AppColors.inkMuted)),
                 Text(
                   '${_totalCalories.round()} kcal',
                   style: const TextStyle(

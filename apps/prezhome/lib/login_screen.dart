@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error de autenticación')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo iniciar con Google')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -319,7 +319,7 @@ class _GoogleButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: AppColors.ink,
-          side: BorderSide(color: Colors.grey[300]!),
+          side: BorderSide(color: AppColors.line),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

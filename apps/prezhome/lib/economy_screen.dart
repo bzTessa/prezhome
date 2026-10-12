@@ -317,7 +317,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('No se ha podido canjear. Puede que te falte saldo.'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -392,7 +392,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e)),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -837,7 +837,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               children: [
                 Text(
                   'Gasto total registrado',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 Text(
                   '${data.historicalTotal.toStringAsFixed(2)} €',
@@ -848,7 +848,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 ),
                 Text(
                   '${data.historicalTicketCount} tickets en total',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -908,8 +908,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
               child: LinearProgressIndicator(
                 value: ratio,
                 minHeight: 10,
-                backgroundColor: const Color(0xFFEFE7CC),
-                color: over ? Colors.redAccent : AppColors.wood,
+                backgroundColor: AppColors.line,
+                color: over ? AppColors.expired : AppColors.wood,
               ),
             ),
             const SizedBox(height: 6),
@@ -918,7 +918,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   ? 'Te has pasado ${(spent - budget).toStringAsFixed(2)} € del presupuesto'
                   : 'Te quedan ${(budget - spent).toStringAsFixed(2)} €',
               style: TextStyle(
-                color: over ? Colors.redAccent : Colors.grey[700],
+                color: over ? AppColors.expired : AppColors.inkMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -960,7 +960,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             const SizedBox(height: 4),
             Text(
               'Presupuesto: ${budget.toStringAsFixed(0)} € al mes',
-              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
           ],
           const SizedBox(height: 16),
@@ -1010,7 +1010,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                           child: Text(
                             months[i].label,
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.inkMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1083,7 +1083,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           Text(
             'Aún no hay gasto registrado en los últimos meses.\n'
             'Cuando escanees tickets verás aquí tu tendencia.',
-            style: TextStyle(color: Colors.grey[700], fontSize: 13),
+            style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
         ],
       ),
@@ -1127,7 +1127,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   Text(
                     '${date.day.toString().padLeft(2, '0')}/'
                     '${date.month.toString().padLeft(2, '0')}/${date.year}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                   ),
               ],
             ),
@@ -1137,7 +1137,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            icon: const Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: () => _deleteTicket(t['id'] as String),
           ),
         ],
@@ -1155,7 +1155,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           Text(
             'Aún no hay tickets este mes.\nEscanea el primero.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[700]),
+            style: TextStyle(color: AppColors.inkMuted),
           ),
         ],
       ),

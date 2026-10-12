@@ -82,7 +82,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -230,7 +230,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   return FilterChip(
                     label: Text(HomeTask.weekdayShort[i]),
                     selected: selected,
-                    selectedColor: const Color(0xFFE2C792),
+                    selectedColor: AppColors.wood,
                     backgroundColor: Colors.white,
                     onSelected: (v) => setState(() {
                       if (v) {

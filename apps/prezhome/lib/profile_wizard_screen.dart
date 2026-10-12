@@ -311,7 +311,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -455,7 +455,11 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         const SizedBox(height: 8),
         Text(
           subtitle,
-          style: TextStyle(fontSize: 15, height: 1.4, color: Colors.grey[700]),
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.4,
+            color: AppColors.inkMuted,
+          ),
         ),
         const SizedBox(height: 24),
       ],
@@ -488,7 +492,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             style: TextStyle(
               fontSize: 16,
               height: 1.5,
-              color: Colors.grey[700],
+              color: AppColors.inkMuted,
             ),
           ),
         ],
@@ -553,7 +557,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: hasDate ? FontWeight.bold : FontWeight.normal,
-                      color: hasDate ? AppColors.ink : Colors.grey[600],
+                      color: hasDate ? AppColors.ink : AppColors.inkMuted,
                     ),
                   ),
                 ),
@@ -920,7 +924,11 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           'Es una estimacion para empezar. Siempre puedes ajustarla desde tu '
           'perfil cuando quieras.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.4),
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.inkMuted,
+            height: 1.4,
+          ),
         ),
       ],
     );
@@ -932,7 +940,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     filled: true,
     fillColor: AppColors.card,
     hintText: hint,
-    hintStyle: TextStyle(fontSize: 15, color: Colors.grey[500]),
+    hintStyle: TextStyle(fontSize: 15, color: AppColors.inkMuted),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(20),
@@ -1020,7 +1028,7 @@ class _OptionCard extends StatelessWidget {
                       subtitle!,
                       style: TextStyle(
                         fontSize: 13,
-                        color: selected ? Colors.black87 : Colors.grey[600],
+                        color: selected ? AppColors.ink : AppColors.inkMuted,
                       ),
                     ),
                   ],
@@ -1092,7 +1100,7 @@ class _SelectCard extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 13,
-                    color: selected ? Colors.black87 : AppColors.inkMuted,
+                    color: selected ? AppColors.ink : AppColors.inkMuted,
                   ),
                 ),
               ],
@@ -1186,7 +1194,7 @@ class _MacroStat extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+        Text(label, style: TextStyle(fontSize: 13, color: AppColors.inkMuted)),
       ],
     );
   }

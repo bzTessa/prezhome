@@ -11,6 +11,7 @@ import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
 import 'utils/friendly_error.dart';
+import 'theme/app_theme.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -211,7 +212,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
-          backgroundColor: const Color(0xFFFDF8E1),
+          backgroundColor: AppColors.cream,
           title: const Text('Completar receta'),
           content: TextField(
             controller: controller,
@@ -235,8 +236,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE2C792),
-                foregroundColor: const Color(0xFF1E1E1E),
+                backgroundColor: AppColors.wood,
+                foregroundColor: AppColors.ink,
                 elevation: 0,
               ),
               onPressed: () =>
@@ -287,7 +288,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo completar la receta')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -306,7 +307,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
-          backgroundColor: const Color(0xFFFDF8E1),
+          backgroundColor: AppColors.cream,
           title: const Text('Importar de TikTok/Instagram'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -340,8 +341,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE2C792),
-                foregroundColor: const Color(0xFF1E1E1E),
+                backgroundColor: AppColors.wood,
+                foregroundColor: AppColors.ink,
                 elevation: 0,
               ),
               onPressed: () =>
@@ -393,7 +394,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo importar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -767,7 +768,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -789,13 +790,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF8E1),
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: Text(
           widget.isEditing ? 'Editar Receta' : 'Nueva Receta',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFFFDF8E1),
+        backgroundColor: AppColors.cream,
         elevation: 0,
       ),
       body: _loadingInitial
@@ -809,10 +810,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     OutlinedButton.icon(
                       onPressed: _aiLoading ? null : _fillWithAI,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E1E1E),
+                        foregroundColor: AppColors.ink,
                         minimumSize: const Size.fromHeight(48),
                         side: const BorderSide(
-                          color: Color(0xFFE2C792),
+                          color: AppColors.wood,
                           width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
@@ -837,10 +838,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     OutlinedButton.icon(
                       onPressed: _aiLoading ? null : _importFromLink,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E1E1E),
+                        foregroundColor: AppColors.ink,
                         minimumSize: const Size.fromHeight(48),
                         side: const BorderSide(
-                          color: Color(0xFFE2C792),
+                          color: AppColors.wood,
                           width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
@@ -884,12 +885,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                                 Icon(
                                   Icons.add_a_photo_outlined,
                                   size: 36,
-                                  color: Colors.grey[500],
+                                  color: AppColors.inkMuted,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   'Añadir foto (opcional)',
-                                  style: TextStyle(color: Colors.grey[600]),
+                                  style: TextStyle(color: AppColors.inkMuted),
                                 ),
                               ],
                             )
@@ -898,7 +899,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8),
                                 child: CircleAvatar(
-                                  backgroundColor: Colors.black54,
+                                  backgroundColor: AppColors.inkMuted,
                                   radius: 16,
                                   child: IconButton(
                                     padding: EdgeInsets.zero,
@@ -949,8 +950,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       return FilterChip(
                         label: Text(e.value),
                         selected: selected,
-                        selectedColor: const Color(0xFFE2C792),
-                        checkmarkColor: const Color(0xFF1E1E1E),
+                        selectedColor: AppColors.wood,
+                        checkmarkColor: AppColors.ink,
                         backgroundColor: Colors.white,
                         onSelected: (v) => setState(() {
                           if (v) {
@@ -1070,14 +1071,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   SwitchListTile(
                     title: const Text('Es congelable'),
                     value: _freezable,
-                    activeThumbColor: const Color(0xFFE2C792),
+                    activeThumbColor: AppColors.wood,
                     contentPadding: EdgeInsets.zero,
                     onChanged: (v) => setState(() => _freezable = v),
                   ),
                   SwitchListTile(
                     title: const Text('Marcar como favorita'),
                     value: _isFavorite,
-                    activeThumbColor: const Color(0xFFE2C792),
+                    activeThumbColor: AppColors.wood,
                     contentPadding: EdgeInsets.zero,
                     onChanged: (v) => setState(() => _isFavorite = v),
                   ),
@@ -1094,11 +1095,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       onPressed: () => setState(
                         () => _ingredients.add(_IngredientControllers()),
                       ),
-                      icon: const Icon(Icons.add, color: Color(0xFF1E1E1E)),
+                      icon: const Icon(Icons.add, color: AppColors.ink),
                       label: const Text(
                         'Añadir ingrediente',
                         style: TextStyle(
-                          color: Color(0xFF1E1E1E),
+                          color: AppColors.ink,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1119,8 +1120,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE2C792),
-                      foregroundColor: const Color(0xFF1E1E1E),
+                      backgroundColor: AppColors.wood,
+                      foregroundColor: AppColors.ink,
                       minimumSize: const Size.fromHeight(52),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -1246,7 +1247,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: Colors.redAccent),
+                icon: const Icon(Icons.close, color: AppColors.expired),
                 onPressed: _ingredients.length == 1
                     ? null
                     : () => setState(() {
@@ -1289,7 +1290,7 @@ class _SectionTitle extends StatelessWidget {
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1E1E1E),
+        color: AppColors.ink,
       ),
     );
   }

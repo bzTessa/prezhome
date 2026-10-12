@@ -304,7 +304,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e)),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -431,7 +431,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -582,7 +582,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                             '${NutritionProfile.dietLabels[_profileDiet]}',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey[700],
+                              color: AppColors.inkMuted,
                             ),
                           ),
                         ),
@@ -767,7 +767,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
             const SizedBox(height: 4),
             Text(
               r['description'].toString(),
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 14),
             ),
           ],
           const SizedBox(height: 10),
@@ -787,7 +787,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                   'P: ${protein}g',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: AppColors.inkMuted,
                   ),
                 ),
               ],

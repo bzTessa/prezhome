@@ -260,7 +260,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e)),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -387,7 +387,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     } catch (err) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $err'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $err'),
+            backgroundColor: AppColors.expired,
+          ),
         );
       }
     }
@@ -440,7 +443,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             ListTile(
               leading: const Icon(
                 Icons.delete_outline,
-                color: Colors.redAccent,
+                color: AppColors.expired,
               ),
               title: const Text('Quitar del plan'),
               onTap: () => Navigator.of(ctx).pop('remove'),
@@ -595,7 +598,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   void _showError(Object err) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $err'), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text('Error: $err'),
+        backgroundColor: AppColors.expired,
+      ),
     );
   }
 
@@ -711,7 +717,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               'El planificador reparte tus recetas por la semana. Guarda unas '
               'cuantas en la pestaña Comidas.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
           ],
         ),
@@ -789,7 +795,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               'Aún no hay plan esta semana.',
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
           ),
         for (final t in types)
@@ -911,13 +917,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'Cocina la semana de una vez',
-                    style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                    style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.chevron_right, color: Colors.grey[500]),
+            Icon(Icons.chevron_right, color: AppColors.inkMuted),
           ],
         ),
       ),
@@ -985,7 +991,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             Text(
               'Cuando tengas plan de la semana te digo qué cocinar en lote, '
               'qué guardar en la nevera y qué congelar.',
-              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             )
           else
             ...plan.cookingDays.map((day) {
@@ -1007,7 +1013,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           child: Icon(
                             Icons.outdoor_grill,
                             size: 16,
-                            color: Color(0xFFB58A3C),
+                            color: AppColors.woodDark,
                           ),
                         ),
                         Expanded(
@@ -1138,7 +1144,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e)),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -1161,7 +1167,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
           const SizedBox(height: 10),
           Row(
@@ -1174,7 +1180,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     label: Text(labels[i]),
                     selected: selected,
                     selectedColor: AppColors.wood,
-                    backgroundColor: const Color(0xFFFDF8E1),
+                    backgroundColor: AppColors.cream,
                     onSelected: (_) => setState(() => _energyLevel = i),
                   ),
                 ),
@@ -1226,12 +1232,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
-          const Icon(Icons.people_outline, size: 12, color: Color(0xFFB58A3C)),
+          const Icon(Icons.people_outline, size: 12, color: AppColors.woodDark),
           const SizedBox(width: 4),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
             ),
           ),
         ],
@@ -1368,7 +1374,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                   ? Center(
                       child: Text(
                         'Sin recetas que coincidan.',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(color: AppColors.inkMuted),
                       ),
                     )
                   : ListView.builder(

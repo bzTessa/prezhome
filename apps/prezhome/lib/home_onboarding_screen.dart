@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_shell.dart';
+import 'theme/app_theme.dart';
 
 class HomeOnboardingScreen extends StatefulWidget {
   const HomeOnboardingScreen({super.key});
@@ -65,7 +66,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppColors.expired),
     );
   }
 

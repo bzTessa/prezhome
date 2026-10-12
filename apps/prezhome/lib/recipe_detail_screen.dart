@@ -187,7 +187,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo actualizar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -281,7 +281,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -326,7 +326,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo subir la foto')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -365,7 +365,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFFDF8E1),
+        backgroundColor: AppColors.cream,
         title: const Text('¿Eliminar receta?'),
         content: Text('Se borrará "${_recipe.title}" y sus ingredientes.'),
         actions: [
@@ -375,7 +375,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppColors.expired,
               foregroundColor: Colors.white,
               elevation: 0,
             ),
@@ -402,7 +402,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo eliminar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -483,7 +483,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -503,7 +503,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('No se pudo abrir el enlace del video'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -512,7 +512,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('No se pudo abrir el enlace del video'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -709,7 +709,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             PopupMenuItem(
               value: 'delete',
               child: ListTile(
-                leading: Icon(Icons.delete_outline, color: Colors.redAccent),
+                leading: Icon(Icons.delete_outline, color: AppColors.expired),
                 title: Text('Eliminar'),
                 contentPadding: EdgeInsets.zero,
               ),
@@ -1292,7 +1292,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
                     '${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
                   ),
                 ),
               if (_cost != null) ...[
@@ -1317,7 +1317,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     const Spacer(),
                     Text(
                       '≈ ${_cost!.total.toStringAsFixed(2).replaceAll('.', ',')} € total',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                   ],
                 ),
@@ -1327,7 +1327,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     child: Text(
                       'Coste aproximado. Escanea tickets para afinarlo con '
                       'tus precios reales.',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
                     ),
                   ),
               ],
@@ -1440,7 +1440,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Text(
           'Completa un Perfil Nutricional para ver cuántos gramos y calorías '
           'corresponden a cada persona.',
-          style: TextStyle(color: Colors.grey[700]),
+          style: TextStyle(color: AppColors.inkMuted),
         ),
       );
     }
@@ -1478,7 +1478,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     '${grams.toStringAsFixed(0)} g · $kcal kcal',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFB58A3C),
+                      color: AppColors.woodDark,
                     ),
                   ),
                 ],
@@ -1491,7 +1491,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     padding: const EdgeInsets.only(left: 4, top: 2),
                     child: Text(
                       '· ${c.name}: ${c.gramsFromTotal(grams).toStringAsFixed(0)} g',
-                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                   ),
                 ),
@@ -1507,7 +1507,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Text(
           'Ajusta el reparto de calorías por comida en el perfil para este tipo '
           'de receta.',
-          style: TextStyle(color: Colors.grey[700]),
+          style: TextStyle(color: AppColors.inkMuted),
         ),
       );
     }
@@ -1523,7 +1523,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           const SizedBox(height: 4),
           Text(
             'Cantidad y calorías por persona para esta comida.',
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
           const Divider(height: 20),
           ...rows,
@@ -1540,10 +1540,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Color(0xFF1E1E1E),
+            color: AppColors.ink,
           ),
         ),
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        Text(label, style: TextStyle(color: AppColors.inkMuted, fontSize: 12)),
       ],
     );
   }

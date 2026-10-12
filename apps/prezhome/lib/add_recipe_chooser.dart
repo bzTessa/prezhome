@@ -38,7 +38,7 @@ class AddRecipeChooser extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[400],
+                  color: AppColors.line,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -137,12 +137,12 @@ class AddRecipeChooser extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: AppColors.inkMuted),
             ],
           ),
         ),

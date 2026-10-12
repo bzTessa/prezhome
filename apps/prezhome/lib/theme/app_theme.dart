@@ -28,6 +28,9 @@ class AppColors {
   /// la calidez de la paleta.
   static const inkMuted = Color(0xFF6B6B6B);
 
+  /// Línea suave crema para separadores, asas de hojas y bordes discretos.
+  static const line = Color(0xFFEFE7CC);
+
   /// Sombra aún más suave que `softShadow`, para superficies en reposo que
   /// necesitan apenas una pizca de profundidad (nivel 1 de [AppElevation]).
   static const faintShadow = Color(0x0D000000);
@@ -121,6 +124,27 @@ class AppTheme {
             borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+      ),
+      // Avisos flotantes y redondeados, en el tono de la app (los de error
+      // pasan su propio color terracota).
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.ink,
+        contentTextStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.cream,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        actionTextColor: AppColors.wood,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.cream,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(

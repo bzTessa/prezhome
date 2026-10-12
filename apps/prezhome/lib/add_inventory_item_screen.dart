@@ -303,7 +303,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -494,7 +494,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     : _kind == 'prep'
                     ? 'Base ya preparada'
                     : 'Plato listo para comer',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
               ),
               const SizedBox(height: 20),
             ],
@@ -670,7 +670,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                           '${_bestBefore!.day.toString().padLeft(2, '0')}/'
                           '${_bestBefore!.month.toString().padLeft(2, '0')}/'
                           '${_bestBefore!.year} (aprox.).',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
               ),
             ],
 
@@ -711,7 +711,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 _expirationManual || _expirationDate == null
                     ? 'Te avisaremos en el Inicio cuando esté a punto de caducar.'
                     : 'Fecha aproximada calculada automáticamente. Puedes ajustarla.',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
               ),
             ],
 

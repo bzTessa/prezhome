@@ -108,7 +108,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo actualizar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -154,7 +154,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
             ListTile(
               leading: const Icon(
                 Icons.delete_outline,
-                color: Colors.redAccent,
+                color: AppColors.expired,
               ),
               title: const Text('Eliminar receta'),
               onTap: () => Navigator.of(ctx).pop('delete'),
@@ -187,7 +187,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppColors.expired,
               foregroundColor: Colors.white,
               elevation: 0,
             ),
@@ -214,7 +214,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo eliminar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
