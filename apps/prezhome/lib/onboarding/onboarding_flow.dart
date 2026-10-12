@@ -1,0 +1,750 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import '../login_screen.dart';
+import '../models/onboarding_answers.dart';
+import '../models/supermarket.dart';
+import '../services/offline_provider.dart';
+import '../theme/app_motion.dart';
+import '../theme/app_theme.dart';
+import 'onboarding_widgets.dart';
+
+/// Primer arranque: bienvenida + cuestionario + perfil de hogar. Las
+/// respuestas se guardan en el dispositivo y se aplican cuando el usuario ya
+/// tiene hogar (ver `OnboardingApplier`). Sustituye a las diapositivas de
+/// bienvenida.
+class OnboardingFlow extends StatefulWidget {
+  const OnboardingFlow({
+    super.key,
+    @visibleForTesting this.initialPage = 0,
+    @visibleForTesting this.initialAnswers = const OnboardingAnswers(),
+  });
+
+  /// Solo para tests y vistas previas: abrir en un paso concreto.
+  final int initialPage;
+  final OnboardingAnswers initialAnswers;
+
+  @override
+  State<OnboardingFlow> createState() => _OnboardingFlowState();
+}
+
+class _OnboardingFlowState extends State<OnboardingFlow> {
+  /// 0 = bienvenida; 1..[_questions] = preguntas; [_questions]+1 = resultado.
+  late int _page = widget.initialPage;
+  late OnboardingAnswers _a = widget.initialAnswers;
+
+  static const int _questions = 7;
+
+  void _next() => setState(() => _page++);
+  void _back() => setState(() => _page = (_page - 1).clamp(0, _page));
+
+  Future<void> _finish({required bool signUp}) async {
+    if (signUp) {
+      try {
+        await OfflineProvider.instance.store.write(
+          OnboardingAnswers.storageKey,
+          _a.encode(),
+        );
+      } catch (_) {
+        // Sin guardado local la app funciona igual, solo sin personalizar.
+      }
+    }
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => LoginScreen(startInSignUp: signUp)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      body: AnimatedSwitcher(
+        duration: AppMotion.base,
+        switchInCurve: Curves.easeOut,
+        transitionBuilder: (child, anim) => FadeTransition(
+          opacity: anim,
+          child: SlideTransition(
+            position: Tween(
+              begin: const Offset(0.04, 0),
+              end: Offset.zero,
+            ).animate(anim),
+            child: child,
+          ),
+        ),
+        child: KeyedSubtree(key: ValueKey(_page), child: _buildPage()),
+      ),
+    );
+  }
+
+  Widget _buildPage() {
+    switch (_page) {
+      case 0:
+        return _IntroPage(
+          onStart: _next,
+          onLogin: () => _finish(signUp: false),
+        );
+      case 1:
+        return _single<HousingType>(
+          section: 'Tu casa',
+          title: '¿Dónde vives?',
+          subtitle: 'Así adaptamos tareas y recordatorios a tu hogar.',
+          values: HousingType.values,
+          selected: _a.housing,
+          label: (v) => v.label,
+          sub: (v) => v.subtitle,
+          icon: (v) => switch (v) {
+            HousingType.piso => Icons.apartment_rounded,
+            HousingType.casa => Icons.house_rounded,
+            HousingType.compartido => Icons.groups_rounded,
+          },
+          color: (v) => switch (v) {
+            HousingType.piso => AppColors.frost,
+            HousingType.casa => AppColors.terracotta,
+            HousingType.compartido => AppColors.sage,
+          },
+          onSelect: (v) => _a = _a.copyWith(housing: v),
+        );
+      case 2:
+        return QuestionScaffold(
+          section: 'Tu hogar',
+          step: 2,
+          total: _questions,
+          title: '¿Cuántas personas vivís?',
+          subtitle: 'Para calcular raciones, la compra y el reparto de tareas.',
+          onBack: _back,
+          onContinue: _next,
+          child: _PeoplePicker(
+            value: _a.people,
+            onChanged: (v) => setState(() => _a = _a.copyWith(people: v)),
+          ),
+        );
+      case 3:
+        return QuestionScaffold(
+          section: 'Lo que te ocupa',
+          step: 3,
+          total: _questions,
+          title: '¿Qué quieres quitarte de la cabeza?',
+          subtitle: 'Elige todo lo que quieras. Lo demás quedará escondido.',
+          onBack: _back,
+          onContinue: _a.goals.isEmpty ? null : _next,
+          continueLabel: _a.goals.isEmpty
+              ? 'Elige al menos una'
+              : 'Continuar (${_a.goals.length})',
+          child: Column(
+            children: [
+              for (final g in HomeGoal.values)
+                OptionCard(
+                  icon: _goalIcon(g),
+                  color: _goalColor(g),
+                  title: g.label,
+                  subtitle: g.subtitle,
+                  selected: _a.goals.contains(g),
+                  onTap: () => setState(() {
+                    final next = {..._a.goals};
+                    if (!next.remove(g)) next.add(g);
+                    _a = _a.copyWith(goals: next);
+                  }),
+                ),
+            ],
+          ),
+        );
+      case 4:
+        return _single<CookingHabit>(
+          section: 'En la cocina',
+          title: '¿Cómo cocináis?',
+          subtitle: 'Así sabemos si organizar tandas y congelador.',
+          values: CookingHabit.values,
+          selected: _a.cooking,
+          label: (v) => v.label,
+          sub: (v) => v.subtitle,
+          icon: (v) => switch (v) {
+            CookingHabit.diario => Icons.today_rounded,
+            CookingHabit.lote => Icons.inventory_2_rounded,
+            CookingHabit.mixto => Icons.sync_rounded,
+            CookingHabit.poco => Icons.takeout_dining_rounded,
+          },
+          color: (v) => switch (v) {
+            CookingHabit.diario => AppColors.terracotta,
+            CookingHabit.lote => AppColors.frost,
+            CookingHabit.mixto => AppColors.sage,
+            CookingHabit.poco => AppColors.peach,
+          },
+          onSelect: (v) => _a = _a.copyWith(cooking: v),
+        );
+      case 5:
+        return QuestionScaffold(
+          section: 'La compra',
+          step: 5,
+          total: _questions,
+          title: '¿Dónde compras?',
+          subtitle:
+              'El primero será tu súper principal: las recetas usarán '
+              'productos fáciles de encontrar allí.',
+          onBack: _back,
+          onContinue: _next,
+          continueLabel: _a.supermarkets.isEmpty ? 'Saltar' : 'Continuar',
+          child: _SupermarketPicker(
+            selected: _a.supermarkets,
+            onChanged: (v) => setState(() => _a = _a.copyWith(supermarkets: v)),
+          ),
+        );
+      case 6:
+        return _single<ShoppingFrequency>(
+          section: 'La compra',
+          title: '¿Cada cuánto haces la compra?',
+          subtitle: 'Para que la lista cubra justo hasta la siguiente.',
+          values: ShoppingFrequency.values,
+          selected: _a.shopping,
+          label: (v) => v.label,
+          sub: (v) => v.subtitle,
+          icon: (v) => switch (v) {
+            ShoppingFrequency.pocosDias => Icons.shopping_basket_rounded,
+            ShoppingFrequency.semanal => Icons.calendar_view_week_rounded,
+            ShoppingFrequency.quincenal => Icons.date_range_rounded,
+            ShoppingFrequency.mensual => Icons.calendar_month_rounded,
+          },
+          color: (_) => AppColors.sage,
+          onSelect: (v) => _a = _a.copyWith(shopping: v),
+        );
+      case 7:
+        return _single<bool>(
+          section: 'Avisos',
+          title: '¿Quieres que te avisemos?',
+          subtitle: 'De lo que caduca, lo que toca hacer y lo que falta.',
+          values: const [true, false],
+          selected: _a.reminders,
+          label: (v) => v ? 'Sí, avísame' : 'Sin avisos',
+          sub: (v) => v ? 'Solo lo importante' : 'Ya lo miro yo',
+          icon: (v) => v
+              ? Icons.notifications_active_rounded
+              : Icons.notifications_off_rounded,
+          color: (v) => v ? AppColors.favorite : AppColors.inkMuted,
+          onSelect: (v) => _a = _a.copyWith(reminders: v),
+          continueLabel: 'Ver mi perfil de hogar',
+        );
+      default:
+        return _ResultPage(
+          profile: _a.profile,
+          onContinue: () => _finish(signUp: true),
+        );
+    }
+  }
+
+  /// Pregunta de una sola respuesta.
+  Widget _single<T>({
+    required String section,
+    required String title,
+    String? subtitle,
+    required List<T> values,
+    required T? selected,
+    required String Function(T) label,
+    required String Function(T) sub,
+    required IconData Function(T) icon,
+    required Color Function(T) color,
+    required void Function(T) onSelect,
+    String continueLabel = 'Continuar',
+  }) {
+    return QuestionScaffold(
+      section: section,
+      step: _page,
+      total: _questions,
+      title: title,
+      subtitle: subtitle,
+      onBack: _back,
+      onContinue: selected == null ? null : _next,
+      continueLabel: continueLabel,
+      child: Column(
+        children: [
+          for (final v in values)
+            OptionCard(
+              icon: icon(v),
+              color: color(v),
+              title: label(v),
+              subtitle: sub(v),
+              selected: v == selected,
+              onTap: () => setState(() => onSelect(v)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static IconData _goalIcon(HomeGoal g) => switch (g) {
+    HomeGoal.comidas => Icons.restaurant_menu_rounded,
+    HomeGoal.compra => Icons.shopping_cart_rounded,
+    HomeGoal.despensa => Icons.kitchen_rounded,
+    HomeGoal.tareas => Icons.cleaning_services_rounded,
+    HomeGoal.lote => Icons.inventory_2_rounded,
+    HomeGoal.gastos => Icons.savings_rounded,
+  };
+
+  static Color _goalColor(HomeGoal g) => switch (g) {
+    HomeGoal.comidas => AppColors.terracotta,
+    HomeGoal.compra => AppColors.sage,
+    HomeGoal.despensa => AppColors.peach,
+    HomeGoal.tareas => AppColors.frost,
+    HomeGoal.lote => const Color(0xFF7A5C9E),
+    HomeGoal.gastos => AppColors.woodDark,
+  };
+}
+
+// ---- Bienvenida ---------------------------------------------------------------
+
+class _IntroPage extends StatefulWidget {
+  const _IntroPage({required this.onStart, required this.onLogin});
+
+  final VoidCallback onStart;
+  final VoidCallback onLogin;
+
+  @override
+  State<_IntroPage> createState() => _IntroPageState();
+}
+
+class _IntroPageState extends State<_IntroPage> {
+  static const _features = [
+    (Icons.shopping_cart_rounded, 'Lista de la compra', AppColors.sage),
+    (Icons.restaurant_menu_rounded, 'Qué comemos', AppColors.terracotta),
+    (Icons.kitchen_rounded, 'Despensa y caducidades', AppColors.peach),
+    (Icons.cleaning_services_rounded, 'Tareas del hogar', AppColors.frost),
+    (Icons.savings_rounded, 'Gasto de la casa', AppColors.woodDark),
+  ];
+
+  final _controller = PageController(viewportFraction: 0.42, initialPage: 1000);
+  Timer? _timer;
+  int _current = 1000;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 2200), (_) {
+      if (!_controller.hasClients) return;
+      _controller.nextPage(
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = _features[_current % _features.length];
+    return Stack(
+      children: [
+        // Halo de color que cambia con la función destacada.
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 600),
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, 0.25),
+                radius: 0.9,
+                colors: [
+                  current.$3.withValues(alpha: 0.22),
+                  AppColors.cream.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Column(
+              children: [
+                const Spacer(flex: 3),
+                const Text(
+                  'PrezHome',
+                  style: TextStyle(
+                    fontSize: 46,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'La casa en orden, la cabeza tranquila.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: AppColors.inkMuted),
+                ),
+                const Spacer(),
+                SizedBox(
+                  height: 190,
+                  child: PageView.builder(
+                    controller: _controller,
+                    onPageChanged: (i) => setState(() => _current = i),
+                    itemBuilder: (context, i) {
+                      final f = _features[i % _features.length];
+                      final active = i == _current;
+                      return AnimatedScale(
+                        duration: const Duration(milliseconds: 400),
+                        scale: active ? 1 : 0.82,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 400),
+                          opacity: active ? 1 : 0.45,
+                          child: _FeaturePill(
+                            icon: f.$1,
+                            label: f.$2,
+                            color: f.$3,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const Spacer(flex: 2),
+                OnboardingButton(label: 'Comenzar', onPressed: widget.onStart),
+                const SizedBox(height: 12),
+                OnboardingButton(
+                  label: 'Ya tengo cuenta',
+                  outlined: true,
+                  onPressed: widget.onLogin,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FeaturePill extends StatelessWidget {
+  const _FeaturePill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(80),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(icon, color: Colors.white, size: 34),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---- Personas ------------------------------------------------------------------
+
+class _PeoplePicker extends StatelessWidget {
+  const _PeoplePicker({required this.value, required this.onChanged});
+
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget round(IconData icon, VoidCallback? onTap, String tip) => IconButton(
+      onPressed: onTap,
+      tooltip: tip,
+      iconSize: 30,
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.card,
+        disabledBackgroundColor: AppColors.card.withValues(alpha: 0.5),
+        fixedSize: const Size(64, 64),
+        side: BorderSide(color: AppColors.wood.withValues(alpha: 0.6)),
+      ),
+      icon: Icon(icon, color: AppColors.ink),
+    );
+
+    return Column(
+      children: [
+        const SizedBox(height: 24),
+        // Se reduce en móviles estrechos en lugar de desbordar.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              round(
+                Icons.remove_rounded,
+                value > 1 ? () => onChanged(value - 1) : null,
+                'Una menos',
+              ),
+              const SizedBox(width: 24),
+              AnimatedSwitcher(
+                duration: AppMotion.fast,
+                transitionBuilder: (c, a) =>
+                    ScaleTransition(scale: a, child: c),
+                child: Container(
+                  key: ValueKey(value),
+                  width: 130,
+                  height: 130,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.woodDark.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.woodDark, width: 3),
+                  ),
+                  child: Text(
+                    value >= 8 ? '8+' : '$value',
+                    style: const TextStyle(
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.woodDark,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 24),
+              round(
+                Icons.add_rounded,
+                value < 8 ? () => onChanged(value + 1) : null,
+                'Una más',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 4,
+          children: [
+            for (var i = 0; i < value.clamp(1, 8); i++)
+              Icon(
+                Icons.person_rounded,
+                size: 34,
+                color: [
+                  AppColors.terracotta,
+                  AppColors.sage,
+                  AppColors.frost,
+                  AppColors.peach,
+                ][i % 4],
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value == 1 ? 'Solo yo' : '$value personas',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.inkMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---- Supermercados -----------------------------------------------------------
+
+class _SupermarketPicker extends StatelessWidget {
+  const _SupermarketPicker({required this.selected, required this.onChanged});
+
+  final List<String> selected;
+  final ValueChanged<List<String>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      alignment: WrapAlignment.center,
+      children: [
+        for (final s in Supermarket.all)
+          _SuperChip(
+            label: s.label,
+            order: selected.indexOf(s.key),
+            onTap: () {
+              final next = [...selected];
+              if (!next.remove(s.key)) next.add(s.key);
+              onChanged(next);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _SuperChip extends StatelessWidget {
+  const _SuperChip({
+    required this.label,
+    required this.order,
+    required this.onTap,
+  });
+
+  final String label;
+
+  /// Posición en la selección (0 = principal) o -1 si no está elegido.
+  final int order;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = order >= 0;
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.sage : AppColors.card,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: selected
+                  ? AppColors.sage
+                  : AppColors.wood.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                Icon(
+                  order == 0 ? Icons.star_rounded : Icons.check_rounded,
+                  size: 18,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : AppColors.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---- Resultado -------------------------------------------------------------------
+
+class _ResultPage extends StatelessWidget {
+  const _ResultPage({required this.profile, required this.onContinue});
+
+  final HouseholdProfile profile;
+  final VoidCallback onContinue;
+
+  static String _loadWord(int v) => v >= 7
+      ? 'pesada'
+      : v >= 4
+      ? 'media'
+      : 'ligera';
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        child: Column(
+          children: [
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.woodDark.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'Tu perfil de hogar',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.woodDark,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              profile.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.w900,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+              child: Text(
+                profile.description,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.45,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            LoadMeter(
+              label: 'Carga mental hoy',
+              value: profile.loadToday,
+              valueLabel: _loadWord(profile.loadToday),
+              color: AppColors.terracotta,
+            ),
+            const SizedBox(height: 18),
+            LoadMeter(
+              label: 'Con PrezHome',
+              value: profile.loadWithApp,
+              valueLabel: _loadWord(profile.loadWithApp),
+              color: AppColors.sage,
+            ),
+            const Spacer(flex: 2),
+            OnboardingButton(label: 'Crear mi cuenta', onPressed: onContinue),
+          ],
+        ),
+      ),
+    );
+  }
+}

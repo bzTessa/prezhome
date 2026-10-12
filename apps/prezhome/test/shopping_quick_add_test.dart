@@ -35,9 +35,9 @@ void main() {
   });
 
   group('ShoppingViewPrefs', () {
-    test('por defecto: sin fotos y agrupado por pasillo', () {
+    test('por defecto: con fotos y agrupado por pasillo', () {
       const p = ShoppingViewPrefs();
-      expect(p.showPhotos, isFalse);
+      expect(p.showPhotos, isTrue);
       expect(p.groupByAisle, isTrue);
     });
 
@@ -51,7 +51,7 @@ void main() {
     test('datos corruptos o vacíos caen al defecto', () {
       for (final raw in [null, '', 'no-json', '[1,2]']) {
         final p = ShoppingViewPrefs.decode(raw);
-        expect(p.showPhotos, isFalse, reason: '$raw');
+        expect(p.showPhotos, isTrue, reason: '$raw');
         expect(p.groupByAisle, isTrue, reason: '$raw');
       }
     });

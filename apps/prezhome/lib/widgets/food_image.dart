@@ -47,6 +47,10 @@ class FoodImage extends StatelessWidget {
   /// y la ilustración por categoría queda más limpia y coherente.
   final bool forceIllustration;
 
+  /// Ajuste de la foto. Las fotos de envase del súper se ven mejor enteras
+  /// (contain); las de alimentos, recortadas (cover).
+  final BoxFit fit;
+
   const FoodImage({
     super.key,
     required this.name,
@@ -57,6 +61,7 @@ class FoodImage extends StatelessWidget {
     this.height,
     this.radius = 14,
     this.forceIllustration = false,
+    this.fit = BoxFit.cover,
   });
 
   bool get _hasPhoto =>
@@ -75,7 +80,7 @@ class FoodImage extends StatelessWidget {
             ? LayoutBuilder(
                 builder: (context, constraints) => Image.network(
                   imageUrl!,
-                  fit: BoxFit.cover,
+                  fit: fit,
                   // Acotamos la resolución de decodificado al ancho real que se
                   // va a pintar (en píxeles físicos), igual que RecipeImage.
                   cacheWidth: _cacheWidthFor(context, constraints, w),

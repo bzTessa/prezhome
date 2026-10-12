@@ -409,7 +409,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
       chips.add(
         _chip(
           icon: Icons.sync,
-          label: 'en paralelo',
+          label: 'En paralelo',
           bg: AppColors.frostBg,
           fg: AppColors.frost,
         ),

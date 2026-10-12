@@ -235,7 +235,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 ),
                 title: const Text('Con una foto'),
                 subtitle: const Text(
-                  'Haz una foto al plato y la IA estima las calorías',
+                  'Haz una foto al plato y calculamos las calorías',
                 ),
                 onTap: () => Navigator.of(context).pop('foto'),
               ),

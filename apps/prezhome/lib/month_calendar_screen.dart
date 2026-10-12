@@ -40,7 +40,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
     'dinner': 'Cena',
-    'snack': 'Snack',
+    'snack': 'Merienda',
     'dessert': 'Postre',
   };
   static const _mealOrder = [

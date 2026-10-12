@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
+import 'cook_mode_screen.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/price_memory.dart';
 import 'utils/approx_price.dart';
@@ -13,11 +14,15 @@ import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
+import 'models/shopping_list_item.dart';
 import 'models/supermarket.dart';
 import 'theme/app_theme.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
 import 'utils/friendly_error.dart';
+import 'utils/pantry_ideas.dart';
+import 'utils/recipe_steps.dart';
+import 'utils/shopping_categories.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -48,6 +53,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   double _multiplier = 1;
   bool _changed = false; // para avisar a la lista si hubo cambios al volver
 
+  // Sección visible: 0 ingredientes, 1 pasos, 2 nutrición.
+  int _tab = 0;
+  // Ingredientes ya preparados y pasos hechos (solo en esta pantalla).
+  final Set<int> _checkedIngs = {};
+  final Set<int> _doneSteps = {};
+  // Nombres de la despensa, para marcar lo que ya hay en casa.
+  List<String> _pantry = [];
+  bool _addingMissing = false;
+
   /// Cuántas raciones-base de la receta equivale el total a preparar.
   /// Base = gramos de una comida de hogar / gramos por ración. Si no hay datos
   /// de perfil o peso, cae a "multiplicador = raciones" (comportamiento simple).
@@ -68,6 +82,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _loadProfile();
     _loadHomeSupermarketLabel();
     _loadCost();
+    _loadPantry();
   }
 
   /// Calcula el coste estimado de la receta: precio real de los tickets si lo
@@ -507,530 +522,634 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final r = _recipe;
+    final steps = r.instructions == null
+        ? const <String>[]
+        : splitRecipeSteps(r.instructions!);
 
     return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (didPop, result) {},
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) Navigator.of(context).pop(_changed);
+      },
       child: Scaffold(
-        backgroundColor: const Color(0xFFFDF8E1),
-        appBar: AppBar(
-          title: Text(
-            r.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          // Altura adaptativa: si el título es largo necesita 2 líneas, damos
-          // algo más de alto para que no se recorte dentro de la toolbar.
-          toolbarHeight: r.title.length > 24 ? 76 : kToolbarHeight,
-          backgroundColor: const Color(0xFFFDF8E1),
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(_changed),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                r.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
-                color: r.isFavorite ? AppColors.favorite : null,
+        backgroundColor: AppColors.cream,
+        bottomNavigationBar: steps.isEmpty ? null : _cookBar(r, steps),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 320,
+              backgroundColor: AppColors.cream,
+              surfaceTintColor: Colors.transparent,
+              automaticallyImplyLeading: false,
+              leading: Padding(
+                padding: const EdgeInsets.all(6),
+                child: _roundAction(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'Volver',
+                  onTap: () => Navigator.of(context).pop(_changed),
+                ),
               ),
-              tooltip: r.isFavorite ? 'Quitar de favoritas' : 'Marcar favorita',
-              onPressed: _toggleFavorite,
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Editar',
-              onPressed: _edit,
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              tooltip: 'Eliminar',
-              onPressed: _delete,
-            ),
-          ],
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            // Foto con botón para cambiarla (regenerar automática o galería).
-            Stack(
-              children: [
-                RecipeImage(recipe: r, height: 200, radius: 24),
-                if (_changingPhoto)
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
+              actions: [
+                _roundAction(
+                  icon: r.isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: r.isFavorite ? AppColors.favorite : AppColors.ink,
+                  tooltip: r.isFavorite
+                      ? 'Quitar de favoritas'
+                      : 'Marcar favorita',
+                  onTap: _toggleFavorite,
+                ),
+                const SizedBox(width: 6),
+                _moreMenu(),
+                const SizedBox(width: 10),
+              ],
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.parallax,
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    RecipeImage(recipe: r, height: 360, radius: 0),
+                    if (_changingPhoto)
+                      Container(
                         color: Colors.black26,
                         alignment: Alignment.center,
                         child: const CircularProgressIndicator(),
                       ),
-                    ),
-                  ),
-                Positioned(
-                  right: 8,
-                  bottom: 8,
-                  child: Material(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    shape: const StadiumBorder(),
-                    child: InkWell(
-                      customBorder: const StadiumBorder(),
-                      onTap: _changingPhoto ? null : _openPhotoMenu,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.photo_camera_outlined,
-                              size: 16,
-                              color: AppColors.woodDark,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Cambiar foto',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Chips de tipo/aparato/tiempo/congelable
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final type in r.mealTypes)
-                  RecipeChip(
-                    text: Recipe.mealTypeLabels[type] ?? type,
-                    icon: mealTypeIcon(type),
-                    style: RecipeChipStyle.type,
-                  ),
-                if (r.appliance != 'none')
-                  RecipeChip(
-                    text: r.applianceLabel,
-                    icon: Icons.kitchen_rounded,
-                    style: RecipeChipStyle.type,
-                  ),
-                if (r.totalTimeMinutes != null)
-                  RecipeChip(
-                    text: '${r.totalTimeMinutes} min',
-                    icon: Icons.schedule_rounded,
-                    style: RecipeChipStyle.time,
-                  ),
-                if (r.calories != null)
-                  RecipeChip(
-                    text: '${r.calories} kcal',
-                    icon: Icons.local_fire_department_rounded,
-                    style: RecipeChipStyle.calories,
-                  ),
-                if (r.freezable)
-                  const RecipeChip(
-                    text: 'Congelable',
-                    icon: Icons.ac_unit,
-                    style: RecipeChipStyle.freezer,
-                  ),
-                if (r.isFavorite)
-                  const RecipeChip(
-                    text: 'Favorita',
-                    icon: Icons.star_rounded,
-                    style: RecipeChipStyle.favorite,
-                  ),
-                // Súper del hogar, junto al resto de chips (Comida/Cena/kcal).
-                if (_homeSupermarketLabel != null)
-                  RecipeChip(
-                    text: _homeSupermarketLabel!,
-                    icon: Icons.storefront_rounded,
-                    style: RecipeChipStyle.type,
-                  ),
-              ],
-            ),
-            if (r.description != null && r.description!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                r.description!,
-                style: TextStyle(color: Colors.grey[700], fontSize: 15),
-              ),
-            ],
-            // Enlace de video de la receta, solo si existe.
-            if (r.videoUrl != null && r.videoUrl!.trim().isNotEmpty) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _openVideo,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.ink,
-                    side: const BorderSide(color: AppColors.wood, width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  icon: const Icon(Icons.play_circle_outline),
-                  label: const Text('Ver video'),
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-
-            // --- Multiplicador de cantidades ---
-            _card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Cantidad a preparar',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _isMealPrep
-                        ? '×1 = una comida para todo el hogar. Sube el número '
-                              'para cocinar de más y congelar.'
-                        : 'Cantidad para una comida de todo el hogar.',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                  ),
-                  // Controles de lote solo en modo Meal prep.
-                  if (_isMealPrep) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _multBtn('×1', 1),
-                        _multBtn('×2', 2),
-                        _multBtn('×3', 3),
-                        _multBtn('×4', 4),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Text('Multiplicador personalizado:'),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: _multiplier > 1
-                              ? () => setState(
-                                  () => _multiplier = (_multiplier - 1)
-                                      .clamp(1, 50)
-                                      .toDouble(),
-                                )
-                              : null,
-                        ),
-                        Text(
-                          '×${_multiplier % 1 == 0 ? _multiplier.toStringAsFixed(0) : _multiplier}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
-                          onPressed: () => setState(
-                            () => _multiplier = (_multiplier + 1)
-                                .clamp(1, 50)
-                                .toDouble(),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
-                  const Divider(),
-                  Builder(
-                    builder: (_) {
-                      final mealGrams = _householdMealGrams(r);
-                      if (mealGrams != null) {
-                        final totalGrams = mealGrams * _multiplier;
-                        final label = _multiplier == 1
-                            ? 'una comida para el hogar'
-                            : '${_multiplier.toStringAsFixed(0)} comidas para el hogar';
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'A preparar: $label',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Dato nutricional: unos ${totalGrams.toStringAsFixed(0)} g en total',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                      // Fallback sin perfiles: mostrar raciones como antes, con
-                      // el peso total relegado a dato nutricional secundario.
-                      final servings = r.servings * _multiplier;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Rinde: ${servings.toStringAsFixed(0)} raciones',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                          ),
-                          if (r.gramsPerServing != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              'Dato nutricional: unos ${(r.gramsPerServing! * servings).toStringAsFixed(0)} g en total',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ],
-                      );
-                    },
-                  ),
-                  if (r.kcalPer100g != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'Dato nutricional: ${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.cream,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      r.title,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.ink,
                       ),
                     ),
-                  if (_isMealPrep) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _markCooked,
+                    if (r.description != null &&
+                        r.description!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        r.description!,
+                        style: AppTextStyles.bodyMuted.copyWith(height: 1.35),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    _statsRow(r),
+                    const SizedBox(height: 14),
+                    _tagsWrap(r),
+                    if (r.videoUrl != null &&
+                        r.videoUrl!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      OutlinedButton.icon(
+                        onPressed: _openVideo,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.ink,
-                          side: const BorderSide(
-                            color: AppColors.wood,
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                          side: const BorderSide(color: AppColors.wood),
                         ),
-                        icon: const Icon(Icons.ac_unit),
-                        label: const Text('Ya cocinado → al congelador'),
+                        icon: const Icon(Icons.play_circle_outline),
+                        label: const Text('Ver vídeo'),
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // --- Cuánto poner en tu taper (automático según tu perfil) ---
-            if (r.kcalPer100g != null) ...[
-              _autoTaperCard(r),
-              const SizedBox(height: 16),
-            ],
-
-            // --- Macros (por ración, no se escalan) ---
-            _card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Por ración',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  if (r.calories != null || r.protein != null)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        if (r.calories != null) _macro('${r.calories}', 'kcal'),
-                        if (r.protein != null)
-                          _macro(
-                            '${r.protein!.toStringAsFixed(0)}g',
-                            'Proteína',
-                          ),
-                        if (r.carbs != null)
-                          _macro('${r.carbs!.toStringAsFixed(0)}g', 'Carbos'),
-                        if (r.fat != null)
-                          _macro('${r.fat!.toStringAsFixed(0)}g', 'Grasa'),
-                      ],
-                    ),
-                  if (_cost != null) ...[
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.euro_rounded,
-                          size: 18,
-                          color: AppColors.sage,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${_cost!.perServing.toStringAsFixed(2).replaceAll('.', ',')} € por ración',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '≈ ${_cost!.total.toStringAsFixed(2).replaceAll('.', ',')} € total',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_cost!.approx)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Coste aproximado. Escanea tickets para afinarlo con '
-                          'tus precios reales.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // --- Ingredientes (escalados por el multiplicador) ---
-            _card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Text(
-                        'Ingredientes',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      if (_multiplier != 1) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          '(×${_multiplier % 1 == 0 ? _multiplier.toStringAsFixed(0) : _multiplier})',
-                          style: const TextStyle(color: Color(0xFFB58A3C)),
-                        ),
-                      ],
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  FutureBuilder<List<Ingredient>>(
-                    future: _ingredientsFuture,
-                    builder: (context, snap) {
-                      if (snap.connectionState == ConnectionState.waiting) {
-                        return const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-                      final ings = snap.data ?? [];
-                      if (ings.isEmpty) {
-                        return Text(
-                          'Sin ingredientes registrados.',
-                          style: TextStyle(color: Colors.grey[600]),
-                        );
-                      }
-                      return Column(
-                        children: ings.map((ing) {
-                          // Escalamos a la cantidad del hogar y la volvemos
-                          // PRÁCTICA (nada de 1060 g, 53 ml, 5,5 dientes).
-                          final scaledRaw = ing.quantity == null
-                              ? null
-                              : ing.quantity! * _servingsFactor;
-                          final practical = makePractical(
-                            ing.name,
-                            scaledRaw,
-                            ing.unit,
-                          );
-                          // Texto de cantidad práctica (sin decimales si es
-                          // entera) y plural concordado con la unidad final.
-                          final pq = practical.quantity;
-                          final qty = pq == null
-                              ? ''
-                              : (pq % 1 == 0
-                                    ? pq.toStringAsFixed(0)
-                                    : pq.toStringAsFixed(1));
-                          final rawUnit = practical.unit.trim();
-                          final unit = rawUnit.isEmpty
-                              ? ''
-                              : pluralizeUnit(rawUnit, pq ?? 0);
-                          // Caso "al gusto"/"a ojo" sin cantidad: queda mas
-                          // natural leer "Sal (al gusto)" que "al gusto Sal".
-                          final isLooseMeasure = qty.isEmpty && unit.isNotEmpty;
-                          final parts = <String>[];
-                          if (qty.isNotEmpty) parts.add(qty);
-                          if (unit.isNotEmpty) parts.add(unit);
-                          final prefix = isLooseMeasure ? '' : parts.join(' ');
-                          final suffix = isLooseMeasure ? ' ($unit)' : '';
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('•  '),
-                                if (prefix.isNotEmpty)
-                                  Text(
-                                    '$prefix ',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                Expanded(child: Text('${ing.name}$suffix')),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      );
+                    const SizedBox(height: 22),
+                    _sectionTabs(steps.length),
+                    const SizedBox(height: 16),
+                    switch (_tab) {
+                      0 => _ingredientsTab(r),
+                      1 => _stepsTab(steps),
+                      _ => _nutritionTab(r),
                     },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // --- Pasos ---
-            if (r.instructions != null && r.instructions!.trim().isNotEmpty)
+  Widget _roundAction({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    Color color = AppColors.ink,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.92),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 42,
+            height: 42,
+            child: Icon(icon, color: color, size: 22),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _moreMenu() {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.92),
+      shape: const CircleBorder(),
+      child: SizedBox(
+        width: 42,
+        height: 42,
+        child: PopupMenuButton<String>(
+          tooltip: 'Más opciones',
+          icon: const Icon(Icons.more_horiz_rounded, color: AppColors.ink),
+          padding: EdgeInsets.zero,
+          onSelected: (v) {
+            switch (v) {
+              case 'photo':
+                if (!_changingPhoto) _openPhotoMenu();
+              case 'edit':
+                _edit();
+              case 'delete':
+                _delete();
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'photo',
+              child: ListTile(
+                leading: Icon(Icons.photo_camera_outlined),
+                title: Text('Cambiar foto'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            PopupMenuItem(
+              value: 'edit',
+              child: ListTile(
+                leading: Icon(Icons.edit_outlined),
+                title: Text('Editar receta'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                leading: Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: Text('Eliminar'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Tres datos clave de un vistazo: tiempo, calorías y coste por ración.
+  Widget _statsRow(Recipe r) {
+    final tiles = <Widget>[
+      _stat(
+        Icons.schedule_rounded,
+        r.totalTimeMinutes == null ? '—' : '${r.totalTimeMinutes}',
+        'Minutos',
+        AppColors.frost,
+        AppColors.frostBg,
+      ),
+      _stat(
+        Icons.local_fire_department_rounded,
+        r.calories == null ? '—' : '${r.calories}',
+        'Kcal/ración',
+        AppColors.terracotta,
+        AppColors.terracottaBg,
+      ),
+      if (_cost != null)
+        _stat(
+          Icons.euro_rounded,
+          _cost!.perServing.toStringAsFixed(2).replaceAll('.', ','),
+          '€/ración',
+          AppColors.sage,
+          AppColors.sageBg,
+        )
+      else
+        _stat(
+          Icons.restaurant_rounded,
+          '${r.servings}',
+          r.servings == 1 ? 'Ración' : 'Raciones',
+          AppColors.peach,
+          AppColors.peachBg,
+        ),
+    ];
+    return Row(
+      children: [
+        for (var i = 0; i < tiles.length; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(child: tiles[i]),
+        ],
+      ],
+    );
+  }
+
+  Widget _stat(IconData icon, String value, String label, Color fg, Color bg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: fg, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: fg,
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.inkMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tagsWrap(Recipe r) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final type in r.mealTypes)
+          RecipeChip(
+            text: Recipe.mealTypeLabels[type] ?? type,
+            icon: mealTypeIcon(type),
+            style: RecipeChipStyle.type,
+          ),
+        if (r.appliance != 'none')
+          RecipeChip(
+            text: r.applianceLabel,
+            icon: Icons.kitchen_rounded,
+            style: RecipeChipStyle.type,
+          ),
+        if (r.freezable)
+          const RecipeChip(
+            text: 'Congelable',
+            icon: Icons.ac_unit,
+            style: RecipeChipStyle.freezer,
+          ),
+        if (_homeSupermarketLabel != null)
+          RecipeChip(
+            text: _homeSupermarketLabel!,
+            icon: Icons.storefront_rounded,
+            style: RecipeChipStyle.type,
+          ),
+      ],
+    );
+  }
+
+  /// Selector de sección (Ingredientes · Pasos · Nutrición): menos scroll y
+  /// cada cosa en su sitio, como en las apps de recetas más usadas.
+  Widget _sectionTabs(int stepCount) {
+    final labels = [
+      'Ingredientes',
+      stepCount == 0 ? 'Pasos' : 'Pasos ($stepCount)',
+      'Nutrición',
+    ];
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: _tab == i,
+                child: GestureDetector(
+                  onTap: () => setState(() => _tab = i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _tab == i ? AppColors.ink : Colors.transparent,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      labels[i],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: _tab == i ? AppColors.cream : AppColors.ink,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _multLabel() => _multiplier % 1 == 0
+      ? _multiplier.toStringAsFixed(0)
+      : _multiplier.toString();
+
+  /// Texto de la cantidad que se prepara con el multiplicador actual.
+  String _amountText(Recipe r) {
+    final mealGrams = _householdMealGrams(r);
+    if (mealGrams != null) {
+      return _multiplier == 1
+          ? 'Una comida para el hogar'
+          : '${_multLabel()} comidas para el hogar';
+    }
+    final servings = r.servings * _multiplier;
+    return '${servings.toStringAsFixed(0)} '
+        '${servings == 1 ? 'ración' : 'raciones'}';
+  }
+
+  /// Cantidad + nombre listos para leer ("200 g arroz", "Sal (al gusto)").
+  ({String prefix, String name}) _ingredientParts(Ingredient ing) {
+    final scaledRaw = ing.quantity == null
+        ? null
+        : ing.quantity! * _servingsFactor;
+    final practical = makePractical(ing.name, scaledRaw, ing.unit);
+    final pq = practical.quantity;
+    final qty = pq == null
+        ? ''
+        : (pq % 1 == 0 ? pq.toStringAsFixed(0) : pq.toStringAsFixed(1));
+    final rawUnit = practical.unit.trim();
+    final unit = rawUnit.isEmpty ? '' : pluralizeUnit(rawUnit, pq ?? 0);
+    final isLooseMeasure = qty.isEmpty && unit.isNotEmpty;
+    final parts = <String>[if (qty.isNotEmpty) qty, if (unit.isNotEmpty) unit];
+    return (
+      prefix: isLooseMeasure ? '' : parts.join(' '),
+      name: isLooseMeasure ? '${ing.name} ($unit)' : ing.name,
+    );
+  }
+
+  String _ingredientLine(Ingredient ing) {
+    final p = _ingredientParts(ing);
+    return p.prefix.isEmpty ? p.name : '${p.prefix} ${p.name}';
+  }
+
+  Widget _ingredientsTab(Recipe r) {
+    return FutureBuilder<List<Ingredient>>(
+      future: _ingredientsFuture,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final ings = snap.data ?? [];
+        final split = splitByPantry([for (final i in ings) i.name], _pantry);
+        final have = split.have.toSet();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _amountCard(r),
+            const SizedBox(height: 12),
+            if (ings.isEmpty)
+              Text(
+                'Sin ingredientes registrados.',
+                style: AppTextStyles.bodyMuted,
+              )
+            else ...[
+              if (_pantry.isNotEmpty) ...[
+                _pantrySummary(have.length, split.missing),
+                const SizedBox(height: 12),
+              ],
               _card(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < ings.length; i++)
+                      _ingredientRow(
+                        i,
+                        ings[i],
+                        inPantry: have.contains(ings[i].name.trim()),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _amountCard(Recipe r) {
+    return _card(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Pasos de preparación',
+                      'Cantidad a preparar',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.inkMuted,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    ..._buildSteps(r.instructions!),
+                    Text(
+                      _amountText(r),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
                   ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Menos',
+                icon: const Icon(Icons.remove_circle_outline_rounded),
+                onPressed: _multiplier > 1
+                    ? () => setState(
+                        () => _multiplier = (_multiplier - 1)
+                            .clamp(1, 50)
+                            .toDouble(),
+                      )
+                    : null,
+              ),
+              Text(
+                '×${_multLabel()}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Más',
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                onPressed: () => setState(
+                  () => _multiplier = (_multiplier + 1).clamp(1, 50).toDouble(),
+                ),
+              ),
+            ],
+          ),
+          if (_isMealPrep)
+            Padding(
+              padding: const EdgeInsets.only(right: 8, top: 4),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _markCooked,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.ink,
+                    side: const BorderSide(color: AppColors.wood, width: 1.5),
+                  ),
+                  icon: const Icon(Icons.ac_unit),
+                  label: const Text('Ya cocinado → al congelador'),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// "Tienes 5 de 8 en casa" + atajo para mandar lo que falta a la compra.
+  Widget _pantrySummary(int haveCount, List<String> missing) {
+    final total = haveCount + missing.length;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.sageBg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.kitchen_rounded, color: AppColors.sage),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              missing.isEmpty
+                  ? '¡Tienes todo en casa!'
+                  : 'Tienes $haveCount de $total en casa',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+          if (missing.isNotEmpty)
+            TextButton.icon(
+              onPressed: _addingMissing ? null : () => _addMissing(missing),
+              icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+              label: Text('Faltan ${missing.length}'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.sage),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ingredientRow(int i, Ingredient ing, {required bool inPantry}) {
+    final checked = _checkedIngs.contains(i);
+    final p = _ingredientParts(ing);
+    return InkWell(
+      onTap: () => setState(
+        () => checked ? _checkedIngs.remove(i) : _checkedIngs.add(i),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: checked ? AppColors.sage : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: checked ? AppColors.sage : AppColors.wood,
+                  width: 2,
+                ),
+              ),
+              child: checked
+                  ? const Icon(
+                      Icons.check_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    if (p.prefix.isNotEmpty)
+                      TextSpan(
+                        text: '${p.prefix}  ',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    TextSpan(text: p.name),
+                  ],
+                ),
+                style: TextStyle(
+                  fontSize: 15.5,
+                  color: checked ? AppColors.inkMuted : AppColors.ink,
+                  decoration: checked ? TextDecoration.lineThrough : null,
+                ),
+              ),
+            ),
+            if (inPantry)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.sageBg,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: const Text(
+                  'En casa',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.sage,
+                  ),
                 ),
               ),
           ],
@@ -1039,81 +1158,275 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  /// Convierte el texto de instrucciones en una lista bonita, cada paso con su
-  /// número en un círculo. Detecta líneas o el patrón "1. 2. 3.".
-  List<Widget> _buildSteps(String instructions) {
-    // 1) Separar por saltos de línea.
-    var parts = instructions
-        .split(RegExp(r'\n+'))
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-
-    // 2) Si vino todo junto, separar por los números "1. 2. 3.".
-    if (parts.length <= 1) {
-      parts = instructions
-          .split(RegExp(r'(?=\d+[\.\)]\s)'))
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+  Widget _stepsTab(List<String> steps) {
+    if (steps.isEmpty) {
+      return Text(
+        'Esta receta no tiene pasos. Puedes añadirlos editándola.',
+        style: AppTextStyles.bodyMuted,
+      );
     }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [for (var i = 0; i < steps.length; i++) _stepRow(i, steps[i])],
+    );
+  }
 
-    // 3) Último recurso: si sigue siendo un solo bloque, separar por frases
-    //    (un punto seguido de espacio y mayúscula = nueva instrucción).
-    if (parts.length <= 1) {
-      parts = instructions
-          .split(RegExp(r'(?<=[\.\!])\s+(?=[A-ZÁÉÍÓÚÑ])'))
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
-    }
+  Widget _stepRow(int i, String step) {
+    final done = _doneSteps.contains(i);
+    final minutes = stepTimerMinutes(step);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: done ? AppColors.card.withValues(alpha: 0.5) : AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () =>
+              setState(() => done ? _doneSteps.remove(i) : _doneSteps.add(i)),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: done ? AppColors.sage : AppColors.ink,
+                    shape: BoxShape.circle,
+                  ),
+                  child: done
+                      ? const Icon(
+                          Icons.check_rounded,
+                          size: 18,
+                          color: Colors.white,
+                        )
+                      : Text(
+                          '${i + 1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.cream,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        step,
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          height: 1.4,
+                          color: done ? AppColors.inkMuted : AppColors.ink,
+                          decoration: done ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                      if (minutes != null && !done)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.timer_outlined,
+                                size: 15,
+                                color: AppColors.woodDark,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$minutes min',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.woodDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-    // Quitar el número inicial de cada paso (lo ponemos nosotros en el círculo)
-    final steps = parts
-        .map((s) => s.replaceFirst(RegExp(r'^\d+[\.\)]\s*'), ''))
-        .toList();
-
-    final widgets = <Widget>[];
-    for (var i = 0; i < steps.length; i++) {
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
+  Widget _nutritionTab(Recipe r) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _card(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: const BoxDecoration(
-                  color: AppColors.wood,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${i + 1}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink,
-                    fontSize: 13,
-                  ),
-                ),
+              const Text(
+                'Por ración',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 2),
+              const SizedBox(height: 12),
+              if (r.calories != null || r.protein != null)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    if (r.calories != null) _macro('${r.calories}', 'kcal'),
+                    if (r.protein != null)
+                      _macro('${r.protein!.toStringAsFixed(0)}g', 'Proteína'),
+                    if (r.carbs != null)
+                      _macro('${r.carbs!.toStringAsFixed(0)}g', 'Carbos'),
+                    if (r.fat != null)
+                      _macro('${r.fat!.toStringAsFixed(0)}g', 'Grasa'),
+                  ],
+                )
+              else
+                Text('Sin datos de nutrición.', style: AppTextStyles.bodyMuted),
+              if (r.kcalPer100g != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                    steps[i],
-                    style: const TextStyle(height: 1.4, fontSize: 15),
+                    '${r.kcalPer100g!.toStringAsFixed(0)} kcal / 100 g',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                 ),
-              ),
+              if (_cost != null) ...[
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.euro_rounded,
+                      size: 18,
+                      color: AppColors.sage,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_cost!.perServing.toStringAsFixed(2).replaceAll('.', ',')} € por ración',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '≈ ${_cost!.total.toStringAsFixed(2).replaceAll('.', ',')} € total',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                if (_cost!.approx)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Coste aproximado. Escanea tickets para afinarlo con '
+                      'tus precios reales.',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ),
+              ],
             ],
           ),
         ),
-      );
+        if (r.kcalPer100g != null) ...[
+          const SizedBox(height: 16),
+          _autoTaperCard(r),
+        ],
+      ],
+    );
+  }
+
+  /// Barra fija de abajo: el gran botón para cocinar paso a paso.
+  Widget _cookBar(Recipe r, List<String> steps) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: SizedBox(
+          height: 56,
+          child: FilledButton.icon(
+            onPressed: () async {
+              final ings = await _ingredientsFuture;
+              if (!mounted) return;
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => CookModeScreen(
+                    title: r.title,
+                    steps: steps,
+                    ingredients: [for (final i in ings) _ingredientLine(i)],
+                  ),
+                ),
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.ink,
+              foregroundColor: AppColors.cream,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(99),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            icon: const Icon(Icons.soup_kitchen_rounded),
+            label: const Text('Empezar a cocinar'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Despensa del hogar para marcar los ingredientes que ya hay.
+  Future<void> _loadPantry() async {
+    try {
+      final rows = await _client
+          .from('inventory_items')
+          .select()
+          .eq('home_id', _recipe.homeId);
+      final items = (rows as List)
+          .map((r) => InventoryItem.fromMap(Map<String, dynamic>.from(r)))
+          .toList();
+      if (mounted) setState(() => _pantry = pantryNamesForIdeas(items));
+    } catch (_) {
+      // Sin despensa no se marca nada.
     }
-    return widgets;
+  }
+
+  /// Manda a la lista de la compra los ingredientes que faltan.
+  Future<void> _addMissing(List<String> missing) async {
+    setState(() => _addingMissing = true);
+    try {
+      await _client.from('shopping_list_items').insert([
+        for (final name in missing)
+          ShoppingListItem(
+            homeId: _recipe.homeId,
+            name: name,
+            category: defaultCategoryFor(name),
+          ).toInsertMap(),
+      ]);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            missing.length == 1
+                ? 'Añadido a la lista de la compra'
+                : 'Añadidos ${missing.length} productos a la compra',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo añadir'))),
+      );
+    } finally {
+      if (mounted) setState(() => _addingMissing = false);
+    }
   }
 
   /// Muestra, para cada miembro del hogar (con perfil), cuántos gramos y kcal
@@ -1217,20 +1530,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  Widget _multBtn(String label, double value) {
-    final selected = _multiplier == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        selectedColor: const Color(0xFFE2C792),
-        backgroundColor: const Color(0xFFFDF8E1),
-        onSelected: (_) => setState(() => _multiplier = value),
-      ),
-    );
-  }
-
   Widget _macro(String value, String label) {
     return Column(
       children: [
@@ -1247,10 +1546,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  Widget _card({required Widget child}) {
+  Widget _card({
+    required Widget child,
+    EdgeInsets padding = const EdgeInsets.all(20),
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: padding,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),

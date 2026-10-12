@@ -241,10 +241,10 @@ Deno.serve(async (req: Request) => {
       "consume_ai_credit",
       { target_home_id: homeId },
     );
-    if (creditErr) return json({ error: "No se pudo verificar el límite de IA" }, 500);
+    if (creditErr) return json({ error: "No se pudo verificar el límite de uso" }, 500);
     if (allowed !== true) {
       return json(
-        { error: "Has alcanzado tu límite mensual de IA. Inténtalo el mes que viene." },
+        { error: "Has llegado al límite de este mes. Vuelve a probar el mes que viene." },
         429,
       );
     }
@@ -282,18 +282,18 @@ Deno.serve(async (req: Request) => {
     }
 
     if (geminiData === undefined) {
-      return json({ error: `Error de la IA -> ${lastError.substring(0, 300)}` }, 502);
+      return json({ error: `Error del servicio -> ${lastError.substring(0, 300)}` }, 502);
     }
 
     const text: string | undefined =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return json({ error: "La IA no devolvió ideas" }, 502);
+    if (!text) return json({ error: "No se recibieron ideas" }, 502);
 
     let parsed: unknown;
     try {
       parsed = JSON.parse(text);
     } catch (_e) {
-      return json({ error: "La IA devolvió un formato inesperado" }, 502);
+      return json({ error: "Respuesta con un formato inesperado" }, 502);
     }
 
     return json(parsed);

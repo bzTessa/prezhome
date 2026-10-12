@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'welcome_screen.dart';
 import 'home_session_screen.dart';
 import 'services/offline_provider.dart';
 import 'theme/app_theme.dart';
+import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,7 +69,7 @@ class _AuthGateState extends State<_AuthGate> {
         if (session != null) {
           return const HomeSessionScreen();
         }
-        return const WelcomeScreen();
+        return const OnboardingFlow();
       },
     );
   }

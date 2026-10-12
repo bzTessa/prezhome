@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,9 +12,13 @@ import 'services/household_servings.dart';
 import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
+import 'services/plan_shopping.dart';
+import 'shopping_list_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
+import 'widgets/plan/plan_parts.dart';
+import 'widgets/recipe_image.dart';
 import 'utils/friendly_error.dart';
 
 /// Planificador semanal de comidas (v1).
@@ -31,7 +37,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
     'dinner': 'Cena',
-    'snack': 'Snack',
+    'snack': 'Merienda',
     'dessert': 'Postre',
   };
   static const _dayNames = [
@@ -46,6 +52,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   bool _generating = false;
   int _energyLevel = 1; // 0=cocinar poco, 1=normal, 2=cocinar mucho
+
+  // Día elegido en la tira de la semana (0 = lunes). null = hoy.
+  int? _selectedDay;
 
   @override
   void initState() {
@@ -245,6 +254,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         await _client.from('meal_plan_entries').insert(rows);
       }
       _reload();
+      if (rows.isNotEmpty) await _fillShoppingFromPlan(data.homeId!);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -256,6 +266,44 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       }
     } finally {
       if (mounted) setState(() => _generating = false);
+    }
+  }
+
+  /// La lista de la compra se hace sola con el plan nuevo: lo que piden las
+  /// recetas menos lo que ya hay en casa, con foto de cada producto.
+  Future<void> _fillShoppingFromPlan(String homeId) async {
+    try {
+      final service = PlanShoppingService(_client);
+      final added = await service.syncFromPlan(
+        homeId: homeId,
+        from: _weekStart,
+        to: _weekStart.add(const Duration(days: 7)),
+      );
+      if (added.isNotEmpty) {
+        unawaited(service.fillMissingPhotos(homeId, added));
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            added.isEmpty
+                ? 'Plan listo. Ya tienes en casa todo lo que necesitas'
+                : 'Plan listo. Lista de la compra con ${added.length} productos',
+          ),
+          action: added.isEmpty
+              ? null
+              : SnackBarAction(
+                  label: 'Ver',
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ShoppingListScreen(),
+                    ),
+                  ),
+                ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('MealPlanScreen._fillShoppingFromPlan error: $e');
     }
   }
 
@@ -456,8 +504,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Future<void> _addEntryToDay(
     _PlanData data,
     DateTime date,
-    List<MealPlanEntry> dayEntries,
-  ) async {
+    List<MealPlanEntry> dayEntries, {
+    String? presetMealType,
+  }) async {
     final usados = dayEntries.map((e) => e.mealType).toSet();
     final disponibles = _mealLabels.keys
         .where((t) => !usados.contains(t))
@@ -467,37 +516,40 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       return;
     }
 
-    final mealType = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppColors.cream,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
-              child: Text(
-                '¿Qué comida añades?',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: AppColors.ink,
+    // Desde un hueco concreto (p. ej. "Cena") ya sabemos el tipo.
+    final mealType =
+        presetMealType ??
+        await showModalBottomSheet<String>(
+          context: context,
+          backgroundColor: AppColors.cream,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          builder: (ctx) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+                  child: Text(
+                    '¿Qué comida añades?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppColors.ink,
+                    ),
+                  ),
                 ),
-              ),
+                for (final t in disponibles)
+                  ListTile(
+                    title: Text(_mealLabels[t] ?? t),
+                    onTap: () => Navigator.of(ctx).pop(t),
+                  ),
+                const SizedBox(height: 8),
+              ],
             ),
-            for (final t in disponibles)
-              ListTile(
-                title: Text(_mealLabels[t] ?? t),
-                onTap: () => Navigator.of(ctx).pop(t),
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
     if (!mounted || mealType == null) return;
 
     final chosen = await _pickRecipe(data, title: 'Elige una receta');
@@ -630,9 +682,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.auto_awesome),
+                : const Icon(Icons.event_available_rounded),
             label: Text(
-              data.entries.isEmpty ? 'Generar plan' : 'Regenerar',
+              data.entries.isEmpty ? 'Hacer plan' : 'Rehacer plan',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           );
@@ -667,200 +719,123 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
-  Widget _buildPlan(_PlanData data) {
-    if (data.entries.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const MiauCharacter(mood: MiauMood.greeting, size: 120),
-              const SizedBox(height: 16),
-              const Text(
-                'Aún no hay plan para esta semana',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Pulsa "Generar plan" y la app repartirá tus recetas.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+  /// Tipos de comida que siempre se ven como huecos del día.
+  static const _mainMealTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
 
+  Widget _buildPlan(_PlanData data) {
     // Agrupar entries por fecha.
+    String keyOf(DateTime d) => d.toIso8601String().split('T').first;
     final byDate = <String, List<MealPlanEntry>>{};
     for (final e in data.entries) {
-      final key = e.date.toIso8601String().split('T').first;
-      byDate.putIfAbsent(key, () => []).add(e);
+      byDate.putIfAbsent(keyOf(e.date), () => []).add(e);
     }
 
     final days = List.generate(7, (i) => _weekStart.add(Duration(days: i)));
+    final now = DateTime.now();
+    final todayIndex = days.indexWhere((d) => _isSameDay(d, now));
+    final sel = (_selectedDay ?? (todayIndex < 0 ? 0 : todayIndex)).clamp(0, 6);
+    final date = days[sel];
+    final dayEntries = byDate[keyOf(date)] ?? const <MealPlanEntry>[];
+    final byType = {for (final e in dayEntries) e.mealType: e};
+    final types = [
+      ..._mainMealTypes,
+      ...byType.keys.where((t) => !_mainMealTypes.contains(t)),
+    ];
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       children: [
+        WeekDayStrip(
+          days: days,
+          selected: sel,
+          today: now,
+          mealsPerDay: [
+            for (final d in days)
+              (byDate[keyOf(d)] ?? const []).where((e) => !e.skipped).length,
+          ],
+          onSelect: (i) => setState(() => _selectedDay = i),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Text(
+              '${_dayNames[date.weekday - 1]} ${date.day}',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: AppColors.ink,
+              ),
+            ),
+            if (sel == todayIndex) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.wood,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Hoy',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (data.entries.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Aún no hay plan esta semana.',
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+          ),
+        for (final t in types)
+          () {
+            final e = byType[t];
+            final recipe = e == null ? null : data.recipesById[e.recipeId];
+            return MealSlotCard(
+              mealType: t,
+              title: e == null ? null : (recipe?.title ?? 'Receta'),
+              image: recipe == null
+                  ? null
+                  : RecipeImage(
+                      recipe: recipe,
+                      width: 64,
+                      height: 64,
+                      radius: 18,
+                    ),
+              detail: e == null ? null : _servingsLine(data, e),
+              skipped: e?.skipped ?? false,
+              fromFreezer: e?.fromFreezer ?? false,
+              onTap: e == null
+                  ? () => _addEntryToDay(
+                      data,
+                      date,
+                      dayEntries,
+                      presetMealType: t,
+                    )
+                  : () => _openEntryActions(data, e),
+            );
+          }(),
+        const SizedBox(height: 12),
+        const Text(
+          'Esta semana',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: AppColors.ink,
+          ),
+        ),
+        const SizedBox(height: 12),
         _energyCard(),
         const SizedBox(height: 12),
         if (data.isMealPrep) ...[
           _mealPrepCard(data),
           const SizedBox(height: 12),
         ],
-        if (_plannedRecipes(data).isNotEmpty) ...[
-          _cookModeCard(data),
-          const SizedBox(height: 12),
-        ],
-        ...days.map((date) {
-          final key = date.toIso8601String().split('T').first;
-          final dayEntries = byDate[key] ?? [];
-          final isToday = _isSameDay(date, DateTime.now());
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.all(16),
-            decoration: AppTheme.cardDecoration(radius: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      _dayNames[date.weekday - 1],
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: isToday ? AppColors.woodDark : AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${date.day}/${date.month}',
-                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                    ),
-                    if (isToday) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.wood,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text(
-                          'Hoy',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (dayEntries.isEmpty)
-                  Text(
-                    'Sin comidas planificadas',
-                    style: TextStyle(color: Colors.grey[500]),
-                  )
-                else
-                  ...dayEntries.map((e) {
-                    final recipe = data.recipesById[e.recipeId];
-                    // Toda la fila es pulsable: abre el menú de edición
-                    // (cambiar receta / fuera / quitar).
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _openEntryActions(data, e),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 80,
-                              child: Text(
-                                _mealLabels[e.mealType] ?? e.mealType,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    recipe?.title ?? 'Receta',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      decoration: e.skipped
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                      color: e.skipped
-                                          ? Colors.grey
-                                          : AppColors.ink,
-                                    ),
-                                  ),
-                                  _servingsLine(data, e),
-                                  if (e.fromFreezer)
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.ac_unit,
-                                          size: 12,
-                                          color: Color(0xFFB58A3C),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Del congelador',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            ),
-                            // Pista visual de que la fila es editable.
-                            Icon(
-                              Icons.more_horiz,
-                              size: 20,
-                              color: Colors.grey[500],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                // Añadir una comida nueva a este día.
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () => _addEntryToDay(data, date, dayEntries),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.woodDark,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                    ),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Añadir comida'),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
+        if (_plannedRecipes(data).isNotEmpty) _cookModeCard(data),
       ],
     );
   }
@@ -934,8 +909,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Cocina en lote las recetas de la semana con una línea de '
-                    'tiempo y temporizadores.',
+                    'Cocina la semana de una vez',
                     style: TextStyle(color: Colors.grey[700], fontSize: 13),
                   ),
                 ],

@@ -50,11 +50,9 @@ class AddRecipeChooser extends StatelessWidget {
             const SizedBox(height: 16),
             _option(
               context,
-              icon: Icons.auto_awesome,
-              title: 'Escribir receta deseada',
-              subtitle:
-                  'Pega o describe la receta y la IA la completa con macros, '
-                  'ingredientes y pasos.',
+              icon: Icons.edit_rounded,
+              title: 'Escribe el nombre',
+              subtitle: 'Se completa con ingredientes, pasos y macros',
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -67,10 +65,8 @@ class AddRecipeChooser extends StatelessWidget {
             _option(
               context,
               icon: Icons.storefront_outlined,
-              title: 'Ideas personalizadas',
-              subtitle:
-                  'Elige supermercado, objetivo, dieta y presupuesto, y la IA '
-                  'te propone ideas de recetas.',
+              title: 'Ideas para ti',
+              subtitle: 'Según tu súper, objetivo y presupuesto',
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -83,8 +79,8 @@ class AddRecipeChooser extends StatelessWidget {
             _option(
               context,
               icon: Icons.edit_note,
-              title: 'Introducir manualmente',
-              subtitle: 'Rellena tú la receta paso a paso, sin IA.',
+              title: 'A mano',
+              subtitle: 'Rellena tú cada campo',
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(

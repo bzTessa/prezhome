@@ -204,8 +204,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       initialValue: _intervalUnit,
                       decoration: _dec('Unidad'),
                       items: const [
-                        DropdownMenuItem(value: 'day', child: Text('días')),
-                        DropdownMenuItem(value: 'week', child: Text('semanas')),
+                        DropdownMenuItem(value: 'day', child: Text('Días')),
+                        DropdownMenuItem(value: 'week', child: Text('Semanas')),
                       ],
                       onChanged: (v) => setState(() => _intervalUnit = v!),
                     ),

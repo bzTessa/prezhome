@@ -3,12 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
 import 'services/food_photo_service.dart';
+import 'services/home_supermarkets.dart';
+import 'services/product_search_service.dart';
 import 'services/inventory_prefill.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
 import 'utils/quick_items.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
+import 'widgets/product_search_sheet.dart';
 import 'utils/friendly_error.dart';
 
 class AddInventoryItemScreen extends StatefulWidget {
@@ -41,6 +44,10 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   DateTime? _bestBefore; // consumo preferente estimado (congelador)
   bool _isStaple = false;
   bool _isLoading = false;
+
+  // Producto del súper elegido en el buscador: su foto se usa tal cual
+  // mientras no se cambie el nombre.
+  SupermarketProduct? _product;
 
   // ¿La usuaria ha fijado la fecha a mano? Si es así, no la pisamos con la
   // estimación automática. Al escribir el nombre o cambiar de ubicación, si la
@@ -230,7 +237,17 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       final editing = widget.item;
       String? imageUrl = editing?.imageUrl;
       final nameChanged = editing == null || editing.name.trim() != name;
-      if (isFood &&
+      final picked = _product;
+      if (picked != null &&
+          picked.imageUrl != null &&
+          picked.displayName == name) {
+        imageUrl = picked.imageUrl;
+        if (homeId != null) {
+          await FoodPhotoService(
+            Supabase.instance.client,
+          ).rememberPhoto(homeId: homeId, name: name, url: imageUrl!);
+        }
+      } else if (isFood &&
           name.isNotEmpty &&
           _selectedCategory != 'Especias' &&
           nameChanged &&
@@ -304,6 +321,87 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       borderSide: BorderSide.none,
     ),
   );
+
+  bool get isEditingItem => widget.item != null;
+
+  /// Abre el buscador de productos del súper principal y rellena el
+  /// formulario con el elegido (nombre, foto y formato de venta).
+  Future<void> _searchProduct() async {
+    final keys = await HomeSupermarkets(Supabase.instance.client).load();
+    if (!mounted) return;
+    final p = await showProductSearchSheet(
+      context,
+      initialQuery: _nameController.text.trim(),
+      supermarketKey: keys.keys.isEmpty ? null : keys.keys.first,
+    );
+    if (p == null || !mounted) return;
+    final cat = CategoryIcons.categoryFor(p.name);
+    final isHome = cat == FoodCategory.limpieza || cat == FoodCategory.hogar;
+    final pkg = parsePackageQuantity(p.quantity);
+    setState(() {
+      _product = p;
+      _nameController.text = p.displayName;
+      _itemType = isHome ? 'hogar' : 'comida';
+      if (!_categories.contains(_selectedCategory)) {
+        _selectedCategory = _categories.first;
+      }
+      if (pkg != null && _units.contains(pkg.unit)) {
+        final q = pkg.quantity;
+        _quantityController.text = q == q.roundToDouble()
+            ? q.toInt().toString()
+            : q.toString();
+        _selectedUnit = pkg.unit;
+      }
+    });
+  }
+
+  Widget _pickedProductCard(SupermarketProduct p) {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          FoodImage(
+            name: p.name,
+            imageUrl: p.imageUrl,
+            size: 56,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Producto del súper',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+                Text(
+                  [?p.brand, ?p.quantity].join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Quitar producto',
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => setState(() => _product = null),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -392,16 +490,43 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               const SizedBox(height: 4),
               Text(
                 _kind == 'ingredient'
-                    ? 'Materia prima (ej. pollo troceado, cebolla picada).'
+                    ? 'Ingrediente para cocinar'
                     : _kind == 'prep'
-                    ? 'Base preparada (ej. sofrito, sopa en daditos).'
-                    : 'Plato listo para comer (ej. lentejas cocinadas).',
+                    ? 'Base ya preparada'
+                    : 'Plato listo para comer',
                 style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
               const SizedBox(height: 20),
             ],
 
-            TextField(controller: _nameController, decoration: _dec('Nombre')),
+            TextField(
+              controller: _nameController,
+              decoration: _dec('Nombre').copyWith(
+                suffixIcon: IconButton(
+                  tooltip: 'Buscar en el súper',
+                  icon: const Icon(
+                    Icons.storefront_rounded,
+                    color: AppColors.woodDark,
+                  ),
+                  onPressed: _searchProduct,
+                ),
+              ),
+            ),
+            if (_product != null &&
+                _product!.displayName == _nameController.text.trim())
+              _pickedProductCard(_product!)
+            else if (!isEditingItem)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: _searchProduct,
+                  icon: const Icon(Icons.storefront_rounded, size: 18),
+                  label: const Text('Buscar el producto del súper con foto'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.woodDark,
+                  ),
+                ),
+              ),
 
             // Sugerencias rápidas de condimentos: al elegir la ubicación
             // 'Especias', mostramos chips de los de siempre (sal, pimienta,
@@ -610,11 +735,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     'No añadir a la compra',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: const Text(
-                    'Para básicos que siempre tienes (sal, aceite, '
-                    'especias...). No aparecerán en la lista de la compra '
-                    'aunque una receta los pida.',
-                  ),
+                  subtitle: const Text('Básicos que siempre tienes'),
                   onChanged: (v) => setState(() => _isStaple = v),
                 ),
               ),

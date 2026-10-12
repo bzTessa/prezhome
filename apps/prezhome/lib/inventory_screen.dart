@@ -15,6 +15,9 @@ import 'widgets/inventory_item_card.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
+import 'utils/kitchen_zones.dart';
+import 'widgets/kitchen/kitchen_zones_grid.dart';
+import 'discover_recipes_screen.dart';
 
 /// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
 /// Despensa, Bebidas, Especias o Hogar y limpieza). Agrupa los items y lleva su
@@ -478,6 +481,34 @@ class _InventoryScreenState extends State<InventoryScreen> {
   /// producto en Open Food Facts y navega al formulario de alta (precargado o
   /// vacío); el item construido vuelve aquí como resultado y se aplica con el
   /// MISMO camino optimista que el alta manual.
+  /// Hoja con las formas de añadir: a mano o escaneando el código de barras.
+  Future<void> _openAddOptions() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_note_rounded),
+              title: const Text('Añadir a mano'),
+              onTap: () => Navigator.of(ctx).pop('manual'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.qr_code_scanner_rounded),
+              title: const Text('Escanear código de barras'),
+              onTap: () => Navigator.of(ctx).pop('scan'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (choice == 'manual') await _openAddItem();
+    if (choice == 'scan') await _openScanBarcode();
+  }
+
   Future<void> _openScanBarcode() async {
     final result = await Navigator.of(context).push<InventoryItem>(
       MaterialPageRoute(builder: (_) => const ScanBarcodeScreen()),
@@ -551,36 +582,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
               elevation: 0,
               iconTheme: const IconThemeData(color: AppColors.ink),
             ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // Escanear código de barras: alta rápida sin ticket. heroTag propio
-          // para no colisionar con el FAB de alta manual.
-          FloatingActionButton.extended(
-            heroTag: 'fab-scan',
-            onPressed: _openScanBarcode,
-            backgroundColor: AppColors.card,
-            foregroundColor: AppColors.ink,
-            icon: const Icon(Icons.qr_code_scanner),
-            label: const Text(
-              'Escanear código',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'fab-inventory',
-            onPressed: _openAddItem,
-            backgroundColor: AppColors.wood,
-            foregroundColor: AppColors.ink,
-            icon: const Icon(Icons.add),
-            label: const Text(
-              'Añadir',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
+      // Un solo botón: las formas de añadir van en una hoja (antes eran dos
+      // botones flotantes apilados que tapaban la lista).
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'fab-inventory',
+        onPressed: _openAddOptions,
+        backgroundColor: AppColors.ink,
+        foregroundColor: AppColors.cream,
+        tooltip: 'Añadir a la despensa',
+        child: const Icon(Icons.add_rounded, size: 30),
       ),
       body: FutureBuilder<List<InventoryItem>>(
         future: _itemsFuture,
@@ -629,7 +639,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
           return Column(
             children: [
-              _sectionFilterBar(),
               // Indicador discreto de "cambios por sincronizar": aparece solo
               // con cola no vacía y desaparece al drenar.
               if (shouldShowPendingIndicator(_pendingCount))
@@ -675,81 +684,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
       default:
         return true;
     }
-  }
-
-  /// Barra de filtros por sección: scroll horizontal de chips (Todo, Nevera,
-  /// Congelador, Despensa, Bebidas, Condimentos, Hogar). Da más divisiones que
-  /// el viejo Todo/Comida/Hogar sin tocar la base de datos.
-  Widget _sectionFilterBar() {
-    const filters = <(String, String, IconData)>[
-      ('todo', 'Todo', Icons.apps_rounded),
-      ('Nevera', 'Nevera', Icons.kitchen),
-      ('Congelador', 'Congelador', Icons.ac_unit),
-      ('Despensa', 'Despensa', Icons.inventory_2),
-      ('Bebidas', 'Bebidas', Icons.local_drink),
-      ('Especias', 'Condimentos', Icons.grass),
-      ('Hogar', 'Hogar y limpieza', Icons.cleaning_services),
-    ];
-    return SizedBox(
-      height: 54,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.xs,
-        ),
-        itemCount: filters.length,
-        separatorBuilder: (context, index) =>
-            const SizedBox(width: AppSpacing.sm),
-        itemBuilder: (context, i) {
-          final (value, label, icon) = filters[i];
-          final selected = _sectionFilter == value;
-          return GestureDetector(
-            // Al tocar un filtro concreto limpiamos los overrides manuales para
-            // que la sección enfocada aplique su apertura inteligente de nuevo
-            // (y la sección filtrada se muestre expandida).
-            onTap: () {
-              setState(() {
-                _sectionFilter = value;
-                _expandedOverrides.clear();
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.wood : AppColors.card,
-                borderRadius: AppRadius.pillRadius,
-                boxShadow: selected ? AppElevation.level1 : AppElevation.level0,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 16,
-                    color: selected ? AppColors.ink : AppColors.inkMuted,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    label,
-                    style: AppTextStyles.label.copyWith(
-                      color: selected ? AppColors.ink : AppColors.inkMuted,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 
   /// Agrupa la lista por ubicación en secciones de orden fijo:
@@ -870,7 +804,31 @@ class _InventoryScreenState extends State<InventoryScreen> {
     // despensa (allItems, antes de filtrar), por eso sigue presente aunque la
     // sección filtrada esté vacía. Debajo pintamos solo las secciones filtradas.
     final children = <Widget>[
-      _DashboardSummary(allItems: allItems),
+      KitchenZonesGrid(
+        zones: summarizeZones(allItems),
+        selected: KitchenZone.byFilterKey(_sectionFilter),
+        onSelect: (zone) => setState(() {
+          _sectionFilter = zone?.filterKey ?? 'todo';
+          _expandedOverrides.clear();
+        }),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      // Al revés que el plan: ideas de recetas con lo que ya hay.
+      FilledButton.tonalIcon(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+          ),
+        ),
+        icon: const Icon(Icons.soup_kitchen_outlined),
+        label: const Text('¿Qué cocino con esto?'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          backgroundColor: AppColors.wood.withValues(alpha: 0.45),
+          foregroundColor: AppColors.ink,
+          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ),
       const SizedBox(height: 16),
     ];
 
@@ -1222,177 +1180,5 @@ class _InventoryScreenState extends State<InventoryScreen> {
     } else if (action == 'delete') {
       await _deleteItem(item);
     }
-  }
-}
-
-/// Resumen superior tipo dashboard, SIEMPRE GLOBAL: totales de Frescos /
-/// Caducan pronto / Caducados de TODA la despensa (todos los items de comida
-/// cargados, sin aplicar el filtro de sección), en números grandes con los
-/// colores de estado de AppColors, más un Miau cozy con un mensaje que cambia
-/// según la urgencia. Al ser global, NO cambia al tocar un chip de filtro: da
-/// un vistazo estable del estado real de toda la despensa.
-class _DashboardSummary extends StatelessWidget {
-  /// Lista COMPLETA de items (sin filtrar). El dashboard solo cuenta los de
-  /// comida con fecha de caducidad relevante.
-  final List<InventoryItem> allItems;
-  const _DashboardSummary({required this.allItems});
-
-  @override
-  Widget build(BuildContext context) {
-    var frescos = 0;
-    var pronto = 0;
-    var caducados = 0;
-    // Totales sobre TODA la comida con semáforo de caducidad. Igual que en las
-    // secciones, las especias quedan fuera (no se les muestra caducidad) y los
-    // 'sin fecha' no suman en ninguno de los tres estados.
-    for (final item in allItems) {
-      if (item.itemType != 'comida') continue;
-      if (item.category == 'Especias') continue;
-      switch (item.expiryStatus) {
-        case ExpiryStatus.fresco:
-          frescos++;
-          break;
-        case ExpiryStatus.pronto:
-          pronto++;
-          break;
-        case ExpiryStatus.caducado:
-          caducados++;
-          break;
-        case ExpiryStatus.sinFecha:
-          break;
-      }
-    }
-
-    // Miau reacciona a lo que de verdad importa: alarma suave si hay caducados,
-    // aviso si algo caduca pronto, y tranquilidad si todo está en orden.
-    final MiauMood mood;
-    final String message;
-    if (caducados > 0) {
-      mood = MiauMood.neutral;
-      message = caducados == 1
-          ? '¡Miau! Hay 1 producto caducado, échale un ojo.'
-          : '¡Miau! Hay $caducados productos caducados, échales un ojo.';
-    } else if (pronto > 0) {
-      mood = MiauMood.curious;
-      message = pronto == 1
-          ? 'Ojo: 1 producto caduca pronto. ¡A cocinarlo!'
-          : 'Ojo: $pronto productos caducan pronto. ¡A cocinarlos!';
-    } else {
-      mood = MiauMood.celebrating;
-      message = 'Todo bajo control en tu despensa, ¡bien hecho!';
-    }
-
-    return Container(
-      padding: AppSpacing.cardPadding,
-      decoration: AppTheme.surfaceDecoration(
-        radius: AppRadius.lg,
-        elevation: 1,
-        color: AppColors.card,
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              MiauCharacter(mood: mood, size: 56),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Estado de tu despensa', style: AppTextStyles.title),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(message, style: AppTextStyles.bodyMuted),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            children: [
-              _DashboardStat(
-                label: 'Frescos',
-                count: frescos,
-                color: AppColors.fresh,
-                background: AppColors.freshBg,
-                icon: Icons.check_circle,
-              ),
-              const SizedBox(width: 8),
-              _DashboardStat(
-                label: 'Caducan pronto',
-                count: pronto,
-                color: AppColors.soon,
-                background: AppColors.soonBg,
-                icon: Icons.schedule,
-              ),
-              const SizedBox(width: 8),
-              _DashboardStat(
-                label: 'Caducados',
-                count: caducados,
-                color: AppColors.expired,
-                background: AppColors.expiredBg,
-                icon: Icons.warning_amber_rounded,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Tarjeta-resumen del dashboard: un NÚMERO grande y su etiqueta de estado con
-/// el color cálido correspondiente (fresco/pronto/caducado).
-class _DashboardStat extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color;
-  final Color background;
-  final IconData icon;
-
-  const _DashboardStat({
-    required this.label,
-    required this.count,
-    required this.color,
-    required this.background,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final active = count > 0;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.md,
-          horizontal: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: active ? background : AppColors.cream,
-          borderRadius: AppRadius.mdRadius,
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 18, color: active ? color : AppColors.inkMuted),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              '$count',
-              style: AppTextStyles.display.copyWith(
-                fontSize: 25,
-                color: active ? color : AppColors.inkMuted,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.label.copyWith(
-                color: active ? color : AppColors.inkMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

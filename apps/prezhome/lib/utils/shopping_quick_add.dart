@@ -97,10 +97,9 @@ QuickAddEntry? parseQuickAdd(String raw) {
 
 /// Preferencias de vista de la lista de la compra (por dispositivo).
 class ShoppingViewPrefs {
-  const ShoppingViewPrefs({this.showPhotos = false, this.groupByAisle = true});
+  const ShoppingViewPrefs({this.showPhotos = true, this.groupByAisle = true});
 
-  /// Mostrar la foto/ilustración de cada producto. Por defecto no: la lista
-  /// se lee más rápido sin imágenes.
+  /// Mostrar la foto de cada producto. Por defecto sí.
   final bool showPhotos;
 
   /// Agrupar por pasillo (verduras, carne...). Si no, una sola lista en el
@@ -126,7 +125,7 @@ class ShoppingViewPrefs {
       final m = jsonDecode(raw);
       if (m is! Map) return const ShoppingViewPrefs();
       return ShoppingViewPrefs(
-        showPhotos: m['show_photos'] == true,
+        showPhotos: m['show_photos'] != false,
         groupByAisle: m['group_by_aisle'] != false,
       );
     } catch (_) {

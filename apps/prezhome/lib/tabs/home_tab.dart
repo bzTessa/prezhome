@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../add_inventory_item_screen.dart';
 import '../add_recipe_chooser.dart';
+import '../discover_recipes_screen.dart';
 import '../food_diary_screen.dart';
+import '../household_screen.dart';
 import '../main_shell.dart';
 import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
@@ -12,12 +14,15 @@ import '../shopping_list_screen.dart';
 import '../models/dashboard_prefs.dart';
 import '../models/inventory_item.dart';
 import '../models/meal_plan_entry.dart';
+import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/smart_reminders.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
+import '../widgets/plan/plan_parts.dart';
+import '../widgets/recipe_image.dart';
 import '../widgets/animations/animated_counter.dart';
 import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
@@ -32,7 +37,16 @@ class HomeTab extends StatefulWidget {
   /// MainShell para que la tarjeta de caducidades aterrice donde el inventario
   /// vive de verdad, en lugar de abrir una InventoryScreen suelta.
   final VoidCallback? onNavigateToDespensa;
-  const HomeTab({super.key, this.onNavigateToDespensa});
+
+  /// Saltos a las pestañas Compra y Tareas desde los accesos de un vistazo.
+  final VoidCallback? onNavigateToShopping;
+  final VoidCallback? onNavigateToTasks;
+  const HomeTab({
+    super.key,
+    this.onNavigateToDespensa,
+    this.onNavigateToShopping,
+    this.onNavigateToTasks,
+  });
 
   @override
   State<HomeTab> createState() => HomeTabState();
@@ -68,6 +82,10 @@ class HomeTabState extends State<HomeTab> {
   // compra). Se calculan sin IA cruzando los datos del día.
   List<Reminder> _reminders = [];
 
+  // Productos pendientes en la lista de la compra (para el acceso de un
+  // vistazo).
+  int _pendingShopping = 0;
+
   // Preferencias de personalización del dashboard (orden/visibilidad de
   // tarjetas y accesos rápidos). Por usuario, en profiles.dashboard_prefs.
   DashboardPrefs _prefs = DashboardPrefs.defaults();
@@ -76,7 +94,7 @@ class HomeTabState extends State<HomeTab> {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
     'dinner': 'Cena',
-    'snack': 'Snack',
+    'snack': 'Merienda',
     'dessert': 'Postre',
   };
   static const _mealOrder = [
@@ -163,7 +181,7 @@ class HomeTabState extends State<HomeTab> {
       final todayKey = DateTime.now().toIso8601String().split('T').first;
       final res = await _client
           .from('meal_plan_entries')
-          .select('plan_date, meal_type, skipped, recipes(title)')
+          .select('plan_date, meal_type, skipped, recipes(*)')
           .eq('home_id', homeId)
           .eq('plan_date', todayKey);
 
@@ -171,12 +189,19 @@ class HomeTabState extends State<HomeTab> {
       for (final row in (res as List)) {
         final e = MealPlanEntry.fromMap(row);
         final rec = row['recipes'];
+        Recipe? recipe;
+        if (rec is Map<String, dynamic>) {
+          try {
+            recipe = Recipe.fromMap(rec);
+          } catch (_) {}
+        }
         final title = (rec is Map ? rec['title'] : null) as String?;
         items.add(
           _PlanItem(
             mealType: e.mealType,
             title: title ?? 'Receta',
             skipped: e.skipped,
+            recipe: recipe,
           ),
         );
       }
@@ -521,7 +546,12 @@ class HomeTabState extends State<HomeTab> {
         pendingShopping: pending,
       );
 
-      if (mounted) setState(() => _reminders = reminders);
+      if (mounted) {
+        setState(() {
+          _reminders = reminders;
+          _pendingShopping = pending;
+        });
+      }
     } catch (e) {
       debugPrint('HomeTab._loadReminders error: $e');
     }
@@ -535,153 +565,509 @@ class HomeTabState extends State<HomeTab> {
     return 'Buenas noches';
   }
 
+  static const _weekdays = [
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
+  ];
+  static const _months = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
+
+  String _todayLabel() {
+    final d = DateTime.now();
+    return '${_weekdays[d.weekday - 1]}, ${d.day} de ${_months[d.month - 1]}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final rest = _prefs.visibleCards
+        .where((c) => c != DashboardCard.meals)
+        .toList();
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(
-        titleSpacing: AppSpacing.xl,
-        title: Text(
-          'Tu hogar',
-          style: AppTextStyles.headline.copyWith(fontSize: 21),
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          color: AppColors.woodDark,
+          onRefresh: _loadDashboard,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.lg,
+              AppSpacing.xl,
+              AppSpacing.xxxl * 2,
+            ),
+            children: [
+              StaggeredEntrance(index: 0, child: _header()),
+              const SizedBox(height: AppSpacing.xl),
+
+              // Lo primero: qué se come hoy, con la foto de la receta.
+              if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
+                StaggeredEntrance(index: 1, child: _todayMealHero()),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+
+              // De un vistazo: caducidades, tareas y compra. Tocar lleva a su
+              // pestaña.
+              StaggeredEntrance(index: 2, child: _glanceRow()),
+              const SizedBox(height: AppSpacing.xl),
+
+              if (_prefs.quick.isNotEmpty) ...[
+                StaggeredEntrance(index: 3, child: _quickAccessRow()),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+
+              if (_prefs.visibleCards.contains(DashboardCard.calories) &&
+                  (!_profileComplete ||
+                      _targetCalories == null ||
+                      _targetCalories! <= 0)) ...[
+                StaggeredEntrance(index: 4, child: _calorieGoalPrompt()),
+                const SizedBox(height: AppSpacing.md),
+              ],
+
+              for (final (i, card) in rest.indexed) ...[
+                StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
+                const SizedBox(height: AppSpacing.md),
+              ],
+            ],
+          ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded),
-            tooltip: 'Personalizar Inicio',
-            onPressed: _openCustomize,
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  /// Cabecera: fecha, saludo y accesos a personalizar y a tu hogar (miembros,
+  /// supermercados, ajustes), que antes era una pestaña.
+  Widget _header() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _todayLabel().toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: AppColors.inkMuted,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _greeting(),
+                style: const TextStyle(
+                  fontSize: 30,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+        _roundButton(
+          icon: Icons.tune_rounded,
+          tooltip: 'Personalizar Inicio',
+          onTap: _openCustomize,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        _roundButton(
+          icon: Icons.home_rounded,
+          tooltip: 'Tu hogar',
+          filled: true,
+          onTap: _openHousehold,
+        ),
+      ],
+    );
+  }
+
+  Widget _roundButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    bool filled = false,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: filled ? AppColors.ink : AppColors.card,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 46,
+            height: 46,
+            child: Icon(
+              icon,
+              size: 22,
+              color: filled ? AppColors.cream : AppColors.ink,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openHousehold() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const HouseholdScreen()));
+    if (mounted) _loadDashboard();
+  }
+
+  Future<void> _openMealPlan() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MealPlanScreen()));
+    if (mounted) _loadTodayPlan();
+  }
+
+  /// La comida que toca ahora según la hora (desayuno por la mañana, comida a
+  /// mediodía…). Si ya pasó todo, la última del día.
+  _PlanItem? _nextMeal() {
+    final active = _todayItems.where((i) => !i.skipped).toList();
+    if (active.isEmpty) return null;
+    final h = DateTime.now().hour;
+    final now = h < 11
+        ? 'breakfast'
+        : h < 16
+        ? 'lunch'
+        : h < 19
+        ? 'snack'
+        : 'dinner';
+    const order = ['breakfast', 'lunch', 'snack', 'dinner', 'dessert'];
+    final from = order.indexOf(now);
+    for (final it in active) {
+      if (order.indexOf(it.mealType) >= from) return it;
+    }
+    return active.last;
+  }
+
+  /// Tarjeta grande "Hoy comemos": foto de la receta que toca y, debajo, el
+  /// resto de comidas del día. Sin plan, invita a planificar o a cocinar con
+  /// lo que hay en casa.
+  Widget _todayMealHero() {
+    final next = _nextMeal();
+    if (next == null) return _emptyMealHero();
+    final style = mealStyle(next.mealType);
+    final others = _todayItems.where((i) => !identical(i, next)).toList();
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(28),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _openMealPlan,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Stack(
+              children: [
+                if (next.recipe != null)
+                  RecipeImage(recipe: next.recipe!, height: 190, radius: 0)
+                else
+                  Container(
+                    height: 190,
+                    color: style.bg,
+                    child: Icon(style.icon, size: 64, color: style.fg),
+                  ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.62),
+                        ],
+                        stops: const [0.35, 1],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: AppSpacing.lg,
+                  top: AppSpacing.lg,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(style.icon, size: 14, color: style.fg),
+                        const SizedBox(width: 4),
+                        Text(
+                          'HOY · ${style.label.toUpperCase()}',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            color: style.fg,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: AppSpacing.lg,
+                  right: AppSpacing.lg,
+                  bottom: AppSpacing.lg,
+                  child: Text(
+                    next.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      height: 1.15,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (others.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                ),
+                child: Column(
+                  children: [for (final o in others) _otherMealRow(o)],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _otherMealRow(_PlanItem it) {
+    final s = mealStyle(it.mealType);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(color: s.bg, shape: BoxShape.circle),
+            child: Icon(s.icon, size: 16, color: s.fg),
           ),
           const SizedBox(width: AppSpacing.sm),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xl,
-          AppSpacing.sm,
-          AppSpacing.xl,
-          AppSpacing.xxxl,
-        ),
-        children: [
-          // Cabecera con Presidente Miau como personaje. Entra la primera
-          // (index 0) con la aparición escalonada, con elevación de tarjeta.
-          StaggeredEntrance(index: 0, child: _headerCard()),
-          const SizedBox(height: AppSpacing.xl),
-
-          // Accesos rápidos a lo que más usas (personalizables).
-          if (_prefs.quick.isNotEmpty) ...[
-            StaggeredEntrance(index: 1, child: _quickAccessRow()),
-            const SizedBox(height: AppSpacing.xl),
-          ],
-
-          StaggeredEntrance(
-            index: 2,
+          SizedBox(
+            width: 74,
             child: Text(
-              'Hoy',
-              style: AppTextStyles.label.copyWith(
-                letterSpacing: 0.5,
+              s.label,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
                 color: AppColors.inkMuted,
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Si el perfil no está completo o aún no hay objetivo de calorías,
-          // invitamos a calcularlo (independiente de la personalización).
-          if (!_profileComplete ||
-              _targetCalories == null ||
-              _targetCalories! <= 0) ...[
-            StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
-            const SizedBox(height: AppSpacing.md),
-          ],
-
-          // Las dos decisiones del día quedan agrupadas y separadas
-          // visualmente: primero qué comer y después qué hacer.
-          if (_prefs.visibleCards.contains(DashboardCard.meals) ||
-              _prefs.visibleCards.contains(DashboardCard.tasks)) ...[
-            StaggeredEntrance(index: 4, child: _priorityCards()),
-            const SizedBox(height: AppSpacing.xl),
-          ],
-
-          // El resto de tarjetas conserva el orden y visibilidad elegidos por
-          // el usuario. Comidas y tareas ya viven arriba como resumen diario.
-          for (final (i, card)
-              in _prefs.visibleCards
-                  .where(
-                    (card) =>
-                        card != DashboardCard.meals &&
-                        card != DashboardCard.tasks,
-                  )
-                  .indexed) ...[
-            StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
-            const SizedBox(height: AppSpacing.md),
-          ],
+          Expanded(
+            child: Text(
+              it.skipped ? 'Fuera de casa' : it.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: it.skipped ? AppColors.inkMuted : AppColors.ink,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  /// Bloque prioritario del día. En pantallas anchas muestra comidas y tareas
-  /// en paralelo; en móvil se apilan para mantener controles cómodos.
-  Widget _priorityCards() {
-    final cards = <Widget>[
-      if (_prefs.visibleCards.contains(DashboardCard.meals)) _mealsCard(),
-      if (_prefs.visibleCards.contains(DashboardCard.tasks)) _tasksCard(),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final sideBySide = constraints.maxWidth >= 720 && cards.length > 1;
-        if (!sideBySide) {
-          return Column(
+  Widget _emptyMealHero() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: AppColors.peachBg,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              for (var i = 0; i < cards.length; i++) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.md),
-                cards[i],
-              ],
+              const Expanded(
+                child: Text(
+                  '¿Qué comemos hoy?',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              const MiauCharacter(mood: MiauMood.greeting, size: 56),
             ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < cards.length; i++) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.md),
-              Expanded(child: cards[i]),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Aún no hay nada planificado para hoy.',
+            style: AppTextStyles.bodyMuted,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              FilledButton.icon(
+                onPressed: _openMealPlan,
+                icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                label: const Text('Planificar'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.ink,
+                  foregroundColor: AppColors.cream,
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const DiscoverRecipesScreen(pantryMode: true),
+                  ),
+                ),
+                icon: const Icon(Icons.kitchen_rounded, size: 18),
+                label: const Text('Con lo que tengo'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.ink,
+                  side: const BorderSide(color: AppColors.ink),
+                ),
+              ),
             ],
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
-  /// Cabecera del dashboard: Presidente Miau saludando + jerarquía tipográfica
-  /// nueva (saludo en headline, subtítulo en gris de marca) sobre una tarjeta
-  /// en reposo.
-  Widget _headerCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-      child: Row(
-        children: [
-          const MiauCharacter(mood: MiauMood.greeting, size: 72),
-          const SizedBox(width: AppSpacing.lg),
+  /// Tres fichas de un vistazo. Cada una salta a su pestaña.
+  Widget _glanceRow() {
+    final expiring = _expiringSoon + _expired;
+    final tasksToday = _todayTasks.length;
+    return Row(
+      children: [
+        Expanded(
+          child: _glanceTile(
+            value: expiring,
+            label: 'Por caducar',
+            icon: Icons.hourglass_bottom_rounded,
+            bg: _expired > 0 ? AppColors.expiredBg : AppColors.soonBg,
+            fg: _expired > 0 ? AppColors.expired : AppColors.soon,
+            onTap: widget.onNavigateToDespensa,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        if (_prefs.isModuleEnabled(HomeModule.tasks)) ...[
           Expanded(
+            child: _glanceTile(
+              value: tasksToday,
+              label: tasksToday == 1 ? 'Tarea hoy' : 'Tareas hoy',
+              icon: Icons.check_circle_outline_rounded,
+              bg: AppColors.sageBg,
+              fg: AppColors.sage,
+              onTap: widget.onNavigateToTasks,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        Expanded(
+          child: _glanceTile(
+            value: _pendingShopping,
+            label: 'En la compra',
+            icon: Icons.shopping_cart_outlined,
+            bg: AppColors.frostBg,
+            fg: AppColors.frost,
+            onTap: widget.onNavigateToShopping,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _glanceTile({
+    required int value,
+    required String label,
+    required IconData icon,
+    required Color bg,
+    required Color fg,
+    VoidCallback? onTap,
+  }) {
+    return Semantics(
+      button: onTap != null,
+      label: '$value $label',
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_greeting(), style: AppTextStyles.headline),
-                const SizedBox(height: AppSpacing.xs),
+                Icon(icon, color: fg, size: 22),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Este es el resumen de tu hogar',
-                  style: AppTextStyles.bodyMuted,
+                  '$value',
+                  style: TextStyle(
+                    fontSize: 28,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                    color: fg,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkMuted,
+                  ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -745,18 +1131,16 @@ class HomeTabState extends State<HomeTab> {
   /// aparece de forma escalonada (StaggeredEntrance por index) y da feedback
   /// táctil al pulsar (PressScale), sin tocar la navegación _runQuickAction.
   Widget _quickAccessRow() {
-    // Mantiene una fila compacta y desplazable: los accesos siguen siendo
-    // fáciles de tocar incluso si el usuario fija más de tres.
     final items = _prefs.quick;
     return SizedBox(
-      height: 112,
+      height: 96,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
         itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
         itemBuilder: (context, i) => SizedBox(
-          width: 104,
+          width: 72,
           child: StaggeredEntrance(
             index: i,
             child: _quickAccessButton(items[i]),
@@ -789,34 +1173,23 @@ class HomeTabState extends State<HomeTab> {
     final accent = _quickAccent(action);
     return PressScale(
       onTap: () => _runQuickAction(action),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.md,
-          horizontal: AppSpacing.sm,
-        ),
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: accent.$1,
-                borderRadius: AppRadius.smRadius,
-              ),
-              child: Icon(action.icon, color: accent.$2, size: 22),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              action.label,
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.label.copyWith(fontSize: 10.5, height: 1.1),
-            ),
-          ],
-        ),
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(color: accent.$1, shape: BoxShape.circle),
+            child: Icon(action.icon, color: accent.$2, size: 26),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            action.label,
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.label.copyWith(fontSize: 11, height: 1.1),
+          ),
+        ],
       ),
     );
   }
@@ -835,6 +1208,11 @@ class HomeTabState extends State<HomeTab> {
         ).push(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
         break;
       case QuickAction.shopping:
+        final goShopping = widget.onNavigateToShopping;
+        if (goShopping != null) {
+          goShopping();
+          return;
+        }
         await Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const ShoppingListScreen()));
@@ -1157,7 +1535,7 @@ class HomeTabState extends State<HomeTab> {
                             ),
                           ),
                           if (it.skipped)
-                            Text('fuera', style: AppTextStyles.labelMuted),
+                            Text('Fuera', style: AppTextStyles.labelMuted),
                         ],
                       ),
                     ),
@@ -1519,10 +1897,12 @@ class _PlanItem {
   final String mealType;
   final String title;
   final bool skipped;
+  final Recipe? recipe;
   _PlanItem({
     required this.mealType,
     required this.title,
     required this.skipped,
+    this.recipe,
   });
 }
 

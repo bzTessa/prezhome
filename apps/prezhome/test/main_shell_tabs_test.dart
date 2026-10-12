@@ -8,10 +8,10 @@ void main() {
       final ids = computeVisibleTabIds(DashboardPrefs.defaults());
       expect(ids, [
         TabId.inicio,
-        TabId.tareas,
         TabId.comidas,
+        TabId.compra,
         TabId.despensa,
-        TabId.hogar,
+        TabId.tareas,
       ]);
     });
 
@@ -30,7 +30,7 @@ void main() {
         enabledModules: {HomeModule.points, HomeModule.batchCooking},
       );
       final ids = computeVisibleTabIds(prefs);
-      expect(ids, [TabId.inicio, TabId.comidas, TabId.despensa, TabId.hogar]);
+      expect(ids, [TabId.inicio, TabId.comidas, TabId.compra, TabId.despensa]);
       expect(ids, isNot(contains(TabId.tareas)));
     });
 
@@ -55,7 +55,7 @@ void main() {
       final ids = computeVisibleTabIds(
         DashboardPrefs.defaults().copyWith(enabledModules: <HomeModule>{}),
       );
-      expect(ids, [TabId.inicio, TabId.comidas, TabId.despensa, TabId.hogar]);
+      expect(ids, [TabId.inicio, TabId.comidas, TabId.compra, TabId.despensa]);
     });
   });
 }

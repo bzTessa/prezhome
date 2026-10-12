@@ -284,7 +284,7 @@ class NutritionProfile {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
     'dinner': 'Cena',
-    'snack': 'Snack',
+    'snack': 'Merienda',
     'dessert': 'Postre',
   };
 

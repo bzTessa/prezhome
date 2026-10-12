@@ -9,30 +9,30 @@ import 'services/proactive_suggestions_service.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/comidas_tab.dart';
 import 'tabs/despensa_tab.dart';
-import 'household_screen.dart';
+import 'shopping_list_screen.dart';
 import 'tasks_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/proactive_suggestions_banner.dart';
+import 'services/onboarding_applier.dart';
 
 /// Identidad semántica de cada pestaña del shell. Se usa para calcular los
 /// índices por identidad (no por número) de forma que la navegación siga
 /// funcionando aunque alguna pestaña opcional desaparezca.
-enum TabId { comidas, despensa, inicio, tareas, hogar }
+enum TabId { comidas, compra, despensa, inicio, tareas }
 
-/// Orden FIJO de pestañas candidatas (Hoy, Comida, Tareas, Despensa, Hogar)
-/// filtrado por los módulos activados. Las tres primeras son las secciones de
-/// uso diario y quedan agrupadas al principio de la navegación; Despensa y
-/// Hogar conservan sus flujos existentes.
+/// Orden FIJO de pestañas candidatas (Hoy, Comida, Compra, Despensa, Tareas)
+/// filtrado por los módulos activados. La compra tiene pestaña propia (es lo
+/// que más se usa); los ajustes del hogar se abren desde el perfil en Hoy.
 ///
 /// Nota Paso 5: batch_prep_timeline_screen añadirá aquí su TabId condicionado a
 /// HomeModule.batchCooking.
 List<TabId> computeVisibleTabIds(DashboardPrefs prefs) {
   return [
     TabId.inicio,
-    if (prefs.isModuleEnabled(HomeModule.tasks)) TabId.tareas,
     TabId.comidas,
+    TabId.compra,
     TabId.despensa,
-    TabId.hogar,
+    if (prefs.isModuleEnabled(HomeModule.tasks)) TabId.tareas,
   ];
 }
 
@@ -161,6 +161,10 @@ class MainShellState extends State<MainShell> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
+      // Primero, si hay respuestas del cuestionario inicial sin aplicar (recién
+      // creada la cuenta y el hogar), se guardan en el perfil.
+      final applied = await OnboardingApplier.applyIfPending(_client);
+      if (applied) _homeKey.currentState?.refreshActiveView();
       final row = await _client
           .from('profiles')
           .select('dashboard_prefs')
@@ -182,7 +186,7 @@ class MainShellState extends State<MainShell> {
   }
 
   /// Construye la lista ordenada de pestañas candidatas en un orden FIJO
-  /// (Hoy, Tareas, Comida, Despensa, Hogar). Solo Tareas es condicional:
+  /// (Hoy, Comida, Compra, Despensa, Tareas). Solo Tareas es condicional:
   /// se incluye únicamente si el módulo está activado. Páginas y destinos
   /// salen de aquí para no desincronizarse nunca.
   ///
@@ -208,6 +212,22 @@ class MainShellState extends State<MainShell> {
             label: 'Comida',
           ),
         );
+      case TabId.compra:
+        return _TabDescriptor(
+          id: id,
+          page: const ColoredBox(
+            color: AppColors.cream,
+            child: SafeArea(
+              bottom: false,
+              child: ShoppingListScreen(embedded: true),
+            ),
+          ),
+          destination: const FloatingNavItem(
+            icon: Icons.shopping_cart_outlined,
+            selectedIcon: Icons.shopping_cart,
+            label: 'Compra',
+          ),
+        );
       case TabId.despensa:
         return _TabDescriptor(
           id: id,
@@ -221,7 +241,15 @@ class MainShellState extends State<MainShell> {
       case TabId.inicio:
         return _TabDescriptor(
           id: id,
-          page: HomeTab(key: _homeKey, onNavigateToDespensa: _goToDespensa),
+          page: HomeTab(
+            key: _homeKey,
+            onNavigateToDespensa: _goToDespensa,
+            onNavigateToShopping: () => goToTab(_indexOf(TabId.compra)),
+            onNavigateToTasks: () {
+              final i = _indexOf(TabId.tareas);
+              if (i >= 0) goToTab(i);
+            },
+          ),
           destination: const FloatingNavItem(
             icon: Icons.today_outlined,
             selectedIcon: Icons.today_rounded,
@@ -236,16 +264,6 @@ class MainShellState extends State<MainShell> {
             icon: Icons.check_circle_outline,
             selectedIcon: Icons.check_circle,
             label: 'Tareas',
-          ),
-        );
-      case TabId.hogar:
-        return _TabDescriptor(
-          id: id,
-          page: const HouseholdScreen(),
-          destination: const FloatingNavItem(
-            icon: Icons.settings_outlined,
-            selectedIcon: Icons.settings,
-            label: 'Hogar',
           ),
         );
     }

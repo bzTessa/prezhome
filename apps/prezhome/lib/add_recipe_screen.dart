@@ -212,7 +212,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         final controller = TextEditingController();
         return AlertDialog(
           backgroundColor: const Color(0xFFFDF8E1),
-          title: const Text('Rellenar con IA'),
+          title: const Text('Completar receta'),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -279,14 +279,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       } else {
         final msg = (data is Map && data['error'] != null)
             ? data['error'].toString()
-            : 'La IA no devolvió una receta válida';
+            : 'No se pudo completar la receta';
         throw msg;
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error con la IA')),
+            content: Text(friendlyError(e, 'No se pudo completar la receta')),
             backgroundColor: Colors.red,
           ),
         );
@@ -825,9 +825,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.auto_awesome),
+                          : const Icon(Icons.edit_note_rounded),
                       label: Text(
-                        _aiLoading ? 'Generando…' : 'Rellenar con IA',
+                        _aiLoading ? 'Completando…' : 'Completar receta',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -1039,7 +1039,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         child: TextFormField(
                           controller: _prepController,
                           keyboardType: TextInputType.number,
-                          decoration: _dec('Prep (min)'),
+                          decoration: _dec('Preparación (min)'),
                         ),
                       ),
                       const SizedBox(width: 12),

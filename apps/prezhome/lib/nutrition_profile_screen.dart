@@ -279,7 +279,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
-                            Icons.auto_awesome,
+                            Icons.tune_rounded,
                             color: Color(0xFF9B6B2E),
                           ),
                         ),
@@ -322,9 +322,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 const SizedBox(height: 8),
                 _ModeCard(
                   title: 'Del día',
-                  subtitle:
-                      'Cocino y lo que sobra lo guardo para el día siguiente. '
-                      'Interfaz sencilla.',
+                  subtitle: 'Cocino cada día',
                   icon: Icons.wb_sunny_outlined,
                   selected: _cookingMode == 'daily',
                   onTap: () => setState(() => _cookingMode = 'daily'),
@@ -332,9 +330,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 const SizedBox(height: 8),
                 _ModeCard(
                   title: 'Cocinar en lote',
-                  subtitle:
-                      'Cocino en lote y congelo para varios días. Se activan '
-                      'congelador, lotes y planificación.',
+                  subtitle: 'Cocino de una vez para varios días',
                   icon: Icons.ac_unit,
                   selected: _cookingMode == 'mealprep',
                   onTap: () => setState(() => _cookingMode = 'mealprep'),
