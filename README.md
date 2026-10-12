@@ -1,20 +1,32 @@
-# prezhome
+# Prez
 
-A new Flutter project.
+Monorepo de las apps Prez (Flutter + Supabase):
 
-## Getting Started
+| Carpeta | Contenido |
+|---------|-----------|
+| `apps/prezhome/` | App **PrezHome** (organización del hogar). Proyecto Flutter completo. |
+| `supabase/` | Migraciones y Edge Functions, compartidas por todas las apps. |
+| `docs/` | Documentación de producto y guías. |
 
-This project is a starting point for a Flutter application.
+Más adelante se añadirán `apps/prezwallet/` y `packages/` con el código
+compartido (ver [docs/PREZWALLET.md](docs/PREZWALLET.md) §6).
 
-A few resources to get you started if this is your first Flutter project:
+## Empezar
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+cd apps/prezhome
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Comprobaciones que ejecuta el CI (desde `apps/prezhome`):
+
+```bash
+dart format --output=none --set-exit-if-changed .
+flutter analyze
+flutter test
+dart run tool/architecture/dependency_map.dart --check
+```
 
 ## Automatizacion CI/CD y secrets
 
@@ -43,11 +55,11 @@ plato), y la guia sencilla para activarlo esta en
 
 Para apoyar el rediseño de la app hay una base de arquitectura en:
 
-- [docs/architecture/review.md](docs/architecture/review.md)
-- [docs/architecture/refactor-plan.md](docs/architecture/refactor-plan.md)
-- [docs/architecture/dependency-map.md](docs/architecture/dependency-map.md)
+- [apps/prezhome/docs/architecture/review.md](apps/prezhome/docs/architecture/review.md)
+- [apps/prezhome/docs/architecture/refactor-plan.md](apps/prezhome/docs/architecture/refactor-plan.md)
+- [apps/prezhome/docs/architecture/dependency-map.md](apps/prezhome/docs/architecture/dependency-map.md)
 
-Comandos útiles:
+Comandos útiles (desde `apps/prezhome`):
 
 - Generar mapa de dependencias:
   `dart run tool/architecture/dependency_map.dart`

@@ -201,7 +201,7 @@ esté en uso.
 
 - **Flutter + Supabase**, igual que PrezHome. **Mismo proyecto Supabase** (un
   único login para las dos apps).
-- Repositorio: recomendado convertir este repo en **monorepo**:
+- Repositorio: **monorepo** (la app PrezHome ya vive en `apps/prezhome`):
 
 ```
 apps/
@@ -213,8 +213,9 @@ packages/
 supabase/          migraciones y Edge Functions compartidas
 ```
 
-  Con *pub workspaces* (Dart 3.6+) o `melos`. Es un movimiento de carpetas
-  grande, así que se hace en un PR propio y antes de empezar PrezWallet.
+  Hecho: `apps/prezhome` + `supabase/` compartido. Pendiente: crear
+  `packages/` y `apps/prezwallet`, y entonces unirlos con *pub workspaces*
+  (Dart 3.6+) para tener un único `pubspec.lock`.
 - Claves de APIs externas (cotizaciones, bancos) solo en **Edge Functions**
   como secrets de Supabase, nunca en el cliente (ver `AGENTS.md`).
 - Cálculos (patrimonio, presupuestos, % por categoría) como **lógica pura y

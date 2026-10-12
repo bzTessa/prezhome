@@ -43,7 +43,7 @@ total como un movimiento más. Ver sección 7.
 
 ## 3. Estado actual (qué ya existe)
 
-Pestañas hoy (`lib/main_shell.dart`): **Hoy · Tareas · Meal Prep · Despensa · Hogar**.
+Pestañas hoy (`apps/prezhome/lib/main_shell.dart`): **Hoy · Tareas · Meal Prep · Despensa · Hogar**.
 
 - **Comidas:** recetas (con IA, importar enlace, foto), perfil nutricional,
   plan semanal que se reajusta, meal prep / batch cooking, raciones por persona.
@@ -130,7 +130,7 @@ Implementación: widget propio `FloatingNavBar` en un paquete compartido
   redondeadas) con Presidente Miau. Sin emojis en la interfaz.
 - **Personalizable**: estilo Clean u Oscuro, color de acento, mascota sí/no y
   tono de los textos. Ver [ESTRATEGIA.md](ESTRATEGIA.md) §3.
-- Tokens ya existentes en `lib/theme/` (spacing, radius, elevation, motion,
+- Tokens ya existentes en `apps/prezhome/lib/theme/` (spacing, radius, elevation, motion,
   text styles): todo componente nuevo debe usarlos.
 - Una idea por tarjeta, mucho aire, textos cortos.
 

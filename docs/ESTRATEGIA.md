@@ -35,7 +35,7 @@ genéricas y en inglés de origen.
 ### Cómo se usan los perfiles en la app
 El onboarding pregunta **qué quieres resolver** (no datos personales) y activa
 los módulos que tocan. Ya existe el mecanismo en PrezHome
-(`HomeModule` en `lib/models/dashboard_prefs.dart`); PrezWallet usa el mismo:
+(`HomeModule` en `apps/prezhome/lib/models/dashboard_prefs.dart`); PrezWallet usa el mismo:
 quien no invierte no ve la pestaña de cartera, quien vive solo no ve "hogar".
 
 ## 2. Dos apps independientes, un mismo ecosistema
@@ -87,7 +87,7 @@ Además, ajustes sueltos que combinan con cualquier estilo:
 ### 3.2 Cómo se construye (para que no sea un infierno mantenerlo)
 - Ningún componente usa colores, radios o sombras "a pelo": todo sale de
   **tokens semánticos** (`surface`, `accent`, `positive`, `radiusCard`…) vía
-  `ThemeExtension`. Los tokens de `lib/theme/` ya van en esa dirección.
+  `ThemeExtension`. Los tokens de `apps/prezhome/lib/theme/` ya van en esa dirección.
 - Un estilo = un conjunto de valores para esos tokens. Añadir uno nuevo no
   toca pantallas.
 - Ilustraciones y mascota detrás de un widget que decide según el estilo
@@ -147,9 +147,9 @@ que hará falta técnicamente cuando lleguen:
 **Logo con nombre**: versión para fondo claro y para fondo oscuro.
 
 **Ilustraciones de Miau** (PNG transparente, 500×500 o más, mismo encuadre):
-hoy la app usa `MiauCharacter` (`lib/widgets/miau_character.dart`) en unas
+hoy la app usa `MiauCharacter` (`apps/prezhome/lib/widgets/miau_character.dart`) en unas
 20 pantallas con estas poses, que se sustituyen sin tocar código si se
-mantienen los nombres de archivo de `assets/images/`:
+mantienen los nombres de archivo de `apps/prezhome/assets/images/`:
 
 | Pose (`MiauMood`) | Archivo | Uso típico |
 |-------------------|---------|-----------|
