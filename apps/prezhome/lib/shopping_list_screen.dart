@@ -16,6 +16,7 @@ import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
 import 'services/home_supermarkets.dart';
 import 'services/plan_shopping.dart';
+import 'services/product_photo_resolver.dart';
 import 'services/shopping_checkout.dart';
 import 'shopping_lists_overview_screen.dart';
 import 'utils/offline_actions.dart';
@@ -219,6 +220,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         _itemsFuture = Future.value(items);
         _pendingCount = pending;
       });
+      _upgradePhotosOnce(items);
     } catch (_) {
       // Sin conexión: nos quedamos con lo que ya pintamos desde la caché.
     } finally {
@@ -228,6 +230,32 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         _refreshFromRemote();
       }
     }
+  }
+
+  /// Una vez por pantalla: a lo pendiente sin foto (o con foto de banco de
+  /// imágenes) se le pone la del envase de Open Food Facts, en segundo plano.
+  bool _photosUpgraded = false;
+  void _upgradePhotosOnce(List<ShoppingListItem> items) {
+    if (_photosUpgraded) return;
+    final todo = [
+      for (final i in items)
+        if (!i.checked &&
+            i.id != null &&
+            !isLocalId(i.id!) &&
+            ((i.imageUrl ?? '').isEmpty || isStockPhoto(i.imageUrl)))
+          i,
+    ].take(25).toList();
+    if (todo.isEmpty) return;
+    _photosUpgraded = true;
+    _homeId()
+        .then(
+          (homeId) => PlanShoppingService(_client).fillMissingPhotos(
+            homeId,
+            todo,
+            supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+          ),
+        )
+        .catchError((_) => 0);
   }
 
   /// Carga best-effort de los precios conocidos del hogar para estimar coste.
@@ -638,14 +666,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             ListTile(
               leading: const Icon(
-                Icons.image_search,
-                color: AppColors.woodDark,
-              ),
-              title: const Text('Buscar otra foto'),
-              onTap: () => Navigator.of(ctx).pop('auto'),
-            ),
-            ListTile(
-              leading: const Icon(
                 Icons.delete_outline,
                 color: Colors.redAccent,
               ),
@@ -667,9 +687,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         break;
       case 'store':
         await _pickStoreProductPhoto(item);
-        break;
-      case 'auto':
-        await _regenPhoto(item);
         break;
       case 'delete':
         await _deleteItem(item);
@@ -760,46 +777,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(friendlyError(e, 'No se pudo cambiar la foto'))),
-      );
-    }
-  }
-
-  /// Vuelve a buscar una foto automática para el artículo.
-  Future<void> _regenPhoto(ShoppingListItem item) async {
-    if (item.id == null) return;
-    try {
-      final homeId = await _homeId();
-      final url = await FoodPhotoService(_client).resolveProductPhotoUrl(
-        homeId: homeId,
-        name: item.name,
-        mode: item.itemType == 'comida' ? 'ingredient' : 'dish',
-      );
-      if (url == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No encontré una foto. Puedes poner una tuya.'),
-          ),
-        );
-        return;
-      }
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kShoppingTable,
-          id: item.id!,
-          changes: {'image_url': url},
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      await _reload();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
-          backgroundColor: Colors.red,
-        ),
       );
     }
   }
@@ -1030,18 +1007,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: imageUrl);
       } else {
-        try {
-          // Foto REAL de producto priorizando Open Food Facts (foto del envase)
-          // y, si no hay, el banco de imágenes; respaldo final = ilustración
-          // cozy en la UI. La elección se recuerda por producto en la caché.
-          imageUrl = await FoodPhotoService(_client).resolveProductPhotoUrl(
-            homeId: homeId,
-            name: name,
-            mode: itemType == 'comida' ? 'ingredient' : 'dish',
-          );
-        } catch (_) {
-          imageUrl = null;
-        }
+        // Foto del envase en Open Food Facts (o la ya guardada). Si tarda,
+        // el producto entra sin foto y se le pone después.
+        imageUrl = await ProductPhotoResolver(_client)
+            .photoFor(
+              homeId: homeId,
+              name: name,
+              supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+            )
+            .timeout(const Duration(seconds: 4), onTimeout: () => null);
       }
       // Alta OPTIMISTA con id temporal local y created_at = ahora: la fila
       // aparece en la lista al instante (ordenada por fecha de creación) y se
@@ -1128,9 +1102,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       );
       // Las fotos que faltan se buscan después, sin bloquear la lista.
       if (added.any((i) => (i.imageUrl ?? '').isEmpty)) {
-        service.fillMissingPhotos(homeId, added).then((n) {
-          if (n > 0 && mounted) _reload();
-        });
+        service
+            .fillMissingPhotos(
+              homeId,
+              added,
+              supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+            )
+            .then((n) {
+              if (n > 0 && mounted) _reload();
+            });
       }
     } catch (e) {
       if (!mounted) return;
@@ -1671,7 +1651,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   child: FoodImage(
                     name: item.name,
                     itemType: item.itemType,
-                    imageUrl: item.imageUrl,
+                    // Las fotos de banco salen al azar: mejor la ilustración
+                    // hasta que llegue la del envase.
+                    imageUrl: isStockPhoto(item.imageUrl)
+                        ? null
+                        : item.imageUrl,
                     size: 44,
                     radius: 12,
                   ),

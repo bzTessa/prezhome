@@ -6,6 +6,7 @@ import '../utils/practical_quantity.dart';
 import '../utils/shopping_categories.dart';
 import '../widgets/food_category_icon.dart';
 import 'food_photo_service.dart';
+import 'product_photo_resolver.dart';
 
 /// Lo que hay en casa de un producto (para descontarlo del plan).
 class PantryStock {
@@ -86,6 +87,40 @@ List<PlanNeed> planShoppingNeeds(
   return needs;
 }
 
+/// Pasa las necesidades a cantidades de súper ("1 ud" de pimienta) y junta
+/// en una sola línea lo que coincide en nombre y unidad.
+List<({String name, double? qty, String? unit})> shoppingLines(
+  List<PlanNeed> needs,
+) {
+  final merged = <String, ({String name, double? qty, String? unit})>{};
+  for (final need in needs) {
+    final practical = makePracticalForShopping(
+      need.name,
+      need.quantity,
+      need.unit,
+    );
+    final key =
+        '${CategoryIcons.normalize(need.name)}|'
+        '${practical.unit.trim().toLowerCase()}';
+    final prev = merged[key];
+    if (prev == null) {
+      merged[key] = (
+        name: need.name,
+        qty: practical.quantity,
+        unit: practical.unit,
+      );
+    } else {
+      final isUnit = (prev.unit ?? '').toLowerCase().startsWith('ud');
+      // Las unidades sueltas (1 ud de especia) no se suman: con una basta.
+      final q = isUnit || prev.qty == null || practical.quantity == null
+          ? prev.qty
+          : prev.qty! + practical.quantity!;
+      merged[key] = (name: prev.name, qty: q, unit: prev.unit);
+    }
+  }
+  return merged.values.toList();
+}
+
 /// Rellena la lista de la compra con lo que pide el plan de comidas y le
 /// pone foto a cada producto (las fotos se guardan por hogar, así que un
 /// producto que ya tuvo foto la reutiliza al instante).
@@ -162,29 +197,26 @@ class PlanShoppingService {
         .eq('home_id', homeId);
     final photos = {
       for (final p in photoRes as List)
-        if (p['url'] != null)
+        if (p['url'] != null && !isStockPhoto(p['url'] as String))
           p['name_normalized'] as String: p['url'] as String,
     };
 
+    final merged = shoppingLines(planShoppingNeeds(ingredients, pantry));
+
     final items = <ShoppingListItem>[];
-    for (final need in planShoppingNeeds(ingredients, pantry)) {
-      final practical = makePracticalForShopping(
-        need.name,
-        need.quantity,
-        need.unit,
-      );
-      final cat = defaultCategoryFor(need.name);
+    for (final m in merged) {
+      final cat = defaultCategoryFor(m.name);
       items.add(
         ShoppingListItem(
           homeId: homeId,
-          name: need.name,
-          quantity: practical.quantity,
-          unit: practical.unit,
+          name: m.name,
+          quantity: m.qty,
+          unit: m.unit,
           source: 'auto',
           category: cat,
           categoryId: catIds[normalizeCategoryText(cat)],
           listId: listId,
-          imageUrl: photos[FoodPhotoService.cacheKey(need.name)],
+          imageUrl: photos[FoodPhotoService.cacheKey(m.name)],
         ),
       );
     }
@@ -210,21 +242,39 @@ class PlanShoppingService {
     ];
   }
 
-  /// Busca foto para los productos que aún no tienen y la guarda. Se puede
-  /// lanzar sin esperar: cada foto se guarda en cuanto se encuentra.
+  /// Pone la foto del envase (Open Food Facts) a los productos sin foto o
+  /// con foto de banco de imágenes. Se puede lanzar sin esperar: cada foto se
+  /// guarda en cuanto se encuentra.
   Future<int> fillMissingPhotos(
     String homeId,
-    List<ShoppingListItem> items,
-  ) async {
+    List<ShoppingListItem> items, {
+    String? supermarketKey,
+  }) async {
     var found = 0;
-    final photos = FoodPhotoService(_client);
-    for (final item in items) {
-      if (item.id == null || (item.imageUrl ?? '').isNotEmpty) continue;
+    final resolver = ProductPhotoResolver(_client);
+    // Sin súper indicado se usa el principal del hogar.
+    var store = supermarketKey;
+    if (store == null) {
       try {
-        final url = await photos.resolveProductPhotoUrl(
+        final home = await _client
+            .from('homes')
+            .select('supermarkets')
+            .eq('id', homeId)
+            .maybeSingle();
+        final raw = home?['supermarkets'];
+        if (raw is List && raw.isNotEmpty) store = raw.first.toString();
+      } catch (_) {}
+    }
+    for (final item in items) {
+      final current = item.imageUrl ?? '';
+      if (item.id == null || (current.isNotEmpty && !isStockPhoto(current))) {
+        continue;
+      }
+      try {
+        final url = await resolver.photoFor(
           homeId: homeId,
           name: item.name,
-          mode: item.itemType == 'comida' ? 'ingredient' : 'dish',
+          supermarketKey: store,
         );
         if (url == null) continue;
         await _client
