@@ -107,7 +107,7 @@ class AddRecipeChooser extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: AppTheme.cardDecoration(radius: 20),
@@ -118,7 +118,7 @@ class AddRecipeChooser extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: AppColors.wood,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, color: AppColors.ink),
               ),

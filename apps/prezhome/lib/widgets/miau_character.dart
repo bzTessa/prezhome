@@ -67,7 +67,7 @@ class _MiauCharacterState extends State<MiauCharacter>
   @override
   Widget build(BuildContext context) {
     final posePath = MiauCharacter._poseAssets[widget.mood];
-    final scale = CurvedAnimation(parent: _entry, curve: Curves.easeOutBack);
+    final scale = CurvedAnimation(parent: _entry, curve: Curves.easeOutCubic);
 
     // Poses = PNG transparente -> se muestran limpias (contain, sin recorte).
     // Base = foto .jpg -> se recorta en cuadrado redondeado.

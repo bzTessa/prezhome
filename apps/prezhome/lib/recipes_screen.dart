@@ -420,10 +420,10 @@ class _PantryBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       child: Material(
         color: AppColors.sageBg,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           child: const Padding(
             padding: EdgeInsets.all(16),
             child: Row(
@@ -583,13 +583,13 @@ class _FilterChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: selected ? AppColors.ink : AppColors.card,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: selected ? AppColors.ink : AppColors.card,
               width: 1.4,
@@ -697,7 +697,7 @@ class _RecipeCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -810,7 +810,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Aún no hay recetas registradas.\n'
-              '¡Pulsa "Nueva receta" para empezar!',
+              'Pulsa "Nueva receta" para empezar',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,

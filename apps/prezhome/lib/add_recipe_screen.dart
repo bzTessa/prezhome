@@ -863,7 +863,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       height: 160,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         color: Colors.white,
                         image: _newImageBytes != null
                             ? DecorationImage(

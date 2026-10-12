@@ -477,7 +477,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
                 const SizedBox(width: AppSpacing.sm),
               ],
               Text(
-                finished ? '¡Listo!' : _formatTime(remaining),
+                finished ? 'Listo' : _formatTime(remaining),
                 style: AppTextStyles.display.copyWith(
                   fontSize: 44,
                   color: timeColor,

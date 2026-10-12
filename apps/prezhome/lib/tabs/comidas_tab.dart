@@ -121,7 +121,7 @@ class _PlanViewToggle extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
@@ -152,7 +152,7 @@ class _PlanViewToggle extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: active ? AppColors.wood : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -623,7 +623,7 @@ class _VarietyCard extends StatelessWidget {
       mensaje = 'Menú muy repetitivo';
       mensajeColor = AppColors.inkMuted;
     } else if (ratio >= 0.75) {
-      mensaje = '¡Menú muy variado!';
+      mensaje = 'Menú variado';
       mensajeColor = AppColors.woodDark;
     } else if (ratio >= 0.5) {
       mensaje = 'Menú bastante variado';

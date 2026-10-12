@@ -853,7 +853,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(44),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                   )

@@ -210,7 +210,7 @@ class MealSlotCard extends StatelessWidget {
                     height: 64,
                     decoration: BoxDecoration(
                       color: empty ? AppColors.card : s.bg,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(s.icon, color: s.fg, size: 28),
                   ),

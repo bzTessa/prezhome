@@ -288,7 +288,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                   : (isToday
                         ? AppColors.wood.withValues(alpha: 0.35)
                         : Colors.white),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: isToday
                   ? Border.all(color: AppColors.woodDark, width: 2)
                   : null,

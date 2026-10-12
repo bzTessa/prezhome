@@ -28,7 +28,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('PASO 2 DE 2'), findsOneWidget);
     expect(find.text('Temporizador 30 min'), findsOneWidget);
-    expect(find.text('¡Listo!'), findsOneWidget);
+    expect(find.text('Listo'), findsOneWidget);
 
     await tester.tap(find.text('Temporizador 30 min'));
     await tester.pump();

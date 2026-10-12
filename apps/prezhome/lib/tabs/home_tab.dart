@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../add_inventory_item_screen.dart';
@@ -291,6 +292,7 @@ class HomeTabState extends State<HomeTab> {
   /// resumen sin reiniciar la app.
   Future<void> _completeTaskFromDashboard(HomeTask task) async {
     try {
+      HapticFeedback.lightImpact();
       await TaskScheduler(_client).complete(task);
       if (isShoppingTask(task.title)) {
         await ShoppingCheckout().markAllBoughtForCurrentUser();
@@ -301,7 +303,7 @@ class HomeTabState extends State<HomeTab> {
         Celebrate.show(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('¡+${task.points} puntos!')));
+        ).showSnackBar(SnackBar(content: Text('+${task.points} puntos')));
       }
       await _loadTasksSummary();
     } catch (e) {
@@ -820,7 +822,7 @@ class HomeTabState extends State<HomeTab> {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.card,
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1040,10 +1042,10 @@ class HomeTabState extends State<HomeTab> {
       label: '$value $label',
       child: Material(
         color: bg,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
@@ -1365,10 +1367,10 @@ class HomeTabState extends State<HomeTab> {
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
               decoration: BoxDecoration(
                 color: AppColors.expiredBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '¡Ya!',
+                'Ya',
                 style: AppTextStyles.label.copyWith(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,

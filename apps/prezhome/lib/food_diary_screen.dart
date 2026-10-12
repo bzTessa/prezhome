@@ -819,7 +819,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.cream,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               e.source == 'receta'

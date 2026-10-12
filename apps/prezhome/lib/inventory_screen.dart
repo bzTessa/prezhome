@@ -9,6 +9,7 @@ import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
 import 'services/proactive_suggestions_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/list_skeleton.dart';
 import 'utils/offline_actions.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/inventory_item_card.dart';
@@ -602,7 +603,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         builder: (context, snapshot) {
           if (!snapshot.hasData &&
               snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton();
           }
           if (snapshot.hasError) {
             return Center(
@@ -626,7 +627,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   MiauCharacter(mood: MiauMood.curious, size: 120, float: true),
                   SizedBox(height: 16),
                   Text(
-                    '¡Todo está vacío por aquí, Miau!',
+                    'Aquí no hay nada todavía',
                     style: TextStyle(
                       color: AppColors.ink,
                       fontSize: 16,
@@ -973,7 +974,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final showTodoAlDia = section.isFood && !expanded && !showUrgencias;
     return InkWell(
       onTap: () => _toggleSection(section),
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
         child: Row(

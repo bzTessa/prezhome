@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('¡Cuenta creada! Bienvenido a PrezHome.'),
+              content: Text('Cuenta creada. Te damos la bienvenida a PrezHome'),
             ),
           );
         }

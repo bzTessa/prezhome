@@ -137,7 +137,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                           foregroundColor: Colors.white,
                           minimumSize: const Size.fromHeight(56),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(9999),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           elevation: 0,
                           textStyle: const TextStyle(
@@ -202,7 +202,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                             width: 1.5,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(9999),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           textStyle: const TextStyle(
                             fontSize: 16,

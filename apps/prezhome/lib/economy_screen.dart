@@ -308,7 +308,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
       if (mounted) {
         Celebrate.show(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('¡Has canjeado "${reward['title']}"!')),
+          SnackBar(content: Text('Has canjeado "${reward['title']}"')),
         );
       }
       _reload();
@@ -826,7 +826,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.cream,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(Icons.history, color: AppColors.ink),
           ),
@@ -1107,7 +1107,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.cream,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
               Icons.receipt_long_outlined,

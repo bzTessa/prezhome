@@ -323,7 +323,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             .update({'skipped': false})
             .eq('id', e.id!);
         if (mounted) {
-          _showMiau('Vuelve a estar en casa, ¡qué bien!');
+          _showMiau('Vuelve a estar en el plan');
         }
         _reload();
         return;
@@ -779,7 +779,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.wood,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
                   'Hoy',
@@ -1388,7 +1388,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                           elevation: 0,
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: ListTile(
                             leading: const Icon(

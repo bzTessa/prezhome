@@ -283,7 +283,7 @@ class _ProductTile extends StatelessWidget {
                   height: 64,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: FoodImage(

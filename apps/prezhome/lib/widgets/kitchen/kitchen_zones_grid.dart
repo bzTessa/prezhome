@@ -59,15 +59,15 @@ class KitchenZonesGrid extends StatelessWidget {
   static const _shapes = [
     BorderRadius.only(
       topLeft: Radius.circular(36),
-      topRight: Radius.circular(18),
-      bottomLeft: Radius.circular(22),
+      topRight: Radius.circular(16),
+      bottomLeft: Radius.circular(24),
       bottomRight: Radius.circular(40),
     ),
     BorderRadius.only(
-      topLeft: Radius.circular(18),
+      topLeft: Radius.circular(16),
       topRight: Radius.circular(40),
       bottomLeft: Radius.circular(36),
-      bottomRight: Radius.circular(20),
+      bottomRight: Radius.circular(24),
     ),
   ];
 

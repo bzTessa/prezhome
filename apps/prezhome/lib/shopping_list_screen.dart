@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +12,7 @@ import 'services/offline_repository.dart';
 import 'services/price_memory.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'widgets/list_skeleton.dart';
 import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
@@ -539,6 +541,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     // Primero se ve el cambio; el guardado va detrás. Al comprar, el producto
     // pasa a su zona de la despensa.
     _showToggled(item, value);
+    if (value) HapticFeedback.selectionClick();
     try {
       final homeId = await _homeId();
       await ShoppingCheckout().setBought(item, value, homeId: homeId);
@@ -562,6 +565,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         .where((i) => !i.checked && i.listId == _activeListId)
         .length;
     if (pending == 0) return;
+    HapticFeedback.mediumImpact();
     setState(() {
       _shown = [
         for (final i in current)
@@ -796,7 +800,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.wood : AppColors.card,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? AppColors.woodDark : AppColors.wood,
             width: 1.3,
@@ -1138,7 +1142,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           // Al refrescar se sigue viendo la lista anterior (sin parpadeo).
           if (!snapshot.hasData &&
               snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton();
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));
@@ -1744,7 +1748,7 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
     _scale = Tween<double>(
       begin: 0.6,
       end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
   }
 
   @override

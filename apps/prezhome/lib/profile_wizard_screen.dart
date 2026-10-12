@@ -543,7 +543,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         ),
         InkWell(
           onTap: _pickBirthDate,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
             decoration: AppTheme.cardDecoration(radius: 20),
@@ -943,7 +943,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     hintStyle: TextStyle(fontSize: 15, color: AppColors.inkMuted),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide.none,
     ),
   );
@@ -959,7 +959,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide.none,
     ),
   );
@@ -986,12 +986,12 @@ class _OptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: selected ? AppColors.wood : AppColors.card,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? AppColors.woodDark : Colors.transparent,
             width: 1.5,

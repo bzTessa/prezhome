@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -769,7 +770,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
@@ -844,7 +845,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         children: [
@@ -861,7 +862,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: _tab == i ? AppColors.ink : Colors.transparent,
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       labels[i],
@@ -1058,7 +1059,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.sageBg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
@@ -1067,7 +1068,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Expanded(
             child: Text(
               missing.isEmpty
-                  ? '¡Tienes todo en casa!'
+                  ? 'Tienes todo en casa'
                   : 'Tienes $haveCount de $total en casa',
               style: const TextStyle(
                 fontWeight: FontWeight.w800,
@@ -1091,9 +1092,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final checked = _checkedIngs.contains(i);
     final p = _ingredientParts(ing);
     return InkWell(
-      onTap: () => setState(
-        () => checked ? _checkedIngs.remove(i) : _checkedIngs.add(i),
-      ),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => checked ? _checkedIngs.remove(i) : _checkedIngs.add(i));
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
@@ -1143,7 +1145,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.sageBg,
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: const Text(
                   'En casa',
@@ -1180,11 +1182,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: done ? AppColors.card.withValues(alpha: 0.5) : AppColors.card,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () =>
-              setState(() => done ? _doneSteps.remove(i) : _doneSteps.add(i)),
+          borderRadius: BorderRadius.circular(24),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => done ? _doneSteps.remove(i) : _doneSteps.add(i));
+          },
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -1368,7 +1372,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               backgroundColor: AppColors.ink,
               foregroundColor: AppColors.cream,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(99),
+                borderRadius: BorderRadius.circular(999),
               ),
               textStyle: const TextStyle(
                 fontSize: 18,
