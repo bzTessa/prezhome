@@ -66,28 +66,25 @@ class InventoryItem {
     return s.isEmpty ? null : s;
   }
 
+  static DateTime? _date(dynamic v) =>
+      v == null ? null : DateTime.tryParse(v.toString());
+
   factory InventoryItem.fromMap(Map<String, dynamic> map) {
     return InventoryItem(
       id: map['id'],
-      homeId: map['home_id'],
-      name: map['name'],
-      category: map['category'],
+      homeId: (map['home_id'] ?? '').toString(),
+      name: (map['name'] ?? '').toString(),
+      category: (map['category'] ?? 'Despensa').toString(),
       itemType: map['item_type'] ?? 'comida',
-      quantity: (map['quantity'] as num).toDouble(),
-      unit: map['unit'],
-      expirationDate: map['expiration_date'] != null
-          ? DateTime.parse(map['expiration_date'])
-          : null,
+      quantity: (map['quantity'] as num?)?.toDouble() ?? 0,
+      unit: (map['unit'] ?? 'unidades').toString(),
+      expirationDate: _date(map['expiration_date']),
       isStaple: (map['is_staple'] as bool?) ?? false,
       kind: map['kind'] ?? 'ingredient',
       recipeId: map['recipe_id'],
       servings: (map['servings'] as num?)?.toDouble(),
-      frozenOn: map['frozen_on'] != null
-          ? DateTime.parse(map['frozen_on'])
-          : null,
-      bestBefore: map['best_before'] != null
-          ? DateTime.parse(map['best_before'])
-          : null,
+      frozenOn: _date(map['frozen_on']),
+      bestBefore: _date(map['best_before']),
       imageUrl: _nonEmptyString(map['image_url']),
     );
   }

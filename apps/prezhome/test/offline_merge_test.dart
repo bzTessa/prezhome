@@ -22,6 +22,17 @@ PendingOp op(
 }
 
 void main() {
+  test('un update suelto sin fila base no crea una fila a medias', () {
+    final rows = mergeRemoteWithPending(
+      table: table,
+      remote: const [],
+      pending: [
+        op(SyncOpType.update, 'x', payload: {'quantity': 3}),
+      ],
+    );
+    expect(rows, isEmpty);
+  });
+
   group('mergeRemoteWithPending: aplicar ops pendientes sobre el remoto', () {
     test('UPDATE pendiente parchea los campos de la fila remota', () {
       final remote = [

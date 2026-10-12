@@ -534,12 +534,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       } else {
         // Ubicación: hogar -> 'Hogar'; comida -> la elegida (item.category) o,
         // si no hay, la deducida por el alimento. Caducidad solo para comida.
-        final String location;
-        if (isHome) {
-          location = item.category ?? 'Hogar';
-        } else {
-          location = item.category ?? ShelfLife.suggestLocation(item.name);
-        }
+        // La categoría de la compra es el pasillo; en la despensa va a su zona.
+        final location = ShelfLife.pantryZoneFor(
+          name: item.name,
+          itemType: item.itemType,
+          category: item.category,
+        );
         final estimated = isHome
             ? null
             : ShelfLife.estimateDate(item.name, location);

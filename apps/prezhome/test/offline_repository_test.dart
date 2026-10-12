@@ -104,7 +104,35 @@ OfflineRepository buildRepo(
   );
 }
 
+/// Sender cuyo servidor rechaza para siempre las altas con id 'malo'.
+class _RejectingSender extends FakeRemoteSender {
+  @override
+  Future<void> sendInsert(String table, Map<String, dynamic> payload) async {
+    if (online && payload['id'] == 'malo') {
+      throw const PermanentSyncError('violates check constraint');
+    }
+    return super.sendInsert(table, payload);
+  }
+}
+
 void main() {
+  group('rechazos definitivos del servidor', () {
+    test('se descartan y no bloquean el resto de la cola', () async {
+      final store = InMemoryLocalStore();
+      final sender = _RejectingSender()..online = false;
+      final repo = buildRepo(store, sender);
+      await repo.applyLocalWrite(insertOp('malo', {'name': 'X'}, 1));
+      await repo.applyLocalWrite(insertOp('bueno', {'name': 'Pan'}, 2));
+      expect(repo.pendingCount, 2);
+
+      sender.online = true;
+      await repo.tryDrain(force: true);
+
+      expect(repo.pendingCount, 0);
+      expect(sender.log, contains('insert:$kTable:bueno'));
+    });
+  });
+
   group('readCached (lectura instantánea sin red)', () {
     test('devuelve lo último persistido en caché sin tocar la red', () async {
       final store = InMemoryLocalStore();

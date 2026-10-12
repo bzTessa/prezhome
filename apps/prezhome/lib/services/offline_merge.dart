@@ -132,6 +132,9 @@ List<Map<String, dynamic>> mergeRemoteWithPending({
   for (final op in ops) {
     if (consumed.contains(op.id)) continue;
     if (op.type == SyncOpType.delete) continue; // nada que borrar en el remoto
+    // Un update suelto (sin fila base ni insert pendiente) solo trae los
+    // campos que cambió: no es una fila completa y no se puede pintar.
+    if (op.type == SyncOpType.update) continue;
     final row = <String, dynamic>{'id': op.id, ...op.payload};
     result.add(row);
     consumed.add(op.id);

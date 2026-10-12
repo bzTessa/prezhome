@@ -254,6 +254,41 @@ class ShelfLife {
   /// 'Especias') para un alimento recién comprado, según su nombre. Nunca
   /// sugiere 'Congelador' automáticamente (congelar es una decisión del
   /// usuario). Por defecto 'Despensa'.
+  /// Zonas válidas de la despensa (las mismas que admite la base de datos).
+  static const Set<String> pantryZones = {
+    'Despensa',
+    'Nevera',
+    'Congelador',
+    'Especias',
+    'Bebidas',
+    'Limpieza',
+    'Hogar',
+  };
+
+  /// Zona de la despensa donde guardar un producto comprado. [category] puede
+  /// ser ya una zona o el pasillo de la lista de la compra ("Verduras",
+  /// "Especias y condimentos"…): el pasillo se traduce a su zona y, si no
+  /// dice nada, se deduce por el alimento.
+  static String pantryZoneFor({
+    required String name,
+    String itemType = 'comida',
+    String? category,
+  }) {
+    if (category != null && pantryZones.contains(category)) return category;
+    if (itemType == 'hogar') {
+      return CategoryIcons.categoryFor(name) == FoodCategory.limpieza
+          ? 'Limpieza'
+          : 'Hogar';
+    }
+    final aisle = CategoryIcons.normalize(category ?? '');
+    if (aisle.contains('bebida')) return 'Bebidas';
+    if (aisle.contains('especia') || aisle.contains('condiment')) {
+      return 'Especias';
+    }
+    if (aisle.contains('congelad')) return 'Congelador';
+    return suggestLocation(name);
+  }
+
   static String suggestLocation(String name) {
     final normalized = CategoryIcons.normalize(name);
     final tokens = normalized
