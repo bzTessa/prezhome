@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
 import 'models/recipe.dart';
+import 'models/supermarket.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
@@ -250,9 +251,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     setState(() => _aiLoading = true);
     try {
+      // Súper principal del hogar: la IA elige ingredientes fáciles de
+      // encontrar allí. Vacío si no hay ninguno.
+      final superKey = await _firstHomeSupermarket();
       final res = await _client.functions.invoke(
         'generate-recipe',
-        body: {'query': query},
+        body: {
+          'query': query,
+          if (superKey.isNotEmpty)
+            'supermarket': Supermarket.labelFor(superKey),
+        },
       );
 
       final data = res.data;

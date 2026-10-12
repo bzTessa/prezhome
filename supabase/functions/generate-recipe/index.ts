@@ -30,7 +30,14 @@ function json(body: unknown, status = 200): Response {
 }
 
 // Prompt que fuerza a Gemini a devolver el esquema exacto que usa la app.
-function buildPrompt(query: string): string {
+function buildPrompt(query: string, supermarket = ""): string {
+  // Súper principal del hogar (opcional): ingredientes fáciles de encontrar
+  // allí, con nombres genéricos (sin marcas).
+  const superLine = supermarket
+    ? `\nEl usuario compra en ${supermarket}: si generas la receta, elige
+ingredientes fáciles de encontrar ahí y formatos de venta reales, pero escribe
+los nombres de forma GENÉRICA (sin marcas).\n`
+    : "";
   return `Eres un asistente de cocina experto. El usuario te da el NOMBRE de una
 receta o bien PEGA una receta completa (con ingredientes, cantidades, pasos...).
 En ambos casos, extrae/deduce y estructura los datos.
@@ -39,6 +46,7 @@ Si el texto ya trae ingredientes y cantidades, respétalos tal cual. Si faltan
 macros o calorías, ESTÍMALOS de forma razonable. Si es solo un nombre, genera una
 receta estándar.
 
+${superLine}
 Petición del usuario:
 """
 ${query}
@@ -212,6 +220,7 @@ Deno.serve(async (req: Request) => {
     // 3. Leer y validar la petición
     const body = await req.json().catch(() => ({}));
     const query = (body?.query ?? "").toString().trim();
+    const supermarket = (body?.supermarket ?? "").toString().trim();
     if (!query) {
       return json({ error: "Falta el nombre o descripción de la receta" }, 400);
     }
@@ -250,7 +259,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: buildPrompt(query) }] }],
+      contents: [{ parts: [{ text: buildPrompt(query, supermarket) }] }],
       generationConfig: { responseMimeType: "application/json" },
     });
 

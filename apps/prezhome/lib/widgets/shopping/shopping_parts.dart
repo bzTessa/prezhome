@@ -18,6 +18,8 @@ class ShoppingSummaryHeader extends StatelessWidget {
     required this.onOptions,
     this.generating = false,
     this.estimate,
+    this.storeLabel,
+    this.onTapStore,
   });
 
   final String listName;
@@ -30,6 +32,11 @@ class ShoppingSummaryHeader extends StatelessWidget {
 
   /// Coste estimado ya formateado ("≈ 34,20 €"), o null si no se conoce.
   final String? estimate;
+
+  /// Súper principal ("Mercadona") o null si no hay; con [onTapStore] se
+  /// muestra un selector debajo del nombre de la lista.
+  final String? storeLabel;
+  final VoidCallback? onTapStore;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +99,20 @@ class ShoppingSummaryHeader extends StatelessWidget {
             ),
           ],
         ),
+        if (onTapStore != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onTapStore,
+              icon: const Icon(Icons.storefront_outlined, size: 18),
+              label: Text(storeLabel ?? 'Elegir supermercado'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.woodDark,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+              ),
+            ),
+          ),
         if (total > 0) ...[
           const SizedBox(height: AppSpacing.xs),
           Row(

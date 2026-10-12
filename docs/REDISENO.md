@@ -13,6 +13,9 @@
 | **Fotos de recetas**: búsqueda con idioma correcto, nombre en inglés de la IA, "Otra foto" que trae una distinta, sin fotos de envases para platos | Las fotos fallaban o salían genéricas, y "buscar otra" repetía la misma. |
 | **Lista de la compra** rediseñada: campo "Añadir producto" que entiende "2 kg tomates", cabecera compacta con progreso y coste, secciones ligeras, opciones de vista guardadas | Se veía recargada, añadir era lento y dos botones flotantes tapaban la lista. |
 | Erratas de tildes en compra y asistente de perfil | Aspecto descuidado. |
+| **Súper principal** elegible desde la lista de la compra; lo usan la IA al crear recetas y "Descubrir" | Recetas con productos fáciles de encontrar donde compras. |
+| **Coste por ración** en cada idea (precios de tus tickets o, si no, orientativos) y **coste máximo por ración** al pedir ideas | Comer bien sin pasarse de presupuesto. |
+| **"¿Qué cocino con esto?"** (Despensa → ideas con lo que hay, primero lo que caduca), con "Te falta" y "Añadir lo que falta" a la compra | Menos desperdicio y menos carga mental: al revés que el plan. |
 
 ## 2. Hallazgos
 

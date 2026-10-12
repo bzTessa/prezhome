@@ -14,6 +14,8 @@ import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
+import 'models/supermarket.dart';
+import 'services/home_supermarkets.dart';
 import 'shopping_lists_overview_screen.dart';
 import 'utils/offline_actions.dart';
 import 'utils/practical_quantity.dart';
@@ -74,6 +76,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // Preferencias de vista de ESTE dispositivo (fotos, agrupar por pasillo).
   ShoppingViewPrefs _view = const ShoppingViewPrefs();
 
+  // Súper del hogar (el primero es el principal) y el hogar al que pertenecen.
+  List<String> _superKeys = [];
+  String? _superHomeId;
+
   // ---- Multi-lista (migración 0045) --------------------------------------
   // Listas de la compra del hogar y lista ACTIVA. Las operaciones de la
   // pantalla (generar del plan, añadir, filtrar la vista) se refieren a la
@@ -126,6 +132,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     _subscribeRealtime();
     _loadListsAndCategories();
     _loadViewPrefs();
+    _loadSupermarkets();
   }
 
   /// Siguiente número de secuencia para encolar/identificar ops de forma
@@ -1308,6 +1315,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 onTapList: _openListsOverview,
                 onGenerate: _generarDesdePlan,
                 onOptions: _openViewOptions,
+                storeLabel: _superKeys.isEmpty
+                    ? null
+                    : Supermarket.labelFor(_superKeys.first),
+                onTapStore: _pickSupermarket,
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
@@ -1484,6 +1495,72 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       }
     } catch (_) {
       // Silencioso.
+    }
+  }
+
+  // ---- Supermercado principal ---------------------------------------------
+
+  Future<void> _loadSupermarkets() async {
+    final r = await HomeSupermarkets(_client).load();
+    if (!mounted) return;
+    setState(() {
+      _superHomeId = r.homeId;
+      _superKeys = r.keys;
+    });
+  }
+
+  /// Elige dónde se compra. Se guarda como súper principal del hogar: lo
+  /// usan también la IA al crear recetas y "Descubrir".
+  Future<void> _pickSupermarket() async {
+    final current = _superKeys.isEmpty ? null : _superKeys.first;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  '¿Dónde compras normalmente? Las recetas que genere la IA '
+                  'usarán productos fáciles de encontrar ahí.',
+                  style: TextStyle(color: AppColors.inkMuted),
+                ),
+              ),
+              for (final s in Supermarket.all)
+                ListTile(
+                  title: Text(s.label),
+                  trailing: s.key == current
+                      ? const Icon(Icons.check, color: AppColors.sage)
+                      : null,
+                  onTap: () => Navigator.of(ctx).pop(s.key),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final homeId = _superHomeId;
+    if (picked == null || picked == current || homeId == null) return;
+    try {
+      final next = await HomeSupermarkets(
+        _client,
+      ).setPrimary(homeId, _superKeys, picked);
+      if (mounted) setState(() => _superKeys = next);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo guardar el supermercado. Inténtalo de nuevo.',
+          ),
+        ),
+      );
     }
   }
 
