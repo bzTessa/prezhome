@@ -985,7 +985,7 @@ class HomeTabState extends State<HomeTab> {
         Expanded(
           child: _glanceTile(
             value: expiring,
-            label: expiring == 1 ? 'caduca pronto' : 'caducan pronto',
+            label: 'por caducar',
             icon: Icons.hourglass_bottom_rounded,
             bg: _expired > 0 ? AppColors.expiredBg : AppColors.soonBg,
             fg: _expired > 0 ? AppColors.expired : AppColors.soon,
