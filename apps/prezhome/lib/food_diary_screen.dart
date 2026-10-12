@@ -695,6 +695,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             '${total.round()} kcal',
             style: const TextStyle(
               fontSize: 32,
+              letterSpacing: -0.6,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
             ),

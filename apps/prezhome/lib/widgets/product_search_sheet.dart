@@ -116,6 +116,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
                     : 'Productos de $storeLabel',
                 style: const TextStyle(
                   fontSize: 22,
+                  letterSpacing: -0.4,
                   fontWeight: FontWeight.w900,
                   color: AppColors.ink,
                 ),

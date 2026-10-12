@@ -681,6 +681,7 @@ class _ResultCard extends StatelessWidget {
                   '$kcal kcal / día',
                   style: const TextStyle(
                     fontSize: 28,
+                    letterSpacing: -0.6,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFB58A3C),
                   ),

@@ -1677,7 +1677,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             const SizedBox(height: AppSpacing.lg),
             const Text(
               'Tu lista está vacía',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
             ),
             const SizedBox(height: AppSpacing.xs),
             const Text(

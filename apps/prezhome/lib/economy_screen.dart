@@ -896,6 +896,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             '${spent.toStringAsFixed(2)} €',
             style: const TextStyle(
               fontSize: 32,
+              letterSpacing: -0.6,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
             ),

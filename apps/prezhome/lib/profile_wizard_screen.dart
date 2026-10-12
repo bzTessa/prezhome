@@ -447,6 +447,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           title,
           style: const TextStyle(
             fontSize: 24,
+            letterSpacing: -0.4,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
           ),
@@ -474,6 +475,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 26,
+              letterSpacing: -0.4,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
             ),
@@ -587,6 +589,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 28,
+            letterSpacing: -0.6,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
           ),
@@ -607,6 +610,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 28,
+            letterSpacing: -0.6,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
           ),
@@ -870,6 +874,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             'Tu objetivo diario',
             style: TextStyle(
               fontSize: 24,
+              letterSpacing: -0.4,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
             ),
@@ -885,6 +890,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                 kcal != null ? '$kcal' : '--',
                 style: const TextStyle(
                   fontSize: 56,
+                  letterSpacing: -0.6,
                   fontWeight: FontWeight.bold,
                   color: AppColors.woodDark,
                 ),

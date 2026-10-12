@@ -84,6 +84,7 @@ class KitchenZonesGrid extends StatelessWidget {
               'Mi cocina',
               style: TextStyle(
                 fontSize: 24,
+                letterSpacing: -0.4,
                 fontWeight: FontWeight.w900,
                 color: AppColors.ink,
               ),
@@ -210,7 +211,9 @@ class _ZoneTile extends StatelessWidget {
                   Text(
                     '${summary.count}',
                     style: TextStyle(
+                      fontFeatures: const [FontFeature.tabularFigures()],
                       fontSize: 34,
+                      letterSpacing: -0.6,
                       height: 1,
                       fontWeight: FontWeight.w900,
                       color: s.fg,
@@ -223,7 +226,7 @@ class _ZoneTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 13,
                       fontWeight: alert == null
                           ? FontWeight.w500
                           : FontWeight.w800,

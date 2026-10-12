@@ -442,7 +442,7 @@ class _PantryBanner extends StatelessWidget {
                         '¿Qué cocino con lo que tengo?',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 15.5,
+                          fontSize: 16,
                           color: AppColors.ink,
                         ),
                       ),
@@ -711,7 +711,7 @@ class _RecipeCard extends StatelessWidget {
                         Text(
                           Recipe.mealTypeLabels[primaryType] ?? primaryType,
                           style: const TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                           ),

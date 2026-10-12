@@ -680,6 +680,7 @@ class HomeTabState extends State<HomeTab> {
                 _greeting(),
                 style: const TextStyle(
                   fontSize: 30,
+                  letterSpacing: -0.6,
                   height: 1.1,
                   fontWeight: FontWeight.w900,
                   color: AppColors.ink,
@@ -829,7 +830,7 @@ class HomeTabState extends State<HomeTab> {
                         Text(
                           'HOY · ${style.label.toUpperCase()}',
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
                             color: style.fg,
@@ -849,6 +850,7 @@ class HomeTabState extends State<HomeTab> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 22,
+                      letterSpacing: -0.4,
                       height: 1.15,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -893,7 +895,7 @@ class HomeTabState extends State<HomeTab> {
             child: Text(
               s.label,
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkMuted,
               ),
@@ -932,6 +934,7 @@ class HomeTabState extends State<HomeTab> {
                   '¿Qué comemos hoy?',
                   style: TextStyle(
                     fontSize: 22,
+                    letterSpacing: -0.4,
                     fontWeight: FontWeight.w900,
                     color: AppColors.ink,
                   ),
@@ -1051,7 +1054,9 @@ class HomeTabState extends State<HomeTab> {
                 Text(
                   '$value',
                   style: TextStyle(
+                    fontFeatures: const [FontFeature.tabularFigures()],
                     fontSize: 28,
+                    letterSpacing: -0.6,
                     height: 1,
                     fontWeight: FontWeight.w900,
                     color: fg,
@@ -1365,7 +1370,7 @@ class HomeTabState extends State<HomeTab> {
               child: Text(
                 '¡Ya!',
                 style: AppTextStyles.label.copyWith(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: AppColors.expired,
                 ),

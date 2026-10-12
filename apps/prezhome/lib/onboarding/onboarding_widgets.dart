@@ -24,7 +24,7 @@ class OnboardingButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.lg),
     );
     const size = Size.fromHeight(58);
-    const text = TextStyle(fontSize: 17, fontWeight: FontWeight.w800);
+    const text = TextStyle(fontSize: 18, fontWeight: FontWeight.w800);
     if (outlined) {
       return OutlinedButton(
         onPressed: onPressed,
@@ -144,6 +144,7 @@ class QuestionScaffold extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 28,
+                letterSpacing: -0.6,
                 fontWeight: FontWeight.w800,
                 height: 1.15,
                 color: AppColors.ink,
@@ -155,7 +156,7 @@ class QuestionScaffold extends StatelessWidget {
                 subtitle!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 15.5,
+                  fontSize: 16,
                   height: 1.4,
                   color: AppColors.inkMuted,
                 ),
@@ -243,7 +244,7 @@ class OptionCard extends StatelessWidget {
                         Text(
                           title,
                           style: const TextStyle(
-                            fontSize: 17,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                           ),

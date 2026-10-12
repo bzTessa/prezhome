@@ -179,6 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _isLoginMode ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
                     style: const TextStyle(
                       fontSize: 26,
+                      letterSpacing: -0.4,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

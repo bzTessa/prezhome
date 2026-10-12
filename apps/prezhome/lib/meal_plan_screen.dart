@@ -762,6 +762,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               '${_dayNames[date.weekday - 1]} ${date.day}',
               style: const TextStyle(
                 fontSize: 22,
+                letterSpacing: -0.4,
                 fontWeight: FontWeight.w900,
                 color: AppColors.ink,
               ),

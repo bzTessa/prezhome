@@ -595,6 +595,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       r.title,
                       style: const TextStyle(
                         fontSize: 26,
+                        letterSpacing: -0.4,
                         height: 1.15,
                         fontWeight: FontWeight.w900,
                         color: AppColors.ink,
@@ -777,6 +778,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Text(
             value,
             style: TextStyle(
+              fontFeatures: const [FontFeature.tabularFigures()],
               fontSize: 20,
               fontWeight: FontWeight.w900,
               color: fg,
@@ -787,7 +789,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.inkMuted,
             ),
@@ -866,7 +868,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: _tab == i ? AppColors.cream : AppColors.ink,
                       ),
@@ -1130,7 +1132,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ],
                 ),
                 style: TextStyle(
-                  fontSize: 15.5,
+                  fontSize: 16,
                   color: checked ? AppColors.inkMuted : AppColors.ink,
                   decoration: checked ? TextDecoration.lineThrough : null,
                 ),
@@ -1146,7 +1148,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 child: const Text(
                   'En casa',
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: AppColors.sage,
                   ),
@@ -1218,7 +1220,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       Text(
                         step,
                         style: TextStyle(
-                          fontSize: 15.5,
+                          fontSize: 16,
                           height: 1.4,
                           color: done ? AppColors.inkMuted : AppColors.ink,
                           decoration: done ? TextDecoration.lineThrough : null,
@@ -1238,7 +1240,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               Text(
                                 '$minutes min',
                                 style: const TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.woodDark,
                                 ),
@@ -1369,7 +1371,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 borderRadius: BorderRadius.circular(99),
               ),
               textStyle: const TextStyle(
-                fontSize: 17,
+                fontSize: 18,
                 fontWeight: FontWeight.w800,
               ),
             ),

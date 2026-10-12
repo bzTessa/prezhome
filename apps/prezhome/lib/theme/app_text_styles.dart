@@ -19,74 +19,88 @@ class AppTextStyles {
   const AppTextStyles._();
 
   /// ~28 / bold — números y titulares grandes (cabeceras de pantalla).
-  static TextStyle get display => GoogleFonts.nunito(
+  static TextStyle get display => GoogleFonts.plusJakartaSans(
     fontSize: 28,
     fontWeight: FontWeight.w800,
     color: AppColors.ink,
+    letterSpacing: -0.6,
     height: 1.15,
   );
 
   /// ~22 / bold — cabeceras de sección / AppBar.
-  static TextStyle get headline => GoogleFonts.nunito(
+  static TextStyle get headline => GoogleFonts.plusJakartaSans(
     fontSize: 22,
     fontWeight: FontWeight.w700,
     color: AppColors.ink,
+    letterSpacing: -0.4,
     height: 1.2,
   );
 
   /// ~16 / semibold — títulos de tarjeta.
-  static TextStyle get title => GoogleFonts.nunito(
+  static TextStyle get title => GoogleFonts.plusJakartaSans(
     fontSize: 16,
     fontWeight: FontWeight.w700,
     color: AppColors.ink,
+    letterSpacing: -0.1,
     height: 1.25,
   );
 
   /// ~14 / semibold — variante pequeña de título (subtítulos de tarjeta).
-  static TextStyle get titleSmall => GoogleFonts.nunito(
+  static TextStyle get titleSmall => GoogleFonts.plusJakartaSans(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.ink,
+    letterSpacing: 0,
     height: 1.3,
   );
 
   /// ~14 / regular — cuerpo de texto estándar.
-  static TextStyle get body => GoogleFonts.nunito(
+  static TextStyle get body => GoogleFonts.plusJakartaSans(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.ink,
+    letterSpacing: 0,
     height: 1.4,
   );
 
   /// ~14 / semibold — cuerpo con énfasis (datos destacados en línea).
-  static TextStyle get bodyStrong => GoogleFonts.nunito(
+  static TextStyle get bodyStrong => GoogleFonts.plusJakartaSans(
     fontSize: 14,
     fontWeight: FontWeight.w700,
     color: AppColors.ink,
+    letterSpacing: 0,
     height: 1.4,
   );
 
   /// ~12 / medium — etiquetas, chips y textos pequeños.
-  static TextStyle get label => GoogleFonts.nunito(
+  static TextStyle get label => GoogleFonts.plusJakartaSans(
     fontSize: 12,
     fontWeight: FontWeight.w600,
     color: AppColors.ink,
+    letterSpacing: 0.1,
     height: 1.3,
   );
 
   /// ~12 / medium — etiqueta secundaria (texto de apoyo en gris de marca).
-  static TextStyle get labelMuted => GoogleFonts.nunito(
+  static TextStyle get labelMuted => GoogleFonts.plusJakartaSans(
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.inkMuted,
+    letterSpacing: 0.1,
     height: 1.3,
   );
 
   /// ~14 / regular — cuerpo secundario en gris de marca (descripciones).
-  static TextStyle get bodyMuted => GoogleFonts.nunito(
+  static TextStyle get bodyMuted => GoogleFonts.plusJakartaSans(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.inkMuted,
+    letterSpacing: 0,
     height: 1.4,
   );
+
+  /// Cifras de ancho fijo (cantidades, precios, contadores): no bailan al
+  /// cambiar de valor y se alinean en columna.
+  static TextStyle numeric(TextStyle base) =>
+      base.copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
 }

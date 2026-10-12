@@ -92,7 +92,7 @@ class AppTheme {
     );
 
     return base.copyWith(
-      textTheme: GoogleFonts.nunitoTextTheme(
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(
         base.textTheme,
       ).apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
       appBarTheme: const AppBarTheme(

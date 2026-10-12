@@ -335,6 +335,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                             data.homeName!,
                             style: const TextStyle(
                               fontSize: 22,
+                              letterSpacing: -0.4,
                               fontWeight: FontWeight.bold,
                               color: AppColors.ink,
                             ),

@@ -56,7 +56,7 @@ class RecipeChip extends StatelessWidget {
           Text(
             text,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: fg,
             ),

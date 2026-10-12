@@ -127,6 +127,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                   'Ingredientes',
                   style: TextStyle(
                     fontSize: 22,
+                    letterSpacing: -0.4,
                     fontWeight: FontWeight.w900,
                     color: AppColors.ink,
                   ),
@@ -149,7 +150,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                     title: Text(
                       widget.ingredients[i],
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: 18,
                         decoration: _checkedIngredients.contains(i)
                             ? TextDecoration.lineThrough
                             : null,
@@ -305,6 +306,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
             step,
             style: const TextStyle(
               fontSize: 26,
+              letterSpacing: -0.4,
               height: 1.35,
               fontWeight: FontWeight.w600,
               color: AppColors.ink,

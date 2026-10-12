@@ -101,7 +101,7 @@ class _PendingSyncIndicatorState extends State<PendingSyncIndicator>
                 child: Text(
                   'Guardado. Se sincronizará al volver la conexión.',
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkMuted,
                   ),

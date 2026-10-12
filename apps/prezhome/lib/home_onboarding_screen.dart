@@ -100,6 +100,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 28,
+                    letterSpacing: -0.6,
                     fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.center,
