@@ -77,21 +77,38 @@ class FoodImage extends StatelessWidget {
         width: w,
         height: h,
         child: _hasPhoto
-            ? LayoutBuilder(
-                builder: (context, constraints) => Image.network(
-                  imageUrl!,
-                  fit: fit,
-                  // Acotamos la resolución de decodificado al ancho real que se
-                  // va a pintar (en píxeles físicos), igual que RecipeImage.
-                  cacheWidth: _cacheWidthFor(context, constraints, w),
-                  errorBuilder: (context, error, stack) => _cozyIllustration(),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return _cozyIllustration(loading: true);
-                  },
-                ),
-              )
+            ? _isPackshot
+                  // Foto de envase: entera y reducida sobre blanco, para que
+                  // se reconozca el producto (recortada no se entiende).
+                  ? ColoredBox(
+                      color: Colors.white,
+                      child: Padding(
+                        padding: EdgeInsets.all(w * 0.06),
+                        child: _network(BoxFit.contain, w),
+                      ),
+                    )
+                  : _network(fit, w)
             : _cozyIllustration(),
+      ),
+    );
+  }
+
+  /// Fotos de producto de Open Food Facts (envases).
+  bool get _isPackshot => (imageUrl ?? '').contains('openfoodfacts');
+
+  Widget _network(BoxFit boxFit, double w) {
+    return LayoutBuilder(
+      builder: (context, constraints) => Image.network(
+        imageUrl!,
+        fit: boxFit,
+        // Acotamos la resolución de decodificado al ancho real que se
+        // va a pintar (en píxeles físicos), igual que RecipeImage.
+        cacheWidth: _cacheWidthFor(context, constraints, w),
+        errorBuilder: (context, error, stack) => _cozyIllustration(),
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return _cozyIllustration(loading: true);
+        },
       ),
     );
   }
