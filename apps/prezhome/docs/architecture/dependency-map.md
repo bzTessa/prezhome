@@ -6,9 +6,10 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 
 | Módulo | Ficheros Dart |
 | --- | ---: |
-| `models` | 12 |
-| `screens` | 29 |
-| `services` | 23 |
+| `models` | 13 |
+| `onboarding` | 2 |
+| `screens` | 28 |
+| `services` | 24 |
 | `tabs` | 3 |
 | `theme` | 6 |
 | `utils` | 14 |
@@ -16,8 +17,9 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 
 ## Dependencias entre módulos
 
-- `models` -> `utils`
-- `screens` -> `models`, `screens`, `services`, `tabs`, `theme`, `utils`, `widgets`
+- `models` -> `models`, `utils`
+- `onboarding` -> `models`, `onboarding`, `screens`, `services`, `theme`
+- `screens` -> `models`, `onboarding`, `screens`, `services`, `tabs`, `theme`, `utils`, `widgets`
 - `services` -> `models`, `services`, `utils`, `widgets`
 - `tabs` -> `models`, `screens`, `services`, `theme`, `utils`, `widgets`
 - `theme` -> `theme`
@@ -27,34 +29,42 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 ## Importaciones cruzadas (conteo por módulo origen/destino)
 
 - `screens` -> `models`: 50
-- `screens` -> `widgets`: 38
-- `screens` -> `services`: 37
+- `screens` -> `services`: 38
+- `screens` -> `widgets`: 37
 - `screens` -> `utils`: 36
-- `screens` -> `theme`: 26
+- `screens` -> `theme`: 25
 - `widgets` -> `theme`: 17
 - `tabs` -> `screens`: 15
 - `tabs` -> `widgets`: 7
 - `tabs` -> `models`: 6
+- `services` -> `models`: 5
+- `onboarding` -> `theme`: 4
 - `screens` -> `tabs`: 3
-- `services` -> `models`: 3
 - `services` -> `utils`: 3
 - `services` -> `widgets`: 3
 - `tabs` -> `theme`: 3
 - `models` -> `utils`: 2
+- `onboarding` -> `models`: 2
 - `tabs` -> `services`: 2
 - `utils` -> `models`: 2
 - `utils` -> `widgets`: 2
 - `widgets` -> `models`: 2
 - `widgets` -> `utils`: 2
+- `onboarding` -> `screens`: 1
+- `onboarding` -> `services`: 1
+- `screens` -> `onboarding`: 1
 - `tabs` -> `utils`: 1
 - `utils` -> `services`: 1
 - `widgets` -> `services`: 1
 
 ## Ciclos detectados
 
+- `models` -> `models`
 - `models` -> `utils` -> `models`
 - `models` -> `utils` -> `services` -> `models`
 - `models` -> `utils` -> `services` -> `widgets` -> `models`
+- `onboarding` -> `onboarding`
+- `onboarding` -> `screens` -> `onboarding`
 - `screens` -> `screens`
 - `screens` -> `tabs` -> `screens`
 - `services` -> `services`

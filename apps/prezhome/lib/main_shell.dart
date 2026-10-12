@@ -13,6 +13,7 @@ import 'household_screen.dart';
 import 'tasks_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/proactive_suggestions_banner.dart';
+import 'services/onboarding_applier.dart';
 
 /// Identidad semántica de cada pestaña del shell. Se usa para calcular los
 /// índices por identidad (no por número) de forma que la navegación siga
@@ -161,6 +162,10 @@ class MainShellState extends State<MainShell> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
+      // Primero, si hay respuestas del cuestionario inicial sin aplicar (recién
+      // creada la cuenta y el hogar), se guardan en el perfil.
+      final applied = await OnboardingApplier.applyIfPending(_client);
+      if (applied) _homeKey.currentState?.refreshActiveView();
       final row = await _client
           .from('profiles')
           .select('dashboard_prefs')

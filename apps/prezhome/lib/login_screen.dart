@@ -7,7 +7,10 @@ import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.startInSignUp = false});
+
+  /// Abrir directamente en "Crear cuenta" (al terminar el cuestionario).
+  final bool startInSignUp;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -17,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoginMode = true;
+  late bool _isLoginMode = !widget.startInSignUp;
   bool _isLoading = false;
   bool _googleLoading = false;
   bool _obscurePassword = true;
