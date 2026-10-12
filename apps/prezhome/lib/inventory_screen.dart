@@ -600,7 +600,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
       body: FutureBuilder<List<InventoryItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData &&
+              snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {

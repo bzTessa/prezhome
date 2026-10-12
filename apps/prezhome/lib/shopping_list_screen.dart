@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -59,6 +61,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final OfflineRepository _inventoryRepo = OfflineProvider.instance.inventory;
 
   late Future<List<ShoppingListItem>> _itemsFuture;
+
+  // Última lista pintada: los cambios locales (marcar, quitar) se aplican
+  // sobre ella AL INSTANTE, sin esperar a la red.
+  List<ShoppingListItem>? _shown;
+
+  // Los avisos en vivo llegan a ráfagas (p. ej. al poner fotos): se agrupan
+  // en un solo refresco, y nunca se solapan dos refrescos.
+  Timer? _realtimeDebounce;
+  bool _refreshing = false;
+  bool _refreshAgain = false;
   bool _generating = false;
 
   // Nº de cambios pendientes de sincronizar (cola no vacía) para el indicador
@@ -165,6 +177,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final rows = await _repo.readCached();
     _pendingCount = _repo.pendingCount + _inventoryRepo.pendingCount;
     final items = _rowsToItems(rows);
+    _shown = items;
     _registerCelebration(items);
     // Los precios conocidos del hogar son best-effort y no bloquean la carga
     // instantánea: se intentan al refrescar desde el remoto.
@@ -187,6 +200,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// a la caché sin romper la UI. Nunca usamos arrow con Future en setState:
   /// calculamos los datos antes y luego setState con cuerpo de bloque.
   Future<void> _refreshFromRemote() async {
+    if (_refreshing) {
+      _refreshAgain = true;
+      return;
+    }
+    _refreshing = true;
     try {
       final rows = await _repo.refreshFromRemote();
       // Aprovechamos que hay red para intentar drenar también el inventario
@@ -198,11 +216,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       _registerCelebration(items);
       final pending = _repo.pendingCount + _inventoryRepo.pendingCount;
       setState(() {
+        _shown = items;
         _itemsFuture = Future.value(items);
         _pendingCount = pending;
       });
     } catch (_) {
       // Sin conexión: nos quedamos con lo que ya pintamos desde la caché.
+    } finally {
+      _refreshing = false;
+      if (_refreshAgain && mounted) {
+        _refreshAgain = false;
+        _refreshFromRemote();
+      }
     }
   }
 
@@ -333,7 +358,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               // Un eco remoto refresca vía refreshFromRemote (fetch + merge con
               // pendientes), de modo que NO borre un cambio local todavía sin
               // sincronizar.
-              _refreshFromRemote();
+              _realtimeDebounce?.cancel();
+              _realtimeDebounce = Timer(const Duration(milliseconds: 600), () {
+                if (mounted) _refreshFromRemote();
+              });
             },
           )
           .subscribe((status, [error]) {
@@ -420,6 +448,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   void dispose() {
+    _realtimeDebounce?.cancel();
     final channel = _channel;
     if (channel != null) {
       _client.removeChannel(channel);
@@ -439,6 +468,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (!mounted) return;
     _registerCelebration(items);
     setState(() {
+      _shown = items;
       _itemsFuture = Future.value(items);
       _pendingCount = pending;
     });
@@ -460,8 +490,27 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return homeId;
   }
 
+  /// Pinta al momento la lista con [item] marcado o desmarcado.
+  void _showToggled(ShoppingListItem item, bool value) {
+    final current = _shown;
+    if (current == null) return;
+    final updated = [
+      for (final i in current)
+        if (i.id == item.id)
+          ShoppingListItem.fromMap({...i.toCacheMap(), 'checked': value})
+        else
+          i,
+    ];
+    setState(() {
+      _shown = updated;
+      _itemsFuture = Future.value(updated);
+    });
+  }
+
   Future<void> _toggleChecked(ShoppingListItem item, bool value) async {
     if (item.id == null) return;
+    // Primero se ve el cambio; el guardado va detrás.
+    _showToggled(item, value);
     try {
       // Escritura OPTIMISTA vía el repositorio: parcheamos solo 'checked'. La
       // caché refleja el cambio al instante; el envío a Supabase se drena en
@@ -1163,7 +1212,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       body: FutureBuilder<List<ShoppingListItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // Al refrescar se sigue viendo la lista anterior (sin parpadeo).
+          if (!snapshot.hasData &&
+              snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
@@ -1644,12 +1695,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         color: AppColors.sageBg,
         child: const Icon(Icons.check_circle_rounded, color: AppColors.sage),
       ),
-      // Deslizar NO borra: marca como comprado y la fila pasa al carro al
-      // recargar (por eso devolvemos false y no se desmonta aquí).
-      confirmDismiss: (_) async {
-        await _toggleChecked(item, true);
-        return false;
-      },
+      // Deslizar marca como comprado: la fila pasa al carro al instante.
+      onDismissed: (_) => _toggleChecked(item, true),
       child: ShoppingItemTile(
         name: shoppingCleanName(item.name),
         checked: done,

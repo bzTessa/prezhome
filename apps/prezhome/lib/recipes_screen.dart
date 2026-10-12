@@ -290,7 +290,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
       body: FutureBuilder<_RecipesData>(
         future: _future,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData &&
+              snapshot.connectionState == ConnectionState.waiting) {
             return const _LoadingGrid();
           }
           if (snapshot.hasError) {
