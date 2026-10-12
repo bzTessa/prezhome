@@ -777,15 +777,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     }
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
   @override
   Widget build(BuildContext context) {
@@ -793,7 +785,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: Text(
-          widget.isEditing ? 'Editar Receta' : 'Nueva Receta',
+          widget.isEditing ? 'Editar receta' : 'Nueva receta',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.cream,
@@ -950,7 +942,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       return FilterChip(
                         label: Text(e.value),
                         selected: selected,
-                        selectedColor: AppColors.wood,
                         checkmarkColor: AppColors.ink,
                         backgroundColor: Colors.white,
                         onSelected: (v) => setState(() {

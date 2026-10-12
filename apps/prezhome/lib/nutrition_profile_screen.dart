@@ -160,15 +160,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     if (picked != null) setState(() => _birthDate = picked);
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
   static const _weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -193,7 +185,6 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
               return FilterChip(
                 label: Text(_weekdayShort[i]),
                 selected: selected,
-                selectedColor: AppColors.wood,
                 backgroundColor: Colors.white,
                 visualDensity: VisualDensity.compact,
                 onSelected: (v) => setState(() {

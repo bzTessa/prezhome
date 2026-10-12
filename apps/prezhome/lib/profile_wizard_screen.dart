@@ -732,7 +732,6 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
               }),
               showCheckmark: false,
               backgroundColor: AppColors.card,
-              selectedColor: AppColors.wood,
               side: BorderSide(
                 color: selected ? AppColors.woodDark : Colors.transparent,
                 width: 1.5,

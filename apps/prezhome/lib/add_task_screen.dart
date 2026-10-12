@@ -106,15 +106,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     });
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
   @override
   Widget build(BuildContext context) {
@@ -131,11 +123,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const Text(
               'Tareas típicas',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Toca una para rellenarla al momento y ajústala si quieres.',
-              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -230,7 +217,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   return FilterChip(
                     label: Text(HomeTask.weekdayShort[i]),
                     selected: selected,
-                    selectedColor: AppColors.wood,
                     backgroundColor: Colors.white,
                     onSelected: (v) => setState(() {
                       if (v) {

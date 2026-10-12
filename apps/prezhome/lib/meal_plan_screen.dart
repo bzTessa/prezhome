@@ -1179,7 +1179,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   child: ChoiceChip(
                     label: Text(labels[i]),
                     selected: selected,
-                    selectedColor: AppColors.wood,
                     backgroundColor: AppColors.cream,
                     onSelected: (_) => setState(() => _energyLevel = i),
                   ),

@@ -440,15 +440,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     }
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
   @override
   Widget build(BuildContext context) {
@@ -525,7 +517,6 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                       return FilterChip(
                         label: Text(s.label),
                         selected: sel,
-                        selectedColor: AppColors.wood,
                         backgroundColor: Colors.white,
                         onSelected: (v) => setState(() {
                           if (v) {
@@ -607,7 +598,6 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                       return FilterChip(
                         label: Text(e.value),
                         selected: sel,
-                        selectedColor: AppColors.wood,
                         backgroundColor: Colors.white,
                         onSelected: (v) => setState(() {
                           if (v) {

@@ -2032,7 +2032,6 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
                   color: sel ? AppColors.ink : AppColors.woodDark,
                 ),
                 selected: sel,
-                selectedColor: AppColors.wood,
                 backgroundColor: AppColors.card,
                 onSelected: (v) => setState(() {
                   if (v) {

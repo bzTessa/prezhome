@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_elevation.dart';
 import 'app_radius.dart';
+import 'app_spacing.dart';
 
 // Reexportamos los tokens del sistema de diseño para que un único import de
 // `app_theme.dart` dé acceso a toda la paleta y escalas (sin dependencias
@@ -103,10 +104,12 @@ class AppTheme {
         foregroundColor: AppColors.ink,
         elevation: 0,
         centerTitle: false,
+        surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
           color: AppColors.ink,
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.4,
         ),
       ),
       cardTheme: CardThemeData(
@@ -116,16 +119,122 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.wood,
-          foregroundColor: AppColors.ink,
+          backgroundColor: AppColors.ink,
+          foregroundColor: AppColors.cream,
           elevation: 0,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: const StadiumBorder(),
           textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
+      // Campos de texto: rellenos en blanco, sin borde y con foco en madera.
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.card,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 14,
+        ),
+        labelStyle: const TextStyle(color: AppColors.inkMuted),
+        floatingLabelStyle: const TextStyle(
+          color: AppColors.woodDark,
+          fontWeight: FontWeight.w700,
+        ),
+        hintStyle: const TextStyle(color: AppColors.inkMuted),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.woodDark, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.expired, width: 1.5),
+        ),
+      ),
+      // Chips de elección: píldora blanca; la elegida, en tinta.
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.card,
+        selectedColor: AppColors.ink,
+        checkmarkColor: AppColors.cream,
+        side: BorderSide.none,
+        shape: const StadiumBorder(),
+        labelStyle: const TextStyle(
+          color: AppColors.ink,
+          fontWeight: FontWeight.w600,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          color: AppColors.cream,
+          fontWeight: FontWeight.w700,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      ),
+      // Botón principal: píldora en tinta. Secundario: contorno suave.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.ink,
+          foregroundColor: AppColors.cream,
+          minimumSize: const Size(64, 52),
+          shape: const StadiumBorder(),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.ink,
+          minimumSize: const Size(64, 48),
+          side: const BorderSide(color: AppColors.wood, width: 1.5),
+          shape: const StadiumBorder(),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.woodDark,
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: AppColors.ink,
+        foregroundColor: AppColors.cream,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? AppColors.card
+              : AppColors.inkMuted,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? AppColors.sage
+              : AppColors.line,
+        ),
+        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? AppColors.sage : null,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.cream,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(color: AppColors.line, thickness: 1),
       // Avisos flotantes y redondeados, en el tono de la app (los de error
       // pasan su propio color terracota).
       snackBarTheme: SnackBarThemeData(
