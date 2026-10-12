@@ -29,6 +29,7 @@ import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
+import 'widgets/product_search_sheet.dart';
 import 'widgets/shopping/shopping_parts.dart';
 import 'utils/friendly_error.dart';
 
@@ -938,30 +939,66 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
+  /// Busca el producto en el súper principal y lo añade con su foto real.
+  /// Si no se elige ninguno, se añade el texto tal cual (con foto
+  /// representativa).
+  Future<void> _searchProduct(String text) async {
+    final entry = parseQuickAdd(text);
+    final product = await showProductSearchSheet(
+      context,
+      initialQuery: entry?.name ?? text,
+      supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+    );
+    if (!mounted) return;
+    if (product == null) {
+      if (text.trim().isNotEmpty) await _quickAdd(text);
+      return;
+    }
+    final cat = CategoryIcons.categoryFor(product.name);
+    final isHome = cat == FoodCategory.limpieza || cat == FoodCategory.hogar;
+    await _addItem(
+      name: product.displayName,
+      quantity: entry?.quantity,
+      unit: entry?.unit,
+      itemType: isHome ? 'hogar' : 'comida',
+      imageUrl: product.imageUrl,
+    );
+  }
+
   /// Añade un producto a la lista activa (alta optimista, offline-first).
+  /// Con [imageUrl] (producto elegido del súper) no se busca foto.
   Future<void> _addItem({
     required String name,
     double? quantity,
     String? unit,
     required String itemType,
+    String? imageUrl,
   }) async {
     final qty = quantity;
+    final productPhoto = imageUrl;
     try {
       final homeId = await _homeId();
       // Foto real del artículo. Para comida en modo "ingrediente crudo"; para
       // hogar como producto tal cual. Best-effort y cacheado por hogar.
-      String? imageUrl;
-      try {
-        // Foto REAL de producto priorizando Open Food Facts (foto del envase)
-        // y, si no hay, el banco de imágenes; respaldo final = ilustración
-        // cozy en la UI. La elección se recuerda por producto en la caché.
-        imageUrl = await FoodPhotoService(_client).resolveProductPhotoUrl(
-          homeId: homeId,
-          name: name,
-          mode: itemType == 'comida' ? 'ingredient' : 'dish',
-        );
-      } catch (_) {
-        imageUrl = null;
+      String? imageUrl = productPhoto;
+      if (imageUrl != null) {
+        // Se recuerda para la próxima vez que se escriba este producto.
+        await FoodPhotoService(
+          _client,
+        ).rememberPhoto(homeId: homeId, name: name, url: imageUrl);
+      } else {
+        try {
+          // Foto REAL de producto priorizando Open Food Facts (foto del envase)
+          // y, si no hay, el banco de imágenes; respaldo final = ilustración
+          // cozy en la UI. La elección se recuerda por producto en la caché.
+          imageUrl = await FoodPhotoService(_client).resolveProductPhotoUrl(
+            homeId: homeId,
+            name: name,
+            mode: itemType == 'comida' ? 'ingredient' : 'dish',
+          );
+        } catch (_) {
+          imageUrl = null;
+        }
       }
       // Alta OPTIMISTA con id temporal local y created_at = ahora: la fila
       // aparece en la lista al instante (ordenada por fecha de creación) y se
@@ -1327,6 +1364,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               child: ShoppingQuickAddBar(
                 onSubmit: _quickAdd,
                 onMore: _openAddItem,
+                onSearch: _searchProduct,
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),

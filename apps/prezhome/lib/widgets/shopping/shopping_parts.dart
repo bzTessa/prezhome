@@ -162,9 +162,13 @@ class ShoppingQuickAddBar extends StatefulWidget {
     super.key,
     required this.onSubmit,
     required this.onMore,
+    this.onSearch,
   });
 
   final ValueChanged<String> onSubmit;
+
+  /// Busca el texto escrito entre los productos del súper (con foto).
+  final ValueChanged<String>? onSearch;
 
   /// Abre el formulario completo (tipo, cantidad, unidad).
   final VoidCallback onMore;
@@ -219,6 +223,17 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
               ),
             ),
           ),
+          if (widget.onSearch != null)
+            IconButton(
+              tooltip: 'Buscar en el súper',
+              onPressed: () {
+                final text = _controller.text.trim();
+                _controller.clear();
+                widget.onSearch!(text);
+              },
+              icon: const Icon(Icons.storefront_rounded),
+              color: AppColors.woodDark,
+            ),
           IconButton(
             tooltip: 'Más opciones',
             onPressed: widget.onMore,
