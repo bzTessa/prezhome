@@ -226,9 +226,9 @@ supabase/          migraciones y Edge Functions compartidas
   estilos personalizables (ESTRATEGIA.md §3).
 - Estilo por defecto **Clean** (sobrio, se lee como app de dinero) con acento
   **verde salvia**; quien quiera puede elegir Cozy.
-- Miau (si está activado) aparece con su versión "gato de la suerte" (maneki-neko con moneda)
-  en estados vacíos y celebraciones (presupuesto cumplido, nuevo máximo de
-  patrimonio). Sin emojis en la interfaz.
+- Miau (si está activado) en estados vacíos y celebraciones (presupuesto
+  cumplido, nuevo máximo de patrimonio). Diseño pendiente: ver
+  ESTRATEGIA.md §5. Sin emojis en la interfaz.
 - Cifras grandes y legibles; negativos en tono cálido suave, no rojo chillón.
 
 ## 8. Preguntas abiertas

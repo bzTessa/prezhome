@@ -129,3 +129,35 @@ Cosas que conviene tener en cuenta **desde ya**, porque cambiarlas luego cuesta:
 - Entornos separados: Supabase de desarrollo y de producción.
 - Textos de la app en archivos de traducción (aunque solo haya español).
 - Cuentas de desarrollador: Apple (cuota anual) y Google Play (pago único).
+
+## 5. Identidad visual (pendiente)
+
+Logo, iconos de app e ilustraciones de Miau los aporta la propietaria del
+proyecto con sus propios diseños. Este documento no fija el estilo; solo lo
+que hará falta técnicamente cuando lleguen:
+
+**Iconos de app (por cada app)**
+- Original en vectorial (SVG) o PNG de 1024×1024 como mínimo.
+- Android: capa de fondo + capa delantera (lo importante dentro del 66 %
+  central) y, opcional, versión monocromo para los iconos temáticos.
+- iOS: cuadrado opaco, sin transparencias ni esquinas redondeadas (las pone
+  el sistema).
+- Comprobar que se reconoce a 48 px (tamaño real en la pantalla de inicio).
+
+**Logo con nombre**: versión para fondo claro y para fondo oscuro.
+
+**Ilustraciones de Miau** (PNG transparente, 500×500 o más, mismo encuadre):
+hoy la app usa `MiauCharacter` (`lib/widgets/miau_character.dart`) en unas
+20 pantallas con estas poses, que se sustituyen sin tocar código si se
+mantienen los nombres de archivo de `assets/images/`:
+
+| Pose (`MiauMood`) | Archivo | Uso típico |
+|-------------------|---------|-----------|
+| `greeting` / `neutral` | `miau_saludando.png` | Bienvenida, estados por defecto |
+| `celebrating` | `miau_celebrando.png` | Tarea hecha, logros |
+| `cooking` | `miau_cocinando.png` | Recetas, meal prep |
+| `curious` | `miau_pensando.png` | Sugerencias, "próximamente", vacíos |
+| `sleeping` | `miau_durmiendo.png` | Sin pendientes, descanso |
+
+Al llegar los diseños también se actualizan la pantalla de carga, el icono
+web/manifest y el nombre visible de la app ("PrezHome").
