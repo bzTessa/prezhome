@@ -20,7 +20,7 @@ los comentarios y los nombres de edge functions (p. ej. `generate-recipe`)
 pueden seguir siendo técnicos; lo que se veta es lo que **ve la usuaria**.
 
 ## 1. Tokens y tema global
-- Fuente única de verdad: `lib/theme/app_theme.dart` y los tokens asociados
+- Fuente única de verdad: `apps/prezhome/lib/theme/app_theme.dart` y los tokens asociados
   (`AppColors`, `AppSpacing`, `AppRadius`, `AppElevation`, `AppTextStyles`,
   `AppMotion`). **No** introducir literales de color `0xFF…`, paddings a ojo ni
   tamaños de fuente sueltos: usar siempre los tokens.

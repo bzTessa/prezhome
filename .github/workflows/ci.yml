@@ -25,6 +25,11 @@ jobs:
   flutter:
     name: Flutter (formato, analisis y tests)
     runs-on: ubuntu-latest
+    # Monorepo: la app PrezHome vive en apps/prezhome. Todos los comandos
+    # de este job (pub get, format, analyze, test...) se ejecutan ahi.
+    defaults:
+      run:
+        working-directory: apps/prezhome
     steps:
       # Descarga el codigo del repositorio.
       - name: Clonar el repositorio
@@ -38,7 +43,7 @@ jobs:
         with:
           channel: stable
 
-      # Descarga las dependencias declaradas en pubspec.yaml.
+      # Descarga las dependencias declaradas en apps/prezhome/pubspec.yaml.
       - name: Descargar dependencias
         run: flutter pub get
 
@@ -55,7 +60,8 @@ jobs:
       - name: Ejecutar tests
         run: flutter test
 
-      # Verifica que el mapa de dependencias internas de lib/ esté al día.
+      # Verifica que el mapa de dependencias internas de lib/ esté al día
+      # (apps/prezhome/docs/architecture/dependency-map.md).
       - name: Verificar mapa de dependencias de arquitectura
         run: dart run tool/architecture/dependency_map.dart --check
 
