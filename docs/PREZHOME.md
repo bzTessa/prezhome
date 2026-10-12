@@ -23,8 +23,19 @@ escondida en Ajustes.
 | ¿Qué como / qué compro / qué hago hoy en casa? | PrezHome   |
 | ¿Cuánto me gasto / cuánto tengo / cómo van mis inversiones? | PrezWallet |
 
-PrezHome **genera** gastos (tickets del súper, compras del hogar) pero **no los
-analiza**: eso es trabajo de PrezWallet. Ver sección 7.
+### Regla para repartir: el *qué* frente al *cuánto*
+
+Un mismo ticket del súper tiene dos lecturas, y cada app se queda la suya:
+
+| Del ticket…                                   | Lo usa     | Para responder |
+|-----------------------------------------------|------------|----------------|
+| **Las líneas** (producto, precio, súper)      | PrezHome   | ¿Dónde está más barato el aceite? ¿Cuánto me cuesta esta receta / el plan de la semana? ¿En qué comida se me va el dinero? |
+| **El total** (importe, fecha, comercio, cuenta) | PrezWallet | ¿Cuánto llevo de súper este mes? ¿Voy dentro del presupuesto? |
+
+Así que **los tickets se quedan en PrezHome**: es donde se escanean y donde se
+analiza el gasto *por producto, por súper y por comida*, porque esas
+respuestas sirven para decidir qué comprar y dónde. PrezWallet solo recibe el
+total como un movimiento más. Ver sección 7.
 
 ## 3. Estado actual (qué ya existe)
 
@@ -59,6 +70,15 @@ congelador, registro "por defecto se hizo" y lista de la compra para X días.
 ### 4.3 Compra
 Una lista que **se escribe sola** a partir del plan y del inventario, con precio
 estimado (memoria de precios) para saber cuánto va a costar antes de ir.
+
+**Tickets y precios** (se quedan aquí, ver §2):
+- Escanear ticket → líneas a `ticket_items` + `product_prices`, y repone la
+  despensa.
+- Estadísticas de cocina, no de finanzas: gasto por **súper**, por
+  **categoría de comida** (carne, fruta, snacks…), **coste por receta / ración**
+  y coste del plan semanal; "este producto es un 20 % más barato en X".
+- Sugerencia útil, no informe: "si compras estos 6 productos en X ahorras
+  ~8 € al mes".
 
 ### 4.4 Tareas y rutinas
 - Rutinas recurrentes con reparto justo entre miembros.
@@ -127,7 +147,11 @@ Decisión recomendada: **dos apps, un mismo backend**.
   Cozy, `FloatingNavBar`, Miau. Las dos apps lo importan → mismo look & feel.
 - **Puentes concretos** (solo los que aportan):
   - Ticket escaneado en PrezHome → crea un **movimiento** en PrezWallet
-    (categoría Supermercado, con desglose de productos).
+    con el total (categoría Supermercado). Las líneas se quedan en PrezHome.
+  - Pago en un súper registrado en PrezWallet (notificación de pago, ver
+    PREZWALLET.md §3.6) → en PrezHome aparece "**ticket pendiente**" para
+    escanearlo si quieres el desglose. Al escanearlo se enlaza al mismo
+    movimiento, no se duplica.
   - Lista de la compra muestra "**te quedan X € del presupuesto de súper**"
     (dato que vive en PrezWallet).
   - Recibos / suscripciones de PrezWallet (luz, IBI, seguro) → **recordatorio**

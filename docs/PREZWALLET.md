@@ -54,12 +54,52 @@ Cada movimiento es *personal* o *del hogar*; esa es la única pregunta extra.
 - Donut por categoría + lista con % (Mis Gastos).
 - Comparativa mes a mes / año.
 - Necesidad vs Deseo vs Obligación (Wallet).
-- Gasto en súper por tienda y evolución de precios (dato que llega de PrezHome).
+- Gasto total en súper por mes y frente al presupuesto. (El detalle por
+  producto, súper y comida vive en PrezHome: ver PREZHOME.md §2.)
 
 ### 3.5 Botón [+]
 Hoja inferior: importe grande → rejilla de categorías → (opcional) nota, cuenta,
 personal/hogar. Guardar con el importe ya escrito y una categoría = 2 toques.
 Atajos: escanear ticket (reutiliza `scan-ticket` de PrezHome), repetir último.
+
+### 3.6 Registro de pagos con un toque (notificación)
+
+Idea: pagas con el móvil o la tarjeta → te salta una notificación de
+PrezWallet → un toque y queda apuntado con el sitio y el importe.
+
+```
+ PrezWallet                                   ahora
+ 12,30 € en MERCADONA · Supermercado · Hogar
+ [ Registrar ]   [ Cambiar ]   [ Ignorar ]
+```
+
+**Cómo detecta el pago:**
+- **Android (primero, es tu móvil):** la app pide permiso de *acceso a
+  notificaciones* (`NotificationListenerService`) y lee **solo** las
+  notificaciones de pago de las apps que tú elijas (app del banco, Google
+  Wallet). De "Has pagado 12,30 € en MERCADONA" saca importe y comercio, y
+  lanza su propia notificación con botones. Todo se procesa en el móvil; el
+  texto original no se sube a ningún sitio.
+- **iOS (más adelante):** iOS no deja leer notificaciones de otras apps. La
+  alternativa es una automatización de Atajos ("Al pulsar la tarjeta en
+  Wallet") que abre PrezWallet con importe y comercio ya rellenos.
+- **Banco conectado (fase 6):** cuando exista, sirve de red de seguridad para
+  los pagos que no generen notificación, con deduplicación por importe+fecha.
+
+**Que sea de verdad "un solo toque":**
+- La app **aprende comercio → categoría / cuenta / personal-hogar**
+  (`wallet_merchants`). La primera vez en "MERCADONA" eliges; las siguientes
+  ya viene sugerido y "Registrar" basta.
+- Para comercios de confianza: opción **"registrar siempre sin preguntar"**
+  (solo se avisa, con opción de deshacer).
+- Si el comercio es un súper → crea el "ticket pendiente" en PrezHome.
+
+**Ajustes (todo desactivable):**
+- Interruptor general "Detectar pagos" (apagado por defecto).
+- Qué apps vigilar (lista de apps instaladas con interruptor por app).
+- Por comercio: preguntar / registrar automático / ignorar siempre.
+- "Pagos sin registrar": bandeja con los que ignoraste o no contestaste, por
+  si quieres apuntarlos luego.
 
 ## 4. Modelo de datos (borrador)
 
@@ -74,7 +114,8 @@ wallet_accounts      id, owner_id, home_id?, name, type (bank|cash|card|
 wallet_categories    id, owner_id?, home_id?, name, icon, color, kind
                      (expense|income), nature (need|want|must)
 wallet_transactions  id, account_id, category_id, amount, date, note,
-                     is_shared, source (manual|ticket|import|recurring),
+                     is_shared, merchant_id?,
+                     source (manual|ticket|notification|import|recurring),
                      ticket_id?  -> enlace con tickets de PrezHome
 wallet_recurring     id, account_id, category_id, amount, rrule, next_date,
                      remind_days_before
@@ -82,6 +123,9 @@ wallet_budgets       id, scope (user|home), category_id?, month, amount
 wallet_holdings      id, account_id, symbol, name, asset_type, quantity,
                      avg_price, currency
 wallet_dividends     id, holding_id, pay_date, amount_per_share, total
+wallet_merchants     id, owner_id, raw_name, display_name, category_id,
+                     account_id, is_shared, mode (ask|auto|ignore)
+                     -> lo que aprende el registro con un toque (§3.6)
 wallet_snapshots     id, owner_id, date, net_worth, assets, liabilities
                      (foto diaria/semanal para el gráfico de evolución)
 ```
@@ -96,6 +140,7 @@ esté en uso.
 | Fase | Contenido | Resultado |
 |------|-----------|-----------|
 | **1. Apuntar** | Cuentas manuales, categorías, [+] rápido, lista de movimientos, Inicio básico. | Ya sustituye a Mis Gastos. |
+| **1b. Un toque** | Detección de pagos por notificación en Android + aprendizaje de comercios (§3.6). | Apuntar deja de ser un esfuerzo. |
 | **2. Entender** | Análisis (donut, comparativas, necesidad/deseo), presupuestos por categoría, recurrentes + avisos. | Sabes en qué se va el dinero. |
 | **3. Conectar con PrezHome** | Tickets → movimientos, presupuesto de súper en la lista de compra, recibos → pantalla Hoy. | Las dos apps trabajan juntas. |
 | **4. Patrimonio** | Activos/deudas manuales, patrimonio neto, snapshots y gráfico de evolución. | Foto completa de tu dinero. |
