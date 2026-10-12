@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,6 +12,8 @@ import 'services/household_servings.dart';
 import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
+import 'services/plan_shopping.dart';
+import 'shopping_list_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
@@ -250,6 +254,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         await _client.from('meal_plan_entries').insert(rows);
       }
       _reload();
+      if (rows.isNotEmpty) await _fillShoppingFromPlan(data.homeId!);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -261,6 +266,44 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       }
     } finally {
       if (mounted) setState(() => _generating = false);
+    }
+  }
+
+  /// La lista de la compra se hace sola con el plan nuevo: lo que piden las
+  /// recetas menos lo que ya hay en casa, con foto de cada producto.
+  Future<void> _fillShoppingFromPlan(String homeId) async {
+    try {
+      final service = PlanShoppingService(_client);
+      final added = await service.syncFromPlan(
+        homeId: homeId,
+        from: _weekStart,
+        to: _weekStart.add(const Duration(days: 7)),
+      );
+      if (added.isNotEmpty) {
+        unawaited(service.fillMissingPhotos(homeId, added));
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            added.isEmpty
+                ? 'Plan listo. Ya tienes en casa todo lo que necesitas'
+                : 'Plan listo. Lista de la compra con ${added.length} productos',
+          ),
+          action: added.isEmpty
+              ? null
+              : SnackBarAction(
+                  label: 'Ver',
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ShoppingListScreen(),
+                    ),
+                  ),
+                ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('MealPlanScreen._fillShoppingFromPlan error: $e');
     }
   }
 

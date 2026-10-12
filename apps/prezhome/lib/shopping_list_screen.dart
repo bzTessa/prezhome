@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'models/ingredient.dart';
 import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
 import 'services/food_photo_service.dart';
@@ -16,9 +15,9 @@ import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
 import 'services/home_supermarkets.dart';
+import 'services/plan_shopping.dart';
 import 'shopping_lists_overview_screen.dart';
 import 'utils/offline_actions.dart';
-import 'utils/practical_quantity.dart';
 import 'utils/realtime_sync.dart';
 import 'utils/shopping_categories.dart';
 import 'utils/shopping_celebration.dart';
@@ -626,11 +625,27 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             ListTile(
               leading: const Icon(
+                Icons.photo_camera_outlined,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Hacer una foto'),
+              onTap: () => Navigator.of(ctx).pop('camera'),
+            ),
+            ListTile(
+              leading: const Icon(
                 Icons.photo_library_outlined,
                 color: AppColors.woodDark,
               ),
-              title: const Text('Elegir foto de la galería'),
+              title: const Text('Elegir de la galería'),
               onTap: () => Navigator.of(ctx).pop('gallery'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.storefront_rounded,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Elegir producto del súper'),
+              onTap: () => Navigator.of(ctx).pop('store'),
             ),
             ListTile(
               leading: const Icon(
@@ -655,8 +670,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
     if (!mounted || action == null) return;
     switch (action) {
+      case 'camera':
+        await _pickPhoto(item, ImageSource.camera);
+        break;
       case 'gallery':
-        await _pickPhoto(item);
+        await _pickPhoto(item, ImageSource.gallery);
+        break;
+      case 'store':
+        await _pickStoreProductPhoto(item);
         break;
       case 'auto':
         await _regenPhoto(item);
@@ -669,11 +690,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   /// Sube una foto de la galería al bucket y la fija como foto del artículo.
   /// El bucket recipe-images se reutiliza (ya tiene políticas públicas).
-  Future<void> _pickPhoto(ShoppingListItem item) async {
+  Future<void> _pickPhoto(ShoppingListItem item, ImageSource source) async {
     if (item.id == null) return;
     try {
       final file = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 1000,
         imageQuality: 82,
       );
@@ -717,6 +738,39 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           content: Text(friendlyError(e, 'No se pudo subir la foto')),
           backgroundColor: Colors.red,
         ),
+      );
+    }
+  }
+
+  /// Pone como foto la del envase de un producto del súper.
+  Future<void> _pickStoreProductPhoto(ShoppingListItem item) async {
+    if (item.id == null) return;
+    final product = await showProductSearchSheet(
+      context,
+      initialQuery: shoppingCleanName(item.name),
+      supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+    );
+    final url = product?.imageUrl;
+    if (url == null || !mounted) return;
+    try {
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'image_url': url},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      final homeId = await _homeId();
+      await FoodPhotoService(
+        _client,
+      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo cambiar la foto'))),
       );
     }
   }
@@ -1048,40 +1102,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return DateTime(now.year, now.month, now.day - (now.weekday - 1));
   }
 
-  /// Clave de agregacion: nombre + unidad normalizados (trim + minusculas).
-  String _aggKey(String name, String? unit) {
-    final n = name.trim().toLowerCase();
-    final u = (unit ?? '').trim().toLowerCase();
-    return '$n|$u';
-  }
-
-  /// Construye un item 'auto' del plan aplicando la regla PURA de condimentos:
-  /// los condimentos/especias se expresan SIEMPRE en unidades enteras ('1 ud'),
-  /// nunca en cucharadas/cucharaditas/pizca/ml de aceite (lo pidió la usuaria).
-  /// El resto de alimentos conserva su cantidad/unidad. Además asigna una
-  /// `category` de texto coherente (secciones por defecto) para que al mostrar
-  /// la lista agrupada caiga en la sección correcta; la lista activa se asigna
-  /// aparte al insertar.
-  ShoppingListItem _buildAutoItem(
-    String homeId,
-    String name,
-    double? quantity,
-    String? unit,
-  ) {
-    final practical = makePracticalForShopping(name, quantity, unit);
-    final catName = defaultCategoryFor(name);
-    return ShoppingListItem(
-      homeId: homeId,
-      name: name,
-      quantity: practical.quantity,
-      unit: practical.unit,
-      source: 'auto',
-      category: catName,
-      categoryId: _categoryIdForName(catName),
-      listId: _activeListId,
-    );
-  }
-
   /// Devuelve el id de la categoría del hogar cuyo nombre coincide (ignorando
   /// mayúsculas/acentos) con [name], o null si no existe (se tratará como "Sin
   /// categorizar"). Casa la categoría de texto por defecto con la fila sembrada.
@@ -1093,215 +1113,36 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return null;
   }
 
-  /// Genera la lista desde el plan semanal. Suma los ingredientes de las
-  /// recetas planificadas de la semana, descuenta lo que ya hay en inventario
-  /// cuando el match es fiable y crea los que faltan con source='auto'.
+  /// Genera la lista desde el plan semanal: lo que piden las recetas menos
+  /// lo que ya hay en casa, cada producto con su foto. Necesita conexión.
   Future<void> _generarDesdePlan() async {
     setState(() => _generating = true);
     try {
       final homeId = await _homeId();
-
-      // Plan de esta semana (desde el lunes).
-      final start = _weekStart;
-      final end = start.add(const Duration(days: 7));
-      final planRes = await _client
-          .from('meal_plan_entries')
-          .select()
-          .eq('home_id', homeId)
-          .gte('plan_date', start.toIso8601String().split('T').first)
-          .lt('plan_date', end.toIso8601String().split('T').first);
-
-      // Recetas de las comidas NO saltadas con recipe_id no nulo.
-      final recipeIds = <String>{};
-      for (final row in (planRes as List)) {
-        final map = row as Map<String, dynamic>;
-        final skipped = (map['skipped'] as bool?) ?? false;
-        final recipeId = map['recipe_id'] as String?;
-        if (!skipped && recipeId != null) recipeIds.add(recipeId);
-      }
-
-      if (recipeIds.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No hay plan esta semana todavia.')),
-        );
-        return;
-      }
-
-      // Ingredientes de esas recetas.
-      final ingRes = await _client
-          .from('recipe_ingredients')
-          .select()
-          .inFilter('recipe_id', recipeIds.toList());
-      final ingredients = (ingRes as List)
-          .map((m) => Ingredient.fromMap(m as Map<String, dynamic>))
-          .toList();
-
-      // Agregar por nombre + unidad normalizados. Si alguna cantidad es null
-      // mantenemos el item sin cantidad (no inventamos cifras).
-      final agg = <String, _AggItem>{};
-      for (final ing in ingredients) {
-        final name = ing.name.trim();
-        if (name.isEmpty) continue;
-        final key = _aggKey(name, ing.unit);
-        final existing = agg[key];
-        if (existing == null) {
-          agg[key] = _AggItem(
-            name: name,
-            unit: ing.unit,
-            quantity: ing.quantity,
-          );
-        } else {
-          if (existing.quantity == null || ing.quantity == null) {
-            // Si alguna no tiene cantidad, no podemos sumar de forma fiable.
-            existing.quantity = null;
-          } else {
-            existing.quantity = existing.quantity! + ing.quantity!;
-          }
-        }
-      }
-
-      // Inventario del hogar, indexado por nombre normalizado. Nos quedamos con
-      // una entrada por nombre (si hay varias, basta con detectar que existe).
-      // Incluimos is_staple para tratar los basicos "siempre en casa" como
-      // siempre disponibles.
-      final invRes = await _client
-          .from('inventory_items')
-          .select('name, quantity, unit, is_staple')
-          .eq('home_id', homeId);
-      final inventory = <String, _InvEntry>{};
-      // Conjunto de nombres normalizados marcados como "siempre en casa".
-      // Criterio de match: nombre normalizado (minusculas + sin acentos) con la
-      // MISMA normalizacion de CategoryIcons.normalize, para que, por ejemplo,
-      // "Pimienta" en inventario excluya "pimienta" del plan.
-      final staples = <String>{};
-      for (final row in (invRes as List)) {
-        final map = row as Map<String, dynamic>;
-        final name = (map['name'] ?? '').toString().trim();
-        if (name.isEmpty) continue;
-        final nKey = CategoryIcons.normalize(name);
-        final qty = (map['quantity'] as num?)?.toDouble();
-        final unit = (map['unit'] as String?)?.trim().toLowerCase();
-        final isStaple = (map['is_staple'] as bool?) ?? false;
-        if (isStaple) staples.add(nKey);
-        // Si ya habia una entrada para ese nombre, la dejamos como esta (basta
-        // con una para decidir si descontamos).
-        inventory.putIfAbsent(nKey, () => _InvEntry(quantity: qty, unit: unit));
-      }
-
-      // Descontar lo que ya tenemos SOLO cuando el match es fiable. Ante
-      // cualquier duda (unidad distinta o cantidad no comparable) NO
-      // descontamos y mantenemos el ingrediente: es mejor comprar de mas que
-      // quedarnos cortos.
-      final faltan = <ShoppingListItem>[];
-      for (final item in agg.values) {
-        final nKey = CategoryIcons.normalize(item.name);
-
-        // Basicos "siempre en casa": si el ingrediente coincide por nombre
-        // normalizado con un item is_staple=true, lo tratamos como siempre
-        // disponible y NO lo anadimos a la lista, por poca cantidad que pida la
-        // receta (sal, pimienta, aceite...).
-        if (staples.contains(nKey)) continue;
-
-        final inv = inventory[nKey];
-
-        if (inv != null &&
-            item.quantity != null &&
-            inv.quantity != null &&
-            (item.unit ?? '').trim().toLowerCase() == (inv.unit ?? '')) {
-          // Match fiable con unidades comparables: restamos.
-          final restante = item.quantity! - inv.quantity!;
-          if (restante <= 0) {
-            // Ya tenemos suficiente, no hace falta comprarlo.
-            continue;
-          }
-          faltan.add(_buildAutoItem(homeId, item.name, restante, item.unit));
-        } else {
-          // No es fiable descontar: lo anadimos tal cual.
-          faltan.add(
-            _buildAutoItem(homeId, item.name, item.quantity, item.unit),
-          );
-        }
-      }
-
-      // La lista de la compra usa ilustración cozy por categoría (no fotos
-      // reales), así que no resolvemos fotos aquí: ahorra cuota de Unsplash y
-      // evita las fotos genéricas/aleatorias de básicos abstractos.
-
-      // Regeneracion sin duplicar: borramos solo los items 'auto' pendientes.
-      // No tocamos los manuales ni los ya marcados como comprados.
-      //
-      // NOTA OFFLINE (deliberado): esta regeneracion REQUIERE CONEXION. Ya ha
-      // leido el plan, los ingredientes y el inventario de la red (lineas de
-      // arriba), asi que sin cobertura habria lanzado mucho antes. Este borrado
-      // es masivo por filtro (home_id + source='auto' + checked=false), no por
-      // id, por lo que NO encaja en la cola optimista por fila; va directo por
-      // _client. Si no hay red, lanza y el catch de abajo aborta toda la
-      // generacion sin dejar a medias (las altas optimistas solo ocurren
-      // DESPUES, si este borrado tuvo exito). Es una operacion online-only por
-      // naturaleza, no una omision.
-      // Scope del borrado a la LISTA ACTIVA: solo regeneramos los 'auto'
-      // pendientes de la lista en la que estamos (list_id null = Lista
-      // principal, que se filtra con .is_). No tocamos las otras listas.
-      final deleteQuery = _client
-          .from('shopping_list_items')
-          .delete()
-          .eq('home_id', homeId)
-          .eq('source', 'auto')
-          .eq('checked', false);
-      if (_activeListId == null) {
-        // Filtro IS NULL vía el escape hatch .filter() (sintaxis cruda de
-        // PostgREST), estable entre versiones del cliente.
-        await deleteQuery.filter('list_id', 'is', null);
-      } else {
-        await deleteQuery.eq('list_id', _activeListId!);
-      }
-
-      if (faltan.isNotEmpty) {
-        // Altas OPTIMISTAS por el repositorio: cada item 'auto' entra con un id
-        // temporal local y created_at = ahora. Aparecen al instante y se drenan
-        // a Supabase en segundo plano (y el refresco posterior converge con el
-        // borrado de los 'auto' previos ya hecho en el servidor).
-        for (final i in faltan) {
-          final nowMillis = DateTime.now().millisecondsSinceEpoch;
-          final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
-          final withId = ShoppingListItem(
-            id: localId,
-            homeId: i.homeId,
-            name: i.name,
-            quantity: i.quantity,
-            unit: i.unit,
-            source: i.source,
-            createdAt: DateTime.fromMillisecondsSinceEpoch(nowMillis),
-            itemType: i.itemType,
-            category: i.category,
-            imageUrl: i.imageUrl,
-            listId: i.listId,
-            categoryId: i.categoryId,
-          );
-          await _repo.applyLocalWrite(
-            buildInsertOp(
-              table: kShoppingTable,
-              id: localId,
-              payload: withId.toCacheMap(),
-              nowMillis: nowMillis,
-              seq: _nextSeq(),
-            ),
-          );
-        }
-      }
-
+      final service = PlanShoppingService(_client);
+      final added = await service.syncFromPlan(
+        homeId: homeId,
+        from: _weekStart,
+        to: _weekStart.add(const Duration(days: 7)),
+        listId: _activeListId,
+      );
       await _reload();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            faltan.isEmpty
-                ? 'Ya tienes todo lo del plan en el inventario.'
-                : 'Añadidos ${faltan.length} productos desde el plan.',
+            added.isEmpty
+                ? 'Ya tienes en casa todo lo del plan'
+                : 'Añadidos ${added.length} productos del plan',
           ),
         ),
       );
+      // Las fotos que faltan se buscan después, sin bloquear la lista.
+      if (added.any((i) => (i.imageUrl ?? '').isEmpty)) {
+        service.fillMissingPhotos(homeId, added).then((n) {
+          if (n > 0 && mounted) _reload();
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1817,13 +1658,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         subtitle: item.source == 'auto' ? 'Del plan de la semana' : null,
         onToggle: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
+        // Tocar la foto permite cambiarla (cámara, galería o súper).
         leading: _view.showPhotos
-            ? FoodImage(
-                name: item.name,
-                itemType: item.itemType,
-                imageUrl: item.imageUrl,
-                size: 34,
-                radius: 10,
+            ? Semantics(
+                button: true,
+                label: 'Cambiar foto',
+                child: GestureDetector(
+                  onTap: () => _openItemActions(item),
+                  child: FoodImage(
+                    name: item.name,
+                    itemType: item.itemType,
+                    imageUrl: item.imageUrl,
+                    size: 44,
+                    radius: 12,
+                  ),
+                ),
               )
             : null,
       ),
@@ -1985,19 +1834,4 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
       ],
     );
   }
-}
-
-/// Acumulador temporal para agregar ingredientes por nombre + unidad.
-class _AggItem {
-  final String name;
-  final String? unit;
-  double? quantity;
-  _AggItem({required this.name, this.unit, this.quantity});
-}
-
-/// Entrada de inventario reducida que usamos para decidir si descontar.
-class _InvEntry {
-  final double? quantity;
-  final String? unit;
-  _InvEntry({this.quantity, this.unit});
 }
