@@ -797,6 +797,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            tooltip: 'Anterior',
             icon: const Icon(Icons.chevron_left),
             onPressed: () => _changeMonth(-1),
           ),
@@ -805,6 +806,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           IconButton(
+            tooltip: 'Siguiente',
             icon: const Icon(Icons.chevron_right),
             // No dejar avanzar más allá del mes actual.
             onPressed: _isCurrentMonth ? null : () => _changeMonth(1),
@@ -1137,6 +1139,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           IconButton(
+            tooltip: 'Eliminar',
             icon: const Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: () => _deleteTicket(t['id'] as String),
           ),

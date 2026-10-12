@@ -167,6 +167,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 children: [
                   const Text('Cada', style: TextStyle(fontSize: 16)),
                   IconButton(
+                    tooltip: 'Menos',
                     icon: const Icon(Icons.remove_circle_outline),
                     onPressed: _intervalCount > 1
                         ? () => setState(() => _intervalCount--)
@@ -180,6 +181,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Más',
                     icon: const Icon(Icons.add_circle_outline),
                     onPressed: _intervalCount < 30
                         ? () => setState(() => _intervalCount++)
@@ -314,6 +316,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 const Text('Puntos:', style: TextStyle(fontSize: 16)),
                 const Spacer(),
                 IconButton(
+                  tooltip: 'Menos',
                   icon: const Icon(Icons.remove_circle_outline),
                   onPressed: _points > 5
                       ? () => setState(() => _points -= 5)
@@ -327,6 +330,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Más',
                   icon: const Icon(Icons.add_circle_outline),
                   onPressed: _points < 100
                       ? () => setState(() => _points += 5)

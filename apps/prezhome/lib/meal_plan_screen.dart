@@ -1330,6 +1330,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Cerrar',
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.of(context).pop(),
                   ),

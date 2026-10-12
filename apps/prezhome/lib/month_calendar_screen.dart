@@ -206,6 +206,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
       child: Row(
         children: [
           IconButton(
+            tooltip: 'Anterior',
             icon: const Icon(Icons.chevron_left, color: AppColors.woodDark),
             onPressed: () => _changeMonth(-1),
           ),
@@ -221,6 +222,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
             ),
           ),
           IconButton(
+            tooltip: 'Siguiente',
             icon: const Icon(Icons.chevron_right, color: AppColors.woodDark),
             onPressed: () => _changeMonth(1),
           ),

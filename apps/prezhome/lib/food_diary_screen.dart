@@ -658,6 +658,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            tooltip: 'Anterior',
             icon: const Icon(Icons.chevron_left),
             onPressed: () => _changeDay(-1),
           ),
@@ -666,6 +667,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           IconButton(
+            tooltip: 'Siguiente',
             icon: const Icon(Icons.chevron_right),
             // No dejar avanzar más allá del día de hoy.
             onPressed: _isToday ? null : () => _changeDay(1),
@@ -850,6 +852,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             ),
           ),
           IconButton(
+            tooltip: 'Eliminar',
             icon: const Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: e.id != null ? () => _deleteEntry(e.id!) : null,
           ),

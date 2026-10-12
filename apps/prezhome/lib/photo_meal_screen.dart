@@ -482,6 +482,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 ),
               ),
               IconButton(
+                tooltip: 'Quitar',
                 icon: const Icon(Icons.close, color: AppColors.expired),
                 onPressed: () => setState(() {
                   _items.removeAt(index);

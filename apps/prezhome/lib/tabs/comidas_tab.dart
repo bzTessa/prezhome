@@ -323,6 +323,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
+                tooltip: 'Anterior',
                 icon: const Icon(Icons.chevron_left),
                 onPressed: () => _changeWeek(-1),
               ),
@@ -351,6 +352,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                 ),
               ),
               IconButton(
+                tooltip: 'Siguiente',
                 icon: const Icon(Icons.chevron_right),
                 onPressed: () => _changeWeek(1),
               ),

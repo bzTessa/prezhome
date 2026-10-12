@@ -454,6 +454,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
             _pantryMode ? '¿Qué cocino con esto?' : 'Ideas personalizadas',
           ),
           leading: IconButton(
+            tooltip: 'Volver',
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.of(context).pop(_savedAny),
           ),

@@ -894,6 +894,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                                   backgroundColor: AppColors.inkMuted,
                                   radius: 16,
                                   child: IconButton(
+                                    tooltip: 'Editar',
                                     padding: EdgeInsets.zero,
                                     icon: const Icon(
                                       Icons.edit,
@@ -1238,6 +1239,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 ),
               ),
               IconButton(
+                tooltip: 'Quitar',
                 icon: const Icon(Icons.close, color: AppColors.expired),
                 onPressed: _ingredients.length == 1
                     ? null

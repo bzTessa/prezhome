@@ -1120,6 +1120,7 @@ class _TaskCard extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Eliminar',
             icon: const Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: onDelete,
           ),

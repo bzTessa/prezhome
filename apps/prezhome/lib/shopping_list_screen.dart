@@ -595,32 +595,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  Future<void> _deleteItem(ShoppingListItem item) async {
-    if (item.id == null) return;
-    try {
-      // Delete OPTIMISTA: desaparece de la caché al instante y se envía al
-      // drenar. Si el id era local (insert aún no sincronizado), la cola
-      // colapsa ambas ops y no se manda nada al servidor.
-      await _repo.applyLocalWrite(
-        buildDeleteOp(
-          table: kShoppingTable,
-          id: item.id!,
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      await _reload();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendlyError(e, 'No se pudo eliminar')),
-          backgroundColor: AppColors.expired,
-        ),
-      );
-    }
-  }
-
   /// Menú de acciones de un artículo (pulsación larga): cambiar foto o borrar.
   Future<void> _openItemActions(ShoppingListItem item) async {
     final action = await showModalBottomSheet<String>(
@@ -693,7 +667,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         await _pickStoreProductPhoto(item);
         break;
       case 'delete':
-        await _deleteItem(item);
+        await _removeWithUndo([
+          item,
+        ], 'Quitado "${shoppingCleanName(item.name)}"');
         break;
     }
   }
@@ -1597,32 +1573,89 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  /// Quita de la lista todo lo ya comprado (ya está en la despensa).
-  Future<void> _clearChecked(List<ShoppingListItem> comprados) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.cream,
-        title: const Text('¿Quitar lo comprado?'),
-        content: Text(
-          'Se quitarán ${comprados.length} productos de la lista. '
-          'Lo que ya pasó a la despensa se queda allí.',
+  /// Quita de la lista todo lo ya comprado (ya está en la despensa). Sin
+  /// pregunta previa: se puede deshacer.
+  Future<void> _clearChecked(List<ShoppingListItem> comprados) =>
+      _removeWithUndo(
+        comprados,
+        comprados.length == 1
+            ? 'Quitado 1 producto'
+            : 'Quitados ${comprados.length} productos',
+      );
+
+  /// Quita [items] al momento y ofrece "Deshacer" (los vuelve a añadir tal
+  /// cual estaban).
+  Future<void> _removeWithUndo(
+    List<ShoppingListItem> items,
+    String message,
+  ) async {
+    final targets = items.where((i) => i.id != null).toList();
+    if (targets.isEmpty) return;
+    final ids = {for (final i in targets) i.id!};
+    final current = _shown;
+    if (current != null) {
+      setState(() {
+        _shown = [
+          for (final i in current)
+            if (!ids.contains(i.id)) i,
+        ];
+        _itemsFuture = Future.value(_shown!);
+      });
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      for (final item in targets) {
+        await _repo.applyLocalWrite(
+          buildDeleteOp(
+            table: kShoppingTable,
+            id: item.id!,
+            nowMillis: DateTime.now().millisecondsSinceEpoch,
+            seq: _nextSeq(),
+          ),
+        );
+      }
+      await _reload();
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo quitar'))),
+      );
+      return;
+    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: SnackBarAction(
+            label: 'Deshacer',
+            onPressed: () => _restore(targets),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+      );
+  }
+
+  /// Vuelve a añadir productos quitados (con ids locales nuevos).
+  Future<void> _restore(List<ShoppingListItem> items) async {
+    try {
+      for (final item in items) {
+        final nowMillis = DateTime.now().millisecondsSinceEpoch;
+        final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
+        await _repo.applyLocalWrite(
+          buildInsertOp(
+            table: kShoppingTable,
+            id: localId,
+            payload: {...item.toCacheMap(), 'id': localId},
+            nowMillis: nowMillis,
+            seq: _nextSeq(),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Quitar'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    for (final item in comprados) {
-      await _deleteItem(item);
+        );
+      }
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo deshacer'))),
+      );
     }
   }
 

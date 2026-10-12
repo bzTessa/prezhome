@@ -395,6 +395,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Copiar',
                     icon: const Icon(Icons.copy, color: AppColors.woodDark),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: data.homeId!));
