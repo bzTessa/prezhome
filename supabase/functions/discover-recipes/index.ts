@@ -127,6 +127,7 @@ Responde SOLO con un JSON válido (sin markdown) con esta forma:
   "recipes": [
     {
       "title": string,
+      "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
       "description": string,
       "meal_types": string[],   // de: "breakfast","lunch","dinner","snack","dessert"
       "appliance": "none"|"oven"|"stovetop"|"pot"|"airfryer"|"microwave",

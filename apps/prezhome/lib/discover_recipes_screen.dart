@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'models/supermarket.dart';
+import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
 import 'theme/app_theme.dart';
@@ -271,22 +272,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       // manual, así que siempre lo intentamos. Degrada con elegancia: si falla o
       // viene null, se guarda sin foto (se verá el placeholder cozy).
       final title = (r['title'] ?? 'Receta').toString();
-      String? autoImageUrl;
-      if (title.trim().isNotEmpty) {
-        try {
-          final photoRes = await _client.functions.invoke(
-            'recipe-photo',
-            body: {'query': title},
-          );
-          final photoData = photoRes.data;
-          if (photoData is Map) {
-            final url = photoData['url']?.toString();
-            if (url != null && url.isNotEmpty) autoImageUrl = url;
-          }
-        } catch (e) {
-          debugPrint('DiscoverRecipesScreen recipe-photo error: $e');
-        }
-      }
+      final autoImageUrl = await RecipePhotoService(
+        _client,
+      ).find(title: title, titleEn: r['photo_query_en']?.toString());
 
       final servings = i(r['servings']) ?? 1;
 

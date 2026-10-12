@@ -48,6 +48,7 @@ Responde SOLO con un objeto JSON válido (sin texto adicional, sin markdown) con
 exactamente esta forma:
 {
   "title": string,
+  "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
   "description": string,
   "servings": number,
   "meal_types": string[],  // uno o varios de: "breakfast","lunch","dinner","snack","dessert"
