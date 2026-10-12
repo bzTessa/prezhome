@@ -46,6 +46,9 @@ dependencies:
   # Escáner de código de barras (cámara) para añadir productos al inventario
   # escaneando el EAN/UPC. Línea 5.x estable, resoluble en este toolchain.
   mobile_scanner: ^5.2.3
+  # Componentes de interfaz compartidos del monorepo (barra flotante...).
+  prez_ui:
+    path: ../../packages/prez_ui
 
 dev_dependencies:
   flutter_test:

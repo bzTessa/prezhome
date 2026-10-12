@@ -213,9 +213,10 @@ packages/
 supabase/          migraciones y Edge Functions compartidas
 ```
 
-  Hecho: `apps/prezhome` + `supabase/` compartido. Pendiente: crear
-  `packages/` y `apps/prezwallet`, y entonces unirlos con *pub workspaces*
-  (Dart 3.6+) para tener un único `pubspec.lock`.
+  Hecho: `apps/prezhome`, `packages/prez_ui` (barra flotante) y
+  `supabase/` compartido. Las apps usan los paquetes por `path:`. Cuando
+  exista `apps/prezwallet`, valorar *pub workspaces* (Dart 3.6+) para tener
+  un único `pubspec.lock`.
 - Claves de APIs externas (cotizaciones, bancos) solo en **Edge Functions**
   como secrets de Supabase, nunca en el cliente (ver `AGENTS.md`).
 - Cálculos (patrimonio, presupuestos, % por categoría) como **lógica pura y
