@@ -6,6 +6,7 @@ Claude Code en la nube (allí no se cargan los plugins instalados en local).
 | Skill (`.claude/skills/…`) | Origen | Commit | Licencia |
 |---|---|---|---|
 | dart-flutter-patterns, flutter-dart-code-review, accessibility, design-system, postgres-patterns | [affaan-m/ECC](https://github.com/affaan-m/ECC) | b92f181 | MIT (`ECC-LICENSE`) |
+| security-audit | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) | c1c8a8c | MIT (`cloudflare-security-audit-LICENSE`) |
 | taste-skill, redesign-skill | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | d237dd3 | MIT (`taste-skill-LICENSE`) |
 
 Son guías de referencia: si chocan con las reglas del proyecto (`AGENTS.md`,
