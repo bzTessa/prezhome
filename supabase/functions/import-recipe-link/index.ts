@@ -264,13 +264,13 @@ Deno.serve(async (req: Request) => {
       { target_home_id: homeId },
     );
     if (creditErr) {
-      return json({ error: "No se pudo verificar el límite de IA" }, 500);
+      return json({ error: "No se pudo verificar el límite de uso" }, 500);
     }
     if (allowed !== true) {
       return json(
         {
           error:
-            "Has alcanzado tu límite mensual de IA. Inténtalo el mes que viene.",
+            "Has llegado al límite de este mes. Vuelve a probar el mes que viene.",
         },
         429,
       );
@@ -293,7 +293,7 @@ Deno.serve(async (req: Request) => {
           error:
             "No pude leer la receta de ese enlace (puede ser privado o no " +
             "tener la receta escrita en la descripción). Prueba a copiar el " +
-            "texto de la receta y pegarlo en 'Rellenar con IA'.",
+            "texto de la receta y pegarlo en 'Completar receta'.",
         },
         422,
       );
@@ -332,20 +332,20 @@ Deno.serve(async (req: Request) => {
 
     if (geminiData === undefined) {
       return json(
-        { error: `Error de la IA → ${lastError.substring(0, 300)}` },
+        { error: `Error del servicio → ${lastError.substring(0, 300)}` },
         502,
       );
     }
 
     const text: string | undefined =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return json({ error: "La IA no devolvió una receta" }, 502);
+    if (!text) return json({ error: "No se recibió ninguna receta" }, 502);
 
     let recipe: unknown;
     try {
       recipe = JSON.parse(text);
     } catch (_e) {
-      return json({ error: "La IA devolvió un formato inesperado" }, 502);
+      return json({ error: "Respuesta con un formato inesperado" }, 502);
     }
 
     return json({ recipe });

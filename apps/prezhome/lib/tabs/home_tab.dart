@@ -94,7 +94,7 @@ class HomeTabState extends State<HomeTab> {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
     'dinner': 'Cena',
-    'snack': 'Snack',
+    'snack': 'Merienda',
     'dessert': 'Postre',
   };
   static const _mealOrder = [
@@ -985,7 +985,7 @@ class HomeTabState extends State<HomeTab> {
         Expanded(
           child: _glanceTile(
             value: expiring,
-            label: 'por caducar',
+            label: 'Por caducar',
             icon: Icons.hourglass_bottom_rounded,
             bg: _expired > 0 ? AppColors.expiredBg : AppColors.soonBg,
             fg: _expired > 0 ? AppColors.expired : AppColors.soon,
@@ -997,7 +997,7 @@ class HomeTabState extends State<HomeTab> {
           Expanded(
             child: _glanceTile(
               value: tasksToday,
-              label: tasksToday == 1 ? 'tarea hoy' : 'tareas hoy',
+              label: tasksToday == 1 ? 'Tarea hoy' : 'Tareas hoy',
               icon: Icons.check_circle_outline_rounded,
               bg: AppColors.sageBg,
               fg: AppColors.sage,
@@ -1009,7 +1009,7 @@ class HomeTabState extends State<HomeTab> {
         Expanded(
           child: _glanceTile(
             value: _pendingShopping,
-            label: 'en la compra',
+            label: 'En la compra',
             icon: Icons.shopping_cart_outlined,
             bg: AppColors.frostBg,
             fg: AppColors.frost,
@@ -1535,7 +1535,7 @@ class HomeTabState extends State<HomeTab> {
                             ),
                           ),
                           if (it.skipped)
-                            Text('fuera', style: AppTextStyles.labelMuted),
+                            Text('Fuera', style: AppTextStyles.labelMuted),
                         ],
                       ),
                     ),

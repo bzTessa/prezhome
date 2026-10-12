@@ -219,7 +219,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
     'dinner': 'Cena',
-    'snack': 'Snack',
+    'snack': 'Merienda',
     'dessert': 'Postre',
   };
   static const _mealOrder = [
@@ -410,8 +410,8 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            icon: const Icon(Icons.auto_awesome),
-            label: const Text('Gestionar plan semanal'),
+            icon: const Icon(Icons.calendar_month_rounded),
+            label: const Text('Plan de la semana'),
           ),
         ),
       ],

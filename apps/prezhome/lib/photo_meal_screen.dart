@@ -258,7 +258,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Analizando la foto con IA…'),
+                  Text('Mirando el plato…'),
                 ],
               ),
             )
@@ -288,9 +288,8 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'La IA estimará los alimentos y sus calorías. La estimación por '
-              'foto es aproximada, así que después podrás revisar y corregir '
-              'todo antes de guardarlo.',
+              'Calculamos los alimentos y sus calorías. Podrás corregirlo antes '
+              'de guardar.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[600]),
             ),
@@ -339,8 +338,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Las calorías son una ESTIMACIÓN aproximada hecha por la '
-                      'IA. Ajústalas si hace falta antes de guardar.',
+                      'Las calorías son aproximadas.',
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                     if (_note.isNotEmpty) ...[
@@ -433,8 +431,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    'La IA no detectó alimentos en la foto. Añádelos a mano '
-                    'con el botón de abajo.',
+                    'No se ha reconocido ningún alimento. Añádelos a mano.',
                     style: TextStyle(color: Colors.grey[700]),
                   ),
                 ),
@@ -515,7 +512,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: _dec('kcal'),
+                  decoration: _dec('Kcal'),
                 ),
               ),
             ],

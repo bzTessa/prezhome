@@ -683,9 +683,8 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     return _stepScroll(
       children: [
         _stepHeader(
-          '¿Como te alimentas?',
-          'Elige el tipo de dieta que mejor va contigo. Asi te propondre '
-              'recetas que encajen.',
+          '¿Cómo te alimentas?',
+          'Las recetas se adaptarán a tu dieta.',
         ),
         ...NutritionProfile.dietLabels.entries.map(
           (e) => Padding(
@@ -707,11 +706,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildAllergiesStep() {
     return _stepScroll(
       children: [
-        _stepHeader(
-          'Alergias o intolerancias',
-          'Marca lo que debamos evitar. Si no tienes ninguna, pasa al '
-              'siguiente paso sin problema.',
-        ),
+        _stepHeader('Alergias o intolerancias', 'Opcional.'),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -754,8 +749,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       children: [
         _stepHeader(
           'Ingredientes que no te gustan',
-          'Escribe los que prefieras evitar, separados por comas (p. ej. '
-              'cebolla, cilantro). Es opcional.',
+          'Separados por comas. Opcional.',
         ),
         TextField(
           controller: _dislikedController,
@@ -805,8 +799,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       children: [
         _stepHeader(
           '¿Cómo prefieres cocinar?',
-          'Elige el ritmo que mejor va contigo. Así adaptamos las propuestas a '
-              'tu día a día. Puedes cambiarlo cuando quieras.',
+          'Puedes cambiarlo cuando quieras.',
         ),
         ...CookingStyle.values.map(
           (style) => Padding(
@@ -838,11 +831,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     };
     return _stepScroll(
       children: [
-        _stepHeader(
-          '¿Qué quieres activar?',
-          'Enciende solo lo que vayas a usar. Lo que apagues se ocultará para '
-              'que la app sea más tuya.',
-        ),
+        _stepHeader('¿Qué quieres activar?', 'Lo que apagues no se mostrará.'),
         ...HomeModule.values.map(
           (module) => Padding(
             padding: const EdgeInsets.only(bottom: 12),

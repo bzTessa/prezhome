@@ -682,9 +682,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.auto_awesome),
+                : const Icon(Icons.event_available_rounded),
             label: Text(
-              data.entries.isEmpty ? 'Generar plan' : 'Regenerar',
+              data.entries.isEmpty ? 'Hacer plan' : 'Rehacer plan',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           );
@@ -787,8 +787,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              'Aún no hay plan esta semana. Pulsa "Generar plan" o toca un '
-              'hueco para elegir tú la receta.',
+              'Aún no hay plan esta semana.',
               style: TextStyle(color: Colors.grey[700]),
             ),
           ),
@@ -910,8 +909,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Cocina en lote las recetas de la semana con una línea de '
-                    'tiempo y temporizadores.',
+                    'Cocina la semana de una vez',
                     style: TextStyle(color: Colors.grey[700], fontSize: 13),
                   ),
                 ],

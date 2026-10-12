@@ -725,14 +725,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       _stat(
         Icons.schedule_rounded,
         r.totalTimeMinutes == null ? '—' : '${r.totalTimeMinutes}',
-        'min',
+        'Minutos',
         AppColors.frost,
         AppColors.frostBg,
       ),
       _stat(
         Icons.local_fire_department_rounded,
         r.calories == null ? '—' : '${r.calories}',
-        'kcal/ración',
+        'Kcal/ración',
         AppColors.terracotta,
         AppColors.terracottaBg,
       ),
@@ -748,7 +748,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         _stat(
           Icons.restaurant_rounded,
           '${r.servings}',
-          r.servings == 1 ? 'ración' : 'raciones',
+          r.servings == 1 ? 'Ración' : 'Raciones',
           AppColors.peach,
           AppColors.peachBg,
         ),
@@ -1167,14 +1167,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Toca un paso para tacharlo.',
-          style: AppTextStyles.bodyMuted.copyWith(fontSize: 13),
-        ),
-        const SizedBox(height: 10),
-        for (var i = 0; i < steps.length; i++) _stepRow(i, steps[i]),
-      ],
+      children: [for (var i = 0; i < steps.length; i++) _stepRow(i, steps[i])],
     );
   }
 

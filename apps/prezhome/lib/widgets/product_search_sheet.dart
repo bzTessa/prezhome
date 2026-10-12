@@ -164,7 +164,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
     if (r.throttled) {
       return _message(
         Icons.hourglass_top_rounded,
-        'Demasiadas búsquedas seguidas. Espera un minuto e inténtalo otra vez.',
+        'Demasiadas búsquedas seguidas. Prueba en un minuto.',
       );
     }
     if (r.failed) {
@@ -176,8 +176,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
     if (r.products.isEmpty) {
       return _message(
         Icons.search_off_rounded,
-        'No lo encontramos en el súper. Añádelo igualmente y le pondremos '
-        'una foto representativa.',
+        'No está en el súper. Puedes añadirlo igualmente.',
       );
     }
     return ListView(
@@ -192,9 +191,8 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text(
-              'No hay resultados de '
-              '${Supermarket.labelFor(widget.supermarketKey!)}; '
-              'te enseñamos los de otros súper.',
+              'Sin resultados en ${Supermarket.labelFor(widget.supermarketKey!)}. '
+              'Estos son de otros súper.',
               style: AppTextStyles.bodyMuted,
             ),
           ),

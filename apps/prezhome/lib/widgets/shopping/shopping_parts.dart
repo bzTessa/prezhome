@@ -81,14 +81,14 @@ class ShoppingSummaryHeader extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'Generar desde el plan de la semana',
+              tooltip: 'Añadir lo del plan de la semana',
               onPressed: generating ? null : onGenerate,
               icon: generating
                   ? const SizedBox.square(
                       dimension: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.auto_awesome_outlined),
+                  : const Icon(Icons.event_note_rounded),
               color: AppColors.woodDark,
             ),
             IconButton(

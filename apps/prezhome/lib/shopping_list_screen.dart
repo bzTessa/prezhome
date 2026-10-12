@@ -903,7 +903,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   autofocus: true,
                   decoration: const InputDecoration(
                     labelText: 'Nombre',
-                    hintText: 'Ej. Tomates / Detergente',
+                    hintText: 'Producto',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1407,8 +1407,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Text(
-                  '¿Dónde compras normalmente? Las recetas que genere la IA '
-                  'usarán productos fáciles de encontrar ahí.',
+                  'Las recetas usarán productos de este súper.',
                   style: TextStyle(color: AppColors.inkMuted),
                 ),
               ),
@@ -1702,8 +1701,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             const SizedBox(height: AppSpacing.lg),
             OutlinedButton.icon(
               onPressed: _generating ? null : _generarDesdePlan,
-              icon: const Icon(Icons.auto_awesome_outlined),
-              label: const Text('Generar desde el plan'),
+              icon: const Icon(Icons.event_note_rounded),
+              label: const Text('Desde el plan'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.woodDark,
                 side: const BorderSide(color: AppColors.wood),

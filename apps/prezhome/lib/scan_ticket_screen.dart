@@ -367,7 +367,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Leyendo el ticket con IA…'),
+                  Text('Leyendo el ticket…'),
                 ],
               ),
             )
@@ -397,7 +397,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'La IA extraerá los productos y precios. Después podrás revisarlo.',
+              'Sacamos los productos y precios. Podrás revisarlo después.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[600]),
             ),

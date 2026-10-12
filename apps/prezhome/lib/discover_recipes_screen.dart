@@ -102,6 +102,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   final Set<int> _saving = {};
   final Set<int> _savedIdx = {};
 
+  static String _cap(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
   static const _goals = [
     'mantener',
     'perder grasa',
@@ -477,7 +480,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                       ButtonSegment(
                         value: false,
                         label: Text('Ideas nuevas'),
-                        icon: Icon(Icons.auto_awesome_outlined),
+                        icon: Icon(Icons.lightbulb_outline_rounded),
                       ),
                       ButtonSegment(
                         value: true,
@@ -539,7 +542,10 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                     initialValue: _goal,
                     decoration: _dec('Objetivo'),
                     items: _goals
-                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .map(
+                          (g) =>
+                              DropdownMenuItem(value: g, child: Text(_cap(g))),
+                        )
                         .toList(),
                     onChanged: (v) => setState(() => _goal = v!),
                   ),
@@ -548,7 +554,10 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                     initialValue: _diet,
                     decoration: _dec('Dieta'),
                     items: _diets
-                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .map(
+                          (g) =>
+                              DropdownMenuItem(value: g, child: Text(_cap(g))),
+                        )
                         .toList(),
                     onChanged:
                         DiscoverRecipesScreen.profileDietOverrides(_profileDiet)
@@ -619,10 +628,8 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.auto_awesome),
-                    label: Text(
-                      _loading ? 'Generando ideas…' : 'Generar ideas',
-                    ),
+                        : const Icon(Icons.search_rounded),
+                    label: Text(_loading ? 'Buscando ideas…' : 'Ver ideas'),
                   ),
                 ],
               ),

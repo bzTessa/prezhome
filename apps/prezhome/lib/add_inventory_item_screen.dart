@@ -490,10 +490,10 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               const SizedBox(height: 4),
               Text(
                 _kind == 'ingredient'
-                    ? 'Materia prima (ej. pollo troceado, cebolla picada).'
+                    ? 'Ingrediente para cocinar'
                     : _kind == 'prep'
-                    ? 'Base preparada (ej. sofrito, sopa en daditos).'
-                    : 'Plato listo para comer (ej. lentejas cocinadas).',
+                    ? 'Base ya preparada'
+                    : 'Plato listo para comer',
                 style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
               const SizedBox(height: 20),
@@ -735,11 +735,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     'No añadir a la compra',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: const Text(
-                    'Para básicos que siempre tienes (sal, aceite, '
-                    'especias...). No aparecerán en la lista de la compra '
-                    'aunque una receta los pida.',
-                  ),
+                  subtitle: const Text('Básicos que siempre tienes'),
                   onChanged: (v) => setState(() => _isStaple = v),
                 ),
               ),

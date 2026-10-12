@@ -52,8 +52,7 @@ String _reason(Object? error) {
     return 'No tienes permiso para hacer esto en este hogar.';
   }
   if (has(['429', 'quota', 'rate limit', 'límite de ia'])) {
-    return 'Has llegado al límite de uso de la IA por ahora. '
-        'Prueba más tarde.';
+    return 'Demasiadas peticiones seguidas. Prueba en un rato.';
   }
   if (has(['23505', 'duplicate key'])) {
     return 'Eso ya existe.';

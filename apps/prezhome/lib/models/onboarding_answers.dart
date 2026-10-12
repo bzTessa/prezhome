@@ -25,7 +25,7 @@ enum HomeGoal {
   compra('compra', 'La compra', 'Lista que se escribe sola'),
   despensa('despensa', 'Lo que hay en casa', 'Despensa, nevera y caducidades'),
   tareas('tareas', 'Tareas del hogar', 'Reparto justo y recordatorios'),
-  lote('lote', 'Cocinar en lote', 'Tuppers y congelador organizados'),
+  lote('lote', 'Cocinar en lote', 'Táperes y congelador organizados'),
   gastos('gastos', 'El gasto de la casa', 'Presupuesto y tickets');
 
   const HomeGoal(this.id, this.label, this.subtitle);

@@ -219,7 +219,7 @@ class _ZoneTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     alert?.$1 ??
-                        (summary.count == 1 ? 'producto' : 'productos'),
+                        (summary.count == 1 ? 'Producto' : 'Productos'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
