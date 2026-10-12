@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/task.dart';
 import 'theme/app_theme.dart';
+import 'utils/friendly_error.dart';
 
 class AddTaskScreen extends StatefulWidget {
   /// Miembros del hogar para asignar: {userId: nombre}.
@@ -80,7 +81,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

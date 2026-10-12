@@ -15,7 +15,12 @@
 //   - Las claves viven como secretos del servidor (nunca en el cliente).
 //   - Valida la sesión del usuario (JWT) y obtiene su home_id (mismo patrón de
 //     seguridad que generate-recipe).
-//   - Recibe { "query": <título/nombre del plato> }.
+//   - Recibe { "query": <título/nombre del plato>, "query_en"?: <el mismo en
+//     inglés>, "mode"?: "dish"|"ingredient", "exclude"?: [urls ya vistas] }.
+//     Cada búsqueda declara su idioma (lang=es / en) y "exclude" permite a la
+//     app pedir "otra foto" distinta de las ya mostradas.
+//   - Open Food Facts (foto del envase) solo se usa en modo "ingredient": para
+//     un plato cocinado daría una foto equivocada.
 //   - Esto NO es Gemini: NO consume crédito de IA (no llama a consume_ai_credit).
 //
 // Unsplash · requisito de "download trigger":
@@ -49,98 +54,117 @@ function json(body: unknown, status = 200): Response {
 }
 
 // --- Refinado de la query de comida -----------------------------------------
-// El título de una receta ("Garbanzos salteados con espinacas") da fotos
-// genéricas en Unsplash (sale "espinacas en un colador"). Para acertar más:
-//   1. Limpiamos el título: quitamos preposiciones/relleno de cocina
-//      ("al horno", "salteado con", "a la plancha"...) que confunden la
-//      búsqueda, y nos quedamos con los INGREDIENTES/sustantivos clave.
-//   2. Añadimos el contexto "food dish meal" para empujar a Unsplash hacia
-//      fotos de PLATOS DE COMIDA y no de ingredientes sueltos o paisajes.
-// Devuelve una lista de queries a probar en orden (de más específica a más
-// genérica) para maximizar el acierto sin dejar de degradar con elegancia.
-function buildFoodQueries(raw: string, mode = "dish"): string[] {
-  const original = raw.trim();
-  if (!original) return [];
+// Antes se mezclaban palabras en español con contexto en inglés
+// ("lentejas estofadas chorizo food dish meal") y Unsplash, que por defecto
+// interpreta la búsqueda en inglés, ignoraba las palabras clave y devolvía un
+// plato genérico. Ahora cada búsqueda declara su IDIOMA:
+//   1. Si la app manda `query_en` (nombre del plato en inglés que da la IA al
+//      generar/importar la receta), se prueba primero en inglés: es lo que
+//      mejor acierta en los bancos de imágenes.
+//   2. Después, el título en español con `lang=es` (Unsplash traduce la
+//      búsqueda), primero el núcleo de ingredientes y luego el título entero.
+// Devuelve la lista de búsquedas a probar en orden (de más a menos específica).
+interface PhotoSearch {
+  query: string;
+  lang: "es" | "en";
+}
 
-  // Modo INGREDIENTE (despensa): buscamos el alimento CRUDO/fresco, no un plato
-  // cocinado. Añadimos términos que empujan a Unsplash hacia el producto tal
-  // cual se compra, evitando que "pechuga de pollo" salga como un plato hecho.
-  if (mode === "ingredient") {
-    const clean = original
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}\s]/gu, " ")
-      .split(/\s+/)
-      .filter((w) => w.length > 0)
-      .join(" ");
-    const base = clean || original;
-    return [
-      ...new Set([
-        `${base} raw fresh ingredient`,
-        `${base} fresh food ingredient`,
-        `${base} food`,
-      ]),
-    ];
-  }
+// Palabras de "relleno" culinario y conectores que no aportan a la búsqueda
+// visual (en español). Se eliminan para quedarnos con los ingredientes.
+const STOP_WORDS = new Set([
+  "al", "a", "la", "el", "los", "las", "con", "de", "del", "y", "o", "en",
+  "estilo", "casero", "casera", "rápido", "rapido", "rápida", "rapida",
+  "fácil", "facil", "rico", "rica", "sabroso", "sabrosa",
+  "horno", "plancha", "sartén", "sarten", "vapor", "olla", "cazuela",
+  "salteado", "salteada", "salteados", "salteadas", "asado", "asada",
+  "asados", "asadas", "cocido", "cocida", "cocidos", "cocidas",
+  "guisado", "guisada", "frito", "frita", "fritos", "fritas",
+  "gratinado", "gratinada", "relleno", "rellena", "crujiente",
+  // Marcas blancas habituales: no describen el plato.
+  "hacendado", "carrefour", "dia", "eroski", "auchan", "alcampo",
+]);
 
-  // Palabras de "relleno" culinario y conectores que no aportan a la búsqueda
-  // visual (en español). Se eliminan para quedarnos con los ingredientes.
-  const stop = new Set([
-    "al", "a", "la", "el", "los", "las", "con", "de", "del", "y", "o", "en",
-    "estilo", "casero", "casera", "rápido", "rapido", "rápida", "rapida",
-    "fácil", "facil", "rico", "rica", "sabroso", "sabrosa",
-    "horno", "plancha", "sartén", "sarten", "vapor", "olla", "cazuela",
-    "salteado", "salteada", "salteados", "salteadas", "asado", "asada",
-    "asados", "asadas", "cocido", "cocida", "cocidos", "cocidas",
-    "guisado", "guisada", "frito", "frita", "fritos", "fritas",
-    "gratinado", "gratinada", "relleno", "rellena", "crujiente",
-  ]);
-
-  const words = original
+function words(raw: string): string[] {
+  return raw
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .split(/\s+/)
     .filter((w) => w.length > 0);
+}
 
-  const keyWords = words.filter((w) => !stop.has(w));
+function buildFoodSearches(
+  raw: string,
+  queryEn: string,
+  mode = "dish",
+): PhotoSearch[] {
+  const original = raw.trim();
+  const en = queryEn.trim();
+  const searches: PhotoSearch[] = [];
+
+  // Modo INGREDIENTE (despensa): el alimento tal cual se compra, no un plato.
+  if (mode === "ingredient") {
+    const base = words(original).join(" ") || original;
+    if (en) searches.push({ query: `${en} raw ingredient`, lang: "en" });
+    if (base) {
+      searches.push({ query: base, lang: "es" });
+      searches.push({ query: `${base} ingrediente fresco`, lang: "es" });
+    }
+    return dedupe(searches);
+  }
+
+  if (en) {
+    searches.push({ query: en, lang: "en" });
+    searches.push({ query: `${en} dish`, lang: "en" });
+  }
+  const keyWords = words(original).filter((w) => !STOP_WORDS.has(w));
   // Los 3 primeros términos significativos suelen ser los ingredientes clave.
-  const core = keyWords.slice(0, 3).join(" ").trim();
+  const core = keyWords.slice(0, 3).join(" ");
+  if (core) searches.push({ query: `${core} plato`, lang: "es" });
+  if (original) searches.push({ query: original, lang: "es" });
+  if (keyWords.length > 0) {
+    searches.push({ query: `${keyWords[0]} comida`, lang: "es" });
+  }
+  return dedupe(searches);
+}
 
-  const queries: string[] = [];
-  // 1) Núcleo de ingredientes + contexto de comida (lo que mejor acierta).
-  if (core) queries.push(`${core} food dish meal`);
-  // 2) Título original + contexto de comida.
-  queries.push(`${original} food dish`);
-  // 3) Solo el primer término significativo + comida (último recurso útil).
-  if (keyWords.length > 0) queries.push(`${keyWords[0]} food plate`);
-  // Quitar duplicados preservando el orden.
-  return [...new Set(queries)];
+function dedupe(searches: PhotoSearch[]): PhotoSearch[] {
+  const seen = new Set<string>();
+  return searches.filter((s) => {
+    const k = `${s.lang}:${s.query}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 // --- Unsplash ---------------------------------------------------------------
-// Busca una foto en Unsplash y devuelve { url, attribution } o { url: null }.
-// Prueba varias queries refinadas (orientadas a comida) en orden hasta que una
-// devuelva resultado. Cualquier excepción de red, respuesta no OK o ausencia de
-// resultados se degrada a { url: null }: NUNCA lanza hacia el flujo principal.
+// Prueba las búsquedas en orden y devuelve la primera foto que NO esté en
+// `exclude` (las que la app ya mostró: así "Otra foto" trae una distinta).
+// Cualquier excepción de red, respuesta no OK o ausencia de resultados se
+// degrada a { url: null }: NUNCA lanza hacia el flujo principal.
 async function searchUnsplash(
-  rawQuery: string,
+  searches: PhotoSearch[],
   key: string,
-  mode = "dish",
-): Promise<unknown> {
-  const queries = buildFoodQueries(rawQuery, mode);
-  if (queries.length === 0) return { url: null };
-  for (const q of queries) {
-    const result = await searchUnsplashOnce(q, key);
-    if ((result as { url?: unknown }).url) return result;
+  exclude: Set<string>,
+): Promise<{ url: string | null; [k: string]: unknown }> {
+  for (const s of searches) {
+    const result = await searchUnsplashOnce(s, key, exclude);
+    if (result.url) return result;
   }
   return { url: null };
 }
 
-// Una sola búsqueda en Unsplash para una query concreta.
-async function searchUnsplashOnce(query: string, key: string): Promise<unknown> {
+// Una sola búsqueda en Unsplash (10 resultados, para poder saltar los
+// excluidos).
+async function searchUnsplashOnce(
+  search: PhotoSearch,
+  key: string,
+  exclude: Set<string>,
+): Promise<{ url: string | null; [k: string]: unknown }> {
   try {
     const url =
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}` +
-      `&per_page=1&orientation=landscape&content_filter=high`;
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(search.query)}` +
+      `&lang=${search.lang}&per_page=10&orientation=landscape&content_filter=high`;
     const res = await fetch(url, {
       headers: { Authorization: `Client-ID ${key}` },
     });
@@ -150,14 +174,12 @@ async function searchUnsplashOnce(query: string, key: string): Promise<unknown> 
     }
     const data = await res.json();
     const results = Array.isArray(data?.results) ? data.results : [];
-    if (results.length === 0) {
-      return { url: null };
-    }
-    const first = results[0];
-    const photoUrl = first?.urls?.regular ?? first?.urls?.small ?? null;
-    if (!photoUrl) {
-      return { url: null };
-    }
+    const first = results.find((r: Record<string, any>) => {
+      const u = r?.urls?.regular ?? r?.urls?.small;
+      return typeof u === "string" && !exclude.has(u);
+    });
+    if (!first) return { url: null };
+    const photoUrl: string = first.urls.regular ?? first.urls.small;
 
     const photographerName = first?.user?.name ?? null;
     const photographerUrl = first?.user?.links?.html ?? null;
@@ -165,21 +187,9 @@ async function searchUnsplashOnce(query: string, key: string): Promise<unknown> 
 
     // Requisito de la API de Unsplash: hay que "disparar" el endpoint de
     // descarga (links.download_location) cuando se usa/selecciona una foto.
-    // Es BEST-EFFORT: si falla, solo lo registramos y seguimos devolviendo la
-    // foto con normalidad.
-    //
-    // IMPORTANTE: NO bloqueamos la respuesta al cliente con este disparo. Antes
-    // se hacía `await fetch(...)` en el camino crítico, de modo que un endpoint
-    // lento o colgado añadía latencia a CADA búsqueda de foto. Ahora:
-    //   1. Acotamos el fetch con un AbortController (~2.5s) para que nunca
-    //      quede colgado indefinidamente.
-    //   2. Lo lanzamos en modo fire-and-forget. En edge functions de Deno una
-    //      promesa sin await puede cortarse al devolver la respuesta, así que
-    //      usamos `EdgeRuntime.waitUntil(...)` si existe para que el disparo
-    //      termine en segundo plano SIN retener la respuesta. Si no existe,
-    //      caemos a un await con el mismo timeout corto (cota aceptable).
-    // En cualquier caso, un fallo o timeout del disparo NUNCA afecta a la foto
-    // devuelta ni lanza hacia el handler.
+    // Es BEST-EFFORT y no retiene la respuesta: se acota con un timeout corto
+    // (~2.5s) y, si existe `EdgeRuntime.waitUntil`, se lanza en segundo plano.
+    // Un fallo o timeout del disparo NUNCA afecta a la foto devuelta.
     const downloadLocation = first?.links?.download_location;
     if (typeof downloadLocation === "string" && downloadLocation.length > 0) {
       const triggerDownload = async () => {
@@ -201,10 +211,8 @@ async function searchUnsplashOnce(query: string, key: string): Promise<unknown> 
         EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
       }).EdgeRuntime;
       if (edgeRuntime && typeof edgeRuntime.waitUntil === "function") {
-        // Fire-and-forget sin retener la respuesta del usuario.
         edgeRuntime.waitUntil(triggerDownload());
       } else {
-        // Sin EdgeRuntime: await acotado por el timeout corto como cota.
         await triggerDownload();
       }
     }
@@ -223,6 +231,37 @@ async function searchUnsplashOnce(query: string, key: string): Promise<unknown> 
     console.error("Unsplash fetch exception:", e);
     return { url: null };
   }
+}
+
+// --- Pexels (respaldo con clave) --------------------------------------------
+// Mismo contrato que Unsplash. Pexels interpreta el idioma con `locale`.
+async function searchPexels(
+  searches: PhotoSearch[],
+  key: string,
+  exclude: Set<string>,
+): Promise<string | null> {
+  for (const s of searches) {
+    try {
+      const locale = s.lang === "es" ? "es-ES" : "en-US";
+      const url =
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(s.query)}` +
+        `&locale=${locale}&per_page=10&orientation=landscape`;
+      const res = await fetch(url, { headers: { Authorization: key } });
+      if (!res.ok) {
+        console.error("Pexels error:", res.status, await res.text());
+        continue;
+      }
+      const data = await res.json();
+      const photos = Array.isArray(data?.photos) ? data.photos : [];
+      for (const p of photos) {
+        const u = p?.src?.large || p?.src?.medium || p?.src?.original;
+        if (typeof u === "string" && !exclude.has(u)) return u;
+      }
+    } catch (e) {
+      console.error("Pexels fetch exception:", e);
+    }
+  }
+  return null;
 }
 
 // --- Open Food Facts (RESPALDO keyless) -------------------------------------
@@ -327,60 +366,52 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 3. Leer y validar la petición. 'mode' puede ser 'dish' (receta, por
-    //    defecto) o 'ingredient' (despensa: busca el alimento crudo/fresco).
+    // 3. Leer y validar la petición.
+    //    - query: título del plato (o nombre del alimento) en español.
+    //    - query_en: opcional, el mismo nombre en inglés (lo da la IA al
+    //      generar/importar recetas). Mejora mucho el acierto.
+    //    - mode: 'dish' (receta, por defecto) o 'ingredient' (despensa).
+    //    - exclude: opcional, URLs ya mostradas; se devuelve otra distinta
+    //      (botón "Otra foto" de la app).
     const body = await req.json().catch(() => ({}));
     const query = (body?.query ?? "").toString().trim();
+    const queryEn = (body?.query_en ?? "").toString().trim();
     const mode = (body?.mode ?? "dish").toString().trim();
+    const exclude = new Set<string>(
+      Array.isArray(body?.exclude)
+        ? body.exclude.filter((u: unknown) => typeof u === "string")
+        : [],
+    );
     if (!query) {
       return json({ error: "Falta el nombre del plato" }, 400);
     }
+    const searches = buildFoodSearches(query, queryEn, mode);
 
     // 4. Selección de proveedor. Unsplash es el PRINCIPAL; Pexels el RESPALDO.
     //    Si no hay ninguna clave, degradar: { url: null } (NUNCA 500).
     const unsplashKey = Deno.env.get("UNSPLASH_ACCESS_KEY");
     const pexelsKey = Deno.env.get("PEXELS_API_KEY");
 
-    // 4a. Camino PRINCIPAL: Unsplash. searchUnsplash ya degrada a { url: null }
-    //     ante cualquier fallo, por lo que nunca rompe el alta de receta. Si
-    //     Unsplash no da foto, caemos al RESPALDO keyless de OFF antes de rendir.
     if (unsplashKey) {
-      const result = await searchUnsplash(query, unsplashKey, mode);
-      if ((result as { url?: unknown }).url) return json(result);
-      const offUrl = await searchOFFPhoto(query);
-      return json(offUrl ? { url: offUrl, provider: "openfoodfacts" } : { url: null });
+      const result = await searchUnsplash(searches, unsplashKey, exclude);
+      if (result.url) return json(result);
+    }
+    if (pexelsKey) {
+      const url = await searchPexels(searches, pexelsKey, exclude);
+      if (url) return json({ url, provider: "pexels" });
     }
 
-    // 4b. Camino de RESPALDO: Pexels (comportamiento previo). Si no hay clave de
-    //     Pexels, saltamos directo al RESPALDO keyless de OFF.
-    if (pexelsKey) {
-      // Consultar Pexels. Cualquier error de red o respuesta no OK se degrada
-      // a OFF (y de ahí a { url: null }) para no romper el alta de receta.
-      try {
-        const url =
-          `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}` +
-          `&per_page=1&orientation=landscape`;
-        const res = await fetch(url, {
-          headers: { Authorization: pexelsKey },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const photos = Array.isArray(data?.photos) ? data.photos : [];
-          const src = photos.length > 0 ? (photos[0]?.src ?? {}) : {};
-          const photoUrl = src.large || src.medium || src.original || null;
-          if (photoUrl) return json({ url: photoUrl, provider: "pexels" });
-        } else {
-          console.error("Pexels error:", res.status, await res.text());
-        }
-      } catch (e) {
-        console.error("Pexels fetch exception:", e);
+    // 5. Open Food Facts SOLO para alimentos sueltos (despensa): da la foto
+    //    del ENVASE del producto, que para un plato cocinado es una foto
+    //    equivocada (una bolsa de lentejas para un guiso). Para platos es
+    //    mejor no devolver foto y que la app pinte su ilustración.
+    if (mode === "ingredient") {
+      const offUrl = await searchOFFPhoto(query);
+      if (offUrl && !exclude.has(offUrl)) {
+        return json({ url: offUrl, provider: "openfoodfacts" });
       }
     }
-
-    // 4c. Camino de RESPALDO KEYLESS: Open Food Facts (foto real del producto).
-    //     Último eslabón antes de rendirse: si tampoco hay, { url: null }.
-    const offUrl = await searchOFFPhoto(query);
-    return json(offUrl ? { url: offUrl, provider: "openfoodfacts" } : { url: null });
+    return json({ url: null });
   } catch (e) {
     console.error(e);
     // Último recurso: aun ante un error inesperado, degradar sin romper el alta.

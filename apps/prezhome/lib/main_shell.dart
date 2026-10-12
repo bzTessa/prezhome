@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:prez_ui/prez_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
@@ -18,7 +19,7 @@ import 'widgets/proactive_suggestions_banner.dart';
 /// funcionando aunque alguna pestaña opcional desaparezca.
 enum TabId { comidas, despensa, inicio, tareas, hogar }
 
-/// Orden FIJO de pestañas candidatas (Hoy, Meal Prep, Tareas, Despensa, Hogar)
+/// Orden FIJO de pestañas candidatas (Hoy, Comida, Tareas, Despensa, Hogar)
 /// filtrado por los módulos activados. Las tres primeras son las secciones de
 /// uso diario y quedan agrupadas al principio de la navegación; Despensa y
 /// Hogar conservan sus flujos existentes.
@@ -36,14 +37,14 @@ List<TabId> computeVisibleTabIds(DashboardPrefs prefs) {
 }
 
 /// Descriptor de una pestaña: su identidad semántica, el widget que renderiza
-/// (página del IndexedStack) y su destino en la barra de navegación. Construir
-/// las páginas y los destinos desde la MISMA lista garantiza que children del
-/// IndexedStack y destinos del NavigationBar estén siempre alineados en orden
-/// y longitud.
+/// (página del IndexedStack) y su pestaña en la barra de navegación. Construir
+/// las páginas y las pestañas desde la MISMA lista garantiza que children del
+/// IndexedStack y pestañas de la FloatingNavBar estén siempre alineados en
+/// orden y longitud.
 class _TabDescriptor {
   final TabId id;
   final Widget page;
-  final NavigationDestination destination;
+  final FloatingNavItem destination;
   const _TabDescriptor({
     required this.id,
     required this.page,
@@ -52,7 +53,7 @@ class _TabDescriptor {
 }
 
 /// Estructura principal de la app con barra de navegación inferior.
-/// Secciones agrupadas por momento de uso: Hoy (resumen del día) · Meal Prep
+/// Secciones agrupadas por momento de uso: Hoy (resumen del día) · Comida
 /// (plan, recetas y diario) · Tareas · Despensa · Hogar.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -85,7 +86,7 @@ class MainShellState extends State<MainShell> {
   DashboardPrefs _prefs = DashboardPrefs.defaults();
 
   // Pestañas construidas dinámicamente a partir de _prefs. _index indexa esta
-  // lista (y por tanto el IndexedStack y el NavigationBar, que se construyen
+  // lista (y por tanto el IndexedStack y la FloatingNavBar, que se construyen
   // desde ella).
   late List<_TabDescriptor> _tabs = _buildTabs();
 
@@ -181,7 +182,7 @@ class MainShellState extends State<MainShell> {
   }
 
   /// Construye la lista ordenada de pestañas candidatas en un orden FIJO
-  /// (Hoy, Tareas, Meal Prep, Despensa, Hogar). Solo Tareas es condicional:
+  /// (Hoy, Tareas, Comida, Despensa, Hogar). Solo Tareas es condicional:
   /// se incluye únicamente si el módulo está activado. Páginas y destinos
   /// salen de aquí para no desincronizarse nunca.
   ///
@@ -201,19 +202,19 @@ class MainShellState extends State<MainShell> {
         return _TabDescriptor(
           id: id,
           page: const ComidasTab(),
-          destination: const NavigationDestination(
-            icon: Icon(Icons.restaurant_menu_outlined),
-            selectedIcon: Icon(Icons.restaurant_menu),
-            label: 'Meal Prep',
+          destination: const FloatingNavItem(
+            icon: Icons.restaurant_menu_outlined,
+            selectedIcon: Icons.restaurant_menu,
+            label: 'Comida',
           ),
         );
       case TabId.despensa:
         return _TabDescriptor(
           id: id,
           page: const DespensaTab(),
-          destination: const NavigationDestination(
-            icon: Icon(Icons.kitchen_outlined),
-            selectedIcon: Icon(Icons.kitchen),
+          destination: const FloatingNavItem(
+            icon: Icons.kitchen_outlined,
+            selectedIcon: Icons.kitchen,
             label: 'Despensa',
           ),
         );
@@ -221,9 +222,9 @@ class MainShellState extends State<MainShell> {
         return _TabDescriptor(
           id: id,
           page: HomeTab(key: _homeKey, onNavigateToDespensa: _goToDespensa),
-          destination: const NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today_rounded),
+          destination: const FloatingNavItem(
+            icon: Icons.today_outlined,
+            selectedIcon: Icons.today_rounded,
             label: 'Hoy',
           ),
         );
@@ -231,9 +232,9 @@ class MainShellState extends State<MainShell> {
         return _TabDescriptor(
           id: id,
           page: const TasksScreen(),
-          destination: const NavigationDestination(
-            icon: Icon(Icons.check_circle_outline),
-            selectedIcon: Icon(Icons.check_circle),
+          destination: const FloatingNavItem(
+            icon: Icons.check_circle_outline,
+            selectedIcon: Icons.check_circle,
             label: 'Tareas',
           ),
         );
@@ -241,9 +242,9 @@ class MainShellState extends State<MainShell> {
         return _TabDescriptor(
           id: id,
           page: const HouseholdScreen(),
-          destination: const NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
+          destination: const FloatingNavItem(
+            icon: Icons.settings_outlined,
+            selectedIcon: Icons.settings,
             label: 'Hogar',
           ),
         );
@@ -317,7 +318,7 @@ class MainShellState extends State<MainShell> {
   ///
   /// DECISIÓN (FEAT-003): el ingrediente que caduca NO es una receta, así que
   /// no existe una integración directa ingrediente -> receta que abrir. La
-  /// opción realista y honesta es llevar a la pestaña Meal Prep, donde vive el
+  /// opción realista y honesta es llevar a la pestaña Comida, donde vive el
   /// plan y el acceso al "Modo cocina" (meal_plan_screen abre
   /// BatchPrepTimelineScreen). Desde ahí la usuaria aprovecha lo que caduca en
   /// su próximo Batch Cooking. No inventamos un atajo que no existe.
@@ -356,19 +357,20 @@ class MainShellState extends State<MainShell> {
           ),
         ],
       ),
+      // Barra flotante compartida (packages/prez_ui): píldora con la pestaña
+      // activa expandida (icono + texto) y las demás solo con icono.
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-        child: Container(
-          decoration: AppTheme.surfaceDecoration(
-            radius: AppRadius.lg,
-            elevation: 2,
-          ),
-          child: NavigationBar(
-            selectedIndex: _index,
-            onDestinationSelected: _onDestinationSelected,
-            destinations: [for (final t in _tabs) t.destination],
-          ),
+        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: FloatingNavBar(
+          items: [for (final t in _tabs) t.destination],
+          selectedIndex: _index,
+          onSelected: _onDestinationSelected,
+          backgroundColor: AppColors.card,
+          indicatorColor: AppColors.wood,
+          selectedColor: AppColors.ink,
+          unselectedColor: AppColors.inkMuted,
+          shadow: AppElevation.level2,
         ),
       ),
     );

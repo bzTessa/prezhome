@@ -9,6 +9,7 @@ import 'nutrition_profile_screen.dart';
 import 'photo_meal_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
+import 'utils/friendly_error.dart';
 
 /// Diario de consumo personal del día: muestra lo que la persona ha comido
 /// un día concreto, el total de kcal frente a su objetivo del perfil, y
@@ -617,7 +618,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text(friendlyError(snapshot.error)));
           }
           final data = snapshot.data!;
 

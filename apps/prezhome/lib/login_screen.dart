@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_session_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
+import 'utils/friendly_error.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error de autenticación: $e'),
+            content: Text(friendlyError(e, 'Error de autenticación')),
             backgroundColor: Colors.red,
           ),
         );
@@ -86,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo iniciar con Google: $e'),
+            content: Text(friendlyError(e, 'No se pudo iniciar con Google')),
             backgroundColor: Colors.red,
           ),
         );
@@ -123,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo enviar el correo: $e'),
+          content: Text(friendlyError(e, 'No se pudo enviar el correo')),
           backgroundColor: AppColors.expired,
         ),
       );

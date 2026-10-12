@@ -2,6 +2,7 @@
 
 ## Estructura (monorepo)
 - `apps/prezhome/`: app PrezHome (Flutter). Los comandos de Flutter se ejecutan desde ahí.
+- `packages/prez_ui/`: componentes de interfaz compartidos entre apps (sin colores propios: cada app pasa los suyos).
 - `supabase/`: migraciones y Edge Functions compartidas.
 - `docs/`: documentación de producto (PREZHOME.md, PREZWALLET.md, ESTRATEGIA.md).
 

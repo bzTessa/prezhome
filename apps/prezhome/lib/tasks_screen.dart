@@ -9,6 +9,7 @@ import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
 import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
+import 'utils/friendly_error.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -243,7 +244,7 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
       );
     }
   }
@@ -343,7 +344,7 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
       );
     }
   }
@@ -374,7 +375,7 @@ class _TasksScreenState extends State<TasksScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text(friendlyError(snapshot.error)));
           }
           final data = snapshot.data!;
           if (data.homeId == null) {

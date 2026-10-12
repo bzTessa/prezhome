@@ -55,7 +55,7 @@ enum QuickAction {
 enum HomeModule {
   points('points', 'Modo Puntos', Icons.emoji_events_outlined),
   tasks('tasks', 'Tareas', Icons.check_circle_outline),
-  batchCooking('batch_cooking', 'Batch Cooking', Icons.restaurant);
+  batchCooking('batch_cooking', 'Cocina en lote', Icons.restaurant);
 
   const HomeModule(this.id, this.label, this.icon);
   final String id;
@@ -75,7 +75,7 @@ enum HomeModule {
 enum CookingStyle {
   batch(
     'batch',
-    'Batch Cooking',
+    'En lote',
     'Cocino en tandas para varios días',
     Icons.inventory_2_outlined,
   ),

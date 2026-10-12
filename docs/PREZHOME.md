@@ -121,9 +121,10 @@ Es el patrón que se adopta para **las dos apps**, para que se sientan familia:
 Propuesta de pestañas PrezHome: **Hoy · Comer · Tareas · Hogar** + **[+]**.
 (Despensa y Compra pasan a vivir dentro de "Comer" con pestañas superiores.)
 
-Implementación: widget propio `FloatingNavBar` en un paquete compartido
-(ver sección 7) que sustituye al `NavigationBar` de `main_shell.dart`, con
-`extendBody: true` en el `Scaffold`.
+Implementación: **hecha** en `packages/prez_ui` (`FloatingNavBar`) y usada en
+`apps/prezhome/lib/main_shell.dart` con las 5 pestañas actuales. El botón "+"
+está soportado pero aún no se usa en PrezHome (espera a la bandeja de
+entrada); la reorganización a 4 pestañas tampoco está hecha.
 
 ### 5.2 Estilo
 - Estilo por defecto **Cozy** (amarillo pastel, madera clara, tarjetas

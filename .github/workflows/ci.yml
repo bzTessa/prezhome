@@ -65,6 +65,34 @@ jobs:
       - name: Verificar mapa de dependencias de arquitectura
         run: dart run tool/architecture/dependency_map.dart --check
 
+  # Paquetes compartidos del monorepo (packages/). Hoy: prez_ui.
+  paquetes:
+    name: Paquetes compartidos (prez_ui)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/prez_ui
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Descargar dependencias
+        run: flutter pub get
+
+      - name: Verificar formato
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analizar codigo
+        run: flutter analyze
+
+      - name: Ejecutar tests
+        run: flutter test
+
   # Validacion de las migraciones de Supabase.
   #
   # IMPORTANTE: aqui NO usamos `supabase db lint` ni `supabase db reset`.

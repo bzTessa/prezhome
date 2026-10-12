@@ -14,6 +14,7 @@ import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/inventory_item_card.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
+import 'utils/friendly_error.dart';
 
 /// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
 /// Despensa, Bebidas, Especias o Hogar y limpieza). Agrupa los items y lleva su
@@ -202,7 +203,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo eliminar: $e'),
+            content: Text(friendlyError(e, 'No se pudo eliminar')),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -239,7 +240,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar: $e'),
+          content: Text(friendlyError(e, 'No se pudo actualizar')),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -276,7 +277,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo marcar ${item.name} como agotado: $e'),
+          content: Text(
+            friendlyError(e, 'No se pudo marcar ${item.name} como agotado'),
+          ),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -306,7 +309,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${item.name} quedó agotado, pero no pude añadirlo a la compra: $e',
+            friendlyError(
+              e,
+              '${item.name} quedó agotado, pero no pude añadirlo a la compra',
+            ),
           ),
           backgroundColor: AppColors.expired,
         ),
@@ -436,7 +442,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo deshacer: $e'),
+          content: Text(friendlyError(e, 'No se pudo deshacer')),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -584,7 +590,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: Text('Error al cargar inventario: ${snapshot.error}'),
+              child: Text(
+                friendlyError(
+                  snapshot.error,
+                  'No se pudo cargar el inventario',
+                ),
+              ),
             );
           }
 

@@ -36,7 +36,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
     if (suggestions.isEmpty) return '';
     if (suggestions.length == 1) return suggestions.first.message;
     return '${suggestions.length} alimentos a punto de caducar. '
-        'Aprovéchalos en tu próximo Batch Cooking.';
+        'Aprovéchalos en tu próxima cocina en lote.';
   }
 
   @override

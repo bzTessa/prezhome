@@ -6,6 +6,7 @@ import 'models/nutrition_profile.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
+import 'utils/friendly_error.dart';
 
 /// Cuestionario guiado paso a paso para crear el perfil nutricional la primera
 /// vez. Recoge sexo, fecha de nacimiento, altura, peso, nivel de actividad y
@@ -309,7 +310,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );
@@ -498,7 +499,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       children: [
         _stepHeader(
           'Tu sexo',
-          'Lo usamos para calcular tu metabolismo con mas precision.',
+          'Lo usamos para calcular tu metabolismo con más precisión.',
         ),
         _OptionCard(
           title: 'Mujer',
@@ -900,7 +901,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                 ),
               ),
               const Text(
-                'kcal / dia',
+                'kcal / día',
                 style: TextStyle(fontSize: 16, color: AppColors.woodDark),
               ),
               if (macros != null) ...[

@@ -1,0 +1,4 @@
+.dart_tool/
+build/
+# Paquete (no app): el lockfile lo fija la app que lo usa.
+pubspec.lock

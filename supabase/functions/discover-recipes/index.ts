@@ -2,7 +2,8 @@
 // PrezHome · Edge Function: discover-recipes
 // ============================================================================
 // Genera IDEAS de recetas (estilo "mise") según los parámetros del usuario:
-// supermercado, objetivo, dieta, electrodomésticos y presupuesto.
+// supermercado, objetivo, dieta, electrodomésticos, presupuesto, coste máximo
+// por ración y, en "modo despensa", los alimentos que ya hay en casa.
 // Devuelve varias recetas completas (macros, ingredientes, pasos) en JSON.
 //
 // Seguridad igual que las otras funciones: JWT, home_id, límite de IA.
@@ -77,6 +78,13 @@ function buildPrompt(p: Record<string, unknown>): string {
   // p. ej. "Rápido (menos de 20 min)"). Opcional: si no viene, no se añade
   // ninguna línea y el comportamiento es idéntico al anterior.
   const cookTime = (p.cook_time ?? "").toString().trim();
+  // Modo "con lo que tengo": alimentos que ya hay en casa (los primeros
+  // caducan antes). Si viene, las recetas se construyen sobre ellos.
+  const pantry = Array.isArray(p.pantry)
+    ? (p.pantry as string[]).filter((s) => s && s.trim().length > 0)
+    : [];
+  // Coste máximo orientativo por ración (EUR). Opcional.
+  const maxCost = Number(p.max_cost_per_serving ?? 0);
   const avoidLine = avoid.length > 0
     ? `\n- NO repitas estas recetas que el usuario YA tiene (propón platos
      claramente DISTINTOS, con otros ingredientes principales o estilos):
@@ -104,6 +112,21 @@ function buildPrompt(p: Record<string, unknown>): string {
      más tiempo de cocción.`
     : "";
 
+  const pantryLine = pantry.length > 0
+    ? `\n- MODO DESPENSA (muy importante): el usuario quiere cocinar CON LO QUE
+     YA TIENE EN CASA. Construye cada receta usando PRINCIPALMENTE estos
+     alimentos, dando prioridad a los primeros de la lista (caducan antes):
+     ${pantry.slice(0, 40).join("; ")}.
+     Puedes añadir como mucho 3 ingredientes que no estén en la lista, además
+     de básicos de cocina (sal, aceite, agua, especias). Varía las recetas para
+     aprovechar alimentos distintos.`
+    : "";
+  const costLine = maxCost > 0
+    ? `\n- Coste máximo orientativo por ración: ${maxCost.toFixed(2)} EUR, con
+     precios medios de supermercado español. Elige ingredientes y cantidades
+     que respeten ese límite (legumbres, huevos, pollo, verdura de temporada,
+     arroz y pasta abaratan; ternera, marisco y pescados nobles encarecen).`
+    : "";
   const superLine = supermarket
     ? `- Supermercado(s) donde se compra: ${supermarket}. Ten en cuenta ese(os)
      supermercado(s) español(es) para elegir ingredientes FÁCILES de encontrar
@@ -120,13 +143,14 @@ ${superLine}
 - Objetivo nutricional: ${goal}
 - Dieta / restricción: ${diet}
 - Electrodomésticos disponibles: ${appliances || "cualquiera"}
-- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${cookTimeLine}${allergyLine}${dislikedLine}${avoidLine}
+- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${cookTimeLine}${costLine}${pantryLine}${allergyLine}${dislikedLine}${avoidLine}
 
 Responde SOLO con un JSON válido (sin markdown) con esta forma:
 {
   "recipes": [
     {
       "title": string,
+      "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
       "description": string,
       "meal_types": string[],   // de: "breakfast","lunch","dinner","snack","dessert"
       "appliance": "none"|"oven"|"stovetop"|"pot"|"airfryer"|"microwave",

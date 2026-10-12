@@ -14,6 +14,8 @@ import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
+import 'models/supermarket.dart';
+import 'services/home_supermarkets.dart';
 import 'shopping_lists_overview_screen.dart';
 import 'utils/offline_actions.dart';
 import 'utils/practical_quantity.dart';
@@ -21,11 +23,14 @@ import 'utils/realtime_sync.dart';
 import 'utils/shopping_categories.dart';
 import 'utils/shopping_celebration.dart';
 import 'utils/shopping_display.dart';
+import 'utils/shopping_quick_add.dart';
 import 'widgets/animations/confetti.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
+import 'widgets/shopping/shopping_parts.dart';
+import 'utils/friendly_error.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
 ///
@@ -68,6 +73,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // deja de ser urgente (NN/g: lo que no apremia no debe ocupar scroll). La
   // usuaria puede desplegarlo para desmarcar o borrar.
   bool _cartExpanded = false;
+
+  // Preferencias de vista de ESTE dispositivo (fotos, agrupar por pasillo).
+  ShoppingViewPrefs _view = const ShoppingViewPrefs();
+
+  // Súper del hogar (el primero es el principal) y el hogar al que pertenecen.
+  List<String> _superKeys = [];
+  String? _superHomeId;
 
   // ---- Multi-lista (migración 0045) --------------------------------------
   // Listas de la compra del hogar y lista ACTIVA. Las operaciones de la
@@ -120,6 +132,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     _refreshFromRemote();
     _subscribeRealtime();
     _loadListsAndCategories();
+    _loadViewPrefs();
+    _loadSupermarkets();
   }
 
   /// Siguiente número de secuencia para encolar/identificar ops de forma
@@ -471,7 +485,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar: $e'),
+          content: Text(friendlyError(e, 'No se pudo actualizar')),
           backgroundColor: Colors.red,
         ),
       );
@@ -579,7 +593,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo eliminar: $e'),
+          content: Text(friendlyError(e, 'No se pudo eliminar')),
           backgroundColor: Colors.red,
         ),
       );
@@ -699,7 +713,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo subir la foto: $e'),
+          content: Text(friendlyError(e, 'No se pudo subir la foto')),
           backgroundColor: Colors.red,
         ),
       );
@@ -739,7 +753,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo cambiar la foto: $e'),
+          content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
           backgroundColor: Colors.red,
         ),
       );
@@ -901,6 +915,37 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       return;
     }
 
+    await _addItem(
+      name: name,
+      quantity: qty,
+      unit: unit.isEmpty ? null : unit,
+      itemType: itemType,
+    );
+  }
+
+  /// Alta rápida desde el campo "Añadir producto": interpreta "2 kg tomates"
+  /// y deduce si es comida o de hogar/limpieza por el nombre.
+  Future<void> _quickAdd(String text) async {
+    final entry = parseQuickAdd(text);
+    if (entry == null) return;
+    final cat = CategoryIcons.categoryFor(entry.name);
+    final isHome = cat == FoodCategory.limpieza || cat == FoodCategory.hogar;
+    await _addItem(
+      name: entry.name,
+      quantity: entry.quantity,
+      unit: entry.unit,
+      itemType: isHome ? 'hogar' : 'comida',
+    );
+  }
+
+  /// Añade un producto a la lista activa (alta optimista, offline-first).
+  Future<void> _addItem({
+    required String name,
+    double? quantity,
+    String? unit,
+    required String itemType,
+  }) async {
+    final qty = quantity;
     try {
       final homeId = await _homeId();
       // Foto real del artículo. Para comida en modo "ingrediente crudo"; para
@@ -930,7 +975,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         homeId: homeId,
         name: name,
         quantity: qty,
-        unit: unit.isEmpty ? null : unit,
+        unit: unit,
         source: 'manual',
         createdAt: now,
         itemType: itemType,
@@ -953,7 +998,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo anadir: $e'),
+          content: Text(friendlyError(e, 'No se pudo añadir')),
           backgroundColor: Colors.red,
         ),
       );
@@ -1216,14 +1261,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           content: Text(
             faltan.isEmpty
                 ? 'Ya tienes todo lo del plan en el inventario.'
-                : 'Anadidos ${faltan.length} items desde el plan.',
+                : 'Añadidos ${faltan.length} productos desde el plan.',
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -1236,51 +1281,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       backgroundColor: AppColors.cream,
       appBar: widget.embedded
           ? null
-          : AppBar(
-              title: const Text('Lista de la compra'),
-              actions: [
-                IconButton(
-                  tooltip: 'Mis listas',
-                  icon: const Icon(Icons.list_alt),
-                  onPressed: _openListsOverview,
-                ),
-              ],
-            ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'fab-compra-generar',
-            onPressed: _generating ? null : _generarDesdePlan,
-            backgroundColor: AppColors.wood,
-            foregroundColor: AppColors.ink,
-            icon: _generating
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.playlist_add_check),
-            label: const Text(
-              'Generar del plan',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'fab-compra-add',
-            onPressed: _openAddItem,
-            backgroundColor: AppColors.wood,
-            foregroundColor: AppColors.ink,
-            icon: const Icon(Icons.add),
-            label: const Text(
-              'Anadir',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
+          : AppBar(title: const Text('Lista de la compra')),
       body: FutureBuilder<List<ShoppingListItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
@@ -1288,59 +1289,55 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text(friendlyError(snapshot.error)));
           }
 
           final all = snapshot.data ?? [];
           // Filtramos por la LISTA ACTIVA: list_id null = Lista principal.
           final items = all.where((i) => i.listId == _activeListId).toList();
-          if (items.isEmpty) {
-            // Lista activa vacía: mostramos el header (para cambiar de lista o
-            // gestionar categorías) encima del estado vacío.
-            return CustomScrollView(
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
-                  sliver: SliverMainAxisGroup(
-                    slivers: [
-                      SliverToBoxAdapter(child: _listHeader(0, 0)),
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _emptyState(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }
-
           final pendientes = items.where((i) => !i.checked).toList();
           final comprados = items.where((i) => i.checked).toList();
 
           // Compra terminada: hay items y todos están marcados. Mostramos a
-          // Miau celebrando (rebote + confeti al vaciar).
+          // Miau celebrando (rebote + confeti al vaciar). La detección de la
+          // transición ya se hizo al resolver el fetch (gate puro); aquí solo
+          // se CONSUME, para no repetir el confeti en cada rebuild.
           final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
-
-          // La detección de la transición a 0 ya se hizo al resolver el fetch
-          // (gate puro). Aquí solo CONSUMIMOS la celebración pendiente: devuelve
-          // true una sola vez tras la transición y se apaga, de modo que un
-          // rebuild posterior (p. ej. borrar un comprado estando en 0
-          // pendientes) ya NO reproduce el rebote ni el confeti.
           final celebrar = _celebrationGate.consume();
 
           final slivers = <Widget>[
             SliverToBoxAdapter(
-              child: _listHeader(pendientes.length, comprados.length),
+              child: ShoppingSummaryHeader(
+                listName: _activeListName,
+                pending: pendientes.length,
+                done: comprados.length,
+                estimate: _estimateLabel(pendientes),
+                generating: _generating,
+                onTapList: _openListsOverview,
+                onGenerate: _generarDesdePlan,
+                onOptions: _openViewOptions,
+                storeLabel: _superKeys.isEmpty
+                    ? null
+                    : Supermarket.labelFor(_superKeys.first),
+                onTapStore: _pickSupermarket,
+              ),
             ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            SliverToBoxAdapter(
+              child: ShoppingQuickAddBar(
+                onSubmit: _quickAdd,
+                onMore: _openAddItem,
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             if (shouldShowPendingIndicator(_pendingCount))
               SliverToBoxAdapter(
                 child: PendingSyncIndicator(pendingCount: _pendingCount),
               ),
+            if (items.isEmpty)
+              SliverFillRemaining(hasScrollBody: false, child: _emptyState()),
             if (compraTerminada)
               SliverToBoxAdapter(child: _CompraCelebracion(celebrar: celebrar)),
-            if (pendientes.isNotEmpty)
-              SliverToBoxAdapter(child: _costEstimateCard(pendientes)),
             ..._buildPendientesSlivers(pendientes),
             if (comprados.isNotEmpty)
               SliverToBoxAdapter(child: _cartCard(comprados)),
@@ -1349,7 +1346,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           return CustomScrollView(
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                // Abajo deja sitio a la barra de navegación flotante.
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                 sliver: SliverMainAxisGroup(slivers: slivers),
               ),
             ],
@@ -1366,67 +1364,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (l.id == _activeListId) return l.name;
     }
     return 'Lista principal';
-  }
-
-  /// Cabecera de la lista: nombre de la lista activa + contador
-  /// 'X de Y comprados', botón para cambiar/gestionar listas y acceso al CRUD
-  /// de categorías. Se muestra tanto embebida como en ruta propia.
-  Widget _listHeader(int pendientes, int comprados) {
-    final total = pendientes + comprados;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: AppTheme.cardDecoration(radius: AppRadius.md),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.peachBg,
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(Icons.shopping_basket, color: AppColors.peach),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _activeListName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  total == 0 ? 'Lista vacía' : '$comprados de $total comprados',
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: 'Categorías',
-            icon: const Icon(Icons.tune, color: AppColors.woodDark),
-            onPressed: _openCategoriesManager,
-          ),
-          IconButton(
-            tooltip: 'Mis listas',
-            icon: const Icon(Icons.list_alt, color: AppColors.woodDark),
-            onPressed: _openListsOverview,
-          ),
-        ],
-      ),
-    );
   }
 
   /// Abre la vista general de listas (crear/elegir lista). Al volver, aplica la
@@ -1485,7 +1422,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo crear la lista: $e'),
+          content: Text(friendlyError(e, 'No se pudo crear la lista')),
           backgroundColor: Colors.red,
         ),
       );
@@ -1562,411 +1499,295 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  /// Tarjeta con el COSTE ESTIMADO de la compra pendiente, usando los precios
-  /// aprendidos de los tickets. Solo aparece si conocemos el precio de alguna
-  /// cosa; si no, no molesta.
-  Widget _costEstimateCard(List<ShoppingListItem> pendientes) {
-    final est = PriceMemory.estimateCost([
-      for (final i in pendientes) (name: i.name, quantity: i.quantity),
-    ], _prices);
-    if (est.priced == 0) return const SizedBox.shrink();
+  // ---- Supermercado principal ---------------------------------------------
 
-    final total = est.total.toStringAsFixed(2).replaceAll('.', ',');
-    final aprox = est.priced < est.totalItems; // faltan precios de algunos
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration(radius: 18),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.sageBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.euro_rounded, color: AppColors.sage),
+  Future<void> _loadSupermarkets() async {
+    final r = await HomeSupermarkets(_client).load();
+    if (!mounted) return;
+    setState(() {
+      _superHomeId = r.homeId;
+      _superKeys = r.keys;
+    });
+  }
+
+  /// Elige dónde se compra. Se guarda como súper principal del hogar: lo
+  /// usan también la IA al crear recetas y "Descubrir".
+  Future<void> _pickSupermarket() async {
+    final current = _superKeys.isEmpty ? null : _superKeys.first;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  '¿Dónde compras normalmente? Las recetas que genere la IA '
+                  'usarán productos fáciles de encontrar ahí.',
+                  style: TextStyle(color: AppColors.inkMuted),
+                ),
+              ),
+              for (final s in Supermarket.all)
+                ListTile(
+                  title: Text(s.label),
+                  trailing: s.key == current
+                      ? const Icon(Icons.check, color: AppColors.sage)
+                      : null,
+                  onTap: () => Navigator.of(ctx).pop(s.key),
+                ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
+        ),
+      ),
+    );
+    final homeId = _superHomeId;
+    if (picked == null || picked == current || homeId == null) return;
+    try {
+      final next = await HomeSupermarkets(
+        _client,
+      ).setPrimary(homeId, _superKeys, picked);
+      if (mounted) setState(() => _superKeys = next);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo guardar el supermercado. Inténtalo de nuevo.',
+          ),
+        ),
+      );
+    }
+  }
+
+  // ---- Vista: preferencias y opciones -------------------------------------
+
+  Future<void> _loadViewPrefs() async {
+    try {
+      final raw = await OfflineProvider.instance.store.read(
+        ShoppingViewPrefs.storageKey,
+      );
+      if (!mounted) return;
+      setState(() => _view = ShoppingViewPrefs.decode(raw));
+    } catch (_) {
+      // Sin almacenamiento: se queda la vista por defecto.
+    }
+  }
+
+  void _setView(ShoppingViewPrefs next) {
+    setState(() => _view = next);
+    OfflineProvider.instance.store
+        .write(ShoppingViewPrefs.storageKey, next.encode())
+        .catchError((_) {});
+  }
+
+  /// Hoja de opciones: cómo se ve la lista y accesos a listas y categorías.
+  Future<void> _openViewOptions() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) {
+          void update(ShoppingViewPrefs next) {
+            _setView(next);
+            setSheet(() {});
+          }
+
+          return SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  aprox ? 'Coste estimado (aprox.)' : 'Coste estimado',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                SwitchListTile(
+                  title: const Text('Agrupar por pasillo'),
+                  subtitle: const Text('Verduras, carne, limpieza…'),
+                  value: _view.groupByAisle,
+                  onChanged: (v) => update(_view.copyWith(groupByAisle: v)),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '$total €',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
-                  ),
+                SwitchListTile(
+                  title: const Text('Mostrar fotos de los productos'),
+                  value: _view.showPhotos,
+                  onChanged: (v) => update(_view.copyWith(showPhotos: v)),
                 ),
-                Text(
-                  aprox
-                      ? 'Con precios de ${est.priced} de ${est.totalItems} '
-                            'productos. Escanea tickets para afinarlo.'
-                      : 'Según tus últimas compras.',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.list_alt_rounded),
+                  title: const Text('Mis listas'),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _openListsOverview();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.category_outlined),
+                  title: const Text('Categorías'),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _openCategoriesManager();
+                  },
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  /// Agrupa los pendientes por "pasillo" (= categoria via
-  /// CategoryIcons.categoryFor) y emite, por cada grupo no vacio, una CABECERA
-  /// DE PASILLO (SliverToBoxAdapter con _categoryHeader) seguida del contenido
-  /// del grupo. El orden de los pasillos sigue el del enum FoodCategory
-  /// (verduras, frutas, carne... y "Otros" al final), que ya va de alimentos
-  /// frescos a genericos. Conserva el colapsado por categoria (_catCollapsed) y
-  /// el chevron/AnimatedCrossFade.
+  /// Coste estimado de lo pendiente con los precios aprendidos de los tickets
+  /// ("≈ 34,20 €"), o null si no conocemos ningún precio.
+  String? _estimateLabel(List<ShoppingListItem> pendientes) {
+    if (pendientes.isEmpty) return null;
+    final est = PriceMemory.estimateCost([
+      for (final i in pendientes) (name: i.name, quantity: i.quantity),
+    ], _prices);
+    if (est.priced == 0) return null;
+    final total = est.total.toStringAsFixed(2).replaceAll('.', ',');
+    return '≈ $total €';
+  }
+
+  // ---- Secciones -----------------------------------------------------------
+
+  /// Pendientes agrupados por pasillo (orden del enum FoodCategory, de frescos
+  /// a genéricos) o, si la vista no agrupa, una sola sección en orden de alta.
+  /// El plegado por pasillo se recuerda mientras viva la pantalla.
   List<Widget> _buildPendientesSlivers(List<ShoppingListItem> pendientes) {
+    if (pendientes.isEmpty) return const [];
+    if (!_view.groupByAisle) {
+      const key = '_todo';
+      final expanded = !(_catCollapsed[key] ?? false);
+      return [
+        SliverToBoxAdapter(
+          child: ShoppingSection(
+            title: 'Por comprar',
+            count: pendientes.length,
+            expanded: expanded,
+            onToggle: () => setState(() => _catCollapsed[key] = expanded),
+            children: [for (final i in pendientes) _buildRow(i)],
+          ),
+        ),
+      ];
+    }
+
     final grupos = <FoodCategory, List<ShoppingListItem>>{};
     for (final item in pendientes) {
       final cat = CategoryIcons.categoryFor(item.name);
       grupos.putIfAbsent(cat, () => []).add(item);
     }
-
-    final slivers = <Widget>[];
-    for (final cat in FoodCategory.values) {
-      final items = grupos[cat];
-      if (items == null || items.isEmpty) continue;
-      // Cada pasillo es UNA tarjeta cozy COLAPSABLE, con el MISMO lenguaje
-      // visual que las secciones del inventario rediseñado: cabecera-toggle con
-      // icono en pastilla del tono de la categoría + etiqueta + contador +
-      // chevron animado, y debajo las filas separadas por divisores suaves.
-      // Arranca EXPANDIDA (lo que falta por comprar apremia); la usuaria puede
-      // plegarla y se recuerda en _catCollapsed.
-      final expanded = !(_catCollapsed[cat.name] ?? false);
-      slivers.add(
-        SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 14),
-            decoration: AppTheme.cardDecoration(radius: AppRadius.md),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _categoryHeader(cat, items.length, expanded),
-                AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 220),
-                  sizeCurve: Curves.easeInOut,
-                  crossFadeState: expanded
-                      ? CrossFadeState.showFirst
-                      : CrossFadeState.showSecond,
-                  firstChild: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < items.length; i++) ...[
-                          if (i > 0)
-                            const Divider(height: 1, color: AppColors.cream),
-                          _buildRow(items[i]),
-                        ],
-                      ],
-                    ),
-                  ),
-                  secondChild: const SizedBox(width: double.infinity),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    return slivers;
+    return [
+      for (final cat in FoodCategory.values)
+        if (grupos[cat] case final items? when items.isNotEmpty)
+          SliverToBoxAdapter(child: _aisleSection(cat, items)),
+    ];
   }
 
-  /// Cabecera-toggle de sección coherente con la del inventario: icono dentro
-  /// de una pastilla con el TONO cozy de la categoría, etiqueta, contador en
-  /// pastilla y chevron animado. Pliega/despliega la categoría al tocarla.
-  Widget _categoryHeader(FoodCategory category, int count, bool expanded) {
-    final style = CategoryIcons.styleForCategory(category);
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _catCollapsed[category.name] = expanded;
-        });
-      },
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: style.background,
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(style.icon, color: style.foreground, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      category.label,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: style.background,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: style.foreground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedRotation(
-              turns: expanded ? 0.5 : 0,
-              duration: const Duration(milliseconds: 220),
-              child: const Icon(
-                Icons.expand_more,
-                color: AppColors.woodDark,
-                size: 26,
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _aisleSection(FoodCategory cat, List<ShoppingListItem> items) {
+    final style = CategoryIcons.styleForCategory(cat);
+    final expanded = !(_catCollapsed[cat.name] ?? false);
+    return ShoppingSection(
+      title: cat.label,
+      count: items.length,
+      icon: style.icon,
+      iconColor: style.foreground,
+      iconBackground: style.background,
+      expanded: expanded,
+      onToggle: () => setState(() => _catCollapsed[cat.name] = expanded),
+      children: [for (final i in items) _buildRow(i)],
     );
   }
 
-  /// Panel colapsable "YA EN EL CARRO". Reutiliza el patrón de secciones
-  /// colapsables del inventario (cabecera-toggle con chevron animado +
-  /// AnimatedCrossFade), pero arranca COLAPSADO porque lo comprado ya no
-  /// apremia. Conserva el gesto de desmarcar (toggle checked) y el de deslizar
-  /// para borrar, ambos dentro de las filas (_buildRow).
+  /// "En el carro": arranca plegado (lo comprado ya no apremia) y permite
+  /// quitar de golpe todo lo comprado.
   Widget _cartCard(List<ShoppingListItem> comprados) {
-    final expanded = _cartExpanded;
-    return Container(
-      margin: const EdgeInsets.only(top: 4),
-      decoration: AppTheme.cardDecoration(radius: 18),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () {
-              setState(() {
-                _cartExpanded = !_cartExpanded;
-              });
-            },
-            borderRadius: BorderRadius.circular(18),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.sageBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_outline,
-                      color: AppColors.sage,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'YA EN EL CARRO · ${comprados.length}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        letterSpacing: 0.4,
-                        color: AppColors.ink.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ),
-                  AnimatedRotation(
-                    turns: expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 220),
-                    child: const Icon(
-                      Icons.expand_more,
-                      color: AppColors.woodDark,
-                      size: 26,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return ShoppingSection(
+      title: 'En el carro',
+      count: comprados.length,
+      icon: Icons.check_rounded,
+      iconColor: AppColors.sage,
+      iconBackground: AppColors.sageBg,
+      expanded: _cartExpanded,
+      onToggle: () => setState(() => _cartExpanded = !_cartExpanded),
+      trailing: TextButton(
+        onPressed: () => _clearChecked(comprados),
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.woodDark,
+          visualDensity: VisualDensity.compact,
+        ),
+        child: const Text('Quitar'),
+      ),
+      children: [for (final i in comprados) _buildRow(i)],
+    );
+  }
+
+  /// Quita de la lista todo lo ya comprado (ya está en la despensa).
+  Future<void> _clearChecked(List<ShoppingListItem> comprados) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.cream,
+        title: const Text('¿Quitar lo comprado?'),
+        content: Text(
+          'Se quitarán ${comprados.length} productos de la lista. '
+          'Lo que ya pasó a la despensa se queda allí.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
           ),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 220),
-            sizeCurve: Curves.easeInOut,
-            crossFadeState: expanded
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            firstChild: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-              child: Column(
-                children: [
-                  for (var i = 0; i < comprados.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, color: AppColors.cream),
-                    _buildRow(comprados[i]),
-                  ],
-                ],
-              ),
-            ),
-            secondChild: const SizedBox(width: double.infinity),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Quitar'),
           ),
         ],
       ),
     );
+    if (ok != true) return;
+    for (final item in comprados) {
+      await _deleteItem(item);
+    }
   }
 
-  /// Fila de la lista estilo "app de compra": compacta, con checkbox a la
-  /// izquierda, un distintivo de categoría pequeño y limpio, y gesto de
-  /// deslizar para borrar. Lo comprado se tacha y atenúa.
+  /// Fila de producto: tocar marca/desmarca, deslizar marca como comprado y
+  /// mantener pulsado abre las acciones (cambiar foto, borrar).
   Widget _buildRow(ShoppingListItem item) {
     final done = item.checked;
     return Dismissible(
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
-      direction: DismissDirection.endToStart,
-      // Fondo que comunica "hecho/comprado" (check sobre sage), NO "borrar".
+      direction: done ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        decoration: BoxDecoration(
-          color: AppColors.sageBg,
-          borderRadius: BorderRadius.circular(12),
-        ),
+        color: AppColors.sageBg,
         child: const Icon(Icons.check_circle_rounded, color: AppColors.sage),
       ),
-      // Deslizar un item PENDIENTE lo MARCA COMO COMPRADO/HECHO (lo tacha,
-      // baja la opacidad y lo mete en la despensa via _toggleChecked), NO lo
-      // borra. confirmDismiss ejecuta el toggle y devuelve false para no
-      // desmontar la fila: _reload reconstruye la lista y el item pasa a "YA
-      // EN EL CARRO". El borrado del item sigue accesible por _openItemActions.
+      // Deslizar NO borra: marca como comprado y la fila pasa al carro al
+      // recargar (por eso devolvemos false y no se desmonta aquí).
       confirmDismiss: (_) async {
-        if (!done) {
-          await _toggleChecked(item, true);
-        }
+        await _toggleChecked(item, true);
         return false;
       },
-      child: InkWell(
-        onTap: () => _toggleChecked(item, !done),
+      child: ShoppingItemTile(
+        name: shoppingCleanName(item.name),
+        checked: done,
+        quantityLabel: shoppingQtyLabel(item.quantity, item.unit),
+        subtitle: item.source == 'auto' ? 'Del plan de la semana' : null,
+        onToggle: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          child: Row(
-            children: [
-              // Checkbox redondo tipo lista de tareas.
-              Icon(
-                done
-                    ? Icons.check_circle_rounded
-                    : Icons.radio_button_unchecked,
-                color: done ? AppColors.woodDark : Colors.grey[400],
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              // Foto real del artículo (si la hay) o ilustración por categoría.
-              Opacity(
-                opacity: done ? 0.5 : 1,
-                child: FoodImage(
-                  name: item.name,
-                  itemType: item.itemType,
-                  imageUrl: item.imageUrl,
-                  size: 38,
-                  radius: 10,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Nombre LIMPIO (sin marca ni unidad redundante) + origen.
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      shoppingCleanName(item.name),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        height: 1.15,
-                        decoration: done ? TextDecoration.lineThrough : null,
-                        color: done ? Colors.grey : AppColors.ink,
-                      ),
-                    ),
-                    if (item.source == 'auto')
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          'Del plan de la semana',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: done ? Colors.grey[400] : Colors.grey[500],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // Pastilla de cantidad a la derecha (separada del nombre).
-              if (shoppingQtyLabel(item.quantity, item.unit).isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: done ? Colors.grey[200] : AppColors.cream,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: done ? Colors.grey[300]! : AppColors.wood,
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    shoppingQtyLabel(item.quantity, item.unit),
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: done ? Colors.grey : AppColors.woodDark,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+        leading: _view.showPhotos
+            ? FoodImage(
+                name: item.name,
+                itemType: item.itemType,
+                imageUrl: item.imageUrl,
+                size: 34,
+                radius: 10,
+              )
+            : null,
       ),
     );
   }
@@ -1974,21 +1795,32 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Widget _emptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const MiauCharacter(mood: MiauMood.curious, size: 120),
-            const SizedBox(height: 16),
+            const MiauCharacter(mood: MiauMood.curious, size: 110),
+            const SizedBox(height: AppSpacing.lg),
             const Text(
-              'Tu lista esta vacia',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              'Tu lista está vacía',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Anade cosas o generala desde el plan de la semana.',
+            const SizedBox(height: AppSpacing.xs),
+            const Text(
+              'Escribe arriba lo que necesitas o genérala desde el plan '
+              'de la semana.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColors.inkMuted),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            OutlinedButton.icon(
+              onPressed: _generating ? null : _generarDesdePlan,
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: const Text('Generar desde el plan'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.woodDark,
+                side: const BorderSide(color: AppColors.wood),
+              ),
             ),
           ],
         ),

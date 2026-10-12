@@ -70,6 +70,10 @@ class OfflineProvider {
 
   LocalStore get _effectiveStore => _store ??= FileLocalStore();
 
+  /// Almacén local de la app, para preferencias de este dispositivo (p. ej.
+  /// la vista de la lista de la compra).
+  LocalStore get store => _effectiveStore;
+
   RemoteSender get _effectiveSender => _sender ??= SupabaseRemoteSender();
 
   /// Repositorio de la lista de la compra (creación perezosa).

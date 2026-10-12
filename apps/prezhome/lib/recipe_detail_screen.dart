@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
+import 'services/recipe_photo_service.dart';
 import 'services/price_memory.dart';
 import 'utils/approx_price.dart';
 import 'utils/measure_format.dart';
@@ -16,6 +17,7 @@ import 'models/supermarket.dart';
 import 'theme/app_theme.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
+import 'utils/friendly_error.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -29,6 +31,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   final ImagePicker _picker = ImagePicker();
   late Recipe _recipe;
+
+  /// Fotos automáticas ya mostradas en esta pantalla (para "Otra foto").
+  final Set<String> _seenPhotoUrls = {};
   late Future<List<Ingredient>> _ingredientsFuture;
   bool _changingPhoto = false; // true mientras se regenera/sube una foto
   String? _homeSupermarketLabel; // etiqueta del súper del hogar (chip)
@@ -166,7 +171,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar: $e'),
+          content: Text(friendlyError(e, 'No se pudo actualizar')),
           backgroundColor: Colors.red,
         ),
       );
@@ -231,16 +236,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Future<void> _regeneratePhoto() async {
     setState(() => _changingPhoto = true);
     try {
-      final res = await _client.functions.invoke(
-        'recipe-photo',
-        body: {'query': _recipe.title},
-      );
-      String? url;
-      final data = res.data;
-      if (data is Map) {
-        final u = data['url']?.toString();
-        if (u != null && u.isNotEmpty) url = u;
-      }
+      // Excluimos las fotos ya vistas: así cada pulsación trae una distinta
+      // (antes devolvía siempre el mismo primer resultado).
+      final current = _recipe.externalImageUrl;
+      if (current != null) _seenPhotoUrls.add(current);
+      final url = await RecipePhotoService(
+        _client,
+      ).find(title: _recipe.title, exclude: _seenPhotoUrls);
+      if (url != null) _seenPhotoUrls.add(url);
       if (!mounted) return;
       if (url == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -262,7 +265,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo cambiar la foto: $e'),
+            content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
             backgroundColor: Colors.red,
           ),
         );
@@ -307,7 +310,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo subir la foto: $e'),
+            content: Text(friendlyError(e, 'No se pudo subir la foto')),
             backgroundColor: Colors.red,
           ),
         );
@@ -383,7 +386,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo eliminar: $e'),
+            content: Text(friendlyError(e, 'No se pudo eliminar')),
             backgroundColor: Colors.red,
           ),
         );
@@ -464,7 +467,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo guardar: $e'),
+            content: Text(friendlyError(e, 'No se pudo guardar')),
             backgroundColor: Colors.red,
           ),
         );

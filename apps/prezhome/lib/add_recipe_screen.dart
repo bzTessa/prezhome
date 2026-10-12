@@ -6,8 +6,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
 import 'models/recipe.dart';
+import 'models/supermarket.dart';
+import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
+import 'utils/friendly_error.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -68,6 +71,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   // al guardar. El getter combinado `imageUrl` solo sirve para previsualizar.
   String? _existingImagePath; // foto manual previa (bucket)
   String? _existingExternalImageUrl; // foto externa previa (Pexels)
+
+  /// Nombre del plato en inglés que da la IA al generar/importar la receta;
+  /// afina la búsqueda de la foto automática.
+  String? _photoQueryEn;
 
   final List<_IngredientControllers> _ingredients = [_IngredientControllers()];
 
@@ -245,9 +252,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     setState(() => _aiLoading = true);
     try {
+      // Súper principal del hogar: la IA elige ingredientes fáciles de
+      // encontrar allí. Vacío si no hay ninguno.
+      final superKey = await _firstHomeSupermarket();
       final res = await _client.functions.invoke(
         'generate-recipe',
-        body: {'query': query},
+        body: {
+          'query': query,
+          if (superKey.isNotEmpty)
+            'supermarket': Supermarket.labelFor(superKey),
+        },
       );
 
       final data = res.data;
@@ -272,7 +286,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error con la IA: $e'),
+            content: Text(friendlyError(e, 'Error con la IA')),
             backgroundColor: Colors.red,
           ),
         );
@@ -378,7 +392,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo importar: $e'),
+            content: Text(friendlyError(e, 'No se pudo importar')),
             backgroundColor: Colors.red,
           ),
         );
@@ -393,6 +407,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   /// luego rellena el formulario. Best-effort: si OFF no responde, cae a la
   /// receta tal cual la dio la IA (nunca bloquea el rellenado).
   Future<void> _applyAIRecipeRefined(Map<String, dynamic> r) async {
+    _photoQueryEn = r['photo_query_en']?.toString();
     try {
       final servings = int.tryParse((r['servings'] ?? '').toString()) ?? 1;
       final rawIngredients = (r['ingredients'] is List)
@@ -652,20 +667,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           uploadedPath == null &&
           title.isNotEmpty;
       if (needsAutoPhoto) {
-        try {
-          final res = await _client.functions.invoke(
-            'recipe-photo',
-            body: {'query': title},
-          );
-          final data = res.data;
-          if (data is Map) {
-            final url = data['url']?.toString();
-            if (url != null && url.isNotEmpty) autoImageUrl = url;
-          }
-        } catch (e) {
-          // No bloqueamos el alta: la receta se guarda sin foto automática.
-          debugPrint('AddRecipeScreen recipe-photo error: $e');
-        }
+        // No bloquea el alta: si no hay foto, se guarda sin ella.
+        autoImageUrl = await RecipePhotoService(
+          _client,
+        ).find(title: title, titleEn: _photoQueryEn);
       }
 
       final recipe = Recipe(
@@ -761,7 +766,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

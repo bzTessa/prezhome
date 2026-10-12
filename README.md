@@ -5,11 +5,12 @@ Monorepo de las apps Prez (Flutter + Supabase):
 | Carpeta | Contenido |
 |---------|-----------|
 | `apps/prezhome/` | App **PrezHome** (organización del hogar). Proyecto Flutter completo. |
+| `packages/prez_ui/` | Componentes de interfaz compartidos (barra flotante…). |
 | `supabase/` | Migraciones y Edge Functions, compartidas por todas las apps. |
 | `docs/` | Documentación de producto y guías. |
 
-Más adelante se añadirán `apps/prezwallet/` y `packages/` con el código
-compartido (ver [docs/PREZWALLET.md](docs/PREZWALLET.md) §6).
+Más adelante se añadirá `apps/prezwallet/` (ver
+[docs/PREZWALLET.md](docs/PREZWALLET.md) §6).
 
 ## Empezar
 
@@ -50,6 +51,7 @@ plato), y la guia sencilla para activarlo esta en
 - [docs/ESTRATEGIA.md](docs/ESTRATEGIA.md): perfiles, apps independientes, personalización y publicación en tiendas.
 - [docs/PREZHOME.md](docs/PREZHOME.md): visión de PrezHome (quitar carga mental).
 - [docs/PREZWALLET.md](docs/PREZWALLET.md): app hermana de gastos y patrimonio.
+- [docs/REDISENO.md](docs/REDISENO.md): revisión de la app y plan del rediseño integral.
 
 ## Arquitectura y refactor
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../discover_recipes_screen.dart';
 import '../inventory_screen.dart';
 import '../shopping_list_screen.dart';
 import '../theme/app_theme.dart';
@@ -85,6 +86,23 @@ class _DespensaHeader extends StatelessWidget {
                 Text(
                   'Revisa existencias, caducidades y tu próxima compra.',
                   style: AppTextStyles.bodyMuted,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                // Al revés que el plan: ideas a partir de lo que ya hay.
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const DiscoverRecipesScreen(pantryMode: true),
+                    ),
+                  ),
+                  icon: const Icon(Icons.soup_kitchen_outlined, size: 18),
+                  label: const Text('¿Qué cocino con esto?'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.woodDark,
+                    side: const BorderSide(color: AppColors.wood),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
               ],
             ),
