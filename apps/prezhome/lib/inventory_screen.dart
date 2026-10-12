@@ -138,7 +138,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (db == null) return -1;
       return db.compareTo(da); // descendente
     });
-    return sorted.map(InventoryItem.fromMap).toList();
+    // Filas a medias (sin nombre) no se pintan: serían de un cambio local
+    // incompleto.
+    return sorted
+        .where((r) => (r['name'] ?? '').toString().trim().isNotEmpty)
+        .map(InventoryItem.fromMap)
+        .toList();
   }
 
   /// Lee created_at de una fila cruda (ISO-8601 o DateTime). Null si falta.
@@ -595,7 +600,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
       body: FutureBuilder<List<InventoryItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData &&
+              snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {

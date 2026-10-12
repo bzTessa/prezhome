@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/models/ingredient.dart';
 import 'package:prezhome/services/plan_shopping.dart';
+import 'package:prezhome/services/product_photo_resolver.dart';
 
 Ingredient ing(String name, double? qty, String? unit) =>
     Ingredient(name: name, quantity: qty, unit: unit);
@@ -54,5 +55,30 @@ void main() {
       );
       expect(needs.map((n) => n.name), ['Aceite de oliva']);
     });
+  });
+
+  group('shoppingLines', () {
+    test('junta duplicados tras pasar a cantidades de súper', () {
+      final lines = shoppingLines(const [
+        PlanNeed(name: 'Pimienta negra', quantity: 1, unit: 'cucharadita'),
+        PlanNeed(name: 'pimienta negra', quantity: 2, unit: 'pizca'),
+        PlanNeed(name: 'Arroz', quantity: 200, unit: 'g'),
+      ]);
+      final pimienta = lines.where(
+        (l) => l.name.toLowerCase() == 'pimienta negra',
+      );
+      expect(pimienta, hasLength(1));
+      expect(lines, hasLength(2));
+    });
+  });
+
+  test('isStockPhoto distingue fotos de banco de las de producto', () {
+    expect(isStockPhoto('https://images.unsplash.com/photo-1'), isTrue);
+    expect(isStockPhoto('https://images.pexels.com/x.jpg'), isTrue);
+    expect(
+      isStockPhoto('https://images.openfoodfacts.org/images/products/1.jpg'),
+      isFalse,
+    );
+    expect(isStockPhoto(null), isFalse);
   });
 }

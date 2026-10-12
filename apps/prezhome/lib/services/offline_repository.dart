@@ -40,6 +40,16 @@ import 'sync_queue.dart';
 /// Cualquier método puede LANZAR para señalar "sin conexión" (o error de red);
 /// el repositorio interpreta ese lanzamiento como "offline" y detiene el
 /// drenado conservando las ops.
+/// El servidor RECHAZÓ el cambio por sus datos (p. ej. una restricción de la
+/// tabla). Reintentarlo no sirve: el repositorio lo descarta y sigue drenando
+/// en lugar de quedarse atascado para siempre.
+class PermanentSyncError implements Exception {
+  const PermanentSyncError(this.message);
+  final String message;
+  @override
+  String toString() => 'PermanentSyncError: $message';
+}
+
 abstract class RemoteSender {
   /// Inserta una fila nueva en [table] con [payload].
   Future<void> sendInsert(String table, Map<String, dynamic> payload);
@@ -364,6 +374,11 @@ class OfflineRepository {
         _queue.markSent(op);
         await _persistQueue();
         sent++;
+      } on PermanentSyncError catch (e) {
+        // Rechazo definitivo: se descarta para no bloquear el resto.
+        developer.log('Op descartada ($table): $e', name: 'OfflineRepository');
+        _queue.markSent(op);
+        await _persistQueue();
       } catch (_) {
         // Primer fallo: asumimos offline y paramos (conservando el resto).
         stopped = true;

@@ -18,6 +18,7 @@ import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/smart_reminders.dart';
+import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
@@ -291,6 +292,9 @@ class HomeTabState extends State<HomeTab> {
   Future<void> _completeTaskFromDashboard(HomeTask task) async {
     try {
       await TaskScheduler(_client).complete(task);
+      if (isShoppingTask(task.title)) {
+        await ShoppingCheckout().markAllBoughtForCurrentUser();
+      }
       if (mounted) {
         // Micro-celebración reutilizable (respeta reduce-motion: no hace nada
         // visible aparatoso) además del SnackBar de puntos existente.

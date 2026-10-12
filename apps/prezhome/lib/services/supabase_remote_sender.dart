@@ -15,6 +15,7 @@ library;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'offline_repository.dart';
+import 'shelf_life.dart';
 
 /// [RemoteSender] que habla con Supabase, aislando home_id por perfil.
 class SupabaseRemoteSender implements RemoteSender {
@@ -47,6 +48,24 @@ class SupabaseRemoteSender implements RemoteSender {
     return {...payload, 'home_id': homeId};
   }
 
+  /// Errores de datos (22xxx), de integridad (23xxx) o de columna/tabla
+  /// (42xxx): el servidor no aceptará la fila por más que se reintente.
+  static bool _isPermanent(PostgrestException e) {
+    final code = e.code ?? '';
+    return code.startsWith('22') ||
+        code.startsWith('23') ||
+        code.startsWith('42');
+  }
+
+  Future<void> _guard(Future<void> Function() send) async {
+    try {
+      await send();
+    } on PostgrestException catch (e) {
+      if (_isPermanent(e)) throw PermanentSyncError(e.message);
+      rethrow;
+    }
+  }
+
   @override
   Future<void> sendInsert(String table, Map<String, dynamic> payload) async {
     final body = await _withHomeId(payload);
@@ -54,7 +73,15 @@ class SupabaseRemoteSender implements RemoteSender {
     final insertable = Map<String, dynamic>.from(body)
       ..remove('id')
       ..remove('created_at');
-    await _client.from(table).insert(insertable);
+    // Altas antiguas que guardaron el pasillo de la compra como ubicación.
+    if (table == 'inventory_items') {
+      insertable['category'] = ShelfLife.pantryZoneFor(
+        name: (insertable['name'] ?? '').toString(),
+        itemType: (insertable['item_type'] ?? 'comida').toString(),
+        category: insertable['category']?.toString(),
+      );
+    }
+    await _guard(() => _client.from(table).insert(insertable));
   }
 
   @override
@@ -66,12 +93,12 @@ class SupabaseRemoteSender implements RemoteSender {
     final body = Map<String, dynamic>.from(payload)
       ..remove('id')
       ..remove('created_at');
-    await _client.from(table).update(body).eq('id', id);
+    await _guard(() => _client.from(table).update(body).eq('id', id));
   }
 
   @override
   Future<void> sendDelete(String table, String id) async {
-    await _client.from(table).delete().eq('id', id);
+    await _guard(() => _client.from(table).delete().eq('id', id));
   }
 
   @override

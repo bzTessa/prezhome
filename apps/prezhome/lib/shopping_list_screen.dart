@@ -1,14 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
 import 'services/food_photo_service.dart';
 import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
 import 'services/price_memory.dart';
-import 'services/shelf_life.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'models/shopping_category.dart';
@@ -16,6 +16,8 @@ import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
 import 'services/home_supermarkets.dart';
 import 'services/plan_shopping.dart';
+import 'services/product_photo_resolver.dart';
+import 'services/shopping_checkout.dart';
 import 'shopping_lists_overview_screen.dart';
 import 'utils/offline_actions.dart';
 import 'utils/realtime_sync.dart';
@@ -59,6 +61,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final OfflineRepository _inventoryRepo = OfflineProvider.instance.inventory;
 
   late Future<List<ShoppingListItem>> _itemsFuture;
+
+  // Última lista pintada: los cambios locales (marcar, quitar) se aplican
+  // sobre ella AL INSTANTE, sin esperar a la red.
+  List<ShoppingListItem>? _shown;
+
+  // Los avisos en vivo llegan a ráfagas (p. ej. al poner fotos): se agrupan
+  // en un solo refresco, y nunca se solapan dos refrescos.
+  Timer? _realtimeDebounce;
+  bool _refreshing = false;
+  bool _refreshAgain = false;
   bool _generating = false;
 
   // Nº de cambios pendientes de sincronizar (cola no vacía) para el indicador
@@ -165,6 +177,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final rows = await _repo.readCached();
     _pendingCount = _repo.pendingCount + _inventoryRepo.pendingCount;
     final items = _rowsToItems(rows);
+    _shown = items;
     _registerCelebration(items);
     // Los precios conocidos del hogar son best-effort y no bloquean la carga
     // instantánea: se intentan al refrescar desde el remoto.
@@ -187,6 +200,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// a la caché sin romper la UI. Nunca usamos arrow con Future en setState:
   /// calculamos los datos antes y luego setState con cuerpo de bloque.
   Future<void> _refreshFromRemote() async {
+    if (_refreshing) {
+      _refreshAgain = true;
+      return;
+    }
+    _refreshing = true;
     try {
       final rows = await _repo.refreshFromRemote();
       // Aprovechamos que hay red para intentar drenar también el inventario
@@ -198,12 +216,46 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       _registerCelebration(items);
       final pending = _repo.pendingCount + _inventoryRepo.pendingCount;
       setState(() {
+        _shown = items;
         _itemsFuture = Future.value(items);
         _pendingCount = pending;
       });
+      _upgradePhotosOnce(items);
     } catch (_) {
       // Sin conexión: nos quedamos con lo que ya pintamos desde la caché.
+    } finally {
+      _refreshing = false;
+      if (_refreshAgain && mounted) {
+        _refreshAgain = false;
+        _refreshFromRemote();
+      }
     }
+  }
+
+  /// Una vez por pantalla: a lo pendiente sin foto (o con foto de banco de
+  /// imágenes) se le pone la del envase de Open Food Facts, en segundo plano.
+  bool _photosUpgraded = false;
+  void _upgradePhotosOnce(List<ShoppingListItem> items) {
+    if (_photosUpgraded) return;
+    final todo = [
+      for (final i in items)
+        if (!i.checked &&
+            i.id != null &&
+            !isLocalId(i.id!) &&
+            ((i.imageUrl ?? '').isEmpty || isStockPhoto(i.imageUrl)))
+          i,
+    ].take(25).toList();
+    if (todo.isEmpty) return;
+    _photosUpgraded = true;
+    _homeId()
+        .then(
+          (homeId) => PlanShoppingService(_client).fillMissingPhotos(
+            homeId,
+            todo,
+            supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+          ),
+        )
+        .catchError((_) => 0);
   }
 
   /// Carga best-effort de los precios conocidos del hogar para estimar coste.
@@ -333,7 +385,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               // Un eco remoto refresca vía refreshFromRemote (fetch + merge con
               // pendientes), de modo que NO borre un cambio local todavía sin
               // sincronizar.
-              _refreshFromRemote();
+              _realtimeDebounce?.cancel();
+              _realtimeDebounce = Timer(const Duration(milliseconds: 600), () {
+                if (mounted) _refreshFromRemote();
+              });
             },
           )
           .subscribe((status, [error]) {
@@ -420,6 +475,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   void dispose() {
+    _realtimeDebounce?.cancel();
     final channel = _channel;
     if (channel != null) {
       _client.removeChannel(channel);
@@ -439,6 +495,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (!mounted) return;
     _registerCelebration(items);
     setState(() {
+      _shown = items;
       _itemsFuture = Future.value(items);
       _pendingCount = pending;
     });
@@ -460,26 +517,31 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return homeId;
   }
 
+  /// Pinta al momento la lista con [item] marcado o desmarcado.
+  void _showToggled(ShoppingListItem item, bool value) {
+    final current = _shown;
+    if (current == null) return;
+    final updated = [
+      for (final i in current)
+        if (i.id == item.id)
+          ShoppingListItem.fromMap({...i.toCacheMap(), 'checked': value})
+        else
+          i,
+    ];
+    setState(() {
+      _shown = updated;
+      _itemsFuture = Future.value(updated);
+    });
+  }
+
   Future<void> _toggleChecked(ShoppingListItem item, bool value) async {
     if (item.id == null) return;
+    // Primero se ve el cambio; el guardado va detrás. Al comprar, el producto
+    // pasa a su zona de la despensa.
+    _showToggled(item, value);
     try {
-      // Escritura OPTIMISTA vía el repositorio: parcheamos solo 'checked'. La
-      // caché refleja el cambio al instante; el envío a Supabase se drena en
-      // segundo plano. Encolamos antes de _addToPantry para conservar el orden.
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kShoppingTable,
-          id: item.id!,
-          changes: {'checked': value},
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      // Al marcar como comprado, el producto pasa SOLO a la despensa (dedup por
-      // nombre). Al desmarcar no lo quitamos del inventario (ya está en casa).
-      if (value) {
-        await _addToPantry(item);
-      }
+      final homeId = await _homeId();
+      await ShoppingCheckout().setBought(item, value, homeId: homeId);
       await _reload();
     } catch (e) {
       if (!mounted) return;
@@ -492,85 +554,40 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  /// Mete un artículo comprado en el inventario (despensa). Deduplica por
-  /// nombre normalizado: si ya existe (en cualquier ubicación de comida), suma
-  /// la cantidad; si no, crea uno nuevo en Despensa con caducidad estimada.
-  /// Best-effort: si algo falla, no rompe el marcado como comprado.
-  Future<void> _addToPantry(ShoppingListItem item) async {
+  /// Da por comprado todo lo pendiente de la lista activa de una vez.
+  Future<void> _checkAll() async {
+    final current = _shown;
+    if (current == null) return;
+    final pending = current
+        .where((i) => !i.checked && i.listId == _activeListId)
+        .length;
+    if (pending == 0) return;
+    setState(() {
+      _shown = [
+        for (final i in current)
+          if (!i.checked && i.listId == _activeListId)
+            ShoppingListItem.fromMap({...i.toCacheMap(), 'checked': true})
+          else
+            i,
+      ];
+      _itemsFuture = Future.value(_shown!);
+    });
     try {
       final homeId = await _homeId();
-      final nKey = CategoryIcons.normalize(item.name);
-      final isHome = item.itemType == 'hogar';
-
-      // Dedup contra la DESPENSA CACHEADA (que ya incluye las ops pendientes):
-      // así funciona también sin conexión y no se pierde el merge por nombre.
-      final existing = await _inventoryRepo.readCached();
-
-      // Dedup por nombre DENTRO del mismo tipo (no fusionar comida con hogar).
-      String? foundId;
-      double foundQty = 0;
-      for (final m in existing) {
-        final rowIsHome = (m['item_type'] ?? 'comida').toString() == 'hogar';
-        if (rowIsHome != isHome) continue;
-        if (CategoryIcons.normalize((m['name'] ?? '').toString()) == nKey) {
-          foundId = m['id'] as String?;
-          foundQty = (m['quantity'] as num?)?.toDouble() ?? 0;
-          break;
-        }
-      }
-
-      final addQty = item.quantity ?? 1;
-      if (foundId != null) {
-        // Ya existe en la despensa: sumamos cantidad vía UPDATE optimista.
-        await _inventoryRepo.applyLocalWrite(
-          buildUpdateOp(
-            table: kInventoryTable,
-            id: foundId,
-            changes: {'quantity': foundQty + addQty},
-            nowMillis: DateTime.now().millisecondsSinceEpoch,
-            seq: _nextSeq(),
-          ),
-        );
-      } else {
-        // Ubicación: hogar -> 'Hogar'; comida -> la elegida (item.category) o,
-        // si no hay, la deducida por el alimento. Caducidad solo para comida.
-        final String location;
-        if (isHome) {
-          location = item.category ?? 'Hogar';
-        } else {
-          location = item.category ?? ShelfLife.suggestLocation(item.name);
-        }
-        final estimated = isHome
-            ? null
-            : ShelfLife.estimateDate(item.name, location);
-        // Insert OPTIMISTA con id temporal local: la fila se ve en la despensa
-        // al instante y se enviará a Supabase al drenar la cola.
-        final now = DateTime.now().millisecondsSinceEpoch;
-        final localId = newLocalId(nowMillis: now, seq: _nextSeq());
-        final inv = InventoryItem(
-          id: localId,
-          homeId: homeId,
-          name: item.name,
-          category: location,
-          itemType: item.itemType,
-          quantity: addQty,
-          unit: item.unit ?? 'unidades',
-          kind: 'ingredient',
-          expirationDate: estimated,
-          imageUrl: item.imageUrl,
-        );
-        await _inventoryRepo.applyLocalWrite(
-          buildInsertOp(
-            table: kInventoryTable,
-            id: localId,
-            payload: inv.toCacheMap(),
-            nowMillis: now,
-            seq: _nextSeq(),
-          ),
-        );
-      }
+      await ShoppingCheckout().markAllBought(
+        homeId: homeId,
+        listId: _activeListId,
+      );
+      await _reload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$pending productos guardados en la despensa')),
+      );
     } catch (e) {
-      debugPrint('ShoppingList._addToPantry error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
+      );
     }
   }
 
@@ -649,14 +666,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             ListTile(
               leading: const Icon(
-                Icons.image_search,
-                color: AppColors.woodDark,
-              ),
-              title: const Text('Buscar otra foto'),
-              onTap: () => Navigator.of(ctx).pop('auto'),
-            ),
-            ListTile(
-              leading: const Icon(
                 Icons.delete_outline,
                 color: Colors.redAccent,
               ),
@@ -678,9 +687,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         break;
       case 'store':
         await _pickStoreProductPhoto(item);
-        break;
-      case 'auto':
-        await _regenPhoto(item);
         break;
       case 'delete':
         await _deleteItem(item);
@@ -771,46 +777,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(friendlyError(e, 'No se pudo cambiar la foto'))),
-      );
-    }
-  }
-
-  /// Vuelve a buscar una foto automática para el artículo.
-  Future<void> _regenPhoto(ShoppingListItem item) async {
-    if (item.id == null) return;
-    try {
-      final homeId = await _homeId();
-      final url = await FoodPhotoService(_client).resolveProductPhotoUrl(
-        homeId: homeId,
-        name: item.name,
-        mode: item.itemType == 'comida' ? 'ingredient' : 'dish',
-      );
-      if (url == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No encontré una foto. Puedes poner una tuya.'),
-          ),
-        );
-        return;
-      }
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kShoppingTable,
-          id: item.id!,
-          changes: {'image_url': url},
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      await _reload();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
-          backgroundColor: Colors.red,
-        ),
       );
     }
   }
@@ -1041,18 +1007,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: imageUrl);
       } else {
-        try {
-          // Foto REAL de producto priorizando Open Food Facts (foto del envase)
-          // y, si no hay, el banco de imágenes; respaldo final = ilustración
-          // cozy en la UI. La elección se recuerda por producto en la caché.
-          imageUrl = await FoodPhotoService(_client).resolveProductPhotoUrl(
-            homeId: homeId,
-            name: name,
-            mode: itemType == 'comida' ? 'ingredient' : 'dish',
-          );
-        } catch (_) {
-          imageUrl = null;
-        }
+        // Foto del envase en Open Food Facts (o la ya guardada). Si tarda,
+        // el producto entra sin foto y se le pone después.
+        imageUrl = await ProductPhotoResolver(_client)
+            .photoFor(
+              homeId: homeId,
+              name: name,
+              supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+            )
+            .timeout(const Duration(seconds: 4), onTimeout: () => null);
       }
       // Alta OPTIMISTA con id temporal local y created_at = ahora: la fila
       // aparece en la lista al instante (ordenada por fecha de creación) y se
@@ -1139,9 +1102,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       );
       // Las fotos que faltan se buscan después, sin bloquear la lista.
       if (added.any((i) => (i.imageUrl ?? '').isEmpty)) {
-        service.fillMissingPhotos(homeId, added).then((n) {
-          if (n > 0 && mounted) _reload();
-        });
+        service
+            .fillMissingPhotos(
+              homeId,
+              added,
+              supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+            )
+            .then((n) {
+              if (n > 0 && mounted) _reload();
+            });
       }
     } catch (e) {
       if (!mounted) return;
@@ -1163,7 +1132,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       body: FutureBuilder<List<ShoppingListItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // Al refrescar se sigue viendo la lista anterior (sin parpadeo).
+          if (!snapshot.hasData &&
+              snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
@@ -1536,6 +1507,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// El plegado por pasillo se recuerda mientras viva la pantalla.
   List<Widget> _buildPendientesSlivers(List<ShoppingListItem> pendientes) {
     if (pendientes.isEmpty) return const [];
+    return [
+      SliverToBoxAdapter(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: _checkAll,
+            icon: const Icon(Icons.done_all_rounded, size: 20),
+            label: const Text('Todo comprado'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.sage),
+          ),
+        ),
+      ),
+      ..._pendingSections(pendientes),
+    ];
+  }
+
+  List<Widget> _pendingSections(List<ShoppingListItem> pendientes) {
     if (!_view.groupByAisle) {
       const key = '_todo';
       final expanded = !(_catCollapsed[key] ?? false);
@@ -1644,12 +1632,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         color: AppColors.sageBg,
         child: const Icon(Icons.check_circle_rounded, color: AppColors.sage),
       ),
-      // Deslizar NO borra: marca como comprado y la fila pasa al carro al
-      // recargar (por eso devolvemos false y no se desmonta aquí).
-      confirmDismiss: (_) async {
-        await _toggleChecked(item, true);
-        return false;
-      },
+      // Deslizar marca como comprado: la fila pasa al carro al instante.
+      onDismissed: (_) => _toggleChecked(item, true),
       child: ShoppingItemTile(
         name: shoppingCleanName(item.name),
         checked: done,
@@ -1667,7 +1651,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   child: FoodImage(
                     name: item.name,
                     itemType: item.itemType,
-                    imageUrl: item.imageUrl,
+                    // Las fotos de banco salen al azar: mejor la ilustración
+                    // hasta que llegue la del envase.
+                    imageUrl: isStockPhoto(item.imageUrl)
+                        ? null
+                        : item.imageUrl,
                     size: 44,
                     radius: 12,
                   ),
