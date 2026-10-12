@@ -17,6 +17,7 @@ import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
+import 'discover_recipes_screen.dart';
 
 /// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
 /// Despensa, Bebidas, Especias o Hogar y limpieza). Agrupa los items y lleva su
@@ -810,6 +811,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
           _sectionFilter = zone?.filterKey ?? 'todo';
           _expandedOverrides.clear();
         }),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      // Al revés que el plan: ideas de recetas con lo que ya hay.
+      FilledButton.tonalIcon(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+          ),
+        ),
+        icon: const Icon(Icons.soup_kitchen_outlined),
+        label: const Text('¿Qué cocino con esto?'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          backgroundColor: AppColors.wood.withValues(alpha: 0.45),
+          foregroundColor: AppColors.ink,
+          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
       const SizedBox(height: 16),
     ];
