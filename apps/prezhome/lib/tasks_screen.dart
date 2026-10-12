@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'add_task_screen.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
+import 'services/shopping_checkout.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
 import 'utils/realtime_sync.dart';
@@ -234,11 +235,22 @@ class _TasksScreenState extends State<TasksScreen> {
 
     try {
       await TaskScheduler(_client).completeAttributed(task, doneBy);
+      // Hacer la compra: se tacha la lista y lo comprado va a la despensa.
+      final bought = isShoppingTask(task.title)
+          ? await ShoppingCheckout().markAllBoughtForCurrentUser()
+          : 0;
 
       if (!mounted) return;
       final who = data.members[doneBy] ?? 'el hogar';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('¡+${task.points} puntos para $who!')),
+        SnackBar(
+          content: Text(
+            bought > 0
+                ? '¡+${task.points} puntos para $who! $bought productos a la '
+                      'despensa'
+                : '¡+${task.points} puntos para $who!',
+          ),
+        ),
       );
       _reload();
     } catch (e) {

@@ -4,13 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
 import 'services/food_photo_service.dart';
 import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
 import 'services/price_memory.dart';
-import 'services/shelf_life.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'models/shopping_category.dart';
@@ -18,6 +16,7 @@ import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
 import 'services/home_supermarkets.dart';
 import 'services/plan_shopping.dart';
+import 'services/shopping_checkout.dart';
 import 'shopping_lists_overview_screen.dart';
 import 'utils/offline_actions.dart';
 import 'utils/realtime_sync.dart';
@@ -509,26 +508,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Future<void> _toggleChecked(ShoppingListItem item, bool value) async {
     if (item.id == null) return;
-    // Primero se ve el cambio; el guardado va detrás.
+    // Primero se ve el cambio; el guardado va detrás. Al comprar, el producto
+    // pasa a su zona de la despensa.
     _showToggled(item, value);
     try {
-      // Escritura OPTIMISTA vía el repositorio: parcheamos solo 'checked'. La
-      // caché refleja el cambio al instante; el envío a Supabase se drena en
-      // segundo plano. Encolamos antes de _addToPantry para conservar el orden.
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kShoppingTable,
-          id: item.id!,
-          changes: {'checked': value},
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      // Al marcar como comprado, el producto pasa SOLO a la despensa (dedup por
-      // nombre). Al desmarcar no lo quitamos del inventario (ya está en casa).
-      if (value) {
-        await _addToPantry(item);
-      }
+      final homeId = await _homeId();
+      await ShoppingCheckout().setBought(item, value, homeId: homeId);
       await _reload();
     } catch (e) {
       if (!mounted) return;
@@ -541,85 +526,40 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  /// Mete un artículo comprado en el inventario (despensa). Deduplica por
-  /// nombre normalizado: si ya existe (en cualquier ubicación de comida), suma
-  /// la cantidad; si no, crea uno nuevo en Despensa con caducidad estimada.
-  /// Best-effort: si algo falla, no rompe el marcado como comprado.
-  Future<void> _addToPantry(ShoppingListItem item) async {
+  /// Da por comprado todo lo pendiente de la lista activa de una vez.
+  Future<void> _checkAll() async {
+    final current = _shown;
+    if (current == null) return;
+    final pending = current
+        .where((i) => !i.checked && i.listId == _activeListId)
+        .length;
+    if (pending == 0) return;
+    setState(() {
+      _shown = [
+        for (final i in current)
+          if (!i.checked && i.listId == _activeListId)
+            ShoppingListItem.fromMap({...i.toCacheMap(), 'checked': true})
+          else
+            i,
+      ];
+      _itemsFuture = Future.value(_shown!);
+    });
     try {
       final homeId = await _homeId();
-      final nKey = CategoryIcons.normalize(item.name);
-      final isHome = item.itemType == 'hogar';
-
-      // Dedup contra la DESPENSA CACHEADA (que ya incluye las ops pendientes):
-      // así funciona también sin conexión y no se pierde el merge por nombre.
-      final existing = await _inventoryRepo.readCached();
-
-      // Dedup por nombre DENTRO del mismo tipo (no fusionar comida con hogar).
-      String? foundId;
-      double foundQty = 0;
-      for (final m in existing) {
-        final rowIsHome = (m['item_type'] ?? 'comida').toString() == 'hogar';
-        if (rowIsHome != isHome) continue;
-        if (CategoryIcons.normalize((m['name'] ?? '').toString()) == nKey) {
-          foundId = m['id'] as String?;
-          foundQty = (m['quantity'] as num?)?.toDouble() ?? 0;
-          break;
-        }
-      }
-
-      final addQty = item.quantity ?? 1;
-      if (foundId != null) {
-        // Ya existe en la despensa: sumamos cantidad vía UPDATE optimista.
-        await _inventoryRepo.applyLocalWrite(
-          buildUpdateOp(
-            table: kInventoryTable,
-            id: foundId,
-            changes: {'quantity': foundQty + addQty},
-            nowMillis: DateTime.now().millisecondsSinceEpoch,
-            seq: _nextSeq(),
-          ),
-        );
-      } else {
-        // Ubicación: hogar -> 'Hogar'; comida -> la elegida (item.category) o,
-        // si no hay, la deducida por el alimento. Caducidad solo para comida.
-        // La categoría de la compra es el pasillo; en la despensa va a su zona.
-        final location = ShelfLife.pantryZoneFor(
-          name: item.name,
-          itemType: item.itemType,
-          category: item.category,
-        );
-        final estimated = isHome
-            ? null
-            : ShelfLife.estimateDate(item.name, location);
-        // Insert OPTIMISTA con id temporal local: la fila se ve en la despensa
-        // al instante y se enviará a Supabase al drenar la cola.
-        final now = DateTime.now().millisecondsSinceEpoch;
-        final localId = newLocalId(nowMillis: now, seq: _nextSeq());
-        final inv = InventoryItem(
-          id: localId,
-          homeId: homeId,
-          name: item.name,
-          category: location,
-          itemType: item.itemType,
-          quantity: addQty,
-          unit: item.unit ?? 'unidades',
-          kind: 'ingredient',
-          expirationDate: estimated,
-          imageUrl: item.imageUrl,
-        );
-        await _inventoryRepo.applyLocalWrite(
-          buildInsertOp(
-            table: kInventoryTable,
-            id: localId,
-            payload: inv.toCacheMap(),
-            nowMillis: now,
-            seq: _nextSeq(),
-          ),
-        );
-      }
+      await ShoppingCheckout().markAllBought(
+        homeId: homeId,
+        listId: _activeListId,
+      );
+      await _reload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$pending productos guardados en la despensa')),
+      );
     } catch (e) {
-      debugPrint('ShoppingList._addToPantry error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
+      );
     }
   }
 
@@ -1587,6 +1527,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// El plegado por pasillo se recuerda mientras viva la pantalla.
   List<Widget> _buildPendientesSlivers(List<ShoppingListItem> pendientes) {
     if (pendientes.isEmpty) return const [];
+    return [
+      SliverToBoxAdapter(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: _checkAll,
+            icon: const Icon(Icons.done_all_rounded, size: 20),
+            label: const Text('Todo comprado'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.sage),
+          ),
+        ),
+      ),
+      ..._pendingSections(pendientes),
+    ];
+  }
+
+  List<Widget> _pendingSections(List<ShoppingListItem> pendientes) {
     if (!_view.groupByAisle) {
       const key = '_todo';
       final expanded = !(_catCollapsed[key] ?? false);
