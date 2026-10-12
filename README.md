@@ -51,6 +51,7 @@ plato), y la guia sencilla para activarlo esta en
 - [docs/ESTRATEGIA.md](docs/ESTRATEGIA.md): perfiles, apps independientes, personalización y publicación en tiendas.
 - [docs/PREZHOME.md](docs/PREZHOME.md): visión de PrezHome (quitar carga mental).
 - [docs/PREZWALLET.md](docs/PREZWALLET.md): app hermana de gastos y patrimonio.
+- [docs/REDISENO.md](docs/REDISENO.md): revisión de la app y plan del rediseño integral.
 
 ## Arquitectura y refactor
 

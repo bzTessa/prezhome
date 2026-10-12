@@ -498,7 +498,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       children: [
         _stepHeader(
           'Tu sexo',
-          'Lo usamos para calcular tu metabolismo con mas precision.',
+          'Lo usamos para calcular tu metabolismo con más precisión.',
         ),
         _OptionCard(
           title: 'Mujer',
@@ -900,7 +900,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                 ),
               ),
               const Text(
-                'kcal / dia',
+                'kcal / día',
                 style: TextStyle(fontSize: 16, color: AppColors.woodDark),
               ),
               if (macros != null) ...[
