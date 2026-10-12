@@ -28,6 +28,12 @@ apuntar.** Si no, no se usa.
 
 Cada movimiento es *personal* o *del hogar*; esa es la única pregunta extra.
 
+Perfil principal: persona de 25–40 años en España que empieza a ordenar su
+dinero y a invertir, con el dinero repartido en varias apps. Fuera de alcance:
+traders y autónomos que emiten facturas. Detalle en
+[ESTRATEGIA.md](ESTRATEGIA.md) §1. La app funciona completa **sin** PrezHome
+(ESTRATEGIA.md §2).
+
 ## 3. Pestañas
 
 **Inicio · Movimientos · Patrimonio · Análisis** + **[+]** (nuevo movimiento).
@@ -88,7 +94,12 @@ PrezWallet → un toque y queda apuntado con el sitio y el importe.
 
 **Que sea de verdad "un solo toque":**
 - La app **aprende comercio → categoría / cuenta / personal-hogar**
-  (`wallet_merchants`). La primera vez en "MERCADONA" eliges; las siguientes
+  (`wallet_bills         id, owner_id, home_id?, provider, category_id, amount,
+                     rrule, next_date, remind_days_before, is_shared
+wallet_bill_docs     id, bill_id, period_start, period_end, amount, file_path
+wallet_risk_profile  user_id, answers jsonb, profile (conservative|moderate|
+                     dynamic), updated_at
+wallet_merchants`). La primera vez en "MERCADONA" eliges; las siguientes
   ya viene sugerido y "Registrar" basta.
 - Para comercios de confianza: opción **"registrar siempre sin preguntar"**
   (solo se avisa, con opción de deshacer).
@@ -100,6 +111,45 @@ PrezWallet → un toque y queda apuntado con el sitio y el importe.
 - Por comercio: preguntar / registrar automático / ignorar siempre.
 - "Pagos sin registrar": bandeja con los que ignoraste o no contestaste, por
   si quieres apuntarlos luego.
+
+### 3.7 Facturas y recibos
+
+Facturas **que recibes** (luz, agua, gas, internet, móvil, seguros, alquiler,
+IBI, suscripciones). No es para emitir facturas (eso es otro producto).
+
+- **Recibo recurrente** con importe, día de cargo y cuenta. Aviso unos días
+  antes (y en la pantalla Hoy de PrezHome si la usas).
+- **Archivo**: foto o PDF de cada factura (Supabase Storage, privado), con
+  importe y periodo leídos con la misma IA que los tickets.
+- **Detectar cambios**: "tu factura de luz ha subido un 18 % respecto a la
+  media de los últimos 6 meses", "esta suscripción no la has usado…" (solo lo
+  que se pueda saber con tus datos).
+- **Gasto fijo mensual**: suma de todos los recibos = lo que te cuesta vivir
+  antes de gastar nada. Es la cifra que más tranquiliza o más alerta.
+- Compartidas con el hogar si se marcan así (alquiler, luz…).
+
+### 3.8 Sugerencias de cartera según tu perfil
+
+Sí, pero con cuidado: **recomendar a una persona concreta qué producto
+financiero comprar es asesoramiento de inversión**, una actividad regulada en
+España (necesita autorización de la CNMV). Una app sin esa licencia no puede
+decir "compra este fondo". Lo que sí puede hacer, y es lo útil:
+
+- **Test de perfil** (horizonte, tolerancia a caídas, objetivo, colchón de
+  emergencia) → resultado educativo: "tu perfil es moderado".
+- **Analizar tu propia cartera con datos, no con órdenes**:
+  - Diversificación: "el 62 % de tu cartera está en una sola empresa".
+  - Coherencia con tu perfil: "tu cartera tiene un riesgo más alto que el
+    perfil que indicaste".
+  - Costes: "pagas un 1,8 % anual en comisiones de este fondo".
+  - Colchón: "tu fondo de emergencia cubre 2 meses de tus gastos fijos"
+    (aquí se juntan gastos y patrimonio: lo que ninguna referencia hace).
+- **Carteras de ejemplo genéricas** por perfil (p. ej. "80 % renta variable
+  global / 20 % renta fija") como contenido educativo, **sin nombrar productos
+  concretos ni enlazar a brókers**.
+- Aviso visible: "Información educativa, no es asesoramiento financiero".
+- Antes de publicar esta parte: **consultarlo con alguien experto en
+  regulación financiera**. Este documento no es una opinión legal.
 
 ## 4. Modelo de datos (borrador)
 
@@ -141,10 +191,10 @@ esté en uso.
 |------|-----------|-----------|
 | **1. Apuntar** | Cuentas manuales, categorías, [+] rápido, lista de movimientos, Inicio básico. | Ya sustituye a Mis Gastos. |
 | **1b. Un toque** | Detección de pagos por notificación en Android + aprendizaje de comercios (§3.6). | Apuntar deja de ser un esfuerzo. |
-| **2. Entender** | Análisis (donut, comparativas, necesidad/deseo), presupuestos por categoría, recurrentes + avisos. | Sabes en qué se va el dinero. |
+| **2. Entender** | Análisis (donut, comparativas, necesidad/deseo), presupuestos por categoría, **facturas y recibos** con avisos y archivo (§3.7). | Sabes en qué se va el dinero. |
 | **3. Conectar con PrezHome** | Tickets → movimientos, presupuesto de súper en la lista de compra, recibos → pantalla Hoy. | Las dos apps trabajan juntas. |
 | **4. Patrimonio** | Activos/deudas manuales, patrimonio neto, snapshots y gráfico de evolución. | Foto completa de tu dinero. |
-| **5. Inversiones** | Posiciones, precios automáticos (Edge Function + API de cotizaciones), dividendos, distribución. | Sustituye a getquin. |
+| **5. Inversiones** | Posiciones, precios automáticos (Edge Function + API de cotizaciones), dividendos, distribución, test de perfil y análisis de cartera (§3.8). | Sustituye a getquin. |
 | **6. Automatizar** | Importar CSV/Excel del banco; más adelante agregador bancario PSD2 (Edge Function, nunca claves en la app). | Casi no hay que apuntar a mano. |
 
 ## 6. Arquitectura técnica
@@ -172,11 +222,11 @@ supabase/          migraciones y Edge Functions compartidas
 
 ## 7. Diseño
 
-- Misma barra flotante y tokens que PrezHome (paquete `prez_ui`).
-- Color de marca propio para distinguirlas de un vistazo: PrezHome amarillo
-  Cozy, PrezWallet **verde salvia** (en la línea de la referencia), mismo
-  fondo crema y tarjetas redondeadas.
-- Miau aparece con su versión "gato de la suerte" (maneki-neko con moneda)
+- Misma barra flotante y tokens que PrezHome (paquete `prez_ui`), y los mismos
+  estilos personalizables (ESTRATEGIA.md §3).
+- Estilo por defecto **Clean** (sobrio, se lee como app de dinero) con acento
+  **verde salvia**; quien quiera puede elegir Cozy.
+- Miau (si está activado) aparece con su versión "gato de la suerte" (maneki-neko con moneda)
   en estados vacíos y celebraciones (presupuesto cumplido, nuevo máximo de
   patrimonio). Sin emojis en la interfaz.
 - Cifras grandes y legibles; negativos en tono cálido suave, no rojo chillón.
@@ -187,5 +237,7 @@ supabase/          migraciones y Edge Functions compartidas
   campo `currency` ya preparado.)
 - ¿Los miembros del hogar ven el patrimonio de los demás? (Propuesta: no,
   solo lo marcado como compartido.)
+- ¿Hasta dónde llegan las sugerencias de cartera? Validar con un experto en
+  regulación antes de la fase 5 (§3.8).
 - ¿Qué fuente de cotizaciones? Decidir en la fase 5 según coste y cobertura de
   ETFs europeos.

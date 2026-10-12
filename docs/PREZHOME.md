@@ -16,6 +16,10 @@ No es una app de "gestionar el hogar" (eso ya es trabajo). Es una app que:
 Regla de oro: si una función obliga a pensar más de lo que ahorra, sobra o va
 escondida en Ajustes.
 
+Perfiles principales: quien lleva la casa en la cabeza (pareja o
+convivientes que cocinan en casa) y quien hace meal prep. La app funciona
+completa **sin** PrezWallet. Detalle en [ESTRATEGIA.md](ESTRATEGIA.md).
+
 ## 2. Separación con PrezWallet
 
 | Pregunta                         | App        |
@@ -122,8 +126,10 @@ Implementación: widget propio `FloatingNavBar` en un paquete compartido
 `extendBody: true` en el `Scaffold`.
 
 ### 5.2 Estilo
-- Se mantiene el estilo **Cozy** (amarillo pastel, madera clara, tarjetas
-  redondeadas) y a Presidente Miau. Sin emojis en la interfaz.
+- Estilo por defecto **Cozy** (amarillo pastel, madera clara, tarjetas
+  redondeadas) con Presidente Miau. Sin emojis en la interfaz.
+- **Personalizable**: estilo Clean u Oscuro, color de acento, mascota sí/no y
+  tono de los textos. Ver [ESTRATEGIA.md](ESTRATEGIA.md) §3.
 - Tokens ya existentes en `lib/theme/` (spacing, radius, elevation, motion,
   text styles): todo componente nuevo debe usarlos.
 - Una idea por tarjeta, mucho aire, textos cortos.
