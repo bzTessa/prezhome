@@ -57,6 +57,37 @@ void main() {
     expect(tapped, 3);
   });
 
+  testWidgets('deslizar el dedo por la barra va cambiando de pestaña', (
+    tester,
+  ) async {
+    await _setWidth(tester, 412);
+    final seen = <int>[];
+    var selected = 0;
+    await tester.pumpWidget(
+      StatefulBuilder(
+        builder: (context, setState) => _host(
+          selected: selected,
+          onSelected: (i) => setState(() {
+            seen.add(i);
+            selected = i;
+          }),
+        ),
+      ),
+    );
+    final bar = tester.getRect(find.byType(FloatingNavBar));
+    final gesture = await tester.startGesture(
+      Offset(bar.left + 20, bar.center.dy),
+    );
+    for (var x = bar.left + 20; x < bar.right - 10; x += 20) {
+      await gesture.moveTo(Offset(x, bar.center.dy));
+      await tester.pump();
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(seen, [1, 2, 3, 4]);
+    expect(selected, 4);
+  });
+
   testWidgets('la pestaña activa se expande al cambiar de selección', (
     tester,
   ) async {

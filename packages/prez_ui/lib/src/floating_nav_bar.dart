@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Una pestaña de [FloatingNavBar].
 @immutable
@@ -38,6 +39,7 @@ class FloatingNavAction {
 /// - Las pestañas inactivas muestran solo su icono.
 /// - La activa se expande (animada) en una cápsula tintada con icono + texto.
 /// - [action], si se da, es un botón circular aparte a la derecha.
+/// - Deslizar el dedo a lo largo de la barra va cambiando de pestaña.
 ///
 /// Los colores son opcionales: por defecto salen del [ColorScheme] del tema.
 /// Pensada para colocarse en `Scaffold.bottomNavigationBar` dentro de un
@@ -108,7 +110,16 @@ class FloatingNavBar extends StatelessWidget {
           final n = items.length;
           final inactive = math.min(56.0, constraints.maxWidth / (n + 1.6));
           final active = constraints.maxWidth - inactive * (n - 1);
-          return Row(
+          // Al deslizar, la barra se reparte en tramos iguales: el tramo bajo
+          // el dedo es la pestaña elegida.
+          void scrub(double dx) {
+            final i = (dx / constraints.maxWidth * n).floor().clamp(0, n - 1);
+            if (i == selectedIndex) return;
+            HapticFeedback.selectionClick();
+            onSelected(i);
+          }
+
+          final row = Row(
             children: [
               for (var i = 0; i < n; i++)
                 AnimatedContainer(
@@ -127,6 +138,12 @@ class FloatingNavBar extends StatelessWidget {
                   ),
                 ),
             ],
+          );
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragStart: (d) => scrub(d.localPosition.dx),
+            onHorizontalDragUpdate: (d) => scrub(d.localPosition.dx),
+            child: row,
           );
         },
       ),
