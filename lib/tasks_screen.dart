@@ -7,8 +7,6 @@ import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
-import 'theme/app_spacing.dart';
-import 'theme/app_text_styles.dart';
 import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
 

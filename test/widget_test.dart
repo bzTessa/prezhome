@@ -7,7 +7,7 @@ void main() {
   testWidgets('home onboarding offers both membership options', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomeOnboardingScreen()));
 
-    expect(find.text('Crear un hogar nuevo'), findsOneWidget);
-    expect(find.text('Unirme al hogar'), findsOneWidget);
+    expect(find.text('Comenzar un hogar nuevo'), findsOneWidget);
+    expect(find.text('Unirme a un hogar'), findsOneWidget);
   });
 }
