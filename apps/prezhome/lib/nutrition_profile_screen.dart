@@ -5,6 +5,7 @@ import 'food_diary_screen.dart';
 import 'main_shell.dart';
 import 'models/nutrition_profile.dart';
 import 'profile_wizard_screen.dart';
+import 'utils/friendly_error.dart';
 
 class NutritionProfileScreen extends StatefulWidget {
   const NutritionProfileScreen({super.key});
@@ -88,7 +89,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cargar el perfil: $e'),
+            content: Text(friendlyError(e, 'Error al cargar el perfil')),
             backgroundColor: Colors.red,
           ),
         );
@@ -136,7 +137,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

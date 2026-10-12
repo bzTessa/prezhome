@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/miau_character.dart';
+import 'utils/friendly_error.dart';
 
 /// Estadísticas curiosas de productos y precios del hogar, a partir de los
 /// tickets escaneados (ticket_items). Muestra: lo que más compras, en qué más
@@ -68,7 +69,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text(friendlyError(snapshot.error)));
           }
           final stats = snapshot.data ?? [];
           if (stats.isEmpty) {

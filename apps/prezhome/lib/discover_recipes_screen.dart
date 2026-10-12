@@ -14,6 +14,7 @@ import 'theme/app_theme.dart';
 import 'utils/approx_price.dart';
 import 'utils/pantry_ideas.dart';
 import 'utils/shopping_categories.dart';
+import 'utils/friendly_error.dart';
 
 /// "Ideas personalizadas" (estilo mise): eliges parámetros y la IA propone
 /// recetas. Puedes guardar las que te gusten en tus recetas.
@@ -298,7 +299,10 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(friendlyError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -423,7 +427,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

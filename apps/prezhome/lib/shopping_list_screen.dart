@@ -30,6 +30,7 @@ import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'widgets/shopping/shopping_parts.dart';
+import 'utils/friendly_error.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
 ///
@@ -484,7 +485,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar: $e'),
+          content: Text(friendlyError(e, 'No se pudo actualizar')),
           backgroundColor: Colors.red,
         ),
       );
@@ -592,7 +593,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo eliminar: $e'),
+          content: Text(friendlyError(e, 'No se pudo eliminar')),
           backgroundColor: Colors.red,
         ),
       );
@@ -712,7 +713,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo subir la foto: $e'),
+          content: Text(friendlyError(e, 'No se pudo subir la foto')),
           backgroundColor: Colors.red,
         ),
       );
@@ -752,7 +753,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo cambiar la foto: $e'),
+          content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
           backgroundColor: Colors.red,
         ),
       );
@@ -997,7 +998,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo añadir: $e'),
+          content: Text(friendlyError(e, 'No se pudo añadir')),
           backgroundColor: Colors.red,
         ),
       );
@@ -1267,7 +1268,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -1288,7 +1289,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text(friendlyError(snapshot.error)));
           }
 
           final all = snapshot.data ?? [];
@@ -1421,7 +1422,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo crear la lista: $e'),
+          content: Text(friendlyError(e, 'No se pudo crear la lista')),
           backgroundColor: Colors.red,
         ),
       );

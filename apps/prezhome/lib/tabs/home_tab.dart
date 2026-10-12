@@ -22,6 +22,7 @@ import '../widgets/animations/animated_counter.dart';
 import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
 import '../widgets/animations/staggered_entrance.dart';
+import '../utils/friendly_error.dart';
 
 /// Pestaña de Inicio: dashboard con el resumen del día del hogar (comidas de
 /// hoy, calorías, tareas y gasto). El plan semanal/mensual vive ahora en la
@@ -278,7 +279,10 @@ class HomeTabState extends State<HomeTab> {
       debugPrint('HomeTab._completeTaskFromDashboard error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(friendlyError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

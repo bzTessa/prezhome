@@ -9,6 +9,7 @@ import 'nutrition_profile_screen.dart';
 import 'login_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
+import 'utils/friendly_error.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({super.key});
@@ -114,7 +115,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await _client.rpc('create_home_and_join');
       _reload();
     } catch (e) {
-      _snack('No se pudo crear el hogar: $e', error: true);
+      _snack(friendlyError(e, 'No se pudo crear el hogar'), error: true);
     }
   }
 
@@ -160,7 +161,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await _client.rpc('join_home', params: {'target_home_id': id});
       _reload();
     } catch (e) {
-      _snack('No se pudo unir al hogar: $e', error: true);
+      _snack(friendlyError(e, 'No se pudo unir al hogar'), error: true);
     }
   }
 
@@ -205,7 +206,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await _client.from('homes').update({'name': name}).eq('id', homeId);
       _reload();
     } catch (e) {
-      _snack('No se pudo renombrar: $e', error: true);
+      _snack(friendlyError(e, 'No se pudo renombrar'), error: true);
     }
   }
 
@@ -255,7 +256,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Error: ${snapshot.error}'),
+                child: Text(friendlyError(snapshot.error)),
               ),
             );
           }
@@ -647,7 +648,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           .eq('id', data.homeId!);
       _reload();
     } catch (e) {
-      _snack('No se pudo guardar: $e', error: true);
+      _snack(friendlyError(e, 'No se pudo guardar'), error: true);
     }
   }
 

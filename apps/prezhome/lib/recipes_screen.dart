@@ -9,6 +9,7 @@ import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
+import 'utils/friendly_error.dart';
 
 class RecipesScreen extends StatefulWidget {
   /// Cuando va dentro de una pestaña con su propio AppBar, lo ocultamos.
@@ -105,7 +106,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar: $e'),
+          content: Text(friendlyError(e, 'No se pudo actualizar')),
           backgroundColor: Colors.red,
         ),
       );
@@ -211,7 +212,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo eliminar: $e'),
+          content: Text(friendlyError(e, 'No se pudo eliminar')),
           backgroundColor: Colors.red,
         ),
       );
@@ -293,7 +294,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
           }
           if (snapshot.hasError) {
             return _ErrorState(
-              message: 'No he podido cargar las recetas.\n${snapshot.error}',
+              message: friendlyError(
+                snapshot.error,
+                'No he podido cargar las recetas',
+              ),
               onRetry: _reload,
             );
           }

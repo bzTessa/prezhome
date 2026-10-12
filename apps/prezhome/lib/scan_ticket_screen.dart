@@ -8,6 +8,7 @@ import 'models/inventory_item.dart';
 import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
 import 'theme/app_theme.dart';
+import 'utils/friendly_error.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
 /// pantalla de revisión editable antes de guardar. Aprende las correcciones.
@@ -73,7 +74,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al escanear: $e'),
+            content: Text(friendlyError(e, 'Error al escanear')),
             backgroundColor: Colors.red,
           ),
         );
@@ -221,8 +222,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'El ticket se guardó, pero no se pudo actualizar la '
-                  'despensa: $e',
+                  friendlyError(
+                    e,
+                    'El ticket se guardó, pero no se pudo actualizar la '
+                    'despensa',
+                  ),
                 ),
                 backgroundColor: Colors.orange,
               ),
@@ -236,7 +240,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

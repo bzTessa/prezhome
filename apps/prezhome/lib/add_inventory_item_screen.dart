@@ -9,6 +9,7 @@ import 'theme/app_theme.dart';
 import 'utils/quick_items.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
+import 'utils/friendly_error.dart';
 
 class AddInventoryItemScreen extends StatefulWidget {
   /// Si se pasa un item, la pantalla funciona en modo EDICIÓN (precarga sus
@@ -284,7 +285,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

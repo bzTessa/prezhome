@@ -10,6 +10,7 @@ import 'models/supermarket.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
+import 'utils/friendly_error.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -285,7 +286,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error con la IA: $e'),
+            content: Text(friendlyError(e, 'Error con la IA')),
             backgroundColor: Colors.red,
           ),
         );
@@ -391,7 +392,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo importar: $e'),
+            content: Text(friendlyError(e, 'No se pudo importar')),
             backgroundColor: Colors.red,
           ),
         );
@@ -765,7 +766,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

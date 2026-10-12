@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'welcome_screen.dart';
@@ -26,6 +27,11 @@ class PrezHomeApp extends StatelessWidget {
       title: 'PrezHome',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(context),
+      // App en español de España: selectores de fecha, textos del sistema y
+      // formato (lunes primero, coma decimal).
+      locale: const Locale('es', 'ES'),
+      supportedLocales: const [Locale('es', 'ES')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: const _AuthGate(),
     );
   }

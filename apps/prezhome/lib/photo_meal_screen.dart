@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/food_log_entry.dart';
 import 'theme/app_theme.dart';
+import 'utils/friendly_error.dart';
 
 /// Registra comida a partir de una foto del plato: la IA estima los alimentos
 /// y sus calorías/macros, y luego la persona REVISA y CORRIGE lo detectado
@@ -104,7 +105,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al analizar la foto: $e'),
+            content: Text(friendlyError(e, 'Error al analizar la foto')),
             backgroundColor: Colors.red,
           ),
         );
@@ -231,7 +232,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(friendlyError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
           ),
         );

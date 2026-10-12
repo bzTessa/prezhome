@@ -6,6 +6,7 @@ import 'models/task.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
+import 'utils/friendly_error.dart';
 
 /// Calendario MENSUAL del hogar. Muestra, por dia del mes, las comidas
 /// planificadas (meal_plan_entries, mismo patron de consulta que el plan
@@ -178,7 +179,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text(friendlyError(snapshot.error)));
           }
           final data = snapshot.data!;
           if (data.homeId == null) {
