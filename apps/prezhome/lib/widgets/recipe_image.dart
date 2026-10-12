@@ -4,7 +4,7 @@ import '../models/recipe.dart';
 import '../theme/app_theme.dart';
 
 /// Muestra la foto de la receta si existe; si no, un placeholder cozy con un
-/// emoji grande según el tipo de plato. Reutilizable en tarjetas y detalle.
+/// icono grande según el tipo de plato. Reutilizable en tarjetas y detalle.
 class RecipeImage extends StatelessWidget {
   final Recipe recipe;
   final double? width;
@@ -27,17 +27,16 @@ class RecipeImage extends StatelessWidget {
 
   bool get _hasPhoto => !forceIllustration && recipe.imageUrl != null;
 
-  /// Emoji cálido representativo del tipo de plato para el placeholder.
-  /// Prioriza el tipo más "identificable" (desayuno/postre/snack) y cae a un
-  /// plato genérico. Mantiene la coherencia con los emojis de la app.
-  static String emojiFor(Recipe recipe) {
+  /// Icono representativo del tipo de plato para el placeholder. Prioriza el
+  /// tipo más "identificable" (desayuno/postre/snack) y cae a un plato
+  /// genérico.
+  static IconData iconFor(Recipe recipe) {
     final types = recipe.mealTypes;
-    if (types.contains('breakfast')) return '🥐';
-    if (types.contains('dessert')) return '🍰';
-    if (types.contains('snack')) return '🥨';
-    if (types.contains('dinner')) return '🍲';
-    if (types.contains('lunch')) return '🍽️';
-    return '🍲';
+    if (types.contains('breakfast')) return Icons.free_breakfast_outlined;
+    if (types.contains('dessert')) return Icons.cake_outlined;
+    if (types.contains('snack')) return Icons.cookie_outlined;
+    if (types.contains('dinner')) return Icons.dinner_dining_outlined;
+    return Icons.restaurant_outlined;
   }
 
   @override
@@ -102,14 +101,14 @@ class RecipeImage extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation(AppColors.woodDark),
                 ),
               )
-            : _emojiBadge(),
+            : _iconBadge(),
       ),
     );
   }
 
-  Widget _emojiBadge() {
-    // Tamaño del emoji proporcional a la altura, con un círculo crema translúcido
-    // detrás para que destaque sobre el gradiente sin parecer un icono "triste".
+  Widget _iconBadge() {
+    // Tamaño del icono proporcional a la altura, con un círculo crema
+    // translúcido detrás para que destaque sobre el gradiente.
     final badgeSize = (height * 0.52).clamp(44.0, 120.0);
     return Container(
       width: badgeSize,
@@ -126,9 +125,10 @@ class RecipeImage extends StatelessWidget {
         ],
       ),
       alignment: Alignment.center,
-      child: Text(
-        emojiFor(recipe),
-        style: TextStyle(fontSize: badgeSize * 0.5),
+      child: Icon(
+        iconFor(recipe),
+        size: badgeSize * 0.5,
+        color: AppColors.woodDark,
       ),
     );
   }

@@ -915,7 +915,7 @@ class HomeTabState extends State<HomeTab> {
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
-                    'Nada urgente ahora mismo. Todo bajo control 🐾',
+                    'Nada urgente ahora mismo. Todo bajo control.',
                     style: AppTextStyles.bodyMuted,
                   ),
                 ),
@@ -1029,7 +1029,7 @@ class HomeTabState extends State<HomeTab> {
                   const SizedBox(height: AppSpacing.sm),
                   if (!hasAlerts)
                     Text(
-                      'Todo fresco por aquí 🐾',
+                      'Todo fresco por aquí.',
                       style: AppTextStyles.bodyMuted,
                     )
                   else

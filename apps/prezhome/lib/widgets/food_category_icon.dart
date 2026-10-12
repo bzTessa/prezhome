@@ -486,19 +486,21 @@ class CategoryIcons {
   static Color foregroundColorFor(String name, {String? itemType}) =>
       styleFor(name, itemType: itemType).foreground;
 
-  /// Pequeño distintivo visual (emoji dentro de un círculo cozy) listo para
-  /// usar como leading de un ListTile. Consistente entre compra e inventario.
+  /// Pequeño distintivo visual (icono de la categoría en un círculo con su
+  /// tono) listo para usar como leading de un ListTile. Consistente entre
+  /// compra e inventario. Sin emojis: se ven distinto en cada móvil y la guía
+  /// de diseño los evita.
   static Widget badge(String name, {String? itemType, double size = 40}) {
-    final emoji = emojiFor(name, itemType: itemType);
+    final style = styleFor(name, itemType: itemType);
     return Container(
       width: size,
       height: size,
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
+      decoration: BoxDecoration(
+        color: style.background,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
-      child: Text(emoji, style: TextStyle(fontSize: size * 0.5)),
+      child: Icon(style.icon, color: style.foreground, size: size * 0.5),
     );
   }
 }
