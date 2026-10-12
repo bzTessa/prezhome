@@ -330,7 +330,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 _ModeCard(
-                  title: 'Meal prep',
+                  title: 'Cocinar en lote',
                   subtitle:
                       'Cocino en lote y congelo para varios días. Se activan '
                       'congelador, lotes y planificación.',

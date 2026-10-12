@@ -268,7 +268,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
           ? null
           : AppBar(
               title: const Text(
-                'Recetas & Meal Prep',
+                'Recetas',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               backgroundColor: AppColors.cream,

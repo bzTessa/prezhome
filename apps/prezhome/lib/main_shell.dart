@@ -19,7 +19,7 @@ import 'widgets/proactive_suggestions_banner.dart';
 /// funcionando aunque alguna pestaña opcional desaparezca.
 enum TabId { comidas, despensa, inicio, tareas, hogar }
 
-/// Orden FIJO de pestañas candidatas (Hoy, Meal Prep, Tareas, Despensa, Hogar)
+/// Orden FIJO de pestañas candidatas (Hoy, Comida, Tareas, Despensa, Hogar)
 /// filtrado por los módulos activados. Las tres primeras son las secciones de
 /// uso diario y quedan agrupadas al principio de la navegación; Despensa y
 /// Hogar conservan sus flujos existentes.
@@ -53,7 +53,7 @@ class _TabDescriptor {
 }
 
 /// Estructura principal de la app con barra de navegación inferior.
-/// Secciones agrupadas por momento de uso: Hoy (resumen del día) · Meal Prep
+/// Secciones agrupadas por momento de uso: Hoy (resumen del día) · Comida
 /// (plan, recetas y diario) · Tareas · Despensa · Hogar.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -182,7 +182,7 @@ class MainShellState extends State<MainShell> {
   }
 
   /// Construye la lista ordenada de pestañas candidatas en un orden FIJO
-  /// (Hoy, Tareas, Meal Prep, Despensa, Hogar). Solo Tareas es condicional:
+  /// (Hoy, Tareas, Comida, Despensa, Hogar). Solo Tareas es condicional:
   /// se incluye únicamente si el módulo está activado. Páginas y destinos
   /// salen de aquí para no desincronizarse nunca.
   ///
@@ -205,7 +205,7 @@ class MainShellState extends State<MainShell> {
           destination: const FloatingNavItem(
             icon: Icons.restaurant_menu_outlined,
             selectedIcon: Icons.restaurant_menu,
-            label: 'Meal Prep',
+            label: 'Comida',
           ),
         );
       case TabId.despensa:
@@ -318,7 +318,7 @@ class MainShellState extends State<MainShell> {
   ///
   /// DECISIÓN (FEAT-003): el ingrediente que caduca NO es una receta, así que
   /// no existe una integración directa ingrediente -> receta que abrir. La
-  /// opción realista y honesta es llevar a la pestaña Meal Prep, donde vive el
+  /// opción realista y honesta es llevar a la pestaña Comida, donde vive el
   /// plan y el acceso al "Modo cocina" (meal_plan_screen abre
   /// BatchPrepTimelineScreen). Desde ahí la usuaria aprovecha lo que caduca en
   /// su próximo Batch Cooking. No inventamos un atajo que no existe.
