@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../services/product_photo_resolver.dart';
 import 'food_category_icon.dart';
+import 'product_icons.dart';
 
 /// Combo visual de un alimento: FOTO REAL si hay URL, o una ILUSTRACIÓN COZY
 /// vectorial de categoría como respaldo. NUNCA renderiza un emoji del sistema.
@@ -64,8 +66,14 @@ class FoodImage extends StatelessWidget {
     this.fit = BoxFit.cover,
   });
 
+  /// Los productos genéricos (cebolla, leche...) llevan siempre su icono:
+  /// solo una foto de la persona pasa por delante.
   bool get _hasPhoto =>
-      !forceIllustration && imageUrl != null && imageUrl!.trim().isNotEmpty;
+      !forceIllustration &&
+      imageUrl != null &&
+      imageUrl!.trim().isNotEmpty &&
+      !(ProductIcons.isGeneric(name) &&
+          (isSharablePhoto(imageUrl!) || isStockPhoto(imageUrl)));
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +141,16 @@ class FoodImage extends StatelessWidget {
   /// spinner suave sobre esta misma ilustración para que no haya saltos.
   Widget _cozyIllustration({bool loading = false}) {
     final style = CategoryIcons.styleFor(name, itemType: itemType);
+    final asset = loading ? null : ProductIcons.assetFor(name);
+    if (asset != null) {
+      return ColoredBox(
+        color: style.background,
+        child: Padding(
+          padding: EdgeInsets.all((width ?? size) * 0.14),
+          child: Image.asset(asset, fit: BoxFit.contain),
+        ),
+      );
+    }
     return LayoutBuilder(
       builder: (context, constraints) {
         final side = constraints.hasBoundedHeight && constraints.maxHeight > 0

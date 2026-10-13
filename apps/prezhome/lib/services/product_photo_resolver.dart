@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../widgets/product_icons.dart';
 import 'food_photo_service.dart';
 import 'product_search_service.dart';
 
@@ -42,6 +43,8 @@ class ProductPhotoResolver {
   /// siempre; las de OFF se comprueban leyendo el producto por su código de
   /// barras (no gasta búsquedas). Null si no se pudo comprobar (sin red).
   Future<bool?> photoMatches(String name, String url) async {
+    // Lo genérico lleva su icono: una foto de OFF guardada sobra.
+    if (ProductIcons.isGeneric(name) && isSharablePhoto(url)) return false;
     final code = offBarcodeFromUrl(url);
     if (code == null) return !isSharablePhoto(url) && !isStockPhoto(url);
     final memo = '$name|$code';
@@ -75,6 +78,8 @@ class ProductPhotoResolver {
         return url;
       }
     } catch (_) {}
+    // Lo genérico (cebolla, leche...) se ve con su icono: no se busca envase.
+    if (ProductIcons.isGeneric(name)) return null;
 
     // Otro hogar ya encontró este producto: se reutiliza sin buscar.
     try {
