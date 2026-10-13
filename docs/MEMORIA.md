@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0047.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0048.
 - No ejecutar SQL de prueba largo en producción (se corta a 60 s).
 
 ## Preferencias de Tessa (producto y textos)
@@ -46,6 +46,8 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Fotos: `services/product_photo_resolver.dart` (caché `food_photo_cache` →
   búsqueda OFF), `services/product_search_service.dart` (8/min, caché; las
   búsquedas en segundo plano solo pueden gastar 4 para no bloquear a la persona).
+  Las fotos de OFF se comparten entre hogares en `product_photo_shared` (solo
+  URLs de OFF; las de galería no salen del hogar).
 - Chips: el seleccionado va en `AppColors.wood` con texto en tinta (tema).
 - Despensa: `inventory_screen.dart`, `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
