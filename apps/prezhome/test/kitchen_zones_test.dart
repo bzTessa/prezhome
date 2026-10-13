@@ -75,7 +75,8 @@ void main() {
     );
     expect(find.text('6 productos'), findsOneWidget);
     expect(find.text('Bebidas'), findsNothing);
-    expect(find.text('1 caducado'), findsOneWidget);
+    // La zona y la tarjeta "Todo" (que suma todas).
+    expect(find.text('1 caducado'), findsNWidgets(2));
 
     await tester.tap(find.text('Congelador'));
     expect(picked, KitchenZone.congelador);

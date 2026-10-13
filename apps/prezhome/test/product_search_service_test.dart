@@ -125,6 +125,22 @@ void main() {
       expect(calls, 8);
     });
 
+    test('las fotos en segundo plano no agotan las búsquedas', () async {
+      var calls = 0;
+      final client = MockClient((req) async {
+        calls++;
+        return http.Response(jsonEncode(_off([])), 200);
+      });
+      final service = ProductSearchService(client: client);
+      for (var i = 0; i < 10; i++) {
+        await service.search('foto $i', background: true);
+      }
+      expect(calls, 4);
+      final r = await service.search('zanahoria');
+      expect(r.throttled, isFalse);
+      expect(calls, 5);
+    });
+
     test('un error de red no lanza', () async {
       final client = MockClient((_) async => throw Exception('sin red'));
       final r = await ProductSearchService(client: client).search('arroz');

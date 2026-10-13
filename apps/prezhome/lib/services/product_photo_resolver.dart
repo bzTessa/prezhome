@@ -49,7 +49,11 @@ class ProductPhotoResolver {
     ProductSearchResult result;
     var tries = 0;
     do {
-      result = await _search.search(name, supermarketKey: supermarketKey);
+      result = await _search.search(
+        name,
+        supermarketKey: supermarketKey,
+        background: true,
+      );
       if (!result.throttled) break;
       await Future<void>.delayed(_throttleWait);
     } while (++tries < 10);

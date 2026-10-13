@@ -197,11 +197,12 @@ class AppTheme {
           borderSide: BorderSide(color: AppColors.expired, width: 1.5),
         ),
       ),
-      // Chips de elección: píldora blanca; la elegida, en tinta.
+      // Chips de elección: píldora de tarjeta; la elegida, en madera. El texto
+      // va siempre en tinta, que contrasta con ambos fondos en claro y oscuro.
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.card,
-        selectedColor: AppColors.ink,
-        checkmarkColor: AppColors.cream,
+        selectedColor: AppColors.wood,
+        checkmarkColor: AppColors.ink,
         side: BorderSide.none,
         shape: const StadiumBorder(),
         labelStyle: TextStyle(
@@ -209,7 +210,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
         secondaryLabelStyle: TextStyle(
-          color: AppColors.cream,
+          color: AppColors.ink,
           fontWeight: FontWeight.w700,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
