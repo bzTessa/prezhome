@@ -20,6 +20,8 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'supabase/functions/**'
+      # Si cambia la lista de funciones, también hay que desplegar.
+      - '.github/workflows/deploy.yml'
 
 # Serializamos los despliegues: si llegan dos merges seguidos a main, no
 # queremos dos despliegues solapados contra el mismo proyecto (el resultado
@@ -115,8 +117,14 @@ jobs:
       - name: Desplegar discover-recipes
         run: supabase functions deploy discover-recipes --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
+      - name: Desplegar food-facts
+        run: supabase functions deploy food-facts --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
       - name: Desplegar generate-recipe
         run: supabase functions deploy generate-recipe --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Desplegar import-recipe-link
+        run: supabase functions deploy import-recipe-link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
       - name: Desplegar recipe-photo
         run: supabase functions deploy recipe-photo --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
