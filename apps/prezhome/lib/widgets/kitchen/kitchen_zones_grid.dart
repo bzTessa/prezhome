@@ -4,7 +4,7 @@ import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/kitchen_zones.dart';
 
-/// "Mi cocina": una fila deslizable de zonas (nevera, congelador, despensa…)
+/// "Mi cocina": rejilla con todas las zonas (nevera, congelador, despensa…)
 /// que funciona como pestañas: debajo solo se ve la zona elegida. Si algo
 /// caduca, la primera es "Revisar", con lo urgente de todas las zonas.
 class KitchenZonesGrid extends StatelessWidget {
@@ -95,31 +95,33 @@ class KitchenZonesGrid extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        // Una fila de zonas que se desliza: hace de filtro sin repetir las
-        // secciones de abajo con tarjetas enormes.
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          child: Row(
-            children: [
-              if (urgent.expired + urgent.soon > 0) ...[
-                _ZoneTile.all(
-                  total: urgent,
-                  selected: selected == null,
-                  onTap: () => onSelect(null),
-                ),
-                const SizedBox(width: AppSpacing.sm),
+        // Todas las zonas a la vista, en rejilla de tres: sin deslizar para
+        // encontrar las bebidas o las especias.
+        LayoutBuilder(
+          builder: (context, c) {
+            const gap = AppSpacing.sm;
+            final w = (c.maxWidth - gap * 2) / 3;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [
+                if (urgent.expired + urgent.soon > 0)
+                  _ZoneTile.all(
+                    total: urgent,
+                    width: w,
+                    selected: selected == null,
+                    onTap: () => onSelect(null),
+                  ),
+                for (final z in visible)
+                  _ZoneTile(
+                    summary: z,
+                    width: w,
+                    selected: selected == z.zone,
+                    onTap: () => onSelect(z.zone),
+                  ),
               ],
-              for (final z in visible) ...[
-                _ZoneTile(
-                  summary: z,
-                  selected: selected == z.zone,
-                  onTap: () => onSelect(z.zone),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-            ],
-          ),
+            );
+          },
         ),
       ],
     );
@@ -129,12 +131,14 @@ class KitchenZonesGrid extends StatelessWidget {
 class _ZoneTile extends StatelessWidget {
   const _ZoneTile({
     required ZoneSummary this.summary,
+    required this.width,
     required this.selected,
     required this.onTap,
   }) : total = null;
 
   const _ZoneTile.all({
     required ZoneSummary this.total,
+    required this.width,
     required this.selected,
     required this.onTap,
   }) : summary = null;
@@ -144,6 +148,7 @@ class _ZoneTile extends StatelessWidget {
 
   /// Lo urgente de todas las zonas, solo en la tarjeta "Revisar".
   final ZoneSummary? total;
+  final double width;
   final bool selected;
   final VoidCallback onTap;
 
@@ -166,7 +171,7 @@ class _ZoneTile extends StatelessWidget {
             AppColors.expired,
           )
         : z.soon > 0
-        ? ('${z.soon} caduca${z.soon == 1 ? '' : 'n'} pronto', AppColors.soon)
+        ? ('${z.soon} pronto', AppColors.soon)
         : null;
 
     return Semantics(
@@ -180,8 +185,8 @@ class _ZoneTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           child: AnimatedContainer(
             duration: AppMotion.fast,
-            width: 140,
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            width: width,
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
             decoration: BoxDecoration(
               color: s.bg,
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -196,13 +201,16 @@ class _ZoneTile extends StatelessWidget {
                 Row(
                   children: [
                     if (isAll)
-                      Icon(s.icon, color: s.fg, size: 20)
+                      SizedBox.square(
+                        dimension: 30,
+                        child: Icon(s.icon, color: s.fg, size: 20),
+                      )
                     else
                       // Ilustración de la zona: assets/images/zona_<etiqueta>.png
                       Image.asset(
                         'assets/images/zona_${z.zone.label.toLowerCase()}.png',
-                        width: 36,
-                        height: 36,
+                        width: 30,
+                        height: 30,
                         errorBuilder: (_, _, _) =>
                             Icon(s.icon, color: s.fg, size: 20),
                       ),
@@ -211,7 +219,7 @@ class _ZoneTile extends StatelessWidget {
                       '$count',
                       style: TextStyle(
                         fontFeatures: const [FontFeature.tabularFigures()],
-                        fontSize: 20,
+                        fontSize: 18,
                         height: 1,
                         fontWeight: FontWeight.w900,
                         color: s.fg,
@@ -219,14 +227,14 @@ class _ZoneTile extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
+                    fontSize: 13,
                     color: AppColors.ink,
                   ),
                 ),

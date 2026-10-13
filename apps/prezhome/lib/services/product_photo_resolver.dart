@@ -16,8 +16,24 @@ bool isStockPhoto(String? url) {
 bool isSharablePhoto(String url) =>
     RegExp(r'^https://images\.openfoodfacts\.(org|net)/').hasMatch(url);
 
+/// Hasta esta fecha la búsqueda cogía el primer resultado con foto, que a
+/// veces era otro producto. Esas fotos de OFF guardadas solas no se reutilizan.
+final _strictPhotosSince = DateTime.utc(2026, 10, 13, 14);
+
+/// Clave en `product_photo_shared` de las fotos elegidas con la regla nueva;
+/// las filas antiguas (sin prefijo) se ignoran.
+String sharedPhotoKey(String key) => 'v2|$key';
+
+/// Si una foto guardada en la caché del hogar se puede reutilizar: las de la
+/// galería siempre; las de OFF solo si son de después de la regla nueva.
+bool isTrustedCachedPhoto(String url, DateTime? savedAt) {
+  if (url.isEmpty || isStockPhoto(url)) return false;
+  if (!isSharablePhoto(url)) return true;
+  return savedAt != null && !savedAt.isBefore(_strictPhotosSince);
+}
+
 /// Foto de producto para la compra: la del envase en Open Food Facts (del
-/// súper principal si lo hay). Lo encontrado se guarda por hogar y se
+/// súper principal si lo hay), solo si el producto es claramente lo buscado. Lo encontrado se guarda por hogar y se
 /// reutiliza. Si no hay producto, null: se ve la ilustración del alimento.
 class ProductPhotoResolver {
   ProductPhotoResolver(
@@ -43,12 +59,13 @@ class ProductPhotoResolver {
     try {
       final cached = await _client
           .from('food_photo_cache')
-          .select('url')
+          .select('url, fetched_at')
           .eq('home_id', homeId)
           .eq('name_normalized', key)
           .maybeSingle();
-      final url = cached?['url']?.toString();
-      if (url != null && url.isNotEmpty && !isStockPhoto(url)) return url;
+      final url = cached?['url']?.toString() ?? '';
+      final savedAt = DateTime.tryParse('${cached?['fetched_at']}');
+      if (isTrustedCachedPhoto(url, savedAt)) return url;
     } catch (_) {}
 
     // Otro hogar ya encontró este producto: se reutiliza sin buscar.
@@ -56,7 +73,7 @@ class ProductPhotoResolver {
       final shared = await _client
           .from('product_photo_shared')
           .select('url')
-          .eq('name_normalized', key)
+          .eq('name_normalized', sharedPhotoKey(key))
           .maybeSingle();
       final url = shared?['url']?.toString();
       if (url != null && url.isNotEmpty) {
@@ -67,24 +84,26 @@ class ProductPhotoResolver {
       }
     } catch (_) {}
 
-    ProductSearchResult result;
-    var tries = 0;
-    do {
-      result = await _search.search(
-        name,
-        supermarketKey: supermarketKey,
-        background: true,
-      );
-      if (!result.throttled) break;
-      await Future<void>.delayed(_throttleWait);
-    } while (++tries < 10);
+    Future<ProductSearchResult> searchIn(String? store) async {
+      ProductSearchResult result;
+      var tries = 0;
+      do {
+        result = await _search.search(
+          name,
+          supermarketKey: store,
+          background: true,
+        );
+        if (!result.throttled) break;
+        await Future<void>.delayed(_throttleWait);
+      } while (++tries < 10);
+      return result;
+    }
 
-    String? found;
-    for (final p in result.products) {
-      if ((p.imageUrl ?? '').isNotEmpty) {
-        found = p.imageUrl;
-        break;
-      }
+    final result = await searchIn(supermarketKey);
+    var found = confidentProductPhoto(name, result.products);
+    // En el súper no estaba claro: se mira en todos los de España.
+    if (found == null && result.filteredByStore) {
+      found = confidentProductPhoto(name, (await searchIn(null)).products);
     }
     if (found != null) {
       await FoodPhotoService(
@@ -93,7 +112,7 @@ class ProductPhotoResolver {
       if (isSharablePhoto(found)) {
         try {
           await _client.from('product_photo_shared').upsert({
-            'name_normalized': key,
+            'name_normalized': sharedPhotoKey(key),
             'url': found,
           }, ignoreDuplicates: true);
         } catch (_) {}

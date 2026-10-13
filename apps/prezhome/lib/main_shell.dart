@@ -253,8 +253,8 @@ class MainShellState extends State<MainShell> {
             },
           ),
           destination: const FloatingNavItem(
-            icon: Icons.today_outlined,
-            selectedIcon: Icons.today_rounded,
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home_rounded,
             label: 'Hoy',
           ),
         );
