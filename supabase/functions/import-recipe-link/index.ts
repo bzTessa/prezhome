@@ -27,7 +27,7 @@
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { aiLimitMessage } from "../_shared/ai_limit.ts";
+import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -210,7 +210,7 @@ async function pickModels(apiKey: string): Promise<string[]> {
   }
 }
 
-Deno.serve(async (req: Request) => {
+serveAi("import_link", async (req, useCredit) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -260,19 +260,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // 3. Consumir crédito de IA (igual que generate-recipe)
-    const { data: allowed, error: creditErr } = await admin.rpc(
-      "consume_ai_credit",
-      { target_home_id: homeId },
-    );
-    if (creditErr) {
+    const credit = await useCredit(admin, homeId);
+    if (credit === "error") {
       return json({ error: "No se pudo verificar el límite de uso" }, 500);
     }
-    if (allowed !== true) {
-      return json(
-        { error: aiLimitMessage() },
-        429,
-      );
-    }
+    if (credit === "limit") return json({ error: aiLimitMessage() }, 429);
 
     // 4. Extraer texto del enlace (oEmbed + metadatos OG, best-effort).
     const oembed = await fetchOEmbed(url);
