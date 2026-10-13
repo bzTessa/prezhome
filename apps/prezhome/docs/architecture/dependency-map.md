@@ -6,10 +6,11 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 
 | Módulo | Ficheros Dart |
 | --- | ---: |
+| `data` | 1 |
 | `models` | 13 |
 | `onboarding` | 2 |
 | `screens` | 31 |
-| `services` | 33 |
+| `services` | 34 |
 | `tabs` | 3 |
 | `theme` | 7 |
 | `utils` | 17 |
@@ -17,10 +18,11 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 
 ## Dependencias entre módulos
 
+- `data` -> (sin dependencias internas)
 - `models` -> `models`, `utils`
 - `onboarding` -> `models`, `onboarding`, `screens`, `services`, `theme`, `widgets`
 - `screens` -> `models`, `onboarding`, `screens`, `services`, `tabs`, `theme`, `utils`, `widgets`
-- `services` -> `models`, `services`, `utils`, `widgets`
+- `services` -> `data`, `models`, `services`, `utils`, `widgets`
 - `tabs` -> `models`, `screens`, `services`, `theme`, `utils`, `widgets`
 - `theme` -> `services`, `theme`
 - `utils` -> `models`, `services`, `theme`, `widgets`
@@ -34,8 +36,8 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `screens` -> `utils`: 46
 - `screens` -> `theme`: 35
 - `widgets` -> `theme`: 23
+- `services` -> `models`: 14
 - `tabs` -> `screens`: 14
-- `services` -> `models`: 11
 - `services` -> `utils`: 7
 - `tabs` -> `widgets`: 7
 - `tabs` -> `models`: 6
@@ -54,6 +56,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `onboarding` -> `services`: 1
 - `onboarding` -> `widgets`: 1
 - `screens` -> `onboarding`: 1
+- `services` -> `data`: 1
 - `tabs` -> `utils`: 1
 - `theme` -> `services`: 1
 - `utils` -> `services`: 1
