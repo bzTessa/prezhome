@@ -13,7 +13,11 @@ import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 
 class EconomyScreen extends StatefulWidget {
-  const EconomyScreen({super.key});
+  const EconomyScreen({super.key, this.showPoints = true});
+
+  /// Recompensas y puntos solo si el hogar usa el "Modo Puntos"; los gastos y
+  /// tickets se ven siempre.
+  final bool showPoints;
 
   @override
   State<EconomyScreen> createState() => _EconomyScreenState();
@@ -416,7 +420,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text('Economía'),
+        title: const Text('Gastos y tickets'),
         actions: [
           IconButton(
             icon: const Icon(Icons.insights_rounded),
@@ -435,7 +439,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (homeId != null)
+              if (homeId != null && widget.showPoints)
                 FloatingActionButton.extended(
                   heroTag: 'fab-reward',
                   onPressed: () => _createReward(homeId),
@@ -480,15 +484,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
             children: [
-              // --- Marketplace de Recompensas (contenido principal) ----------
-              _balanceCard(data),
-              const SizedBox(height: 12),
-              _rewardsCard(data),
-              const SizedBox(height: 24),
-
-              // --- Gastos y tickets (funcionalidad existente preservada) -----
-              _sectionLabel('GASTOS Y TICKETS'),
-              const SizedBox(height: 8),
+              // --- Gastos y tickets ---------------------------------------
               _monthNavigator(),
               const SizedBox(height: 12),
               _budgetCard(data),
@@ -508,6 +504,14 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 _empty()
               else
                 ...data.tickets.map((t) => _ticketCard(t)),
+              if (widget.showPoints) ...[
+                const SizedBox(height: 24),
+                _sectionLabel('PUNTOS Y RECOMPENSAS'),
+                const SizedBox(height: 8),
+                _balanceCard(data),
+                const SizedBox(height: 12),
+                _rewardsCard(data),
+              ],
             ],
           );
         },
