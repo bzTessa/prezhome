@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_motion.dart';
-
 /// Estados de ánimo de Presidente Miau. Cada uno mapea a una imagen.
 /// Si aún no tienes la imagen específica, cae a la imagen por defecto.
 enum MiauMood {
@@ -47,11 +45,6 @@ class MiauCharacter extends StatefulWidget {
     MiauMood.neutral: 'assets/images/miau_saludando.png',
   };
 
-  /// Fotogramas del saludo (parpadea y mueve la pata). Mismo encuadre.
-  static final List<String> _greetingFrames = [
-    for (var i = 1; i <= 12; i++) 'assets/images/miau_saludo_$i.png',
-  ];
-
   @override
   State<MiauCharacter> createState() => _MiauCharacterState();
 }
@@ -60,13 +53,6 @@ class _MiauCharacterState extends State<MiauCharacter>
     with TickerProviderStateMixin {
   late final AnimationController _entry;
   late final AnimationController _floatCtrl;
-  // Ciclo del saludo: los 4 fotogramas al principio y luego quieto.
-  late final AnimationController _frameCtrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 3200),
-  );
-
-  bool get _animatesFrames => widget.mood == MiauMood.greeting;
 
   @override
   void initState() {
@@ -83,22 +69,7 @@ class _MiauCharacterState extends State<MiauCharacter>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_animatesFrames) return;
-    for (final f in MiauCharacter._greetingFrames) {
-      precacheImage(AssetImage(f), context);
-    }
-    if (AppMotion.reduceMotionOf(context)) {
-      _frameCtrl.stop();
-    } else if (!_frameCtrl.isAnimating) {
-      _frameCtrl.repeat();
-    }
-  }
-
-  @override
   void dispose() {
-    _frameCtrl.dispose();
     _entry.dispose();
     _floatCtrl.dispose();
     super.dispose();
@@ -111,24 +82,7 @@ class _MiauCharacterState extends State<MiauCharacter>
 
     // Poses = PNG transparente -> se muestran limpias (contain, sin recorte).
     // Base = foto .jpg -> se recorta en cuadrado redondeado.
-    final Widget image = _animatesFrames
-        ? AnimatedBuilder(
-            animation: _frameCtrl,
-            builder: (context, _) {
-              // Cada fotograma dura 3,5 % del ciclo (~110 ms); el resto, el 1.º.
-              final i = (_frameCtrl.value / 0.035).floor();
-              final frames = MiauCharacter._greetingFrames;
-              return Image.asset(
-                frames[i < frames.length ? i : 0],
-                width: widget.size,
-                height: widget.size,
-                fit: BoxFit.contain,
-                gaplessPlayback: true,
-                errorBuilder: (context, error, stack) => _baseImage(),
-              );
-            },
-          )
-        : posePath != null
+    final Widget image = posePath != null
         ? Image.asset(
             posePath,
             width: widget.size,
