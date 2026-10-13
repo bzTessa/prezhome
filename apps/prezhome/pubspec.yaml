@@ -53,6 +53,11 @@ dependencies:
   # Componentes de interfaz compartidos del monorepo (barra flotante...).
   prez_ui:
     path: ../../packages/prez_ui
+  # Manos libres del modo cocina: leer pasos en voz alta, escuchar órdenes y
+  # que la pantalla no se apague mientras se cocina.
+  flutter_tts: ^4.2.5
+  speech_to_text: ^7.5.0
+  wakelock_plus: ^1.8.1
 
 dev_dependencies:
   flutter_test:
