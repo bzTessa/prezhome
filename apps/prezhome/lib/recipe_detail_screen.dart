@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'add_recipe_screen.dart';
 import 'cook_mode_screen.dart';
 import 'services/recipe_photo_service.dart';
+import 'services/recipe_share.dart';
 import 'services/price_memory.dart';
 import 'utils/approx_price.dart';
 import 'utils/measure_format.dart';
@@ -359,6 +361,32 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
   }
 
+  /// Comparte un código con el que otra persona guarda la receta en su app.
+  Future<void> _share() async {
+    final box = context.findRenderObject() as RenderBox?;
+    try {
+      final code = await RecipeShare(_client).share(_recipe.id);
+      await SharePlus.instance.share(
+        ShareParams(
+          text:
+              'Te paso mi receta de ${_recipe.title} en PrezHome. En la app, '
+              've a Recetas, toca Añadir receta y luego Con un código: $code',
+          sharePositionOrigin: box == null
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
   Future<void> _delete() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -681,6 +709,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             switch (v) {
               case 'photo':
                 if (!_changingPhoto) _openPhotoMenu();
+              case 'share':
+                _share();
               case 'edit':
                 _edit();
               case 'delete':
@@ -693,6 +723,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               child: ListTile(
                 leading: Icon(Icons.photo_camera_outlined),
                 title: Text('Cambiar foto'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            PopupMenuItem(
+              value: 'share',
+              child: ListTile(
+                leading: Icon(Icons.ios_share_rounded),
+                title: Text('Compartir'),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
