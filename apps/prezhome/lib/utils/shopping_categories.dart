@@ -304,3 +304,56 @@ String defaultCategoryFor(String productName) {
 /// hogar (la `position` es el índice en esta lista).
 List<String> defaultCategoryNames() =>
     kDefaultShoppingCategories.map((c) => c.name).toList();
+
+/// Agrupa los productos por las categorías del hogar, en el orden que la
+/// persona les dio (el de su súper). Cada producto va a su categoría por id,
+/// si no por nombre, y si no por la que le toca según [defaultCategoryFor].
+/// Los que no encajan van al final, en [kUncategorizedName]. Solo devuelve
+/// grupos con productos.
+List<(String, List<T>)> groupByHomeCategories<T>(
+  List<T> items,
+  List<({String? id, String name})> categories, {
+  required String? Function(T) categoryIdOf,
+  required String? Function(T) categoryNameOf,
+  required String Function(T) nameOf,
+}) {
+  final byId = {for (final c in categories) c.id: c.name};
+  final byName = {
+    for (final c in categories) normalizeCategoryText(c.name): c.name,
+  };
+  String? known(String? name) =>
+      name == null ? null : byName[normalizeCategoryText(name)];
+
+  final groups = <String, List<T>>{};
+  for (final item in items) {
+    final cat =
+        byId[categoryIdOf(item)] ??
+        known(categoryNameOf(item)) ??
+        known(defaultCategoryFor(nameOf(item))) ??
+        kUncategorizedName;
+    groups.putIfAbsent(cat, () => []).add(item);
+  }
+  return [
+    for (final c in categories)
+      if (c.name != kUncategorizedName && groups[c.name] != null)
+        (c.name, groups[c.name]!),
+    if (groups[kUncategorizedName] != null)
+      (kUncategorizedName, groups[kUncategorizedName]!),
+  ];
+}
+
+/// "Lo habitual": lo que más se compra según los tickets (al menos 2 veces),
+/// sin lo que ya está en la lista. Como mucho [limit].
+List<String> usualProducts(
+  Iterable<({String? name, int times})> history,
+  Iterable<String> inList, {
+  int limit = 10,
+}) {
+  final pending = inList.map(normalizeCategoryText).toSet();
+  final sorted = history.where((h) => h.times >= 2 && h.name != null).toList()
+    ..sort((a, b) => b.times.compareTo(a.times));
+  return [
+    for (final h in sorted)
+      if (!pending.contains(normalizeCategoryText(h.name!))) h.name!,
+  ].take(limit).toList();
+}
