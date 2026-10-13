@@ -4,6 +4,10 @@
 /// Lógica PURA (solo mira el texto del error) para poder testearla.
 library;
 
+import 'dart:convert';
+
+import 'package:supabase_flutter/supabase_flutter.dart' show FunctionException;
+
 /// Mensaje para el usuario. [context] es lo que se intentaba hacer
 /// ("No se pudo guardar") y va delante: "No se pudo guardar. Parece que no
 /// hay conexión…".
@@ -20,6 +24,14 @@ String _reason(Object? error) {
     final s = error.trim();
     if (s.isEmpty) return _generic;
     return s.endsWith('.') ? s : '$s.';
+  }
+
+  // Las funciones del servidor responden { error: '...' } con un mensaje ya
+  // pensado para el usuario (p. ej. el límite del mes y cuándo se renueva).
+  // supabase_flutter lo envuelve en FunctionException al no ser 2xx.
+  if (error is FunctionException) {
+    final msg = _serverMessage(error.details);
+    if (msg != null) return _reason(msg);
   }
 
   final t = (error?.toString() ?? '').toLowerCase();
@@ -61,6 +73,18 @@ String _reason(Object? error) {
     return 'No se pudo subir la imagen. Prueba con otra más pequeña.';
   }
   return _generic;
+}
+
+String? _serverMessage(dynamic details) {
+  if (details is String) {
+    try {
+      details = jsonDecode(details);
+    } catch (_) {
+      return null;
+    }
+  }
+  final msg = details is Map ? details['error'] : null;
+  return msg is String && msg.trim().isNotEmpty ? msg : null;
 }
 
 const String _generic = 'Algo ha fallado. Inténtalo de nuevo.';
