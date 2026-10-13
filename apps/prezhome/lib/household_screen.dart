@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'economy_screen.dart';
+import 'plan_usage_screen.dart';
 import 'stats_screen.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/supermarket.dart';
@@ -587,6 +588,18 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   MaterialPageRoute(
                     builder: (_) =>
                         EconomyScreen(showPoints: data.pointsEnabled),
+                  ),
+                ),
+              ),
+              _settingTile(
+                icon: Icons.workspace_premium_outlined,
+                title: 'Tu plan',
+                subtitle: 'Usos que te quedan este mes',
+                iconBg: AppColors.sageBg,
+                iconFg: AppColors.sage,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PlanUsageScreen(homeId: data.homeId!),
                   ),
                 ),
               ),

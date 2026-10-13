@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0049.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0050.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -24,7 +24,8 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `consume_ai_credit(hogar, función)` y devuelve el uso
   (`refund_ai_credit`) si la respuesta es un error. `friendlyError` enseña el
   `{error}` de cualquier función. Plan Pro aún sin cobro (RevenueCat
-  pendiente; plan en `subscriptions.plan`).
+  pendiente; plan en `subscriptions.plan`). La pantalla "Tu plan"
+  (`plan_usage_screen.dart`) lee `plan_quotas` y `ai_usage` (solo lectura, RLS).
 - No ejecutar SQL de prueba largo en producción (se corta a 60 s).
 
 ## Preferencias de Tessa (producto y textos)
