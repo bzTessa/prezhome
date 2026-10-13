@@ -38,7 +38,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
 - Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
-  poses `miau_*` (`MiauMood`), saludo animado `miau_saludo_1..4`,
+  poses `miau_*` (`MiauMood`), saludo animado `miau_saludo_1..12`,
   `vacio_*` (EmptyState `image:`), `zona_<etiqueta>` (Mi cocina), `onb_*`.
 - Offline: `services/offline_repository.dart` (+ `offline_merge.dart`,
   `supabase_remote_sender.dart`, `offline_provider.dart`). Ids locales

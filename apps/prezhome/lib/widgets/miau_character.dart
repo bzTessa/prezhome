@@ -48,11 +48,8 @@ class MiauCharacter extends StatefulWidget {
   };
 
   /// Fotogramas del saludo (parpadea y mueve la pata). Mismo encuadre.
-  static const List<String> _greetingFrames = [
-    'assets/images/miau_saludo_1.png',
-    'assets/images/miau_saludo_2.png',
-    'assets/images/miau_saludo_3.png',
-    'assets/images/miau_saludo_4.png',
+  static final List<String> _greetingFrames = [
+    for (var i = 1; i <= 12; i++) 'assets/images/miau_saludo_$i.png',
   ];
 
   @override
@@ -118,8 +115,8 @@ class _MiauCharacterState extends State<MiauCharacter>
         ? AnimatedBuilder(
             animation: _frameCtrl,
             builder: (context, _) {
-              // Cada fotograma dura 4 % del ciclo (~130 ms); el resto, el 1.º.
-              final i = (_frameCtrl.value / 0.04).floor();
+              // Cada fotograma dura 3,5 % del ciclo (~110 ms); el resto, el 1.º.
+              final i = (_frameCtrl.value / 0.035).floor();
               final frames = MiauCharacter._greetingFrames;
               return Image.asset(
                 frames[i < frames.length ? i : 0],

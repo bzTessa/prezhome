@@ -17,7 +17,7 @@ void main() {
     expect(_shownAsset(tester), 'assets/images/miau_saludo_1.png');
     await tester.pump(const Duration(milliseconds: 140));
     expect(_shownAsset(tester), 'assets/images/miau_saludo_2.png');
-    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pump(const Duration(milliseconds: 2000));
     expect(_shownAsset(tester), 'assets/images/miau_saludo_1.png');
   });
 
