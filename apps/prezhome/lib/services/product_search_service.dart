@@ -120,6 +120,183 @@ List<SupermarketProduct> parseProductSearch(Map<String, dynamic> json) {
   return out;
 }
 
+// Palabras que no dicen qué producto es ("de", "pack"…).
+const _filler = {
+  'de',
+  'del',
+  'la',
+  'las',
+  'el',
+  'los',
+  'con',
+  'y',
+  'e',
+  'en',
+  'al',
+  'a',
+  'para',
+  'sin',
+  'bolsa',
+  'pack',
+  'paquete',
+  'malla',
+  'botella',
+  'brick',
+  'lata',
+  'bote',
+  'tarro',
+  'bandeja',
+  'granel',
+  'unidad',
+  'unidades',
+  'kg',
+  'gr',
+  'ml',
+  'cl',
+};
+
+// Si el producto las lleva y la búsqueda no, es otra cosa: "arroz blanco
+// cocido" no es arroz, "vinagre de vino blanco" no es vino.
+const _transformed = {
+  'cocido',
+  'cocida',
+  'cocidos',
+  'cocidas',
+  'preparado',
+  'preparada',
+  'precocinado',
+  'precocinada',
+  'tiras',
+  'vinagre',
+  'chocolate',
+  'sabor',
+  'tortitas',
+  'tortita',
+  'galletas',
+  'galleta',
+  'crackers',
+  'snack',
+  'chips',
+  'empanado',
+  'empanada',
+  'empanadas',
+  'rebozado',
+  'rebozada',
+  'salsa',
+  'crema',
+  'sopa',
+  'caldo',
+  'ensalada',
+  'pizza',
+  'relleno',
+  'rellena',
+  'frito',
+  'frita',
+  'fritos',
+  'fritas',
+  'asado',
+  'asada',
+  'ahumado',
+  'ahumada',
+  'zumo',
+  'bebida',
+  'yogur',
+  'helado',
+  'turron',
+  'barrita',
+  'barritas',
+  'cereales',
+  'harina',
+  'pure',
+  'nuggets',
+  'hamburguesa',
+  'croquetas',
+  'lasana',
+  'tortilla',
+  'bizcocho',
+  'mermelada',
+  'aroma',
+  'condimento',
+  'sazonador',
+  'concentrado',
+  'polvo',
+  'deshidratado',
+  'liofilizado',
+  'congelado',
+  'microondas',
+  'kebab',
+  'burger',
+  'mix',
+};
+
+List<String> _words(String s) {
+  const from = 'áàäâéèëêíìïîóòöôúùüûñç';
+  const to = 'aaaaeeeeiiiioooouuuunc';
+  final b = StringBuffer();
+  for (final ch in s.toLowerCase().split('')) {
+    final i = from.indexOf(ch);
+    b.write(i >= 0 ? to[i] : ch);
+  }
+  return b
+      .toString()
+      .split(RegExp(r'[^a-z0-9]+'))
+      .where(
+        (w) =>
+            w.length > 1 &&
+            !_filler.contains(w) &&
+            !RegExp(r'^\d+$').hasMatch(w),
+      )
+      .toList();
+}
+
+// Singular y plural cuentan igual ("patata" = "patatas", "limon" = "limones").
+bool _sameWord(String a, String b) =>
+    a == b || '${a}s' == b || '${b}s' == a || '${a}es' == b || '${b}es' == a;
+
+/// Cuánto se aleja [product] de lo buscado: 0 es exacto, cada palabra de más
+/// suma 1. Null si no es lo buscado: le falta alguna palabra, empieza por
+/// otra cosa ("harina de arroz") o está transformado ("arroz cocido").
+int? productMatchScore(String query, SupermarketProduct product) {
+  final q = _words(query);
+  if (q.isEmpty) return null;
+  final brand = _words(product.brand ?? '').toSet();
+  final name = _words(product.name).where((w) => !brand.contains(w)).toList();
+  if (name.isEmpty || !q.any((w) => _sameWord(w, name.first))) return null;
+  for (final w in q) {
+    if (!name.any((n) => _sameWord(w, n))) return null;
+  }
+  final extra = name.where((n) => !q.any((w) => _sameWord(w, n))).toList();
+  if (extra.any(_transformed.contains)) return null;
+  return extra.length;
+}
+
+/// Ordena: primero lo que es justo lo buscado, luego el resto tal cual.
+List<SupermarketProduct> rankProducts(
+  String query,
+  List<SupermarketProduct> products,
+) {
+  final scored = [
+    for (var i = 0; i < products.length; i++)
+      (p: products[i], s: productMatchScore(query, products[i]), i: i),
+  ];
+  scored.sort((a, b) {
+    final sa = a.s ?? 1 << 20, sb = b.s ?? 1 << 20;
+    return sa != sb ? sa.compareTo(sb) : a.i.compareTo(b.i);
+  });
+  return [for (final e in scored) e.p];
+}
+
+/// Foto para [query] solo si hay un producto que es claramente eso (con foto
+/// y, como mucho, 3 palabras de más). Mejor sin foto que con una que no es.
+String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
+  for (final p in rankProducts(query, products)) {
+    final s = productMatchScore(query, p);
+    if (s == null || s > 3) return null;
+    if ((p.imageUrl ?? '').isNotEmpty) return p.imageUrl;
+  }
+  return null;
+}
+
 /// Formato de venta normalizado a cantidad + unidad del inventario
 /// ('g', 'kg', 'ml', 'litros'). Null si no se entiende ("pack de 6").
 ({double quantity, String unit})? parsePackageQuantity(String? raw) {
@@ -212,7 +389,7 @@ class ProductSearchService {
         }
         if (inStore.isNotEmpty) {
           return _cache[key] = ProductSearchResult(
-            inStore,
+            rankProducts(q, inStore),
             filteredByStore: true,
           );
         }
@@ -222,7 +399,7 @@ class ProductSearchService {
         background: background,
       );
       if (all == null) return const ProductSearchResult([], throttled: true);
-      return _cache[key] = ProductSearchResult(all);
+      return _cache[key] = ProductSearchResult(rankProducts(q, all));
     } catch (_) {
       return const ProductSearchResult([], failed: true);
     }

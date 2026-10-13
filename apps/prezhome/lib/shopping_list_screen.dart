@@ -245,7 +245,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         if (!i.checked &&
             i.id != null &&
             !isLocalId(i.id!) &&
-            ((i.imageUrl ?? '').isEmpty || isStockPhoto(i.imageUrl)))
+            ((i.imageUrl ?? '').isEmpty ||
+                isStockPhoto(i.imageUrl) ||
+                !isTrustedCachedPhoto(i.imageUrl!, i.createdAt?.toUtc())))
           i,
     ].take(25).toList();
     if (todo.isEmpty) return;

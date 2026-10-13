@@ -17,4 +17,16 @@ void main() {
     );
     expect(isSharablePhoto('https://images.unsplash.com/x.jpg'), isFalse);
   });
+
+  test('las fotos de OFF puestas con la regla antigua no se reutilizan', () {
+    const off = 'https://images.openfoodfacts.org/images/products/1/front.jpg';
+    expect(isTrustedCachedPhoto(off, DateTime.utc(2026, 10, 1)), isFalse);
+    expect(isTrustedCachedPhoto(off, null), isFalse);
+    expect(isTrustedCachedPhoto(off, DateTime.utc(2026, 10, 20)), isTrue);
+    expect(
+      isTrustedCachedPhoto('https://abc.supabase.co/mia.jpg', null),
+      isTrue,
+    );
+    expect(sharedPhotoKey('patata'), 'v2|patata');
+  });
 }
