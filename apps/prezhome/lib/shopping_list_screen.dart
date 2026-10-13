@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +12,7 @@ import 'services/offline_repository.dart';
 import 'services/price_memory.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'widgets/list_skeleton.dart';
 import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
@@ -27,6 +29,7 @@ import 'utils/shopping_display.dart';
 import 'utils/shopping_quick_add.dart';
 import 'widgets/animations/confetti.dart';
 import 'widgets/food_category_icon.dart';
+import 'widgets/empty_state.dart';
 import 'widgets/food_image.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
@@ -539,6 +542,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     // Primero se ve el cambio; el guardado va detrás. Al comprar, el producto
     // pasa a su zona de la despensa.
     _showToggled(item, value);
+    if (value) HapticFeedback.selectionClick();
     try {
       final homeId = await _homeId();
       await ShoppingCheckout().setBought(item, value, homeId: homeId);
@@ -548,7 +552,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo actualizar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -562,6 +566,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         .where((i) => !i.checked && i.listId == _activeListId)
         .length;
     if (pending == 0) return;
+    HapticFeedback.mediumImpact();
     setState(() {
       _shown = [
         for (final i in current)
@@ -587,32 +592,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
-      );
-    }
-  }
-
-  Future<void> _deleteItem(ShoppingListItem item) async {
-    if (item.id == null) return;
-    try {
-      // Delete OPTIMISTA: desaparece de la caché al instante y se envía al
-      // drenar. Si el id era local (insert aún no sincronizado), la cola
-      // colapsa ambas ops y no se manda nada al servidor.
-      await _repo.applyLocalWrite(
-        buildDeleteOp(
-          table: kShoppingTable,
-          id: item.id!,
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      await _reload();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendlyError(e, 'No se pudo eliminar')),
-          backgroundColor: Colors.red,
-        ),
       );
     }
   }
@@ -667,7 +646,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ListTile(
               leading: const Icon(
                 Icons.delete_outline,
-                color: Colors.redAccent,
+                color: AppColors.expired,
               ),
               title: const Text('Quitar de la lista'),
               onTap: () => Navigator.of(ctx).pop('delete'),
@@ -689,7 +668,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         await _pickStoreProductPhoto(item);
         break;
       case 'delete':
-        await _deleteItem(item);
+        await _removeWithUndo([
+          item,
+        ], 'Quitado "${shoppingCleanName(item.name)}"');
         break;
     }
   }
@@ -742,7 +723,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo subir la foto')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -796,7 +777,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.wood : AppColors.card,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? AppColors.woodDark : AppColors.wood,
             width: 1.3,
@@ -1053,7 +1034,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo añadir')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -1115,7 +1096,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
       );
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -1135,7 +1119,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           // Al refrescar se sigue viendo la lista anterior (sin parpadeo).
           if (!snapshot.hasData &&
               snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton();
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));
@@ -1273,7 +1257,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo crear la lista')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
       return null;
@@ -1590,32 +1574,89 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  /// Quita de la lista todo lo ya comprado (ya está en la despensa).
-  Future<void> _clearChecked(List<ShoppingListItem> comprados) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.cream,
-        title: const Text('¿Quitar lo comprado?'),
-        content: Text(
-          'Se quitarán ${comprados.length} productos de la lista. '
-          'Lo que ya pasó a la despensa se queda allí.',
+  /// Quita de la lista todo lo ya comprado (ya está en la despensa). Sin
+  /// pregunta previa: se puede deshacer.
+  Future<void> _clearChecked(List<ShoppingListItem> comprados) =>
+      _removeWithUndo(
+        comprados,
+        comprados.length == 1
+            ? 'Quitado 1 producto'
+            : 'Quitados ${comprados.length} productos',
+      );
+
+  /// Quita [items] al momento y ofrece "Deshacer" (los vuelve a añadir tal
+  /// cual estaban).
+  Future<void> _removeWithUndo(
+    List<ShoppingListItem> items,
+    String message,
+  ) async {
+    final targets = items.where((i) => i.id != null).toList();
+    if (targets.isEmpty) return;
+    final ids = {for (final i in targets) i.id!};
+    final current = _shown;
+    if (current != null) {
+      setState(() {
+        _shown = [
+          for (final i in current)
+            if (!ids.contains(i.id)) i,
+        ];
+        _itemsFuture = Future.value(_shown!);
+      });
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      for (final item in targets) {
+        await _repo.applyLocalWrite(
+          buildDeleteOp(
+            table: kShoppingTable,
+            id: item.id!,
+            nowMillis: DateTime.now().millisecondsSinceEpoch,
+            seq: _nextSeq(),
+          ),
+        );
+      }
+      await _reload();
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo quitar'))),
+      );
+      return;
+    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: SnackBarAction(
+            label: 'Deshacer',
+            onPressed: () => _restore(targets),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+      );
+  }
+
+  /// Vuelve a añadir productos quitados (con ids locales nuevos).
+  Future<void> _restore(List<ShoppingListItem> items) async {
+    try {
+      for (final item in items) {
+        final nowMillis = DateTime.now().millisecondsSinceEpoch;
+        final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
+        await _repo.applyLocalWrite(
+          buildInsertOp(
+            table: kShoppingTable,
+            id: localId,
+            payload: {...item.toCacheMap(), 'id': localId},
+            nowMillis: nowMillis,
+            seq: _nextSeq(),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Quitar'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    for (final item in comprados) {
-      await _deleteItem(item);
+        );
+      }
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo deshacer'))),
+      );
     }
   }
 
@@ -1667,38 +1708,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _emptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MiauCharacter(mood: MiauMood.curious, size: 110),
-            const SizedBox(height: AppSpacing.lg),
-            const Text(
-              'Tu lista está vacía',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            const Text(
-              'Escribe arriba lo que necesitas o genérala desde el plan '
-              'de la semana.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.inkMuted),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            OutlinedButton.icon(
-              onPressed: _generating ? null : _generarDesdePlan,
-              icon: const Icon(Icons.event_note_rounded),
-              label: const Text('Desde el plan'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.woodDark,
-                side: const BorderSide(color: AppColors.wood),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return EmptyState(
+      title: 'Tu lista está vacía',
+      message: 'Escribe arriba lo que necesitas o trae lo del plan.',
+      actionLabel: 'Desde el plan',
+      actionIcon: Icons.event_note_rounded,
+      onAction: _generating ? null : _generarDesdePlan,
     );
   }
 }
@@ -1741,7 +1756,7 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
     _scale = Tween<double>(
       begin: 0.6,
       end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
   }
 
   @override

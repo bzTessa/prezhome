@@ -30,7 +30,7 @@ class ComingSoon extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.wood,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
               child: const Text(
                 'PRÓXIMAMENTE',
@@ -53,7 +53,7 @@ class ComingSoon extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[700],
+                color: AppColors.inkMuted,
                 fontSize: 15,
                 height: 1.4,
               ),

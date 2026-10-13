@@ -116,6 +116,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
                     : 'Productos de $storeLabel',
                 style: const TextStyle(
                   fontSize: 22,
+                  letterSpacing: -0.4,
                   fontWeight: FontWeight.w900,
                   color: AppColors.ink,
                 ),
@@ -282,7 +283,7 @@ class _ProductTile extends StatelessWidget {
                   height: 64,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: FoodImage(

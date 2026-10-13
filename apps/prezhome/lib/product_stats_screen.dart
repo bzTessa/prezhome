@@ -145,7 +145,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
                 Text(
                   '$distintos productos distintos · $lineas compras\n'
                   'Gasto total registrado: ${gasto.toStringAsFixed(0)} €',
-                  style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
               ],
             ),
@@ -238,7 +238,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
           if (items.isEmpty)
             Text(
               'Aún no hay suficientes datos de precios.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             )
           else
             for (final s in items)
@@ -310,7 +310,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
               'Escanea tickets de la compra y aquí verás lo que más compras, '
               'en qué gastas más y los productos más caros.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
           ],
         ),

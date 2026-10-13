@@ -97,7 +97,7 @@ class WeekDayStrip extends StatelessWidget {
               Text(
                 _abbr[d.weekday - 1],
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.4,
                   color: isSelected ? AppColors.ink : AppColors.inkMuted,
@@ -210,7 +210,7 @@ class MealSlotCard extends StatelessWidget {
                     height: 64,
                     decoration: BoxDecoration(
                       color: empty ? AppColors.card : s.bg,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(s.icon, color: s.fg, size: 28),
                   ),
@@ -226,7 +226,7 @@ class MealSlotCard extends StatelessWidget {
                           Text(
                             s.label.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.6,
                               color: s.fg,
@@ -237,7 +237,7 @@ class MealSlotCard extends StatelessWidget {
                             const Text(
                               '· Fuera',
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.inkMuted,
                               ),

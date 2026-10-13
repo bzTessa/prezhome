@@ -31,7 +31,7 @@ class ComidasTab extends StatelessWidget {
           bottom: const TabBar(
             indicatorColor: AppColors.woodDark,
             labelColor: AppColors.ink,
-            unselectedLabelColor: Colors.grey,
+            unselectedLabelColor: AppColors.inkMuted,
             labelStyle: TextStyle(fontWeight: FontWeight.bold),
             tabs: [
               Tab(text: 'Plan', icon: Icon(Icons.calendar_month_rounded)),
@@ -121,7 +121,7 @@ class _PlanViewToggle extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
@@ -152,7 +152,7 @@ class _PlanViewToggle extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: active ? AppColors.wood : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -323,6 +323,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
+                tooltip: 'Anterior',
                 icon: const Icon(Icons.chevron_left),
                 onPressed: () => _changeWeek(-1),
               ),
@@ -351,6 +352,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                 ),
               ),
               IconButton(
+                tooltip: 'Siguiente',
                 icon: const Icon(Icons.chevron_right),
                 onPressed: () => _changeWeek(1),
               ),
@@ -383,7 +385,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                   child: Text(
                     'Esta semana aún no tiene plan. Genera el plan semanal '
                     'para ver aquí las comidas de cada día.',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ),
               ],
@@ -477,7 +479,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
           if (items.isEmpty)
             Text(
               'Sin plan',
-              style: TextStyle(color: Colors.grey[500], fontSize: 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             )
           else
             ...items.map(
@@ -490,7 +492,10 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                       width: 80,
                       child: Text(
                         _mealLabels[it.mealType] ?? it.mealType,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                     Expanded(
@@ -503,14 +508,19 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                           decoration: it.skipped
                               ? TextDecoration.lineThrough
                               : null,
-                          color: it.skipped ? Colors.grey : AppColors.ink,
+                          color: it.skipped
+                              ? AppColors.inkMuted
+                              : AppColors.ink,
                         ),
                       ),
                     ),
                     if (it.skipped)
                       Text(
                         'fuera',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        style: TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 12,
+                        ),
                       ),
                   ],
                 ),
@@ -568,7 +578,7 @@ class _VarietyCard extends StatelessWidget {
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[500],
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -592,7 +602,7 @@ class _VarietyCard extends StatelessWidget {
           child: Text(
             'Esta semana todas las comidas están marcadas como fuera de casa. '
             'Cuando planifiquéis platos verás aquí si el menú es variado.',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: AppColors.inkMuted),
           ),
         ),
       ],
@@ -613,16 +623,16 @@ class _VarietyCard extends StatelessWidget {
     final Color mensajeColor;
     if (numeroRecetasDistintas <= 1) {
       mensaje = 'Menú muy repetitivo';
-      mensajeColor = Colors.grey[700]!;
+      mensajeColor = AppColors.inkMuted;
     } else if (ratio >= 0.75) {
-      mensaje = '¡Menú muy variado!';
+      mensaje = 'Menú variado';
       mensajeColor = AppColors.woodDark;
     } else if (ratio >= 0.5) {
       mensaje = 'Menú bastante variado';
       mensajeColor = AppColors.woodDark;
     } else {
       mensaje = 'Se repiten varias recetas';
-      mensajeColor = Colors.grey[700]!;
+      mensajeColor = AppColors.inkMuted;
     }
 
     final comidasLabel = numeroComidas == 1 ? 'comida' : 'comidas';
@@ -706,7 +716,7 @@ class _VarietyCard extends StatelessWidget {
                         _shortTitle(top[i].key),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.inkMuted,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),

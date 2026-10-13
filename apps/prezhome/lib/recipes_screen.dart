@@ -7,6 +7,7 @@ import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'theme/app_theme.dart';
+import 'widgets/empty_state.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
@@ -108,7 +109,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo actualizar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -154,7 +155,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
             ListTile(
               leading: const Icon(
                 Icons.delete_outline,
-                color: Colors.redAccent,
+                color: AppColors.expired,
               ),
               title: const Text('Eliminar receta'),
               onTap: () => Navigator.of(ctx).pop('delete'),
@@ -187,7 +188,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppColors.expired,
               foregroundColor: Colors.white,
               elevation: 0,
             ),
@@ -214,7 +215,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo eliminar')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.expired,
         ),
       );
     }
@@ -308,7 +309,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
           final perMeal = data.profile?.caloriesPerMeal;
 
           if (allRecipes.isEmpty) {
-            return const _EmptyState();
+            return EmptyState(
+              mood: MiauMood.cooking,
+              title: 'Aún no hay recetas',
+              message: 'Crea la primera o pide ideas con lo que tienes.',
+              actionLabel: 'Nueva receta',
+              onAction: _openAdd,
+              secondaryLabel: 'Ideas con lo que tengo',
+              onSecondary: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+                ),
+              ),
+            );
           }
 
           final visible = _applyFilter(allRecipes);
@@ -420,10 +433,10 @@ class _PantryBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       child: Material(
         color: AppColors.sageBg,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           child: const Padding(
             padding: EdgeInsets.all(16),
             child: Row(
@@ -442,7 +455,7 @@ class _PantryBanner extends StatelessWidget {
                         '¿Qué cocino con lo que tengo?',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 15.5,
+                          fontSize: 16,
                           color: AppColors.ink,
                         ),
                       ),
@@ -583,13 +596,13 @@ class _FilterChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: selected ? AppColors.ink : AppColors.card,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: selected ? AppColors.ink : AppColors.card,
               width: 1.4,
@@ -697,7 +710,7 @@ class _RecipeCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -711,7 +724,7 @@ class _RecipeCard extends StatelessWidget {
                         Text(
                           Recipe.mealTypeLabels[primaryType] ?? primaryType,
                           style: const TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                           ),
@@ -778,47 +791,6 @@ class _RecipeCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Estado vacío: Miau anima a crear la primera receta.
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const MiauCharacter(mood: MiauMood.cooking, size: 120),
-            const SizedBox(height: 20),
-            const Text(
-              'Presidente Miau supervisa la cocina',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.ink,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Aún no hay recetas registradas.\n'
-              '¡Pulsa "Nueva receta" para empezar!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                height: 1.3,
-                color: AppColors.ink.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -28,7 +28,7 @@ class AppMotion {
   // --- Curvas ----------------------------------------------------------------
 
   /// Curva de salida suave para la mayoría de transiciones.
-  static const Curve easeOut = Curves.easeOut;
+  static const Curve easeOut = Curves.easeOutCubic;
 
   /// Rebote suave y medido para entradas con un toque de vida (sin exagerar).
   static const Curve easeOutBack = Curves.easeOutBack;

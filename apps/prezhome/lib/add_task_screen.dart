@@ -82,7 +82,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -106,15 +106,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     });
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
   @override
   Widget build(BuildContext context) {
@@ -131,11 +123,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const Text(
               'Tareas típicas',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Toca una para rellenarla al momento y ajústala si quieres.',
-              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -180,6 +167,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 children: [
                   const Text('Cada', style: TextStyle(fontSize: 16)),
                   IconButton(
+                    tooltip: 'Menos',
                     icon: const Icon(Icons.remove_circle_outline),
                     onPressed: _intervalCount > 1
                         ? () => setState(() => _intervalCount--)
@@ -193,6 +181,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Más',
                     icon: const Icon(Icons.add_circle_outline),
                     onPressed: _intervalCount < 30
                         ? () => setState(() => _intervalCount++)
@@ -230,7 +219,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   return FilterChip(
                     label: Text(HomeTask.weekdayShort[i]),
                     selected: selected,
-                    selectedColor: const Color(0xFFE2C792),
                     backgroundColor: Colors.white,
                     onSelected: (v) => setState(() {
                       if (v) {
@@ -328,6 +316,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 const Text('Puntos:', style: TextStyle(fontSize: 16)),
                 const Spacer(),
                 IconButton(
+                  tooltip: 'Menos',
                   icon: const Icon(Icons.remove_circle_outline),
                   onPressed: _points > 5
                       ? () => setState(() => _points -= 5)
@@ -341,6 +330,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Más',
                   icon: const Icon(Icons.add_circle_outline),
                   onPressed: _points < 100
                       ? () => setState(() => _points += 5)

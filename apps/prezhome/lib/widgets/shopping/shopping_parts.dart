@@ -65,6 +65,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 22,
+                              letterSpacing: -0.4,
                               fontWeight: FontWeight.w800,
                               color: AppColors.ink,
                             ),
@@ -316,7 +317,7 @@ class ShoppingSection extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.6,
                               color: AppColors.inkMuted,
@@ -327,7 +328,7 @@ class ShoppingSection extends StatelessWidget {
                         Text(
                           '$count',
                           style: const TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.woodDark,
                           ),
@@ -456,7 +457,7 @@ class ShoppingItemTile extends StatelessWidget {
                           child: Text(
                             subtitle!,
                             style: const TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 12,
                               color: AppColors.inkMuted,
                             ),
                           ),
@@ -469,7 +470,8 @@ class ShoppingItemTile extends StatelessWidget {
                   Text(
                     qty,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: checked ? AppColors.inkMuted : AppColors.woodDark,
                     ),

@@ -78,7 +78,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
         showDialog<void>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('¡Tiempo!'),
+            title: const Text('Tiempo'),
             content: Text('Ha terminado el temporizador del paso ${step + 1}.'),
             actions: [
               FilledButton(
@@ -127,6 +127,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                   'Ingredientes',
                   style: TextStyle(
                     fontSize: 22,
+                    letterSpacing: -0.4,
                     fontWeight: FontWeight.w900,
                     color: AppColors.ink,
                   ),
@@ -149,7 +150,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                     title: Text(
                       widget.ingredients[i],
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: 18,
                         decoration: _checkedIngredients.contains(i)
                             ? TextDecoration.lineThrough
                             : null,
@@ -247,7 +248,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
       ),
       decoration: BoxDecoration(
         color: AppColors.ink,
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         children: [
@@ -305,6 +306,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
             step,
             style: const TextStyle(
               fontSize: 26,
+              letterSpacing: -0.4,
               height: 1.35,
               fontWeight: FontWeight.w600,
               color: AppColors.ink,
@@ -378,14 +380,14 @@ class _CookModeScreenState extends State<CookModeScreen> {
                     backgroundColor: _isLast ? AppColors.sage : AppColors.ink,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     textStyle: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  child: Text(_isLast ? '¡Listo!' : 'Siguiente paso'),
+                  child: Text(_isLast ? 'Listo' : 'Siguiente paso'),
                 ),
               ),
             ),

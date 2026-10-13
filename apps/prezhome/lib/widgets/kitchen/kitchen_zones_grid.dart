@@ -59,15 +59,15 @@ class KitchenZonesGrid extends StatelessWidget {
   static const _shapes = [
     BorderRadius.only(
       topLeft: Radius.circular(36),
-      topRight: Radius.circular(18),
-      bottomLeft: Radius.circular(22),
+      topRight: Radius.circular(16),
+      bottomLeft: Radius.circular(24),
       bottomRight: Radius.circular(40),
     ),
     BorderRadius.only(
-      topLeft: Radius.circular(18),
+      topLeft: Radius.circular(16),
       topRight: Radius.circular(40),
       bottomLeft: Radius.circular(36),
-      bottomRight: Radius.circular(20),
+      bottomRight: Radius.circular(24),
     ),
   ];
 
@@ -84,6 +84,7 @@ class KitchenZonesGrid extends StatelessWidget {
               'Mi cocina',
               style: TextStyle(
                 fontSize: 24,
+                letterSpacing: -0.4,
                 fontWeight: FontWeight.w900,
                 color: AppColors.ink,
               ),
@@ -210,7 +211,9 @@ class _ZoneTile extends StatelessWidget {
                   Text(
                     '${summary.count}',
                     style: TextStyle(
+                      fontFeatures: const [FontFeature.tabularFigures()],
                       fontSize: 34,
+                      letterSpacing: -0.6,
                       height: 1,
                       fontWeight: FontWeight.w900,
                       color: s.fg,
@@ -223,7 +226,7 @@ class _ZoneTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 13,
                       fontWeight: alert == null
                           ? FontWeight.w500
                           : FontWeight.w800,

@@ -75,7 +75,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al escanear')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -241,7 +241,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -399,7 +399,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             Text(
               'Sacamos los productos y precios. Podrás revisarlo después.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -447,7 +447,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Tus correcciones se recordarán para la próxima vez.',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -506,7 +506,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                       fontSize: 12,
                       letterSpacing: 1,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[500],
+                      color: AppColors.inkMuted,
                     ),
                   ),
                   const Spacer(),
@@ -543,7 +543,8 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: Colors.redAccent),
+                tooltip: 'Quitar',
+                icon: const Icon(Icons.close, color: AppColors.expired),
                 onPressed: () => setState(() {
                   _items.removeAt(index);
                   it.dispose();
@@ -558,7 +559,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                 padding: const EdgeInsets.only(top: 2, left: 4),
                 child: Text(
                   'Ticket: "${it.rawName}"',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
                 ),
               ),
             ),
@@ -607,7 +608,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
+            color: AppColors.softShadow,
             blurRadius: 10,
             offset: Offset(0, -2),
           ),
@@ -620,7 +621,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Total', style: TextStyle(color: Colors.grey[600])),
+                Text('Total', style: TextStyle(color: AppColors.inkMuted)),
                 Text(
                   '${_total.toStringAsFixed(2)} €',
                   style: const TextStyle(

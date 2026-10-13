@@ -6,6 +6,7 @@ import 'main_shell.dart';
 import 'models/nutrition_profile.dart';
 import 'profile_wizard_screen.dart';
 import 'utils/friendly_error.dart';
+import 'theme/app_theme.dart';
 
 class NutritionProfileScreen extends StatefulWidget {
   const NutritionProfileScreen({super.key});
@@ -90,7 +91,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al cargar el perfil')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -138,7 +139,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -159,15 +160,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     if (picked != null) setState(() => _birthDate = picked);
   }
 
-  InputDecoration _dec(String label) => InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
   static const _weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -192,7 +185,6 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
               return FilterChip(
                 label: Text(_weekdayShort[i]),
                 selected: selected,
-                selectedColor: const Color(0xFFE2C792),
                 backgroundColor: Colors.white,
                 visualDensity: VisualDensity.compact,
                 onSelected: (v) => setState(() {
@@ -217,13 +209,13 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF8E1),
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: const Text(
           'Mi Perfil Nutricional',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFFFDF8E1),
+        backgroundColor: AppColors.cream,
         elevation: 0,
         actions: [
           IconButton(
@@ -264,10 +256,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFE2C792),
-                        width: 1.4,
-                      ),
+                      border: Border.all(color: AppColors.wood, width: 1.4),
                     ),
                     child: Row(
                       children: [
@@ -275,12 +264,12 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF6E6CC),
+                            color: AppColors.peachBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
                             Icons.tune_rounded,
-                            color: Color(0xFF9B6B2E),
+                            color: AppColors.peach,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -301,7 +290,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                                 'tu objetivo.',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.grey,
+                                  color: AppColors.inkMuted,
                                 ),
                               ),
                             ],
@@ -352,7 +341,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                         subtitle: const Text('Formatos de súper'),
                         value: 'practical',
                         groupValue: _portionMode,
-                        activeColor: const Color(0xFFB58A3C),
+                        activeColor: AppColors.woodDark,
                         onChanged: (v) => setState(() => _portionMode = v!),
                       ),
                     ),
@@ -363,7 +352,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                         subtitle: const Text('Al gramo'),
                         value: 'strict',
                         groupValue: _portionMode,
-                        activeColor: const Color(0xFFB58A3C),
+                        activeColor: AppColors.woodDark,
                         onChanged: (v) => setState(() => _portionMode = v!),
                       ),
                     ),
@@ -472,7 +461,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                       style: TextStyle(
                         color: _mealSplit.values.fold(0, (a, b) => a + b) == 100
                             ? Colors.green[700]
-                            : Colors.redAccent,
+                            : AppColors.expired,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -481,7 +470,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Pon 0% en las comidas que no haces. La suma debería ser 100%.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 ...NutritionProfile.splitOrder.map((key) {
@@ -497,7 +486,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                           max: 100,
                           divisions: 20,
                           label: '$value%',
-                          activeColor: const Color(0xFFE2C792),
+                          activeColor: AppColors.wood,
                           onChanged: (v) =>
                               setState(() => _mealSplit[key] = v.round()),
                         ),
@@ -524,7 +513,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 Text(
                   'Marca los días que haces cada comida en casa. Si comes fuera '
                   '(p. ej. en el trabajo), desmarca ese día y no se contará.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 ...NutritionProfile.splitOrder
@@ -537,7 +526,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     'Si está desactivado, tu perfil es privado.',
                   ),
                   value: _isPublic,
-                  activeThumbColor: const Color(0xFFE2C792),
+                  activeThumbColor: AppColors.wood,
                   contentPadding: EdgeInsets.zero,
                   onChanged: (v) => setState(() => _isPublic = v),
                 ),
@@ -548,8 +537,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
 
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE2C792),
-                    foregroundColor: const Color(0xFF1E1E1E),
+                    backgroundColor: AppColors.wood,
+                    foregroundColor: AppColors.ink,
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -595,16 +584,16 @@ class _ModeCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFE2C792) : Colors.white,
+          color: selected ? AppColors.wood : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? const Color(0xFFB58A3C) : Colors.transparent,
+            color: selected ? AppColors.woodDark : Colors.transparent,
             width: 1.5,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF1E1E1E)),
+            Icon(icon, color: AppColors.ink),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -620,7 +609,7 @@ class _ModeCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: selected ? Colors.black87 : Colors.grey[600],
+                      color: selected ? AppColors.ink : AppColors.inkMuted,
                       fontSize: 13,
                     ),
                   ),
@@ -628,7 +617,7 @@ class _ModeCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: Color(0xFFB58A3C)),
+              const Icon(Icons.check_circle, color: AppColors.woodDark),
           ],
         ),
       ),
@@ -663,7 +652,7 @@ class _ResultCard extends StatelessWidget {
           ? const Text(
               'Completa sexo, fecha de nacimiento, altura y peso para calcular '
               'tus calorías y macros diarios.',
-              style: TextStyle(color: Color(0xFF1E1E1E)),
+              style: TextStyle(color: AppColors.ink),
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,7 +662,7 @@ class _ResultCard extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Color(0xFF1E1E1E),
+                    color: AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -681,14 +670,15 @@ class _ResultCard extends StatelessWidget {
                   '$kcal kcal / día',
                   style: const TextStyle(
                     fontSize: 28,
+                    letterSpacing: -0.6,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFB58A3C),
+                    color: AppColors.woodDark,
                   ),
                 ),
                 if (perMeal != null)
                   Text(
                     '≈ $perMeal kcal por comida (${profile.mealsPerDay} comidas)',
-                    style: TextStyle(color: Colors.grey[700]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                 const SizedBox(height: 12),
                 if (macros != null)
@@ -720,10 +710,10 @@ class _Macro extends StatelessWidget {
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Color(0xFF1E1E1E),
+            color: AppColors.ink,
           ),
         ),
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+        Text(label, style: TextStyle(color: AppColors.inkMuted, fontSize: 13)),
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../add_inventory_item_screen.dart';
@@ -291,6 +292,7 @@ class HomeTabState extends State<HomeTab> {
   /// resumen sin reiniciar la app.
   Future<void> _completeTaskFromDashboard(HomeTask task) async {
     try {
+      HapticFeedback.lightImpact();
       await TaskScheduler(_client).complete(task);
       if (isShoppingTask(task.title)) {
         await ShoppingCheckout().markAllBoughtForCurrentUser();
@@ -301,7 +303,7 @@ class HomeTabState extends State<HomeTab> {
         Celebrate.show(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('¡+${task.points} puntos!')));
+        ).showSnackBar(SnackBar(content: Text('+${task.points} puntos')));
       }
       await _loadTasksSummary();
     } catch (e) {
@@ -310,7 +312,7 @@ class HomeTabState extends State<HomeTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e)),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -680,6 +682,7 @@ class HomeTabState extends State<HomeTab> {
                 _greeting(),
                 style: const TextStyle(
                   fontSize: 30,
+                  letterSpacing: -0.6,
                   height: 1.1,
                   fontWeight: FontWeight.w900,
                   color: AppColors.ink,
@@ -819,7 +822,7 @@ class HomeTabState extends State<HomeTab> {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.card,
-                      borderRadius: BorderRadius.circular(99),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -829,7 +832,7 @@ class HomeTabState extends State<HomeTab> {
                         Text(
                           'HOY · ${style.label.toUpperCase()}',
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
                             color: style.fg,
@@ -849,6 +852,7 @@ class HomeTabState extends State<HomeTab> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 22,
+                      letterSpacing: -0.4,
                       height: 1.15,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -893,7 +897,7 @@ class HomeTabState extends State<HomeTab> {
             child: Text(
               s.label,
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkMuted,
               ),
@@ -932,6 +936,7 @@ class HomeTabState extends State<HomeTab> {
                   '¿Qué comemos hoy?',
                   style: TextStyle(
                     fontSize: 22,
+                    letterSpacing: -0.4,
                     fontWeight: FontWeight.w900,
                     color: AppColors.ink,
                   ),
@@ -1037,10 +1042,10 @@ class HomeTabState extends State<HomeTab> {
       label: '$value $label',
       child: Material(
         color: bg,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
@@ -1051,7 +1056,9 @@ class HomeTabState extends State<HomeTab> {
                 Text(
                   '$value',
                   style: TextStyle(
+                    fontFeatures: const [FontFeature.tabularFigures()],
                     fontSize: 28,
+                    letterSpacing: -0.6,
                     height: 1,
                     fontWeight: FontWeight.w900,
                     color: fg,
@@ -1360,12 +1367,12 @@ class HomeTabState extends State<HomeTab> {
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
               decoration: BoxDecoration(
                 color: AppColors.expiredBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '¡Ya!',
+                'Ya',
                 style: AppTextStyles.label.copyWith(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: AppColors.expired,
                 ),
@@ -1811,8 +1818,8 @@ class HomeTabState extends State<HomeTab> {
                       child: LinearProgressIndicator(
                         value: ratio,
                         minHeight: 10,
-                        backgroundColor: const Color(0xFFEFE7CC),
-                        color: over ? Colors.redAccent : AppColors.wood,
+                        backgroundColor: AppColors.line,
+                        color: over ? AppColors.expired : AppColors.wood,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -1821,7 +1828,7 @@ class HomeTabState extends State<HomeTab> {
                           ? 'Te has pasado ${(total - target).round()} kcal'
                           : 'Te quedan ${(target - total).round()} kcal',
                       style: AppTextStyles.label.copyWith(
-                        color: over ? Colors.redAccent : AppColors.inkMuted,
+                        color: over ? AppColors.expired : AppColors.inkMuted,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1871,8 +1878,8 @@ class HomeTabState extends State<HomeTab> {
                     child: LinearProgressIndicator(
                       value: ratio,
                       minHeight: 10,
-                      backgroundColor: const Color(0xFFEFE7CC),
-                      color: over ? Colors.redAccent : AppColors.wood,
+                      backgroundColor: AppColors.line,
+                      color: over ? AppColors.expired : AppColors.wood,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -1881,7 +1888,7 @@ class HomeTabState extends State<HomeTab> {
                         ? 'Te has pasado ${(spent - budget).toStringAsFixed(2)} € del presupuesto'
                         : 'Te quedan ${(budget - spent).toStringAsFixed(2)} €',
                     style: AppTextStyles.label.copyWith(
-                      color: over ? Colors.redAccent : AppColors.inkMuted,
+                      color: over ? AppColors.expired : AppColors.inkMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2025,7 +2032,6 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
                   color: sel ? AppColors.ink : AppColors.woodDark,
                 ),
                 selected: sel,
-                selectedColor: AppColors.wood,
                 backgroundColor: AppColors.card,
                 onSelected: (v) => setState(() {
                   if (v) {

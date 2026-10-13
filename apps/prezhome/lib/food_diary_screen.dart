@@ -465,7 +465,9 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                             ? '${r.calories} kcal por ración'
                             : 'Sin calorías registradas',
                         style: TextStyle(
-                          color: hasKcal ? Colors.grey[700] : Colors.redAccent,
+                          color: hasKcal
+                              ? AppColors.inkMuted
+                              : AppColors.expired,
                         ),
                       ),
                       enabled: hasKcal,
@@ -500,7 +502,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             children: [
               Text(
                 '${recipe.calories} kcal por ración',
-                style: TextStyle(color: Colors.grey[700]),
+                style: TextStyle(color: AppColors.inkMuted),
               ),
               const SizedBox(height: 12),
               _dialogField(servingsController, 'Raciones', number: true),
@@ -656,6 +658,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            tooltip: 'Anterior',
             icon: const Icon(Icons.chevron_left),
             onPressed: () => _changeDay(-1),
           ),
@@ -664,6 +667,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           IconButton(
+            tooltip: 'Siguiente',
             icon: const Icon(Icons.chevron_right),
             // No dejar avanzar más allá del día de hoy.
             onPressed: _isToday ? null : () => _changeDay(1),
@@ -695,6 +699,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             '${total.round()} kcal',
             style: const TextStyle(
               fontSize: 32,
+              letterSpacing: -0.6,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
             ),
@@ -702,7 +707,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           if (hasTarget) ...[
             Text(
               'de $target kcal',
-              style: TextStyle(color: Colors.grey[700], fontSize: 15),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 15),
             ),
             const SizedBox(height: 12),
             ClipRRect(
@@ -710,8 +715,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               child: LinearProgressIndicator(
                 value: ratio,
                 minHeight: 10,
-                backgroundColor: const Color(0xFFEFE7CC),
-                color: over ? Colors.redAccent : AppColors.wood,
+                backgroundColor: AppColors.line,
+                color: over ? AppColors.expired : AppColors.wood,
               ),
             ),
             const SizedBox(height: 6),
@@ -720,7 +725,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   ? 'Te has pasado ${(total - target).round()} kcal'
                   : 'Te quedan ${(target - total).round()} kcal',
               style: TextStyle(
-                color: over ? Colors.redAccent : Colors.grey[700],
+                color: over ? AppColors.expired : AppColors.inkMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -729,7 +734,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             Text(
               'Completa tu perfil para fijar un objetivo diario de calorías '
               'y ver cuánto te queda cada día.',
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
             const SizedBox(height: 8),
             Align(
@@ -793,7 +798,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           fontSize: 12,
           letterSpacing: 1,
           fontWeight: FontWeight.w700,
-          color: Colors.grey[500],
+          color: AppColors.inkMuted,
         ),
       ),
     );
@@ -816,7 +821,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.cream,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               e.source == 'receta'
@@ -836,18 +841,19 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 ),
                 Text(
                   '${(e.calories ?? 0).round()} kcal',
-                  style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 if (macros.isNotEmpty)
                   Text(
                     macros.join('  ·  '),
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
                   ),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            tooltip: 'Eliminar',
+            icon: const Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: e.id != null ? () => _deleteEntry(e.id!) : null,
           ),
         ],
@@ -891,7 +897,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             const SizedBox(height: 4),
             Text(
               'Objetivo: $target kcal al día',
-              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
           ],
           const SizedBox(height: 16),
@@ -942,7 +948,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                           child: Text(
                             _weekdayInitials[d.weekday - 1],
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.inkMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1021,7 +1027,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           if (total <= 0)
             Text(
               'Aún no hay macros registrados hoy.',
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: AppColors.inkMuted),
             )
           else
             Row(
@@ -1048,7 +1054,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                         ),
                         PieChartSectionData(
                           value: fat,
-                          color: const Color(0xFFEFE7CC),
+                          color: AppColors.line,
                           radius: 26,
                           showTitle: false,
                         ),
@@ -1065,7 +1071,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       const SizedBox(height: 8),
                       _macroLegend(AppColors.wood, 'Carbos', carbs),
                       const SizedBox(height: 8),
-                      _macroLegend(const Color(0xFFEFE7CC), 'Grasa', fat),
+                      _macroLegend(AppColors.line, 'Grasa', fat),
                     ],
                   ),
                 ),
@@ -1107,7 +1113,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           Text(
             'Aún no has apuntado nada este día.\nAñade tu primera comida.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[700]),
+            style: TextStyle(color: AppColors.inkMuted),
           ),
         ],
       ),

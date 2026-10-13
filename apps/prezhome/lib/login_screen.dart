@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('¡Cuenta creada! Bienvenido a PrezHome.'),
+              content: Text('Cuenta creada. Te damos la bienvenida a PrezHome'),
             ),
           );
         }
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error de autenticación')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo iniciar con Google')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -179,6 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _isLoginMode ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
                     style: const TextStyle(
                       fontSize: 26,
+                      letterSpacing: -0.4,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -318,7 +319,7 @@ class _GoogleButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: AppColors.ink,
-          side: BorderSide(color: Colors.grey[300]!),
+          side: BorderSide(color: AppColors.line),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

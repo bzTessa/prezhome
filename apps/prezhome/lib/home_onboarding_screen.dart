@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_shell.dart';
+import 'theme/app_theme.dart';
 
 class HomeOnboardingScreen extends StatefulWidget {
   const HomeOnboardingScreen({super.key});
@@ -65,7 +66,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppColors.expired),
     );
   }
 
@@ -100,6 +101,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 28,
+                    letterSpacing: -0.6,
                     fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.center,
@@ -135,7 +137,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                           foregroundColor: Colors.white,
                           minimumSize: const Size.fromHeight(56),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(9999),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           elevation: 0,
                           textStyle: const TextStyle(
@@ -200,7 +202,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                             width: 1.5,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(9999),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           textStyle: const TextStyle(
                             fontSize: 16,

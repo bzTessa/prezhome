@@ -206,6 +206,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
       child: Row(
         children: [
           IconButton(
+            tooltip: 'Anterior',
             icon: const Icon(Icons.chevron_left, color: AppColors.woodDark),
             onPressed: () => _changeMonth(-1),
           ),
@@ -221,6 +222,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
             ),
           ),
           IconButton(
+            tooltip: 'Siguiente',
             icon: const Icon(Icons.chevron_right, color: AppColors.woodDark),
             onPressed: () => _changeMonth(1),
           ),
@@ -241,7 +243,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                     d,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[600],
+                      color: AppColors.inkMuted,
                       fontSize: 13,
                     ),
                   ),
@@ -288,7 +290,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                   : (isToday
                         ? AppColors.wood.withValues(alpha: 0.35)
                         : Colors.white),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: isToday
                   ? Border.all(color: AppColors.woodDark, width: 2)
                   : null,
@@ -309,7 +311,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (hasMeals) _dot(const Color(0xFFB58A3C)),
+                    if (hasMeals) _dot(AppColors.woodDark),
                     if (hasMeals && hasTasks) const SizedBox(width: 3),
                     if (hasTasks) _dot(const Color(0xFF7FA05A)),
                   ],
@@ -376,7 +378,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                 Expanded(
                   child: Text(
                     'Nada planificado este día.',
-                    style: TextStyle(color: Colors.grey[700]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ),
               ],
@@ -399,7 +401,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                                 child: Text(
                                   _mealLabels[m.mealType] ?? m.mealType,
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: AppColors.inkMuted,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -413,7 +415,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                                         ? TextDecoration.lineThrough
                                         : null,
                                     color: m.skipped
-                                        ? Colors.grey
+                                        ? AppColors.inkMuted
                                         : AppColors.ink,
                                   ),
                                 ),
@@ -449,7 +451,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                               Text(
                                 t.recurrenceLabel,
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: AppColors.inkMuted,
                                   fontSize: 11,
                                 ),
                               ),
@@ -476,7 +478,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
           fontSize: 11,
           letterSpacing: 1,
           fontWeight: FontWeight.w700,
-          color: Colors.grey[500],
+          color: AppColors.inkMuted,
         ),
       ),
     );

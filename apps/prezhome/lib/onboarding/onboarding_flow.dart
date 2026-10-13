@@ -526,6 +526,7 @@ class _PeoplePicker extends StatelessWidget {
                     value >= 8 ? '8+' : '$value',
                     style: const TextStyle(
                       fontSize: 56,
+                      letterSpacing: -0.6,
                       fontWeight: FontWeight.w900,
                       color: AppColors.woodDark,
                     ),
@@ -708,6 +709,7 @@ class _ResultPage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 40,
+                letterSpacing: -0.6,
                 fontWeight: FontWeight.w900,
                 color: AppColors.ink,
               ),
@@ -720,7 +722,7 @@ class _ResultPage extends StatelessWidget {
                 profile.description,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 16.5,
+                  fontSize: 16,
                   height: 1.45,
                   color: AppColors.ink,
                 ),

@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_task_screen.dart';
@@ -8,6 +9,7 @@ import 'models/task.dart';
 import 'services/shopping_checkout.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
+import 'widgets/list_skeleton.dart';
 import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
@@ -234,6 +236,7 @@ class _TasksScreenState extends State<TasksScreen> {
     if (doneBy == null) return; // Cancelado.
 
     try {
+      HapticFeedback.lightImpact();
       await TaskScheduler(_client).completeAttributed(task, doneBy);
       // Hacer la compra: se tacha la lista y lo comprado va a la despensa.
       final bought = isShoppingTask(task.title)
@@ -246,9 +249,9 @@ class _TasksScreenState extends State<TasksScreen> {
         SnackBar(
           content: Text(
             bought > 0
-                ? '¡+${task.points} puntos para $who! $bought productos a la '
+                ? '+${task.points} puntos para $who. $bought productos a la '
                       'despensa'
-                : '¡+${task.points} puntos para $who!',
+                : '+${task.points} puntos para $who',
           ),
         ),
       );
@@ -256,7 +259,10 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
       );
     }
   }
@@ -356,7 +362,10 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e)), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
       );
     }
   }
@@ -385,7 +394,7 @@ class _TasksScreenState extends State<TasksScreen> {
         builder: (context, snapshot) {
           if (!snapshot.hasData &&
               snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton();
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));
@@ -721,10 +730,10 @@ class _TareasCelebracion extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('¡Todo hecho!', style: AppTextStyles.title),
+                          Text('Todo hecho', style: AppTextStyles.title),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            'No quedan tareas pendientes. Miau esta encantado.',
+                            'No queda nada pendiente.',
                             style: AppTextStyles.bodyMuted,
                           ),
                         ],
@@ -793,7 +802,7 @@ class _Scoreboard extends StatelessWidget {
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[500],
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -885,7 +894,7 @@ class _PointsChart extends StatelessWidget {
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[500],
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 16),
@@ -935,7 +944,7 @@ class _PointsChart extends StatelessWidget {
                           child: Text(
                             _shortName(data[i].name),
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.inkMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -994,7 +1003,7 @@ class _PointsChart extends StatelessWidget {
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[500],
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -1017,7 +1026,7 @@ class _PointsChart extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Completa tareas para ir sumando.',
-                      style: TextStyle(color: Colors.grey[700]),
+                      style: TextStyle(color: AppColors.inkMuted),
                     ),
                   ],
                 ),
@@ -1111,7 +1120,8 @@ class _TaskCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            tooltip: 'Eliminar',
+            icon: const Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: onDelete,
           ),
         ],

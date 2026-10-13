@@ -223,7 +223,10 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   void _snack(String msg, {bool error = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: error ? Colors.red : null),
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: error ? AppColors.expired : null,
+      ),
     );
   }
 
@@ -335,6 +338,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                             data.homeName!,
                             style: const TextStyle(
                               fontSize: 22,
+                              letterSpacing: -0.4,
                               fontWeight: FontWeight.bold,
                               color: AppColors.ink,
                             ),
@@ -356,7 +360,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       data.members.length == 1
                           ? 'Tu hogar, de momento para ti.'
                           : 'Un hogar de ${data.members.length} personas.',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                   ],
                 ),
@@ -371,7 +375,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             children: [
               const Text(
                 'Código de invitación',
-                style: TextStyle(color: Colors.grey, fontSize: 13),
+                style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
               ),
               const SizedBox(height: 4),
               const Text(
@@ -391,6 +395,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Copiar',
                     icon: const Icon(Icons.copy, color: AppColors.woodDark),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: data.homeId!));
@@ -543,13 +548,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           const SizedBox(height: 4),
           Text(
             'Las recetas se adaptarán a lo que haya en tus súper. Es opcional.',
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
           const SizedBox(height: 10),
           if (labels.isEmpty)
             Text(
               'Sin supermercado elegido.',
-              style: TextStyle(color: Colors.grey[500], fontSize: 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             )
           else
             Wrap(
@@ -601,7 +606,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Puedes elegir varios. Es opcional.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 Flexible(

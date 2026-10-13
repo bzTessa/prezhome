@@ -311,7 +311,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'Error al guardar')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.expired,
           ),
         );
       }
@@ -447,6 +447,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           title,
           style: const TextStyle(
             fontSize: 24,
+            letterSpacing: -0.4,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
           ),
@@ -454,7 +455,11 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         const SizedBox(height: 8),
         Text(
           subtitle,
-          style: TextStyle(fontSize: 15, height: 1.4, color: Colors.grey[700]),
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.4,
+            color: AppColors.inkMuted,
+          ),
         ),
         const SizedBox(height: 24),
       ],
@@ -474,6 +479,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 26,
+              letterSpacing: -0.4,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
             ),
@@ -486,7 +492,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             style: TextStyle(
               fontSize: 16,
               height: 1.5,
-              color: Colors.grey[700],
+              color: AppColors.inkMuted,
             ),
           ),
         ],
@@ -537,7 +543,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         ),
         InkWell(
           onTap: _pickBirthDate,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
             decoration: AppTheme.cardDecoration(radius: 20),
@@ -551,7 +557,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: hasDate ? FontWeight.bold : FontWeight.normal,
-                      color: hasDate ? AppColors.ink : Colors.grey[600],
+                      color: hasDate ? AppColors.ink : AppColors.inkMuted,
                     ),
                   ),
                 ),
@@ -587,6 +593,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 28,
+            letterSpacing: -0.6,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
           ),
@@ -607,6 +614,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 28,
+            letterSpacing: -0.6,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
           ),
@@ -724,7 +732,6 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
               }),
               showCheckmark: false,
               backgroundColor: AppColors.card,
-              selectedColor: AppColors.wood,
               side: BorderSide(
                 color: selected ? AppColors.woodDark : Colors.transparent,
                 width: 1.5,
@@ -870,6 +877,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             'Tu objetivo diario',
             style: TextStyle(
               fontSize: 24,
+              letterSpacing: -0.4,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
             ),
@@ -885,6 +893,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                 kcal != null ? '$kcal' : '--',
                 style: const TextStyle(
                   fontSize: 56,
+                  letterSpacing: -0.6,
                   fontWeight: FontWeight.bold,
                   color: AppColors.woodDark,
                 ),
@@ -914,7 +923,11 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           'Es una estimacion para empezar. Siempre puedes ajustarla desde tu '
           'perfil cuando quieras.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.4),
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.inkMuted,
+            height: 1.4,
+          ),
         ),
       ],
     );
@@ -926,10 +939,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     filled: true,
     fillColor: AppColors.card,
     hintText: hint,
-    hintStyle: TextStyle(fontSize: 15, color: Colors.grey[500]),
+    hintStyle: TextStyle(fontSize: 15, color: AppColors.inkMuted),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide.none,
     ),
   );
@@ -945,7 +958,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide.none,
     ),
   );
@@ -972,12 +985,12 @@ class _OptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: selected ? AppColors.wood : AppColors.card,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? AppColors.woodDark : Colors.transparent,
             width: 1.5,
@@ -1014,7 +1027,7 @@ class _OptionCard extends StatelessWidget {
                       subtitle!,
                       style: TextStyle(
                         fontSize: 13,
-                        color: selected ? Colors.black87 : Colors.grey[600],
+                        color: selected ? AppColors.ink : AppColors.inkMuted,
                       ),
                     ),
                   ],
@@ -1086,7 +1099,7 @@ class _SelectCard extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 13,
-                    color: selected ? Colors.black87 : AppColors.inkMuted,
+                    color: selected ? AppColors.ink : AppColors.inkMuted,
                   ),
                 ),
               ],
@@ -1180,7 +1193,7 @@ class _MacroStat extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+        Text(label, style: TextStyle(fontSize: 13, color: AppColors.inkMuted)),
       ],
     );
   }
