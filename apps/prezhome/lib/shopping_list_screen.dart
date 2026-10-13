@@ -1167,6 +1167,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 onSearch: _searchProduct,
               ),
             ),
+            if (usualProducts([
+                  for (final p in _prices.values)
+                    (name: p.displayName, times: p.samples),
+                ], pendientes.map((i) => i.name))
+                case final usual when usual.isNotEmpty)
+              SliverToBoxAdapter(child: _usualChips(usual)),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             if (shouldShowPendingIndicator(_pendingCount))
               SliverToBoxAdapter(
@@ -1528,29 +1534,93 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ];
     }
 
-    final grupos = <FoodCategory, List<ShoppingListItem>>{};
-    for (final item in pendientes) {
-      final cat = CategoryIcons.categoryFor(item.name);
-      grupos.putIfAbsent(cat, () => []).add(item);
+    // Sin categorías del hogar (sin red o sin migrar): pasillos por defecto.
+    if (_categories.isEmpty) {
+      final grupos = <FoodCategory, List<ShoppingListItem>>{};
+      for (final item in pendientes) {
+        final cat = CategoryIcons.categoryFor(item.name);
+        grupos.putIfAbsent(cat, () => []).add(item);
+      }
+      return [
+        for (final cat in FoodCategory.values)
+          if (grupos[cat] case final items? when items.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _aisleSection(
+                cat.label,
+                CategoryIcons.styleForCategory(cat),
+                items,
+              ),
+            ),
+      ];
     }
+
+    // En el orden de las categorías del hogar, que se puede cambiar en
+    // Opciones → Categorías para seguir el recorrido de tu súper.
+    final grupos = groupByHomeCategories(
+      pendientes,
+      [for (final c in _categories) (id: c.id, name: c.name)],
+      categoryIdOf: (i) => i.categoryId,
+      categoryNameOf: (i) => i.category,
+      nameOf: (i) => i.name,
+    );
     return [
-      for (final cat in FoodCategory.values)
-        if (grupos[cat] case final items? when items.isNotEmpty)
-          SliverToBoxAdapter(child: _aisleSection(cat, items)),
+      for (final (name, items) in grupos)
+        SliverToBoxAdapter(
+          child: _aisleSection(
+            name,
+            CategoryIcons.styleForCategory(CategoryIcons.categoryFor(name)),
+            items,
+          ),
+        ),
     ];
   }
 
-  Widget _aisleSection(FoodCategory cat, List<ShoppingListItem> items) {
-    final style = CategoryIcons.styleForCategory(cat);
-    final expanded = !(_catCollapsed[cat.name] ?? false);
+  /// "Lo habitual": lo que más compras, para añadirlo de un toque.
+  Widget _usualChips(List<String> usual) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Lo habitual',
+            style: TextStyle(
+              color: AppColors.inkMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final name in usual)
+                ActionChip(
+                  avatar: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(name),
+                  onPressed: () => _quickAdd(name),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _aisleSection(
+    String title,
+    CategoryStyle style,
+    List<ShoppingListItem> items,
+  ) {
+    final expanded = !(_catCollapsed[title] ?? false);
     return ShoppingSection(
-      title: cat.label,
+      title: title,
       count: items.length,
       icon: style.icon,
       iconColor: style.foreground,
       iconBackground: style.background,
       expanded: expanded,
-      onToggle: () => setState(() => _catCollapsed[cat.name] = expanded),
+      onToggle: () => setState(() => _catCollapsed[title] = expanded),
       children: [for (final i in items) _buildRow(i)],
     );
   }
