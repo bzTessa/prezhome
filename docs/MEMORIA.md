@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0050.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0051.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
