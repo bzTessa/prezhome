@@ -232,4 +232,53 @@ void main() {
       expect(resumen, contains('Saca pollo el viernes'));
     });
   });
+
+  group('Agenda de la cocina en lote', () {
+    test('compra la víspera, nevera/congelador por táper y qué sacar', () {
+      final meals = [
+        PrepMeal(
+          recipeId: 'pollo',
+          date: day(0),
+          mealType: 'lunch',
+          servings: 2,
+        ),
+        PrepMeal(
+          recipeId: 'pollo',
+          date: day(5),
+          mealType: 'lunch',
+          servings: 2,
+        ),
+      ];
+      final plan = const MealPrepPlanner().buildPlan(
+        meals: meals,
+        recipesById: recipes,
+        weekStart: weekStart,
+        energyLevel: 0,
+      );
+      final agenda = prepAgenda(plan);
+      expect(agenda.map((e) => e.kind), [
+        PrepEventKind.compra,
+        PrepEventKind.cocina,
+        PrepEventKind.sacar,
+      ]);
+      expect(agenda[0].date, day(-1));
+      expect(
+        agenda[1].lines.first,
+        'Pollo x4: 2 a la nevera (lun), 2 al congelador (sáb)',
+      );
+      expect(agenda[2].date, day(4));
+      expect(agenda[2].lines.single, 'Pollo: 2 tápers para el sábado');
+    });
+
+    test('la compra nunca cae antes de hoy', () {
+      final plan = const MealPrepPlanner().buildPlan(
+        meals: [PrepMeal(recipeId: 'pollo', date: day(0), mealType: 'lunch')],
+        recipesById: recipes,
+        weekStart: weekStart,
+      );
+      final agenda = prepAgenda(plan, earliest: day(0));
+      expect(agenda.first.kind, PrepEventKind.compra);
+      expect(agenda.first.date, day(0));
+    });
+  });
 }

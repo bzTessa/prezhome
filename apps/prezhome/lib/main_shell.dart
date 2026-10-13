@@ -251,6 +251,7 @@ class MainShellState extends State<MainShell> {
               final i = _indexOf(TabId.tareas);
               if (i >= 0) goToTab(i);
             },
+            onNavigateToPlan: () => goToTab(_indexOf(TabId.comidas)),
           ),
           destination: const FloatingNavItem(
             icon: Icons.home_outlined,

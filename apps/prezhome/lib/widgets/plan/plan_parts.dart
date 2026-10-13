@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/meal_prep_planner.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
 
@@ -294,6 +295,89 @@ class MealSlotCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Icono y color de cada aviso de la cocina en lote.
+({IconData icon, Color fg, Color bg}) prepEventStyle(PrepEventKind k) =>
+    switch (k) {
+      PrepEventKind.compra => (
+        icon: Icons.shopping_cart_outlined,
+        fg: AppColors.sage,
+        bg: AppColors.sageBg,
+      ),
+      PrepEventKind.cocina => (
+        icon: Icons.outdoor_grill_outlined,
+        fg: AppColors.terracotta,
+        bg: AppColors.terracottaBg,
+      ),
+      PrepEventKind.sacar => (
+        icon: Icons.ac_unit_rounded,
+        fg: AppColors.frost,
+        bg: AppColors.frostBg,
+      ),
+    };
+
+/// Un aviso de la cocina en lote (compra, cocinar, pasar a la nevera).
+class PrepEventTile extends StatelessWidget {
+  const PrepEventTile({super.key, required this.event, this.showDate = false});
+
+  final PrepEvent event;
+
+  /// En la agenda de la semana se antepone el día ("Dom 12 · …").
+  final bool showDate;
+
+  static const _abbr = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+  @override
+  Widget build(BuildContext context) {
+    final s = prepEventStyle(event.kind);
+    final d = event.date;
+    final title = showDate
+        ? '${_abbr[d.weekday - 1]} ${d.day} · ${event.title}'
+        : event.title;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: s.bg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(s.icon, size: 20, color: s.fg),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: AppColors.ink,
+                  ),
+                ),
+                for (final l in event.lines)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3),
+                    child: Text(
+                      l,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.3,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
