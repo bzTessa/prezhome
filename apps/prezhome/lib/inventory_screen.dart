@@ -1110,10 +1110,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
             ),
             ListTile(
-              leading: Icon(
-                Icons.edit_outlined,
-                color: AppColors.woodDark,
-              ),
+              leading: Icon(Icons.edit_outlined, color: AppColors.woodDark),
               title: const Text('Editar'),
               onTap: () => Navigator.of(ctx).pop('edit'),
             ),
@@ -1151,10 +1148,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 onTap: () => Navigator.of(ctx).pop('depleted'),
               ),
             ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: AppColors.expired,
-              ),
+              leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Eliminar'),
               onTap: () => Navigator.of(ctx).pop('delete'),
             ),

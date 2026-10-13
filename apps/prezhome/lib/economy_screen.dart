@@ -1111,10 +1111,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               color: AppColors.cream,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              color: AppColors.ink,
-            ),
+            child: Icon(Icons.receipt_long_outlined, color: AppColors.ink),
           ),
           const SizedBox(width: 12),
           Expanded(

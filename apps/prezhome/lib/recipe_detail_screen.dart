@@ -218,10 +218,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               ),
             ),
             ListTile(
-              leading: Icon(
-                Icons.image_search,
-                color: AppColors.woodDark,
-              ),
+              leading: Icon(Icons.image_search, color: AppColors.woodDark),
               title: const Text('Buscar otra foto automática'),
               subtitle: const Text('Busca una imagen nueva por el nombre'),
               onTap: () => Navigator.of(ctx).pop('regenerate'),
@@ -1305,11 +1302,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Icon(
-                      Icons.euro_rounded,
-                      size: 18,
-                      color: AppColors.sage,
-                    ),
+                    Icon(Icons.euro_rounded, size: 18, color: AppColors.sage),
                     const SizedBox(width: 8),
                     Text(
                       '${_cost!.perServing.toStringAsFixed(2).replaceAll('.', ',')} € por ración',

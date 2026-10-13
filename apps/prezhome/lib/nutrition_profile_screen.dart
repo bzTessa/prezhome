@@ -296,7 +296,10 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right, color: AppColors.inkMuted.withValues(alpha: 0.5)),
+                        Icon(
+                          Icons.chevron_right,
+                          color: AppColors.inkMuted.withValues(alpha: 0.5),
+                        ),
                       ],
                     ),
                   ),
@@ -616,8 +619,7 @@ class _ModeCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (selected)
-              Icon(Icons.check_circle, color: AppColors.woodDark),
+            if (selected) Icon(Icons.check_circle, color: AppColors.woodDark),
           ],
         ),
       ),

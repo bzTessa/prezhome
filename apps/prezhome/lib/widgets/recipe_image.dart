@@ -88,7 +88,11 @@ class RecipeImage extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.cream, Color.lerp(AppColors.cream, AppColors.wood, 0.4)!, AppColors.wood],
+          colors: [
+            AppColors.cream,
+            Color.lerp(AppColors.cream, AppColors.wood, 0.4)!,
+            AppColors.wood,
+          ],
         ),
       ),
       child: Center(

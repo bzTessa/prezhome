@@ -18,14 +18,18 @@ class AppColors {
   /// Modo oscuro activo. Lo fija la raíz de la app según el brillo del sistema.
   static bool dark = false;
 
-  static Color get cream =>
-      dark ? const Color(0xFF1C1915) : const Color(0xFFFDF8E1); // fondo amarillo pastel cálido
-  static Color get wood =>
-      dark ? const Color(0xFF7A6238) : const Color(0xFFE2C792); // madera clara (acento)
-  static Color get woodDark =>
-      dark ? const Color(0xFFE2C792) : const Color(0xFFB58A3C); // acento oscuro para texto/números
-  static Color get ink =>
-      dark ? const Color(0xFFF2EBD9) : const Color(0xFF1E1E1E); // gris muy oscuro (texto)
+  static Color get cream => dark
+      ? const Color(0xFF1C1915)
+      : const Color(0xFFFDF8E1); // fondo amarillo pastel cálido
+  static Color get wood => dark
+      ? const Color(0xFF7A6238)
+      : const Color(0xFFE2C792); // madera clara (acento)
+  static Color get woodDark => dark
+      ? const Color(0xFFE2C792)
+      : const Color(0xFFB58A3C); // acento oscuro para texto/números
+  static Color get ink => dark
+      ? const Color(0xFFF2EBD9)
+      : const Color(0xFF1E1E1E); // gris muy oscuro (texto)
   static Color get card =>
       dark ? const Color(0xFF27231E) : const Color(0xFFFFFFFF);
   static Color get softShadow =>

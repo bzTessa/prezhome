@@ -116,10 +116,7 @@ class InventoryItemCard extends StatelessWidget {
                     qty,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.inkMuted,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                   ),
                 ],
                 if (showExpiryBar) ...[

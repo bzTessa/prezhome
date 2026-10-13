@@ -496,10 +496,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                                 'casa para recibir ideas con ello.'
                           : 'Usaremos ${_pantry.length} alimentos de tu '
                                 'despensa, empezando por lo que caduca antes.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.inkMuted,
-                      ),
+                      style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
                     ),
                   ],
                   const SizedBox(height: 16),

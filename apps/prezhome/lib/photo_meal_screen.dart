@@ -275,11 +275,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.photo_camera_outlined,
-              size: 72,
-              color: AppColors.wood,
-            ),
+            Icon(Icons.photo_camera_outlined, size: 72, color: AppColors.wood),
             const SizedBox(height: 16),
             const Text(
               'Haz una foto a tu plato',

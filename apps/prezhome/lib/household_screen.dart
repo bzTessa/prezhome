@@ -620,10 +620,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
                 IconButton(
                   tooltip: 'Copiar',
-                  icon: Icon(
-                    Icons.copy_rounded,
-                    color: AppColors.woodDark,
-                  ),
+                  icon: Icon(Icons.copy_rounded, color: AppColors.woodDark),
                   onPressed: () {
                     Clipboard.setData(
                       ClipboardData(text: formatInviteCode(invite.code)),
@@ -667,10 +664,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   color: AppColors.sageBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.storefront_outlined,
-                  color: AppColors.sage,
-                ),
+                child: Icon(Icons.storefront_outlined, color: AppColors.sage),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -844,7 +838,10 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(subtitle),
-      trailing: Icon(Icons.chevron_right, color: AppColors.inkMuted.withValues(alpha: 0.5)),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: AppColors.inkMuted.withValues(alpha: 0.5),
+      ),
       onTap: onTap,
     );
   }

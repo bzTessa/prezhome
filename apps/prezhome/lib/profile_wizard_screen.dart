@@ -347,9 +347,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                   value: (_page + 1) / _totalPages,
                   minHeight: 8,
                   backgroundColor: AppColors.wood.withValues(alpha: 0.25),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.wood,
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.wood),
                 ),
               ),
             ),
@@ -1034,8 +1032,7 @@ class _OptionCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (selected)
-              Icon(Icons.check_circle, color: AppColors.woodDark),
+            if (selected) Icon(Icons.check_circle, color: AppColors.woodDark),
           ],
         ),
       ),
@@ -1105,8 +1102,7 @@ class _SelectCard extends StatelessWidget {
               ],
             ),
           ),
-          if (selected)
-            Icon(Icons.check_circle, color: AppColors.woodDark),
+          if (selected) Icon(Icons.check_circle, color: AppColors.woodDark),
         ],
       ),
     );

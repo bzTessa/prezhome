@@ -123,10 +123,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                   pending == 0
                       ? 'Todo en el carro'
                       : '$pending por comprar · $done en el carro',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.inkMuted,
-                  ),
+                  style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
                 ),
               ),
               if (estimate != null)

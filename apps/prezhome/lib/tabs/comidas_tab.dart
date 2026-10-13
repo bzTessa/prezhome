@@ -343,10 +343,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                       '${_weekStart.day} ${_months[_weekStart.month - 1]} - '
                       '${weekEnd.day} ${_months[weekEnd.month - 1]}',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.inkMuted,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                   ],
                 ),

@@ -804,10 +804,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.ink,
                         minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(
-                          color: AppColors.wood,
-                          width: 1.5,
-                        ),
+                        side: BorderSide(color: AppColors.wood, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -832,10 +829,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.ink,
                         minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(
-                          color: AppColors.wood,
-                          width: 1.5,
-                        ),
+                        side: BorderSide(color: AppColors.wood, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

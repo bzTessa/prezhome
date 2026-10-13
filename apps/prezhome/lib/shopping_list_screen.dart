@@ -644,10 +644,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               onTap: () => Navigator.of(ctx).pop('store'),
             ),
             ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: AppColors.expired,
-              ),
+              leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Quitar de la lista'),
               onTap: () => Navigator.of(ctx).pop('delete'),
             ),

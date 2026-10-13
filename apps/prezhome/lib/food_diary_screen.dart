@@ -220,10 +220,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 onTap: () => Navigator.of(context).pop('manual'),
               ),
               ListTile(
-                leading: Icon(
-                  Icons.menu_book_outlined,
-                  color: AppColors.ink,
-                ),
+                leading: Icon(Icons.menu_book_outlined, color: AppColors.ink),
                 title: const Text('Desde una receta'),
                 subtitle: const Text('Registra una receta tuya como comida'),
                 onTap: () => Navigator.of(context).pop('receta'),

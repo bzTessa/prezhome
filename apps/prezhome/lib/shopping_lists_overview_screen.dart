@@ -107,10 +107,7 @@ class _ShoppingListsOverviewScreenState
           name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: AppColors.ink,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
         ),
         trailing: selected
             ? Text(

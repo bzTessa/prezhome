@@ -153,10 +153,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
               onTap: () => Navigator.of(ctx).pop('favorite'),
             ),
             ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: AppColors.expired,
-              ),
+              leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Eliminar receta'),
               onTap: () => Navigator.of(ctx).pop('delete'),
             ),
@@ -842,11 +839,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.cloud_off_rounded,
-              size: 56,
-              color: AppColors.woodDark,
-            ),
+            Icon(Icons.cloud_off_rounded, size: 56, color: AppColors.woodDark),
             const SizedBox(height: 16),
             Text(
               message,
@@ -961,17 +954,11 @@ class _SearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Buscar receta...',
           hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: AppColors.woodDark,
-          ),
+          prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
           suffixIcon: controller.text.isEmpty
               ? null
               : IconButton(
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: AppColors.woodDark,
-                  ),
+                  icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
                   onPressed: onClear,
                   tooltip: 'Limpiar',
                 ),

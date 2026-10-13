@@ -441,10 +441,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               onTap: () => Navigator.of(ctx).pop('skip'),
             ),
             ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: AppColors.expired,
-              ),
+              leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Quitar del plan'),
               onTap: () => Navigator.of(ctx).pop('remove'),
             ),
@@ -1036,10 +1033,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           onPressed: () => _freezeBatches(data, toFreeze),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.woodDark,
-                            side: BorderSide(
-                              color: AppColors.wood,
-                              width: 1.3,
-                            ),
+                            side: BorderSide(color: AppColors.wood, width: 1.3),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 6,
@@ -1353,10 +1347,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 2),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: AppColors.wood,
-                      width: 1.4,
-                    ),
+                    borderSide: BorderSide(color: AppColors.wood, width: 1.4),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),

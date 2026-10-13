@@ -384,11 +384,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 72,
-              color: AppColors.wood,
-            ),
+            Icon(Icons.receipt_long_outlined, size: 72, color: AppColors.wood),
             const SizedBox(height: 16),
             const Text(
               'Escanea el ticket de la compra',
