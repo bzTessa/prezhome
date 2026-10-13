@@ -1,6 +1,10 @@
-# Temporal (se borra antes de fusionar): aplica dart fix/format y devuelve el diff.
+# Temporal (se borra antes de fusionar): aplica dart fix/format, sube el
+# arreglo y comenta el resultado del análisis y los tests.
 name: tmp-modo-oscuro
 on: pull_request
+permissions:
+  contents: write
+  pull-requests: write
 jobs:
   fix:
     runs-on: ubuntu-latest
@@ -9,6 +13,8 @@ jobs:
         working-directory: apps/prezhome
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -16,13 +22,17 @@ jobs:
       - run: dart fix --apply || true
       - run: dart format . || true
       - run: git checkout analysis_options.yaml || true
+      - name: Subir arreglos
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A lib test
+          git commit -m "dart fix + format (automático)" && git push || true
       - run: flutter analyze > /tmp/analyze.txt 2>&1 || true
       - run: flutter test > /tmp/test.txt 2>&1 || true
-      - run: git diff > /tmp/fix.diff
-      - uses: actions/upload-artifact@v4
-        with:
-          name: resultado
-          path: |
-            /tmp/analyze.txt
-            /tmp/test.txt
-            /tmp/fix.diff
+      - name: Comentar resultado
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          { echo '```'; grep -E "^\s*(error|warning|info) " /tmp/analyze.txt | head -120; tail -2 /tmp/analyze.txt; echo; grep -E "\[E\]|Some tests failed|All tests passed|Error:" /tmp/test.txt | head -40; tail -2 /tmp/test.txt; echo '```'; } > /tmp/c.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/c.md
