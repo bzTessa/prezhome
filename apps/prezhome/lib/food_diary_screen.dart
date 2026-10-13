@@ -214,22 +214,19 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               ),
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.edit_outlined, color: AppColors.ink),
+                leading: Icon(Icons.edit_outlined, color: AppColors.ink),
                 title: const Text('A mano'),
                 subtitle: const Text('Escribe el nombre y las calorías'),
                 onTap: () => Navigator.of(context).pop('manual'),
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.menu_book_outlined,
-                  color: AppColors.ink,
-                ),
+                leading: Icon(Icons.menu_book_outlined, color: AppColors.ink),
                 title: const Text('Desde una receta'),
                 subtitle: const Text('Registra una receta tuya como comida'),
                 onTap: () => Navigator.of(context).pop('receta'),
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.photo_camera_outlined,
                   color: AppColors.ink,
                 ),
@@ -574,7 +571,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   InputDecoration _dialogDecoration(String label) => InputDecoration(
     labelText: label,
     filled: true,
-    fillColor: Colors.white,
+    fillColor: AppColors.card,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: BorderSide.none,
@@ -697,7 +694,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           const SizedBox(height: 8),
           Text(
             '${total.round()} kcal',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               letterSpacing: -0.6,
               fontWeight: FontWeight.bold,
@@ -750,7 +747,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.ink,
-                  side: const BorderSide(color: AppColors.wood, width: 1.5),
+                  side: BorderSide(color: AppColors.wood, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -853,7 +850,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           ),
           IconButton(
             tooltip: 'Eliminar',
-            icon: const Icon(Icons.delete_outline, color: AppColors.expired),
+            icon: Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: e.id != null ? () => _deleteEntry(e.id!) : null,
           ),
         ],
@@ -915,7 +912,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         '${rod.toY.round()} kcal',
-                        const TextStyle(
+                        TextStyle(
                           color: AppColors.ink,
                           fontWeight: FontWeight.bold,
                         ),
@@ -969,7 +966,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                             label: HorizontalLineLabel(
                               show: true,
                               alignment: Alignment.topRight,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.woodDark,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,

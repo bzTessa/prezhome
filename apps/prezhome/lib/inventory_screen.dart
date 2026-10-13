@@ -577,7 +577,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       appBar: widget.embedded
           ? null
           : AppBar(
-              title: const Text(
+              title: Text(
                 'Despensa y Nevera',
                 style: TextStyle(
                   color: AppColors.ink,
@@ -586,7 +586,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
               backgroundColor: AppColors.cream,
               elevation: 0,
-              iconTheme: const IconThemeData(color: AppColors.ink),
+              iconTheme: IconThemeData(color: AppColors.ink),
             ),
       // Un solo botón: las formas de añadir van en una hoja (antes eran dos
       // botones flotantes apilados que tapaban la lista).
@@ -830,7 +830,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     if (items.isEmpty) {
       children.add(
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(vertical: 24),
           child: Center(
             child: Text(
@@ -987,7 +987,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       Flexible(
                         child: Text(
                           section.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: AppColors.ink,
@@ -1102,7 +1102,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
                 item.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   color: AppColors.ink,
@@ -1110,10 +1110,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(
-                Icons.edit_outlined,
-                color: AppColors.woodDark,
-              ),
+              leading: Icon(Icons.edit_outlined, color: AppColors.woodDark),
               title: const Text('Editar'),
               onTap: () => Navigator.of(ctx).pop('edit'),
             ),
@@ -1140,7 +1137,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             // compra automáticamente.
             if (item.itemType == 'comida')
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.production_quantity_limits,
                   color: AppColors.woodDark,
                 ),
@@ -1151,10 +1148,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 onTap: () => Navigator.of(ctx).pop('depleted'),
               ),
             ListTile(
-              leading: const Icon(
-                Icons.delete_outline,
-                color: AppColors.expired,
-              ),
+              leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Eliminar'),
               onTap: () => Navigator.of(ctx).pop('delete'),
             ),

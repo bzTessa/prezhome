@@ -107,20 +107,17 @@ class _ShoppingListsOverviewScreenState
           name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: AppColors.ink,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
         ),
         trailing: selected
-            ? const Text(
+            ? Text(
                 'Activa',
                 style: TextStyle(
                   color: AppColors.sage,
                   fontWeight: FontWeight.w700,
                 ),
               )
-            : const Icon(Icons.chevron_right, color: AppColors.woodDark),
+            : Icon(Icons.chevron_right, color: AppColors.woodDark),
         // Devuelve '' para la principal (list_id null) o el id de la lista.
         onTap: () => Navigator.of(context).pop(id ?? ''),
       ),
@@ -210,7 +207,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
         ),
       ),
       body: _cats.isEmpty
-          ? const Center(
+          ? Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
@@ -235,7 +232,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.folder_outlined,
                       color: AppColors.woodDark,
                     ),
@@ -243,7 +240,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
                       c.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -253,7 +250,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
                       children: [
                         IconButton(
                           tooltip: 'Renombrar',
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.edit_outlined,
                             color: AppColors.woodDark,
                           ),
@@ -261,7 +258,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
                         ),
                         ReorderableDragStartListener(
                           index: index,
-                          child: const Icon(
+                          child: Icon(
                             Icons.drag_handle,
                             color: AppColors.inkMuted,
                           ),

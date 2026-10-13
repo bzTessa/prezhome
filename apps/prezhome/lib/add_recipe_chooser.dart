@@ -142,7 +142,7 @@ class AddRecipeChooser extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.inkMuted),
+              Icon(Icons.chevron_right, color: AppColors.inkMuted),
             ],
           ),
         ),

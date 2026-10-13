@@ -368,7 +368,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Producto del súper',
                   style: TextStyle(
                     fontSize: 12,
@@ -443,7 +443,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 return ChoiceChip(
                   label: Text(e.value),
                   selected: selected,
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.card,
                   onSelected: (_) {
                     setState(() {
                       _itemType = e.key;
@@ -472,7 +472,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                   return ChoiceChip(
                     label: Text(e.value),
                     selected: selected,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.card,
                     onSelected: (_) => setState(() => _kind = e.key),
                   );
                 }).toList(),
@@ -494,7 +494,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               decoration: _dec('Nombre').copyWith(
                 suffixIcon: IconButton(
                   tooltip: 'Buscar en el súper',
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.storefront_rounded,
                     color: AppColors.woodDark,
                   ),
@@ -707,7 +707,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.card,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: SwitchListTile(

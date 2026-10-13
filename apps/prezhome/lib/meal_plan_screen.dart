@@ -417,7 +417,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               child: Text(
                 '${_mealLabels[e.mealType] ?? e.mealType} · '
                 '${recipe?.title ?? 'Sin receta'}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                   color: AppColors.ink,
@@ -425,7 +425,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.swap_horiz_rounded,
                 color: AppColors.woodDark,
               ),
@@ -441,10 +441,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               onTap: () => Navigator.of(ctx).pop('skip'),
             ),
             ListTile(
-              leading: const Icon(
-                Icons.delete_outline,
-                color: AppColors.expired,
-              ),
+              leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Quitar del plan'),
               onTap: () => Navigator.of(ctx).pop('remove'),
             ),
@@ -532,7 +529,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
                   child: Text(
                     '¿Qué comida añades?',
@@ -634,7 +631,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.ink,
                   fontWeight: FontWeight.w600,
                 ),
@@ -766,7 +763,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           children: [
             Text(
               '${_dayNames[date.weekday - 1]} ${date.day}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 letterSpacing: -0.4,
                 fontWeight: FontWeight.w900,
@@ -827,7 +824,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             );
           }(),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Esta semana',
           style: TextStyle(
             fontSize: 18,
@@ -895,18 +892,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.sageBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.outdoor_grill, color: AppColors.woodDark),
+              child: Icon(Icons.outdoor_grill, color: AppColors.woodDark),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Modo cocina',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -1008,7 +1005,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 2, right: 8),
                           child: Icon(
                             Icons.outdoor_grill,
@@ -1019,7 +1016,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         Expanded(
                           child: Text(
                             resumenDiaCoccion(day),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               height: 1.35,
                               color: AppColors.ink,
@@ -1036,10 +1033,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           onPressed: () => _freezeBatches(data, toFreeze),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.woodDark,
-                            side: const BorderSide(
-                              color: AppColors.wood,
-                              width: 1.3,
-                            ),
+                            side: BorderSide(color: AppColors.wood, width: 1.3),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 6,
@@ -1231,7 +1225,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
-          const Icon(Icons.people_outline, size: 12, color: AppColors.woodDark),
+          Icon(Icons.people_outline, size: 12, color: AppColors.woodDark),
           const SizedBox(width: 4),
           Expanded(
             child: Text(
@@ -1322,7 +1316,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                   Expanded(
                     child: Text(
                       widget.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: AppColors.ink,
@@ -1344,7 +1338,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                 onChanged: (v) => setState(() => _query = v),
                 decoration: InputDecoration(
                   hintText: 'Buscar receta...',
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search_rounded,
                     color: AppColors.woodDark,
                   ),
@@ -1353,14 +1347,11 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 2),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: AppColors.wood,
-                      width: 1.4,
-                    ),
+                    borderSide: BorderSide(color: AppColors.wood, width: 1.4),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
+                    borderSide: BorderSide(
                       color: AppColors.woodDark,
                       width: 1.8,
                     ),
@@ -1391,7 +1382,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: ListTile(
-                            leading: const Icon(
+                            leading: Icon(
                               Icons.restaurant_menu,
                               color: AppColors.woodDark,
                             ),

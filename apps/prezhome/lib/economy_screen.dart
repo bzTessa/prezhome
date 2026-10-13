@@ -246,7 +246,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           decoration: InputDecoration(
             labelText: 'Importe (€)',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.card,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -315,7 +315,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('No se ha podido canjear. Puede que te falte saldo.'),
             backgroundColor: AppColors.expired,
           ),
@@ -518,7 +518,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
   Widget _sectionLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         letterSpacing: 1,
         fontWeight: FontWeight.w700,
@@ -583,7 +583,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 16,
             backgroundColor: AppColors.wood,
             child: Icon(Icons.person, size: 18, color: AppColors.ink),
@@ -611,7 +611,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           AnimatedCounter(
             value: balance.toDouble(),
             formatter: (v) => '${v.round()} pts',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.woodDark,
               fontSize: 16,
@@ -631,7 +631,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Aún no hay puntos que repartir',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -670,7 +670,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           const SizedBox(height: 4),
           Text(
             'Tu saldo: $myBalance pts',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.woodDark,
               fontWeight: FontWeight.w600,
             ),
@@ -723,7 +723,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '$cost pts',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.woodDark,
                   ),
@@ -745,7 +745,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   color: AppColors.wood,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: const Text(
+                child: Text(
                   'Canjear',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -769,7 +769,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Todavía no hay recompensas',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -830,7 +830,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               color: AppColors.cream,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.history, color: AppColors.ink),
+            child: Icon(Icons.history, color: AppColors.ink),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -896,7 +896,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           const SizedBox(height: 8),
           Text(
             '${spent.toStringAsFixed(2)} €',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               letterSpacing: -0.6,
               fontWeight: FontWeight.bold,
@@ -980,7 +980,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         '${rod.toY.toStringAsFixed(2)} €',
-                        const TextStyle(
+                        TextStyle(
                           color: AppColors.ink,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1033,7 +1033,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                             label: HorizontalLineLabel(
                               show: true,
                               alignment: Alignment.topRight,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.woodDark,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -1111,10 +1111,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               color: AppColors.cream,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.receipt_long_outlined,
-              color: AppColors.ink,
-            ),
+            child: Icon(Icons.receipt_long_outlined, color: AppColors.ink),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1140,7 +1137,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           ),
           IconButton(
             tooltip: 'Eliminar',
-            icon: const Icon(Icons.delete_outline, color: AppColors.expired),
+            icon: Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: () => _deleteTicket(t['id'] as String),
           ),
         ],

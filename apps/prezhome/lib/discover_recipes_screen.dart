@@ -496,10 +496,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                                 'casa para recibir ideas con ello.'
                           : 'Usaremos ${_pantry.length} alimentos de tu '
                                 'despensa, empezando por lo que caduca antes.',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.inkMuted,
-                      ),
+                      style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
                     ),
                   ],
                   const SizedBox(height: 16),
@@ -518,7 +515,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                       return FilterChip(
                         label: Text(s.label),
                         selected: sel,
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.card,
                         onSelected: (v) => setState(() {
                           if (v) {
                             _supermarkets.add(s.key);
@@ -562,7 +559,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.favorite,
                           size: 16,
                           color: AppColors.woodDark,
@@ -599,7 +596,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                       return FilterChip(
                         label: Text(e.value),
                         selected: sel,
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.card,
                         onSelected: (v) => setState(() {
                           if (v) {
                             _appliances.add(e.key);
@@ -723,7 +720,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                   TextSpan(text: text),
                 ],
               ),
-              style: const TextStyle(fontSize: 13, color: AppColors.ink),
+              style: TextStyle(fontSize: 13, color: AppColors.ink),
             ),
           ),
         ],
@@ -767,7 +764,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
               if (kcal != null)
                 Text(
                   '$kcal kcal',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.woodDark,
                   ),
@@ -790,7 +787,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                       'precios medios de supermercado.',
                   child: Text(
                     '≈ ${formatEuros(costPerServing)}/ración',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.sage,
                     ),

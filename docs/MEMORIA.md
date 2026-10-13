@@ -31,7 +31,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Navegación: `main_shell.dart` + barra `packages/prez_ui/lib/src/floating_nav_bar.dart`
   (se desliza el dedo para cambiar). Pestañas en `tabs/`.
 - Diseño: `theme/` (`AppColors`, `AppTextStyles` Plus Jakarta Sans,
-  `AppRadius`, `AppSpacing`, `AppMotion`). Widgets comunes: `widgets/empty_state.dart`,
+  `AppRadius`, `AppSpacing`, `AppMotion`). Modo oscuro: `AppColors` son
+  getters claro/oscuro según `AppColors.dark`, que fija `main.dart` con el
+  brillo del sistema (no usar `const` con `AppColors`; nada de `Colors.white`
+  para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
 - Offline: `services/offline_repository.dart` (+ `offline_merge.dart`,
   `supabase_remote_sender.dart`, `offline_provider.dart`). Ids locales
@@ -55,4 +58,4 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
 - Tessa enviará imágenes (animaciones del gato Miau y otras).
-- Ofrecido, sin decidir: modo oscuro; precios con Open Prices.
+- Ofrecido, sin decidir: precios con Open Prices; selector manual claro/oscuro.

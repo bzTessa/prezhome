@@ -275,11 +275,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.photo_camera_outlined,
-              size: 72,
-              color: AppColors.wood,
-            ),
+            Icon(Icons.photo_camera_outlined, size: 72, color: AppColors.wood),
             const SizedBox(height: 16),
             const Text(
               'Haz una foto a tu plato',
@@ -305,7 +301,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.ink,
                 minimumSize: const Size.fromHeight(50),
-                side: const BorderSide(color: AppColors.wood, width: 1.5),
+                side: BorderSide(color: AppColors.wood, width: 1.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -352,7 +348,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.lightbulb_outline,
                               size: 18,
                               color: AppColors.wood,
@@ -483,7 +479,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
               ),
               IconButton(
                 tooltip: 'Quitar',
-                icon: const Icon(Icons.close, color: AppColors.expired),
+                icon: Icon(Icons.close, color: AppColors.expired),
                 onPressed: () => setState(() {
                   _items.removeAt(index);
                   it.dispose();
@@ -560,8 +556,8 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
   Widget _bottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card,
         boxShadow: [
           BoxShadow(
             color: AppColors.softShadow,

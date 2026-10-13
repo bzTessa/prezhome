@@ -207,14 +207,14 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
         children: [
           IconButton(
             tooltip: 'Anterior',
-            icon: const Icon(Icons.chevron_left, color: AppColors.woodDark),
+            icon: Icon(Icons.chevron_left, color: AppColors.woodDark),
             onPressed: () => _changeMonth(-1),
           ),
           Expanded(
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.ink,
@@ -223,7 +223,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
           ),
           IconButton(
             tooltip: 'Siguiente',
-            icon: const Icon(Icons.chevron_right, color: AppColors.woodDark),
+            icon: Icon(Icons.chevron_right, color: AppColors.woodDark),
             onPressed: () => _changeMonth(1),
           ),
         ],
@@ -289,7 +289,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                   ? AppColors.wood
                   : (isToday
                         ? AppColors.wood.withValues(alpha: 0.35)
-                        : Colors.white),
+                        : AppColors.card),
               borderRadius: BorderRadius.circular(16),
               border: isToday
                   ? Border.all(color: AppColors.woodDark, width: 2)
@@ -363,7 +363,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
               color: AppColors.ink,
@@ -442,7 +442,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                               Expanded(
                                 child: Text(
                                   t.title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.ink,
                                   ),

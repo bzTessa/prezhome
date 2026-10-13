@@ -10,7 +10,7 @@ class DespensaTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
+    return ColoredBox(
       color: AppColors.cream,
       child: SafeArea(bottom: false, child: InventoryScreen(embedded: true)),
     );

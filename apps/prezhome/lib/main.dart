@@ -18,8 +18,45 @@ Future<void> main() async {
   runApp(const PrezHomeApp());
 }
 
-class PrezHomeApp extends StatelessWidget {
+class PrezHomeApp extends StatefulWidget {
   const PrezHomeApp({super.key});
+
+  @override
+  State<PrezHomeApp> createState() => _PrezHomeAppState();
+}
+
+/// Sigue el modo claro/oscuro del sistema. La paleta ([AppColors]) se lee al
+/// construir cada widget, así que al cambiar se reconstruye todo el árbol
+/// (como hace hot reload) sin perder el estado de las pantallas.
+class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _syncBrightness();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    _syncBrightness();
+    setState(() {});
+    void rebuild(Element e) {
+      e.markNeedsBuild();
+      e.visitChildren(rebuild);
+    }
+
+    (context as Element).visitChildren(rebuild);
+  }
+
+  void _syncBrightness() => AppColors.dark =
+      WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+      Brightness.dark;
 
   @override
   Widget build(BuildContext context) {

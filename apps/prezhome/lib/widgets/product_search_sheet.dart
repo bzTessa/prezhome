@@ -114,7 +114,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
                 storeLabel == null
                     ? 'Productos del súper'
                     : 'Productos de $storeLabel',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   letterSpacing: -0.4,
                   fontWeight: FontWeight.w900,
@@ -151,7 +151,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
 
   Widget _body() {
     if (_loading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.woodDark),
       );
     }
@@ -303,7 +303,7 @@ class _ProductTile extends StatelessWidget {
                         p.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           color: AppColors.ink,
                         ),
@@ -318,7 +318,7 @@ class _ProductTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.add_circle_rounded,
                   color: AppColors.woodDark,
                   size: 28,

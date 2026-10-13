@@ -13,14 +13,14 @@ import 'app_theme.dart';
 /// - [level1]: tarjeta en reposo, sombra suave (profundidad discreta).
 /// - [level2]: elemento elevado o interactivo (al pulsar, flotante, destacado).
 class AppElevation {
-  const AppElevation._();
+  AppElevation._();
 
   /// Nivel 0: superficie plana, sin sombra.
-  static const List<BoxShadow> level0 = <BoxShadow>[];
+  static List<BoxShadow> get level0 => <BoxShadow>[];
 
   /// Nivel 1: tarjeta en reposo. Sombra suave coherente con el estilo cozy
   /// original (blur ~12, desplazamiento vertical pequeño).
-  static const List<BoxShadow> level1 = <BoxShadow>[
+  static List<BoxShadow> get level1 => <BoxShadow>[
     BoxShadow(
       color: AppColors.softShadow,
       blurRadius: 12,
@@ -30,7 +30,7 @@ class AppElevation {
 
   /// Nivel 2: elemento elevado o interactivo. Sombra algo mayor y una capa
   /// extra muy tenue para dar sensación de "flotar" al pulsar o destacar.
-  static const List<BoxShadow> level2 = <BoxShadow>[
+  static List<BoxShadow> get level2 => <BoxShadow>[
     BoxShadow(
       color: AppColors.mediumShadow,
       blurRadius: 20,

@@ -206,7 +206,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Text(
                 'Foto de la receta',
@@ -218,16 +218,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(
-                Icons.image_search,
-                color: AppColors.woodDark,
-              ),
+              leading: Icon(Icons.image_search, color: AppColors.woodDark),
               title: const Text('Buscar otra foto automática'),
               subtitle: const Text('Busca una imagen nueva por el nombre'),
               onTap: () => Navigator.of(ctx).pop('regenerate'),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_library_outlined,
                 color: AppColors.woodDark,
               ),
@@ -502,7 +499,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       );
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('No se pudo abrir el enlace del video'),
             backgroundColor: AppColors.expired,
           ),
@@ -511,7 +508,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('No se pudo abrir el enlace del video'),
             backgroundColor: AppColors.expired,
           ),
@@ -584,7 +581,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             SliverToBoxAdapter(
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.cream,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                 ),
@@ -594,7 +591,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   children: [
                     Text(
                       r.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 26,
                         letterSpacing: -0.4,
                         height: 1.15,
@@ -621,7 +618,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         onPressed: _openVideo,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.ink,
-                          side: const BorderSide(color: AppColors.wood),
+                          side: BorderSide(color: AppColors.wood),
                         ),
                         icon: const Icon(Icons.play_circle_outline),
                         label: const Text('Ver vídeo'),
@@ -649,12 +646,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     required IconData icon,
     required String tooltip,
     required VoidCallback onTap,
-    Color color = AppColors.ink,
+    Color? color,
   }) {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: 0.92),
+        color: AppColors.card.withValues(alpha: 0.92),
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -662,7 +659,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           child: SizedBox(
             width: 42,
             height: 42,
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color ?? AppColors.ink, size: 22),
           ),
         ),
       ),
@@ -671,14 +668,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   Widget _moreMenu() {
     return Material(
-      color: Colors.white.withValues(alpha: 0.92),
+      color: AppColors.card.withValues(alpha: 0.92),
       shape: const CircleBorder(),
       child: SizedBox(
         width: 42,
         height: 42,
         child: PopupMenuButton<String>(
           tooltip: 'Más opciones',
-          icon: const Icon(Icons.more_horiz_rounded, color: AppColors.ink),
+          icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
           padding: EdgeInsets.zero,
           onSelected: (v) {
             switch (v) {
@@ -690,7 +687,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 _delete();
             }
           },
-          itemBuilder: (_) => const [
+          itemBuilder: (_) => [
             PopupMenuItem(
               value: 'photo',
               child: ListTile(
@@ -789,7 +786,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.inkMuted,
@@ -985,7 +982,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Cantidad a preparar',
                       style: TextStyle(
                         fontSize: 12,
@@ -995,7 +992,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ),
                     Text(
                       _amountText(r),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
@@ -1040,7 +1037,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   onPressed: _markCooked,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.ink,
-                    side: const BorderSide(color: AppColors.wood, width: 1.5),
+                    side: BorderSide(color: AppColors.wood, width: 1.5),
                   ),
                   icon: const Icon(Icons.ac_unit),
                   label: const Text('Ya cocinado → al congelador'),
@@ -1063,14 +1060,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.kitchen_rounded, color: AppColors.sage),
+          Icon(Icons.kitchen_rounded, color: AppColors.sage),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               missing.isEmpty
                   ? 'Tienes todo en casa'
                   : 'Tienes $haveCount de $total en casa',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,
               ),
@@ -1147,7 +1144,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   color: AppColors.sageBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Text(
+                child: Text(
                   'En casa',
                   style: TextStyle(
                     fontSize: 12,
@@ -1203,14 +1200,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: done
-                      ? const Icon(
+                      ? Icon(
                           Icons.check_rounded,
                           size: 18,
-                          color: Colors.white,
+                          color: done ? Colors.white : AppColors.cream,
                         )
                       : Text(
                           '${i + 1}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w900,
                             color: AppColors.cream,
                           ),
@@ -1235,7 +1232,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           padding: const EdgeInsets.only(top: 6),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.timer_outlined,
                                 size: 15,
                                 color: AppColors.woodDark,
@@ -1243,7 +1240,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 '$minutes min',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.woodDark,
@@ -1305,15 +1302,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.euro_rounded,
-                      size: 18,
-                      color: AppColors.sage,
-                    ),
+                    Icon(Icons.euro_rounded, size: 18, color: AppColors.sage),
                     const SizedBox(width: 8),
                     Text(
                       '${_cost!.perServing.toStringAsFixed(2).replaceAll('.', ',')} € por ración',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
@@ -1480,7 +1473,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   Text(
                     '${grams.toStringAsFixed(0)} g · $kcal kcal',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.woodDark,
                     ),
@@ -1541,7 +1534,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
             color: AppColors.ink,
@@ -1560,7 +1553,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

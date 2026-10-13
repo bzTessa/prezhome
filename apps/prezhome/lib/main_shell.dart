@@ -215,7 +215,7 @@ class MainShellState extends State<MainShell> {
       case TabId.compra:
         return _TabDescriptor(
           id: id,
-          page: const ColoredBox(
+          page: ColoredBox(
             color: AppColors.cream,
             child: SafeArea(
               bottom: false,

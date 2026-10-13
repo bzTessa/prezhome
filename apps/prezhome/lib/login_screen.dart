@@ -142,15 +142,15 @@ class _LoginScreenState extends State<LoginScreen> {
     suffixIcon: suffixIcon,
     enabledBorder: OutlineInputBorder(
       borderRadius: AppRadius.mdRadius,
-      borderSide: const BorderSide(color: AppColors.wood),
+      borderSide: BorderSide(color: AppColors.wood),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: AppRadius.mdRadius,
-      borderSide: const BorderSide(color: AppColors.woodDark, width: 2),
+      borderSide: BorderSide(color: AppColors.woodDark, width: 2),
     ),
     border: OutlineInputBorder(
       borderRadius: AppRadius.mdRadius,
-      borderSide: const BorderSide(color: AppColors.wood),
+      borderSide: BorderSide(color: AppColors.wood),
     ),
   );
 
@@ -288,7 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _isLoginMode
                           ? '¿No tienes cuenta? Regístrate'
                           : '¿Ya tienes cuenta? Inicia sesión',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.ink,
                         fontWeight: FontWeight.w600,
                       ),
@@ -317,7 +317,7 @@ class _GoogleButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.card,
           foregroundColor: AppColors.ink,
           side: BorderSide(color: AppColors.line),
           shape: RoundedRectangleBorder(

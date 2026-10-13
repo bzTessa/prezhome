@@ -66,7 +66,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Sugerencia de hoy',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
@@ -77,7 +77,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     bannerMessage(suggestions),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       height: 1.25,
                       color: AppColors.inkMuted,
@@ -115,7 +115,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
             IconButton(
               tooltip: 'Descartar',
               onPressed: onDismiss,
-              icon: const Icon(
+              icon: Icon(
                 Icons.close_rounded,
                 size: 20,
                 color: AppColors.woodDark,

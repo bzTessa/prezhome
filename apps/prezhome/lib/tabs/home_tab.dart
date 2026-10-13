@@ -670,7 +670,7 @@ class HomeTabState extends State<HomeTab> {
             children: [
               Text(
                 _todayLabel().toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
@@ -680,7 +680,7 @@ class HomeTabState extends State<HomeTab> {
               const SizedBox(height: 4),
               Text(
                 _greeting(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 30,
                   letterSpacing: -0.6,
                   height: 1.1,
@@ -896,7 +896,7 @@ class HomeTabState extends State<HomeTab> {
             width: 74,
             child: Text(
               s.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkMuted,
@@ -931,7 +931,7 @@ class HomeTabState extends State<HomeTab> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   '¿Qué comemos hoy?',
                   style: TextStyle(
@@ -975,7 +975,7 @@ class HomeTabState extends State<HomeTab> {
                 label: const Text('Con lo que tengo'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.ink,
-                  side: const BorderSide(color: AppColors.ink),
+                  side: BorderSide(color: AppColors.ink),
                 ),
               ),
             ],
@@ -1069,7 +1069,7 @@ class HomeTabState extends State<HomeTab> {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkMuted,
@@ -1448,7 +1448,10 @@ class HomeTabState extends State<HomeTab> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black26),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.inkMuted.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),
@@ -1498,7 +1501,7 @@ class HomeTabState extends State<HomeTab> {
         elevation: 2,
         color: Color.alphaBlend(
           accent.$1.withValues(alpha: 0.28),
-          Colors.white,
+          AppColors.card,
         ),
       ),
       child: Row(
@@ -1575,7 +1578,7 @@ class HomeTabState extends State<HomeTab> {
         elevation: 2,
         color: Color.alphaBlend(
           accent.$1.withValues(alpha: 0.24),
-          Colors.white,
+          AppColors.card,
         ),
       ),
       child: Column(
@@ -1764,7 +1767,10 @@ class HomeTabState extends State<HomeTab> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black26),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.inkMuted.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),
@@ -1836,7 +1842,10 @@ class HomeTabState extends State<HomeTab> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black26),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.inkMuted.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),
@@ -1959,7 +1968,7 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
         actions: [
           TextButton(
             onPressed: _save,
-            child: const Text(
+            child: Text(
               'Guardar',
               style: TextStyle(
                 color: AppColors.woodDark,

@@ -222,7 +222,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             decoration: InputDecoration(
               hintText: 'Escribe el nombre o pega una receta entera…',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.card,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -325,7 +325,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 decoration: InputDecoration(
                   hintText: 'https://...',
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.card,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -804,10 +804,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.ink,
                         minimumSize: const Size.fromHeight(48),
-                        side: const BorderSide(
-                          color: AppColors.wood,
-                          width: 1.5,
-                        ),
+                        side: BorderSide(color: AppColors.wood, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -832,10 +829,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.ink,
                         minimumSize: const Size.fromHeight(48),
-                        side: const BorderSide(
-                          color: AppColors.wood,
-                          width: 1.5,
-                        ),
+                        side: BorderSide(color: AppColors.wood, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -856,7 +850,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
-                        color: Colors.white,
+                        color: AppColors.card,
                         image: _newImageBytes != null
                             ? DecorationImage(
                                 image: MemoryImage(_newImageBytes!),
@@ -944,7 +938,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         label: Text(e.value),
                         selected: selected,
                         checkmarkColor: AppColors.ink,
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.card,
                         onSelected: (v) => setState(() {
                           if (v) {
                             _mealTypes.add(e.key);
@@ -1087,8 +1081,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       onPressed: () => setState(
                         () => _ingredients.add(_IngredientControllers()),
                       ),
-                      icon: const Icon(Icons.add, color: AppColors.ink),
-                      label: const Text(
+                      icon: Icon(Icons.add, color: AppColors.ink),
+                      label: Text(
                         'Añadir ingrediente',
                         style: TextStyle(
                           color: AppColors.ink,
@@ -1240,7 +1234,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               ),
               IconButton(
                 tooltip: 'Quitar',
-                icon: const Icon(Icons.close, color: AppColors.expired),
+                icon: Icon(Icons.close, color: AppColors.expired),
                 onPressed: _ingredients.length == 1
                     ? null
                     : () => setState(() {
@@ -1280,7 +1274,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
         color: AppColors.ink,

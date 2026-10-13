@@ -278,11 +278,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
                   const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.schedule,
-                        size: 18,
-                        color: AppColors.sage,
-                      ),
+                      Icon(Icons.schedule, size: 18, color: AppColors.sage),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         'Unos $total ${total == 1 ? 'minuto' : 'minutos'} en total',
@@ -473,7 +469,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (finished) ...[
-                const Icon(Icons.check_circle, color: AppColors.sage, size: 28),
+                Icon(Icons.check_circle, color: AppColors.sage, size: 28),
                 const SizedBox(width: AppSpacing.sm),
               ],
               Text(

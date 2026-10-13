@@ -49,8 +49,8 @@ class KitchenZonesGrid extends StatelessWidget {
           icon: Icons.grass_rounded,
         ),
         KitchenZone.hogar => (
-          bg: const Color(0xFFEDE7F3),
-          fg: const Color(0xFF6E5A8A),
+          bg: AppColors.lilacBg,
+          fg: AppColors.lilac,
           icon: Icons.cleaning_services_rounded,
         ),
       };
@@ -80,7 +80,7 @@ class KitchenZonesGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Mi cocina',
               style: TextStyle(
                 fontSize: 24,
@@ -92,7 +92,7 @@ class KitchenZonesGrid extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Text(
               '$total productos',
-              style: const TextStyle(color: AppColors.inkMuted),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
             const Spacer(),
             if (selected != null)
@@ -197,7 +197,7 @@ class _ZoneTile extends StatelessWidget {
                           summary.zone.label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
                             color: AppColors.ink,
