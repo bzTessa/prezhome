@@ -307,7 +307,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
           if (allRecipes.isEmpty) {
             return EmptyState(
-              mood: MiauMood.cooking,
+              image: 'assets/images/vacio_recetas.png',
               title: 'Aún no hay recetas',
               message: 'Crea la primera o pide ideas con lo que tienes.',
               actionLabel: 'Nueva receta',
@@ -839,7 +839,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_off_rounded, size: 56, color: AppColors.woodDark),
+            const MiauCharacter(mood: MiauMood.worried, size: 110),
             const SizedBox(height: 16),
             Text(
               message,

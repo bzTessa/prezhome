@@ -569,7 +569,11 @@ class _TasksScreenState extends State<TasksScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const MiauCharacter(mood: MiauMood.curious, size: 120),
+          Image.asset(
+            'assets/images/vacio_tareas.png',
+            width: 160,
+            height: 160,
+          ),
           const SizedBox(height: 16),
           const Text(
             'No hay tareas todavía',

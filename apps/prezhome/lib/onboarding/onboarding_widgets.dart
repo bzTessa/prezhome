@@ -100,6 +100,7 @@ class QuestionScaffold extends StatelessWidget {
     required this.onBack,
     this.subtitle,
     this.continueLabel = 'Continuar',
+    this.illustration,
   });
 
   final String section;
@@ -111,6 +112,9 @@ class QuestionScaffold extends StatelessWidget {
   final VoidCallback? onContinue;
   final VoidCallback onBack;
   final String continueLabel;
+
+  /// Dibujo opcional encima de la pregunta (assets/images/onb_*.png).
+  final String? illustration;
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +142,11 @@ class QuestionScaffold extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             StepProgress(step: step, total: total),
-            const SizedBox(height: 32),
+            SizedBox(height: illustration == null ? 32 : 12),
+            if (illustration != null) ...[
+              Image.asset(illustration!, height: 110),
+              const SizedBox(height: 12),
+            ],
             Text(
               title,
               textAlign: TextAlign.center,

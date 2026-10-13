@@ -1706,6 +1706,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Widget _emptyState() {
     return EmptyState(
+      mood: MiauMood.shopping,
       title: 'Tu lista está vacía',
       message: 'Escribe arriba lo que necesitas o trae lo del plan.',
       actionLabel: 'Desde el plan',
@@ -1776,12 +1777,12 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
     final reduceMotion = AppMotion.reduceMotionOf(context);
     final animar = widget.celebrar && !reduceMotion;
 
-    final miau = animar
-        ? ScaleTransition(
-            scale: _scale,
-            child: const MiauCharacter(mood: MiauMood.celebrating, size: 72),
-          )
-        : const MiauCharacter(mood: MiauMood.celebrating, size: 72);
+    const carro = Image(
+      image: AssetImage('assets/images/vacio_compra.png'),
+      width: 72,
+      height: 72,
+    );
+    final miau = animar ? ScaleTransition(scale: _scale, child: carro) : carro;
 
     final tarjeta = Container(
       margin: const EdgeInsets.only(bottom: 16),

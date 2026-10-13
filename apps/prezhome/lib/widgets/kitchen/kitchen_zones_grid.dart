@@ -187,7 +187,17 @@ class _ZoneTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(s.icon, color: s.fg, size: 20),
+                    if (isAll)
+                      Icon(s.icon, color: s.fg, size: 20)
+                    else
+                      // Ilustración de la zona: assets/images/zona_<etiqueta>.png
+                      Image.asset(
+                        'assets/images/zona_${z.zone.label.toLowerCase()}.png',
+                        width: 36,
+                        height: 36,
+                        errorBuilder: (_, _, _) =>
+                            Icon(s.icon, color: s.fg, size: 20),
+                      ),
                     const Spacer(),
                     Text(
                       '$count',

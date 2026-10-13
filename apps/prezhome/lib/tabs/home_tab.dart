@@ -1408,7 +1408,14 @@ class HomeTabState extends State<HomeTab> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _cardIconBox(Icons.event_busy, accent),
+            if (hasAlerts)
+              const MiauCharacter(
+                mood: MiauMood.worried,
+                size: 48,
+                float: false,
+              )
+            else
+              _cardIconBox(Icons.event_busy, accent),
             const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
