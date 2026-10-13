@@ -84,16 +84,16 @@ class RecipeImage extends StatelessWidget {
     // Gradiente cálido crema -> madera para que el placeholder se sienta
     // "cozy" y no un bloque plano. El emoji por tipo de plato da identidad.
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.cream, Color(0xFFF3E6C4), AppColors.wood],
+          colors: [AppColors.cream, Color.lerp(AppColors.cream, AppColors.wood, 0.4)!, AppColors.wood],
         ),
       ),
       child: Center(
         child: loading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 26,
                 height: 26,
                 child: CircularProgressIndicator(
@@ -114,9 +114,9 @@ class RecipeImage extends StatelessWidget {
       width: badgeSize,
       height: badgeSize,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
+        color: AppColors.card.withValues(alpha: 0.55),
         shape: BoxShape.circle,
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.softShadow,
             blurRadius: 8,

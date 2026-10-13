@@ -261,7 +261,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           autofocus: true,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.card,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -420,7 +420,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                         Expanded(
                           child: Text(
                             data.homeName!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               letterSpacing: -0.4,
                               fontWeight: FontWeight.bold,
@@ -429,7 +429,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.edit,
                             size: 20,
                             color: AppColors.woodDark,
@@ -486,7 +486,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   trailing: !m.isMe && data.iAmOwner
                       ? IconButton(
                           tooltip: 'Quitar del hogar',
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.person_remove_outlined,
                             color: AppColors.inkMuted,
                           ),
@@ -502,7 +502,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                             color: AppColors.wood,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Tú',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -620,7 +620,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
                 IconButton(
                   tooltip: 'Copiar',
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.copy_rounded,
                     color: AppColors.woodDark,
                   ),
@@ -636,7 +636,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             Text(
               'Vale hasta el ${invite.expiresAt.day} '
               '${months[invite.expiresAt.month - 1]}',
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
             Align(
               alignment: Alignment.centerLeft,
@@ -667,7 +667,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   color: AppColors.sageBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.storefront_outlined,
                   color: AppColors.sage,
                 ),
@@ -709,7 +709,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       label: Text(l),
                       backgroundColor: AppColors.sageBg,
                       side: BorderSide.none,
-                      labelStyle: const TextStyle(
+                      labelStyle: TextStyle(
                         color: AppColors.sage,
                         fontWeight: FontWeight.w600,
                       ),
@@ -805,7 +805,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Widget _memberAvatar(String name) {
     final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?';
     // Paleta cozy de fondos y sus colores de texto a juego.
-    const palette = <(Color, Color)>[
+    final palette = <(Color, Color)>[
       (AppColors.sageBg, AppColors.sage),
       (AppColors.peachBg, AppColors.peach),
       (AppColors.terracottaBg, AppColors.terracotta),
@@ -844,7 +844,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right, color: Colors.black26),
+      trailing: Icon(Icons.chevron_right, color: AppColors.inkMuted.withValues(alpha: 0.5)),
       onTap: onTap,
     );
   }

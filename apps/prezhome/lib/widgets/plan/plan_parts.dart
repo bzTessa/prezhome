@@ -139,7 +139,7 @@ class WeekDayStrip extends StatelessWidget {
                         width: 5,
                         height: 5,
                         margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.woodDark,
                           shape: BoxShape.circle,
                         ),
@@ -234,7 +234,7 @@ class MealSlotCard extends StatelessWidget {
                           ),
                           if (skipped) ...[
                             const SizedBox(width: 6),
-                            const Text(
+                            Text(
                               '· Fuera',
                               style: TextStyle(
                                 fontSize: 12,
@@ -261,7 +261,7 @@ class MealSlotCard extends StatelessWidget {
                       ),
                       if (!empty && detail != null) detail!,
                       if (fromFreezer)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 2),
                           child: Row(
                             children: [

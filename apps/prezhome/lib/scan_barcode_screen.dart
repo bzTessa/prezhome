@@ -114,7 +114,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
               alignment: Alignment.center,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   CircularProgressIndicator(color: AppColors.cream),
                   SizedBox(height: AppSpacing.md),
                   Text(
@@ -153,7 +153,7 @@ class _ScannerError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.no_photography_outlined,
             size: 56,
             color: AppColors.inkMuted,
@@ -162,7 +162,7 @@ class _ScannerError extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.ink, fontSize: 15),
+            style: TextStyle(color: AppColors.ink, fontSize: 15),
           ),
           const SizedBox(height: AppSpacing.lg),
           ElevatedButton(

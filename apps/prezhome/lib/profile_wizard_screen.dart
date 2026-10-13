@@ -347,7 +347,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                   value: (_page + 1) / _totalPages,
                   minHeight: 8,
                   backgroundColor: AppColors.wood.withValues(alpha: 0.25),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
+                  valueColor: AlwaysStoppedAnimation<Color>(
                     AppColors.wood,
                   ),
                 ),
@@ -390,7 +390,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.ink,
                           minimumSize: const Size.fromHeight(52),
-                          side: const BorderSide(color: AppColors.wood),
+                          side: BorderSide(color: AppColors.wood),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -405,7 +405,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                     child: ElevatedButton(
                       onPressed: _saving ? null : (isResult ? _save : _goNext),
                       child: _saving
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 24,
                               width: 24,
                               child: CircularProgressIndicator(
@@ -445,7 +445,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             letterSpacing: -0.4,
             fontWeight: FontWeight.bold,
@@ -474,7 +474,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         children: [
           const MiauCharacter(mood: MiauMood.greeting, size: 180),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'Vamos a conocerte',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -549,7 +549,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             decoration: AppTheme.cardDecoration(radius: 20),
             child: Row(
               children: [
-                const Icon(Icons.cake_outlined, color: AppColors.woodDark),
+                Icon(Icons.cake_outlined, color: AppColors.woodDark),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
@@ -561,7 +561,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                     ),
                   ),
                 ),
-                const Icon(Icons.edit_calendar_outlined, color: AppColors.wood),
+                Icon(Icons.edit_calendar_outlined, color: AppColors.wood),
               ],
             ),
           ),
@@ -571,7 +571,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           Center(
             child: Text(
               '$_age años',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppColors.woodDark,
@@ -591,7 +591,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           controller: _heightController,
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             letterSpacing: -0.6,
             fontWeight: FontWeight.bold,
@@ -612,7 +612,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           controller: _weightController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             letterSpacing: -0.6,
             fontWeight: FontWeight.bold,
@@ -763,7 +763,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           textCapitalization: TextCapitalization.sentences,
           minLines: 2,
           maxLines: 4,
-          style: const TextStyle(fontSize: 16, color: AppColors.ink),
+          style: TextStyle(fontSize: 16, color: AppColors.ink),
           decoration: _textDecoration('cebolla, cilantro...'),
         ),
       ],
@@ -872,7 +872,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           child: MiauCharacter(mood: MiauMood.celebrating, size: 150),
         ),
         const SizedBox(height: 20),
-        const Center(
+        Center(
           child: Text(
             'Tu objetivo diario',
             style: TextStyle(
@@ -891,14 +891,14 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             children: [
               Text(
                 kcal != null ? '$kcal' : '--',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 56,
                   letterSpacing: -0.6,
                   fontWeight: FontWeight.bold,
                   color: AppColors.woodDark,
                 ),
               ),
-              const Text(
+              Text(
                 'kcal / día',
                 style: TextStyle(fontSize: 16, color: AppColors.woodDark),
               ),
@@ -951,7 +951,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     filled: true,
     fillColor: AppColors.card,
     suffixText: suffix,
-    suffixStyle: const TextStyle(
+    suffixStyle: TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.bold,
       color: AppColors.woodDark,
@@ -995,7 +995,7 @@ class _OptionCard extends StatelessWidget {
             color: selected ? AppColors.woodDark : Colors.transparent,
             width: 1.5,
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
               color: AppColors.softShadow,
               blurRadius: 8,
@@ -1015,7 +1015,7 @@ class _OptionCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.ink,
@@ -1035,7 +1035,7 @@ class _OptionCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: AppColors.woodDark),
+              Icon(Icons.check_circle, color: AppColors.woodDark),
           ],
         ),
       ),
@@ -1070,7 +1070,7 @@ class _SelectCard extends StatelessWidget {
           color: selected ? AppColors.woodDark : Colors.transparent,
           width: 1.5,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.softShadow,
             blurRadius: 8,
@@ -1088,7 +1088,7 @@ class _SelectCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.ink,
@@ -1106,7 +1106,7 @@ class _SelectCard extends StatelessWidget {
             ),
           ),
           if (selected)
-            const Icon(Icons.check_circle, color: AppColors.woodDark),
+            Icon(Icons.check_circle, color: AppColors.woodDark),
         ],
       ),
     );
@@ -1140,7 +1140,7 @@ class _ModuleToggleCard extends StatelessWidget {
           color: value ? AppColors.woodDark : Colors.transparent,
           width: 1.5,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.softShadow,
             blurRadius: 8,
@@ -1158,7 +1158,7 @@ class _ModuleToggleCard extends StatelessWidget {
         secondary: Icon(icon, color: AppColors.woodDark),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
@@ -1166,7 +1166,7 @@ class _ModuleToggleCard extends StatelessWidget {
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+          style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
         ),
       ),
     );
@@ -1186,7 +1186,7 @@ class _MacroStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,

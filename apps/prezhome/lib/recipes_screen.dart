@@ -131,7 +131,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
                 recipe.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   color: AppColors.ink,
@@ -153,7 +153,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
               onTap: () => Navigator.of(ctx).pop('favorite'),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.delete_outline,
                 color: AppColors.expired,
               ),
@@ -437,7 +437,7 @@ class _PantryBanner extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(24),
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.all(16),
             child: Row(
               children: [
@@ -608,7 +608,7 @@ class _FilterChip extends StatelessWidget {
               width: 1.4,
             ),
             boxShadow: selected
-                ? const [
+                ? [
                     BoxShadow(
                       color: AppColors.softShadow,
                       blurRadius: 8,
@@ -709,7 +709,7 @@ class _RecipeCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.92),
+                      color: AppColors.card.withValues(alpha: 0.92),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
@@ -723,7 +723,7 @@ class _RecipeCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           Recipe.mealTypeLabels[primaryType] ?? primaryType,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
@@ -737,7 +737,7 @@ class _RecipeCard extends StatelessWidget {
                 top: 6,
                 right: 6,
                 child: Material(
-                  color: Colors.white.withValues(alpha: 0.92),
+                  color: AppColors.card.withValues(alpha: 0.92),
                   shape: const CircleBorder(),
                   child: InkWell(
                     customBorder: const CircleBorder(),
@@ -842,7 +842,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_rounded,
               size: 56,
               color: AppColors.woodDark,
@@ -863,7 +863,7 @@ class _ErrorState extends StatelessWidget {
               label: const Text('Reintentar'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.woodDark,
-                side: const BorderSide(color: AppColors.wood, width: 1.4),
+                side: BorderSide(color: AppColors.wood, width: 1.4),
               ),
             ),
           ],
@@ -957,18 +957,18 @@ class _SearchBar extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         textInputAction: TextInputAction.search,
-        style: const TextStyle(color: AppColors.ink, fontSize: 15),
+        style: TextStyle(color: AppColors.ink, fontSize: 15),
         decoration: InputDecoration(
           hintText: 'Buscar receta...',
           hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
             color: AppColors.woodDark,
           ),
           suffixIcon: controller.text.isEmpty
               ? null
               : IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.close_rounded,
                     color: AppColors.woodDark,
                   ),
@@ -980,11 +980,11 @@ class _SearchBar extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 2),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.wood, width: 1.4),
+            borderSide: BorderSide(color: AppColors.wood, width: 1.4),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.woodDark, width: 1.8),
+            borderSide: BorderSide(color: AppColors.woodDark, width: 1.8),
           ),
         ),
       ),

@@ -123,7 +123,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
               shrinkWrap: true,
               padding: const EdgeInsets.all(AppSpacing.xl),
               children: [
-                const Text(
+                Text(
                   'Ingredientes',
                   style: TextStyle(
                     fontSize: 22,
@@ -252,11 +252,11 @@ class _CookModeScreenState extends State<CookModeScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.timer_rounded, color: AppColors.cream),
+          Icon(Icons.timer_rounded, color: AppColors.cream),
           const SizedBox(width: AppSpacing.sm),
           Text(
             _fmt(_left),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.cream,
               fontSize: 20,
               fontWeight: FontWeight.w900,
@@ -294,7 +294,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
         children: [
           Text(
             'PASO ${i + 1} DE $_total',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w900,
               letterSpacing: 1,
@@ -304,7 +304,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
           const SizedBox(height: AppSpacing.lg),
           Text(
             step,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 26,
               letterSpacing: -0.4,
               height: 1.35,
@@ -324,7 +324,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.ink,
-                side: const BorderSide(color: AppColors.ink, width: 1.5),
+                side: BorderSide(color: AppColors.ink, width: 1.5),
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg,
                   vertical: AppSpacing.md,
@@ -363,7 +363,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                     padding: EdgeInsets.zero,
                     foregroundColor: AppColors.ink,
                     shape: const CircleBorder(),
-                    side: const BorderSide(color: AppColors.ink, width: 1.5),
+                    side: BorderSide(color: AppColors.ink, width: 1.5),
                   ),
                   child: const Icon(Icons.arrow_back_rounded),
                 ),
@@ -378,7 +378,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                       : () => _go(_page + 1),
                   style: FilledButton.styleFrom(
                     backgroundColor: _isLast ? AppColors.sage : AppColors.ink,
-                    foregroundColor: Colors.white,
+                    foregroundColor: _isLast ? Colors.white : AppColors.cream,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999),
                     ),

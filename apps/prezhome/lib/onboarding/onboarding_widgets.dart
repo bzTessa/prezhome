@@ -32,7 +32,7 @@ class OnboardingButton extends StatelessWidget {
           minimumSize: size,
           shape: shape,
           foregroundColor: AppColors.ink,
-          side: const BorderSide(color: AppColors.ink, width: 1.5),
+          side: BorderSide(color: AppColors.ink, width: 1.5),
           textStyle: text,
         ),
         child: Text(label),
@@ -129,7 +129,7 @@ class QuestionScaffold extends StatelessWidget {
                 ),
                 Text(
                   section,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.inkMuted,
                   ),
@@ -142,7 +142,7 @@ class QuestionScaffold extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 28,
                 letterSpacing: -0.6,
                 fontWeight: FontWeight.w800,
@@ -155,7 +155,7 @@ class QuestionScaffold extends StatelessWidget {
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   height: 1.4,
                   color: AppColors.inkMuted,
@@ -243,7 +243,7 @@ class OptionCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
@@ -254,7 +254,7 @@ class OptionCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 2),
                             child: Text(
                               subtitle!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 color: AppColors.inkMuted,
                               ),
@@ -317,7 +317,7 @@ class LoadMeter extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                   color: AppColors.ink,

@@ -97,7 +97,7 @@ class _PendingSyncIndicatorState extends State<PendingSyncIndicator>
                   child: icon,
                 ),
               const SizedBox(width: 8),
-              const Flexible(
+              Flexible(
                 child: Text(
                   'Guardado. Se sincronizará al volver la conexión.',
                   style: TextStyle(

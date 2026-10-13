@@ -121,7 +121,7 @@ List<ConfettiParticle> generateConfetti({
 /// Paleta del confeti, SOLO con tokens cálidos de [AppColors].
 class _ConfettiPalette {
   const _ConfettiPalette._();
-  static const List<Color> colors = [
+  static final List<Color> colors = [
     AppColors.sage,
     AppColors.terracotta,
     AppColors.peach,

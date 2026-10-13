@@ -301,7 +301,7 @@ class _TasksScreenState extends State<TasksScreen> {
                 for (final e in ordered)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
+                    leading: CircleAvatar(
                       radius: 18,
                       backgroundColor: AppColors.wood,
                       child: Icon(Icons.person, size: 20, color: AppColors.ink),
@@ -812,7 +812,7 @@ class _Scoreboard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 16,
                     backgroundColor: AppColors.wood,
                     child: Icon(Icons.person, size: 18, color: AppColors.ink),
@@ -826,14 +826,14 @@ class _Scoreboard extends StatelessWidget {
                   ),
                   Text(
                     '$pts pts',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.woodDark,
                       fontSize: 16,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.restart_alt,
                       size: 20,
                       color: AppColors.inkMuted,
@@ -912,7 +912,7 @@ class _PointsChart extends StatelessWidget {
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         '${rod.toY.toInt()} pts',
-                        const TextStyle(
+                        TextStyle(
                           color: AppColors.ink,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1015,7 +1015,7 @@ class _PointsChart extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Aún no hay puntos',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -1088,7 +1088,7 @@ class _TaskCard extends StatelessWidget {
                 ),
               ),
               child: done
-                  ? const Icon(Icons.check, size: 18, color: AppColors.ink)
+                  ? Icon(Icons.check, size: 18, color: AppColors.ink)
                   : null,
             ),
           ),
@@ -1121,7 +1121,7 @@ class _TaskCard extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Eliminar',
-            icon: const Icon(Icons.delete_outline, color: AppColors.expired),
+            icon: Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: onDelete,
           ),
         ],

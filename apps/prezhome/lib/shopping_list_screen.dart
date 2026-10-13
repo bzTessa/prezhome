@@ -612,7 +612,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
                 item.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   color: AppColors.ink,
@@ -620,7 +620,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_camera_outlined,
                 color: AppColors.woodDark,
               ),
@@ -628,7 +628,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               onTap: () => Navigator.of(ctx).pop('camera'),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_library_outlined,
                 color: AppColors.woodDark,
               ),
@@ -636,7 +636,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               onTap: () => Navigator.of(ctx).pop('gallery'),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.storefront_rounded,
                 color: AppColors.woodDark,
               ),
@@ -644,7 +644,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               onTap: () => Navigator.of(ctx).pop('store'),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.delete_outline,
                 color: AppColors.expired,
               ),
@@ -790,7 +790,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
@@ -1359,7 +1359,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Text(
                   'Las recetas usarán productos de este súper.',
@@ -1370,7 +1370,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ListTile(
                   title: Text(s.label),
                   trailing: s.key == current
-                      ? const Icon(Icons.check, color: AppColors.sage)
+                      ? Icon(Icons.check, color: AppColors.sage)
                       : null,
                   onTap: () => Navigator.of(ctx).pop(s.key),
                 ),
@@ -1671,7 +1671,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: AppColors.sageBg,
-        child: const Icon(Icons.check_circle_rounded, color: AppColors.sage),
+        child: Icon(Icons.check_circle_rounded, color: AppColors.sage),
       ),
       // Deslizar marca como comprado: la fila pasa al carro al instante.
       onDismissed: (_) => _toggleChecked(item, true),
@@ -1797,7 +1797,7 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Compra completada',
                   style: TextStyle(

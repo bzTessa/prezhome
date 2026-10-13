@@ -63,7 +63,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                             listName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               letterSpacing: -0.4,
                               fontWeight: FontWeight.w800,
@@ -71,7 +71,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.expand_more_rounded,
                           color: AppColors.inkMuted,
                         ),
@@ -123,7 +123,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                   pending == 0
                       ? 'Todo en el carro'
                       : '$pending por comprar · $done en el carro',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppColors.inkMuted,
                   ),
@@ -132,7 +132,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
               if (estimate != null)
                 Text(
                   estimate!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -147,7 +147,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
               value: progress,
               minHeight: 6,
               backgroundColor: AppColors.wood.withValues(alpha: 0.35),
-              valueColor: const AlwaysStoppedAnimation(AppColors.sage),
+              valueColor: AlwaysStoppedAnimation(AppColors.sage),
             ),
           ),
         ],
@@ -204,7 +204,7 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
       padding: const EdgeInsets.only(left: AppSpacing.md),
       child: Row(
         children: [
-          const Icon(Icons.add_rounded, color: AppColors.woodDark),
+          Icon(Icons.add_rounded, color: AppColors.woodDark),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: TextField(
@@ -316,7 +316,7 @@ class ShoppingSection extends StatelessWidget {
                             title.toUpperCase(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.6,
@@ -327,7 +327,7 @@ class ShoppingSection extends StatelessWidget {
                         const SizedBox(width: AppSpacing.sm),
                         Text(
                           '$count',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.woodDark,
@@ -340,7 +340,7 @@ class ShoppingSection extends StatelessWidget {
                   AnimatedRotation(
                     turns: expanded ? 0 : -0.25,
                     duration: AppMotion.fast,
-                    child: const Icon(
+                    child: Icon(
                       Icons.expand_more_rounded,
                       size: 22,
                       color: AppColors.inkMuted,
@@ -364,7 +364,7 @@ class ShoppingSection extends StatelessWidget {
                       children: [
                         for (var i = 0; i < children.length; i++) ...[
                           if (i > 0)
-                            const Divider(
+                            Divider(
                               height: 1,
                               thickness: 1,
                               indent: 52,
@@ -456,7 +456,7 @@ class ShoppingItemTile extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             subtitle!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.inkMuted,
                             ),

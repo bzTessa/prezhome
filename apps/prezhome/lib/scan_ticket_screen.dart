@@ -384,7 +384,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.receipt_long_outlined,
               size: 72,
               color: AppColors.wood,
@@ -413,7 +413,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.ink,
                 minimumSize: const Size.fromHeight(50),
-                side: const BorderSide(color: AppColors.wood, width: 1.5),
+                side: BorderSide(color: AppColors.wood, width: 1.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -544,7 +544,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
               ),
               IconButton(
                 tooltip: 'Quitar',
-                icon: const Icon(Icons.close, color: AppColors.expired),
+                icon: Icon(Icons.close, color: AppColors.expired),
                 onPressed: () => setState(() {
                   _items.removeAt(index);
                   it.dispose();
@@ -604,8 +604,8 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   Widget _bottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card,
         boxShadow: [
           BoxShadow(
             color: AppColors.softShadow,

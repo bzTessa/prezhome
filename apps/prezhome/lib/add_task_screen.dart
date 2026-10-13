@@ -219,7 +219,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   return FilterChip(
                     label: Text(HomeTask.weekdayShort[i]),
                     selected: selected,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.card,
                     onSelected: (v) => setState(() {
                       if (v) {
                         _weekdays.add(day);
@@ -382,7 +382,7 @@ class _TaskTemplate {
   /// el set Material estandar (verificado): cleaning_services, wash,
   /// bathtub_outlined, local_laundry_service, restaurant, delete_outline, bed,
   /// countertops.
-  static const List<_TaskTemplate> catalog = [
+  static final List<_TaskTemplate> catalog = [
     _TaskTemplate(
       icon: Icons.cleaning_services,
       bg: AppColors.sageBg,

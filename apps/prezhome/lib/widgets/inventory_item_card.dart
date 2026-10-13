@@ -80,12 +80,12 @@ class InventoryItemCard extends StatelessWidget {
                   top: 4,
                   right: 4,
                   child: Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.card,
                       shape: BoxShape.circle,
                     ),
                     padding: const EdgeInsets.all(2),
-                    child: const Icon(
+                    child: Icon(
                       Icons.more_vert,
                       size: 18,
                       color: AppColors.woodDark,
@@ -104,7 +104,7 @@ class InventoryItemCard extends StatelessWidget {
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: AppColors.ink,
@@ -116,7 +116,7 @@ class InventoryItemCard extends StatelessWidget {
                     qty,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.inkMuted,
                     ),
@@ -154,7 +154,7 @@ class _StapleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: AppColors.woodDark),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.remove_shopping_cart,
         size: 12,
         color: AppColors.woodDark,

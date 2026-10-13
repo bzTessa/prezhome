@@ -32,7 +32,7 @@ class ComingSoon extends StatelessWidget {
                 color: AppColors.wood,
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Text(
+              child: Text(
                 'PRÓXIMAMENTE',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,

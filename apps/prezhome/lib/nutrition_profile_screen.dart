@@ -185,7 +185,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
               return FilterChip(
                 label: Text(_weekdayShort[i]),
                 selected: selected,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.card,
                 visualDensity: VisualDensity.compact,
                 onSelected: (v) => setState(() {
                   // Si estaba en "todos", materializamos la lista completa antes de quitar.
@@ -254,7 +254,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.card,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.wood, width: 1.4),
                     ),
@@ -267,13 +267,13 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                             color: AppColors.peachBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.tune_rounded,
                             color: AppColors.peach,
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -296,7 +296,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right, color: Colors.black26),
+                        Icon(Icons.chevron_right, color: AppColors.inkMuted.withValues(alpha: 0.5)),
                       ],
                     ),
                   ),
@@ -584,7 +584,7 @@ class _ModeCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? AppColors.wood : Colors.white,
+          color: selected ? AppColors.wood : AppColors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? AppColors.woodDark : Colors.transparent,
@@ -617,7 +617,7 @@ class _ModeCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: AppColors.woodDark),
+              Icon(Icons.check_circle, color: AppColors.woodDark),
           ],
         ),
       ),
@@ -638,7 +638,7 @@ class _ResultCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -649,7 +649,7 @@ class _ResultCard extends StatelessWidget {
         ],
       ),
       child: kcal == null
-          ? const Text(
+          ? Text(
               'Completa sexo, fecha de nacimiento, altura y peso para calcular '
               'tus calorías y macros diarios.',
               style: TextStyle(color: AppColors.ink),
@@ -657,7 +657,7 @@ class _ResultCard extends StatelessWidget {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Tu objetivo diario (aprox.)',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -668,7 +668,7 @@ class _ResultCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   '$kcal kcal / día',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     letterSpacing: -0.6,
                     fontWeight: FontWeight.bold,
@@ -707,7 +707,7 @@ class _Macro extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
             color: AppColors.ink,

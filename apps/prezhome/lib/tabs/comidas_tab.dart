@@ -28,7 +28,7 @@ class ComidasTab extends StatelessWidget {
         backgroundColor: AppColors.cream,
         appBar: AppBar(
           title: const Text('Comidas'),
-          bottom: const TabBar(
+          bottom: TabBar(
             indicatorColor: AppColors.woodDark,
             labelColor: AppColors.ink,
             unselectedLabelColor: AppColors.inkMuted,
@@ -120,7 +120,7 @@ class _PlanViewToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
       ),
       padding: const EdgeInsets.all(3),
@@ -161,7 +161,7 @@ class _PlanViewToggle extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.ink,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -343,9 +343,9 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
                       '${_weekStart.day} ${_months[_weekStart.month - 1]} - '
                       '${weekEnd.day} ${_months[weekEnd.month - 1]}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.black45,
+                        color: AppColors.inkMuted,
                       ),
                     ),
                   ],
@@ -407,7 +407,7 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.ink,
               minimumSize: const Size.fromHeight(48),
-              side: const BorderSide(color: AppColors.wood, width: 1.5),
+              side: BorderSide(color: AppColors.wood, width: 1.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -651,7 +651,7 @@ class _VarietyCard extends StatelessWidget {
     return [
       Text(
         '$numeroRecetasDistintas $recetasLabel en $numeroComidas $comidasLabel',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
           color: AppColors.ink,
@@ -683,7 +683,7 @@ class _VarietyCard extends StatelessWidget {
                   return BarTooltipItem(
                     '${top[group.x].key}\n'
                     '$veces ${veces == 1 ? 'vez' : 'veces'}',
-                    const TextStyle(
+                    TextStyle(
                       color: AppColors.ink,
                       fontWeight: FontWeight.bold,
                     ),

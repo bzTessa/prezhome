@@ -303,7 +303,7 @@ class _IntroPage extends StatefulWidget {
 }
 
 class _IntroPageState extends State<_IntroPage> {
-  static const _features = [
+  static final _features = [
     (Icons.shopping_cart_rounded, 'Lista de la compra', AppColors.sage),
     (Icons.restaurant_menu_rounded, 'Qué comemos', AppColors.terracotta),
     (Icons.kitchen_rounded, 'Despensa y caducidades', AppColors.peach),
@@ -361,7 +361,7 @@ class _IntroPageState extends State<_IntroPage> {
             child: Column(
               children: [
                 const Spacer(flex: 3),
-                const Text(
+                Text(
                   'PrezHome',
                   style: TextStyle(
                     fontSize: 46,
@@ -371,7 +371,7 @@ class _IntroPageState extends State<_IntroPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'La casa en orden, la cabeza tranquila.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: AppColors.inkMuted),
@@ -524,7 +524,7 @@ class _PeoplePicker extends StatelessWidget {
                   ),
                   child: Text(
                     value >= 8 ? '8+' : '$value',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 56,
                       letterSpacing: -0.6,
                       fontWeight: FontWeight.w900,
@@ -563,7 +563,7 @@ class _PeoplePicker extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value == 1 ? 'Solo yo' : '$value personas',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.inkMuted,
@@ -695,7 +695,7 @@ class _ResultPage extends StatelessWidget {
                 color: AppColors.woodDark.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: const Text(
+              child: Text(
                 'Tu perfil de hogar',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
@@ -707,7 +707,7 @@ class _ResultPage extends StatelessWidget {
             Text(
               profile.name,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 40,
                 letterSpacing: -0.6,
                 fontWeight: FontWeight.w900,
@@ -721,7 +721,7 @@ class _ResultPage extends StatelessWidget {
               child: Text(
                 profile.description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   height: 1.45,
                   color: AppColors.ink,

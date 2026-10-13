@@ -438,7 +438,7 @@ class CategoryIcons {
   /// Par de colores cozy (fondo suave + color del icono) por categoría, tomados
   /// de [AppColors]. Pensado como ilustración cálida de respaldo, no como
   /// semáforo de estado (eso lo cubren los colores de caducidad aparte).
-  static const Map<FoodCategory, (Color, Color)> _palette = {
+  static final Map<FoodCategory, (Color, Color)> _palette = {
     FoodCategory.verdura: (AppColors.sageBg, AppColors.sage),
     FoodCategory.fruta: (AppColors.peachBg, AppColors.peach),
     FoodCategory.carne: (AppColors.terracottaBg, AppColors.terracotta),

@@ -186,7 +186,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
                           s.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: AppColors.ink,
                           ),
@@ -194,7 +194,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
                       ),
                       Text(
                         label(s),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: AppColors.woodDark,
                         ),
@@ -209,7 +209,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
                       value: maxV > 0 ? (value(s) / maxV).clamp(0.0, 1.0) : 0,
                       minHeight: 8,
                       backgroundColor: AppColors.cream,
-                      valueColor: const AlwaysStoppedAnimation(AppColors.wood),
+                      valueColor: AlwaysStoppedAnimation(AppColors.wood),
                     ),
                   ),
                 ],
@@ -262,7 +262,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
                     ),
                     Text(
                       label(s),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.woodDark,
                       ),
@@ -282,7 +282,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
             color: AppColors.ink,

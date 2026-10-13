@@ -1,0 +1,28 @@
+# Temporal (se borra antes de fusionar): aplica dart fix/format y devuelve el diff.
+name: tmp-modo-oscuro
+on: pull_request
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/prezhome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: dart fix --apply || true
+      - run: dart format . || true
+      - run: git checkout analysis_options.yaml || true
+      - run: flutter analyze > /tmp/analyze.txt 2>&1 || true
+      - run: flutter test > /tmp/test.txt 2>&1 || true
+      - run: git diff > /tmp/fix.diff
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resultado
+          path: |
+            /tmp/analyze.txt
+            /tmp/test.txt
+            /tmp/fix.diff
