@@ -27,6 +27,7 @@
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { aiLimitMessage } from "../_shared/ai_limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -268,10 +269,7 @@ Deno.serve(async (req: Request) => {
     }
     if (allowed !== true) {
       return json(
-        {
-          error:
-            "Has llegado al límite de este mes. Vuelve a probar el mes que viene.",
-        },
+        { error: aiLimitMessage() },
         429,
       );
     }

@@ -17,6 +17,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
   `pgcrypto` está en el esquema `extensions`. Última migración: 0048.
+- Límite de IA: `consume_ai_credit` (20/mes por hogar en plan free, en
+  `subscriptions`), compartido por scan-ticket, generate-recipe,
+  discover-recipes, analyze-meal e import-recipe-link. El 429 lleva el
+  mensaje de `supabase/functions/_shared/ai_limit.ts`; `friendlyError` enseña
+  el `{error}` que devuelve cualquier función.
 - No ejecutar SQL de prueba largo en producción (se corta a 60 s).
 
 ## Preferencias de Tessa (producto y textos)
