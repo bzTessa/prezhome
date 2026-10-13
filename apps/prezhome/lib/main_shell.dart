@@ -368,9 +368,16 @@ class MainShellState extends State<MainShell> {
               ),
             ),
           Expanded(
-            child: IndexedStack(
-              index: _index,
-              children: [for (final t in _tabs) t.page],
+            // Con el banner arriba, la barra de estado ya está cubierta: las
+            // pestañas no deben volver a dejar su hueco (quedaba un espacio
+            // vacío entre el banner y el título).
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: showBanner,
+              child: IndexedStack(
+                index: _index,
+                children: [for (final t in _tabs) t.page],
+              ),
             ),
           ),
         ],

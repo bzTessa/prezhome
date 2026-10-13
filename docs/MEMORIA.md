@@ -5,7 +5,8 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 
 ## Cómo trabajar
 - Flutter: `export PATH=/opt/flutter-sdk/flutter/bin:$PATH` y comandos desde
-  `apps/prezhome`. Tras `flutter analyze`/`test`/`pub get`, deshacer cambios
+  `apps/prezhome` (si no está, descargar el stable de
+  `storage.googleapis.com/flutter_infra_release` en `/opt/flutter-sdk`). Tras `flutter analyze`/`test`/`pub get`, deshacer cambios
   en `analysis_options.yaml` (`git checkout analysis_options.yaml`).
 - Antes de push: `dart format .`, `flutter analyze`, `flutter test`, y
   `dart run tool/architecture/dependency_map.dart` (CI lo comprueba con
@@ -15,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0047.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0048.
 - No ejecutar SQL de prueba largo en producción (se corta a 60 s).
 
 ## Preferencias de Tessa (producto y textos)
@@ -43,7 +44,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (comprado → despensa por zona, "Todo comprado", tarea "compra" completada
   marca la lista), `services/plan_shopping.dart` (lista desde el plan).
 - Fotos: `services/product_photo_resolver.dart` (caché `food_photo_cache` →
-  búsqueda OFF), `services/product_search_service.dart` (8/min, caché).
+  búsqueda OFF), `services/product_search_service.dart` (8/min, caché; las
+  búsquedas en segundo plano solo pueden gastar 4 para no bloquear a la persona).
+  Las fotos de OFF se comparten entre hogares en `product_photo_shared` (solo
+  URLs de OFF; las de galería no salen del hogar).
+- Chips: el seleccionado va en `AppColors.wood` con texto en tinta (tema).
 - Despensa: `inventory_screen.dart`, `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
   Especias, Bebidas, Limpieza, Hogar).

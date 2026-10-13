@@ -158,19 +158,27 @@ class ProductSearchService {
   static const _userAgent = 'PrezHome/1.0 (app de hogar; openfoodfacts)';
   static const _maxPerMinute = 8;
 
+  /// Las fotos que se buscan solas en segundo plano solo pueden gastar esta
+  /// parte del límite: el resto queda libre para lo que busca la persona.
+  static const _maxBackgroundPerMinute = 4;
+
   static final Map<String, ProductSearchResult> _cache = {};
   static final List<DateTime> _recent = [];
 
-  bool _allowRequest() {
+  bool _allowRequest({required bool background}) {
     final now = _now();
     _recent.removeWhere((t) => now.difference(t).inSeconds >= 60);
-    if (_recent.length >= _maxPerMinute) return false;
+    final limit = background ? _maxBackgroundPerMinute : _maxPerMinute;
+    if (_recent.length >= limit) return false;
     _recent.add(now);
     return true;
   }
 
-  Future<List<SupermarketProduct>?> _fetch(Uri uri) async {
-    if (!_allowRequest()) return null;
+  Future<List<SupermarketProduct>?> _fetch(
+    Uri uri, {
+    required bool background,
+  }) async {
+    if (!_allowRequest(background: background)) return null;
     final res = await _client
         .get(uri, headers: const {'User-Agent': _userAgent})
         .timeout(const Duration(seconds: 12));
@@ -180,10 +188,12 @@ class ProductSearchService {
   }
 
   /// Busca [query]. Con [supermarketKey] prueba primero solo ese súper y, si
-  /// no hay nada, en todos los de España.
+  /// no hay nada, en todos los de España. [background] marca las búsquedas
+  /// que nadie ha pedido (fotos de la lista), que no pueden agotar el límite.
   Future<ProductSearchResult> search(
     String query, {
     String? supermarketKey,
+    bool background = false,
   }) async {
     final q = query.trim();
     if (q.length < 2) return const ProductSearchResult([]);
@@ -193,7 +203,10 @@ class ProductSearchService {
     if (cached != null) return cached;
     try {
       if (store != null) {
-        final inStore = await _fetch(buildProductSearchUri(q, storeTag: store));
+        final inStore = await _fetch(
+          buildProductSearchUri(q, storeTag: store),
+          background: background,
+        );
         if (inStore == null) {
           return const ProductSearchResult([], throttled: true);
         }
@@ -204,7 +217,10 @@ class ProductSearchService {
           );
         }
       }
-      final all = await _fetch(buildProductSearchUri(q));
+      final all = await _fetch(
+        buildProductSearchUri(q),
+        background: background,
+      );
       if (all == null) return const ProductSearchResult([], throttled: true);
       return _cache[key] = ProductSearchResult(all);
     } catch (_) {

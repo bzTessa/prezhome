@@ -1,4 +1,3 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -30,13 +29,15 @@ class ComidasTab extends StatelessWidget {
           title: const Text('Comidas'),
           bottom: TabBar(
             indicatorColor: AppColors.woodDark,
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: AppColors.line,
             labelColor: AppColors.ink,
             unselectedLabelColor: AppColors.inkMuted,
             labelStyle: TextStyle(fontWeight: FontWeight.bold),
             tabs: [
-              Tab(text: 'Plan', icon: Icon(Icons.calendar_month_rounded)),
-              Tab(text: 'Recetas', icon: Icon(Icons.restaurant_menu)),
-              Tab(text: 'Diario', icon: Icon(Icons.local_fire_department)),
+              Tab(text: 'Plan'),
+              Tab(text: 'Recetas'),
+              Tab(text: 'Diario'),
             ],
           ),
         ),
@@ -304,8 +305,12 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
   @override
   Widget build(BuildContext context) {
     final weekEnd = _weekStart.add(const Duration(days: 6));
-    final title =
-        'Semana del ${_weekStart.day} de ${_months[_weekStart.month - 1]}';
+    final range = _weekStart.month == weekEnd.month
+        ? '${_weekStart.day} – ${weekEnd.day} de '
+              '${_months[weekEnd.month - 1].toLowerCase()}'
+        : '${_weekStart.day} ${_months[_weekStart.month - 1].toLowerCase()} – '
+              '${weekEnd.day} ${_months[weekEnd.month - 1].toLowerCase()}';
+    final isThisWeek = _isSameDay(_weekStart, _mondayOf(DateTime.now()));
 
     final days = List<DateTime>.generate(
       7,
@@ -313,112 +318,110 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
     );
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
       children: [
-        // Cabecera con navegación de semanas.
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: AppTheme.cardDecoration(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                tooltip: 'Anterior',
-                icon: const Icon(Icons.chevron_left),
-                onPressed: () => _changeWeek(-1),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+        // Navegación de semanas: una fila ligera, sin tarjeta.
+        Row(
+          children: [
+            IconButton(
+              tooltip: 'Semana anterior',
+              icon: const Icon(Icons.chevron_left_rounded),
+              onPressed: () => _changeWeek(-1),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    isThisWeek ? 'Esta semana' : 'Semana',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.woodDark,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${_weekStart.day} ${_months[_weekStart.month - 1]} - '
-                      '${weekEnd.day} ${_months[weekEnd.month - 1]}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                  ),
+                  Text(
+                    range,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              IconButton(
-                tooltip: 'Siguiente',
-                icon: const Icon(Icons.chevron_right),
-                onPressed: () => _changeWeek(1),
-              ),
-            ],
-          ),
+            ),
+            IconButton(
+              tooltip: 'Semana siguiente',
+              icon: const Icon(Icons.chevron_right_rounded),
+              onPressed: () => _changeWeek(1),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        // Tarjeta de variedad del menú: solo tiene sentido si hay plan en la
-        // semana. Si no, abajo ya se muestra el bloque de Miau.
-        if (_weekHasPlan) ...[
-          _VarietyCard(planByDate: _planByDate),
-          const SizedBox(height: 16),
-        ],
-
-        // Estado vacío: ningún día de la semana tiene plan.
         if (!_weekHasPlan)
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: AppTheme.cardDecoration(),
-            child: Row(
+            decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+            child: Column(
               children: [
                 const MiauCharacter(
                   mood: MiauMood.curious,
-                  size: 56,
+                  size: 72,
                   float: false,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Esta semana aún no tiene plan. Genera el plan semanal '
-                    'para ver aquí las comidas de cada día.',
-                    style: TextStyle(color: AppColors.inkMuted),
+                const SizedBox(height: 12),
+                Text(
+                  'Semana sin plan',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Crea el plan y verás aquí las comidas de cada día.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.inkMuted),
                 ),
               ],
             ),
           )
-        else
+        else ...[
           ...days.map(_buildDayCard),
+          const SizedBox(height: 8),
+          _VarietyCard(planByDate: _planByDate),
+        ],
 
         const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () async {
-              await Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const MealPlanScreen()));
-              _loadWeekPlan(); // refrescar al volver
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.ink,
-              minimumSize: const Size.fromHeight(48),
-              side: BorderSide(color: AppColors.wood, width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            icon: const Icon(Icons.calendar_month_rounded),
-            label: const Text('Plan de la semana'),
+        FilledButton.icon(
+          onPressed: () async {
+            await Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const MealPlanScreen()));
+            _loadWeekPlan(); // refrescar al volver
+          },
+          icon: Icon(
+            _weekHasPlan ? Icons.edit_calendar_rounded : Icons.add_rounded,
           ),
+          label: Text(_weekHasPlan ? 'Editar plan' : 'Crear plan'),
         ),
       ],
     );
   }
 
-  /// Tarjeta de un día: cabecera (nombre + número, HOY resaltado) y las
-  /// comidas del día escritas.
+  static const _mealIcons = {
+    'breakfast': Icons.free_breakfast_rounded,
+    'lunch': Icons.lunch_dining_rounded,
+    'dinner': Icons.dinner_dining_rounded,
+    'snack': Icons.cookie_rounded,
+    'dessert': Icons.icecream_rounded,
+  };
+
+  /// Un día: bloque de fecha a la izquierda y sus comidas a la derecha. Hoy
+  /// lleva borde de madera; los días sin plan quedan en una línea.
   Widget _buildDayCard(DateTime date) {
     final isToday = _isSameDay(date, DateTime.now());
     final key = date.toIso8601String().split('T').first;
@@ -430,99 +433,113 @@ class _WeekAgendaViewState extends State<_WeekAgendaView> {
     );
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration(),
-      child: Column(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration:
+          AppTheme.surfaceDecoration(
+            radius: AppRadius.md,
+            elevation: isToday ? 2 : 1,
+          ).copyWith(
+            border: isToday
+                ? Border.all(color: AppColors.wood, width: 2)
+                : null,
+          ),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cabecera del día; se resalta HOY con un fondo wood.
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isToday ? AppColors.wood : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isToday
-                      ? null
-                      : Border.all(color: AppColors.wood, width: 1.2),
-                ),
-                child: Text(
-                  '${_weekdayNames[date.weekday - 1]} ${date.day}',
+          Container(
+            width: 48,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: isToday ? AppColors.wood : AppColors.cream,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  _weekdayNames[date.weekday - 1].substring(0, 3),
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isToday ? AppColors.ink : AppColors.inkMuted,
+                  ),
+                ),
+                Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    height: 1.1,
+                    fontWeight: FontWeight.w900,
                     color: AppColors.ink,
                   ),
                 ),
-              ),
-              if (isToday) ...[
-                const SizedBox(width: 8),
-                Text(
-                  'Hoy',
-                  style: TextStyle(
-                    color: AppColors.woodDark,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
               ],
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (items.isEmpty)
-            Text(
-              'Sin plan',
-              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
-            )
-          else
-            ...items.map(
-              (it) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      child: Text(
-                        _mealLabels[it.mealType] ?? it.mealType,
-                        style: TextStyle(
-                          color: AppColors.inkMuted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        it.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          decoration: it.skipped
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: it.skipped
-                              ? AppColors.inkMuted
-                              : AppColors.ink,
-                        ),
-                      ),
-                    ),
-                    if (it.skipped)
-                      Text(
-                        'fuera',
-                        style: TextStyle(
-                          color: AppColors.inkMuted,
-                          fontSize: 12,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
             ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: items.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: Text(
+                      'Sin plan',
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final it in items)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _mealIcons[it.mealType] ??
+                                    Icons.restaurant_rounded,
+                                size: 18,
+                                color: it.skipped
+                                    ? AppColors.inkMuted
+                                    : AppColors.woodDark,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _mealLabels[it.mealType] ?? it.mealType,
+                                      style: TextStyle(
+                                        color: AppColors.inkMuted,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      it.skipped
+                                          ? '${it.title} · fuera'
+                                          : it.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        decoration: it.skipped
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                        color: it.skipped
+                                            ? AppColors.inkMuted
+                                            : AppColors.ink,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
         ],
       ),
     );
@@ -565,7 +582,7 @@ class _VarietyCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -637,20 +654,19 @@ class _VarietyCard extends StatelessWidget {
         ? 'receta distinta'
         : 'recetas distintas';
 
-    // Top de recetas más repetidas, de mayor a menor. Limitamos a 6 para que
-    // la gráfica no se sature cuando hay muchos platos distintos.
+    // Recetas de más a menos repetida. Barras horizontales con el nombre
+    // entero encima: nada se corta, ni el texto ni la barra.
     final ordenadas = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final top = ordenadas.take(6).toList();
-    final maxCount = top.fold<int>(0, (a, e) => e.value > a ? e.value : a);
-    final maxY = maxCount <= 0 ? 1.0 : maxCount * 1.2;
+    final top = ordenadas.take(5).toList();
+    final maxCount = top.isEmpty ? 1 : top.first.value;
 
     return [
       Text(
         '$numeroRecetasDistintas $recetasLabel en $numeroComidas $comidasLabel',
         style: TextStyle(
           fontSize: 18,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
           color: AppColors.ink,
         ),
       ),
@@ -664,91 +680,50 @@ class _VarietyCard extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 16),
-      SizedBox(
-        height: 180,
-        child: BarChart(
-          BarChartData(
-            maxY: maxY,
-            minY: 0,
-            alignment: BarChartAlignment.spaceAround,
-            borderData: FlBorderData(show: false),
-            gridData: const FlGridData(show: false),
-            barTouchData: BarTouchData(
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  final veces = rod.toY.toInt();
-                  return BarTooltipItem(
-                    '${top[group.x].key}\n'
-                    '$veces ${veces == 1 ? 'vez' : 'veces'}',
-                    TextStyle(
-                      color: AppColors.ink,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                },
-              ),
-            ),
-            titlesData: FlTitlesData(
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              leftTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 28,
-                  getTitlesWidget: (value, meta) {
-                    final i = value.toInt();
-                    if (i < 0 || i >= top.length) {
-                      return const SizedBox.shrink();
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        _shortTitle(top[i].key),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.inkMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            barGroups: [
-              for (int i = 0; i < top.length; i++)
-                BarChartGroupData(
-                  x: i,
-                  barRods: [
-                    BarChartRodData(
-                      toY: top[i].value.toDouble(),
-                      color: AppColors.wood,
-                      width: 22,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(6),
+      for (final e in top)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      e.key,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${e.value} ${e.value == 1 ? 'vez' : 'veces'}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: e.value / maxCount,
+                  minHeight: 8,
+                  color: e.value > 2 ? AppColors.terracotta : AppColors.wood,
+                  backgroundColor: AppColors.line,
                 ),
+              ),
             ],
           ),
         ),
-      ),
     ];
-  }
-
-  /// Acorta títulos largos para que no se solapen bajo las barras.
-  String _shortTitle(String title) {
-    final trimmed = title.trim();
-    if (trimmed.length <= 10) return trimmed;
-    return '${trimmed.substring(0, 9)}…';
   }
 }

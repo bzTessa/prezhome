@@ -45,83 +45,66 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
     final reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
+    // Compacto (una sola fila): toda la tarjeta lleva a Comidas, así no
+    // ocupa media pantalla encima de cada pestaña.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 2),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-        decoration: AppTheme.surfaceDecoration(
-          radius: AppRadius.md,
-          elevation: 2,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MiauCharacter(
-              mood: MiauMood.curious,
-              size: 48,
-              float: !reduceMotion,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Sugerencia de hoy',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    bannerMessage(suggestions),
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.25,
-                      color: AppColors.inkMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: onAction,
-                      style: TextButton.styleFrom(
-                        backgroundColor: AppColors.soonBg,
-                        foregroundColor: AppColors.soon,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Material(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: InkWell(
+          onTap: onAction,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 0, 8),
+            child: Row(
+              children: [
+                MiauCharacter(
+                  mood: MiauMood.curious,
+                  size: 36,
+                  float: !reduceMotion,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Sugerencia de hoy',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: AppColors.woodDark,
                         ),
                       ),
-                      // El botón navega a la pestaña Comidas (ahí vive el plan
-                      // y el acceso al Modo cocina), así que la etiqueta es
-                      // honesta con el destino real.
-                      child: const Text(
-                        'Ir a Comidas',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      const SizedBox(height: 1),
+                      Text(
+                        bannerMessage(suggestions),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.25,
+                          color: AppColors.ink,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+                IconButton(
+                  tooltip: 'Descartar',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onDismiss,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+              ],
             ),
-            // X para descartar el banner.
-            IconButton(
-              tooltip: 'Descartar',
-              onPressed: onDismiss,
-              icon: Icon(
-                Icons.close_rounded,
-                size: 20,
-                color: AppColors.woodDark,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

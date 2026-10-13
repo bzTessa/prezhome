@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_inventory_item_screen.dart';
@@ -807,6 +808,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           _sectionFilter = zone?.filterKey ?? 'todo';
           _expandedOverrides.clear();
         }),
+        trailing: _cleanupMenu(items),
       ),
       const SizedBox(height: AppSpacing.md),
       // Al revés que el plan: ideas de recetas con lo que ya hay.
@@ -865,6 +867,123 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
       children: children,
     );
+  }
+
+  /// Menú de limpieza: quitar lo caducado o vaciar lo que se ve (todo o la
+  /// zona filtrada). [visible] es la lista ya filtrada.
+  Widget _cleanupMenu(List<InventoryItem> visible) {
+    final expired = visible
+        .where((i) => i.expiryStatus == ExpiryStatus.caducado)
+        .toList();
+    final zone = KitchenZone.byFilterKey(_sectionFilter);
+    return PopupMenuButton<String>(
+      tooltip: 'Más opciones',
+      icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
+      color: AppColors.card,
+      onSelected: (v) => v == 'expired'
+          ? _deleteMany(
+              expired,
+              done: expired.length == 1
+                  ? 'Caducado eliminado'
+                  : '${expired.length} caducados eliminados',
+            )
+          : _confirmEmpty(visible, zone),
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'expired',
+          enabled: expired.isNotEmpty,
+          child: Text(
+            expired.isEmpty
+                ? 'Nada caducado'
+                : 'Eliminar caducados (${expired.length})',
+          ),
+        ),
+        PopupMenuItem(
+          value: 'all',
+          enabled: visible.isNotEmpty,
+          child: Text(
+            zone == null ? 'Vaciar Mi cocina' : 'Vaciar ${zone.label}',
+            style: TextStyle(color: AppColors.expired),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmEmpty(
+    List<InventoryItem> items,
+    KitchenZone? zone,
+  ) async {
+    final where = zone == null ? 'Mi cocina' : zone.label;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Vaciar $where?'),
+        content: Text('Se eliminarán ${items.length} productos.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.expired,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Vaciar'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true)
+      await _deleteMany(items, done: '${items.length} productos eliminados');
+  }
+
+  /// Borra [items] de forma optimista y ofrece deshacer (los vuelve a crear).
+  Future<void> _deleteMany(
+    List<InventoryItem> items, {
+    required String done,
+  }) async {
+    if (items.isEmpty) return;
+    HapticFeedback.mediumImpact();
+    try {
+      for (final item in items) {
+        await _repo.applyLocalWrite(
+          buildDeleteOp(
+            table: kInventoryTable,
+            id: item.id,
+            nowMillis: DateTime.now().millisecondsSinceEpoch,
+            seq: _nextSeq(),
+          ),
+        );
+      }
+      if (_sectionFilter != 'todo') _sectionFilter = 'todo';
+      await _reload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(done),
+          action: SnackBarAction(
+            label: 'Deshacer',
+            onPressed: () async {
+              for (final item in items) {
+                await _applyUpsert(item, editing: false);
+              }
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      await _reload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, 'No se pudo eliminar')),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
   }
 
   /// ¿Está la sección expandida? Si el usuario la tocó manualmente respetamos

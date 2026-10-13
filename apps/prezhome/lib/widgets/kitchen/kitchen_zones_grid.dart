@@ -4,15 +4,16 @@ import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/kitchen_zones.dart';
 
-/// "Mi cocina": una tarjeta grande por zona (nevera, congelador, despensa…)
+/// "Mi cocina": una fila deslizable de zonas (nevera, congelador, despensa…)
 /// con cuántos productos hay y cuántos caducan. Tocar una zona la filtra;
-/// tocarla de nuevo (o "Ver todo") quita el filtro.
+/// tocarla de nuevo (o "Todo") quita el filtro.
 class KitchenZonesGrid extends StatelessWidget {
   const KitchenZonesGrid({
     super.key,
     required this.zones,
     required this.selected,
     required this.onSelect,
+    this.trailing,
   });
 
   final List<ZoneSummary> zones;
@@ -20,6 +21,9 @@ class KitchenZonesGrid extends StatelessWidget {
   /// Zona filtrada o null si se ve todo.
   final KitchenZone? selected;
   final ValueChanged<KitchenZone?> onSelect;
+
+  /// Acciones de la cabecera (p. ej. el menú para vaciar).
+  final Widget? trailing;
 
   static ({Color bg, Color fg, IconData icon}) styleOf(KitchenZone z) =>
       switch (z) {
@@ -55,22 +59,6 @@ class KitchenZonesGrid extends StatelessWidget {
         ),
       };
 
-  // Esquinas distintas por posición: formas más orgánicas que un rectángulo.
-  static const _shapes = [
-    BorderRadius.only(
-      topLeft: Radius.circular(36),
-      topRight: Radius.circular(16),
-      bottomLeft: Radius.circular(24),
-      bottomRight: Radius.circular(40),
-    ),
-    BorderRadius.only(
-      topLeft: Radius.circular(16),
-      topRight: Radius.circular(40),
-      bottomLeft: Radius.circular(36),
-      bottomRight: Radius.circular(24),
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final total = zones.fold<int>(0, (s, z) => s + z.count);
@@ -79,12 +67,14 @@ class KitchenZonesGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
               'Mi cocina',
               style: TextStyle(
-                fontSize: 24,
-                letterSpacing: -0.4,
+                fontSize: 26,
+                letterSpacing: -0.6,
                 fontWeight: FontWeight.w900,
                 color: AppColors.ink,
               ),
@@ -95,41 +85,37 @@ class KitchenZonesGrid extends StatelessWidget {
               style: TextStyle(color: AppColors.inkMuted),
             ),
             const Spacer(),
-            if (selected != null)
-              TextButton(
-                onPressed: () => onSelect(null),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.woodDark,
-                  visualDensity: VisualDensity.compact,
-                ),
-                child: const Text('Ver todo'),
-              ),
+            ?trailing,
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        LayoutBuilder(
-          builder: (context, c) {
-            const gap = AppSpacing.md;
-            final w = (c.maxWidth - gap) / 2;
-            var i = 0;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                for (final z in visible)
-                  SizedBox(
-                    width: w,
-                    child: _ZoneTile(
-                      summary: z,
-                      shape: _shapes[i++ % 2],
-                      selected: selected == z.zone,
-                      dimmed: selected != null && selected != z.zone,
-                      onTap: () => onSelect(selected == z.zone ? null : z.zone),
-                    ),
-                  ),
+        // Una fila de zonas que se desliza: hace de filtro sin repetir las
+        // secciones de abajo con tarjetas enormes.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          child: Row(
+            children: [
+              _ZoneTile.all(
+                total: ZoneSummary(
+                  zone: KitchenZone.despensa,
+                  count: total,
+                  soon: zones.fold(0, (s, z) => s + z.soon),
+                  expired: zones.fold(0, (s, z) => s + z.expired),
+                ),
+                selected: selected == null,
+                onTap: () => onSelect(null),
+              ),
+              for (final z in visible) ...[
+                const SizedBox(width: AppSpacing.sm),
+                _ZoneTile(
+                  summary: z,
+                  selected: selected == z.zone,
+                  onTap: () => onSelect(selected == z.zone ? null : z.zone),
+                ),
               ],
-            );
-          },
+            ],
+          ),
         ),
       ],
     );
@@ -138,103 +124,107 @@ class KitchenZonesGrid extends StatelessWidget {
 
 class _ZoneTile extends StatelessWidget {
   const _ZoneTile({
-    required this.summary,
-    required this.shape,
+    required ZoneSummary this.summary,
     required this.selected,
-    required this.dimmed,
     required this.onTap,
-  });
+  }) : total = null;
 
-  final ZoneSummary summary;
-  final BorderRadius shape;
+  const _ZoneTile.all({
+    required ZoneSummary this.total,
+    required this.selected,
+    required this.onTap,
+  }) : summary = null;
+
+  /// Null en la tarjeta "Todo".
+  final ZoneSummary? summary;
+
+  /// Suma de todas las zonas, solo en la tarjeta "Todo".
+  final ZoneSummary? total;
   final bool selected;
-  final bool dimmed;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final s = KitchenZonesGrid.styleOf(summary.zone);
-    final alert = summary.expired > 0
+    final z = summary ?? total!;
+    final isAll = summary == null;
+    final s = isAll
+        ? (bg: AppColors.card, fg: AppColors.woodDark, icon: Icons.apps_rounded)
+        : KitchenZonesGrid.styleOf(z.zone);
+    final label = isAll ? 'Todo' : z.zone.label;
+    final count = z.count;
+    final alert = z.expired > 0
         ? (
-            '${summary.expired} caducado${summary.expired == 1 ? '' : 's'}',
-            AppColors.terracotta,
+            '${z.expired} caducado${z.expired == 1 ? '' : 's'}',
+            AppColors.expired,
           )
-        : summary.soon > 0
-        ? ('${summary.soon} caduca${summary.soon == 1 ? '' : 'n'} pronto', s.fg)
+        : z.soon > 0
+        ? ('${z.soon} caduca${z.soon == 1 ? '' : 'n'} pronto', AppColors.soon)
         : null;
 
     return Semantics(
       button: true,
       selected: selected,
-      label: '${summary.zone.label}: ${summary.count} productos',
-      child: AnimatedOpacity(
-        duration: AppMotion.fast,
-        opacity: dimmed ? 0.55 : 1,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: shape,
-            child: AnimatedContainer(
-              duration: AppMotion.fast,
-              height: 132,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: s.bg,
-                borderRadius: shape,
-                border: Border.all(
-                  color: selected ? s.fg : Colors.transparent,
-                  width: 2,
-                ),
+      label: '$label: $count productos',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: AnimatedContainer(
+            duration: AppMotion.fast,
+            width: 140,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: s.bg,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: selected ? s.fg : Colors.transparent,
+                width: 2,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          summary.zone.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                            color: AppColors.ink,
-                          ),
-                        ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(s.icon, color: s.fg, size: 20),
+                    const Spacer(),
+                    Text(
+                      '$count',
+                      style: TextStyle(
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontSize: 20,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                        color: s.fg,
                       ),
-                      Icon(s.icon, color: s.fg, size: 22),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${summary.count}',
-                    style: TextStyle(
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      fontSize: 34,
-                      letterSpacing: -0.6,
-                      height: 1,
-                      fontWeight: FontWeight.w900,
-                      color: s.fg,
                     ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: AppColors.ink,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    alert?.$1 ??
-                        (summary.count == 1 ? 'Producto' : 'Productos'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: alert == null
-                          ? FontWeight.w500
-                          : FontWeight.w800,
-                      color: alert?.$2 ?? AppColors.inkMuted,
-                    ),
+                ),
+                Text(
+                  alert?.$1 ?? 'Al día',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: alert == null
+                        ? FontWeight.w500
+                        : FontWeight.w800,
+                    color: alert?.$2 ?? AppColors.inkMuted,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
