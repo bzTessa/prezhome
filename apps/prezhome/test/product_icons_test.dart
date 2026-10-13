@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -50,5 +51,25 @@ void main() {
         reason: n,
       );
     }
+  });
+
+  test('clave de la foto genérica', () {
+    expect(ProductIcons.keyFor('2 Cebollas moradas'), 'cebolla');
+    expect(ProductIcons.keyFor('Judías verdes'), 'judia verde');
+    expect(ProductIcons.photoKeyFor('Patatas'), 'patata');
+    expect(ProductIcons.photoKeyFor('Quinoa'), 'quinoa');
+    expect(ProductIcons.photoKeyFor('500 g'), isNull);
+  });
+
+  test('la función product-image conoce todas las palabras clave', () {
+    final src = File('lib/widgets/product_icons.dart').readAsStringSync();
+    final keys = RegExp(
+      r"^\s+'([a-z ]+)': '[a-z_]+',",
+      multiLine: true,
+    ).allMatches(src).map((m) => m[1]).toList();
+    final json = File(
+      '../../supabase/functions/product-image/keywords.json',
+    ).readAsStringSync();
+    expect((jsonDecode(json) as List).cast<String>(), keys);
   });
 }

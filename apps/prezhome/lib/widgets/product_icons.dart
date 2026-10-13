@@ -327,8 +327,8 @@ class ProductIcons {
     ..._icons.entries.where((e) => !e.key.contains(' ')),
   ];
 
-  /// Dónde aparece la primera palabra clave que casa: (inicio, fin, icono).
-  static (int, int, String)? _find(List<String> tokens) {
+  /// Dónde aparece la primera palabra clave que casa: (inicio, fin, entrada).
+  static (int, int, MapEntry<String, String>)? _find(List<String> tokens) {
     for (final e in _ordered) {
       final parts = e.key.split(' ');
       for (var i = 0; i + parts.length <= tokens.length; i++) {
@@ -336,16 +336,36 @@ class ProductIcons {
         for (var j = 0; j < parts.length && all; j++) {
           all = _same(tokens[i + j], parts[j]);
         }
-        if (all) return (i, i + parts.length, e.value);
+        if (all) return (i, i + parts.length, e);
       }
     }
     return null;
   }
 
+  /// Palabra clave de [name] ("cebollas moradas" -> "cebolla"), o null. Es
+  /// también el nombre de su foto genérica (función `product-image`).
+  static String? keyFor(String name) {
+    return _find(_tokens(name))?.$3.key;
+  }
+
+  /// Nombre de [name] para pedir su foto genérica: su palabra clave si la
+  /// tiene; si no, el nombre limpio ("quinoa"). Null si es demasiado largo.
+  static String? photoKeyFor(String name) {
+    final key = keyFor(name);
+    if (key != null) return key;
+    final tokens = _tokens(
+      name,
+    ).where((t) => !_neutral.contains(t) && int.tryParse(t) == null).toList();
+    final clean = tokens.join(' ');
+    return tokens.isEmpty || tokens.length > 4 || clean.length > 40
+        ? null
+        : clean;
+  }
+
   /// Ruta del icono de [name], o null si no hay uno que lo represente.
   static String? assetFor(String name) {
     final hit = _find(_tokens(name));
-    return hit == null ? null : 'assets/icons/products/${hit.$3}.png';
+    return hit == null ? null : 'assets/icons/products/${hit.$3.value}.png';
   }
 
   /// Si [name] es un producto genérico ("cebollas", "leche entera"), sin

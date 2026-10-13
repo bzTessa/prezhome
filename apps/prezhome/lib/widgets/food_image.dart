@@ -66,8 +66,8 @@ class FoodImage extends StatelessWidget {
     this.fit = BoxFit.cover,
   });
 
-  /// Los productos genéricos (cebolla, leche...) llevan siempre su icono:
-  /// solo una foto de la persona pasa por delante.
+  /// En los productos genéricos (cebolla, leche...) no se enseña la foto de
+  /// un envase de OFF: va su foto genérica, la de la persona o el icono.
   bool get _hasPhoto =>
       !forceIllustration &&
       imageUrl != null &&
@@ -101,8 +101,12 @@ class FoodImage extends StatelessWidget {
     );
   }
 
-  /// Fotos de producto de Open Food Facts (envases).
-  bool get _isPackshot => (imageUrl ?? '').contains('openfoodfacts');
+  /// Fotos de producto sobre blanco: envases de Open Food Facts y fotos
+  /// genéricas (`product-image`). Se ven enteras, como en el súper online.
+  bool get _isPackshot {
+    final url = imageUrl ?? '';
+    return url.contains('openfoodfacts') || url.contains('/generic/');
+  }
 
   Widget _network(BoxFit boxFit, double w) {
     return LayoutBuilder(

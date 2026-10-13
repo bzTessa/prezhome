@@ -31,6 +31,7 @@ import 'widgets/animations/confetti.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/food_image.dart';
+import 'widgets/product_icons.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'widgets/product_search_sheet.dart';
@@ -650,6 +651,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               title: const Text('Elegir producto del súper'),
               onTap: () => Navigator.of(ctx).pop('store'),
             ),
+            if (ProductIcons.photoKeyFor(item.name) != null)
+              ListTile(
+                leading: Icon(Icons.image_outlined, color: AppColors.woodDark),
+                title: const Text('Generar foto'),
+                onTap: () => Navigator.of(ctx).pop('generate'),
+              ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Quitar de la lista'),
@@ -670,6 +677,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         break;
       case 'store':
         await _pickStoreProductPhoto(item);
+        break;
+      case 'generate':
+        await _generatePhoto(item);
         break;
       case 'delete':
         await _removeWithUndo([
@@ -727,6 +737,48 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo subir la foto')),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
+  /// Crea otra foto genérica del producto (sustituye la compartida).
+  Future<void> _generatePhoto(ShoppingListItem item) async {
+    if (item.id == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Creando la foto…'),
+        duration: Duration(seconds: 30),
+      ),
+    );
+    try {
+      final url = await ProductPhotoResolver(
+        _client,
+      ).genericPhoto(item.name, again: true);
+      messenger.hideCurrentSnackBar();
+      if (url == null) throw Exception('Sin foto');
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'image_url': url},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      final homeId = await _homeId();
+      await FoodPhotoService(
+        _client,
+      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
+      await _reload();
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, 'No se pudo crear la foto')),
           backgroundColor: AppColors.expired,
         ),
       );
