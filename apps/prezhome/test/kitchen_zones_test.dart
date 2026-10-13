@@ -30,6 +30,7 @@ InventoryItem _item(
 }
 
 void main() {
+  _dupes();
   final items = [
     _item('Leche', 'Nevera', expiresInDays: 1),
     _item('Yogur', 'Nevera', expiresInDays: -2),
@@ -75,11 +76,45 @@ void main() {
     );
     expect(find.text('6 productos'), findsOneWidget);
     expect(find.text('Bebidas'), findsNothing);
-    // La zona y la tarjeta "Todo" (que suma todas).
+    // La zona y la tarjeta "Revisar" (lo urgente de todas).
     expect(find.text('1 caducado'), findsNWidgets(2));
 
     await tester.tap(find.text('Congelador'));
     expect(picked, KitchenZone.congelador);
     expect(tester.takeException(), isNull);
   });
+}
+
+void _dupes() {
+  test(
+    'une los productos repetidos sumando y con la caducidad más próxima',
+    () {
+      final now = DateTime.now();
+      InventoryItem jamon(String id, double q, int days) =>
+          InventoryItem.fromMap({
+            'id': id,
+            'home_id': 'h',
+            'name': id == 'a' ? 'Jamón serrano' : 'jamon serrano',
+            'category': 'Nevera',
+            'item_type': 'comida',
+            'quantity': q,
+            'unit': 'g',
+            'kind': 'ingredient',
+            'expiration_date': now.add(Duration(days: days)).toIso8601String(),
+          });
+      final merges = findPantryDuplicates([
+        jamon('a', 100, 5),
+        jamon('b', 145, 2),
+        _item('Leche', 'Nevera'),
+      ]);
+      expect(merges, hasLength(1));
+      expect(merges.single.keep.id, 'a');
+      expect(merges.single.quantity, 245);
+      expect(merges.single.removeIds, ['b']);
+      expect(
+        merges.single.expirationDate!.day,
+        now.add(const Duration(days: 2)).day,
+      );
+    },
+  );
 }

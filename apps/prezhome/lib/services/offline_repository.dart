@@ -26,6 +26,7 @@
 /// que el remoto sea estrictamente más nuevo.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 
@@ -178,6 +179,12 @@ class OfflineRepository {
 
   /// Hogar activo.
   String get homeId => _homeId;
+
+  final _changes = StreamController<void>.broadcast();
+
+  /// Avisa de cada cambio local (también los hechos desde otra pantalla, p. ej.
+  /// la compra que pasa a la despensa) para que quien pinta la tabla repinte.
+  Stream<void> get changes => _changes.stream;
 
   /// Número de operaciones pendientes de sincronizar (tras cargar la cola).
   int get pendingCount => _queue.length;
@@ -335,6 +342,7 @@ class OfflineRepository {
       remoteTimestampKey: remoteTimestampKey,
     );
     await _persistCache(effective);
+    _changes.add(null);
 
     // Intento de drenado en segundo plano (idempotente, respeta el gate).
     await tryDrain();

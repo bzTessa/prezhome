@@ -5,8 +5,8 @@ import '../../theme/app_theme.dart';
 import '../../utils/kitchen_zones.dart';
 
 /// "Mi cocina": una fila deslizable de zonas (nevera, congelador, despensa…)
-/// con cuántos productos hay y cuántos caducan. Tocar una zona la filtra;
-/// tocarla de nuevo (o "Todo") quita el filtro.
+/// que funciona como pestañas: debajo solo se ve la zona elegida. Si algo
+/// caduca, la primera es "Revisar", con lo urgente de todas las zonas.
 class KitchenZonesGrid extends StatelessWidget {
   const KitchenZonesGrid({
     super.key,
@@ -18,7 +18,7 @@ class KitchenZonesGrid extends StatelessWidget {
 
   final List<ZoneSummary> zones;
 
-  /// Zona filtrada o null si se ve todo.
+  /// Zona elegida, o null para "Revisar" (lo que caduca, de todas las zonas).
   final KitchenZone? selected;
   final ValueChanged<KitchenZone?> onSelect;
 
@@ -63,6 +63,12 @@ class KitchenZonesGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = zones.fold<int>(0, (s, z) => s + z.count);
     final visible = zones.where((z) => z.count > 0 || z.zone == selected);
+    final urgent = ZoneSummary(
+      zone: KitchenZone.despensa,
+      count: zones.fold(0, (s, z) => s + z.soon + z.expired),
+      soon: zones.fold(0, (s, z) => s + z.soon),
+      expired: zones.fold(0, (s, z) => s + z.expired),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -96,23 +102,21 @@ class KitchenZonesGrid extends StatelessWidget {
           clipBehavior: Clip.none,
           child: Row(
             children: [
-              _ZoneTile.all(
-                total: ZoneSummary(
-                  zone: KitchenZone.despensa,
-                  count: total,
-                  soon: zones.fold(0, (s, z) => s + z.soon),
-                  expired: zones.fold(0, (s, z) => s + z.expired),
+              if (urgent.expired + urgent.soon > 0) ...[
+                _ZoneTile.all(
+                  total: urgent,
+                  selected: selected == null,
+                  onTap: () => onSelect(null),
                 ),
-                selected: selected == null,
-                onTap: () => onSelect(null),
-              ),
-              for (final z in visible) ...[
                 const SizedBox(width: AppSpacing.sm),
+              ],
+              for (final z in visible) ...[
                 _ZoneTile(
                   summary: z,
                   selected: selected == z.zone,
-                  onTap: () => onSelect(selected == z.zone ? null : z.zone),
+                  onTap: () => onSelect(z.zone),
                 ),
+                const SizedBox(width: AppSpacing.sm),
               ],
             ],
           ),
@@ -135,10 +139,10 @@ class _ZoneTile extends StatelessWidget {
     required this.onTap,
   }) : summary = null;
 
-  /// Null en la tarjeta "Todo".
+  /// Null en la tarjeta "Revisar".
   final ZoneSummary? summary;
 
-  /// Suma de todas las zonas, solo en la tarjeta "Todo".
+  /// Lo urgente de todas las zonas, solo en la tarjeta "Revisar".
   final ZoneSummary? total;
   final bool selected;
   final VoidCallback onTap;
@@ -148,9 +152,13 @@ class _ZoneTile extends StatelessWidget {
     final z = summary ?? total!;
     final isAll = summary == null;
     final s = isAll
-        ? (bg: AppColors.card, fg: AppColors.woodDark, icon: Icons.apps_rounded)
+        ? (
+            bg: AppColors.expiredBg,
+            fg: AppColors.expired,
+            icon: Icons.notifications_active_rounded,
+          )
         : KitchenZonesGrid.styleOf(z.zone);
-    final label = isAll ? 'Todo' : z.zone.label;
+    final label = isAll ? 'Revisar' : z.zone.label;
     final count = z.count;
     final alert = z.expired > 0
         ? (

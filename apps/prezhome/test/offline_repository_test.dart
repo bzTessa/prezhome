@@ -161,6 +161,13 @@ void main() {
       final rows = await repo.readCached();
       expect(rows.map((r) => r['name']), contains('Pan'));
     });
+
+    test('avisa del cambio para que otras pantallas repinten', () async {
+      final repo = buildRepo(InMemoryLocalStore(), FakeRemoteSender());
+      final aviso = repo.changes.first;
+      await repo.applyLocalWrite(insertOp('tmp-1', {'name': 'Pan'}, 100));
+      await expectLater(aviso, completes);
+    });
   });
 
   group('applyLocalWrite offline (escritura optimista sin perder cambios)', () {

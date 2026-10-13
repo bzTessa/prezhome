@@ -25,7 +25,8 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   inicial. Nombres en español (p. ej. modos del plan).
 - Fotos de producto de Open Food Facts (se ven enteras, `contain` sobre
   blanco), no Unsplash. El usuario puede poner su foto.
-- Deshacer en vez de diálogos de confirmación. Háptica en acciones.
+- Eliminar pide confirmación ("¿Eliminar…?"); vaciar/quitar en bloque, además,
+  deshacer. Los avisos con acción llevan `persist: false`. Háptica en acciones.
 - Trabajar con autonomía y entregar en PR; respuestas en español.
 
 ## Mapa del código (`apps/prezhome/lib`)
@@ -33,8 +34,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (se desliza el dedo para cambiar). Pestañas en `tabs/`.
 - Diseño: `theme/` (`AppColors`, `AppTextStyles` Plus Jakarta Sans,
   `AppRadius`, `AppSpacing`, `AppMotion`). Modo oscuro: `AppColors` son
-  getters claro/oscuro según `AppColors.dark`, que fija `main.dart` con el
-  brillo del sistema (no usar `const` con `AppColors`; nada de `Colors.white`
+  getters claro/oscuro según `AppColors.dark`, que fija `main.dart` según
+  `theme/theme_preference.dart` (claro por defecto; Claro/Oscuro/Sistema en
+  Hogar y ajustes; sin sesión, siempre claro) (no usar `const` con `AppColors`; nada de `Colors.white`
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
 - Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
@@ -52,7 +54,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Las fotos de OFF se comparten entre hogares en `product_photo_shared` (solo
   URLs de OFF; las de galería no salen del hogar).
 - Chips: el seleccionado va en `AppColors.wood` con texto en tinta (tema).
-- Despensa: `inventory_screen.dart`, `services/shelf_life.dart`
+- Despensa ("Mi cocina"): `inventory_screen.dart` (zonas como pestañas +
+  "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta
+  con `OfflineRepository.changes`), `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
   Especias, Bebidas, Limpieza, Hogar).
 - Plan de comidas: `meal_plan_screen.dart`, `services/meal_planner.dart`,

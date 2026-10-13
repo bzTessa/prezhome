@@ -1624,6 +1624,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
+          // Con acción Flutter la deja fija; que se vaya sola.
+          persist: false,
           action: SnackBarAction(
             label: 'Deshacer',
             onPressed: () => _restore(targets),

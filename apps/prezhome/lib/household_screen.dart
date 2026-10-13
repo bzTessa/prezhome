@@ -11,6 +11,7 @@ import 'nutrition_profile_screen.dart';
 import 'home_session_screen.dart';
 import 'login_screen.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_preference.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 
@@ -536,7 +537,33 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 'Hogar y ajustes',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
+              const Text(
+                'Apariencia',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              ValueListenableBuilder(
+                valueListenable: ThemePreference.mode,
+                builder: (context, mode, _) => SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<AppThemeMode>(
+                    showSelectedIcon: false,
+                    segments: [
+                      for (final m in AppThemeMode.values)
+                        ButtonSegment(value: m, label: Text(m.label)),
+                    ],
+                    selected: {mode},
+                    onSelectionChanged: (s) => ThemePreference.set(s.first),
+                    style: SegmentedButton.styleFrom(
+                      selectedBackgroundColor: AppColors.wood,
+                      selectedForegroundColor: AppColors.ink,
+                      foregroundColor: AppColors.ink,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               // Economía (presupuesto/gastos + puntos) es la pieza ligada al
               // "Modo Puntos": solo se muestra si el módulo está activado. El
               // resto de la tarjeta (Mi perfil nutricional, etc.) permanece.
