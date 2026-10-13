@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,74 +15,13 @@ import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/list_skeleton.dart';
 import 'utils/offline_actions.dart';
-import 'widgets/animations/staggered_entrance.dart';
-import 'widgets/inventory_item_card.dart';
+import 'widgets/food_image.dart';
+import 'utils/shopping_display.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
 import 'discover_recipes_screen.dart';
-
-/// Una sección del inventario agrupada por ubicación (Nevera, Congelador,
-/// Despensa, Bebidas, Especias o Hogar y limpieza). Agrupa los items y lleva su
-/// presentación (icono + título) para pintar la cabecera.
-class _InventorySection {
-  final String title;
-  final IconData icon;
-  final bool isFood;
-  final List<InventoryItem> items;
-
-  const _InventorySection({
-    required this.title,
-    required this.icon,
-    required this.isFood,
-    required this.items,
-  });
-
-  /// Par de colores cozy (fondo suave + icono) para la pastilla de la cabecera,
-  /// de forma que cada ubicación tenga su propio tono y la vista "entre por los
-  /// ojos" sin recargar. Todos salen de AppColors.
-  (Color, Color) get accent {
-    switch (title) {
-      case 'Nevera':
-        return (AppColors.frostBg, AppColors.frost);
-      case 'Congelador':
-        return (AppColors.frostBg, AppColors.frost);
-      case 'Bebidas':
-        return (AppColors.sageBg, AppColors.sage);
-      case 'Especias y condimentos':
-        return (AppColors.terracottaBg, AppColors.terracotta);
-      case 'Hogar y limpieza':
-        return (AppColors.sageBg, AppColors.sage);
-      default:
-        return (AppColors.peachBg, AppColors.peach);
-    }
-  }
-
-  /// Clave estable para recordar el estado expandido/colapsado entre rebuilds.
-  String get key => title;
-
-  int get frescos =>
-      items.where((i) => i.expiryStatus == ExpiryStatus.fresco).length;
-  int get pronto =>
-      items.where((i) => i.expiryStatus == ExpiryStatus.pronto).length;
-  int get caducados =>
-      items.where((i) => i.expiryStatus == ExpiryStatus.caducado).length;
-
-  /// Secciones "tranquilas" que arrancan colapsadas aunque no tengan urgencias:
-  /// condimentos y hogar no suelen caducar y abultan el scroll.
-  bool get isCalmByDefault =>
-      title == 'Especias y condimentos' || title == 'Hogar y limpieza';
-
-  /// Apertura inteligente (NN/g: no esconder lo urgente). Una sección arranca
-  /// EXPANDIDA si contiene algún item que caduca pronto o ya caducado; en caso
-  /// contrario, y siempre para las secciones tranquilas, arranca COLAPSADA.
-  bool get defaultExpanded {
-    if (isCalmByDefault) return false;
-    if (!isFood) return false;
-    return pronto > 0 || caducados > 0;
-  }
-}
 
 class InventoryScreen extends StatefulWidget {
   final bool embedded;
@@ -104,14 +45,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
   // Contador monótono para encolar/identificar ops de forma estable.
   int _opSeq = 0;
 
-  // Filtro por sección: 'todo' | 'Nevera' | 'Congelador' | 'Despensa' |
-  // 'Bebidas' | 'Especias' | 'Hogar'. Se aplica en cliente sobre la lista ya
-  // cargada.
-  String _sectionFilter = 'todo';
+  // Zona que se ve: filterKey de [KitchenZone], 'revisar' (lo que caduca, de
+  // todas las zonas) o null hasta que se elige (primera zona con productos).
+  String? _sectionFilter;
 
-  // Overrides manuales de expandido/colapsado por sección (clave = título). Lo
-  // que la usuaria toca manda sobre la apertura inteligente por defecto.
-  final Map<String, bool> _expandedOverrides = {};
+  StreamSubscription<void>? _changesSub;
 
   @override
   void initState() {
@@ -120,6 +58,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
     // refrescamos desde Supabase (que, al llegar, reemplaza la lista).
     _itemsFuture = _loadFromCache();
     _refreshFromRemote();
+    // Lo comprado en la lista entra por el mismo repositorio: repintamos al
+    // momento aunque esta pestaña ya estuviera abierta.
+    _changesSub = _repo.changes.listen((_) async {
+      final items = _rowsToItems(await _repo.readCached());
+      if (!mounted) return;
+      setState(() {
+        _itemsFuture = Future.value(items);
+        _pendingCount = _repo.pendingCount;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _changesSub?.cancel();
+    super.dispose();
   }
 
   /// Siguiente número de secuencia para encolar/identificar ops de forma
@@ -169,7 +123,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Future<void> _refreshFromRemote() async {
     try {
       final rows = await _repo.refreshFromRemote();
-      final items = _rowsToItems(rows);
+      var items = _rowsToItems(rows);
+      if (await _mergeDuplicates(items)) {
+        items = _rowsToItems(await _repo.readCached());
+      }
       if (!mounted) return;
       final pending = _repo.pendingCount;
       setState(() {
@@ -179,6 +136,40 @@ class _InventoryScreenState extends State<InventoryScreen> {
     } catch (_) {
       // Sin conexión: conservamos lo pintado desde la caché.
     }
+  }
+
+  /// Une los productos repetidos (p. ej. el mismo jamón comprado tres veces)
+  /// en uno solo con la cantidad sumada. Devuelve si cambió algo.
+  Future<bool> _mergeDuplicates(List<InventoryItem> items) async {
+    final merges = findPantryDuplicates(items);
+    for (final m in merges) {
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: m.keep.id,
+          changes: {
+            'quantity': m.quantity,
+            'expiration_date': m.expirationDate
+                ?.toIso8601String()
+                .split('T')
+                .first,
+          },
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      for (final id in m.removeIds) {
+        await _repo.applyLocalWrite(
+          buildDeleteOp(
+            table: kInventoryTable,
+            id: id,
+            nowMillis: DateTime.now().millisecondsSinceEpoch,
+            seq: _nextSeq(),
+          ),
+        );
+      }
+    }
+    return merges.isNotEmpty;
   }
 
   /// Recarga tras una escritura optimista: repinta al instante desde la caché y
@@ -408,6 +399,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('He añadido ${item.name} a la compra'),
+        // Con acción Flutter la deja fija; que se vaya sola.
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () => _undoRestock(
@@ -630,11 +623,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
             );
           }
 
-          // Filtrado en cliente por sección (ubicación / tipo).
-          final filtered = _sectionFilter == 'todo'
-              ? items
-              : items.where(_matchesSectionFilter).toList();
-
           return Column(
             children: [
               // Indicador discreto de "cambios por sincronizar": aparece solo
@@ -649,10 +637,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                   child: PendingSyncIndicator(pendingCount: _pendingCount),
                 ),
-              // El dashboard recibe SIEMPRE la lista COMPLETA (sin filtrar): es
-              // un resumen GLOBAL de toda la despensa que no debe encogerse al
-              // tocar un chip. Las secciones de abajo sí usan la lista filtrada.
-              Expanded(child: _buildSections(filtered, allItems: items)),
+              Expanded(child: _buildKitchen(items)),
             ],
           );
         },
@@ -660,203 +645,43 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  /// ¿El item encaja con el filtro de sección seleccionado?
-  bool _matchesSectionFilter(InventoryItem i) {
-    switch (_sectionFilter) {
-      case 'Hogar':
-        return i.itemType != 'comida';
-      case 'Nevera':
-        return i.itemType == 'comida' && i.category == 'Nevera';
-      case 'Congelador':
-        return i.itemType == 'comida' && i.category == 'Congelador';
-      case 'Especias':
-        return i.itemType == 'comida' && i.category == 'Especias';
-      case 'Bebidas':
-        return i.itemType == 'comida' && i.category == 'Bebidas';
-      case 'Despensa':
-        return i.itemType == 'comida' &&
-            i.category != 'Nevera' &&
-            i.category != 'Congelador' &&
-            i.category != 'Especias' &&
-            i.category != 'Bebidas';
-      default:
-        return true;
-    }
-  }
+  static bool _tracksExpiry(InventoryItem i) =>
+      i.itemType == 'comida' && i.category != 'Especias';
 
-  /// Agrupa la lista por ubicación en secciones de orden fijo:
-  /// Nevera, Congelador, Despensa, Bebidas, Especias y, al final, Hogar y
-  /// limpieza.
-  List<_InventorySection> _groupIntoSections(List<InventoryItem> items) {
-    // Las comidas se agrupan por su ubicación (category). El resto (hogar) va
-    // a una sección propia porque no tiene caducidad.
-    final nevera = <InventoryItem>[];
-    final congelador = <InventoryItem>[];
-    final despensa = <InventoryItem>[];
-    final especias = <InventoryItem>[];
-    final bebidas = <InventoryItem>[];
-    final hogar = <InventoryItem>[];
+  static bool _isUrgent(InventoryItem i) =>
+      _tracksExpiry(i) &&
+      (i.expiryStatus == ExpiryStatus.caducado ||
+          i.expiryStatus == ExpiryStatus.pronto);
 
-    for (final item in items) {
-      if (item.itemType != 'comida') {
-        hogar.add(item);
-        continue;
-      }
-      switch (item.category) {
-        case 'Nevera':
-          nevera.add(item);
-          break;
-        case 'Congelador':
-          congelador.add(item);
-          break;
-        case 'Despensa':
-          despensa.add(item);
-          break;
-        case 'Especias':
-          especias.add(item);
-          break;
-        case 'Bebidas':
-          bebidas.add(item);
-          break;
-        default:
-          // Cualquier otra ubicación de comida se trata como despensa.
-          despensa.add(item);
-      }
-    }
-
-    // Dentro de cada sección de comida ordenamos por caducidad más próxima;
-    // los que no tienen fecha quedan al final (orden estable para el resto).
-    void sortByExpiry(List<InventoryItem> list) {
-      list.sort((a, b) {
-        final da = a.daysUntilExpiry;
-        final db = b.daysUntilExpiry;
-        if (da == null && db == null) return 0;
+  /// Mi cocina: las zonas hacen de pestañas y debajo va SOLO la zona elegida,
+  /// en filas compactas. Así nada sale dos veces.
+  Widget _buildKitchen(List<InventoryItem> items) {
+    final zones = summarizeZones(items);
+    final review = _sectionFilter == 'revisar';
+    final zone = review
+        ? null
+        : KitchenZone.byFilterKey(_sectionFilter ?? '') ??
+              zones
+                  .firstWhere((z) => z.count > 0, orElse: () => zones.first)
+                  .zone;
+    final shown = items
+        .where((i) => review ? _isUrgent(i) : zone!.matches(i))
+        .toList();
+    if (zone == KitchenZone.especias || zone == KitchenZone.hogar) {
+      shown.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+    } else {
+      // Lo que antes caduca, arriba; lo que no tiene fecha, al final.
+      shown.sort((a, b) {
+        final da = a.daysUntilExpiry, db = b.daysUntilExpiry;
+        if (da == null && db == null) {
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        }
         if (da == null) return 1;
         if (db == null) return -1;
         return da.compareTo(db);
       });
-    }
-
-    sortByExpiry(nevera);
-    sortByExpiry(congelador);
-    sortByExpiry(despensa);
-    sortByExpiry(bebidas);
-    // Las especias no se ordenan por caducidad (no suele aplicar); las dejamos
-    // en su orden natural de llegada.
-
-    final sections = <_InventorySection>[
-      _InventorySection(
-        title: 'Nevera',
-        icon: Icons.kitchen,
-        isFood: true,
-        items: nevera,
-      ),
-      _InventorySection(
-        title: 'Congelador',
-        icon: Icons.ac_unit,
-        isFood: true,
-        items: congelador,
-      ),
-      _InventorySection(
-        title: 'Despensa',
-        icon: Icons.inventory_2,
-        isFood: true,
-        items: despensa,
-      ),
-      // Bebidas: agua, refrescos, zumos, leche, vino... Con semáforo de
-      // caducidad porque algunas (leche, zumo) sí caducan.
-      _InventorySection(
-        title: 'Bebidas',
-        icon: Icons.local_drink,
-        isFood: true,
-        items: bebidas,
-      ),
-      // Especias y condimentos: básicos que no caducan rápido ni van a la
-      // compra. Sin semáforo de caducidad (isFood: false) para no mostrar
-      // chips de "sin fecha" en algo que no lo necesita.
-      _InventorySection(
-        title: 'Especias y condimentos',
-        icon: Icons.grass,
-        isFood: false,
-        items: especias,
-      ),
-      _InventorySection(
-        title: 'Hogar y limpieza',
-        icon: Icons.cleaning_services,
-        isFood: false,
-        items: hogar,
-      ),
-    ];
-
-    // Solo mostramos secciones con contenido.
-    return sections.where((s) => s.items.isNotEmpty).toList();
-  }
-
-  Widget _buildSections(
-    List<InventoryItem> items, {
-    required List<InventoryItem> allItems,
-  }) {
-    final sections = _groupIntoSections(items);
-
-    // El dashboard es un resumen GLOBAL: se calcula SIEMPRE sobre toda la
-    // despensa (allItems, antes de filtrar), por eso sigue presente aunque la
-    // sección filtrada esté vacía. Debajo pintamos solo las secciones filtradas.
-    final children = <Widget>[
-      KitchenZonesGrid(
-        zones: summarizeZones(allItems),
-        selected: KitchenZone.byFilterKey(_sectionFilter),
-        onSelect: (zone) => setState(() {
-          _sectionFilter = zone?.filterKey ?? 'todo';
-          _expandedOverrides.clear();
-        }),
-        trailing: _cleanupMenu(items),
-      ),
-      const SizedBox(height: AppSpacing.md),
-      // Al revés que el plan: ideas de recetas con lo que ya hay.
-      FilledButton.tonalIcon(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
-          ),
-        ),
-        icon: const Icon(Icons.soup_kitchen_outlined),
-        label: const Text('¿Qué cocino con esto?'),
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(48),
-          backgroundColor: AppColors.wood.withValues(alpha: 0.45),
-          foregroundColor: AppColors.ink,
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-      ),
-      const SizedBox(height: 16),
-    ];
-
-    if (items.isEmpty) {
-      children.add(
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Center(
-            child: Text(
-              'No hay productos en esta categoría.',
-              style: TextStyle(color: AppColors.ink, fontSize: 15),
-            ),
-          ),
-        ),
-      );
-      return ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          96,
-        ),
-        children: children,
-      );
-    }
-
-    for (final section in sections) {
-      children.add(_sectionCard(section));
-      children.add(const SizedBox(height: 14));
     }
 
     return ListView(
@@ -864,31 +689,187 @@ class _InventoryScreenState extends State<InventoryScreen> {
         AppSpacing.lg,
         AppSpacing.lg,
         AppSpacing.lg,
-        96,
+        112,
       ),
-      children: children,
+      children: [
+        KitchenZonesGrid(
+          zones: zones,
+          selected: zone,
+          onSelect: (z) {
+            HapticFeedback.selectionClick();
+            setState(() => _sectionFilter = z?.filterKey ?? 'revisar');
+          },
+          trailing: _cleanupMenu(items, zone),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        // Al revés que el plan: ideas de recetas con lo que ya hay.
+        FilledButton.tonalIcon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+            ),
+          ),
+          icon: const Icon(Icons.soup_kitchen_outlined, size: 20),
+          label: const Text('¿Qué cocino con esto?'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(44),
+            backgroundColor: AppColors.wood.withValues(alpha: 0.35),
+            foregroundColor: AppColors.ink,
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.sm),
+          child: Text(
+            review
+                ? 'Caducados y a punto de caducar'
+                : '${zone!.label} · ${shown.length}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.inkMuted,
+            ),
+          ),
+        ),
+        if (shown.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 32),
+            child: Text(
+              'Aquí no hay nada.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.inkMuted),
+            ),
+          )
+        else
+          Container(
+            decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                for (var k = 0; k < shown.length; k++) ...[
+                  if (k > 0)
+                    Divider(height: 1, indent: 76, color: AppColors.line),
+                  _itemRow(shown[k], showZone: review),
+                ],
+              ],
+            ),
+          ),
+      ],
     );
   }
 
-  /// Menú de limpieza: quitar lo caducado o vaciar lo que se ve (todo o la
-  /// zona filtrada). [visible] es la lista ya filtrada.
-  Widget _cleanupMenu(List<InventoryItem> visible) {
-    final expired = visible
-        .where((i) => i.expiryStatus == ExpiryStatus.caducado)
+  /// Fila de producto: foto, nombre, cantidad y, si caduca, cuándo.
+  Widget _itemRow(InventoryItem item, {required bool showZone}) {
+    final days = _tracksExpiry(item) ? item.daysUntilExpiry : null;
+    final (String, Color)? expiry = switch (days) {
+      null => null,
+      < -1 => ('Caducó hace ${-days} días', AppColors.expired),
+      -1 => ('Caducó ayer', AppColors.expired),
+      0 => ('Caduca hoy', AppColors.expired),
+      1 => ('Caduca mañana', AppColors.soon),
+      <= 3 => ('Caduca en $days días', AppColors.soon),
+      _ => ('$days días', AppColors.fresh),
+    };
+    final zoneLabel = showZone
+        ? KitchenZone.values.firstWhere((z) => z.matches(item)).label
+        : null;
+    final subtitle = [
+      inventoryQtyLabel(item.quantity, item.unit),
+      ?zoneLabel,
+      if (item.isStaple) 'No se compra',
+    ].where((t) => t.isNotEmpty).join(' · ');
+
+    return InkWell(
+      onTap: () => _openItemActions(item),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: Row(
+          children: [
+            FoodImage(
+              name: item.name,
+              itemType: item.itemType,
+              imageUrl: item.imageUrl,
+              size: 52,
+              radius: 14,
+              forceIllustration: item.category == 'Especias',
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shoppingCleanName(item.name),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  if (subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (expiry != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: expiry.$2.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  expiry.$1,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: expiry.$2,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Menú de limpieza: quitar lo caducado (de toda la cocina), vaciar la zona
+  /// que se ve o vaciarlo todo. Vaciar pide confirmación.
+  Widget _cleanupMenu(List<InventoryItem> all, KitchenZone? zone) {
+    final expired = all
+        .where(
+          (i) => _tracksExpiry(i) && i.expiryStatus == ExpiryStatus.caducado,
+        )
         .toList();
-    final zone = KitchenZone.byFilterKey(_sectionFilter);
+    final inZone = zone == null
+        ? <InventoryItem>[]
+        : all.where(zone.matches).toList();
     return PopupMenuButton<String>(
       tooltip: 'Más opciones',
       icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
       color: AppColors.card,
-      onSelected: (v) => v == 'expired'
-          ? _deleteMany(
-              expired,
-              done: expired.length == 1
-                  ? 'Caducado eliminado'
-                  : '${expired.length} caducados eliminados',
-            )
-          : _confirmEmpty(visible, zone),
+      onSelected: (v) => switch (v) {
+        'expired' => _deleteMany(
+          expired,
+          done: expired.length == 1
+              ? 'Caducado eliminado'
+              : '${expired.length} caducados eliminados',
+        ),
+        'zone' => _confirmEmpty(inZone, zone!.label),
+        _ => _confirmEmpty(all, 'Mi cocina'),
+      },
       itemBuilder: (_) => [
         PopupMenuItem(
           value: 'expired',
@@ -899,11 +880,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 : 'Eliminar caducados (${expired.length})',
           ),
         ),
+        if (inZone.isNotEmpty)
+          PopupMenuItem(
+            value: 'zone',
+            child: Text(
+              'Vaciar ${zone!.label}',
+              style: TextStyle(color: AppColors.expired),
+            ),
+          ),
         PopupMenuItem(
           value: 'all',
-          enabled: visible.isNotEmpty,
           child: Text(
-            zone == null ? 'Vaciar Mi cocina' : 'Vaciar ${zone.label}',
+            'Vaciar Mi cocina',
             style: TextStyle(color: AppColors.expired),
           ),
         ),
@@ -911,11 +899,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Future<void> _confirmEmpty(
-    List<InventoryItem> items,
-    KitchenZone? zone,
-  ) async {
-    final where = zone == null ? 'Mi cocina' : zone.label;
+  Future<void> _confirmEmpty(List<InventoryItem> items, String where) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -937,8 +921,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ],
       ),
     );
-    if (ok == true)
+    if (ok == true) {
       await _deleteMany(items, done: '${items.length} productos eliminados');
+    }
   }
 
   /// Borra [items] de forma optimista y ofrece deshacer (los vuelve a crear).
@@ -959,12 +944,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ),
         );
       }
-      if (_sectionFilter != 'todo') _sectionFilter = 'todo';
       await _reload();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(done),
+          // Con acción Flutter la deja fija; que se vaya sola.
+          persist: false,
           action: SnackBarAction(
             label: 'Deshacer',
             onPressed: () async {
@@ -985,224 +971,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       );
     }
-  }
-
-  /// ¿Está la sección expandida? Si el usuario la tocó manualmente respetamos
-  /// su decisión; si no, aplicamos la apertura inteligente por defecto. Cuando
-  /// hay un filtro de sección activo (distinto de 'todo'), la sección mostrada
-  /// se fuerza a expandida para que no quede escondida.
-  bool _isExpanded(_InventorySection section) {
-    final override = _expandedOverrides[section.key];
-    if (override != null) return override;
-    if (_sectionFilter != 'todo') return true;
-    return section.defaultExpanded;
-  }
-
-  void _toggleSection(_InventorySection section) {
-    final current = _isExpanded(section);
-    setState(() {
-      _expandedOverrides[section.key] = !current;
-    });
-  }
-
-  /// Una sección = UNA tarjeta cozy colapsable: cabecera-toggle (icono + título
-  /// + contador + resumen compacto de estado + chevron) y, debajo, las filas de
-  /// producto separadas por divisores suaves. Reduce el ruido visual frente a
-  /// una tarjeta con sombra por producto.
-  Widget _sectionCard(_InventorySection section) {
-    final expanded = _isExpanded(section);
-    return Container(
-      decoration: AppTheme.surfaceDecoration(
-        radius: AppRadius.md,
-        elevation: expanded ? 1 : 0,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeader(section, expanded),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 220),
-            sizeCurve: Curves.easeInOut,
-            crossFadeState: expanded
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            firstChild: _sectionBody(section),
-            secondChild: const SizedBox(width: double.infinity),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Cuerpo de una sección: CUADRÍCULA de tarjetas de producto. Vive dentro del
-  /// ListView exterior de secciones, así que el grid usa shrinkWrap y desactiva
-  /// su propio scroll (el número de items por sección es acotado). En móvil se
-  /// pintan 2 columnas (ancho máximo por celda ~180).
-  Widget _sectionBody(_InventorySection section) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 180,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          // Alto para imagen cuadrada + nombre + cantidad + barra sin overflow.
-          childAspectRatio: 0.74,
-        ),
-        itemCount: section.items.length,
-        itemBuilder: (context, i) {
-          final item = section.items[i];
-          // Las especias son 'comida' pero no muestran caducidad (igual que no
-          // mostraban chip): sin barra. Hogar (isFood=false) tampoco.
-          final showExpiryBar = section.isFood && item.category != 'Especias';
-          return StaggeredEntrance(
-            index: i,
-            child: InventoryItemCard(
-              item: item,
-              showExpiryBar: showExpiryBar,
-              onTap: () => _openItemActions(item),
-              onLongPress: () => _openItemActions(item),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// Cabecera-toggle de la sección: actúa como botón para plegar/desplegar.
-  Widget _sectionHeader(_InventorySection section, bool expanded) {
-    final (accentBg, accentFg) = section.accent;
-    final showUrgencias =
-        section.isFood && (section.pronto > 0 || section.caducados > 0);
-    // En una sección de comida colapsada SIN urgencias, un sello verde de
-    // "Todo al día" tranquiliza: plegar no esconde nada que apremie.
-    final showTodoAlDia = section.isFood && !expanded && !showUrgencias;
-    return InkWell(
-      onTap: () => _toggleSection(section),
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: accentBg,
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(section.icon, color: accentFg, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          section.title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Contador en pastilla con el tono de la sección: más
-                      // legible que el "· N" pegado al título.
-                      _countPill(section.items.length, accentBg, accentFg),
-                    ],
-                  ),
-                  // Resumen compacto de estado para ver de un vistazo si una
-                  // sección colapsada esconde urgencias; si no las hay y está
-                  // plegada, un sello verde de tranquilidad.
-                  if (showUrgencias) ...[
-                    const SizedBox(height: 4),
-                    _miniStatusRow(section),
-                  ] else if (showTodoAlDia) ...[
-                    const SizedBox(height: 4),
-                    _miniStatusChip(
-                      'Todo al día',
-                      AppColors.freshBg,
-                      AppColors.fresh,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            AnimatedRotation(
-              turns: expanded ? 0.5 : 0,
-              duration: const Duration(milliseconds: 220),
-              child: Icon(
-                Icons.expand_more,
-                color: AppColors.woodDark,
-                size: 26,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Pastilla con el número de items de la sección, en el tono de la ubicación.
-  Widget _countPill(int count, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        '$count',
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: fg),
-      ),
-    );
-  }
-
-  /// Fila compacta de estado (pronto / caducados) para la cabecera de sección.
-  Widget _miniStatusRow(_InventorySection section) {
-    final chips = <Widget>[];
-    if (section.caducados > 0) {
-      chips.add(
-        _miniStatusChip(
-          '${section.caducados} caducados',
-          AppColors.expiredBg,
-          AppColors.expired,
-        ),
-      );
-    }
-    if (section.pronto > 0) {
-      chips.add(
-        _miniStatusChip(
-          '${section.pronto} caducan pronto',
-          AppColors.soonBg,
-          AppColors.soon,
-        ),
-      );
-    }
-    return Wrap(spacing: 6, runSpacing: 4, children: chips);
-  }
-
-  Widget _miniStatusChip(String text, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
-      ),
-    );
   }
 
   /// Menú de acciones de un producto (pulsación larga o toque): marcar/quitar
@@ -1288,7 +1056,30 @@ class _InventoryScreenState extends State<InventoryScreen> {
     } else if (action == 'depleted') {
       await _markDepleted(item);
     } else if (action == 'delete') {
-      await _deleteItem(item);
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('¿Eliminar ${shoppingCleanName(item.name)}?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.expired,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        ),
+      );
+      if (ok == true) {
+        HapticFeedback.mediumImpact();
+        await _deleteItem(item);
+      }
     }
   }
 }

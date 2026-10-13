@@ -25,37 +25,12 @@ void main() {
       expect(despensa, lessThan(ids.length));
     });
 
-    test('con Tareas desactivado desaparece su pestaña y quedan 4', () {
-      final prefs = DashboardPrefs.defaults().copyWith(
-        enabledModules: {HomeModule.points, HomeModule.batchCooking},
-      );
-      final ids = computeVisibleTabIds(prefs);
-      expect(ids, [TabId.inicio, TabId.comidas, TabId.compra, TabId.despensa]);
-      expect(ids, isNot(contains(TabId.tareas)));
-    });
-
-    test(
-      'sin Tareas, Inicio sigue siendo el arranque y Despensa sigue válido',
-      () {
-        final prefs = DashboardPrefs.defaults().copyWith(
-          enabledModules: <HomeModule>{},
-        );
-        final ids = computeVisibleTabIds(prefs);
-        // Inicio presente para arrancar ahí (índice recalculado, no 2 fijo).
-        expect(ids.contains(TabId.inicio), isTrue);
-        // Despensa presente para 'Caducidades -> Despensa'.
-        final despensa = ids.indexOf(TabId.despensa);
-        expect(despensa, isNonNegative);
-        expect(despensa, lessThan(ids.length));
-      },
-    );
-
-    test('Tareas es la ÚNICA pestaña condicional', () {
-      // Sin ningún módulo activado solo falta Tareas; el resto permanece.
+    test('Tareas se ve aunque su módulo esté desactivado', () {
       final ids = computeVisibleTabIds(
         DashboardPrefs.defaults().copyWith(enabledModules: <HomeModule>{}),
       );
-      expect(ids, [TabId.inicio, TabId.comidas, TabId.compra, TabId.despensa]);
+      expect(ids.last, TabId.tareas);
+      expect(ids.indexOf(TabId.inicio), 0);
     });
   });
 }

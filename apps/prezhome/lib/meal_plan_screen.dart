@@ -290,6 +290,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 ? 'Plan listo. Ya tienes en casa todo lo que necesitas'
                 : 'Plan listo. Lista de la compra con ${added.length} productos',
           ),
+          persist: false,
           action: added.isEmpty
               ? null
               : SnackBarAction(

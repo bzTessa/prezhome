@@ -11,9 +11,9 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 | `screens` | 29 |
 | `services` | 29 |
 | `tabs` | 3 |
-| `theme` | 6 |
-| `utils` | 16 |
-| `widgets` | 20 |
+| `theme` | 7 |
+| `utils` | 15 |
+| `widgets` | 19 |
 
 ## Dependencias entre módulos
 
@@ -22,7 +22,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `screens` -> `models`, `onboarding`, `screens`, `services`, `tabs`, `theme`, `utils`, `widgets`
 - `services` -> `models`, `services`, `utils`, `widgets`
 - `tabs` -> `models`, `screens`, `services`, `theme`, `utils`, `widgets`
-- `theme` -> `theme`
+- `theme` -> `services`, `theme`
 - `utils` -> `models`, `services`, `widgets`
 - `widgets` -> `models`, `services`, `theme`, `utils`, `widgets`
 
@@ -31,9 +31,9 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `screens` -> `models`: 49
 - `screens` -> `widgets`: 48
 - `screens` -> `services`: 47
-- `screens` -> `utils`: 40
-- `screens` -> `theme`: 29
-- `widgets` -> `theme`: 26
+- `screens` -> `utils`: 41
+- `screens` -> `theme`: 32
+- `widgets` -> `theme`: 24
 - `tabs` -> `screens`: 15
 - `services` -> `models`: 9
 - `tabs` -> `widgets`: 8
@@ -44,19 +44,20 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `screens` -> `tabs`: 3
 - `tabs` -> `services`: 3
 - `tabs` -> `theme`: 3
-- `utils` -> `models`: 3
-- `widgets` -> `models`: 3
-- `widgets` -> `utils`: 3
+- `utils` -> `widgets`: 3
 - `models` -> `utils`: 2
 - `onboarding` -> `models`: 2
-- `utils` -> `widgets`: 2
+- `utils` -> `models`: 2
+- `widgets` -> `models`: 2
 - `widgets` -> `services`: 2
 - `onboarding` -> `screens`: 1
 - `onboarding` -> `services`: 1
 - `onboarding` -> `widgets`: 1
 - `screens` -> `onboarding`: 1
 - `tabs` -> `utils`: 1
+- `theme` -> `services`: 1
 - `utils` -> `services`: 1
+- `widgets` -> `utils`: 1
 
 ## Ciclos detectados
 
@@ -71,6 +72,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `services` -> `services`
 - `services` -> `utils` -> `services`
 - `services` -> `widgets` -> `services`
+- `services` -> `widgets` -> `theme` -> `services`
 - `services` -> `widgets` -> `utils` -> `services`
 - `theme` -> `theme`
 - `widgets` -> `widgets`

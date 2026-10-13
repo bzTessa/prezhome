@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -5,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_session_screen.dart';
 import 'services/offline_provider.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_preference.dart';
 import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
@@ -15,6 +18,7 @@ Future<void> main() async {
     publishableKey: 'sb_publishable_9bsI8HUy7IlctmudvIljtg_zxZmKoAu',
   );
 
+  await ThemePreference.load();
   runApp(const PrezHomeApp());
 }
 
@@ -25,26 +29,39 @@ class PrezHomeApp extends StatefulWidget {
   State<PrezHomeApp> createState() => _PrezHomeAppState();
 }
 
-/// Sigue el modo claro/oscuro del sistema. La paleta ([AppColors]) se lee al
-/// construir cada widget, así que al cambiar se reconstruye todo el árbol
-/// (como hace hot reload) sin perder el estado de las pantallas.
+/// Aplica la apariencia elegida en Ajustes (clara por defecto). Sin sesión
+/// (bienvenida y registro) va siempre en claro. La paleta ([AppColors]) se lee
+/// al construir cada widget, así que al cambiar se reconstruye todo el árbol
+/// sin perder el estado de las pantallas.
 class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
+  late final StreamSubscription<AuthState> _authSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ThemePreference.mode.addListener(_applyTheme);
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen(
+      (_) => _applyTheme(),
+    );
     _syncBrightness();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    ThemePreference.mode.removeListener(_applyTheme);
+    _authSub.cancel();
     super.dispose();
   }
 
   @override
-  void didChangePlatformBrightness() {
+  void didChangePlatformBrightness() => _applyTheme();
+
+  void _applyTheme() {
+    final before = AppColors.dark;
     _syncBrightness();
+    if (before == AppColors.dark || !mounted) return;
     setState(() {});
     void rebuild(Element e) {
       e.markNeedsBuild();
@@ -54,9 +71,13 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
     (context as Element).visitChildren(rebuild);
   }
 
-  void _syncBrightness() => AppColors.dark =
-      WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-      Brightness.dark;
+  void _syncBrightness() => AppColors.dark = ThemePreference.isDark(
+    mode: ThemePreference.mode.value,
+    systemDark:
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+        Brightness.dark,
+    forceLight: Supabase.instance.client.auth.currentSession == null,
+  );
 
   @override
   Widget build(BuildContext context) {

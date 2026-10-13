@@ -21,7 +21,7 @@ import 'services/onboarding_applier.dart';
 enum TabId { comidas, compra, despensa, inicio, tareas }
 
 /// Orden FIJO de pestañas candidatas (Hoy, Comida, Compra, Despensa, Tareas)
-/// filtrado por los módulos activados. La compra tiene pestaña propia (es lo
+/// (todas fijas). La compra tiene pestaña propia (es lo
 /// que más se usa); los ajustes del hogar se abren desde el perfil en Hoy.
 ///
 /// Nota Paso 5: batch_prep_timeline_screen añadirá aquí su TabId condicionado a
@@ -32,7 +32,9 @@ List<TabId> computeVisibleTabIds(DashboardPrefs prefs) {
     TabId.comidas,
     TabId.compra,
     TabId.despensa,
-    if (prefs.isModuleEnabled(HomeModule.tasks)) TabId.tareas,
+    // Tareas siempre visible: al ocultarse con el módulo parecía que se había
+    // borrado la sección.
+    TabId.tareas,
   ];
 }
 
