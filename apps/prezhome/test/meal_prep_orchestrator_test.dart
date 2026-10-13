@@ -102,10 +102,34 @@ void main() {
       expect(cocciones.last.appliance, 'pot');
     });
 
+    test('(4b) cada receta se prepara antes de ir a su aparato', () {
+      final plan = orquestador.buildTimeline(
+        recipes: const [arrozOlla, polloHorno, ensalada],
+      );
+      final titulos = plan.steps.map((s) => s.title).toList();
+      expect(
+        titulos.indexOf('Salpimenta el pollo'),
+        lessThan(titulos.indexOf('Enciende el horno para pollo asado')),
+      );
+      expect(
+        titulos.indexOf('Lava el arroz'),
+        lessThan(titulos.indexOf('Enciende la olla para arroz')),
+      );
+      // Lo primero (antes de encender nada) va en serie; el arroz se lava
+      // mientras el pollo está en el horno.
+      expect(plan.steps.first.canRunInParallel, isFalse);
+      expect(
+        plan.steps
+            .firstWhere((s) => s.title == 'Lava el arroz')
+            .canRunInParallel,
+        isTrue,
+      );
+    });
+
     test('(5) totalEstimatedMinutes refleja el solape (menor que la suma en '
         'serie)', () {
       final plan = orquestador.buildTimeline(
-        recipes: const [lasana, polloHorno],
+        recipes: const [polloHorno, ensalada],
       );
 
       // Suma ingenua en serie de todas las duraciones.
@@ -114,8 +138,9 @@ void main() {
         (s, step) => s + step.durationMinutes,
       );
       expect(plan.totalEstimatedMinutes, lessThan(sumaSerie));
-      // El bloque de cocción (50) sí cuenta; las preparaciones solapan y no.
-      expect(plan.totalEstimatedMinutes, 50);
+      // Preparar el pollo (10) va antes del horno (50); la ensalada se hace
+      // mientras el horno trabaja y no suma.
+      expect(plan.totalEstimatedMinutes, 60);
     });
 
     test('(5b) con preparación dominante el total NO baja del tiempo de prep '
@@ -133,9 +158,8 @@ void main() {
       );
       final plan = orquestador.buildTimeline(recipes: const [prepDominante]);
 
-      // Solo cabe solapar 10 min de prep dentro de la cocción; el resto va en
-      // serie. total = max(cocción 10, prep 60) = 60, nunca 10.
-      expect(plan.totalEstimatedMinutes, 60);
+      // La verdura se pica antes de ir a la olla: prep 60 + cocción 10.
+      expect(plan.totalEstimatedMinutes, 70);
       expect(plan.totalEstimatedMinutes, greaterThan(10));
     });
   });

@@ -2,13 +2,30 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'services/hands_free.dart';
 import 'theme/app_theme.dart';
+import 'utils/cook_voice.dart';
 import 'utils/recipe_steps.dart';
 
+/// Un paso del modo cocina. [note] dice para qué receta es o si va mientras
+/// otra cosa se hace (en tandas); [minutes] ofrece un temporizador.
+class CookStep {
+  const CookStep(this.text, {this.note, this.minutes});
+
+  /// Paso de una receta suelta: el temporizador sale del propio texto.
+  CookStep.fromText(String text) : this(text, minutes: stepTimerMinutes(text));
+
+  final String text;
+  final String? note;
+  final int? minutes;
+}
+
 /// Modo cocina: un paso por pantalla con letra grande, para seguir la receta
-/// con las manos ocupadas. Se pasa de paso deslizando o con los botones
-/// grandes de abajo. Si el paso menciona un tiempo, ofrece un temporizador.
+/// (o una tanda de varias) con las manos ocupadas. Se pasa de paso deslizando,
+/// con los botones grandes o, en manos libres, con la voz. Puede haber varios
+/// temporizadores a la vez (el horno y la olla), siempre visibles arriba.
 class CookModeScreen extends StatefulWidget {
   const CookModeScreen({
     super.key,
@@ -19,7 +36,7 @@ class CookModeScreen extends StatefulWidget {
   });
 
   final String title;
-  final List<String> steps;
+  final List<CookStep> steps;
 
   /// Ingredientes ya formateados ("200 g arroz").
   final List<String> ingredients;
@@ -36,21 +53,35 @@ class _CookModeScreenState extends State<CookModeScreen> {
   late int _page = widget.initialStep;
   final Set<int> _checkedIngredients = {};
 
-  Timer? _timer;
-  int? _timerStep;
-  Duration _left = Duration.zero;
+  /// Fin de cada temporizador en marcha, por paso. Con la hora de fin (y no
+  /// restando segundos) no se desfasa aunque la app pase a segundo plano.
+  final Map<int, DateTime> _timerEnds = {};
+  Timer? _ticker;
+
+  late final HandsFree _voice = HandsFree(onCommand: _onVoice);
+  bool _voiceOn = false;
 
   int get _total => widget.steps.length;
   bool get _isLast => _page >= _total - 1;
 
   @override
+  void initState() {
+    super.initState();
+    // Que la pantalla no se apague mientras se cocina.
+    WakelockPlus.enable().catchError((_) {});
+  }
+
+  @override
   void dispose() {
-    _timer?.cancel();
+    _ticker?.cancel();
+    if (_voiceOn) _voice.stop();
+    WakelockPlus.disable().catchError((_) {});
     _pages.dispose();
     super.dispose();
   }
 
   void _go(int page) {
+    if (page < 0 || page >= _total) return;
     _pages.animateToPage(
       page,
       duration: const Duration(milliseconds: 280),
@@ -58,52 +89,151 @@ class _CookModeScreenState extends State<CookModeScreen> {
     );
   }
 
-  void _startTimer(int step, int minutes) {
-    _timer?.cancel();
-    setState(() {
-      _timerStep = step;
-      _left = Duration(minutes: minutes);
-    });
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) return;
-      final next = _left - const Duration(seconds: 1);
-      if (next <= Duration.zero) {
-        t.cancel();
-        setState(() {
-          _left = Duration.zero;
-          _timerStep = null;
-        });
-        HapticFeedback.heavyImpact();
-        SystemSound.play(SystemSoundType.alert);
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Tiempo'),
-            content: Text('Ha terminado el temporizador del paso ${step + 1}.'),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Vale'),
-              ),
-            ],
-          ),
-        );
-      } else {
-        setState(() => _left = next);
-      }
-    });
+  void _onPageChanged(int p) {
+    setState(() => _page = p);
+    HapticFeedback.selectionClick();
+    if (_voiceOn) _voice.say(_spoken(p));
   }
 
-  void _stopTimer() {
-    _timer?.cancel();
-    setState(() => _timerStep = null);
+  String _spoken(int i) {
+    final s = widget.steps[i];
+    return [
+      'Paso ${i + 1}.',
+      if (s.note != null) '${s.note}.',
+      s.text,
+    ].join(' ');
+  }
+
+  // --- Temporizadores ---------------------------------------------------------
+
+  Duration _left(int step) {
+    final left = _timerEnds[step]!.difference(DateTime.now());
+    return left.isNegative ? Duration.zero : left;
+  }
+
+  void _startTimer(int step) {
+    final minutes = widget.steps[step].minutes;
+    if (minutes == null) return;
+    HapticFeedback.mediumImpact();
+    setState(
+      () => _timerEnds[step] = DateTime.now().add(Duration(minutes: minutes)),
+    );
+    _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _stopTimer(int step) {
+    setState(() => _timerEnds.remove(step));
+    if (_timerEnds.isEmpty) {
+      _ticker?.cancel();
+      _ticker = null;
+    }
+  }
+
+  void _tick() {
+    if (!mounted) return;
+    final done = [
+      for (final s in _timerEnds.keys)
+        if (_left(s) == Duration.zero) s,
+    ];
+    setState(() {});
+    for (final s in done) {
+      _stopTimer(s);
+      _timerDone(s);
+    }
+  }
+
+  void _timerDone(int step) {
+    final what = widget.steps[step].note ?? 'Paso ${step + 1}';
+    HapticFeedback.heavyImpact();
+    SystemSound.play(SystemSoundType.alert);
+    if (_voiceOn) _voice.say('Tiempo. $what.');
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tiempo'),
+        content: Text(what),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _go(step);
+            },
+            child: const Text('Ver paso'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Vale'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _fmt(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return d.inHours > 0 ? '${d.inHours}:$m:$s' : '$m:$s';
+    // Redondeo hacia arriba: al empezar se ve 30:00, no 29:59.
+    final secs = (d.inMilliseconds / 1000).ceil();
+    final m = (secs ~/ 60 % 60).toString().padLeft(2, '0');
+    final s = (secs % 60).toString().padLeft(2, '0');
+    return secs >= 3600 ? '${secs ~/ 3600}:$m:$s' : '$m:$s';
   }
+
+  // --- Manos libres -----------------------------------------------------------
+
+  Future<void> _toggleVoice() async {
+    HapticFeedback.lightImpact();
+    if (_voiceOn) {
+      await _voice.stop();
+      setState(() => _voiceOn = false);
+      return;
+    }
+    final ok = await _voice.start();
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Para usar la voz, permite el micrófono en Ajustes.'),
+          persist: false,
+        ),
+      );
+      return;
+    }
+    setState(() => _voiceOn = true);
+    _voice.say(_spoken(_page));
+  }
+
+  void _onVoice(CookCommand command) {
+    if (!mounted) return;
+    switch (command) {
+      case CookCommand.next:
+        _isLast ? _voice.say('Es el último paso.') : _go(_page + 1);
+      case CookCommand.previous:
+        _page == 0 ? _voice.say(_spoken(0)) : _go(_page - 1);
+      case CookCommand.repeat:
+        _voice.say(_spoken(_page));
+      case CookCommand.startTimer:
+        final minutes = widget.steps[_page].minutes;
+        if (minutes == null) {
+          _voice.say('Este paso no tiene tiempo.');
+        } else {
+          _startTimer(_page);
+          _voice.say('Temporizador de $minutes minutos.');
+        }
+      case CookCommand.stopTimer:
+        final step = _timerEnds.containsKey(_page)
+            ? _page
+            : (_timerEnds.isEmpty ? null : _timerEnds.keys.first);
+        if (step != null) _stopTimer(step);
+        _voice.say(step == null ? 'No hay temporizadores.' : 'Parado.');
+      case CookCommand.ingredients:
+        _voice.say(
+          widget.ingredients.isEmpty
+              ? 'No hay lista de ingredientes.'
+              : widget.ingredients.join('. '),
+        );
+    }
+  }
+
+  // --- Interfaz ---------------------------------------------------------------
 
   Future<void> _showIngredients() async {
     await showModalBottomSheet<void>(
@@ -188,12 +318,21 @@ class _CookModeScreenState extends State<CookModeScreen> {
         ),
         actions: [
           if (widget.ingredients.isNotEmpty)
-            TextButton.icon(
+            IconButton(
               onPressed: _showIngredients,
               icon: const Icon(Icons.format_list_bulleted_rounded),
-              label: const Text('Ingredientes'),
-              style: TextButton.styleFrom(foregroundColor: AppColors.ink),
+              tooltip: 'Ingredientes',
+              color: AppColors.ink,
             ),
+          IconButton(
+            onPressed: _toggleVoice,
+            tooltip: _voiceOn ? 'Quitar manos libres' : 'Manos libres',
+            icon: Icon(_voiceOn ? Icons.mic_rounded : Icons.mic_none_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: _voiceOn ? AppColors.ink : null,
+              foregroundColor: _voiceOn ? AppColors.cream : AppColors.ink,
+            ),
+          ),
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
@@ -219,12 +358,25 @@ class _CookModeScreenState extends State<CookModeScreen> {
               ],
             ),
           ),
-          if (_timerStep != null) _timerBanner(),
+          if (_voiceOn)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.md,
+                AppSpacing.xl,
+                0,
+              ),
+              child: Text(
+                'Di «siguiente», «anterior», «repite» o «temporizador»',
+                style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+              ),
+            ),
+          if (_timerEnds.isNotEmpty) _timers(),
           Expanded(
             child: PageView.builder(
               controller: _pages,
               itemCount: _total,
-              onPageChanged: (p) => setState(() => _page = p),
+              onPageChanged: _onPageChanged,
               itemBuilder: (_, i) => _stepPage(i),
             ),
           ),
@@ -234,46 +386,68 @@ class _CookModeScreenState extends State<CookModeScreen> {
     );
   }
 
-  Widget _timerBanner() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
+  /// Todos los temporizadores en marcha (el que acaba antes, arriba); tocar
+  /// uno lleva a su paso.
+  Widget _timers() {
+    final steps = _timerEnds.keys.toList()
+      ..sort((a, b) => _timerEnds[a]!.compareTo(_timerEnds[b]!));
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
         AppSpacing.xl,
         AppSpacing.md,
         AppSpacing.xl,
         0,
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
+      child: Column(
         children: [
-          Icon(Icons.timer_rounded, color: AppColors.cream),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            _fmt(_left),
-            style: TextStyle(
-              color: AppColors.cream,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              fontFeatures: [FontFeature.tabularFigures()],
+          for (final s in steps)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Material(
+                color: AppColors.ink,
+                borderRadius: BorderRadius.circular(999),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () => _go(s),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.lg),
+                    child: Row(
+                      children: [
+                        Icon(Icons.timer_rounded, color: AppColors.cream),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          _fmt(_left(s)),
+                          style: TextStyle(
+                            color: AppColors.cream,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            widget.steps[s].note ?? 'Paso ${s + 1}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.cream.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _stopTimer(s),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.cream,
+                          ),
+                          child: const Text('Parar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            'paso ${_timerStep! + 1}',
-            style: TextStyle(color: AppColors.cream.withValues(alpha: 0.7)),
-          ),
-          const Spacer(),
-          TextButton(
-            onPressed: _stopTimer,
-            style: TextButton.styleFrom(foregroundColor: AppColors.cream),
-            child: const Text('Parar'),
-          ),
         ],
       ),
     );
@@ -281,14 +455,10 @@ class _CookModeScreenState extends State<CookModeScreen> {
 
   Widget _stepPage(int i) {
     final step = widget.steps[i];
-    final minutes = stepTimerMinutes(step);
+    final minutes = step.minutes;
+    final running = _timerEnds.containsKey(i);
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl,
-        AppSpacing.xl,
-        AppSpacing.xl,
-        AppSpacing.xl,
-      ),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -301,9 +471,20 @@ class _CookModeScreenState extends State<CookModeScreen> {
               color: AppColors.woodDark,
             ),
           ),
+          if (step.note != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              step.note!,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.inkMuted,
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.lg),
           Text(
-            step,
+            step.text,
             style: TextStyle(
               fontSize: 26,
               letterSpacing: -0.4,
@@ -315,10 +496,10 @@ class _CookModeScreenState extends State<CookModeScreen> {
           if (minutes != null) ...[
             const SizedBox(height: AppSpacing.xl),
             OutlinedButton.icon(
-              onPressed: _timerStep == i ? null : () => _startTimer(i, minutes),
+              onPressed: running ? null : () => _startTimer(i),
               icon: const Icon(Icons.timer_outlined),
               label: Text(
-                _timerStep == i
+                running
                     ? 'Temporizador en marcha'
                     : 'Temporizador $minutes min',
               ),
@@ -334,6 +515,24 @@ class _CookModeScreenState extends State<CookModeScreen> {
                   fontWeight: FontWeight.w800,
                 ),
               ),
+            ),
+          ],
+          if (i < _total - 1) ...[
+            const SizedBox(height: AppSpacing.xxl),
+            Text(
+              'Luego',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppColors.inkMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              widget.steps[i + 1].text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 16, color: AppColors.inkMuted),
             ),
           ],
         ],

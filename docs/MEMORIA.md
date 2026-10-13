@@ -74,7 +74,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Si solo hay una persona no se pregunta quién la hizo.
 - Plan de comidas (código): `services/meal_planner.dart`,
   `meal_prep_*`. Recetas: `recipes_screen.dart`, `recipe_detail_screen.dart`,
-  `cook_mode_screen.dart`, `utils/recipe_steps.dart`.
+  `cook_mode_screen.dart` (paso a paso con `CookStep`, varios temporizadores,
+  pantalla encendida, manos libres por voz: `services/hands_free.dart` +
+  `utils/cook_voice.dart`), `utils/recipe_steps.dart`. Tanda:
+  `batch_prep_timeline_screen.dart` (cada receta se prepara antes de ir a su
+  aparato; acaba con el reparto en tápers del `PrepBatch`).
 - Gasto y datos: `stats_screen.dart` ("Tus datos": gráficas de gasto con
   previsión `services/spend_forecast.dart`, compra, despensa, comidas y
   tareas; se abre desde Inicio y Hogar). `economy_screen.dart` = "Gastos y

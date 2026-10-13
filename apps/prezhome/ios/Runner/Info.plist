@@ -4,6 +4,10 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>PrezHome usa la cámara para escanear códigos de barras de productos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>PrezHome usa el micrófono para que manejes el modo cocina con la voz.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>PrezHome entiende órdenes como «siguiente» o «repite» en el modo cocina.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

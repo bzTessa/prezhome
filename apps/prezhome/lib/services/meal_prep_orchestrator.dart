@@ -204,9 +204,10 @@ class MealPrepOrchestrator {
   ///    FUSIONAN en un solo bloque que cubre todas esas recetas, con duración =
   ///    el MÁXIMO de las cocciones del grupo (no la suma): el horno está
   ///    encendido una vez para todas. Aparatos distintos no se fusionan.
-  ///  - Las PREPARACIONES (appliance 'none') que se pueden hacer mientras algún
-  ///    aparato ya está ocupado se marcan `canRunInParallel = true` (solapan y
-  ///    no suman al total). El resto queda en serie.
+  ///  - Las PREPARACIONES de cada receta van justo antes de su cocción (no se
+  ///    puede hornear lo que aún no está montado). Las que caen después de
+  ///    encender el primer aparato se marcan `canRunInParallel = true`
+  ///    (solapan con la cocción y no suman al total). El resto va en serie.
   TimelinePlan buildTimeline({required List<OrchestratorRecipe> recipes}) {
     if (recipes.isEmpty) {
       return const TimelinePlan(steps: []);
@@ -222,13 +223,16 @@ class MealPrepOrchestrator {
       });
 
     // Derivamos los pasos de cada receta, separando preparación de cocción.
-    final prepSteps = <TimelineStep>[];
+    final prepByRecipe = <String, List<TimelineStep>>{};
     final cookStepsByRecipe = <_RecipeCookStep>[];
+    final sinAparato = <OrchestratorRecipe>[];
     for (final recipe in ordered) {
       final derived = _derivarPasos(recipe);
-      prepSteps.addAll(derived.prep);
+      prepByRecipe[recipe.id] = derived.prep;
       if (derived.cook != null) {
         cookStepsByRecipe.add(derived.cook!);
+      } else {
+        sinAparato.add(recipe);
       }
     }
 
@@ -245,12 +249,35 @@ class MealPrepOrchestrator {
       grupos[cs.appliance]!.add(cs);
     }
 
-    final cookSteps = <TimelineStep>[];
+    // Montamos la línea de tiempo en el orden real de la cocina: lo que se
+    // prepara para un aparato va justo antes de meterlo. Lo que se prepara
+    // después de encender el primer aparato se hace mientras este trabaja
+    // (en paralelo); lo de antes va en serie.
+    final steps = <TimelineStep>[];
+    var aparatoEnMarcha = false;
+    void addPrep(List<TimelineStep> preps) {
+      for (final p in preps) {
+        steps.add(
+          TimelineStep(
+            title: p.title,
+            recipeTitles: p.recipeTitles,
+            appliance: p.appliance,
+            durationMinutes: p.durationMinutes,
+            canRunInParallel: aparatoEnMarcha,
+            isPrep: true,
+          ),
+        );
+      }
+    }
+
     for (final appliance in ordenAparatos) {
       final grupo = grupos[appliance]!;
+      for (final cs in grupo) {
+        addPrep(prepByRecipe[cs.recipeId]!);
+      }
       if (grupo.length == 1) {
         final cs = grupo.first;
-        cookSteps.add(
+        steps.add(
           TimelineStep(
             title: cs.title,
             recipeTitles: [cs.recipeTitle],
@@ -267,7 +294,7 @@ class MealPrepOrchestrator {
         final maxDuracion = grupo
             .map((c) => c.durationMinutes)
             .fold(0, (a, b) => a > b ? a : b);
-        cookSteps.add(
+        steps.add(
           TimelineStep(
             title: '${_etiquetaUsar(appliance)} para ${_unirConY(titulos)}',
             recipeTitles: titulos,
@@ -277,26 +304,10 @@ class MealPrepOrchestrator {
           ),
         );
       }
+      aparatoEnMarcha = true;
     }
-
-    // Montamos la línea de tiempo: primero las cocciones (ocupan los aparatos)
-    // y las preparaciones solapan en paralelo mientras haya algún aparato
-    // ocupado. Si no hay ninguna cocción, las preparaciones van en serie.
-    final hayCoccion = cookSteps.isNotEmpty;
-    final steps = <TimelineStep>[];
-    steps.addAll(cookSteps);
-    for (final p in prepSteps) {
-      steps.add(
-        TimelineStep(
-          title: p.title,
-          recipeTitles: p.recipeTitles,
-          appliance: p.appliance,
-          durationMinutes: p.durationMinutes,
-          // Una preparación manual puede solaparse si hay algo cocinándose.
-          canRunInParallel: hayCoccion,
-          isPrep: true,
-        ),
-      );
+    for (final r in sinAparato) {
+      addPrep(prepByRecipe[r.id]!);
     }
 
     return TimelinePlan(steps: steps);
@@ -352,6 +363,7 @@ class MealPrepOrchestrator {
     if (recipe.usaAparato) {
       final cookDur = recipe.cookTimeMinutes ?? kDuracionPasoPorDefecto;
       cook = _RecipeCookStep(
+        recipeId: recipe.id,
         recipeTitle: recipe.title,
         appliance: recipe.appliance,
         durationMinutes: cookDur,
@@ -388,12 +400,14 @@ class MealPrepOrchestrator {
 
 /// Representación interna de una cocción de una receta antes de agruparla.
 class _RecipeCookStep {
+  final String recipeId;
   final String recipeTitle;
   final String appliance;
   final int durationMinutes;
   final String title;
 
   const _RecipeCookStep({
+    required this.recipeId,
     required this.recipeTitle,
     required this.appliance,
     required this.durationMinutes,
