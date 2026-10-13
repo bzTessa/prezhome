@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/services/product_photo_resolver.dart';
+import 'package:prezhome/services/product_search_service.dart';
 
 void main() {
   test('solo se comparten fotos de Open Food Facts', () {
@@ -18,15 +19,20 @@ void main() {
     expect(isSharablePhoto('https://images.unsplash.com/x.jpg'), isFalse);
   });
 
-  test('las fotos de OFF puestas con la regla antigua no se reutilizan', () {
-    const off = 'https://images.openfoodfacts.org/images/products/1/front.jpg';
-    expect(isTrustedCachedPhoto(off, DateTime.utc(2026, 10, 1)), isFalse);
-    expect(isTrustedCachedPhoto(off, null), isFalse);
-    expect(isTrustedCachedPhoto(off, DateTime.utc(2026, 10, 20)), isTrue);
+  test('saca el código de barras de una foto de OFF', () {
     expect(
-      isTrustedCachedPhoto('https://abc.supabase.co/mia.jpg', null),
-      isTrue,
+      offBarcodeFromUrl(
+        'https://images.openfoodfacts.org/images/products/843/000/000/1234/front_es.3.200.jpg',
+      ),
+      '8430000001234',
     );
+    expect(
+      offBarcodeFromUrl(
+        'https://images.openfoodfacts.net/images/products/12345678/front.jpg',
+      ),
+      '12345678',
+    );
+    expect(offBarcodeFromUrl('https://abc.supabase.co/mia.jpg'), isNull);
     expect(sharedPhotoKey('patata'), 'v2|patata');
   });
 }
