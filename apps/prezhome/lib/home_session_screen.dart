@@ -7,6 +7,7 @@ import 'login_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'profile_wizard_screen.dart';
 import 'services/offline_provider.dart';
+import 'widgets/miau_character.dart';
 
 /// Resultado de evaluar el estado del usuario para decidir a donde llevarlo:
 /// si pertenece a un hogar y si su perfil nutricional esta completo.
@@ -149,6 +150,8 @@ class _ProfileLoadError extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const MiauCharacter(mood: MiauMood.worried, size: 110),
+              const SizedBox(height: 16),
               const Text('No se pudo cargar tu perfil.'),
               const SizedBox(height: 16),
               ElevatedButton(

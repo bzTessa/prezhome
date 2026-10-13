@@ -37,6 +37,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   brillo del sistema (no usar `const` con `AppColors`; nada de `Colors.white`
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
+- Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
+  poses `miau_*` (`MiauMood`), saludo animado `miau_saludo_1..4`,
+  `vacio_*` (EmptyState `image:`), `zona_<etiqueta>` (Mi cocina), `onb_*`.
 - Offline: `services/offline_repository.dart` (+ `offline_merge.dart`,
   `supabase_remote_sender.dart`, `offline_provider.dart`). Ids locales
   `local-`. Errores permanentes (`PermanentSyncError`) se descartan.
@@ -62,5 +65,4 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
-- Tessa enviará imágenes (animaciones del gato Miau y otras).
 - Ofrecido, sin decidir: precios con Open Prices; selector manual claro/oscuro.

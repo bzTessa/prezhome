@@ -8,6 +8,7 @@ import '../models/supermarket.dart';
 import '../services/offline_provider.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
+import '../widgets/miau_character.dart';
 import 'onboarding_widgets.dart';
 
 /// Primer arranque: bienvenida + cuestionario + perfil de hogar. Las
@@ -89,6 +90,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         return _single<HousingType>(
           section: 'Tu casa',
           title: '¿Dónde vives?',
+          illustration: 'assets/images/onb_hogar.png',
           subtitle: 'Así adaptamos tareas y recordatorios a tu hogar.',
           values: HousingType.values,
           selected: _a.housing,
@@ -112,6 +114,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           step: 2,
           total: _questions,
           title: '¿Cuántas personas vivís?',
+          illustration: 'assets/images/onb_personas.png',
           subtitle: 'Para calcular raciones, la compra y el reparto de tareas.',
           onBack: _back,
           onContinue: _next,
@@ -126,6 +129,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           step: 3,
           total: _questions,
           title: '¿Qué quieres quitarte de la cabeza?',
+          illustration: 'assets/images/onb_cabeza.png',
           subtitle: 'Elige todo lo que quieras. Lo demás quedará escondido.',
           onBack: _back,
           onContinue: _a.goals.isEmpty ? null : _next,
@@ -179,6 +183,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           step: 5,
           total: _questions,
           title: '¿Dónde compras?',
+          illustration: 'assets/images/onb_compra.png',
           subtitle:
               'El primero será tu súper principal: las recetas usarán '
               'productos fáciles de encontrar allí.',
@@ -245,8 +250,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     required Color Function(T) color,
     required void Function(T) onSelect,
     String continueLabel = 'Continuar',
+    String? illustration,
   }) {
     return QuestionScaffold(
+      illustration: illustration,
       section: section,
       step: _page,
       total: _questions,
@@ -361,6 +368,7 @@ class _IntroPageState extends State<_IntroPage> {
             child: Column(
               children: [
                 const Spacer(flex: 3),
+                const MiauCharacter(mood: MiauMood.greeting, size: 120),
                 Text(
                   'PrezHome',
                   style: TextStyle(

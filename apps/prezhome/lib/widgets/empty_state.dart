@@ -11,6 +11,7 @@ class EmptyState extends StatelessWidget {
     required this.title,
     this.message,
     this.mood = MiauMood.curious,
+    this.image,
     this.actionLabel,
     this.actionIcon,
     this.onAction,
@@ -21,6 +22,10 @@ class EmptyState extends StatelessWidget {
   final String title;
   final String? message;
   final MiauMood mood;
+
+  /// Ilustración propia de esta pantalla vacía (assets/images/vacio_*.png);
+  /// si no hay, sale Miau con [mood].
+  final String? image;
   final String? actionLabel;
   final IconData? actionIcon;
   final VoidCallback? onAction;
@@ -38,7 +43,10 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            MiauCharacter(mood: mood, size: 112, float: true),
+            if (image != null)
+              Image.asset(image!, width: 160, height: 160)
+            else
+              MiauCharacter(mood: mood, size: 112, float: true),
             const SizedBox(height: AppSpacing.lg),
             Text(
               title,

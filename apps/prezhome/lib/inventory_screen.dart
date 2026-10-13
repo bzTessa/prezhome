@@ -620,6 +620,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           final items = snapshot.data ?? [];
           if (items.isEmpty) {
             return EmptyState(
+              image: 'assets/images/vacio_despensa.png',
               title: 'Tu despensa está vacía',
               message:
                   'Añade lo que tienes en casa o tacha la compra y '
