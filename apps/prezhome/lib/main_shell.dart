@@ -167,6 +167,19 @@ class MainShellState extends State<MainShell> {
       // creada la cuenta y el hogar), se guardan en el perfil.
       final applied = await OnboardingApplier.applyIfPending(_client);
       if (applied) _homeKey.currentState?.refreshActiveView();
+      if (applied && OnboardingApplier.weekBuilt && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Tu semana está lista: comidas, cenas y lista de la compra',
+            ),
+            action: SnackBarAction(
+              label: 'Ver',
+              onPressed: () => goToTab(_indexOf(TabId.comidas)),
+            ),
+          ),
+        );
+      }
       final row = await _client
           .from('profiles')
           .select('dashboard_prefs')
