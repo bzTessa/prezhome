@@ -65,15 +65,22 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   con `OfflineRepository.changes`), `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
   Especias, Bebidas, Limpieza, Hogar).
-- Plan de comidas: un solo calendario, `meal_plan_screen.dart` (semana con
-  flechas; va dentro de Comidas > Plan con `embedded: true`; no hay vista de
-  mes). La pestaña Hoy usa icono de casa, no de calendario.
+- Plan de comidas: un solo plan semanal, `meal_plan_screen.dart` (semana con
+  flechas; vive en Comidas > Plan; Hoy lleva ahí con `onNavigateToPlan`, no abre
+  otra copia). Iconos discretos junto al día: calendario del mes
+  (`month_calendar_screen.dart`, único, con comidas, tareas y cocina en lote) y
+  ajustes (`services/plan_prefs.dart`, en el dispositivo: ocultar
+  desayuno/merienda, desayuno de siempre; "Cocino en tanda" = cooking_mode).
+  La pestaña Hoy usa icono de casa, no de calendario.
 - Tareas: `tasks_screen.dart` (anillo de hoy, tarjetas por tipo con icono y
   color de `utils/task_kinds.dart`, próximos días, hechas hoy; nueva tarea en
   hoja con tareas típicas; editar/más opciones con `AddTaskScreen(task:)`).
   Si solo hay una persona no se pregunta quién la hizo.
-- Plan de comidas (código): `services/meal_planner.dart`,
-  `meal_prep_*`. Recetas: `recipes_screen.dart`, `recipe_detail_screen.dart`,
+- Plan de comidas (código): `services/meal_planner.dart` (equilibrio por
+  grupo legumbre/pescado/huevo/carne y límite de repeticiones),
+  `meal_prep_*` (`prepAgenda`: compra, día de cocina con tápers nevera/congelador,
+  qué sacar la víspera), `services/plan_prep.dart` (lo comparten plan y mes).
+  Raciones por comida editables en "Quién come". Recetas: `recipes_screen.dart`, `recipe_detail_screen.dart`,
   `cook_mode_screen.dart`, `utils/recipe_steps.dart`.
 - Gasto y datos: `stats_screen.dart` ("Tus datos": gráficas de gasto con
   previsión `services/spend_forecast.dart`, compra, despensa, comidas y

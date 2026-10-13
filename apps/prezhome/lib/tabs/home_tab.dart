@@ -8,7 +8,6 @@ import '../discover_recipes_screen.dart';
 import '../food_diary_screen.dart';
 import '../household_screen.dart';
 import '../main_shell.dart';
-import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../scan_ticket_screen.dart';
 import '../shopping_list_screen.dart';
@@ -44,11 +43,15 @@ class HomeTab extends StatefulWidget {
   /// Saltos a las pestañas Compra y Tareas desde los accesos de un vistazo.
   final VoidCallback? onNavigateToShopping;
   final VoidCallback? onNavigateToTasks;
+
+  /// Lleva a Comidas > Plan, el único plan semanal.
+  final VoidCallback? onNavigateToPlan;
   const HomeTab({
     super.key,
     this.onNavigateToDespensa,
     this.onNavigateToShopping,
     this.onNavigateToTasks,
+    this.onNavigateToPlan,
   });
 
   @override
@@ -756,12 +759,8 @@ class HomeTabState extends State<HomeTab> {
     if (mounted) _loadDashboard();
   }
 
-  Future<void> _openMealPlan() async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const MealPlanScreen()));
-    if (mounted) _loadTodayPlan();
-  }
+  /// El plan semanal vive solo en Comidas > Plan: no se abre otra copia.
+  void _openMealPlan() => widget.onNavigateToPlan?.call();
 
   /// La comida que toca ahora según la hora (desayuno por la mañana, comida a
   /// mediodía…). Si ya pasó todo, la última del día.
@@ -1247,9 +1246,7 @@ class HomeTabState extends State<HomeTab> {
         await AddRecipeChooser.show(context);
         break;
       case QuickAction.mealPlan:
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const MealPlanScreen()));
+        _openMealPlan();
         break;
       case QuickAction.diary:
         await Navigator.of(

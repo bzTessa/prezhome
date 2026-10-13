@@ -8,6 +8,7 @@ import 'home_session_screen.dart';
 import 'services/offline_provider.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_preference.dart';
+import 'services/plan_prefs.dart';
 import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
@@ -19,6 +20,7 @@ Future<void> main() async {
   );
 
   await ThemePreference.load();
+  await PlanPrefs.load();
   runApp(const PrezHomeApp());
 }
 

@@ -121,6 +121,11 @@ class PrepBatch {
   /// para avisar a la usuaria de que ese plato se comerá un poco tarde.
   final bool freezerExpiryRisk;
 
+  /// Raciones por día de consumo: lo que va a la nevera y lo que se congela.
+  /// Es la rotación de tápers (cada táper lleva su día).
+  final Map<DateTime, int> fridgeByDay;
+  final Map<DateTime, int> freezerByDay;
+
   const PrepBatch({
     required this.recipeId,
     required this.title,
@@ -129,6 +134,8 @@ class PrepBatch {
     required this.freezerServings,
     this.takeOutDate,
     this.freezerExpiryRisk = false,
+    this.fridgeByDay = const {},
+    this.freezerByDay = const {},
   });
 }
 
@@ -300,6 +307,8 @@ class MealPrepPlanner {
       var freezer = 0;
       DateTime? earliestFreezerConsumption;
       DateTime? latestFreezerConsumption;
+      final fridgeByDay = <DateTime, int>{};
+      final freezerByDay = <DateTime, int>{};
 
       for (final meal in recipeMeals) {
         final daysAhead = meal._day.difference(cookDate).inDays;
@@ -307,8 +316,12 @@ class MealPrepPlanner {
         if (goesToFridge || !recipe.freezable) {
           // Consumo cercano, o receta no congelable: siempre a la nevera.
           fridge += meal.servings;
+          fridgeByDay[meal._day] =
+              (fridgeByDay[meal._day] ?? 0) + meal.servings;
         } else {
           freezer += meal.servings;
+          freezerByDay[meal._day] =
+              (freezerByDay[meal._day] ?? 0) + meal.servings;
           if (earliestFreezerConsumption == null ||
               meal._day.isBefore(earliestFreezerConsumption)) {
             earliestFreezerConsumption = meal._day;
@@ -347,6 +360,8 @@ class MealPrepPlanner {
           freezerServings: freezer,
           takeOutDate: takeOut,
           freezerExpiryRisk: expiryRisk,
+          fridgeByDay: fridgeByDay,
+          freezerByDay: freezerByDay,
         ),
       );
     });
@@ -444,6 +459,106 @@ String resumenPlanCoccion(MealPrepPlan plan) {
     return 'Esta semana no hay nada que cocinar en lote todavía.';
   }
   return plan.cookingDays.map(resumenDiaCoccion).join('\n');
+}
+
+/// Qué toca hacer un día para que la cocina en lote funcione.
+enum PrepEventKind { compra, cocina, sacar }
+
+/// Un aviso del calendario: hacer la compra, cocinar en tanda o pasar tápers
+/// del congelador a la nevera para que se descongelen.
+class PrepEvent {
+  final DateTime date;
+  final PrepEventKind kind;
+  final String title;
+  final List<String> lines;
+
+  const PrepEvent({
+    required this.date,
+    required this.kind,
+    required this.title,
+    this.lines = const [],
+  });
+}
+
+/// Agenda de la cocina en lote: la compra el día antes de la primera tanda
+/// (nunca antes de [earliest]), cada día de cocina con qué va a la nevera y qué
+/// al congelador (con el día de cada táper) y, la víspera de cada comida
+/// congelada, qué pasar a la nevera. Ordenada por fecha.
+List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
+  if (plan.isEmpty) return const [];
+  final events = <PrepEvent>[];
+  final firstCook = plan.cookingDays.first.date;
+  var shop = firstCook.subtract(const Duration(days: 1));
+  if (earliest != null) {
+    final e = DateTime(earliest.year, earliest.month, earliest.day);
+    if (shop.isBefore(e)) shop = firstCook.isBefore(e) ? e : firstCook;
+  }
+  events.add(
+    PrepEvent(
+      date: shop,
+      kind: PrepEventKind.compra,
+      title: 'Hacer la compra',
+      lines: ['Para cocinar en tanda el ${_diaSemana(firstCook)}'],
+    ),
+  );
+
+  // Por día de consumo: qué sacar del congelador la víspera.
+  final thaw = <DateTime, List<String>>{};
+  for (final day in plan.cookingDays) {
+    final lines = <String>[];
+    for (final b in day.batches) {
+      final parts = <String>[];
+      if (b.fridgeServings > 0) {
+        parts.add('${b.fridgeServings} a la nevera (${_dias(b.fridgeByDay)})');
+      }
+      if (b.freezerServings > 0) {
+        parts.add(
+          '${b.freezerServings} al congelador (${_dias(b.freezerByDay)})',
+        );
+      }
+      lines.add(
+        '${_capitalizar(b.title)} x${b.totalServings}: ${parts.join(', ')}',
+      );
+      b.freezerByDay.forEach((eat, n) {
+        var out = eat.subtract(const Duration(days: kDiasSacarAntes));
+        if (out.isBefore(day.date)) out = day.date;
+        (thaw[out] ??= []).add(
+          '${_capitalizar(b.title)}: $n ${n == 1 ? 'táper' : 'tápers'} '
+          'para el ${_diaSemana(eat)}',
+        );
+      });
+    }
+    lines.add('Pon a cada táper el día que toca');
+    events.add(
+      PrepEvent(
+        date: day.date,
+        kind: PrepEventKind.cocina,
+        title: 'Cocinar en tanda',
+        lines: lines,
+      ),
+    );
+  }
+  thaw.forEach((date, lines) {
+    events.add(
+      PrepEvent(
+        date: date,
+        kind: PrepEventKind.sacar,
+        title: 'Del congelador a la nevera',
+        lines: lines,
+      ),
+    );
+  });
+  events.sort((a, b) {
+    final c = a.date.compareTo(b.date);
+    return c != 0 ? c : a.kind.index.compareTo(b.kind.index);
+  });
+  return events;
+}
+
+/// "lun, mar" a partir de los días de un mapa.
+String _dias(Map<DateTime, int> byDay) {
+  final days = byDay.keys.toList()..sort();
+  return days.map((d) => _diaSemana(d).substring(0, 3)).join(', ');
 }
 
 /// Une una lista con comas y una "y" final: ["a","b","c"] -> "a, b y c".
