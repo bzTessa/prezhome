@@ -1,5 +1,8 @@
 # prezhome - Guidelines for AI Agents
 
+**Al empezar, lee `docs/MEMORIA.md`** (comandos, preferencias, mapa del código y
+pendientes). Úsalo en vez de explorar el repo y mantenlo al día.
+
 ## Estructura (monorepo)
 - `apps/prezhome/`: app PrezHome (Flutter). Los comandos de Flutter se ejecutan desde ahí.
 - `packages/prez_ui/`: componentes de interfaz compartidos entre apps (sin colores propios: cada app pasa los suyos).
