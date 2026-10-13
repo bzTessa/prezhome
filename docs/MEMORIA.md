@@ -40,7 +40,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
 - Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
-  poses `miau_*` (`MiauMood`), saludo animado `miau_saludo_1..12`,
+  poses `miau_*` (`MiauMood`),
   `vacio_*` (EmptyState `image:`), `zona_<etiqueta>` (Mi cocina), `onb_*`.
 - Offline: `services/offline_repository.dart` (+ `offline_merge.dart`,
   `supabase_remote_sender.dart`, `offline_provider.dart`). Ids locales
@@ -75,6 +75,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Plan de comidas (código): `services/meal_planner.dart`,
   `meal_prep_*`. Recetas: `recipes_screen.dart`, `recipe_detail_screen.dart`,
   `cook_mode_screen.dart`, `utils/recipe_steps.dart`.
+- Gasto y datos: `stats_screen.dart` ("Tus datos": gráficas de gasto con
+  previsión `services/spend_forecast.dart`, compra, despensa, comidas y
+  tareas; se abre desde Inicio y Hogar). `economy_screen.dart` = "Gastos y
+  tickets" (siempre visible; puntos solo con Modo Puntos, `showPoints`).
+  Escanear ticket: `scan_ticket_screen.dart`.
 - Hogar e invitaciones: `household_screen.dart`, `services/home_invites.dart`
   (códigos de 8 caracteres, 7 días, 10 usos; RPC `create_home_invite`,
   `join_home_with_code`, `remove_home_member`, `leave_home`).

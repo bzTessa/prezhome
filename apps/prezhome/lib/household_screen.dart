@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'economy_screen.dart';
+import 'stats_screen.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/supermarket.dart';
 import 'services/home_invites.dart';
@@ -564,20 +565,31 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Economía (presupuesto/gastos + puntos) es la pieza ligada al
-              // "Modo Puntos": solo se muestra si el módulo está activado. El
-              // resto de la tarjeta (Mi perfil nutricional, etc.) permanece.
-              if (data.pointsEnabled)
-                _settingTile(
-                  icon: Icons.savings_outlined,
-                  title: 'Economía',
-                  subtitle: 'Presupuesto y gastos del hogar',
-                  iconBg: AppColors.sageBg,
-                  iconFg: AppColors.sage,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const EconomyScreen()),
+              // Gastos y tickets siempre; los puntos dentro solo con el
+              // "Modo Puntos".
+              _settingTile(
+                icon: Icons.insights_rounded,
+                title: 'Tus datos',
+                subtitle: 'Gráficas de gasto, compra, cocina y tareas',
+                iconBg: AppColors.lilacBg,
+                iconFg: AppColors.lilac,
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const StatsScreen())),
+              ),
+              _settingTile(
+                icon: Icons.receipt_long_outlined,
+                title: 'Gastos y tickets',
+                subtitle: 'Presupuesto, tickets escaneados y gasto por mes',
+                iconBg: AppColors.sageBg,
+                iconFg: AppColors.sage,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        EconomyScreen(showPoints: data.pointsEnabled),
                   ),
                 ),
+              ),
               _settingTile(
                 icon: Icons.favorite_outline,
                 title: 'Mi perfil nutricional',

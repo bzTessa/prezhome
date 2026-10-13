@@ -12,6 +12,7 @@ import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../scan_ticket_screen.dart';
 import '../shopping_list_screen.dart';
+import '../stats_screen.dart';
 import '../models/dashboard_prefs.dart';
 import '../models/inventory_item.dart';
 import '../models/meal_plan_entry.dart';
@@ -692,6 +693,12 @@ class HomeTabState extends State<HomeTab> {
           ),
         ),
         _roundButton(
+          icon: Icons.insights_rounded,
+          tooltip: 'Tus datos',
+          onTap: _openStats,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        _roundButton(
           icon: Icons.tune_rounded,
           tooltip: 'Personalizar Inicio',
           onTap: _openCustomize,
@@ -733,6 +740,13 @@ class HomeTabState extends State<HomeTab> {
         ),
       ),
     );
+  }
+
+  Future<void> _openStats() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const StatsScreen()));
+    if (mounted) _loadDashboard();
   }
 
   Future<void> _openHousehold() async {
@@ -1868,51 +1882,55 @@ class HomeTabState extends State<HomeTab> {
     final ratio = budget > 0 ? (spent / budget).clamp(0.0, 1.0) : 0.0;
     final over = budget > 0 && spent > budget;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardIconBox(Icons.savings_outlined, accent),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Gasto del mes', style: AppTextStyles.title),
-                const SizedBox(height: AppSpacing.sm),
-                AnimatedCounter(
-                  value: spent,
-                  formatter: (v) => '${v.toStringAsFixed(2)} €',
-                  style: AppTextStyles.display.copyWith(fontSize: 24),
-                ),
-                if (budget > 0) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: ratio,
-                      minHeight: 10,
-                      backgroundColor: AppColors.line,
-                      color: over ? AppColors.expired : AppColors.wood,
-                    ),
-                  ),
+    return PressScale(
+      onTap: _openStats,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _cardIconBox(Icons.savings_outlined, accent),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Gasto del mes', style: AppTextStyles.title),
                   const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    over
-                        ? 'Te has pasado ${(spent - budget).toStringAsFixed(2)} € del presupuesto'
-                        : 'Te quedan ${(budget - spent).toStringAsFixed(2)} €',
-                    style: AppTextStyles.label.copyWith(
-                      color: over ? AppColors.expired : AppColors.inkMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  AnimatedCounter(
+                    value: spent,
+                    formatter: (v) => '${v.toStringAsFixed(2)} €',
+                    style: AppTextStyles.display.copyWith(fontSize: 24),
                   ),
+                  if (budget > 0) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: ratio,
+                        minHeight: 10,
+                        backgroundColor: AppColors.line,
+                        color: over ? AppColors.expired : AppColors.wood,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      over
+                          ? 'Te has pasado ${(spent - budget).toStringAsFixed(2)} € del presupuesto'
+                          : 'Te quedan ${(budget - spent).toStringAsFixed(2)} €',
+                      style: AppTextStyles.label.copyWith(
+                        color: over ? AppColors.expired : AppColors.inkMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+            Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+          ],
+        ),
       ),
     );
   }
