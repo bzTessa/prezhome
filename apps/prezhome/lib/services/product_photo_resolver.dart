@@ -16,24 +16,13 @@ bool isStockPhoto(String? url) {
 bool isSharablePhoto(String url) =>
     RegExp(r'^https://images\.openfoodfacts\.(org|net)/').hasMatch(url);
 
-/// Hasta esta fecha la búsqueda cogía el primer resultado con foto, que a
-/// veces era otro producto. Esas fotos de OFF guardadas solas no se reutilizan.
-final _strictPhotosSince = DateTime.utc(2026, 10, 13, 14);
-
 /// Clave en `product_photo_shared` de las fotos elegidas con la regla nueva;
 /// las filas antiguas (sin prefijo) se ignoran.
 String sharedPhotoKey(String key) => 'v2|$key';
 
-/// Si una foto guardada en la caché del hogar se puede reutilizar: las de la
-/// galería siempre; las de OFF solo si son de después de la regla nueva.
-bool isTrustedCachedPhoto(String url, DateTime? savedAt) {
-  if (url.isEmpty || isStockPhoto(url)) return false;
-  if (!isSharablePhoto(url)) return true;
-  return savedAt != null && !savedAt.isBefore(_strictPhotosSince);
-}
-
 /// Foto de producto para la compra: la del envase en Open Food Facts (del
-/// súper principal si lo hay), solo si el producto es claramente lo buscado. Lo encontrado se guarda por hogar y se
+/// súper principal si lo hay), solo si el producto es claramente lo buscado.
+/// Las fotos ya guardadas se comprueban antes de reutilizarlas. Lo encontrado se guarda por hogar y se
 /// reutiliza. Si no hay producto, null: se ve la ilustración del alimento.
 class ProductPhotoResolver {
   ProductPhotoResolver(
@@ -47,6 +36,22 @@ class ProductPhotoResolver {
   final ProductSearchService _search;
   final Duration _throttleWait;
 
+  static final Map<String, bool> _checked = {};
+
+  /// Si la foto guardada [url] es de verdad de [name]: las de la galería
+  /// siempre; las de OFF se comprueban leyendo el producto por su código de
+  /// barras (no gasta búsquedas). Null si no se pudo comprobar (sin red).
+  Future<bool?> photoMatches(String name, String url) async {
+    final code = offBarcodeFromUrl(url);
+    if (code == null) return !isSharablePhoto(url) && !isStockPhoto(url);
+    final memo = '$name|$code';
+    final known = _checked[memo];
+    if (known != null) return known;
+    final product = await _search.productByCode(code);
+    if (product == null) return null;
+    return _checked[memo] = isProductFor(name, product);
+  }
+
   /// Busca la foto de [name]. Si Open Food Facts pide esperar, espera y
   /// reintenta (pensado para ir en segundo plano). Nunca lanza.
   Future<String?> photoFor({
@@ -59,13 +64,16 @@ class ProductPhotoResolver {
     try {
       final cached = await _client
           .from('food_photo_cache')
-          .select('url, fetched_at')
+          .select('url')
           .eq('home_id', homeId)
           .eq('name_normalized', key)
           .maybeSingle();
       final url = cached?['url']?.toString() ?? '';
-      final savedAt = DateTime.tryParse('${cached?['fetched_at']}');
-      if (isTrustedCachedPhoto(url, savedAt)) return url;
+      if (url.isNotEmpty &&
+          !isStockPhoto(url) &&
+          await photoMatches(name, url) != false) {
+        return url;
+      }
     } catch (_) {}
 
     // Otro hogar ya encontró este producto: se reutiliza sin buscar.
@@ -76,7 +84,9 @@ class ProductPhotoResolver {
           .eq('name_normalized', sharedPhotoKey(key))
           .maybeSingle();
       final url = shared?['url']?.toString();
-      if (url != null && url.isNotEmpty) {
+      if (url != null &&
+          url.isNotEmpty &&
+          await photoMatches(name, url) == true) {
         await FoodPhotoService(
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: url);
@@ -100,11 +110,7 @@ class ProductPhotoResolver {
     }
 
     final result = await searchIn(supermarketKey);
-    var found = confidentProductPhoto(name, result.products);
-    // En el súper no estaba claro: se mira en todos los de España.
-    if (found == null && result.filteredByStore) {
-      found = confidentProductPhoto(name, (await searchIn(null)).products);
-    }
+    final found = confidentProductPhoto(name, result.products);
     if (found != null) {
       await FoodPhotoService(
         _client,

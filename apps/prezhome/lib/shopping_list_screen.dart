@@ -245,9 +245,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         if (!i.checked &&
             i.id != null &&
             !isLocalId(i.id!) &&
+            // Las de OFF se comprueban (y se cambian si no son ese producto).
             ((i.imageUrl ?? '').isEmpty ||
                 isStockPhoto(i.imageUrl) ||
-                !isTrustedCachedPhoto(i.imageUrl!, i.createdAt?.toUtc())))
+                isSharablePhoto(i.imageUrl!)))
           i,
     ].take(25).toList();
     if (todo.isEmpty) return;
@@ -260,6 +261,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
           ),
         )
+        .then((n) {
+          if (n > 0 && mounted) _reload();
+          return n;
+        })
         .catchError((_) => 0);
   }
 

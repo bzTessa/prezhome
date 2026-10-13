@@ -55,8 +55,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   URLs de OFF; las de galería no salen del hogar; claves `v2|<nombre>`).
   Solo se pone foto sola si el producto es claramente el buscado
   (`productMatchScore`/`confidentProductPhoto`): mejor sin foto que errónea.
-  Las fotos de OFF guardadas antes del 13/10/2026 se revisan y, si no hay
-  producto claro, se quitan (`isTrustedCachedPhoto`).
+  Toda foto de OFF guardada se comprueba leyendo el producto por su código
+  de barras (`photoMatches`, `productByCode`) y, si no es ese producto, se
+  cambia o se quita. La búsqueda quita resultados sin relación (`rankProducts`).
 - Chips: el seleccionado va en `AppColors.wood` con texto en tinta (tema).
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
@@ -67,8 +68,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Plan de comidas: un solo calendario, `meal_plan_screen.dart` (semana con
   flechas; va dentro de Comidas > Plan con `embedded: true`; no hay vista de
   mes). La pestaña Hoy usa icono de casa, no de calendario.
-- Tareas: `tasks_screen.dart` (filtro por persona, alta rápida, aplazar,
-  editar con `AddTaskScreen(task:)`).
+- Tareas: `tasks_screen.dart` (anillo de hoy, tarjetas por tipo con icono y
+  color de `utils/task_kinds.dart`, próximos días, hechas hoy; nueva tarea en
+  hoja con tareas típicas; editar/más opciones con `AddTaskScreen(task:)`).
+  Si solo hay una persona no se pregunta quién la hizo.
 - Plan de comidas (código): `services/meal_planner.dart`,
   `meal_prep_*`. Recetas: `recipes_screen.dart`, `recipe_detail_screen.dart`,
   `cook_mode_screen.dart`, `utils/recipe_steps.dart`.

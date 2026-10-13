@@ -243,7 +243,7 @@ class PlanShoppingService {
   }
 
   /// Pone la foto del envase (Open Food Facts) a los productos sin foto, con
-  /// foto de banco de imágenes o con una de OFF puesta con la regla antigua. Se puede lanzar sin esperar: cada foto se
+  /// foto de banco de imágenes o con una de OFF que no es ese producto. Se puede lanzar sin esperar: cada foto se
   /// guarda en cuanto se encuentra.
   Future<int> fillMissingPhotos(
     String homeId,
@@ -267,14 +267,13 @@ class PlanShoppingService {
     }
     for (final item in items) {
       final current = item.imageUrl ?? '';
-      // Las fotos de OFF puestas antes de la regla nueva se revisan.
-      final recheck =
+      if (item.id == null) continue;
+      // Una foto ya puesta se deja si es de verdad ese producto.
+      final wrong =
           current.isNotEmpty &&
-          !isTrustedCachedPhoto(current, item.createdAt?.toUtc());
-      if (item.id == null ||
-          (current.isNotEmpty && !isStockPhoto(current) && !recheck)) {
-        continue;
-      }
+          !isStockPhoto(current) &&
+          await resolver.photoMatches(item.name, current) == false;
+      if (current.isNotEmpty && !isStockPhoto(current) && !wrong) continue;
       try {
         final url = await resolver.photoFor(
           homeId: homeId,
@@ -282,7 +281,7 @@ class PlanShoppingService {
           supermarketKey: store,
         );
         // Sin producto claro, mejor la ilustración que una foto que no es.
-        if (url == null && !recheck) continue;
+        if (url == null && !wrong) continue;
         if (url == current) continue;
         await _client
             .from('shopping_list_items')

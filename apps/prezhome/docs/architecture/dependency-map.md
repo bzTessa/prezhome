@@ -12,7 +12,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 | `services` | 30 |
 | `tabs` | 3 |
 | `theme` | 7 |
-| `utils` | 15 |
+| `utils` | 16 |
 | `widgets` | 19 |
 
 ## Dependencias entre módulos
@@ -23,7 +23,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `services` -> `models`, `services`, `utils`, `widgets`
 - `tabs` -> `models`, `screens`, `services`, `theme`, `utils`, `widgets`
 - `theme` -> `services`, `theme`
-- `utils` -> `models`, `services`, `widgets`
+- `utils` -> `models`, `services`, `theme`, `widgets`
 - `widgets` -> `models`, `services`, `theme`, `utils`, `widgets`
 
 ## Importaciones cruzadas (conteo por módulo origen/destino)
@@ -31,7 +31,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `screens` -> `widgets`: 49
 - `screens` -> `services`: 48
 - `screens` -> `models`: 47
-- `screens` -> `utils`: 41
+- `screens` -> `utils`: 42
 - `screens` -> `theme`: 33
 - `widgets` -> `theme`: 23
 - `tabs` -> `screens`: 15
@@ -57,6 +57,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `tabs` -> `utils`: 1
 - `theme` -> `services`: 1
 - `utils` -> `services`: 1
+- `utils` -> `theme`: 1
 - `widgets` -> `utils`: 1
 
 ## Ciclos detectados

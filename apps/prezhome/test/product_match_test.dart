@@ -61,4 +61,22 @@ void main() {
       isNull,
     );
   });
+
+  test('quita el ruido de OFF y no da foto a cebolla con una tortilla', () {
+    final patata = [
+      _p('Trigo Espelta Crackers'),
+      _p('Corn flakes 0% azúcares añadidos'),
+      _p('Tortilla De Patatas Con Cebolla'),
+      _p('Copos de avena sin gluten'),
+    ];
+    expect(rankProducts('Patata', patata).map((p) => p.name), [
+      'Tortilla De Patatas Con Cebolla',
+    ]);
+    expect(confidentProductPhoto('Patata', patata), isNull);
+    expect(
+      confidentProductPhoto('Cebolla', [_p('Tortilla De Patatas Con Cebolla')]),
+      isNull,
+    );
+    expect(isProductFor('Cebolla', _p('Cebolla dulce malla')), isTrue);
+  });
 }

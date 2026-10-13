@@ -142,19 +142,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   bool _photosRechecked = false;
 
-  /// Las fotos de OFF puestas solas con la regla antigua a veces eran otro
-  /// producto: se buscan otra vez y, si no hay uno claro, se quitan.
+  /// Las fotos de OFF a veces eran otro producto (vinagre por vino): se
+  /// comprueban y, si no son ese producto, se cambian o se quitan.
   Future<void> _recheckOldPhotos(List<Map<String, dynamic>> rows) async {
     if (_photosRechecked) return;
     _photosRechecked = true;
     final old = [
       for (final r in rows)
-        if ((r['image_url'] ?? '').toString().isNotEmpty &&
-            !isTrustedCachedPhoto(
-              r['image_url'].toString(),
-              _rowCreatedAt(r)?.toUtc(),
-            ))
-          r,
+        if (isSharablePhoto((r['image_url'] ?? '').toString())) r,
     ];
     if (old.isEmpty) return;
     try {
@@ -164,6 +159,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
       for (final r in old) {
         final id = r['id']?.toString();
         if (id == null || isLocalId(id)) continue;
+        final name = r['name'].toString();
+        final current = r['image_url'].toString();
+        if (await resolver.photoMatches(name, current) != false) continue;
         final url = await resolver.photoFor(
           homeId: homeId,
           name: r['name'].toString(),

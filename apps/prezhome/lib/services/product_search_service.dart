@@ -270,14 +270,20 @@ int? productMatchScore(String query, SupermarketProduct product) {
   return extra.length;
 }
 
-/// Ordena: primero lo que es justo lo buscado, luego el resto tal cual.
+/// Ordena: primero lo que es justo lo buscado, luego lo que al menos lo
+/// nombra ("tortilla de patatas" para "patata"). Lo que no tiene nada que ver
+/// (crackers, copos de avena…) se quita: OFF devuelve mucho ruido.
 List<SupermarketProduct> rankProducts(
   String query,
   List<SupermarketProduct> products,
 ) {
+  final q = _words(query);
+  bool mentions(SupermarketProduct p) =>
+      _words(p.name).any((n) => q.any((w) => _sameWord(w, n)));
   final scored = [
     for (var i = 0; i < products.length; i++)
-      (p: products[i], s: productMatchScore(query, products[i]), i: i),
+      if (mentions(products[i]))
+        (p: products[i], s: productMatchScore(query, products[i]), i: i),
   ];
   scored.sort((a, b) {
     final sa = a.s ?? 1 << 20, sb = b.s ?? 1 << 20;
@@ -286,12 +292,28 @@ List<SupermarketProduct> rankProducts(
   return [for (final e in scored) e.p];
 }
 
+/// Si [product] es lo que dice [query] (como mucho 3 palabras de más).
+bool isProductFor(String query, SupermarketProduct product) {
+  final s = productMatchScore(query, product);
+  return s != null && s <= 3;
+}
+
+/// Código de barras de una foto de OFF
+/// (`.../images/products/843/000/000/1234/front_es.3.200.jpg` → 8430000001234).
+String? offBarcodeFromUrl(String url) {
+  final m = RegExp(
+    r'^https://images\.openfoodfacts\.(?:org|net)/images/products/((?:\d+/)+)',
+  ).firstMatch(url);
+  if (m == null) return null;
+  final code = m.group(1)!.replaceAll('/', '');
+  return code.isEmpty ? null : code;
+}
+
 /// Foto para [query] solo si hay un producto que es claramente eso (con foto
 /// y, como mucho, 3 palabras de más). Mejor sin foto que con una que no es.
 String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
   for (final p in rankProducts(query, products)) {
-    final s = productMatchScore(query, p);
-    if (s == null || s > 3) return null;
+    if (!isProductFor(query, p)) return null;
     if ((p.imageUrl ?? '').isNotEmpty) return p.imageUrl;
   }
   return null;
@@ -379,17 +401,18 @@ class ProductSearchService {
     final cached = _cache[key];
     if (cached != null) return cached;
     try {
+      var inStore = <SupermarketProduct>[];
       if (store != null) {
-        final inStore = await _fetch(
+        final r = await _fetch(
           buildProductSearchUri(q, storeTag: store),
           background: background,
         );
-        if (inStore == null) {
-          return const ProductSearchResult([], throttled: true);
-        }
-        if (inStore.isNotEmpty) {
+        if (r == null) return const ProductSearchResult([], throttled: true);
+        inStore = rankProducts(q, r);
+        // Solo se queda en el súper si allí está justo lo buscado.
+        if (inStore.any((p) => isProductFor(q, p))) {
           return _cache[key] = ProductSearchResult(
-            rankProducts(q, inStore),
+            inStore,
             filteredByStore: true,
           );
         }
@@ -398,15 +421,54 @@ class ProductSearchService {
         buildProductSearchUri(q),
         background: background,
       );
-      if (all == null) return const ProductSearchResult([], throttled: true);
-      return _cache[key] = ProductSearchResult(rankProducts(q, all));
+      if (all == null) {
+        // Sin más búsquedas libres: lo que haya del súper.
+        return inStore.isEmpty
+            ? const ProductSearchResult([], throttled: true)
+            : ProductSearchResult(inStore, filteredByStore: true);
+      }
+      final seen = {for (final p in inStore) p.code};
+      return _cache[key] = ProductSearchResult(
+        rankProducts(q, [...inStore, ...all.where((p) => seen.add(p.code))]),
+      );
     } catch (_) {
       return const ProductSearchResult([], failed: true);
     }
   }
 
+  static final Map<String, SupermarketProduct?> _byCode = {};
+
+  /// Producto de OFF por código de barras (para comprobar fotos guardadas).
+  /// Null si no existe o no se pudo leer; no gasta búsquedas.
+  Future<SupermarketProduct?> productByCode(String code) async {
+    if (_byCode.containsKey(code)) return _byCode[code];
+    try {
+      final res = await _client
+          .get(
+            Uri.https('es.openfoodfacts.org', '/api/v2/product/$code.json', {
+              'fields': 'code,product_name_es,product_name,brands',
+            }),
+            headers: const {'User-Agent': _userAgent},
+          )
+          .timeout(const Duration(seconds: 12));
+      if (res.statusCode == 404) return _byCode[code] = null;
+      if (res.statusCode != 200) return null;
+      final body = jsonDecode(utf8.decode(res.bodyBytes));
+      final p = body is Map ? body['product'] : null;
+      final parsed = p is Map
+          ? parseProductSearch({
+              'products': [p],
+            })
+          : const <SupermarketProduct>[];
+      return _byCode[code] = parsed.isEmpty ? null : parsed.first;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Solo para tests: olvida caché y límite.
   static void resetForTest() {
+    _byCode.clear();
     _cache.clear();
     _recent.clear();
   }
