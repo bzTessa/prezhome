@@ -16,7 +16,15 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0048.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0049.
+- Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
+  (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
+  editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
+  `supabase/functions/_shared/ai_limit.ts`: cobra con
+  `consume_ai_credit(hogar, función)` y devuelve el uso
+  (`refund_ai_credit`) si la respuesta es un error. `friendlyError` enseña el
+  `{error}` de cualquier función. Plan Pro aún sin cobro (RevenueCat
+  pendiente; plan en `subscriptions.plan`).
 - No ejecutar SQL de prueba largo en producción (se corta a 60 s).
 
 ## Preferencias de Tessa (producto y textos)
@@ -80,8 +88,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   grupo legumbre/pescado/huevo/carne y límite de repeticiones),
   `meal_prep_*` (`prepAgenda`: compra, día de cocina con tápers nevera/congelador,
   qué sacar la víspera), `services/plan_prep.dart` (lo comparten plan y mes).
-  Raciones por comida editables en "Quién come". Recetas: `recipes_screen.dart`, `recipe_detail_screen.dart`,
-  `cook_mode_screen.dart`, `utils/recipe_steps.dart`.
+  Raciones por comida editables en "Quién come". Recetas: `recipes_screen.dart`,
+  `recipe_detail_screen.dart`, `cook_mode_screen.dart` (paso a paso con
+  `CookStep`, varios temporizadores, pantalla encendida, manos libres por voz:
+  `services/hands_free.dart` + `utils/cook_voice.dart`), `utils/recipe_steps.dart`.
+  Tanda: `batch_prep_timeline_screen.dart` (cada receta se prepara antes de ir a
+  su aparato; acaba con el reparto en tápers del `PrepBatch`).
 - Gasto y datos: `stats_screen.dart` ("Tus datos": gráficas de gasto con
   previsión `services/spend_forecast.dart`, compra, despensa, comidas y
   tareas; se abre desde Inicio y Hogar). `economy_screen.dart` = "Gastos y

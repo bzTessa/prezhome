@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'cook_mode_screen.dart';
 import 'models/recipe.dart';
 import 'services/meal_prep_orchestrator.dart';
+import 'services/meal_prep_planner.dart';
 import 'theme/app_theme.dart';
+import 'utils/recipe_steps.dart';
 import 'widgets/animations/celebrate.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/animations/staggered_entrance.dart';
@@ -30,7 +33,15 @@ import 'widgets/miau_character.dart';
 class BatchPrepTimelineScreen extends StatefulWidget {
   final List<Recipe> recipes;
 
-  const BatchPrepTimelineScreen({super.key, required this.recipes});
+  /// Qué va a la nevera y qué al congelador de cada receta (del plan de
+  /// cocción). Si viene, se añade el reparto en tápers al final.
+  final List<PrepBatch> batches;
+
+  const BatchPrepTimelineScreen({
+    super.key,
+    required this.recipes,
+    this.batches = const [],
+  });
 
   @override
   State<BatchPrepTimelineScreen> createState() =>
@@ -205,6 +216,88 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
       body: SafeArea(
         child: _plan.isEmpty ? _buildEmptyState() : _buildTimeline(),
       ),
+      bottomNavigationBar: _plan.isEmpty ? null : _buildStartBar(),
+    );
+  }
+
+  // --- Paso a paso ------------------------------------------------------------
+
+  /// Los pasos de la tanda para el modo cocina paso a paso: cada uno dice para
+  /// qué receta es y si se hace mientras otra cosa está al fuego.
+  List<CookStep> _cookSteps() => [
+    for (final step in _plan.steps)
+      CookStep(
+        step.title,
+        note: [
+          if (!step.isPrep)
+            Recipe.applianceLabels[step.appliance] ?? step.appliance,
+          step.recipeTitles.join(', '),
+          if (step.canRunInParallel) 'Mientras tanto',
+        ].join(' · '),
+        // La cocción dura lo que dice la receta; en la preparación solo hay
+        // temporizador si el propio paso menciona un tiempo.
+        minutes: step.isPrep
+            ? stepTimerMinutes(step.title)
+            : (step.durationMinutes > 0 ? step.durationMinutes : null),
+      ),
+    for (final b in widget.batches)
+      if (_taperText(b) != null)
+        CookStep(_taperText(b)!, note: 'Tápers · ${b.title}'),
+  ];
+
+  /// "2 raciones a la nevera y 4 al congelador", o null si no hay nada.
+  String? _taperText(PrepBatch b) {
+    String r(int n) => n == 1 ? '1 ración' : '$n raciones';
+    final parts = [
+      if (b.fridgeServings > 0) '${r(b.fridgeServings)} a la nevera',
+      if (b.freezerServings > 0) '${r(b.freezerServings)} al congelador',
+    ];
+    if (parts.isEmpty) return null;
+    final text = parts.join(' y ');
+    return '${text[0].toUpperCase()}${text.substring(1)}.';
+  }
+
+  Widget _buildStartBar() {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.lg,
+        ),
+        child: SizedBox(
+          height: 56,
+          child: FilledButton.icon(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => CookModeScreen(
+                    title: 'Cocina en tanda',
+                    steps: _cookSteps(),
+                    ingredients: const [],
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: const Text('Empezar paso a paso'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.ink,
+              foregroundColor: AppColors.cream,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -243,16 +336,47 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
     final steps = _plan.steps;
     return ListView.builder(
       padding: AppSpacing.screenPadding,
-      // +1 por la cabecera (índice 0).
-      itemCount: steps.length + 1,
+      // +1 por la cabecera (índice 0) y +1 por los tápers (al final).
+      itemCount: steps.length + 2,
       itemBuilder: (context, i) {
         if (i == 0) return _buildHeader();
+        if (i == steps.length + 1) return _buildTapers();
         final index = i - 1;
         return StaggeredEntrance(
           index: index,
           child: _buildStepCard(index, steps[index]),
         );
       },
+    );
+  }
+
+  /// Reparto final en tápers: qué va a la nevera y qué al congelador.
+  Widget _buildTapers() {
+    final rows = [
+      for (final b in widget.batches)
+        if (_taperText(b) != null) (b.title, _taperText(b)!),
+    ];
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.kitchen_outlined, color: AppColors.frost),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Reparte en tápers', style: AppTextStyles.title),
+            ],
+          ),
+          for (final (title, text) in rows) ...[
+            const SizedBox(height: AppSpacing.md),
+            Text(title, style: AppTextStyles.bodyStrong),
+            Text(text, style: AppTextStyles.bodyMuted),
+          ],
+        ],
+      ),
     );
   }
 

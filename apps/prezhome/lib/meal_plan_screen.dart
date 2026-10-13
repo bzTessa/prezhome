@@ -1170,12 +1170,27 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// prefs.isModuleEnabled(HomeModule.batchCooking). En este paso no se toca
   /// main_shell.dart para evitar colisión con el Paso 2.
   Widget _cookModeCard(_PlanData data) {
-    final recipes = _plannedRecipes(data);
     return PressScale(
       onTap: () {
+        // Con plan de cocción se cocina lo del próximo día de tanda, con su
+        // reparto en tápers; si no, todo lo planificado de la semana.
+        final today = DateUtils.dateOnly(DateTime.now());
+        final day = data.isMealPrep
+            ? _buildMealPrepPlan(
+                data,
+              ).cookingDays.where((d) => !d.date.isBefore(today)).firstOrNull
+            : null;
+        final ids = day?.batches.map((b) => b.recipeId).toSet();
+        final recipes = [
+          for (final r in _plannedRecipes(data))
+            if (ids == null || ids.contains(r.id)) r,
+        ];
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => BatchPrepTimelineScreen(recipes: recipes),
+            builder: (_) => BatchPrepTimelineScreen(
+              recipes: recipes,
+              batches: day?.batches ?? const [],
+            ),
           ),
         );
       },

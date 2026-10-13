@@ -14,6 +14,7 @@
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -163,7 +164,7 @@ async function pickModels(apiKey: string): Promise<string[]> {
   }
 }
 
-Deno.serve(async (req: Request) => {
+serveAi("recipes", async (req, useCredit) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -229,19 +230,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4. Comprobar y consumir el límite mensual de IA (server-side)
-    const { data: allowed, error: creditErr } = await admin.rpc(
-      "consume_ai_credit",
-      { target_home_id: homeId },
-    );
-    if (creditErr) {
+    const credit = await useCredit(admin, homeId);
+    if (credit === "error") {
       return json({ error: "No se pudo verificar el límite de uso" }, 500);
     }
-    if (allowed !== true) {
-      return json(
-        { error: "Has llegado al límite de este mes. Vuelve a probar el mes que viene." },
-        429,
-      );
-    }
+    if (credit === "limit") return json({ error: aiLimitMessage() }, 429);
 
     // 5. Descubrir qué modelos soporta ESTA key (los nombres cambian con el
     // tiempo, así que no los fijamos). Pedimos la lista y filtramos los que

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/utils/friendly_error.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FunctionException;
 
 class _FakeError {
   _FakeError(this.text);
@@ -65,4 +66,35 @@ void main() {
     expect(msg, 'Algo ha fallado. Inténtalo de nuevo.');
     expect(friendlyError(null), 'Algo ha fallado. Inténtalo de nuevo.');
   });
+
+  test(
+    'el límite del mes muestra el mensaje del servidor, no "demasiadas peticiones"',
+    () {
+      const msg =
+          'Has llegado al límite de este mes. Se renueva el 1 de noviembre.';
+      expect(
+        friendlyError(
+          FunctionException(status: 429, details: {'error': msg}),
+          'Error al escanear',
+        ),
+        'Error al escanear. $msg',
+      );
+      expect(
+        friendlyError(
+          FunctionException(status: 429, details: '{"error":"$msg"}'),
+        ),
+        msg,
+      );
+    },
+  );
+
+  test(
+    'un 429 sin mensaje del servidor sigue siendo "demasiadas peticiones"',
+    () {
+      expect(
+        friendlyError(FunctionException(status: 429)),
+        'Demasiadas peticiones seguidas. Prueba en un rato.',
+      );
+    },
+  );
 }

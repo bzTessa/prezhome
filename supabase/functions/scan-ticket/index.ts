@@ -14,6 +14,7 @@
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,7 +92,7 @@ aprendidas si encajan). Mantén el texto original en "raw_name". Si un dato no s
 ve, usa "" o 0. No inventes productos que no estén en el ticket.`;
 }
 
-Deno.serve(async (req: Request) => {
+serveAi("scan_ticket", async (req, useCredit) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -136,17 +137,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // Límite mensual de IA
-    const { data: allowed, error: creditErr } = await admin.rpc(
-      "consume_ai_credit",
-      { target_home_id: homeId },
-    );
-    if (creditErr) return json({ error: "No se pudo verificar el límite de uso" }, 500);
-    if (allowed !== true) {
-      return json(
-        { error: "Has llegado al límite de este mes. Vuelve a probar el mes que viene." },
-        429,
-      );
+    const credit = await useCredit(admin, homeId);
+    if (credit === "error") {
+      return json({ error: "No se pudo verificar el límite de uso" }, 500);
     }
+    if (credit === "limit") return json({ error: aiLimitMessage() }, 429);
 
     // Cargar correcciones aprendidas del hogar (memoria)
     const { data: aliasRows } = await admin

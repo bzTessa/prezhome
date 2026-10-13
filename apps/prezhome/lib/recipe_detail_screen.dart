@@ -1355,7 +1355,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 MaterialPageRoute(
                   builder: (_) => CookModeScreen(
                     title: r.title,
-                    steps: steps,
+                    steps: [for (final s in steps) CookStep.fromText(s)],
                     ingredients: [for (final i in ings) _ingredientLine(i)],
                   ),
                 ),

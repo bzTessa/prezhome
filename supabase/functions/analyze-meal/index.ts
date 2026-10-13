@@ -16,6 +16,7 @@
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,7 +93,7 @@ Reglas:
 - No inventes alimentos que no se vean en el plato.`;
 }
 
-Deno.serve(async (req: Request) => {
+serveAi("meal_photo", async (req, useCredit) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -137,17 +138,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // Límite mensual de IA (por hogar, aunque el diario sea personal)
-    const { data: allowed, error: creditErr } = await admin.rpc(
-      "consume_ai_credit",
-      { target_home_id: homeId },
-    );
-    if (creditErr) return json({ error: "No se pudo verificar el límite de uso" }, 500);
-    if (allowed !== true) {
-      return json(
-        { error: "Has llegado al límite de este mes. Vuelve a probar el mes que viene." },
-        429,
-      );
+    const credit = await useCredit(admin, homeId);
+    if (credit === "error") {
+      return json({ error: "No se pudo verificar el límite de uso" }, 500);
     }
+    if (credit === "limit") return json({ error: aiLimitMessage() }, 429);
 
     const models = await pickModels(geminiKey);
     if (models.length === 0) {

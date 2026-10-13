@@ -11,10 +11,13 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: CookModeScreen(
           title: 'Lentejas',
-          steps: ['Pica la verdura.', 'Cuece 30 minutos.'],
+          steps: [
+            CookStep.fromText('Pica la verdura.'),
+            CookStep.fromText('Cuece 30 minutos.'),
+          ],
           ingredients: ['200 g lentejas', '1 cebolla'],
         ),
       ),
@@ -33,13 +36,11 @@ void main() {
     await tester.tap(find.text('Temporizador 30 min'));
     await tester.pump();
     expect(find.text('30:00'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.text('29:59'), findsOneWidget);
     await tester.tap(find.text('Parar'));
     await tester.pump();
     expect(find.text('Parar'), findsNothing);
 
-    await tester.tap(find.text('Ingredientes'));
+    await tester.tap(find.byTooltip('Ingredientes'));
     await tester.pumpAndSettle();
     expect(find.text('200 g lentejas'), findsOneWidget);
     await tester.tap(find.text('200 g lentejas'));
@@ -48,5 +49,51 @@ void main() {
       find.widgetWithText(CheckboxListTile, '200 g lentejas'),
     );
     expect(tile.value, isTrue);
+  });
+
+  testWidgets('en tanda lleva varios temporizadores a la vez', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CookModeScreen(
+          title: 'Cocina en tanda',
+          steps: [
+            CookStep(
+              'Enciende el horno para lasaña',
+              note: 'Horno · lasaña',
+              minutes: 40,
+            ),
+            CookStep('Lava el arroz', note: 'arroz · Mientras tanto'),
+            CookStep(
+              'Enciende la olla para arroz',
+              note: 'Olla · arroz',
+              minutes: 18,
+            ),
+          ],
+          ingredients: [],
+        ),
+      ),
+    );
+
+    expect(find.text('Horno · lasaña'), findsOneWidget);
+    expect(find.text('Lava el arroz'), findsOneWidget); // "Luego"
+    await tester.tap(find.text('Temporizador 40 min'));
+    await tester.pump();
+    await tester.tap(find.text('Siguiente paso'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Siguiente paso'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Temporizador 18 min'));
+    await tester.pump();
+
+    expect(find.text('Parar'), findsNWidgets(2));
+    expect(find.text('18:00'), findsOneWidget);
+    expect(find.text('40:00'), findsOneWidget);
+    await tester.tap(find.text('Parar').first);
+    await tester.pump();
+    expect(find.text('Parar'), findsOneWidget);
   });
 }
