@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_shell.dart';
+import 'services/home_invites.dart';
 import 'theme/app_theme.dart';
 
 class HomeOnboardingScreen extends StatefulWidget {
@@ -24,14 +25,14 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
   }
 
   Future<void> _joinHome() async {
-    final homeId = _homeIdController.text.trim();
-    if (!_isUuid(homeId)) {
-      _showError('Introduce un UUID de hogar válido.');
+    final code = _homeIdController.text;
+    if (!looksLikeInviteCode(code)) {
+      _showError('El código tiene 8 letras y números (por ejemplo ABCD-EFGH).');
       return;
     }
 
     await _runHomeAction(() async {
-      await _client.rpc('join_home', params: {'target_home_id': homeId});
+      await HomeInvites(_client).join(normalizeInviteCode(code));
     });
   }
 
@@ -56,12 +57,6 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  bool _isUuid(String value) {
-    return RegExp(
-      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
-    ).hasMatch(value);
   }
 
   void _showError(String message) {
@@ -172,9 +167,10 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                       TextField(
                         controller: _homeIdController,
                         enabled: !_isLoading,
+                        textCapitalization: TextCapitalization.characters,
                         decoration: InputDecoration(
-                          labelText: 'UUID del hogar',
-                          hintText: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+                          labelText: 'Código de invitación',
+                          hintText: 'ABCD-EFGH',
                           filled: true,
                           fillColor: Theme.of(context).scaffoldBackgroundColor,
                           border: OutlineInputBorder(

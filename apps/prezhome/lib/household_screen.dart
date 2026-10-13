@@ -5,7 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'economy_screen.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/supermarket.dart';
+import 'services/home_invites.dart';
+import 'services/offline_provider.dart';
 import 'nutrition_profile_screen.dart';
+import 'home_session_screen.dart';
 import 'login_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
@@ -96,6 +99,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       );
     }).toList();
 
+    HomeInvite? invite;
+    try {
+      invite = await HomeInvites(_client).current(homeId);
+    } catch (_) {
+      invite = null;
+    }
+
     final rawSupers = home?['supermarkets'];
     final supermarkets = rawSupers is List
         ? rawSupers.map((e) => e.toString()).toList()
@@ -107,6 +117,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       members: members,
       supermarkets: supermarkets,
       pointsEnabled: pointsEnabled,
+      invite: invite,
     );
   }
 
@@ -121,22 +132,17 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
 
   Future<void> _joinHome() async {
     final controller = TextEditingController();
-    final id = await showDialog<String>(
+    final code = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cream,
         title: const Text('Unirme a un hogar'),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Pega el código del hogar',
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(
+            labelText: 'Código de invitación',
+            hintText: 'ABCD-EFGH',
           ),
         ),
         actions: [
@@ -144,24 +150,102 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancelar'),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.wood,
-              foregroundColor: AppColors.ink,
-              elevation: 0,
-            ),
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
             child: const Text('Unirme'),
           ),
         ],
       ),
     );
-    if (id == null || id.isEmpty) return;
+    if (code == null || code.trim().isEmpty) return;
+    if (!looksLikeInviteCode(code)) {
+      _snack('El código tiene 8 letras y números', error: true);
+      return;
+    }
     try {
-      await _client.rpc('join_home', params: {'target_home_id': id});
+      await HomeInvites(_client).join(normalizeInviteCode(code));
+      // Hogar nuevo: la caché local del anterior no debe mezclarse.
+      await OfflineProvider.instance.clearForLogout();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeSessionScreen()),
+        (_) => false,
+      );
+    } catch (e) {
+      _snack(friendlyError(e, 'Código no válido o caducado'), error: true);
+    }
+  }
+
+  Future<void> _newInvite() async {
+    try {
+      await HomeInvites(_client).create();
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo unir al hogar'), error: true);
+      _snack(friendlyError(e, 'No se pudo crear el código'), error: true);
+    }
+  }
+
+  Future<void> _removeMember(_Member m) async {
+    final name = (m.name?.isNotEmpty ?? false) ? m.name! : 'este miembro';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Quitar a $name del hogar?'),
+        content: const Text('Dejará de ver la compra, la despensa y el plan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Quitar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await HomeInvites(_client).removeMember(m.userId);
+      _reload();
+    } catch (e) {
+      _snack(friendlyError(e, 'No se pudo quitar'), error: true);
+    }
+  }
+
+  Future<void> _leaveHome() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Salir del hogar?'),
+        content: const Text(
+          'Dejarás de ver sus datos. Para volver necesitarás un código nuevo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Salir'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await HomeInvites(_client).leave();
+      await OfflineProvider.instance.clearForLogout();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeSessionScreen()),
+        (_) => false,
+      );
+    } catch (e) {
+      _snack(friendlyError(e, 'No se pudo salir del hogar'), error: true);
     }
   }
 
@@ -369,44 +453,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        _card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Código de invitación',
-                style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Compártelo con los demás para que se unan a este hogar.',
-                style: TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: SelectableText(
-                      data.homeId!,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Copiar',
-                    icon: const Icon(Icons.copy, color: AppColors.woodDark),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: data.homeId!));
-                      _snack('Código copiado');
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        _inviteCard(data),
         const SizedBox(height: 16),
         _supermarketsCard(data),
         const SizedBox(height: 16),
@@ -436,7 +483,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   subtitle: Text(
                     m.role == 'owner' ? 'Administrador' : 'Miembro',
                   ),
-                  trailing: m.isMe
+                  trailing: !m.isMe && data.iAmOwner
+                      ? IconButton(
+                          tooltip: 'Quitar del hogar',
+                          icon: const Icon(
+                            Icons.person_remove_outlined,
+                            color: AppColors.inkMuted,
+                          ),
+                          onPressed: () => _removeMember(m),
+                        )
+                      : m.isMe
                       ? Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -458,6 +514,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       : null,
                 );
               }),
+              const SizedBox(height: 4),
+              TextButton.icon(
+                onPressed: _leaveHome,
+                icon: const Icon(Icons.logout_rounded, size: 18),
+                label: const Text('Salir del hogar'),
+                style: TextButton.styleFrom(foregroundColor: AppColors.expired),
+              ),
             ],
           ),
         ),
@@ -509,6 +572,86 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
 
   /// Tarjeta de supermercados del hogar: chips de los elegidos (o un texto si
   /// no hay ninguno) y un botón para editarlos.
+  /// Invitar: código corto que caduca. Uno nuevo anula el anterior.
+  Widget _inviteCard(_HouseholdData data) {
+    final invite = data.invite;
+    const months = [
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
+    ];
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Invitar a alguien',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
+          const SizedBox(height: 12),
+          if (invite == null)
+            FilledButton.icon(
+              onPressed: _newInvite,
+              icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
+              label: const Text('Crear código'),
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: SelectableText(
+                    formatInviteCode(invite.code),
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 2,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Copiar',
+                  icon: const Icon(
+                    Icons.copy_rounded,
+                    color: AppColors.woodDark,
+                  ),
+                  onPressed: () {
+                    Clipboard.setData(
+                      ClipboardData(text: formatInviteCode(invite.code)),
+                    );
+                    _snack('Código copiado');
+                  },
+                ),
+              ],
+            ),
+            Text(
+              'Vale hasta el ${invite.expiresAt.day} '
+              '${months[invite.expiresAt.month - 1]}',
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _newInvite,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Nuevo código'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _supermarketsCard(_HouseholdData data) {
     final labels = Supermarket.labelsFor(data.supermarkets);
     return _card(
@@ -721,6 +864,11 @@ class _HouseholdData {
   final List<_Member> members;
   final List<String> supermarkets; // claves canónicas de súper del hogar
 
+  /// Código de invitación vigente (null si no hay).
+  final HomeInvite? invite;
+
+  bool get iAmOwner => members.any((m) => m.isMe && m.role == 'owner');
+
   /// "Modo Puntos" activado: controla si se muestra el acceso a Economía.
   final bool pointsEnabled;
   _HouseholdData({
@@ -729,6 +877,7 @@ class _HouseholdData {
     this.members = const [],
     this.supermarkets = const [],
     this.pointsEnabled = true,
+    this.invite,
   });
 }
 
