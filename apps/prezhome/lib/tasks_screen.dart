@@ -27,6 +27,10 @@ class _TasksScreenState extends State<TasksScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   late Future<_TasksData> _future;
 
+  // Filtro de persona: null = todas; si no, id del miembro (Mías = uid).
+  String? _filterUser;
+  final _quickController = TextEditingController();
+
   // Canal Realtime de las tareas del hogar. Se abre UNA sola vez en initState
   // (filtrado por home_id) y se cierra en dispose. Si el otro miembro del hogar
   // completa o cambia una tarea, recargamos al instante.
@@ -135,6 +139,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   void dispose() {
+    _quickController.dispose();
     final channel = _channel;
     if (channel != null) {
       _client.removeChannel(channel);
@@ -402,11 +407,67 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (_) {}
   }
 
-  Future<void> _openAdd(Map<String, String> members) async {
+  Future<void> _openAdd(Map<String, String> members, [HomeTask? task]) async {
     final added = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => AddTaskScreen(members: members)),
+      MaterialPageRoute(
+        builder: (_) => AddTaskScreen(members: members, task: task),
+      ),
     );
     if (added == true) _reload();
+  }
+
+  /// Alta rápida: tarea puntual para hoy, sin asignar y con puntos por defecto.
+  Future<void> _quickAdd(_TasksData data) async {
+    final title = _quickController.text.trim();
+    final uid = _client.auth.currentUser?.id;
+    if (title.isEmpty || uid == null || data.homeId == null) return;
+    HapticFeedback.lightImpact();
+    final now = DateTime.now();
+    final task = HomeTask(
+      id: '',
+      homeId: data.homeId!,
+      title: title,
+      dueDate: DateTime(now.year, now.month, now.day),
+    );
+    try {
+      await _client.from('tasks').insert(task.toInsertMap(createdBy: uid));
+      _quickController.clear();
+      _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
+  /// Aplaza una tarea [days] días desde hoy (due_date y next_due).
+  Future<void> _postpone(HomeTask task, int days) async {
+    HapticFeedback.selectionClick();
+    final now = DateTime.now();
+    final key = DateTime(
+      now.year,
+      now.month,
+      now.day + days,
+    ).toIso8601String().split('T').first;
+    try {
+      await _client
+          .from('tasks')
+          .update({'due_date': key, 'next_due': key})
+          .eq('id', task.id);
+      _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
   }
 
   @override
@@ -436,13 +497,16 @@ class _TasksScreenState extends State<TasksScreen> {
             );
           }
 
-          final pending = data.listTasks.where((t) => !t.isDone).toList()
+          final visible = data.listTasks
+              .where((t) => taskMatchesFilter(t, _filterUser))
+              .toList();
+          final pending = visible.where((t) => !t.isDone).toList()
             ..sort(_byDue);
           final today = pending.where(_isDueTodayOrOverdue).toList();
           final upcoming = pending
               .where((t) => !_isDueTodayOrOverdue(t))
               .toList();
-          final done = data.listTasks.where((t) => t.isDone).toList()
+          final done = visible.where((t) => t.isDone).toList()
             ..sort(
               (a, b) =>
                   (b.completedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
@@ -462,6 +526,8 @@ class _TasksScreenState extends State<TasksScreen> {
                 : (data.members[t.assignedTo] ?? 'Miembro'),
             onComplete: () => _complete(t, data),
             confirmDelete: () => _confirmDelete(t),
+            onEdit: () => _openAdd(data.members, t),
+            onPostpone: (days) => _postpone(t, days),
           );
 
           // Todo el contenido va dentro de UN solo scroll.
@@ -478,6 +544,16 @@ class _TasksScreenState extends State<TasksScreen> {
                 pendingToday: today.length,
                 pendingTotal: pending.length,
               ),
+              _FilterRow(
+                members: data.members,
+                currentUserId: data.currentUserId,
+                selected: _filterUser,
+                onSelected: (id) => setState(() => _filterUser = id),
+              ),
+              _QuickAdd(
+                controller: _quickController,
+                onSubmit: () => _quickAdd(data),
+              ),
               if (pending.isEmpty)
                 const _TareasCelebracion(visible: true)
               else ...[
@@ -493,7 +569,19 @@ class _TasksScreenState extends State<TasksScreen> {
                 for (final t in today) row(t),
                 if (upcoming.isNotEmpty) ...[
                   _SectionHeader('Próximas', count: upcoming.length),
-                  for (final t in upcoming) row(t),
+                  for (final g in groupUpcomingByDay(
+                    upcoming,
+                    DateTime.now(),
+                  )) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xs,
+                        bottom: AppSpacing.xs,
+                      ),
+                      child: Text(g.key, style: AppTextStyles.bodyMuted),
+                    ),
+                    for (final t in g.value) row(t),
+                  ],
                 ],
               ],
               if (recentDone.isNotEmpty) ...[
@@ -625,6 +713,74 @@ class _TodayProgress extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Chips de filtro por persona bajo la cabecera de progreso.
+class _FilterRow extends StatelessWidget {
+  final Map<String, String> members;
+  final String? currentUserId;
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+  const _FilterRow({
+    required this.members,
+    required this.currentUserId,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final others = members.entries.where((e) => e.key != currentUserId);
+    Widget chip(String label, String? id) => ChoiceChip(
+      label: Text(label),
+      selected: selected == id,
+      onSelected: (_) {
+        HapticFeedback.selectionClick();
+        onSelected(id);
+      },
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.xs,
+        children: [
+          chip('Todas', null),
+          if (currentUserId != null) chip('Mías', currentUserId),
+          for (final e in others) chip(e.value, e.key),
+        ],
+      ),
+    );
+  }
+}
+
+/// Campo compacto para crear una tarea puntual de hoy con Enter.
+class _QuickAdd extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onSubmit;
+  const _QuickAdd({required this.controller, required this.onSubmit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: TextField(
+        controller: controller,
+        textCapitalization: TextCapitalization.sentences,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => onSubmit(),
+        decoration: InputDecoration(
+          hintText: 'Añadir tarea…',
+          isDense: true,
+          suffixIcon: IconButton(
+            tooltip: 'Añadir',
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: onSubmit,
+          ),
+        ),
       ),
     );
   }
@@ -1006,6 +1162,8 @@ class _TaskRow extends StatelessWidget {
   final String memberName;
   final VoidCallback onComplete;
   final Future<bool> Function() confirmDelete;
+  final VoidCallback onEdit;
+  final void Function(int days) onPostpone;
 
   const _TaskRow({
     super.key,
@@ -1013,6 +1171,8 @@ class _TaskRow extends StatelessWidget {
     required this.memberName,
     required this.onComplete,
     required this.confirmDelete,
+    required this.onEdit,
+    required this.onPostpone,
   });
 
   @override
@@ -1033,79 +1193,109 @@ class _TaskRow extends StatelessWidget {
         ),
         child: Icon(Icons.delete_outline, color: AppColors.expired),
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
-        ),
-        decoration: AppTheme.surfaceDecoration(
-          radius: AppRadius.md,
-          elevation: done ? 0 : 1,
-          color: done ? AppColors.card.withValues(alpha: 0.72) : AppColors.card,
-        ),
-        child: Row(
-          children: [
-            Semantics(
-              button: true,
-              label: done ? 'Hecha' : 'Marcar como hecha',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: done ? null : onComplete,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xs),
-                  child: AnimatedContainer(
-                    duration: AppMotion.effectiveDuration(
-                      AppMotion.fast,
-                      reduceMotion: AppMotion.reduceMotionOf(context),
-                    ),
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: done ? AppColors.sage : Colors.transparent,
-                      border: Border.all(
-                        color: done ? AppColors.sage : AppColors.inkMuted,
-                        width: 2,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: done ? null : onEdit,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
+          decoration: AppTheme.surfaceDecoration(
+            radius: AppRadius.md,
+            elevation: done ? 0 : 1,
+            color: done
+                ? AppColors.card.withValues(alpha: 0.72)
+                : AppColors.card,
+          ),
+          child: Row(
+            children: [
+              Semantics(
+                button: true,
+                label: done ? 'Hecha' : 'Marcar como hecha',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: done ? null : onComplete,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.xs),
+                    child: AnimatedContainer(
+                      duration: AppMotion.effectiveDuration(
+                        AppMotion.fast,
+                        reduceMotion: AppMotion.reduceMotionOf(context),
                       ),
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: done ? AppColors.sage : Colors.transparent,
+                        border: Border.all(
+                          color: done ? AppColors.sage : AppColors.inkMuted,
+                          width: 2,
+                        ),
+                      ),
+                      child: done
+                          ? Icon(Icons.check, size: 20, color: AppColors.ink)
+                          : null,
                     ),
-                    child: done
-                        ? Icon(Icons.check, size: 20, color: AppColors.ink)
-                        : null,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.title,
-                    style: AppTextStyles.bodyStrong.copyWith(
-                      decoration: done ? TextDecoration.lineThrough : null,
-                      color: done ? AppColors.inkMuted : AppColors.ink,
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      task.title,
+                      style: AppTextStyles.bodyStrong.copyWith(
+                        decoration: done ? TextDecoration.lineThrough : null,
+                        color: done ? AppColors.inkMuted : AppColors.ink,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    children: [
-                      if (!done && due != null) due,
-                      _pill(memberName, icon: Icons.person_outline),
-                      if (task.recurrence != 'once')
-                        _pill(task.recurrenceLabel, icon: Icons.repeat),
-                      if (task.dueTime != null)
-                        _pill(task.dueTime!, icon: Icons.schedule),
-                      _pill('${task.points} pts'),
-                    ],
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.xs),
+                    Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        if (!done && due != null) due,
+                        _pill(memberName, icon: Icons.person_outline),
+                        if (task.recurrence != 'once')
+                          _pill(task.recurrenceLabel, icon: Icons.repeat),
+                        if (task.dueTime != null)
+                          _pill(task.dueTime!, icon: Icons.schedule),
+                        _pill('${task.points} pts'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              if (!done)
+                PopupMenuButton<String>(
+                  tooltip: 'Más opciones',
+                  icon: Icon(Icons.more_horiz, color: AppColors.inkMuted),
+                  color: AppColors.card,
+                  onSelected: (v) async {
+                    switch (v) {
+                      case 'tomorrow':
+                        onPostpone(1);
+                      case 'week':
+                        onPostpone(7);
+                      case 'edit':
+                        onEdit();
+                      case 'delete':
+                        await confirmDelete();
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'tomorrow', child: Text('Mañana')),
+                    PopupMenuItem(value: 'week', child: Text('Próxima semana')),
+                    PopupMenuItem(value: 'edit', child: Text('Editar')),
+                    PopupMenuItem(value: 'delete', child: Text('Eliminar')),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );

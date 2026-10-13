@@ -8,7 +8,10 @@ import 'utils/friendly_error.dart';
 class AddTaskScreen extends StatefulWidget {
   /// Miembros del hogar para asignar: {userId: nombre}.
   final Map<String, String> members;
-  const AddTaskScreen({super.key, required this.members});
+
+  /// Tarea existente a editar; null = nueva.
+  final HomeTask? task;
+  const AddTaskScreen({super.key, required this.members, this.task});
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -29,6 +32,31 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   DateTime? _dueDate;
   TimeOfDay? _dueTime;
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final t = widget.task;
+    if (t == null) return;
+    _titleController.text = t.title;
+    _notesController.text = t.notes ?? '';
+    _points = t.points;
+    _recurrence = t.recurrence;
+    _intervalCount = t.intervalCount ?? _intervalCount;
+    _intervalUnit = t.intervalUnit ?? _intervalUnit;
+    _weekdays.addAll(t.weekdays);
+    _assignedTo = widget.members.containsKey(t.assignedTo)
+        ? t.assignedTo
+        : null;
+    _dueDate = t.dueDate;
+    final parts = t.dueTime?.split(':');
+    if (parts != null && parts.length >= 2) {
+      _dueTime = TimeOfDay(
+        hour: int.tryParse(parts[0]) ?? 0,
+        minute: int.tryParse(parts[1]) ?? 0,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -56,8 +84,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         throw 'Elige al menos un día de la semana.';
       }
 
+      final original = widget.task;
       final task = HomeTask(
-        id: '',
+        id: original?.id ?? '',
+        effortPoints: original?.effortPoints ?? 10,
         homeId: homeId,
         title: _titleController.text.trim(),
         notes: _notesController.text.trim().isEmpty
@@ -75,7 +105,20 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             : '${_dueTime!.hour.toString().padLeft(2, '0')}:'
                   '${_dueTime!.minute.toString().padLeft(2, '0')}',
       );
-      await _client.from('tasks').insert(task.toInsertMap(createdBy: user.id));
+      final map = task.toInsertMap(createdBy: user.id);
+      if (original == null) {
+        await _client.from('tasks').insert(map);
+      } else {
+        map
+          ..remove('created_by')
+          ..remove('home_id');
+        // Si la fecha no cambia, conservamos la próxima aparición actual.
+        final sameDue = _dayKey(original.dueDate) == _dayKey(_dueDate);
+        if (sameDue && original.nextDue != null) {
+          map['next_due'] = _dayKey(original.nextDue);
+        }
+        await _client.from('tasks').update(map).eq('id', original.id);
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
@@ -106,13 +149,16 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     });
   }
 
+  static String? _dayKey(DateTime? d) => d?.toIso8601String().split('T').first;
+
   InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
   @override
   Widget build(BuildContext context) {
+    final editing = widget.task != null;
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Nueva tarea')),
+      appBar: AppBar(title: Text(editing ? 'Editar tarea' : 'Nueva tarea')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -120,22 +166,24 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           children: [
             // Plantillas tipicas del hogar: un toque rellena titulo, periodicidad
             // y puntos sugeridos; luego se puede ajustar todo antes de guardar.
-            const Text(
-              'Tareas típicas',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _TaskTemplate.catalog
-                  .map(
-                    (tpl) =>
-                        _TemplateChip(template: tpl, onTap: _applyTemplate),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 20),
+            if (!editing) ...[
+              const Text(
+                'Tareas típicas',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _TaskTemplate.catalog
+                    .map(
+                      (tpl) =>
+                          _TemplateChip(template: tpl, onTap: _applyTemplate),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
             TextFormField(
               controller: _titleController,
               decoration: _dec('Título'),
@@ -343,7 +391,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               onPressed: _saving ? null : _save,
               child: _saving
                   ? const CircularProgressIndicator()
-                  : const Text('Guardar tarea'),
+                  : Text(editing ? 'Guardar cambios' : 'Guardar tarea'),
             ),
           ],
         ),

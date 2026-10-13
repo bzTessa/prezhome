@@ -233,3 +233,40 @@ class HomeTask {
     }
   }
 }
+
+/// Filtro por persona: [userId] null = todas. Las sin asignar salen siempre.
+bool taskMatchesFilter(HomeTask t, String? userId) =>
+    userId == null || t.assignedTo == null || t.assignedTo == userId;
+
+/// Etiqueta del día para agrupar "Próximas": Mañana, "Jueves 15" o "Sin fecha".
+String upcomingDayLabel(DateTime? due, DateTime today) {
+  if (due == null) return 'Sin fecha';
+  final d = DateTime(due.year, due.month, due.day);
+  final t = DateTime(today.year, today.month, today.day);
+  if (d.difference(t).inDays == 1) return 'Mañana';
+  return '${HomeTask.weekdayLong[d.weekday - 1]} ${d.day}';
+}
+
+/// Agrupa tareas (ya ordenadas por fecha) por día; "Sin fecha" va al final.
+List<MapEntry<String, List<HomeTask>>> groupUpcomingByDay(
+  List<HomeTask> tasks,
+  DateTime today,
+) {
+  final groups = <String, List<HomeTask>>{};
+  final undated = <HomeTask>[];
+  for (final t in tasks) {
+    final due = t.nextDue ?? t.dueDate;
+    if (due == null) {
+      undated.add(t);
+    } else {
+      final key =
+          '${DateTime(due.year, due.month, due.day).toIso8601String()}'
+          '|${upcomingDayLabel(due, today)}';
+      groups.putIfAbsent(key, () => []).add(t);
+    }
+  }
+  return [
+    for (final e in groups.entries) MapEntry(e.key.split('|').last, e.value),
+    if (undated.isNotEmpty) MapEntry('Sin fecha', undated),
+  ];
+}

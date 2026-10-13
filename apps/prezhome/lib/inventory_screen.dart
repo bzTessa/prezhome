@@ -10,6 +10,7 @@ import 'models/shopping_list_item.dart';
 import 'scan_barcode_screen.dart';
 import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
+import 'services/product_photo_resolver.dart';
 import 'services/proactive_suggestions_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
@@ -127,6 +128,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (await _mergeDuplicates(items)) {
         items = _rowsToItems(await _repo.readCached());
       }
+      unawaited(_recheckOldPhotos(rows));
       if (!mounted) return;
       final pending = _repo.pendingCount;
       setState(() {
@@ -135,6 +137,51 @@ class _InventoryScreenState extends State<InventoryScreen> {
       });
     } catch (_) {
       // Sin conexión: conservamos lo pintado desde la caché.
+    }
+  }
+
+  bool _photosRechecked = false;
+
+  /// Las fotos de OFF puestas solas con la regla antigua a veces eran otro
+  /// producto: se buscan otra vez y, si no hay uno claro, se quitan.
+  Future<void> _recheckOldPhotos(List<Map<String, dynamic>> rows) async {
+    if (_photosRechecked) return;
+    _photosRechecked = true;
+    final old = [
+      for (final r in rows)
+        if ((r['image_url'] ?? '').toString().isNotEmpty &&
+            !isTrustedCachedPhoto(
+              r['image_url'].toString(),
+              _rowCreatedAt(r)?.toUtc(),
+            ))
+          r,
+    ];
+    if (old.isEmpty) return;
+    try {
+      final homeId = await _homeId();
+      final resolver = ProductPhotoResolver(Supabase.instance.client);
+      // Cada cambio repinta solo (OfflineRepository.changes).
+      for (final r in old) {
+        final id = r['id']?.toString();
+        if (id == null || isLocalId(id)) continue;
+        final url = await resolver.photoFor(
+          homeId: homeId,
+          name: r['name'].toString(),
+        );
+        if (url == r['image_url']) continue;
+        await _repo.applyLocalWrite(
+          buildUpdateOp(
+            table: kInventoryTable,
+            id: id,
+            changes: {'image_url': url},
+            nowMillis: DateTime.now().millisecondsSinceEpoch,
+            seq: _nextSeq(),
+          ),
+        );
+      }
+    } catch (_) {
+      // Sin red se revisa la próxima vez.
+      _photosRechecked = false;
     }
   }
 

@@ -23,7 +23,10 @@ import 'utils/friendly_error.dart';
 
 /// Planificador semanal de comidas (v1).
 class MealPlanScreen extends StatefulWidget {
-  const MealPlanScreen({super.key});
+  const MealPlanScreen({super.key, this.embedded = false});
+
+  /// Dentro de la pestaña Comidas: sin barra propia.
+  final bool embedded;
 
   @override
   State<MealPlanScreen> createState() => _MealPlanScreenState();
@@ -40,6 +43,20 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     'snack': 'Merienda',
     'dessert': 'Postre',
   };
+  static const _monthNames = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
   static const _dayNames = [
     'Lunes',
     'Martes',
@@ -56,6 +73,15 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   // Día elegido en la tira de la semana (0 = lunes). null = hoy.
   int? _selectedDay;
 
+  // Semanas desde la actual (0 = esta, 1 = la próxima…).
+  int _weekOffset = 0;
+
+  void _moveWeek(int delta) {
+    _weekOffset += delta;
+    _selectedDay = null;
+    _reload();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -71,8 +97,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   DateTime get _weekStart {
     final now = DateTime.now();
-    // Lunes de esta semana
-    return DateTime(now.year, now.month, now.day - (now.weekday - 1));
+    // Lunes de la semana mostrada
+    return DateTime(
+      now.year,
+      now.month,
+      now.day - (now.weekday - 1) + 7 * _weekOffset,
+    );
   }
 
   Future<_PlanData> _load() async {
@@ -648,7 +678,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Plan semanal')),
+      appBar: widget.embedded
+          ? null
+          : AppBar(title: const Text('Plan semanal')),
       body: FutureBuilder<_PlanData>(
         future: _future,
         builder: (context, snapshot) {
@@ -738,6 +770,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final now = DateTime.now();
     final todayIndex = days.indexWhere((d) => _isSameDay(d, now));
     final sel = (_selectedDay ?? (todayIndex < 0 ? 0 : todayIndex)).clamp(0, 6);
+    final last = days.last;
+    final range = days.first.month == last.month
+        ? '${days.first.day} – ${last.day} de ${_monthNames[last.month - 1]}'
+        : '${days.first.day} ${_monthNames[days.first.month - 1]} – '
+              '${last.day} ${_monthNames[last.month - 1]}';
     final date = days[sel];
     final dayEntries = byDate[keyOf(date)] ?? const <MealPlanEntry>[];
     final byType = {for (final e in dayEntries) e.mealType: e};
@@ -749,6 +786,48 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       children: [
+        Row(
+          children: [
+            IconButton(
+              tooltip: 'Semana anterior',
+              onPressed: () => _moveWeek(-1),
+              icon: const Icon(Icons.chevron_left_rounded),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    switch (_weekOffset) {
+                      0 => 'Esta semana',
+                      1 => 'La próxima semana',
+                      -1 => 'La semana pasada',
+                      _ => 'Semana',
+                    },
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.woodDark,
+                    ),
+                  ),
+                  Text(
+                    range,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Semana siguiente',
+              onPressed: () => _moveWeek(1),
+              icon: const Icon(Icons.chevron_right_rounded),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         WeekDayStrip(
           days: days,
           selected: sel,
@@ -792,7 +871,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              'Aún no hay plan esta semana.',
+              'Aún no hay plan para esta semana.',
               style: TextStyle(color: AppColors.inkMuted),
             ),
           ),
