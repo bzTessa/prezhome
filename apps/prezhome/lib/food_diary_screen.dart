@@ -7,6 +7,7 @@ import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'nutrition_profile_screen.dart';
 import 'photo_meal_screen.dart';
+import 'services/plan_diary.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
@@ -93,6 +94,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   Future<_DiaryData> _load() async {
     final user = _client.auth.currentUser;
     if (user == null) throw 'No autenticado';
+    await PlanDiary.sync(_client);
 
     // Perfil propio para leer el objetivo diario (puede ser null si está
     // incompleto). El perfil es por usuario: id = auth user id.

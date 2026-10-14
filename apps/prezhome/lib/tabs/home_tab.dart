@@ -19,6 +19,7 @@ import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/smart_reminders.dart';
+import '../services/plan_diary.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
@@ -381,6 +382,7 @@ class HomeTabState extends State<HomeTab> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
+      await PlanDiary.sync(_client);
 
       final profileRow = await _client
           .from('profiles')

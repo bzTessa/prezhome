@@ -79,6 +79,14 @@ function buildPrompt(p: Record<string, unknown>): string {
   // p. ej. "Rápido (menos de 20 min)"). Opcional: si no viene, no se añade
   // ninguna línea y el comportamiento es idéntico al anterior.
   const cookTime = (p.cook_time ?? "").toString().trim();
+  // Cocinas que le gustan (p. ej. "Mediterránea"): preferencia blanda.
+  const cuisines = Array.isArray(p.cuisines)
+    ? (p.cuisines as string[]).filter((s) => s && s.trim().length > 0)
+    : [];
+  const cuisineLine = cuisines.length > 0
+    ? `\n- Cocinas que le gustan: ${cuisines.slice(0, 10).join(", ")}. Inspírate
+     sobre todo en ellas, sin dejar de variar.`
+    : "";
   // Modo "con lo que tengo": alimentos que ya hay en casa (los primeros
   // caducan antes). Si viene, las recetas se construyen sobre ellos.
   const pantry = Array.isArray(p.pantry)
@@ -144,7 +152,7 @@ ${superLine}
 - Objetivo nutricional: ${goal}
 - Dieta / restricción: ${diet}
 - Electrodomésticos disponibles: ${appliances || "cualquiera"}
-- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${cookTimeLine}${costLine}${pantryLine}${allergyLine}${dislikedLine}${avoidLine}
+- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${cookTimeLine}${cuisineLine}${costLine}${pantryLine}${allergyLine}${dislikedLine}${avoidLine}
 
 Responde SOLO con un JSON válido (sin markdown) con esta forma:
 {

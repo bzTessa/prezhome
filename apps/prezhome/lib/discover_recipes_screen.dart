@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/dashboard_prefs.dart';
 import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
@@ -95,6 +96,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   List<String> _profileAllergies = [];
   List<String> _profileDisliked = [];
   String? _profileCookTime;
+  List<String> _profileCuisines = [];
 
   bool _loading = false;
   bool _savedAny = false;
@@ -140,7 +142,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       if (user == null) return;
       final profile = await _client
           .from('profiles')
-          .select('home_id, diet, allergies, disliked, cook_time_pref')
+          .select(
+            'home_id, diet, allergies, disliked, cook_time_pref, dashboard_prefs',
+          )
           .eq('id', user.id)
           .maybeSingle();
       // Guardamos las preferencias del perfil para personalizar la generación.
@@ -154,6 +158,19 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           _profileAllergies = asStrings(profile['allergies']);
           _profileDisliked = asStrings(profile['disliked']);
           _profileCookTime = profile['cook_time_pref'] as String?;
+          final raw = profile['dashboard_prefs'];
+          final prefs = DashboardPrefs.fromJson(
+            raw is Map ? Map<String, dynamic>.from(raw) : null,
+          );
+          _profileCuisines = [
+            for (final c in prefs.cuisines) ?DashboardPrefs.cuisineLabels[c],
+          ];
+          // Aparatos de su cuestionario como punto de partida.
+          if (_appliances.isEmpty && prefs.appliances != null) {
+            _appliances.addAll(
+              prefs.appliances!.where(_applianceOptions.containsKey),
+            );
+          }
         });
       }
       final homeId = profile?['home_id'] as String?;
@@ -265,6 +282,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         // Alergias (restricción dura) e ingredientes no deseados (blanda).
         'allergies': _profileAllergies,
         'disliked': _profileDisliked,
+        'cuisines': _profileCuisines,
       };
       // Tiempo de cocina del perfil (si lo hay): así ajustamos las recetas al
       // ritmo que la usuaria eligió en su cuestionario. Si es null, la clave no

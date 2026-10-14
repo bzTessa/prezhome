@@ -131,13 +131,47 @@ class DashboardPrefs {
   /// Estilo/ritmo de cocina elegido.
   final CookingStyle cookingStyle;
 
+  /// Cocinas que le gustan (claves de [cuisineLabels]).
+  final Set<String> cuisines;
+
+  /// Aparatos que tiene (claves de `Recipe.applianceLabels`). null = sin
+  /// responder: se da por hecho que tiene todos.
+  final Set<String>? appliances;
+
+  /// Lleva la cuenta de calorías: las comidas del plan que ya pasaron se
+  /// apuntan solas en su diario.
+  final bool trackCalories;
+
   const DashboardPrefs({
     required this.order,
     required this.hidden,
     required this.quick,
     required this.enabledModules,
     required this.cookingStyle,
+    this.cuisines = const {},
+    this.appliances,
+    this.trackCalories = true,
   });
+
+  static const Map<String, String> cuisineLabels = {
+    'casera': 'Casera de siempre',
+    'mediterranea': 'Mediterránea',
+    'ligera': 'Ligera',
+    'rapida': 'Rápida y sencilla',
+    'italiana': 'Italiana',
+    'asiatica': 'Asiática',
+    'mexicana': 'Mexicana',
+    'internacional': 'De todo el mundo',
+  };
+
+  /// Lo básico (fuego, olla, nada) se da por hecho en cualquier cocina.
+  static const basicAppliances = {'none', 'stovetop', 'pot'};
+
+  /// ¿Puede cocinar una receta que usa [appliance]?
+  bool canCook(String appliance) =>
+      appliances == null ||
+      basicAppliances.contains(appliance) ||
+      appliances!.contains(appliance);
 
   /// Preferencias por defecto: todas las tarjetas visibles en el orden clásico,
   /// unos accesos rápidos sensatos, todos los módulos activados y el estilo de
@@ -215,12 +249,18 @@ class DashboardPrefs {
         ? CookingStyle.defaultStyle
         : (CookingStyle.byId(rawStyle.toString()) ?? CookingStyle.defaultStyle);
 
+    Set<String>? strings(Object? raw) =>
+        raw is List ? {for (final e in raw) e.toString()} : null;
+
     return DashboardPrefs(
       order: order,
       hidden: hidden,
       quick: quick.isEmpty ? DashboardPrefs.defaults().quick : quick,
       enabledModules: enabledModules,
       cookingStyle: cookingStyle,
+      cuisines: strings(json['cuisines']) ?? const {},
+      appliances: strings(json['appliances']),
+      trackCalories: json['track_calories'] != false,
     );
   }
 
@@ -230,6 +270,9 @@ class DashboardPrefs {
     'quick': quick.map((q) => q.id).toList(),
     'modules': enabledModules.map((m) => m.id).toList(),
     'cooking_style': cookingStyle.id,
+    'cuisines': cuisines.toList(),
+    'appliances': ?appliances?.toList(),
+    'track_calories': trackCalories,
   };
 
   DashboardPrefs copyWith({
@@ -238,11 +281,17 @@ class DashboardPrefs {
     List<QuickAction>? quick,
     Set<HomeModule>? enabledModules,
     CookingStyle? cookingStyle,
+    Set<String>? cuisines,
+    Set<String>? appliances,
+    bool? trackCalories,
   }) => DashboardPrefs(
     order: order ?? this.order,
     hidden: hidden ?? this.hidden,
     quick: quick ?? this.quick,
     enabledModules: enabledModules ?? this.enabledModules,
     cookingStyle: cookingStyle ?? this.cookingStyle,
+    cuisines: cuisines ?? this.cuisines,
+    appliances: appliances ?? this.appliances,
+    trackCalories: trackCalories ?? this.trackCalories,
   );
 }
