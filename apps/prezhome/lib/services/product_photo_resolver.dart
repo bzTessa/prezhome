@@ -43,7 +43,7 @@ class ProductPhotoResolver {
   /// siempre; las de OFF se comprueban leyendo el producto por su código de
   /// barras (no gasta búsquedas). Null si no se pudo comprobar (sin red).
   Future<bool?> photoMatches(String name, String url) async {
-    // Lo genérico lleva su icono: una foto de OFF guardada sobra.
+    // Lo genérico lleva su foto genérica: una de OFF guardada sobra.
     if (ProductIcons.isGeneric(name) && isSharablePhoto(url)) return false;
     final code = offBarcodeFromUrl(url);
     if (code == null) return !isSharablePhoto(url) && !isStockPhoto(url);
@@ -78,8 +78,17 @@ class ProductPhotoResolver {
         return url;
       }
     } catch (_) {}
-    // Lo genérico (cebolla, leche...) se ve con su icono: no se busca envase.
-    if (ProductIcons.isGeneric(name)) return null;
+    // Lo genérico (cebolla, leche...) lleva su foto genérica compartida, no
+    // la de un envase.
+    if (ProductIcons.isGeneric(name)) {
+      final url = await genericPhoto(name);
+      if (url != null) {
+        await FoodPhotoService(
+          _client,
+        ).rememberPhoto(homeId: homeId, name: name, url: url);
+      }
+      return url;
+    }
 
     // Otro hogar ya encontró este producto: se reutiliza sin buscar.
     try {
@@ -130,5 +139,24 @@ class ProductPhotoResolver {
       }
     }
     return found;
+  }
+
+  /// Foto genérica realista de [name] (función `product-image`, Nano
+  /// Banana), compartida por todos los hogares. Con [again] crea otra
+  /// versión, gasta una foto del cupo y lanza si falla (para avisar).
+  Future<String?> genericPhoto(String name, {bool again = false}) async {
+    final key = ProductIcons.photoKeyFor(name);
+    if (key == null) return null;
+    try {
+      final res = await _client.functions.invoke(
+        'product-image',
+        body: {'key': key, 'again': again},
+      );
+      final url = (res.data is Map ? res.data['url'] : null)?.toString();
+      return url == null || url.isEmpty ? null : url;
+    } catch (_) {
+      if (again) rethrow;
+      return null;
+    }
   }
 }

@@ -59,8 +59,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   marca la lista), `services/plan_shopping.dart` (lista desde el plan).
 - Iconos de producto: `widgets/product_icons.dart` (palabra clave → PNG de
   Fluent Emoji 3D, MIT, en `assets/icons/products/`). Lo genérico ("cebollas",
-  "leche entera") lleva siempre su icono y no se busca foto; con marca u otras
-  palabras sí se busca envase en OFF. Solo una foto de la persona gana al icono.
+  "leche entera") no busca envase en OFF: pide su foto genérica a la función
+  `product-image` (Nano Banana, una por producto para todos los hogares en
+  `recipe-images/generic/`; gratis la primera vez si está en `keywords.json`,
+  que un test mantiene igual que el mapa; "Generar foto" en la compra crea otra
+  y gasta cupo `meal_photo`). El icono queda mientras no hay foto. Con marca u
+  otras palabras se busca envase en OFF. Una foto de la persona gana siempre.
 - Fotos: `services/product_photo_resolver.dart` (caché `food_photo_cache` →
   búsqueda OFF), `services/product_search_service.dart` (8/min, caché; las
   búsquedas en segundo plano solo pueden gastar 4 para no bloquear a la persona).
