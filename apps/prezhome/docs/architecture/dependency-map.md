@@ -10,11 +10,11 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 | `models` | 13 |
 | `onboarding` | 2 |
 | `screens` | 30 |
-| `services` | 36 |
+| `services` | 37 |
 | `tabs` | 3 |
 | `theme` | 7 |
 | `utils` | 17 |
-| `widgets` | 24 |
+| `widgets` | 25 |
 
 ## Dependencias entre módulos
 
@@ -30,21 +30,21 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 
 ## Importaciones cruzadas (conteo por módulo origen/destino)
 
-- `screens` -> `widgets`: 65
-- `screens` -> `services`: 60
+- `screens` -> `widgets`: 66
+- `screens` -> `services`: 63
 - `screens` -> `models`: 52
 - `screens` -> `utils`: 46
 - `screens` -> `theme`: 34
-- `widgets` -> `theme`: 32
-- `services` -> `models`: 20
+- `widgets` -> `theme`: 33
+- `services` -> `models`: 22
 - `tabs` -> `screens`: 14
+- `tabs` -> `widgets`: 8
 - `services` -> `utils`: 7
-- `tabs` -> `widgets`: 7
 - `services` -> `widgets`: 6
 - `tabs` -> `models`: 6
+- `tabs` -> `services`: 5
+- `widgets` -> `services`: 5
 - `onboarding` -> `theme`: 4
-- `tabs` -> `services`: 4
-- `widgets` -> `services`: 4
 - `screens` -> `tabs`: 3
 - `tabs` -> `theme`: 3
 - `utils` -> `widgets`: 3

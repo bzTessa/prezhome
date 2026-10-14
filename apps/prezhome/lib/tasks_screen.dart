@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
+import 'services/calendar_sync.dart';
+import 'services/plan_prefs.dart';
 import 'services/shopping_checkout.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_motion.dart';
@@ -162,6 +166,7 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Future<_TasksData> _load() async {
+    unawaited(CalendarSync.sync(_client));
     final user = _client.auth.currentUser;
     if (user == null) throw 'No autenticado';
     final profile = await _client
@@ -1781,6 +1786,27 @@ class _TaskSheetState extends State<_TaskSheet> {
 
   static String? _dayKey(DateTime? d) => d?.toIso8601String().split('T').first;
 
+  Future<int?>? _free;
+  String? _freeKey;
+
+  /// Primer hueco libre del día elegido según el calendario del móvil.
+  Future<int?> _freeSlot(DateTime day) {
+    if (_freeKey != _dayKey(day)) {
+      _freeKey = _dayKey(day);
+      _free = CalendarSync.busyOn(day).then(
+        (events) => CalendarSync.freeSlot(
+          [
+            for (final e in events)
+              if (!e.isAllDay) (start: e.startDate, end: e.endDate),
+          ],
+          day,
+          DateTime.now(),
+        ),
+      );
+    }
+    return _free!;
+  }
+
   Future<void> _save() async {
     final title = _title.text.trim();
     final uid = Supabase.instance.client.auth.currentUser?.id;
@@ -1822,6 +1848,7 @@ class _TaskSheetState extends State<_TaskSheet> {
         }
         await client.from('tasks').update(map).eq('id', original.id);
       }
+      unawaited(CalendarSync.sync(client, force: true));
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -2042,6 +2069,27 @@ class _TaskSheetState extends State<_TaskSheet> {
                                 tooltip: 'Quitar hora',
                                 onPressed: () => setState(() => _time = null),
                                 icon: const Icon(Icons.close_rounded, size: 20),
+                              ),
+                            if (_time == null &&
+                                _due != null &&
+                                PlanPrefs.current.value.calendarId != null)
+                              FutureBuilder<int?>(
+                                future: _freeSlot(_due!),
+                                builder: (context, snap) {
+                                  final m = snap.data;
+                                  if (m == null) return const SizedBox.shrink();
+                                  return _chip(
+                                    'Libre a las ${PlanPrefs.formatMinutes(m)}',
+                                    false,
+                                    () => setState(
+                                      () => _time = TimeOfDay(
+                                        hour: m ~/ 60,
+                                        minute: m % 60,
+                                      ),
+                                    ),
+                                    icon: Icons.event_available_rounded,
+                                  );
+                                },
                               ),
                           ],
                         ),

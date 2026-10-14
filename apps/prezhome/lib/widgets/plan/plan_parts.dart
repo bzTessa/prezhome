@@ -168,9 +168,15 @@ class MealSlotCard extends StatelessWidget {
     this.detail,
     this.skipped = false,
     this.fromFreezer = false,
+    this.time,
+    this.inFast = false,
   });
 
   final String mealType;
+
+  /// Hora de la comida ("14:00") y si cae en el ayuno.
+  final String? time;
+  final bool inFast;
   final VoidCallback onTap;
 
   /// Título de la receta, o null si el hueco está vacío.
@@ -233,6 +239,17 @@ class MealSlotCard extends StatelessWidget {
                               color: s.fg,
                             ),
                           ),
+                          if (time != null) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              inFast ? '$time · Ayuno' : time!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.inkMuted,
+                              ),
+                            ),
+                          ],
                           if (skipped) ...[
                             const SizedBox(width: 6),
                             Text(

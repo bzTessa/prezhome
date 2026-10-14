@@ -20,9 +20,11 @@ import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/smart_reminders.dart';
 import '../services/plan_diary.dart';
+import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
+import '../widgets/fasting_card.dart';
 import '../widgets/miau_character.dart';
 import '../widgets/plan/plan_parts.dart';
 import '../widgets/recipe_image.dart';
@@ -628,6 +630,16 @@ class HomeTabState extends State<HomeTab> {
             children: [
               StaggeredEntrance(index: 0, child: _header()),
               const SizedBox(height: AppSpacing.xl),
+
+              ValueListenableBuilder(
+                valueListenable: PlanPrefs.current,
+                builder: (_, p, _) => p.fastHours == null
+                    ? const SizedBox.shrink()
+                    : const Padding(
+                        padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                        child: FastingCard(),
+                      ),
+              ),
 
               // Lo primero: qué se come hoy, con la foto de la receta.
               if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
