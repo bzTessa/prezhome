@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/inventory_item.dart';
 import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
+import 'services/shopping_checkout.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/food_category_icon.dart';
@@ -232,7 +233,30 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         }
       }
 
-      if (mounted) Navigator.of(context).pop(true);
+      // 5. Tachar de la lista lo que trae el ticket. También secundario.
+      var crossed = 0;
+      try {
+        crossed = await ShoppingCheckout().markBoughtFromTicket([
+          for (final it in _items)
+            if (it.name.text.trim().isNotEmpty) it.name.text.trim(),
+        ]);
+      } catch (e) {
+        debugPrint('No se pudo tachar de la lista: $e');
+      }
+
+      if (!mounted) return;
+      if (crossed > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              crossed == 1
+                  ? '1 producto tachado de la lista'
+                  : '$crossed productos tachados de la lista',
+            ),
+          ),
+        );
+      }
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

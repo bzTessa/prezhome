@@ -110,7 +110,8 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   tareas; se abre desde Inicio y Hogar). `economy_screen.dart` = "Gastos y
   tickets" (siempre visible; puntos solo con Modo Puntos, `showPoints`).
   Escanear ticket: `scan_ticket_screen.dart` (categoría con selector de
-  `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre).
+  `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre;
+  al guardar tacha de la lista lo comprado con `ticketCovers`).
 - Hogar e invitaciones: `household_screen.dart`, `services/home_invites.dart`
   (códigos de 8 caracteres, 7 días, 10 usos; RPC `create_home_invite`,
   `join_home_with_code`, `remove_home_member`, `leave_home`).

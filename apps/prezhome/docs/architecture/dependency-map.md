@@ -30,7 +30,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 
 ## Importaciones cruzadas (conteo por módulo origen/destino)
 
-- `screens` -> `services`: 58
+- `screens` -> `services`: 59
 - `screens` -> `widgets`: 54
 - `screens` -> `models`: 49
 - `screens` -> `utils`: 46
