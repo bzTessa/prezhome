@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 /// Tokens y helpers de animación de PrezHome.
@@ -5,7 +7,7 @@ import 'package:flutter/widgets.dart';
 /// Esta clase es la ÚNICA fuente de verdad para duraciones y curvas de las
 /// animaciones de la app. Sustituye los `Duration(milliseconds: ...)` y curvas
 /// sueltas por una escala pequeña y coherente, siempre dentro de un rango
-/// cómodo (~150-350 ms) con curvas medidas.
+/// cómodo (~120-350 ms) con curvas medidas.
 ///
 /// Además expone funciones PURAS y testables que respetan la preferencia de
 /// accesibilidad "reducir movimiento" (`MediaQuery.disableAnimations`): todos
@@ -16,8 +18,12 @@ class AppMotion {
 
   // --- Duraciones ------------------------------------------------------------
 
-  /// Rápida (150 ms): feedback táctil, pulsaciones, cambios menores.
-  static const Duration fast = Duration(milliseconds: 150);
+  /// Rápida (120 ms): feedback táctil, pulsaciones, cambios menores.
+  static const Duration fast = Duration(milliseconds: 120);
+
+  /// Normal (220 ms): cross-fades y sustituto de los muelles con
+  /// "reducir movimiento".
+  static const Duration normal = Duration(milliseconds: 220);
 
   /// Base (250 ms): la mayoría de transiciones y apariciones.
   static const Duration base = Duration(milliseconds: 250);
@@ -32,6 +38,48 @@ class AppMotion {
 
   /// Rebote suave y medido para entradas con un toque de vida (sin exagerar).
   static const Curve easeOutBack = Curves.easeOutBack;
+
+  // --- Muelles (estilo iOS, "Designing Fluid Interfaces") ------------------
+
+  /// Convierte los parámetros de diseño de Apple ([dampingRatio] y [response]
+  /// en segundos) en un [SpringDescription] de Flutter (masa 1).
+  static SpringDescription appleSpring({
+    double dampingRatio = 1.0,
+    double response = 0.35,
+  }) {
+    final double stiffness = math.pow(2 * math.pi / response, 2).toDouble();
+    final double damping = 4 * math.pi * dampingRatio / response;
+    return SpringDescription(mass: 1, stiffness: stiffness, damping: damping);
+  }
+
+  /// Muelle por defecto: críticamente amortiguado, sin rebote.
+  static final SpringDescription fluidDefault = appleSpring(
+    dampingRatio: 1.0,
+    response: 0.34,
+  );
+
+  /// Muelle interactivo: rebote ligero para gestos, Miau y botones.
+  static final SpringDescription fluidBouncy = appleSpring(
+    dampingRatio: 0.76,
+    response: 0.38,
+  );
+
+  /// Muelle de Miau: más expresivo para sus cambios de estado.
+  static final SpringDescription miauSpring = appleSpring(
+    dampingRatio: 0.68,
+    response: 0.42,
+  );
+
+  /// Rubber-banding de Apple: cuánto se mueve algo arrastrado [overshoot]
+  /// píxeles más allá de su límite, en un contenedor de tamaño [dimension].
+  static double rubberBand(
+    double overshoot,
+    double dimension, {
+    double constant = 0.55,
+  }) {
+    return (overshoot * dimension * constant) /
+        (dimension + constant * overshoot.abs());
+  }
 
   // --- Lógica pura (testable) ------------------------------------------------
 

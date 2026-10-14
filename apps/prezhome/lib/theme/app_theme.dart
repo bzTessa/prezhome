@@ -20,7 +20,7 @@ class AppColors {
 
   static Color get cream => dark
       ? const Color(0xFF1C1915)
-      : const Color(0xFFFDF8E1); // fondo amarillo pastel cálido
+      : const Color(0xFFF9F5EB); // crema del logo
   static Color get wood => dark
       ? const Color(0xFF7A6238)
       : const Color(0xFFE2C792); // madera clara (acento)
@@ -72,7 +72,7 @@ class AppColors {
   static Color get terracottaBg =>
       dark ? const Color(0xFF3A2A22) : const Color(0xFFF6E0D4);
   static Color get terracotta =>
-      dark ? const Color(0xFFD9906A) : const Color(0xFFB5663C);
+      dark ? const Color(0xFFD9906A) : const Color(0xFFD85A32);
 
   /// Melocotón suave: tipo de comida principal.
   static Color get peachBg =>
@@ -86,9 +86,8 @@ class AppColors {
   static Color get frost =>
       dark ? const Color(0xFF8DB3C7) : const Color(0xFF4A7489);
 
-  /// Dorado/estrella: favorita.
-  static Color get favorite =>
-      dark ? const Color(0xFFE0A52E) : const Color(0xFFE0A52E);
+  /// Dorado de la corona del logo: favorita.
+  static Color get favorite => const Color(0xFFE8A923);
 
   /// Lila suave: zona "Hogar" y objetivo de lotes.
   static Color get lilacBg =>
