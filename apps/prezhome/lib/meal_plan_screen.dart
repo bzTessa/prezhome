@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'batch_prep_timeline_screen.dart';
+import 'models/dashboard_prefs.dart';
 import 'models/inventory_item.dart';
 import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
@@ -187,6 +188,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       entries: entries,
       members: members,
       isMealPrep: isMealPrep,
+      prefs: switch (profile['dashboard_prefs']) {
+        final Map m => DashboardPrefs.fromJson(Map<String, dynamic>.from(m)),
+        _ => null,
+      },
     );
   }
 
@@ -228,12 +233,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
       final frozenRecipeIds = freezerQueue.map((f) => f.recipeId).toSet();
 
+      // Solo recetas que se pueden hacer con los aparatos que tiene.
+      final cookable = data.recipes
+          .where((r) => data.prefs.canCook(r.appliance))
+          .toList();
       final planner = MealPlanner();
       final plan = planner.generate(
         startDate: _weekStart,
         days: 7,
         mealTypes: PlanPrefs.current.value.planned(data.activeMeals),
-        recipes: data.recipes,
+        recipes: cookable.isEmpty ? data.recipes : cookable,
         scoreByRecipe: scores,
         frozenRecipeIds: frozenRecipeIds,
         energyLevel: _energyLevel,
@@ -1483,6 +1492,7 @@ class _PlanData {
   /// true si algún perfil del hogar cocina en modo 'mealprep' (en lote). Solo
   /// entonces mostramos la sección "Plan de cocción".
   final bool isMealPrep;
+  final DashboardPrefs prefs;
   _PlanData({
     required this.homeId,
     this.activeMeals = const ['lunch', 'dinner'],
@@ -1491,7 +1501,8 @@ class _PlanData {
     this.entries = const [],
     this.members = const [],
     this.isMealPrep = false,
-  });
+    DashboardPrefs? prefs,
+  }) : prefs = prefs ?? DashboardPrefs.defaults();
 }
 
 /// Bottom sheet para elegir una receta del hogar, con buscador por nombre.

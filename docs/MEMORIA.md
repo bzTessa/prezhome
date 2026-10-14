@@ -102,6 +102,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   desayuno/merienda; "Cocino en tanda" = cooking_mode; sin "desayuno de
   siempre", Tessa lo quitó).
   La pestaña Hoy usa icono de casa, no de calendario.
+- Cuestionario (Hogar > Perfil): `profile_wizard_screen.dart`. Primero
+  pregunta si lleva calorías (si no, se salta peso y medidas y oculta su
+  tarjeta); también cocinas que le gustan y aparatos. Se guarda en
+  `profiles.dashboard_prefs` (`cuisines`, `appliances`, `track_calories`):
+  el plan solo usa recetas con sus aparatos (`canCook`) y Descubrir manda las
+  cocinas. `services/plan_diary.dart` apunta solas en el diario las comidas
+  del plan ya pasadas (marca en el dispositivo; lo borrado no vuelve).
 - Tareas: `tasks_screen.dart` (anillo de hoy, tarjetas por tipo con icono y
   color de `utils/task_kinds.dart`, próximos días, hechas hoy; nueva tarea en
   `_TaskSheet`, la única hoja para crear y editar: típicas, cuándo, se repite
