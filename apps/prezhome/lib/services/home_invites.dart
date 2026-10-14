@@ -71,4 +71,8 @@ class HomeInvites {
 
   /// Salir del hogar.
   Future<void> leave() => _client.rpc('leave_home');
+
+  /// Borra la cuenta: sale del hogar (que se borra si queda vacío) y elimina
+  /// el usuario. No se puede deshacer.
+  Future<void> deleteAccount() => _client.functions.invoke('delete-account');
 }
