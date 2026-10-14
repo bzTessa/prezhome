@@ -87,11 +87,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   otra copia). Iconos discretos junto al día: calendario del mes
   (`month_calendar_screen.dart`, único, con comidas, tareas y cocina en lote) y
   ajustes (`services/plan_prefs.dart`, en el dispositivo: ocultar
-  desayuno/merienda, desayuno de siempre; "Cocino en tanda" = cooking_mode).
+  desayuno/merienda; "Cocino en tanda" = cooking_mode; sin "desayuno de
+  siempre", Tessa lo quitó).
   La pestaña Hoy usa icono de casa, no de calendario.
 - Tareas: `tasks_screen.dart` (anillo de hoy, tarjetas por tipo con icono y
   color de `utils/task_kinds.dart`, próximos días, hechas hoy; nueva tarea en
-  hoja con tareas típicas; editar/más opciones con `AddTaskScreen(task:)`).
+  `_TaskSheet`, la única hoja para crear y editar: típicas, cuándo, se repite
+  (incl. algunos días), quién y "Detalles" con hora, notas y puntos).
   Si solo hay una persona no se pregunta quién la hizo.
 - Plan de comidas (código): `services/meal_planner.dart` (equilibrio por
   grupo legumbre/pescado/huevo/carne y límite de repeticiones),
@@ -107,7 +109,8 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   previsión `services/spend_forecast.dart`, compra, despensa, comidas y
   tareas; se abre desde Inicio y Hogar). `economy_screen.dart` = "Gastos y
   tickets" (siempre visible; puntos solo con Modo Puntos, `showPoints`).
-  Escanear ticket: `scan_ticket_screen.dart`.
+  Escanear ticket: `scan_ticket_screen.dart` (categoría con selector de
+  `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre).
 - Hogar e invitaciones: `household_screen.dart`, `services/home_invites.dart`
   (códigos de 8 caracteres, 7 días, 10 usos; RPC `create_home_invite`,
   `join_home_with_code`, `remove_home_member`, `leave_home`).
