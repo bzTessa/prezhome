@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
 import 'models/nutrition_profile.dart';
+import 'models/recipe.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
@@ -41,11 +42,13 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   final TextEditingController _dislikedController = TextEditingController();
 
   // Numero total de pasos:
-  // 0 bienvenida, 1 sexo, 2 fecha, 3 altura, 4 peso, 5 actividad, 6 objetivo,
-  // 7 dieta, 8 alergias, 9 ingredientes a evitar, 10 tiempo de cocina,
-  // 11 estilo de cocina, 12 modulos, 13 resultado.
-  static const int _totalPages = 14;
-  static const int _resultPage = 13;
+  // 0 bienvenida (¿calorías?), 1 sexo, 2 fecha, 3 altura, 4 peso,
+  // 5 actividad, 6 objetivo, 7 dieta, 8 alergias, 9 ingredientes a evitar,
+  // 10 tiempo de cocina, 11 cocinas, 12 aparatos, 13 estilo de cocina,
+  // 14 modulos, 15 resultado. Sin calorías se salta del 0 al 7.
+  static const int _totalPages = 16;
+  static const int _resultPage = 15;
+  static const int _dietPage = 7;
 
   int _page = 0;
 
@@ -70,6 +73,16 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     ...DashboardPrefs.defaults().enabledModules,
   };
   CookingStyle _cookingStyle = CookingStyle.defaultStyle;
+
+  bool _trackCalories = true;
+  final Set<String> _cuisines = {};
+  final Set<String> _appliances = {..._optionalAppliances.keys};
+
+  /// Aparatos por los que se pregunta (lo básico se da por hecho).
+  static Map<String, String> get _optionalAppliances => {
+    for (final e in Recipe.applianceLabels.entries)
+      if (!DashboardPrefs.basicAppliances.contains(e.key)) e.key: e.value,
+  };
 
   bool _saving = false;
 
@@ -135,6 +148,15 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           ..clear()
           ..addAll(prefs.enabledModules);
         _cookingStyle = prefs.cookingStyle;
+        _trackCalories = prefs.trackCalories;
+        _cuisines
+          ..clear()
+          ..addAll(prefs.cuisines);
+        if (prefs.appliances != null) {
+          _appliances
+            ..clear()
+            ..addAll(prefs.appliances!);
+        }
       });
     } catch (_) {
       // Si falla la precarga, el wizard sigue funcionando con los valores por
@@ -237,11 +259,14 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
 
   void _goBack() {
     if (_page == 0) return;
-    _controller.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _goTo(_page == _dietPage && !_trackCalories ? 0 : _page - 1);
   }
+
+  void _goTo(int page) => _controller.animateToPage(
+    page,
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeOut,
+  );
 
   void _goNext() {
     if (!_currentStepValid) {
@@ -251,10 +276,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       return;
     }
     if (_page >= _resultPage) return;
-    _controller.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _goTo(_page == 0 && !_trackCalories ? _dietPage : _page + 1);
   }
 
   /// Convierte el texto libre de ingredientes a evitar (separado por comas) en
@@ -280,6 +302,13 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       final mergedPrefs = _dashboardPrefs.copyWith(
         enabledModules: {..._enabledModules},
         cookingStyle: _cookingStyle,
+        cuisines: {..._cuisines},
+        appliances: {..._appliances},
+        trackCalories: _trackCalories,
+        // Sin calorías, fuera su tarjeta de Inicio.
+        hidden: _trackCalories
+            ? (_dashboardPrefs.hidden.toSet()..remove(DashboardCard.calories))
+            : {..._dashboardPrefs.hidden, DashboardCard.calories},
       );
       // Update PARCIAL: solo los campos que recoge el wizard. Asi no
       // sobreescribimos otros datos del perfil (nombre, reparto de comidas,
@@ -287,12 +316,15 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       await _client
           .from('profiles')
           .update({
-            'sex': _sex,
-            'birth_date': _birthDate?.toIso8601String().split('T').first,
-            'height_cm': _height,
-            'weight_kg': _weight,
-            'activity_level': _activity,
-            'goal': _goal,
+            // Sin calorías no se ha preguntado por el cuerpo: no se toca.
+            if (_trackCalories) ...{
+              'sex': _sex,
+              'birth_date': _birthDate?.toIso8601String().split('T').first,
+              'height_cm': _height,
+              'weight_kg': _weight,
+              'activity_level': _activity,
+              'goal': _goal,
+            },
             'diet': _diet,
             'allergies': _allergies.toList(),
             'disliked': _parseDisliked(),
@@ -331,7 +363,9 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
 
     final String primaryLabel = isResult
         ? 'Empezar a usar PrezHome'
-        : (isLastDataStep ? 'Ver mi objetivo' : 'Siguiente');
+        : (isLastDataStep
+              ? (_trackCalories ? 'Ver mi objetivo' : 'Terminar')
+              : 'Siguiente');
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -370,6 +404,8 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                   _buildAllergiesStep(),
                   _buildDislikedStep(),
                   _buildCookTimeStep(),
+                  _buildCuisinesStep(),
+                  _buildAppliancesStep(),
                   _buildCookingStyleStep(),
                   _buildModulesStep(),
                   _buildResultStep(),
@@ -393,7 +429,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text('Atras'),
+                        child: const Text('Atrás'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -465,35 +501,52 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   }
 
   Widget _buildWelcomeStep() {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const MiauCharacter(mood: MiauMood.greeting, size: 180),
-          const SizedBox(height: 32),
-          Text(
-            'Vamos a conocerte',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 26,
-              letterSpacing: -0.4,
-              fontWeight: FontWeight.bold,
-              color: AppColors.ink,
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const MiauCharacter(mood: MiauMood.greeting, size: 150),
+            const SizedBox(height: 32),
+            Text(
+              'Vamos a conocerte',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 26,
+                letterSpacing: -0.4,
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Te hare unas preguntas rapidas para calcular tu objetivo diario de '
-            'calorias y adaptar PrezHome a ti. Sera cortito, lo prometo.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              height: 1.5,
-              color: AppColors.inkMuted,
+            const SizedBox(height: 12),
+            Text(
+              'Unas preguntas rápidas para adaptar PrezHome a ti. Puedes '
+              'cambiarlo cuando quieras.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.5,
+                color: AppColors.inkMuted,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 28),
+            _OptionCard(
+              title: 'Quiero llevar la cuenta de calorías',
+              subtitle: 'Las comidas del plan se apuntan solas al pasar.',
+              icon: Icons.local_fire_department_outlined,
+              selected: _trackCalories,
+              onTap: () => setState(() => _trackCalories = true),
+            ),
+            const SizedBox(height: 12),
+            _OptionCard(
+              title: 'Solo organizar la casa',
+              subtitle: 'Sin peso ni medidas.',
+              icon: Icons.home_outlined,
+              selected: !_trackCalories,
+              onTap: () => setState(() => _trackCalories = false),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -713,38 +766,62 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     return _stepScroll(
       children: [
         _stepHeader('Alergias o intolerancias', 'Opcional.'),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: _commonAllergies.map((allergy) {
-            final selected = _allergies.contains(allergy);
-            return FilterChip(
-              label: Text(allergy),
-              selected: selected,
-              onSelected: (value) => setState(() {
-                if (value) {
-                  _allergies.add(allergy);
-                } else {
-                  _allergies.remove(allergy);
-                }
-              }),
-              showCheckmark: false,
-              backgroundColor: AppColors.card,
-              side: BorderSide(
-                color: selected ? AppColors.woodDark : Colors.transparent,
-                width: 1.5,
-              ),
-              labelStyle: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            );
-          }).toList(),
+        _chips({for (final a in _commonAllergies) a: a}, _allergies),
+      ],
+    );
+  }
+
+  /// Chips de selección múltiple: [options] es clave → texto.
+  Widget _chips(Map<String, String> options, Set<String> selected) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (final MapEntry(:key, :value) in options.entries)
+          FilterChip(
+            label: Text(value),
+            selected: selected.contains(key),
+            onSelected: (on) =>
+                setState(() => on ? selected.add(key) : selected.remove(key)),
+            showCheckmark: false,
+            backgroundColor: AppColors.card,
+            selectedColor: AppColors.wood,
+            side: BorderSide(
+              color: selected.contains(key)
+                  ? AppColors.woodDark
+                  : Colors.transparent,
+              width: 1.5,
+            ),
+            labelStyle: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCuisinesStep() {
+    return _stepScroll(
+      children: [
+        _stepHeader('¿Qué te gusta comer?', 'Elige las que quieras.'),
+        _chips(DashboardPrefs.cuisineLabels, _cuisines),
+      ],
+    );
+  }
+
+  Widget _buildAppliancesStep() {
+    return _stepScroll(
+      children: [
+        _stepHeader(
+          '¿Qué tienes en la cocina?',
+          'El plan solo usará recetas que puedas hacer.',
         ),
+        _chips(_optionalAppliances, _appliances),
       ],
     );
   }
@@ -860,6 +937,37 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   }
 
   Widget _buildResultStep() {
+    if (!_trackCalories) {
+      return Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const MiauCharacter(mood: MiauMood.celebrating, size: 150),
+            const SizedBox(height: 24),
+            Text(
+              'Todo listo',
+              style: TextStyle(
+                fontSize: 24,
+                letterSpacing: -0.4,
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Recetas, plan y compra se adaptan a lo que has contado.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.5,
+                color: AppColors.inkMuted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     final profile = _buildProfile();
     final kcal = profile.targetCalories;
     final macros = profile.targetMacros;
@@ -918,8 +1026,8 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Es una estimacion para empezar. Siempre puedes ajustarla desde tu '
-          'perfil cuando quieras.',
+          'Es una estimación para empezar. Las comidas del plan se apuntarán '
+          'solas en tu diario cuando pasen.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
