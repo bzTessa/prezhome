@@ -112,6 +112,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Escanear ticket: `scan_ticket_screen.dart` (categoría con selector de
   `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre;
   al guardar tacha de la lista lo comprado con `ticketCovers`).
+- Borrar cuenta (lo piden las tiendas): "Borrar mi cuenta" al final de Mi
+  Hogar → función `delete-account` (sale del hogar, borra el hogar si queda
+  vacío y el usuario de Auth).
 - Hogar e invitaciones: `household_screen.dart`, `services/home_invites.dart`
   (códigos de 8 caracteres, 7 días, 10 usos; RPC `create_home_invite`,
   `join_home_with_code`, `remove_home_member`, `leave_home`).

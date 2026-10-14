@@ -297,6 +297,54 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     }
   }
 
+  Future<void> _deleteAccount() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Borrar tu cuenta?'),
+        content: const Text(
+          'Se borran tu cuenta y tus datos. Si eres la única persona del '
+          'hogar, también el hogar entero. No se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    HapticFeedback.heavyImpact();
+    try {
+      await HomeInvites(_client).deleteAccount();
+    } catch (e) {
+      _snack(friendlyError(e, 'No se pudo borrar la cuenta'), error: true);
+      return;
+    }
+    await OfflineProvider.instance.clearForLogout();
+    // La sesión ya no vale; cerrarla solo limpia el dispositivo.
+    try {
+      await _client.auth.signOut();
+    } catch (_) {}
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
+
+  Widget _deleteAccountButton() => TextButton(
+    onPressed: _deleteAccount,
+    style: TextButton.styleFrom(foregroundColor: AppColors.inkMuted),
+    child: const Text('Borrar mi cuenta'),
+  );
+
   Future<void> _logout() async {
     await _client.auth.signOut();
     if (mounted) {
@@ -396,6 +444,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               onPressed: _joinHome,
               child: const Text('Unirme a un hogar existente'),
             ),
+            const SizedBox(height: 24),
+            _deleteAccountButton(),
           ],
         ),
       ),
@@ -618,6 +668,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 8),
+        Center(child: _deleteAccountButton()),
       ],
     );
   }
