@@ -76,6 +76,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   de barras (`photoMatches`, `productByCode`) y, si no es ese producto, se
   cambia o se quita. La búsqueda quita resultados sin relación (`rankProducts`).
 - Chips: el seleccionado va en `AppColors.wood` con texto en tinta (tema).
+- Estilo "Warm Tactile" (logo): `AppTheme.tactileDecoration` (papel, borde
+  `AppColors.stroke`, sombra dura), `TactileButton`, `SegmentedPill`. Muelles
+  en `AppMotion` (`fluidDefault`/`fluidBouncy`/`miauSpring`) vía `SpringValue`;
+  deslizar con `SwipeAction` (rubber-band). Miau sin animación por fotogramas.
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta

@@ -9,7 +9,12 @@ import 'services/shopping_checkout.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'widgets/animations/animated_counter.dart';
+import 'widgets/animations/celebrate.dart';
+import 'widgets/animations/press_scale.dart';
+import 'widgets/animations/swipe_action.dart';
 import 'widgets/empty_state.dart';
+import 'widgets/segmented_pill.dart';
 import 'widgets/list_skeleton.dart';
 import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
@@ -29,6 +34,9 @@ class _TasksScreenState extends State<TasksScreen> {
 
   // Filtro de persona: null = todas; si no, id del miembro (Mías = uid).
   String? _filterUser;
+
+  // Vista elegida en la píldora de arriba.
+  _TaskView _view = _TaskView.pending;
 
   // Canal Realtime de las tareas del hogar. Se abre UNA sola vez en initState
   // (filtrado por home_id) y se cierra en dispose. Si el otro miembro del hogar
@@ -243,8 +251,14 @@ class _TasksScreenState extends State<TasksScreen> {
     if (doneBy == null) return; // Cancelado.
 
     try {
-      HapticFeedback.lightImpact();
+      HapticFeedback.mediumImpact();
       await TaskScheduler(_client).completeAttributed(task, doneBy);
+      if (mounted) {
+        Celebrate.check(
+          context,
+          points: data.pointsEnabled ? task.points : null,
+        );
+      }
       // Hacer la compra: se tacha la lista y lo comprado va a la despensa.
       final bought = isShoppingTask(task.title)
           ? await ShoppingCheckout().markAllBoughtForCurrentUser()
@@ -408,6 +422,31 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (_) {}
   }
 
+  /// "Me la pido": una tarea de la bolsa del hogar pasa a ser tuya.
+  Future<void> _claim(HomeTask task, _TasksData data) async {
+    final uid = data.currentUserId;
+    if (uid == null) return;
+    try {
+      await _client
+          .from('tasks')
+          .update({'assigned_to': uid})
+          .eq('id', task.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('"${task.title}" es tuya')));
+      _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
   /// Aplaza una tarea [days] días desde hoy (due_date y next_due).
   Future<void> _postpone(HomeTask task, int days) async {
     HapticFeedback.selectionClick();
@@ -550,10 +589,12 @@ class _TasksScreenState extends State<TasksScreen> {
             return const Center(child: Text('No perteneces a ningún hogar.'));
           }
           if (data.tasks.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               title: 'No hay tareas todavía',
-              message: 'Añade la primera con el botón de abajo.',
+              message: 'Añade la primera.',
               image: 'assets/images/vacio_tareas.png',
+              actionLabel: 'Nueva tarea',
+              onAction: () => _openNew(data),
             );
           }
 
@@ -578,6 +619,40 @@ class _TasksScreenState extends State<TasksScreen> {
               ? 'Cualquiera'
               : (data.members[t.assignedTo] ?? 'Miembro');
 
+          final pool = pending.where((t) => t.isInPool).toList();
+          final views = [
+            _TaskView.pending,
+            if (showWho) _TaskView.pool,
+            _TaskView.done,
+          ];
+          final view = views.contains(_view) ? _view : _TaskView.pending;
+
+          Widget tile(HomeTask t) => _TaskTile(
+            key: ValueKey(t.id),
+            task: t,
+            who: who(t),
+            overdue: _isOverdue(t),
+            points: data.pointsEnabled ? t.points : null,
+            onDone: () => _complete(t, data),
+            onMore: () => _showActions(t, data),
+            onClaim: showWho && t.isInPool && data.currentUserId != null
+                ? () => _claim(t, data)
+                : null,
+          );
+
+          Widget grid(List<HomeTask> tasks) => LayoutBuilder(
+            builder: (context, c) {
+              final w = (c.maxWidth - AppSpacing.md) / 2;
+              return Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.md,
+                children: [
+                  for (final t in tasks) SizedBox(width: w, child: tile(t)),
+                ],
+              );
+            },
+          );
+
           return ListView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
@@ -591,78 +666,84 @@ class _TasksScreenState extends State<TasksScreen> {
                 left: today.length,
                 overdue: overdue,
               ),
-              if (showWho)
-                _FilterRow(
-                  members: data.members,
-                  currentUserId: data.currentUserId,
-                  selected: _filterUser,
-                  onSelected: (id) => setState(() => _filterUser = id),
-                ),
               const SizedBox(height: AppSpacing.lg),
-              if (today.isEmpty)
-                _TareasCelebracion(
-                  visible: true,
-                  nothingToday: upcoming.isNotEmpty,
-                )
-              else ...[
-                const _SectionTitle('Para hoy'),
-                LayoutBuilder(
-                  builder: (context, c) {
-                    final w = (c.maxWidth - AppSpacing.md) / 2;
-                    return Wrap(
-                      spacing: AppSpacing.md,
-                      runSpacing: AppSpacing.md,
+              SegmentedPill(
+                labels: [for (final v in views) v.label],
+                selected: views.indexOf(view),
+                onChanged: (i) => setState(() => _view = views[i]),
+              ),
+              if (view == _TaskView.pending) ...[
+                if (showWho)
+                  _FilterRow(
+                    members: data.members,
+                    currentUserId: data.currentUserId,
+                    selected: _filterUser,
+                    onSelected: (id) => setState(() => _filterUser = id),
+                  ),
+                const SizedBox(height: AppSpacing.lg),
+                if (today.isEmpty)
+                  _TareasCelebracion(
+                    visible: true,
+                    nothingToday: upcoming.isNotEmpty,
+                  )
+                else ...[
+                  const _SectionTitle('Para hoy'),
+                  grid(today),
+                ],
+                if (upcoming.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionTitle('Próximos días'),
+                  Container(
+                    decoration: AppTheme.tactileDecoration(
+                      radius: AppRadius.lg,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
                       children: [
-                        for (final t in today)
-                          SizedBox(
-                            width: w,
-                            child: _TaskTile(
-                              key: ValueKey(t.id),
+                        for (final g in groupUpcomingByDay(
+                          upcoming,
+                          DateTime.now(),
+                        ))
+                          for (final t in g.value)
+                            _UpcomingRow(
                               task: t,
+                              day: g.key,
                               who: who(t),
-                              overdue: _isOverdue(t),
-                              onDone: () => _complete(t, data),
-                              onMore: () => _showActions(t, data),
+                              onTap: () => _showActions(t, data),
                             ),
-                          ),
                       ],
-                    );
-                  },
-                ),
-              ],
-              if (upcoming.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.xl),
-                const _SectionTitle('Próximos días'),
-                Container(
-                  decoration: AppTheme.surfaceDecoration(
-                    radius: AppRadius.lg,
-                    elevation: 1,
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      for (final g in groupUpcomingByDay(
-                        upcoming,
-                        DateTime.now(),
-                      ))
-                        for (final t in g.value)
-                          _UpcomingRow(
-                            task: t,
-                            day: g.key,
-                            who: who(t),
-                            onTap: () => _showActions(t, data),
-                          ),
-                    ],
-                  ),
-                ),
+                ],
               ],
-              if (doneToday.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.xl),
-                const _SectionTitle('Hechas hoy'),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: [for (final t in doneToday) _DoneChip(task: t)],
-                ),
+              if (view == _TaskView.pool) ...[
+                const SizedBox(height: AppSpacing.lg),
+                if (pool.isEmpty)
+                  _ViewEmpty('Nada en la bolsa. Todo tiene dueño.')
+                else ...[
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: AppSpacing.xs,
+                      bottom: AppSpacing.md,
+                    ),
+                    child: Text(
+                      'Desliza a la izquierda para pedírtela.',
+                      style: AppTextStyles.bodyMuted,
+                    ),
+                  ),
+                  grid(pool),
+                ],
+              ],
+              if (view == _TaskView.done) ...[
+                const SizedBox(height: AppSpacing.lg),
+                if (doneToday.isEmpty)
+                  _ViewEmpty('Hoy aún no hay nada hecho.')
+                else
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [for (final t in doneToday) _DoneChip(task: t)],
+                  ),
               ],
               // Marcador y gráfica de puntos solo con el "Modo Puntos".
               if (data.pointsEnabled) ...[
@@ -791,9 +872,8 @@ class _TareasCelebracion extends StatelessWidget {
         child: visible
             ? Container(
                 padding: AppSpacing.cardPadding,
-                decoration: AppTheme.surfaceDecoration(
+                decoration: AppTheme.tactileDecoration(
                   radius: AppRadius.lg,
-                  elevation: 1,
                   color: AppColors.sageBg,
                 ),
                 child: Row(
@@ -869,9 +949,9 @@ class _Scoreboard extends StatelessWidget {
       ..sort((a, b) => (scores[b.key] ?? 0).compareTo(scores[a.key] ?? 0));
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: 16),
       padding: const EdgeInsets.all(18),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -903,11 +983,12 @@ class _Scoreboard extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  Text(
-                    '$pts pts',
+                  AnimatedCounter(
+                    value: pts.toDouble(),
+                    formatter: (v) => '${v.round()} pts',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.woodDark,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
                       fontSize: 16,
                     ),
                   ),
@@ -1136,18 +1217,10 @@ String _repeatLabel(HomeTask t) => switch (t.recurrence) {
 
 /// Icono de la tarea en su color: así se reconoce sin leer.
 class _KindBadge extends StatelessWidget {
-  const _KindBadge({
-    required this.kind,
-    this.size = 48,
-    this.faded = false,
-    this.onCard = false,
-  });
+  const _KindBadge({required this.kind, this.size = 48, this.faded = false});
   final TaskKind kind;
   final double size;
   final bool faded;
-
-  /// Sobre una tarjeta ya teñida: fondo de tarjeta en vez del color suave.
-  final bool onCard;
 
   @override
   Widget build(BuildContext context) {
@@ -1156,12 +1229,9 @@ class _KindBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: faded
-            ? AppColors.line
-            : onCard
-            ? AppColors.card
-            : bg,
+        color: faded ? AppColors.line : bg,
         borderRadius: BorderRadius.circular(size * 0.32),
+        border: faded ? null : Border.all(color: AppColors.stroke, width: 1.5),
       ),
       child: Icon(
         kind.icon,
@@ -1209,10 +1279,7 @@ class _TodayHero extends StatelessWidget {
     final reduce = AppMotion.reduceMotionOf(context);
     return Container(
       padding: AppSpacing.cardPadding,
-      decoration: AppTheme.surfaceDecoration(
-        radius: AppRadius.lg,
-        elevation: 1,
-      ),
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
       child: Row(
         children: [
           SizedBox.square(
@@ -1223,7 +1290,7 @@ class _TodayHero extends StatelessWidget {
                 const Duration(milliseconds: 500),
                 reduceMotion: reduce,
               ),
-              curve: Curves.easeOutCubic,
+              curve: AppMotion.springCurve(AppMotion.fluidDefault),
               builder: (context, v, _) => Stack(
                 fit: StackFit.expand,
                 children: [
@@ -1232,11 +1299,12 @@ class _TodayHero extends StatelessWidget {
                     strokeWidth: 8,
                     strokeCap: StrokeCap.round,
                     backgroundColor: AppColors.line,
-                    color: AppColors.sage,
+                    color: AppColors.done,
                   ),
                   Center(
-                    child: Text(
-                      '$done/$total',
+                    child: AnimatedCounter(
+                      value: done.toDouble(),
+                      formatter: (v) => '${v.round()}/$total',
                       style: AppTextStyles.numeric(
                         AppTextStyles.bodyStrong,
                       ).copyWith(fontSize: 16, fontWeight: FontWeight.w800),
@@ -1304,7 +1372,10 @@ class _Pill extends StatelessWidget {
   );
 }
 
-/// Tarjeta de una tarea de hoy: icono grande, nombre y botón de hecha.
+/// Tarjeta de tarea estilo "calendario del logo": papel con borde de trazo,
+/// franja superior del color de su tipo, botón de hecha y, con puntos, la
+/// insignia dorada. Deslizar a la derecha la completa y, si está en la bolsa,
+/// a la izquierda te la pides.
 class _TaskTile extends StatelessWidget {
   const _TaskTile({
     super.key,
@@ -1313,93 +1384,193 @@ class _TaskTile extends StatelessWidget {
     required this.overdue,
     required this.onDone,
     required this.onMore,
+    this.points,
+    this.onClaim,
   });
   final HomeTask task;
   final String? who;
   final bool overdue;
   final VoidCallback onDone;
   final VoidCallback onMore;
+  final int? points;
+  final VoidCallback? onClaim;
 
   @override
   Widget build(BuildContext context) {
     final kind = taskKindFor(task.title);
-    final (bg, fg) = kind.colors;
+    final (_, fg) = kind.colors;
     final meta = [
       if (task.recurrence != 'once') _repeatLabel(task),
       ?who,
     ].join(' · ');
-    // La tarjeta lleva el color de su tipo; el icono va sobre blanco.
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
+    return SwipeAction(
+      radius: AppRadius.lg,
+      toRight: SwipeSide(
+        icon: Icons.check_rounded,
+        color: AppColors.done,
+        label: 'Marcar ${task.title} como hecha',
+        onTrigger: onDone,
+      ),
+      toLeft: onClaim == null
+          ? null
+          : SwipeSide(
+              icon: Icons.back_hand_rounded,
+              color: AppColors.terracotta,
+              label: 'Pedirme ${task.title}',
+              onTrigger: onClaim!,
+            ),
+      child: PressScale(
         onTap: onMore,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+        pressedScale: 0.97,
+        child: Container(
+          decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
+          clipBehavior: Clip.antiAlias,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _KindBadge(kind: kind, onCard: true),
-                  const Spacer(),
-                  Semantics(
-                    button: true,
-                    label: 'Marcar ${task.title} como hecha',
-                    child: InkResponse(
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        onDone();
-                      },
-                      radius: 26,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.card,
-                          border: Border.all(color: fg, width: 2.5),
+              // Franja de color, como el lomo del calendario.
+              Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: fg,
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.stroke, width: 1.5),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _KindBadge(kind: kind),
+                        const Spacer(),
+                        Semantics(
+                          button: true,
+                          label: 'Marcar ${task.title} como hecha',
+                          child: InkResponse(
+                            onTap: onDone,
+                            radius: 26,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.paper,
+                                border: Border.all(
+                                  color: AppColors.stroke,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.check_rounded,
+                                color: AppColors.done,
+                                size: 24,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: Icon(Icons.check_rounded, color: fg, size: 22),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      task.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                task.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.2,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
+                    const SizedBox(height: AppSpacing.xs),
+                    if (overdue)
+                      _Pill(
+                        text: 'Atrasada',
+                        bg: AppColors.expiredBg,
+                        fg: AppColors.expired,
+                      )
+                    else
+                      Text(
+                        meta.isEmpty ? kind.label : meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
+                      ),
+                    if (points case final p? when p > 0) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _PointsBadge(points: p),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
-              if (overdue)
-                _Pill(
-                  text: 'Atrasada',
-                  bg: AppColors.expiredBg,
-                  fg: AppColors.expired,
-                )
-              else
-                Text(
-                  meta.isEmpty ? kind.label : meta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
-                ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+/// Insignia "corona dorada" con los puntos de una tarea.
+class _PointsBadge extends StatelessWidget {
+  const _PointsBadge({required this.points});
+  final int points;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(6, 3, 10, 3),
+    decoration: BoxDecoration(
+      color: AppColors.goldBg,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: AppColors.gold, width: 1.5),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.star_rounded, size: 16, color: AppColors.gold),
+        const SizedBox(width: 3),
+        Text(
+          '$points pts',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: AppColors.ink,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Texto suave cuando una vista de la píldora está vacía.
+class _ViewEmpty extends StatelessWidget {
+  const _ViewEmpty(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+    child: Text(
+      text,
+      textAlign: TextAlign.center,
+      style: AppTextStyles.bodyMuted,
+    ),
+  );
+}
+
+/// Vistas de la píldora de arriba.
+enum _TaskView {
+  pending('Pendientes'),
+  pool('Bolsa'),
+  done('Hechas');
+
+  const _TaskView(this.label);
+  final String label;
 }
 
 /// Fila de una tarea de otro día.

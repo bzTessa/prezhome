@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/physics.dart';
 import 'package:flutter/widgets.dart';
 
 /// Tokens y helpers de animación de PrezHome.
@@ -70,6 +71,14 @@ class AppMotion {
     response: 0.42,
   );
 
+  /// Curva que sigue a [spring] durante [duration], para widgets que solo
+  /// aceptan curva (p. ej. `AnimatedSize`). Usa muelles sin rebote: el
+  /// último tramo se recorta para terminar justo en 1.
+  static Curve springCurve(
+    SpringDescription spring, {
+    Duration duration = slow,
+  }) => _SpringCurve(spring, duration.inMicroseconds / 1e6);
+
   /// Rubber-banding de Apple: cuánto se mueve algo arrastrado [overshoot]
   /// píxeles más allá de su límite, en un contenedor de tamaño [dimension].
   static double rubberBand(
@@ -136,4 +145,15 @@ class AppMotion {
   static bool reduceMotionOf(BuildContext context) {
     return MediaQuery.maybeOf(context)?.disableAnimations ?? false;
   }
+}
+
+class _SpringCurve extends Curve {
+  const _SpringCurve(this.spring, this.seconds);
+
+  final SpringDescription spring;
+  final double seconds;
+
+  @override
+  double transformInternal(double t) =>
+      SpringSimulation(spring, 0, 1, 0).x(t * seconds);
 }

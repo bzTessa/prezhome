@@ -86,8 +86,35 @@ class AppColors {
   static Color get frost =>
       dark ? const Color(0xFF8DB3C7) : const Color(0xFF4A7489);
 
-  /// Dorado de la corona del logo: favorita.
-  static Color get favorite => const Color(0xFFE8A923);
+  /// Dorado de la corona del logo: favorita y puntos.
+  static Color get gold => const Color(0xFFE8A923);
+  static Color get favorite => gold;
+
+  /// Fondo de las insignias de puntos.
+  static Color get goldBg =>
+      dark ? const Color(0xFF3A3020) : const Color(0xFFFFF3D6);
+
+  // --- Estilo táctil del logo ("Warm Tactile") -------------------------------
+
+  /// Tarjeta táctil: papel cálido con borde de trazo.
+  static Color get paper =>
+      dark ? const Color(0xFF27231E) : const Color(0xFFFFFDF7);
+
+  /// Hueco crema para iconos dentro de una tarjeta táctil.
+  static Color get iconTile =>
+      dark ? const Color(0xFF332D25) : const Color(0xFFF2E9D8);
+
+  /// Trazo carbón de bordes y sombras duras (en oscuro, uno que se vea).
+  static Color get stroke =>
+      dark ? const Color(0xFF5A5042) : const Color(0xFF1E1E1E);
+
+  /// Verde de "hecho": producto en el carro, tarea completada.
+  static Color get done =>
+      dark ? const Color(0xFF5FAF7E) : const Color(0xFF3B8A5A);
+
+  /// Texto sobre los rellenos de marca (terracota, dorado, verde): siempre
+  /// carbón, que contrasta con ellos en claro y en oscuro.
+  static const Color onBrand = Color(0xFF1E1E1E);
 
   /// Lila suave: zona "Hogar" y objetivo de lotes.
   static Color get lilacBg =>
@@ -337,6 +364,23 @@ class AppTheme {
         blurRadius: 12,
         offset: Offset(0, 4),
       ),
+    ],
+  );
+
+  /// Tarjeta táctil del logo: papel, borde de trazo y sombra dura debajo
+  /// (sin desenfoque), como si estuviera dibujada a mano.
+  static BoxDecoration tactileDecoration({
+    double radius = 14,
+    Color? color,
+    double borderWidth = 1.5,
+    double shadow = 3,
+  }) => BoxDecoration(
+    color: color ?? AppColors.paper,
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(color: AppColors.stroke, width: borderWidth),
+    boxShadow: [
+      if (shadow > 0)
+        BoxShadow(color: AppColors.stroke, offset: Offset(0, shadow)),
     ],
   );
 

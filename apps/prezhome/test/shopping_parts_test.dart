@@ -70,9 +70,9 @@ void main() {
       ),
     );
     expect(find.text('Tomates'), findsOneWidget);
-    expect(find.text('VERDURAS'), findsOneWidget);
+    expect(find.text('Verduras'), findsOneWidget);
 
-    await tester.tap(find.text('VERDURAS'));
+    await tester.tap(find.text('Verduras'));
     await tester.pumpAndSettle();
     expect(find.text('Tomates'), findsNothing);
   });
@@ -84,7 +84,7 @@ void main() {
           listName: 'Lista principal',
           pending: 3,
           done: 1,
-          estimate: '≈ 12,40 €',
+          estimate: 12.4,
           onTapList: () {},
           onGenerate: () {},
           onOptions: () {},
@@ -93,6 +93,6 @@ void main() {
     );
     expect(find.text('3 por comprar · 1 en el carro'), findsOneWidget);
     expect(find.text('≈ 12,40 €'), findsOneWidget);
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.byType(CartProgressBar), findsOneWidget);
   });
 }

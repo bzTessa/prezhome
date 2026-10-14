@@ -9,6 +9,8 @@ import 'theme/app_theme.dart';
 import 'widgets/animations/animated_counter.dart';
 import 'widgets/animations/celebrate.dart';
 import 'widgets/animations/press_scale.dart';
+import 'widgets/animations/spring_value.dart';
+import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 
@@ -481,37 +483,41 @@ class _EconomyScreenState extends State<EconomyScreen> {
             return const Center(child: Text('No perteneces a ningún hogar.'));
           }
 
+          final children = <Widget>[
+            // --- Gastos y tickets ---------------------------------------
+            _monthNavigator(),
+            const SizedBox(height: 12),
+            _budgetCard(data),
+            const SizedBox(height: 12),
+            if (data.last6Months.any((m) => m.total > 0))
+              _spendChartCard(data)
+            else
+              _spendChartEmpty(),
+            const SizedBox(height: 12),
+            _historicalCard(data),
+            const SizedBox(height: 16),
+            _sectionLabel(
+              'TICKETS DE ${_monthNames[_viewMonth.month - 1].toUpperCase()}',
+            ),
+            const SizedBox(height: 8),
+            if (data.tickets.isEmpty)
+              _empty()
+            else
+              ...data.tickets.map((t) => _ticketCard(t)),
+            if (widget.showPoints) ...[
+              const SizedBox(height: 24),
+              _sectionLabel('PUNTOS Y RECOMPENSAS'),
+              const SizedBox(height: 8),
+              _balanceCard(data),
+              const SizedBox(height: 12),
+              _rewardsCard(data),
+            ],
+          ];
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
             children: [
-              // --- Gastos y tickets ---------------------------------------
-              _monthNavigator(),
-              const SizedBox(height: 12),
-              _budgetCard(data),
-              const SizedBox(height: 12),
-              if (data.last6Months.any((m) => m.total > 0))
-                _spendChartCard(data)
-              else
-                _spendChartEmpty(),
-              const SizedBox(height: 12),
-              _historicalCard(data),
-              const SizedBox(height: 16),
-              _sectionLabel(
-                'TICKETS DE ${_monthNames[_viewMonth.month - 1].toUpperCase()}',
-              ),
-              const SizedBox(height: 8),
-              if (data.tickets.isEmpty)
-                _empty()
-              else
-                ...data.tickets.map((t) => _ticketCard(t)),
-              if (widget.showPoints) ...[
-                const SizedBox(height: 24),
-                _sectionLabel('PUNTOS Y RECOMPENSAS'),
-                const SizedBox(height: 8),
-                _balanceCard(data),
-                const SizedBox(height: 12),
-                _rewardsCard(data),
-              ],
+              for (var i = 0; i < children.length; i++)
+                StaggeredEntrance(index: i, child: children[i]),
             ],
           );
         },
@@ -548,39 +554,62 @@ class _EconomyScreenState extends State<EconomyScreen> {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Balanza de puntos',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Saldo disponible de cada miembro para canjear recompensas.',
-            style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+          Row(
+            children: [
+              const MiauCharacter(
+                mood: MiauMood.celebrating,
+                size: 56,
+                float: false,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Balanza de puntos',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Saldo de cada miembro para canjear recompensas.',
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           if (entries.isEmpty || maxBalance == 0)
             _balanceEmpty()
           else
-            ...entries.map(
-              (e) => _balanceRow(
-                name: e.value,
-                balance: data.balances[e.key] ?? 0,
+            for (var i = 0; i < entries.length; i++)
+              _balanceRow(
+                name: entries[i].value,
+                balance: data.balances[entries[i].key] ?? 0,
                 maxBalance: maxBalance,
+                leader: i == 0,
               ),
-            ),
         ],
       ),
     );
   }
 
+  /// Fila de la balanza: la barra va en dorado para quien va primero y en
+  /// terracota para el resto, y crece con un muelle.
   Widget _balanceRow({
     required String name,
     required int balance,
     required int maxBalance,
+    bool leader = false,
   }) {
     final ratio = maxBalance > 0 ? (balance / maxBalance).clamp(0.0, 1.0) : 0.0;
     return Padding(
@@ -589,23 +618,38 @@ class _EconomyScreenState extends State<EconomyScreen> {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: AppColors.wood,
-            child: Icon(Icons.person, size: 18, color: AppColors.ink),
+            backgroundColor: leader ? AppColors.goldBg : AppColors.iconTile,
+            child: Icon(
+              leader ? Icons.emoji_events_rounded : Icons.person,
+              size: 18,
+              color: leader ? AppColors.gold : AppColors.ink,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
+                Container(
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: AppColors.iconTile,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppColors.stroke, width: 1.5),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: SpringValue(
                     value: ratio,
-                    minHeight: 10,
-                    backgroundColor: AppColors.cream,
-                    color: AppColors.wood,
+                    from: 0,
+                    builder: (context, v, _) => FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: v.clamp(0.0, 1.0),
+                      child: ColoredBox(
+                        color: leader ? AppColors.gold : AppColors.terracotta,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -616,8 +660,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
             value: balance.toDouble(),
             formatter: (v) => '${v.round()} pts',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.woodDark,
+              fontWeight: FontWeight.w800,
+              color: AppColors.ink,
               fontSize: 16,
             ),
           ),
@@ -663,7 +707,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     final myBalance = data.balances[data.currentUserId] ?? 0;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -703,7 +747,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: AppTheme.cardDecoration(radius: 18),
+      decoration: AppTheme.tactileDecoration(radius: 18),
       child: Row(
         children: [
           Expanded(
@@ -745,15 +789,16 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   horizontal: 16,
                   vertical: 10,
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.wood,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                decoration: AppTheme.tactileDecoration(
+                  radius: 999,
+                  color: AppColors.gold,
+                  shadow: 2,
                 ),
-                child: Text(
+                child: const Text(
                   'Canjear',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.onBrand,
                   ),
                 ),
               ),
@@ -767,7 +812,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
   Widget _rewardsEmpty() {
     return Row(
       children: [
-        const MiauCharacter(mood: MiauMood.curious, size: 72),
+        const MiauCharacter(mood: MiauMood.greeting, size: 72),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -796,7 +841,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
   Widget _monthNavigator() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: AppTheme.cardDecoration(radius: 20),
+      decoration: AppTheme.tactileDecoration(radius: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -824,7 +869,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     if (data.historicalTicketCount == 0) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration(radius: 20),
+      decoration: AppTheme.tactileDecoration(radius: 20),
       child: Row(
         children: [
           Container(
@@ -872,7 +917,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -909,13 +954,24 @@ class _EconomyScreenState extends State<EconomyScreen> {
           ),
           if (budget > 0) ...[
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
+            Container(
+              height: 14,
+              decoration: BoxDecoration(
+                color: AppColors.iconTile,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppColors.stroke, width: 1.5),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: SpringValue(
                 value: ratio,
-                minHeight: 10,
-                backgroundColor: AppColors.line,
-                color: over ? AppColors.expired : AppColors.wood,
+                from: 0,
+                builder: (context, v, _) => FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: v.clamp(0.0, 1.0),
+                  child: ColoredBox(
+                    color: over ? AppColors.terracotta : AppColors.gold,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -954,7 +1010,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1077,7 +1133,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
   Widget _spendChartEmpty() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1105,7 +1161,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: AppTheme.cardDecoration(radius: 18),
+      decoration: AppTheme.tactileDecoration(radius: 18),
       child: Row(
         children: [
           Container(

@@ -27,15 +27,20 @@ import 'utils/shopping_categories.dart';
 import 'utils/shopping_celebration.dart';
 import 'utils/shopping_display.dart';
 import 'utils/shopping_quick_add.dart';
+import 'scan_ticket_screen.dart';
+import 'widgets/animations/celebrate.dart';
 import 'widgets/animations/confetti.dart';
+import 'widgets/animations/press_scale.dart';
+import 'widgets/animations/spring_value.dart';
+import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/food_image.dart';
 import 'widgets/product_icons.dart';
-import 'widgets/miau_character.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'widgets/product_search_sheet.dart';
 import 'widgets/shopping/shopping_parts.dart';
+import 'widgets/tactile_button.dart';
 import 'utils/friendly_error.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
@@ -89,6 +94,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // deja de ser urgente (NN/g: lo que no apremia no debe ocupar scroll). La
   // usuaria puede desplegarlo para desmarcar o borrar.
   bool _cartExpanded = false;
+
+  // Recién marcados: se quedan un momento en su sitio (tachados) antes de
+  // pasar al carrito, por si el toque fue sin querer y hay que desmarcar.
+  final Set<String> _settling = {};
+
+  // "Lo habitual" recién añadido: el chip sigue a la vista con su check un
+  // momento para poder añadir varios seguidos.
+  final Set<String> _justAdded = {};
+
+  // Confeti al terminar la compra.
+  bool _finishConfetti = false;
 
   // Preferencias de vista de ESTE dispositivo (fotos, agrupar por pasillo).
   ShoppingViewPrefs _view = const ShoppingViewPrefs();
@@ -528,14 +544,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return homeId;
   }
 
-  /// Pinta al momento la lista con [item] marcado o desmarcado.
-  void _showToggled(ShoppingListItem item, bool value) {
+  /// Pinta al momento la lista con [changes] aplicados a [item].
+  void _showChanged(ShoppingListItem item, Map<String, dynamic> changes) {
     final current = _shown;
     if (current == null) return;
     final updated = [
       for (final i in current)
         if (i.id == item.id)
-          ShoppingListItem.fromMap({...i.toCacheMap(), 'checked': value})
+          ShoppingListItem.fromMap({...i.toCacheMap(), ...changes})
         else
           i,
     ];
@@ -545,12 +561,62 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     });
   }
 
+  /// Cambia la cantidad desde la pastilla − / + de la fila.
+  Future<void> _setQuantity(ShoppingListItem item, double quantity) async {
+    if (item.id == null) return;
+    HapticFeedback.selectionClick();
+    _showChanged(item, {'quantity': quantity});
+    try {
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'quantity': quantity},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
+      );
+    }
+  }
+
+  /// Termina la compra: celebra y quita de la lista lo del carrito (ya está
+  /// en la despensa desde que se marcó). Se puede deshacer.
+  Future<void> _finishShopping(List<ShoppingListItem> comprados) async {
+    HapticFeedback.mediumImpact();
+    if (!AppMotion.reduceMotionOf(context)) {
+      Celebrate.show(context);
+      setState(() => _finishConfetti = true);
+    }
+    await _clearChecked(comprados);
+  }
+
+  void _openScanTicket() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
+  }
+
   Future<void> _toggleChecked(ShoppingListItem item, bool value) async {
     if (item.id == null) return;
     // Primero se ve el cambio; el guardado va detrás. Al comprar, el producto
     // pasa a su zona de la despensa.
-    _showToggled(item, value);
-    if (value) HapticFeedback.selectionClick();
+    _showChanged(item, {'checked': value});
+    final id = item.id!;
+    if (value) {
+      HapticFeedback.mediumImpact();
+      _settling.add(id);
+      Timer(const Duration(milliseconds: 900), () {
+        if (mounted && _settling.remove(id)) setState(() {});
+      });
+    } else {
+      _settling.remove(id);
+    }
     try {
       final homeId = await _homeId();
       await ShoppingCheckout().setBought(item, value, homeId: homeId);
@@ -1184,14 +1250,20 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           final all = snapshot.data ?? [];
           // Filtramos por la LISTA ACTIVA: list_id null = Lista principal.
           final items = all.where((i) => i.listId == _activeListId).toList();
-          final pendientes = items.where((i) => !i.checked).toList();
-          final comprados = items.where((i) => i.checked).toList();
+          bool settling(ShoppingListItem i) => _settling.contains(i.id);
+          final pendientes = items
+              .where((i) => !i.checked || settling(i))
+              .toList();
+          final comprados = items
+              .where((i) => i.checked && !settling(i))
+              .toList();
 
           // Compra terminada: hay items y todos están marcados. Mostramos a
           // Miau celebrando (rebote + confeti al vaciar). La detección de la
           // transición ya se hizo al resolver el fetch (gate puro); aquí solo
           // se CONSUME, para no repetir el confeti en cada rebuild.
           final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
+          final porComprar = pendientes.where((i) => !i.checked).toList();
           final celebrar = _celebrationGate.consume();
 
           final slivers = <Widget>[
@@ -1200,7 +1272,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 listName: _activeListName,
                 pending: pendientes.length,
                 done: comprados.length,
-                estimate: _estimateLabel(pendientes),
+                estimate: _estimate(porComprar),
                 generating: _generating,
                 onTapList: _openListsOverview,
                 onGenerate: _generarDesdePlan,
@@ -1219,10 +1291,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 onSearch: _searchProduct,
               ),
             ),
-            if (usualProducts([
-                  for (final p in _prices.values)
-                    (name: p.displayName, times: p.samples),
-                ], pendientes.map((i) => i.name))
+            if (usualProducts(
+                  [
+                    for (final p in _prices.values)
+                      (name: p.displayName, times: p.samples),
+                  ],
+                  porComprar
+                      .map((i) => i.name)
+                      .where((n) => !_justAdded.contains(n)),
+                )
                 case final usual when usual.isNotEmpty)
               SliverToBoxAdapter(child: _usualChips(usual)),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
@@ -1239,13 +1316,37 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               SliverToBoxAdapter(child: _cartCard(comprados)),
           ];
 
-          return CustomScrollView(
-            slivers: [
-              SliverPadding(
-                // Abajo deja sitio a la barra de navegación flotante.
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                sliver: SliverMainAxisGroup(slivers: slivers),
+          final showBar = comprados.isNotEmpty;
+          return Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    // Abajo deja sitio a la barra de terminar la compra.
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      showBar ? 104 : 32,
+                    ),
+                    sliver: SliverMainAxisGroup(slivers: slivers),
+                  ),
+                ],
               ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: _checkoutBar(comprados, visible: showBar),
+              ),
+              if (_finishConfetti)
+                Positioned.fill(
+                  child: ConfettiBurst(
+                    onCompleted: () {
+                      if (mounted) setState(() => _finishConfetti = false);
+                    },
+                  ),
+                ),
             ],
           );
         },
@@ -1534,16 +1635,70 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  /// Coste estimado de lo pendiente con los precios aprendidos de los tickets
-  /// ("≈ 34,20 €"), o null si no conocemos ningún precio.
-  String? _estimateLabel(List<ShoppingListItem> pendientes) {
+  /// Coste estimado de lo pendiente en euros con los precios aprendidos de
+  /// los tickets, o null si no conocemos ningún precio.
+  double? _estimate(List<ShoppingListItem> pendientes) {
     if (pendientes.isEmpty) return null;
     final est = PriceMemory.estimateCost([
       for (final i in pendientes) (name: i.name, quantity: i.quantity),
     ], _prices);
     if (est.priced == 0) return null;
-    final total = est.total.toStringAsFixed(2).replaceAll('.', ',');
-    return '≈ $total €';
+    return est.total;
+  }
+
+  /// Barra flotante para terminar la compra (y escanear el ticket). Entra y
+  /// sale desde abajo con un muelle.
+  Widget _checkoutBar(
+    List<ShoppingListItem> comprados, {
+    required bool visible,
+  }) {
+    return IgnorePointer(
+      ignoring: !visible,
+      child: SpringValue(
+        value: visible ? 0 : 1,
+        spring: AppMotion.fluidBouncy,
+        builder: (context, t, child) => Transform.translate(
+          offset: Offset(0, 120 * t),
+          child: Opacity(opacity: (1 - t).clamp(0.0, 1.0), child: child),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TactileButton(
+                label: comprados.isEmpty
+                    ? 'Terminar compra'
+                    : 'Terminar compra (${comprados.length})',
+                icon: Icons.kitchen_rounded,
+                onPressed: () => _finishShopping(comprados),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Tooltip(
+              message: 'Escanear ticket',
+              child: Semantics(
+                button: true,
+                label: 'Escanear ticket',
+                child: PressScale(
+                  onTap: _openScanTicket,
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: AppTheme.tactileDecoration(
+                      radius: 999,
+                      borderWidth: 2,
+                    ),
+                    child: Icon(
+                      Icons.document_scanner_outlined,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ---- Secciones -----------------------------------------------------------
@@ -1553,15 +1708,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// El plegado por pasillo se recuerda mientras viva la pantalla.
   List<Widget> _buildPendientesSlivers(List<ShoppingListItem> pendientes) {
     if (pendientes.isEmpty) return const [];
+    final porComprar = pendientes.where((i) => !i.checked).length;
     return [
       SliverToBoxAdapter(
         child: Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
-            onPressed: _checkAll,
+            onPressed: porComprar == 0 ? null : _checkAll,
             icon: const Icon(Icons.done_all_rounded, size: 20),
             label: const Text('Todo comprado'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.sage),
+            style: TextButton.styleFrom(foregroundColor: AppColors.done),
           ),
         ),
       ),
@@ -1577,7 +1733,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         SliverToBoxAdapter(
           child: ShoppingSection(
             title: 'Por comprar',
-            count: pendientes.length,
+            count: pendientes.where((i) => !i.checked).length,
+            complete: pendientes.every((i) => i.checked),
             expanded: expanded,
             onToggle: () => setState(() => _catCollapsed[key] = expanded),
             children: [for (final i in pendientes) _buildRow(i)],
@@ -1647,16 +1804,28 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             runSpacing: 8,
             children: [
               for (final name in usual)
-                ActionChip(
-                  avatar: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(name),
-                  onPressed: () => _quickAdd(name),
+                QuickAddChip(
+                  label: name,
+                  added: _justAdded.contains(name),
+                  onAdd: () => _addUsual(name),
                 ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  /// Añade un producto de "Lo habitual" y deja su chip con el check un
+  /// momento, para seguir añadiendo sin perder el sitio.
+  Future<void> _addUsual(String name) async {
+    if (_justAdded.contains(name)) return;
+    HapticFeedback.lightImpact();
+    setState(() => _justAdded.add(name));
+    Timer(const Duration(milliseconds: 1200), () {
+      if (mounted && _justAdded.remove(name)) setState(() {});
+    });
+    await _quickAdd(name);
   }
 
   Widget _aisleSection(
@@ -1667,7 +1836,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final expanded = !(_catCollapsed[title] ?? false);
     return ShoppingSection(
       title: title,
-      count: items.length,
+      count: items.where((i) => !i.checked).length,
+      complete: items.every((i) => i.checked),
       icon: style.icon,
       iconColor: style.foreground,
       iconBackground: style.background,
@@ -1677,25 +1847,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  /// "En el carro": arranca plegado (lo comprado ya no apremia) y permite
-  /// quitar de golpe todo lo comprado.
+  /// "En el carrito": arranca plegado (lo comprado ya no apremia); se vacía
+  /// con "Terminar compra".
   Widget _cartCard(List<ShoppingListItem> comprados) {
     return ShoppingSection(
-      title: 'En el carro',
+      title: 'En el carrito',
       count: comprados.length,
-      icon: Icons.check_rounded,
-      iconColor: AppColors.sage,
+      icon: Icons.shopping_cart_rounded,
+      iconColor: AppColors.done,
       iconBackground: AppColors.sageBg,
       expanded: _cartExpanded,
       onToggle: () => setState(() => _cartExpanded = !_cartExpanded),
-      trailing: TextButton(
-        onPressed: () => _clearChecked(comprados),
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.woodDark,
-          visualDensity: VisualDensity.compact,
-        ),
-        child: const Text('Quitar'),
-      ),
       children: [for (final i in comprados) _buildRow(i)],
     );
   }
@@ -1788,25 +1950,40 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  /// Fila de producto: tocar marca/desmarca, deslizar marca como comprado y
-  /// mantener pulsado abre las acciones (cambiar foto, borrar).
+  /// Fila de producto: tocar marca/desmarca, deslizar a la izquierda marca
+  /// como comprado, − / + cambia la cantidad y mantener pulsado abre las
+  /// acciones (cambiar foto, borrar).
   Widget _buildRow(ShoppingListItem item) {
     final done = item.checked;
-    return Dismissible(
+    final photo = FoodImage(
+      name: item.name,
+      itemType: item.itemType,
+      // Sin fotos, el icono del producto. Las fotos de banco salen al azar:
+      // mejor el icono hasta que llegue la del envase.
+      imageUrl: !_view.showPhotos || isStockPhoto(item.imageUrl)
+          ? null
+          : item.imageUrl,
+      forceIllustration: !_view.showPhotos,
+      size: 42,
+      radius: 10,
+    );
+    return SwipeAction(
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
-      direction: done ? DismissDirection.none : DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: AppColors.sageBg,
-        child: Icon(Icons.check_circle_rounded, color: AppColors.sage),
-      ),
-      // Deslizar marca como comprado: la fila pasa al carro al instante.
-      onDismissed: (_) => _toggleChecked(item, true),
+      toLeft: done
+          ? null
+          : SwipeSide(
+              icon: Icons.check_rounded,
+              color: AppColors.done,
+              label: 'Al carrito',
+              onTrigger: () => _toggleChecked(item, true),
+            ),
       child: ShoppingItemTile(
         name: shoppingCleanName(item.name),
         checked: done,
         quantityLabel: shoppingQtyLabel(item.quantity, item.unit),
+        quantity: item.quantity,
+        unit: item.unit,
+        onQuantityChanged: (q) => _setQuantity(item, q),
         subtitle: item.source == 'auto' ? 'Del plan de la semana' : null,
         onToggle: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
@@ -1817,27 +1994,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 label: 'Cambiar foto',
                 child: GestureDetector(
                   onTap: () => _openItemActions(item),
-                  child: FoodImage(
-                    name: item.name,
-                    itemType: item.itemType,
-                    // Las fotos de banco salen al azar: mejor la ilustración
-                    // hasta que llegue la del envase.
-                    imageUrl: isStockPhoto(item.imageUrl)
-                        ? null
-                        : item.imageUrl,
-                    size: 44,
-                    radius: 12,
-                  ),
+                  child: photo,
                 ),
               )
-            : null,
+            : photo,
       ),
     );
   }
 
   Widget _emptyState() {
     return EmptyState(
-      mood: MiauMood.shopping,
+      image: 'assets/images/vacio_compra.png',
       title: 'Tu lista está vacía',
       message: 'Escribe arriba lo que necesitas o trae lo del plan.',
       actionLabel: 'Desde el plan',
