@@ -271,20 +271,12 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
     }
   }
 
-  /// Mete los productos del ticket en el inventario (comida, en Despensa).
+  /// Mete los productos del ticket en el inventario, cada uno en su zona
+  /// según su categoría (helado al congelador, lejía a limpieza…).
   /// Deduplica contra el inventario existente y dentro del propio ticket:
   /// si el producto ya existe por NOMBRE NORMALIZADO en CUALQUIER ubicación
   /// (Despensa, Nevera o Congelador), suma la cantidad sobre esa fila en vez
-  /// de crear un duplicado. Solo si no existe en ninguna ubicación se inserta
-  /// uno nuevo en Despensa (comida por defecto).
-  ///
-  /// La categoría que la IA asignó por línea del ticket NO se usa para la
-  /// ubicación del inventario: todos los productos del ticket entran como
-  /// 'comida' en 'Despensa'. Es una simplificación deliberada (lo pedido en el
-  /// diseño y lo que anuncia el subtítulo del switch); mapear Nevera/Congelador
-  /// desde la IA es opcional y queda fuera de alcance. El cruce se hace solo
-  /// por nombre, así que un producto ya ubicado en Nevera/Congelador igualmente
-  /// recibe la suma y no se duplica.
+  /// de crear un duplicado.
   Future<void> _addItemsToPantry(dynamic homeId) async {
     // Inventario actual del hogar (RLS ya filtra; el eq es explícito y barato).
     final existing = await _client
@@ -338,7 +330,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       final key = name.trim().toLowerCase();
       final acc = ticketByName[key];
       if (acc == null) {
-        ticketByName[key] = {'name': name, 'quantity': qty};
+        ticketByName[key] = {
+          'name': name,
+          'quantity': qty,
+          'aisle': it.category.label,
+        };
       } else {
         acc['quantity'] = (acc['quantity'] as double) + qty;
       }
@@ -358,18 +354,23 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         // Ubicación lógica según el producto (nevera/despensa/condimentos) y
         // caducidad estimada para esa ubicación. La usuaria puede ajustarla
         // luego desde el inventario (ahora los productos son editables).
-        final location = ShelfLife.suggestLocation(name);
-        final estimated = ShelfLife.estimateDate(name, location);
+        final location = ShelfLife.pantryZoneFor(
+          name: name,
+          category: entry.value['aisle'] as String,
+        );
+        final isHome = location == 'Limpieza' || location == 'Hogar';
         final item = InventoryItem(
           id: '',
           homeId: homeId,
           name: name,
           category: location,
-          itemType: 'comida',
+          itemType: isHome ? 'hogar' : 'comida',
           quantity: qty,
           unit: 'unidades',
           kind: 'ingredient',
-          expirationDate: estimated,
+          expirationDate: isHome
+              ? null
+              : ShelfLife.estimateDate(name, location),
         );
         await _client.from('inventory_items').insert(item.toMap());
       }
@@ -687,14 +688,21 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   );
 }
 
-/// La del ticket si es una de las nuestras; si no ("otros", "higiene"…),
-/// la que sugiere el nombre del producto.
-FoodCategory guessTicketCategory(String fromTicket, String name) {
+/// La del ticket si es una de las nuestras; si no ("otros"…), la que
+/// sugiere el nombre del producto o, si tampoco, lo que ponía el ticket
+/// ([raw], a veces en catalán: "XOCOLATA").
+FoodCategory guessTicketCategory(
+  String fromTicket,
+  String name, [
+  String? raw,
+]) {
   final key = CategoryIcons.normalize(fromTicket);
   for (final c in FoodCategory.values) {
     if (c != FoodCategory.otros && c.name == key) return c;
   }
-  return CategoryIcons.categoryFor(name);
+  final byName = CategoryIcons.categoryFor(name);
+  if (byName != FoodCategory.otros || raw == null) return byName;
+  return CategoryIcons.categoryFor(raw);
 }
 
 class _ItemRow {
@@ -711,7 +719,7 @@ class _ItemRow {
     String quantity = '1',
     String totalPrice = '',
   }) : name = TextEditingController(text: name),
-       category = guessTicketCategory(category, name),
+       category = guessTicketCategory(category, name, rawName),
        quantity = TextEditingController(text: quantity),
        totalPrice = TextEditingController(text: totalPrice);
 

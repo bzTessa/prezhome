@@ -52,10 +52,15 @@ class KitchenZonesGrid extends StatelessWidget {
           fg: AppColors.soon,
           icon: Icons.grass_rounded,
         ),
-        KitchenZone.hogar => (
+        KitchenZone.limpieza => (
           bg: AppColors.lilacBg,
           fg: AppColors.lilac,
           icon: Icons.cleaning_services_rounded,
+        ),
+        KitchenZone.hogar => (
+          bg: AppColors.frostBg,
+          fg: AppColors.frost,
+          icon: Icons.soap_rounded,
         ),
       };
 
@@ -206,9 +211,9 @@ class _ZoneTile extends StatelessWidget {
                         child: Icon(s.icon, color: s.fg, size: 20),
                       )
                     else
-                      // Ilustración de la zona: assets/images/zona_<etiqueta>.png
+                      // Ilustración: assets/images/zona_<1.ª palabra>.png
                       Image.asset(
-                        'assets/images/zona_${z.zone.label.toLowerCase()}.png',
+                        'assets/images/zona_${z.zone.label.split(' ').first.toLowerCase()}.png',
                         width: 30,
                         height: 30,
                         errorBuilder: (_, _, _) =>

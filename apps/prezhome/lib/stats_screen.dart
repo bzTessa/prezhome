@@ -10,6 +10,7 @@ import 'services/spend_forecast.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
+import 'utils/ticket_date.dart';
 import 'widgets/animations/animated_counter.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/food_category_icon.dart';
@@ -126,12 +127,14 @@ class _StatsScreenState extends State<StatsScreen> {
           .maybeSingle(),
       _client
           .from('tickets')
-          .select('total_amount, created_at')
+          .select('total_amount, purchased_at, created_at')
           .eq('home_id', homeId)
-          .gte('created_at', _day(sixAgo)),
+          .or(ticketRangeFilter(sixAgo, DateTime(now.year, now.month + 1))),
       _client
           .from('ticket_items')
-          .select('name, category, total_price, created_at')
+          .select(
+            'name, category, total_price, created_at, tickets(purchased_at)',
+          )
           .eq('home_id', homeId)
           .gte('created_at', _day(today.subtract(const Duration(days: 90)))),
       _client
@@ -156,10 +159,10 @@ class _StatsScreenState extends State<StatsScreen> {
     final budget =
         ((results[0] as Map?)?['monthly_amount'] as num?)?.toDouble() ?? 0;
 
-    // Gasto por mes (misma regla que Gastos y tickets: por created_at).
+    // Gasto por mes (misma regla que Gastos y tickets: por fecha de compra).
     final byMonth = <String, double>{};
     for (final t in (results[1] as List)) {
-      final d = DateTime.tryParse(t['created_at'] as String? ?? '')?.toLocal();
+      final d = ticketDate(t as Map);
       if (d == null) continue;
       final k = '${d.year}-${d.month}';
       byMonth[k] =
@@ -186,7 +189,7 @@ class _StatsScreenState extends State<StatsScreen> {
     for (final it in (results[2] as List)) {
       final name = _cap((it['name'] as String?)?.trim() ?? '');
       if (name.isNotEmpty) productCount[name] = (productCount[name] ?? 0) + 1;
-      final d = DateTime.tryParse(it['created_at'] as String? ?? '')?.toLocal();
+      final d = ticketDate({...?(it['tickets'] as Map?), ...it as Map});
       if (d == null || d.isBefore(monthStart)) continue;
       final raw = (it['category'] as String?)?.trim() ?? '';
       // Los tickets antiguos guardaban la clave ("lacteos"); los nuevos, el nombre.

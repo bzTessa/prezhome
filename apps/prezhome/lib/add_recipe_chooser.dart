@@ -7,10 +7,8 @@ import 'services/recipe_share.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 
-/// Hoja para elegir cómo añadir una receta:
-///  - Manual: formulario vacío
-///  - Escribir receta deseada: pega/describe y la IA la completa
-///  - Ideas personalizadas: la IA propone recetas según tus parámetros
+/// Hoja para elegir cómo añadir una receta: pegar el enlace de un vídeo,
+/// escribir el nombre (se completa sola), ideas, a mano o con un código.
 class AddRecipeChooser extends StatelessWidget {
   const AddRecipeChooser({super.key});
 
@@ -19,6 +17,8 @@ class AddRecipeChooser extends StatelessWidget {
     return showModalBottomSheet<bool>(
       context: context,
       backgroundColor: AppColors.cream,
+      isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -29,7 +29,7 @@ class AddRecipeChooser extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -51,6 +51,20 @@ class AddRecipeChooser extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+            _option(
+              context,
+              icon: Icons.link_rounded,
+              title: 'Pegar enlace de vídeo',
+              subtitle: 'De TikTok, Instagram o YouTube',
+              onTap: () async {
+                final r = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => const AddRecipeScreen(startWithLink: true),
+                  ),
+                );
+                if (context.mounted) Navigator.of(context).pop(r);
+              },
+            ),
             _option(
               context,
               icon: Icons.edit_rounded,
@@ -86,9 +100,7 @@ class AddRecipeChooser extends StatelessWidget {
               subtitle: 'Rellena tú cada campo',
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
-                  MaterialPageRoute(
-                    builder: (_) => const AddRecipeScreen(manual: true),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AddRecipeScreen()),
                 );
                 if (context.mounted) Navigator.of(context).pop(r);
               },
@@ -115,6 +127,7 @@ class AddRecipeChooser extends StatelessWidget {
     final code = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         title: const Text('Código de la receta'),
         content: TextField(
           controller: controller,

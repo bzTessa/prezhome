@@ -11,7 +11,8 @@ enum KitchenZone {
   despensa('Despensa', 'Despensa'),
   bebidas('Bebidas', 'Bebidas'),
   especias('Especias', 'Condimentos'),
-  hogar('Hogar', 'Limpieza');
+  limpieza('Limpieza', 'Limpieza'),
+  hogar('Hogar', 'Higiene y hogar');
 
   const KitchenZone(this.filterKey, this.label);
 
@@ -20,16 +21,19 @@ enum KitchenZone {
   final String label;
 
   /// ¿Pertenece [i] a esta zona? (misma regla que el filtro del inventario).
+  /// Lo de casa se reparte por su zona guardada ('Hogar' = higiene y hogar,
+  /// lo demás a limpieza); la comida, por la suya.
   bool matches(InventoryItem i) {
-    final food = i.itemType == 'comida';
+    final home = i.itemType != 'comida' || _homeZones.contains(i.category);
     return switch (this) {
-      KitchenZone.hogar => !food,
-      KitchenZone.nevera => food && i.category == 'Nevera',
-      KitchenZone.congelador => food && i.category == 'Congelador',
-      KitchenZone.especias => food && i.category == 'Especias',
-      KitchenZone.bebidas => food && i.category == 'Bebidas',
+      KitchenZone.hogar => home && i.category == 'Hogar',
+      KitchenZone.limpieza => home && i.category != 'Hogar',
+      KitchenZone.nevera => !home && i.category == 'Nevera',
+      KitchenZone.congelador => !home && i.category == 'Congelador',
+      KitchenZone.especias => !home && i.category == 'Especias',
+      KitchenZone.bebidas => !home && i.category == 'Bebidas',
       KitchenZone.despensa =>
-        food &&
+        !home &&
             !const {
               'Nevera',
               'Congelador',
@@ -38,6 +42,8 @@ enum KitchenZone {
             }.contains(i.category),
     };
   }
+
+  static const _homeZones = {'Limpieza', 'Hogar'};
 
   static KitchenZone? byFilterKey(String key) {
     for (final z in KitchenZone.values) {
@@ -71,7 +77,9 @@ List<ZoneSummary> summarizeZones(List<InventoryItem> items) {
       () {
         var count = 0, soon = 0, expired = 0;
         final tracksExpiry =
-            zone != KitchenZone.especias && zone != KitchenZone.hogar;
+            zone != KitchenZone.especias &&
+            zone != KitchenZone.limpieza &&
+            zone != KitchenZone.hogar;
         for (final i in items) {
           if (!zone.matches(i)) continue;
           count++;

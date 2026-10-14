@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -17,17 +16,17 @@ class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
   final Recipe? recipe;
 
-  /// Si es true, al abrir muestra directamente el diálogo de "Rellenar con IA".
+  /// Al abrir pide el nombre (o la receta entera) y la completa.
   final bool startWithAI;
 
-  /// Si es true, es modo manual: se oculta el botón "Rellenar con IA".
-  final bool manual;
+  /// Al abrir pide el enlace de un vídeo y lee la receta.
+  final bool startWithLink;
 
   const AddRecipeScreen({
     super.key,
     this.recipe,
     this.startWithAI = false,
-    this.manual = false,
+    this.startWithLink = false,
   });
 
   bool get isEditing => recipe != null;
@@ -91,8 +90,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       _prefillFromRecipe(widget.recipe!);
     } else {
       _mealTypes.add('lunch');
-      if (widget.startWithAI) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _fillWithAI());
+      if (widget.startWithAI || widget.startWithLink) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          final started = widget.startWithLink
+              ? await _importFromLink()
+              : await _fillWithAI();
+          // Si se cancela o no sale, se vuelve a elegir cómo añadirla en vez
+          // de quedarse en el formulario vacío.
+          if (!started && mounted) Navigator.of(context).pop();
+        });
       }
     }
   }
@@ -206,14 +212,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         uri.host.isNotEmpty;
   }
 
-  Future<void> _fillWithAI() async {
+  /// Devuelve true si la receta quedó rellenada.
+  Future<bool> _fillWithAI() async {
     final query = await showDialog<String>(
       context: context,
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
+          scrollable: true,
           backgroundColor: AppColors.cream,
-          title: const Text('Completar receta'),
+          title: const Text('Escribe el nombre'),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -249,7 +257,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       },
     );
 
-    if (query == null || query.isEmpty) return;
+    if (query == null || query.isEmpty) return false;
 
     setState(() => _aiLoading = true);
     try {
@@ -277,6 +285,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             ),
           );
         }
+        return true;
       } else {
         final msg = (data is Map && data['error'] != null)
             ? data['error'].toString()
@@ -295,25 +304,28 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     } finally {
       if (mounted) setState(() => _aiLoading = false);
     }
+    return false;
   }
 
-  /// Importa una receta desde un enlace de TikTok/Instagram (o web). Pide la
-  /// URL, llama a la edge function import-recipe-link (que lee el texto público
-  /// del post y lo estructura con IA) y rellena el formulario. Además guarda el
-  /// enlace en el campo de vídeo para tenerlo a mano.
-  Future<void> _importFromLink() async {
+  /// Importa una receta desde el enlace de un vídeo (TikTok, Instagram,
+  /// YouTube) o una web. Pide la URL (con botón de pegar), llama a la edge
+  /// function import-recipe-link (que lee el texto público del post y lo
+  /// estructura) y rellena el formulario. Además guarda el enlace en el campo
+  /// de vídeo para tenerlo a mano. Devuelve true si la receta quedó rellenada.
+  Future<bool> _importFromLink() async {
     final url = await showDialog<String>(
       context: context,
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
+          scrollable: true,
           backgroundColor: AppColors.cream,
-          title: const Text('Importar de TikTok/Instagram'),
+          title: const Text('Pegar enlace de vídeo'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Pega el enlace del vídeo o post. Leeré la receta de su '
+                'De TikTok, Instagram o YouTube. La receta se saca de su '
                 'descripción.',
                 style: TextStyle(fontSize: 13),
               ),
@@ -324,6 +336,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 keyboardType: TextInputType.url,
                 decoration: InputDecoration(
                   hintText: 'https://...',
+                  suffixIcon: IconButton(
+                    tooltip: 'Pegar',
+                    icon: const Icon(Icons.content_paste_rounded),
+                    onPressed: () async {
+                      final clip = await Clipboard.getData(
+                        Clipboard.kTextPlain,
+                      );
+                      final text = clip?.text?.trim() ?? '';
+                      if (text.isNotEmpty) controller.text = text;
+                    },
+                  ),
                   filled: true,
                   fillColor: AppColors.card,
                   border: OutlineInputBorder(
@@ -354,13 +377,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       },
     );
 
-    if (url == null || url.isEmpty) return;
-    if (!mounted) return;
+    if (url == null || url.isEmpty) return false;
+    if (!mounted) return false;
     if (!_looksLikeUrl(url)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Eso no parece un enlace válido.')),
       );
-      return;
+      return false;
     }
 
     setState(() => _aiLoading = true);
@@ -383,6 +406,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             ),
           );
         }
+        return true;
       } else {
         final msg = (data is Map && data['error'] != null)
             ? data['error'].toString()
@@ -401,6 +425,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     } finally {
       if (mounted) setState(() => _aiLoading = false);
     }
+    return false;
   }
 
   /// Refina una receta recién recibida de la IA con Open Food Facts (cantidades
@@ -793,55 +818,27 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ),
       body: _loadingInitial
           ? const Center(child: CircularProgressIndicator())
+          : _aiLoading
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    widget.startWithLink
+                        ? 'Leyendo la receta del vídeo…'
+                        : 'Completando la receta…',
+                    style: TextStyle(color: AppColors.inkMuted),
+                  ),
+                ],
+              ),
+            )
           : Form(
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
-                  if (!widget.isEditing && !widget.manual) ...[
-                    OutlinedButton.icon(
-                      onPressed: _aiLoading ? null : _fillWithAI,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.ink,
-                        minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(color: AppColors.wood, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: _aiLoading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.edit_note_rounded),
-                      label: Text(
-                        _aiLoading ? 'Completando…' : 'Completar receta',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Importar desde un enlace de TikTok/Instagram (lee la
-                    // receta de la descripción del post con IA).
-                    OutlinedButton.icon(
-                      onPressed: _aiLoading ? null : _importFromLink,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.ink,
-                        minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(color: AppColors.wood, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.link),
-                      label: const Text(
-                        'Importar de TikTok/Instagram',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
                   // Selector de imagen de la receta
                   GestureDetector(
                     onTap: _pickImage,

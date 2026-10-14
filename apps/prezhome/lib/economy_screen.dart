@@ -13,6 +13,7 @@ import 'widgets/animations/spring_value.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
+import 'utils/ticket_date.dart';
 
 class EconomyScreen extends StatefulWidget {
   const EconomyScreen({super.key, this.showPoints = true});
@@ -89,8 +90,6 @@ class _EconomyScreenState extends State<EconomyScreen> {
     // Rango del mes que se está viendo.
     final monthStart = DateTime(_viewMonth.year, _viewMonth.month, 1);
     final monthEnd = DateTime(_viewMonth.year, _viewMonth.month + 1, 1);
-    final startStr = monthStart.toIso8601String().split('T').first;
-    final endStr = monthEnd.toIso8601String().split('T').first;
 
     // Presupuesto
     final budgetRow = await _client
@@ -100,13 +99,13 @@ class _EconomyScreenState extends State<EconomyScreen> {
         .maybeSingle();
     final budget = (budgetRow?['monthly_amount'] as num?)?.toDouble() ?? 0;
 
-    // Tickets del mes que se ve (por created_at, dato fiable).
+    // Tickets del mes que se ve, por la fecha de la compra.
     final ticketsRes = await _client
         .from('tickets')
         .select('id, merchant, total_amount, purchased_at, created_at')
         .eq('home_id', homeId)
-        .gte('created_at', startStr)
-        .lt('created_at', endStr)
+        .or(ticketRangeFilter(monthStart, monthEnd))
+        .order('purchased_at', ascending: false)
         .order('created_at', ascending: false);
     final tickets = (ticketsRes as List).cast<Map<String, dynamic>>();
 
@@ -130,22 +129,17 @@ class _EconomyScreenState extends State<EconomyScreen> {
     // como último). Una sola consulta por rango y agregación en Dart.
     final rangeStart = DateTime(_viewMonth.year, _viewMonth.month - 5, 1);
     final rangeEnd = DateTime(_viewMonth.year, _viewMonth.month + 1, 1);
-    final rangeStartStr = rangeStart.toIso8601String().split('T').first;
-    final rangeEndStr = rangeEnd.toIso8601String().split('T').first;
-
     final trendRes = await _client
         .from('tickets')
-        .select('total_amount, created_at')
+        .select('total_amount, purchased_at, created_at')
         .eq('home_id', homeId)
-        .gte('created_at', rangeStartStr)
-        .lt('created_at', rangeEndStr);
+        .or(ticketRangeFilter(rangeStart, rangeEnd));
     final trendRows = (trendRes as List).cast<Map<String, dynamic>>();
 
     // Clave año-mes -> gasto acumulado.
     final byMonth = <String, double>{};
     for (final row in trendRows) {
-      final createdStr = row['created_at'] as String?;
-      final created = createdStr != null ? DateTime.tryParse(createdStr) : null;
+      final created = ticketDate(row);
       if (created == null) continue;
       final key = '${created.year}-${created.month}';
       final amount = (row['total_amount'] as num?)?.toDouble() ?? 0;
@@ -243,6 +237,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     final value = await showDialog<double>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         backgroundColor: AppColors.cream,
         title: const Text('Presupuesto mensual'),
         content: TextField(
@@ -341,6 +336,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         backgroundColor: AppColors.cream,
         title: const Text('Nueva recompensa'),
         content: Column(

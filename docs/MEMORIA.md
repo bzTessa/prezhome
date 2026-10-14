@@ -87,7 +87,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta
   con `OfflineRepository.changes`), `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
-  Especias, Bebidas, Limpieza, Hogar).
+  Especias, Bebidas, Limpieza, Hogar). Zonas en `utils/kitchen_zones.dart`:
+  Limpieza y "Higiene y hogar" (category 'Hogar'); lo de casa va ahí aunque
+  se guardara como comida.
+- Clasificar productos: una sola fuente, `CategoryIcons.categoryFor`
+  (`widgets/food_category_icon.dart`, palabras en castellano y catalán; gana
+  la que sale antes en el nombre). Los pasillos de la compra
+  (`defaultCategoryFor`) y la zona de la despensa salen de ahí.
 - Plan de comidas: un solo plan semanal, `meal_plan_screen.dart` (semana con
   flechas; vive en Comidas > Plan; Hoy lleva ahí con `onNavigateToPlan`, no abre
   otra copia). Iconos discretos junto al día: calendario del mes
@@ -117,7 +123,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   tickets" (siempre visible; puntos solo con Modo Puntos, `showPoints`).
   Escanear ticket: `scan_ticket_screen.dart` (categoría con selector de
   `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre;
-  al guardar tacha de la lista lo comprado con `ticketCovers`).
+  al guardar tacha de la lista lo comprado con `ticketCovers`). El gasto por
+  mes va por la fecha del ticket (`purchased_at`, `utils/ticket_date.dart`).
+- Añadir receta (`add_recipe_chooser.dart`): pegar enlace de vídeo
+  (TikTok/Instagram/YouTube → `import-recipe-link`), escribir el nombre, ideas,
+  a mano, código. Si se cancela el enlace o el nombre, vuelve atrás.
 - Borrar cuenta (lo piden las tiendas): "Borrar mi cuenta" al final de Mi
   Hogar → función `delete-account` (sale del hogar, borra el hogar si queda
   vacío y el usuario de Auth).
