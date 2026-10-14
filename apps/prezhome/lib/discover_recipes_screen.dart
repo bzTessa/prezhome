@@ -16,6 +16,7 @@ import 'utils/approx_price.dart';
 import 'utils/pantry_ideas.dart';
 import 'utils/shopping_categories.dart';
 import 'utils/friendly_error.dart';
+import 'widgets/supermarket_badge.dart';
 
 /// "Ideas personalizadas" (estilo mise): eliges parámetros y la IA propone
 /// recetas. Puedes guardar las que te gusten en tus recetas.
@@ -126,6 +127,43 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     'pot': 'Olla',
     'airfryer': 'Airfryer',
     'microwave': 'Microondas',
+    'blender': 'Batidora',
+  };
+  static const Map<String, IconData> _applianceIcons = {
+    'oven': Icons.local_fire_department_outlined,
+    'stovetop': Icons.outdoor_grill_outlined,
+    'pot': Icons.soup_kitchen_outlined,
+    'airfryer': Icons.air,
+    'microwave': Icons.microwave_outlined,
+    'blender': Icons.blender_outlined,
+  };
+
+  // Tipo de plato: '' = cualquiera; si no, una clave de Recipe.mealTypeLabels.
+  String _mealType = '';
+  static const Map<String, String> _mealTypeOptions = {
+    '': 'Cualquiera',
+    ...Recipe.mealTypeLabels,
+  };
+  static const Map<String, IconData> _mealTypeIcons = {
+    '': Icons.auto_awesome_outlined,
+    'breakfast': Icons.free_breakfast_outlined,
+    'lunch': Icons.lunch_dining_outlined,
+    'dinner': Icons.dinner_dining_outlined,
+    'snack': Icons.bakery_dining_outlined,
+    'dessert': Icons.cake_outlined,
+    'drink': Icons.local_drink_outlined,
+  };
+
+  // Intolerancias elegidas aquí (claves como en el perfil). Se suman a las
+  // alergias del perfil y se mandan como restricción dura.
+  final Set<String> _intolerances = {};
+  static const Map<String, String> _intoleranceOptions = {
+    'gluten': 'Sin gluten (celiaquía)',
+    'lactosa': 'Sin lactosa',
+    'huevo': 'Sin huevo',
+    'frutos secos': 'Sin frutos secos',
+    'marisco': 'Sin marisco',
+    'soja': 'Sin soja',
   };
 
   @override
@@ -156,6 +194,11 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         setState(() {
           _profileDiet = profile['diet'] as String?;
           _profileAllergies = asStrings(profile['allergies']);
+          _intolerances.addAll(
+            _profileAllergies
+                .map((a) => a.toLowerCase().trim())
+                .where(_intoleranceOptions.containsKey),
+          );
           _profileDisliked = asStrings(profile['disliked']);
           _profileCookTime = profile['cook_time_pref'] as String?;
           final raw = profile['dashboard_prefs'];
@@ -275,12 +318,19 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         'goal': _goal,
         'diet': diet,
         'appliances': _appliances.toList(),
+        if (_mealType.isNotEmpty) 'meal_type': Recipe.mealTypeLabels[_mealType],
         'count': 5,
         // Títulos existentes (para no repetir); el prompt los trata como
         // "no repetir", distinto de alergias/disliked.
         'avoid': avoid,
         // Alergias (restricción dura) e ingredientes no deseados (blanda).
-        'allergies': _profileAllergies,
+        'allergies': {
+          ..._profileAllergies,
+          for (final k in _intolerances)
+            k == 'gluten'
+                ? 'gluten (celiaquía: nada de trigo, cebada ni centeno)'
+                : k,
+        }.toList(),
         'disliked': _profileDisliked,
         'cuisines': _profileCuisines,
       };
@@ -350,8 +400,12 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       int? i(dynamic v) => v == null ? null : int.tryParse(v.toString());
 
       final types = (r['meal_types'] is List)
-          ? (r['meal_types'] as List).map((e) => e.toString()).toList()
-          : <String>['lunch'];
+          ? (r['meal_types'] as List)
+                .map((e) => e.toString())
+                .where(Recipe.mealTypeLabels.containsKey)
+                .toList()
+          : <String>[];
+      if (types.isEmpty && _mealType.isNotEmpty) types.add(_mealType);
 
       // Foto automática (Pexels) para la idea guardada. Las ideas no traen foto
       // manual, así que siempre lo intentamos. Degrada con elegancia: si falla o
@@ -395,7 +449,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         protein: nut?.protein.toDouble() ?? d(r['protein_grams']),
         carbs: nut?.carbs.toDouble() ?? d(r['carbs_grams']),
         fat: nut?.fat.toDouble() ?? d(r['fat_grams']),
-        appliance: (r['appliance'] ?? 'none').toString(),
+        appliance: Recipe.applianceLabels.containsKey(r['appliance'])
+            ? r['appliance'].toString()
+            : 'none',
         mealTypes: types.isEmpty ? ['lunch'] : types,
         gramsPerServing: d(r['grams_per_serving']),
         externalImageUrl: autoImageUrl,
@@ -458,10 +514,159 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     }
   }
 
-  InputDecoration _dec(String label) => InputDecoration(labelText: label);
+  /// Título de sección con icono, para que el formulario se lea por partes.
+  Widget _section(IconData icon, String title, Widget child, {String? hint}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: AppTheme.cardDecoration(radius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.peachBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: AppColors.woodDark),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (hint != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              hint,
+              style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+            ),
+          ],
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  /// Chips de una sola opción (o varias si [multi]) con icono opcional.
+  Widget _choiceChips<T>({
+    required Map<T, String> options,
+    required bool Function(T) isSelected,
+    required void Function(T) onTap,
+    Map<T, IconData> icons = const {},
+    bool enabled = true,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final e in options.entries)
+          ChoiceChip(
+            label: Text(e.value),
+            avatar: icons[e.key] == null
+                ? null
+                : Icon(icons[e.key], size: 18, color: AppColors.woodDark),
+            showCheckmark: false,
+            selected: isSelected(e.key),
+            backgroundColor: AppColors.card,
+            selectedColor: AppColors.peachBg,
+            side: BorderSide(
+              color: isSelected(e.key) ? AppColors.wood : AppColors.line,
+            ),
+            onSelected: enabled ? (_) => setState(() => onTap(e.key)) : null,
+          ),
+      ],
+    );
+  }
+
+  /// Tarjetas de supermercado con su insignia de marca, desplazables.
+  Widget _supermarketTiles() {
+    return SizedBox(
+      height: 96,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: Supermarket.all.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (_, i) {
+          final s = Supermarket.all[i];
+          final sel = _supermarkets.contains(s.key);
+          return Semantics(
+            selected: sel,
+            button: true,
+            label: s.label,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => setState(() {
+                if (!_supermarkets.remove(s.key)) _supermarkets.add(s.key);
+              }),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 84,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: sel ? AppColors.peachBg : AppColors.paper,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: sel ? AppColors.wood : AppColors.line,
+                    width: sel ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        SupermarketBadge(supermarket: s, size: 42),
+                        if (sel)
+                          Positioned(
+                            right: -4,
+                            bottom: -4,
+                            child: Icon(
+                              Icons.check_circle,
+                              size: 18,
+                              color: AppColors.sage,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        s.label.split(' /').first,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final dietLocked = DiscoverRecipesScreen.profileDietOverrides(_profileDiet);
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {},
@@ -478,167 +683,132 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           ),
         ),
         body: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: AppTheme.cardDecoration(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(
-                        value: false,
-                        label: Text('Ideas nuevas'),
-                        icon: Icon(Icons.lightbulb_outline_rounded),
-                      ),
-                      ButtonSegment(
-                        value: true,
-                        label: Text('Con lo que tengo'),
-                        icon: Icon(Icons.kitchen_outlined),
-                      ),
-                    ],
-                    selected: {_pantryMode},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (v) =>
-                        setState(() => _pantryMode = v.first),
-                  ),
-                  if (_pantryMode) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      !_pantryLoaded
-                          ? 'Mirando tu despensa…'
-                          : _pantry.isEmpty
-                          ? 'Tu despensa está vacía: añade lo que tienes en '
-                                'casa para recibir ideas con ello.'
-                          : 'Usaremos ${_pantry.length} alimentos de tu '
-                                'despensa, empezando por lo que caduca antes.',
-                      style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Dinos qué buscas',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Supermercados (opcional):'),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: Supermarket.all.map((s) {
-                      final sel = _supermarkets.contains(s.key);
-                      return FilterChip(
-                        label: Text(s.label),
-                        selected: sel,
-                        backgroundColor: AppColors.card,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _supermarkets.add(s.key);
-                          } else {
-                            _supermarkets.remove(s.key);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _goal,
-                    decoration: _dec('Objetivo'),
-                    items: _goals
-                        .map(
-                          (g) =>
-                              DropdownMenuItem(value: g, child: Text(_cap(g))),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _goal = v!),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _diet,
-                    decoration: _dec('Dieta'),
-                    items: _diets
-                        .map(
-                          (g) =>
-                              DropdownMenuItem(value: g, child: Text(_cap(g))),
-                        )
-                        .toList(),
-                    onChanged:
-                        DiscoverRecipesScreen.profileDietOverrides(_profileDiet)
-                        ? null
-                        : (v) => setState(() => _diet = v!),
-                  ),
-                  if (DiscoverRecipesScreen.profileDietOverrides(
-                    _profileDiet,
-                  )) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.favorite,
-                          size: 16,
-                          color: AppColors.woodDark,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Usamos la dieta de tu perfil: '
-                            '${NutritionProfile.dietLabels[_profileDiet]}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.inkMuted,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _maxCostController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _dec('Coste máximo por ración € (opcional)'),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Electrodomésticos:'),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    children: _applianceOptions.entries.map((e) {
-                      final sel = _appliances.contains(e.key);
-                      return FilterChip(
-                        label: Text(e.value),
-                        selected: sel,
-                        backgroundColor: AppColors.card,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _appliances.add(e.key);
-                          } else {
-                            _appliances.remove(e.key);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _loading ? null : _generate,
-                    icon: _loading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.search_rounded),
-                    label: Text(_loading ? 'Buscando ideas…' : 'Ver ideas'),
-                  ),
-                ],
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: false,
+                  label: Text('Ideas nuevas'),
+                  icon: Icon(Icons.lightbulb_outline_rounded),
+                ),
+                ButtonSegment(
+                  value: true,
+                  label: Text('Con lo que tengo'),
+                  icon: Icon(Icons.kitchen_outlined),
+                ),
+              ],
+              selected: {_pantryMode},
+              showSelectedIcon: false,
+              onSelectionChanged: (v) => setState(() => _pantryMode = v.first),
+            ),
+            if (_pantryMode)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
+                child: Text(
+                  !_pantryLoaded
+                      ? 'Mirando tu despensa…'
+                      : _pantry.isEmpty
+                      ? 'Tu despensa está vacía: añade lo que tienes en '
+                            'casa para recibir ideas con ello.'
+                      : 'Usaremos ${_pantry.length} alimentos de tu '
+                            'despensa, empezando por lo que caduca antes.',
+                  style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                ),
               ),
+            const SizedBox(height: 16),
+            _section(
+              Icons.restaurant_menu_rounded,
+              '¿Qué te apetece?',
+              _choiceChips<String>(
+                options: _mealTypeOptions,
+                icons: _mealTypeIcons,
+                isSelected: (k) => _mealType == k,
+                onTap: (k) => _mealType = k,
+              ),
+            ),
+            _section(
+              Icons.storefront_rounded,
+              'Supermercados',
+              _supermarketTiles(),
+              hint: 'Opcional. Usaremos productos fáciles de encontrar ahí.',
+            ),
+            _section(
+              Icons.flag_outlined,
+              'Objetivo',
+              _choiceChips<String>(
+                options: {for (final g in _goals) g: _cap(g)},
+                isSelected: (k) => _goal == k,
+                onTap: (k) => _goal = k,
+              ),
+            ),
+            _section(
+              Icons.eco_outlined,
+              'Dieta',
+              _choiceChips<String>(
+                options: {for (final d in _diets) d: _cap(d)},
+                isSelected: (k) => _diet == k,
+                onTap: (k) => _diet = k,
+                enabled: !dietLocked,
+              ),
+              hint: dietLocked
+                  ? 'Usamos la dieta de tu perfil: '
+                        '${NutritionProfile.dietLabels[_profileDiet]}'
+                  : null,
+            ),
+            _section(
+              Icons.health_and_safety_outlined,
+              'Intolerancias y alergias',
+              _choiceChips<String>(
+                options: _intoleranceOptions,
+                isSelected: _intolerances.contains,
+                onTap: (k) {
+                  if (!_intolerances.remove(k)) _intolerances.add(k);
+                },
+              ),
+              hint: 'Nunca saldrán en las recetas.',
+            ),
+            _section(
+              Icons.blender_outlined,
+              'Electrodomésticos',
+              _choiceChips<String>(
+                options: _applianceOptions,
+                icons: _applianceIcons,
+                isSelected: _appliances.contains,
+                onTap: (k) {
+                  if (!_appliances.remove(k)) _appliances.add(k);
+                },
+              ),
+            ),
+            _section(
+              Icons.euro_rounded,
+              'Coste máximo por ración',
+              TextField(
+                controller: _maxCostController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Opcional, p. ej. 2,50',
+                  suffixText: '€',
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            ElevatedButton.icon(
+              onPressed: _loading ? null : _generate,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              icon: _loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.search_rounded),
+              label: Text(_loading ? 'Buscando ideas…' : 'Ver ideas'),
             ),
             const SizedBox(height: 20),
             ..._ideas.asMap().entries.map((e) => _ideaCard(e.key, e.value)),

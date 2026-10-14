@@ -547,7 +547,10 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     final entry = FoodLogEntry(
       userId: user.id,
       logDate: _viewDay,
-      mealType: recipe.mealTypes.isNotEmpty ? recipe.mealTypes.first : null,
+      // El diario no tiene 'drink' como comida: las bebidas van sin grupo.
+      mealType: recipe.mealTypes
+          .where(FoodLogEntry.mealTypeLabels.containsKey)
+          .firstOrNull,
       name: recipe.title,
       calories: baseKcal * factor,
       protein: recipe.protein != null ? recipe.protein! * factor : null,

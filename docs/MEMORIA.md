@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0051.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0052.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -81,7 +81,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   en `AppMotion` (`fluidDefault`/`fluidBouncy`/`miauSpring`) vía `SpringValue`;
   deslizar con `SwipeAction` (rubber-band). Miau sin animación por fotogramas.
 - Icono de la app: logo de Tessa en `apps/prezhome/assets/brand/app_icon.png`
-  (1024, fondo crema); los de Android/iOS se generan redimensionándolo.
+  (1024, fondo crema); los de Android/iOS se generan redimensionándolo. Android
+  8+ usa icono adaptativo (`mipmap-anydpi-v26`): dibujo recortado sin fondo
+  dentro del círculo seguro de 66dp + fondo crema `#F0EAD2`.
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta

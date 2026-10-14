@@ -61,6 +61,13 @@ function buildPrompt(p: Record<string, unknown>): string {
     ? (p.appliances as string[]).join(", ")
     : "";
   const budget = (p.weekly_budget ?? "").toString();
+  // Tipo de plato pedido (p. ej. "Postre" o "Bebida"). Opcional.
+  const mealType = (p.meal_type ?? "").toString().trim();
+  const mealTypeLine = mealType
+    ? `\n- Tipo de plato: TODAS las ideas deben ser de tipo "${mealType}"
+     (si es Bebida: batidos, zumos, smoothies o bebidas caseras; si es Postre:
+     dulces y postres).`
+    : "";
   const count = Number(p.count ?? 5);
   // Títulos de recetas que la usuaria YA tiene: hay que proponer cosas
   // DISTINTAS para no repetir lo de siempre.
@@ -152,7 +159,7 @@ ${superLine}
 - Objetivo nutricional: ${goal}
 - Dieta / restricción: ${diet}
 - Electrodomésticos disponibles: ${appliances || "cualquiera"}
-- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${cookTimeLine}${cuisineLine}${costLine}${pantryLine}${allergyLine}${dislikedLine}${avoidLine}
+- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${mealTypeLine}${cookTimeLine}${cuisineLine}${costLine}${pantryLine}${allergyLine}${dislikedLine}${avoidLine}
 
 Responde SOLO con un JSON válido (sin markdown) con esta forma:
 {
@@ -161,8 +168,8 @@ Responde SOLO con un JSON válido (sin markdown) con esta forma:
       "title": string,
       "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
       "description": string,
-      "meal_types": string[],   // de: "breakfast","lunch","dinner","snack","dessert"
-      "appliance": "none"|"oven"|"stovetop"|"pot"|"airfryer"|"microwave",
+      "meal_types": string[],   // de: "breakfast","lunch","dinner","snack","dessert","drink"
+      "appliance": "none"|"oven"|"stovetop"|"pot"|"airfryer"|"microwave"|"blender",
       "servings": number,
       "prep_minutes": number,
       "cook_minutes": number,

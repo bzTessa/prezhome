@@ -162,8 +162,8 @@ forma:
   "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
   "description": string,
   "servings": number,
-  "meal_types": string[],
-  "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave",
+  "meal_types": string[],  // de: "breakfast","lunch","dinner","snack","dessert","drink"
+  "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave" | "blender",
   "prep_minutes": number,
   "cook_minutes": number,
   "freezable": boolean,
