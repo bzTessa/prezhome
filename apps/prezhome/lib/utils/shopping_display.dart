@@ -187,3 +187,17 @@ String shoppingCleanName(String name) {
   // Primera letra en mayúscula para que quede cuidado.
   return cleaned[0].toUpperCase() + cleaned.substring(1);
 }
+
+/// Cantidad siguiente al pulsar + ([up]) o − en la pastilla de la compra: de
+/// 100 en 100 en g y ml, de medio en medio en kg y L, y de uno en uno en lo
+/// demás. Devuelve null si bajaría de un paso (quitar es otra acción).
+double? shoppingQtyNext(double? quantity, String? unit, {required bool up}) {
+  final step = switch (_unitKey(unit ?? '')) {
+    'g' || 'ml' => 100.0,
+    'kg' || 'l' => 0.5,
+    _ => 1.0,
+  };
+  final next = (quantity ?? (up ? 0 : step)) + (up ? step : -step);
+  if (next < step) return null;
+  return (next * 100).round() / 100;
+}

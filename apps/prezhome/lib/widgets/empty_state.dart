@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_motion.dart';
 import 'miau_character.dart';
+import 'tactile_button.dart';
 
 /// Pantalla vacía común: Miau, un título corto, una línea de apoyo y, si
 /// procede, la acción que saca de ese vacío. Igual en toda la app.
@@ -44,7 +46,7 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (image != null)
-              Image.asset(image!, width: 160, height: 160)
+              _Floating(child: Image.asset(image!, width: 160, height: 160))
             else
               MiauCharacter(mood: mood, size: 112, float: true),
             const SizedBox(height: AppSpacing.lg),
@@ -66,10 +68,10 @@ class EmptyState extends StatelessWidget {
             ],
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: AppSpacing.xl),
-              FilledButton.icon(
+              TactileButton(
+                label: actionLabel!,
+                icon: actionIcon ?? Icons.add_rounded,
                 onPressed: onAction,
-                icon: Icon(actionIcon ?? Icons.add_rounded, size: 20),
-                label: Text(actionLabel!),
               ),
             ],
             if (secondaryLabel != null && onSecondary != null) ...[
@@ -78,6 +80,44 @@ class EmptyState extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Flotación suave y continua (sube y baja unos píxeles). Quieta con
+/// "reducir movimiento".
+class _Floating extends StatefulWidget {
+  const _Floating({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_Floating> createState() => _FloatingState();
+}
+
+class _FloatingState extends State<_Floating>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 3),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppMotion.reduceMotionOf(context)) return widget.child;
+    return AnimatedBuilder(
+      animation: _c,
+      child: widget.child,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, -6 * Curves.easeInOut.transform(_c.value)),
+        child: child,
       ),
     );
   }

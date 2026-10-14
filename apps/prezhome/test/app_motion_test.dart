@@ -1,10 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/theme/app_motion.dart';
 
 void main() {
   group('AppMotion tokens (duraciones y curvas en rango medido)', () {
-    test('las duraciones están en el rango ~150-350 ms', () {
-      expect(AppMotion.fast, const Duration(milliseconds: 150));
+    test('las duraciones están en el rango ~120-350 ms', () {
+      expect(AppMotion.fast, const Duration(milliseconds: 120));
       expect(AppMotion.base, const Duration(milliseconds: 250));
       expect(AppMotion.slow, const Duration(milliseconds: 350));
     });
@@ -14,9 +16,9 @@ void main() {
       expect(AppMotion.base < AppMotion.slow, isTrue);
     });
 
-    test('ninguna duración se sale del rango 150-350 ms', () {
+    test('ninguna duración se sale del rango 120-350 ms', () {
       for (final d in [AppMotion.fast, AppMotion.base, AppMotion.slow]) {
-        expect(d.inMilliseconds, greaterThanOrEqualTo(150));
+        expect(d.inMilliseconds, greaterThanOrEqualTo(120));
         expect(d.inMilliseconds, lessThanOrEqualTo(350));
       }
     });
@@ -153,6 +155,27 @@ void main() {
     test('formateo kcal: punto intermedio redondeado', () {
       final mid = AppMotion.lerpDouble(0, 2000, 0.5);
       expect(mid.round(), 1000);
+    });
+  });
+
+  group('AppMotion muelles', () {
+    test('appleSpring: dampingRatio 1 es amortiguamiento crítico', () {
+      final s = AppMotion.fluidDefault;
+      final critical = 2 * math.sqrt(s.stiffness * s.mass);
+      expect(s.damping, closeTo(critical, 1e-9));
+    });
+
+    test('los muelles con rebote están subamortiguados', () {
+      for (final s in [AppMotion.fluidBouncy, AppMotion.miauSpring]) {
+        expect(s.damping < 2 * math.sqrt(s.stiffness * s.mass), isTrue);
+      }
+    });
+
+    test('rubberBand: 0 sin exceso, simétrico y nunca supera el límite', () {
+      expect(AppMotion.rubberBand(0, 300), 0);
+      expect(AppMotion.rubberBand(-50, 300), -AppMotion.rubberBand(50, 300));
+      expect(AppMotion.rubberBand(1e6, 300), lessThan(300));
+      expect(AppMotion.rubberBand(50, 300), lessThan(50));
     });
   });
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_motion.dart';
+
 /// Estados de ánimo de Presidente Miau. Cada uno mapea a una imagen.
 /// Si aún no tienes la imagen específica, cae a la imagen por defecto.
 enum MiauMood {
@@ -95,7 +97,7 @@ class _MiauCharacterState extends State<MiauCharacter>
     return AnimatedBuilder(
       animation: Listenable.merge([_entry, _floatCtrl]),
       builder: (context, child) {
-        final floatOffset = widget.float
+        final floatOffset = widget.float && !AppMotion.reduceMotionOf(context)
             ? (0.5 - (_floatCtrl.value - 0.5).abs()) * 8
             : 0.0;
         return Transform.translate(

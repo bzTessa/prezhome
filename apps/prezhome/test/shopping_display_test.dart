@@ -68,4 +68,24 @@ void main() {
       expect(shoppingCleanName('Hacendado'), 'Hacendado');
     });
   });
+
+  group('shoppingQtyNext', () {
+    test('sube y baja de uno en uno sin unidad o en unidades', () {
+      expect(shoppingQtyNext(2, 'ud', up: true), 3);
+      expect(shoppingQtyNext(2, null, up: false), 1);
+      expect(shoppingQtyNext(null, null, up: true), 1);
+    });
+
+    test('g y ml de 100 en 100; kg y L de medio en medio', () {
+      expect(shoppingQtyNext(250, 'g', up: false), 150);
+      expect(shoppingQtyNext(1, 'kg', up: true), 1.5);
+      expect(shoppingQtyNext(0.3, 'kg', up: true), 0.8);
+    });
+
+    test('no baja de un paso', () {
+      expect(shoppingQtyNext(1, 'ud', up: false), isNull);
+      expect(shoppingQtyNext(50, 'g', up: false), isNull);
+      expect(shoppingQtyNext(null, null, up: false), isNull);
+    });
+  });
 }
