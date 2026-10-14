@@ -295,7 +295,33 @@ class _EconomyScreenState extends State<EconomyScreen> {
     if (added == true) _reload();
   }
 
+  Future<void> _editTicket(String id) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => ScanTicketScreen(ticketId: id)),
+    );
+    if (changed == true) _reload();
+  }
+
   Future<void> _deleteTicket(String id) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Eliminar ticket?'),
+        content: const Text('Dejará de contar en tus gastos.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
     await _client.from('tickets').delete().eq('id', id);
     _reload();
   }
@@ -1154,49 +1180,53 @@ class _EconomyScreenState extends State<EconomyScreen> {
     final dateStr = t['purchased_at'] as String?;
     final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: AppTheme.tactileDecoration(radius: 18),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.cream,
-              borderRadius: BorderRadius.circular(16),
+    // Tocar el ticket lo abre para corregirlo (fecha, importes, categorías).
+    return GestureDetector(
+      onTap: () => _editTicket(t['id'] as String),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: AppTheme.tactileDecoration(radius: 18),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(Icons.receipt_long_outlined, color: AppColors.ink),
             ),
-            child: Icon(Icons.receipt_long_outlined, color: AppColors.ink),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  merchant?.isNotEmpty == true ? merchant! : 'Ticket',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                if (date != null)
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    '${date.day.toString().padLeft(2, '0')}/'
-                    '${date.month.toString().padLeft(2, '0')}/${date.year}',
-                    style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+                    merchant?.isNotEmpty == true ? merchant! : 'Ticket',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-              ],
+                  if (date != null)
+                    Text(
+                      '${date.day.toString().padLeft(2, '0')}/'
+                      '${date.month.toString().padLeft(2, '0')}/${date.year}',
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+                    ),
+                ],
+              ),
             ),
-          ),
-          Text(
-            '${amount.toStringAsFixed(2)} €',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          IconButton(
-            tooltip: 'Eliminar',
-            icon: Icon(Icons.delete_outline, color: AppColors.expired),
-            onPressed: () => _deleteTicket(t['id'] as String),
-          ),
-        ],
+            Text(
+              '${amount.toStringAsFixed(2)} €',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            IconButton(
+              tooltip: 'Eliminar',
+              icon: Icon(Icons.delete_outline, color: AppColors.expired),
+              onPressed: () => _deleteTicket(t['id'] as String),
+            ),
+          ],
+        ),
       ),
     );
   }

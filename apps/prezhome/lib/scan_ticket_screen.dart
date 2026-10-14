@@ -10,12 +10,16 @@ import 'services/shelf_life.dart';
 import 'services/shopping_checkout.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
+import 'utils/ticket_date.dart';
 import 'widgets/food_category_icon.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
 /// pantalla de revisión editable antes de guardar. Aprende las correcciones.
+/// Con [ticketId] edita un ticket ya guardado (fecha, tienda, productos).
 class ScanTicketScreen extends StatefulWidget {
-  const ScanTicketScreen({super.key});
+  const ScanTicketScreen({super.key, this.ticketId});
+
+  final String? ticketId;
 
   @override
   State<ScanTicketScreen> createState() => _ScanTicketScreenState();
@@ -34,6 +38,126 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   List<_ItemRow> _items = [];
   bool _hasResult = false;
   bool _addToPantry = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.ticketId != null) _loadTicket(widget.ticketId!);
+  }
+
+  /// Carga un ticket guardado en la pantalla de revisión.
+  Future<void> _loadTicket(String id) async {
+    setState(() => _processing = true);
+    try {
+      final t = await _client
+          .from('tickets')
+          .select(
+            'merchant, purchased_at, created_at, '
+            'ticket_items(raw_name, name, category, quantity, total_price, position)',
+          )
+          .eq('id', id)
+          .single();
+      final items = [...(t['ticket_items'] as List? ?? const [])]
+        ..sort(
+          (a, b) => ((a['position'] as num?) ?? 0).compareTo(
+            (b['position'] as num?) ?? 0,
+          ),
+        );
+      String s(dynamic v) => v == null ? '' : v.toString();
+      String n(dynamic v) {
+        final d = (v as num?)?.toDouble();
+        if (d == null) return '';
+        return d == d.roundToDouble() ? d.toStringAsFixed(0) : d.toString();
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _merchantController.text = s(t['merchant']);
+        _purchasedAt = ticketDate(t) ?? DateTime.now();
+        _items = [
+          for (final m in items)
+            _ItemRow(
+              rawName: s(m['raw_name']),
+              name: s(m['name']),
+              category: s(m['category']),
+              quantity: n(m['quantity']),
+              totalPrice: n(m['total_price']),
+            ),
+        ];
+        _hasResult = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo abrir el ticket'))),
+      );
+      Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _processing = false);
+    }
+  }
+
+  /// Guarda los cambios de un ticket ya guardado: datos del ticket y sus
+  /// productos (se reemplazan). No toca la despensa ni la lista.
+  Future<void> _saveEdit(String id) async {
+    setState(() => _saving = true);
+    try {
+      final t = await _client
+          .from('tickets')
+          .update({
+            'merchant': _merchantController.text.trim(),
+            'total_amount': _total,
+            'purchased_at': _purchasedAt.toIso8601String().split('T').first,
+          })
+          .eq('id', id)
+          .select('home_id')
+          .single();
+      // Primero los nuevos y luego se quitan los viejos: si algo falla a
+      // medias no se pierden los productos.
+      final old = await _client
+          .from('ticket_items')
+          .select('id')
+          .eq('ticket_id', id);
+      final rows = _itemRows(id, t['home_id']);
+      if (rows.isNotEmpty) await _client.from('ticket_items').insert(rows);
+      final oldIds = [for (final r in old) r['id']];
+      if (oldIds.isNotEmpty) {
+        await _client.from('ticket_items').delete().inFilter('id', oldIds);
+      }
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(friendlyError(e, 'Error al guardar')),
+            backgroundColor: AppColors.expired,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _itemRows(String ticketId, dynamic homeId) {
+    final rows = <Map<String, dynamic>>[];
+    var pos = 0;
+    for (final it in _items) {
+      final name = it.name.text.trim();
+      if (name.isEmpty) continue;
+      rows.add({
+        'ticket_id': ticketId,
+        'home_id': homeId,
+        'raw_name': it.rawName,
+        'name': name,
+        'category': it.category.label,
+        'quantity': _num(it.quantity.text),
+        'total_price': _num(it.totalPrice.text),
+        'position': pos++,
+      });
+    }
+    return rows;
+  }
 
   @override
   void dispose() {
@@ -150,22 +274,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       final ticketId = ticket['id'] as String;
 
       // 2. Insertar los items
-      final rows = <Map<String, dynamic>>[];
-      var pos = 0;
-      for (final it in _items) {
-        final name = it.name.text.trim();
-        if (name.isEmpty) continue;
-        rows.add({
-          'ticket_id': ticketId,
-          'home_id': homeId,
-          'raw_name': it.rawName,
-          'name': name,
-          'category': it.category.label,
-          'quantity': _num(it.quantity.text),
-          'total_price': _num(it.totalPrice.text),
-          'position': pos++,
-        });
-      }
+      final rows = _itemRows(ticketId, homeId);
       if (rows.isNotEmpty) {
         await _client.from('ticket_items').insert(rows);
       }
@@ -381,7 +490,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Escanear ticket')),
+      appBar: AppBar(
+        title: Text(
+          widget.ticketId == null ? 'Escanear ticket' : 'Editar ticket',
+        ),
+      ),
       body: _processing
           ? const Center(
               child: Column(
@@ -497,21 +610,19 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Añadir a la despensa'),
-                      subtitle: const Text(
-                        'Mete los productos en el inventario (comida, en '
-                        'Despensa)',
+                    if (widget.ticketId == null)
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Añadir a la despensa'),
+                        subtitle: const Text('Cada producto va a su zona'),
+                        value: _addToPantry,
+                        activeThumbColor: AppColors.wood,
+                        onChanged: (val) {
+                          setState(() {
+                            _addToPantry = val;
+                          });
+                        },
                       ),
-                      value: _addToPantry,
-                      activeThumbColor: AppColors.wood,
-                      onChanged: (val) {
-                        setState(() {
-                          _addToPantry = val;
-                        });
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -664,7 +775,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: _saving ? null : _save,
+                onPressed: _saving
+                    ? null
+                    : widget.ticketId == null
+                    ? _save
+                    : () => _saveEdit(widget.ticketId!),
                 child: _saving
                     ? const CircularProgressIndicator()
                     : const Text('Guardar ticket'),
@@ -696,9 +811,11 @@ FoodCategory guessTicketCategory(
   String name, [
   String? raw,
 ]) {
+  // Los tickets guardan el nombre ("Lácteos"); la IA da la clave ("lacteos").
   final key = CategoryIcons.normalize(fromTicket);
   for (final c in FoodCategory.values) {
-    if (c != FoodCategory.otros && c.name == key) return c;
+    if (c == FoodCategory.otros) continue;
+    if (c.name == key || CategoryIcons.normalize(c.label) == key) return c;
   }
   final byName = CategoryIcons.categoryFor(name);
   if (byName != FoodCategory.otros || raw == null) return byName;
