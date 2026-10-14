@@ -67,8 +67,8 @@ void main() {
     expect(maxUses, lessThanOrEqualTo(4));
   });
 
-  test('Plan sin comidas ocultas ni el desayuno fijo', () {
-    const prefs = PlanPrefs(hidden: {'snack'}, fixedBreakfast: 'Café');
+  test('Plan sin comidas ocultas', () {
+    const prefs = PlanPrefs(hidden: {'snack', 'breakfast'});
     expect(prefs.planned(['breakfast', 'lunch', 'snack', 'dinner']), [
       'lunch',
       'dinner',

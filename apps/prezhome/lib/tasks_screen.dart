@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'add_task_screen.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/shopping_checkout.dart';
@@ -409,15 +408,6 @@ class _TasksScreenState extends State<TasksScreen> {
     } catch (_) {}
   }
 
-  Future<void> _openAdd(Map<String, String> members, [HomeTask? task]) async {
-    final added = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => AddTaskScreen(members: members, task: task),
-      ),
-    );
-    if (added == true) _reload();
-  }
-
   /// Aplaza una tarea [days] días desde hoy (due_date y next_due).
   Future<void> _postpone(HomeTask task, int days) async {
     HapticFeedback.selectionClick();
@@ -444,7 +434,8 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
-  Future<void> _openNew(_TasksData data) async {
+  /// Crear o editar ([task]) en la misma hoja.
+  Future<void> _openNew(_TasksData data, [HomeTask? task]) async {
     final created = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -453,11 +444,12 @@ class _TasksScreenState extends State<TasksScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
-      builder: (_) => _NewTaskSheet(
+      builder: (_) => _TaskSheet(
         homeId: data.homeId!,
         members: data.members,
         currentUserId: data.currentUserId,
-        onMoreOptions: () => _openAdd(data.members),
+        pointsEnabled: data.pointsEnabled,
+        task: task,
       ),
     );
     if (created == true) _reload();
@@ -530,7 +522,7 @@ class _TasksScreenState extends State<TasksScreen> {
       case 'week':
         await _postpone(t, 7);
       case 'edit':
-        await _openAdd(data.members, t);
+        await _openNew(data, t);
       case 'delete':
         await _confirmDelete(t);
     }
@@ -1502,53 +1494,103 @@ class _DoneChip extends StatelessWidget {
   }
 }
 
-/// Hoja para crear una tarea: tareas típicas con un toque, cuándo, cada
-/// cuánto y quién. Lo demás (puntos, días concretos) en "Más opciones".
-class _NewTaskSheet extends StatefulWidget {
-  const _NewTaskSheet({
+/// La única hoja de tareas, para crear y para editar: lo de siempre a la
+/// vista (qué, cuándo, cada cuánto, quién) y el resto en "Detalles".
+class _TaskSheet extends StatefulWidget {
+  const _TaskSheet({
     required this.homeId,
     required this.members,
     required this.currentUserId,
-    required this.onMoreOptions,
+    required this.pointsEnabled,
+    this.task,
   });
   final String homeId;
   final Map<String, String> members;
   final String? currentUserId;
-  final VoidCallback onMoreOptions;
+  final bool pointsEnabled;
+  final HomeTask? task;
 
   @override
-  State<_NewTaskSheet> createState() => _NewTaskSheetState();
+  State<_TaskSheet> createState() => _TaskSheetState();
 }
 
-class _NewTaskSheetState extends State<_NewTaskSheet> {
+class _TaskSheetState extends State<_TaskSheet> {
   final _title = TextEditingController();
-  int _when = 0; // 0 hoy, 1 mañana, 2 fecha elegida
+  final _notes = TextEditingController();
+  int _when = 0; // 0 hoy, 1 mañana, 2 fecha elegida, -1 sin fecha
   DateTime? _date;
   String _repeat = 'once';
+  final Set<int> _weekdays = {}; // 1=Lun..7=Dom
   String? _assigned;
+  TimeOfDay? _time;
+  int _points = 10;
+  bool _details = false;
   bool _saving = false;
+
+  bool get _editing => widget.task != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final t = widget.task;
+    if (t == null) return;
+    _title.text = t.title;
+    _notes.text = t.notes ?? '';
+    _repeat = t.recurrence;
+    _weekdays.addAll(t.weekdays);
+    _assigned = widget.members.containsKey(t.assignedTo) ? t.assignedTo : null;
+    _points = t.points;
+    final parts = t.dueTime?.split(':');
+    if (parts != null && parts.length >= 2) {
+      _time = TimeOfDay(
+        hour: int.tryParse(parts[0]) ?? 0,
+        minute: int.tryParse(parts[1]) ?? 0,
+      );
+    }
+    final d = t.dueDate;
+    final today = DateUtils.dateOnly(DateTime.now());
+    if (d == null) {
+      _when = -1;
+    } else if (DateUtils.isSameDay(d, today)) {
+      _when = 0;
+    } else if (DateUtils.isSameDay(d, today.add(const Duration(days: 1)))) {
+      _when = 1;
+    } else {
+      _when = 2;
+      _date = d;
+    }
+    _details = _notes.text.isNotEmpty || _time != null;
+  }
 
   @override
   void dispose() {
     _title.dispose();
+    _notes.dispose();
     super.dispose();
   }
 
-  DateTime get _due {
+  DateTime? get _due {
     final n = DateTime.now();
     return switch (_when) {
+      -1 => null,
       1 => DateTime(n.year, n.month, n.day + 1),
       2 => _date ?? DateTime(n.year, n.month, n.day),
       _ => DateTime(n.year, n.month, n.day),
     };
   }
 
+  bool get _canSave =>
+      _title.text.trim().isNotEmpty &&
+      !_saving &&
+      !(_repeat == 'custom_weekdays' && _weekdays.isEmpty);
+
   Future<void> _pickDate() async {
     final n = DateTime.now();
+    final first = DateTime(n.year, n.month, n.day);
     final d = await showDatePicker(
       context: context,
-      initialDate: _date ?? n,
-      firstDate: DateTime(n.year, n.month, n.day),
+      initialDate: _date != null && !_date!.isBefore(first) ? _date! : n,
+      firstDate: first,
       lastDate: DateTime(n.year + 2),
     );
     if (d == null) return;
@@ -1558,24 +1600,57 @@ class _NewTaskSheetState extends State<_NewTaskSheet> {
     });
   }
 
+  Future<void> _pickTime() async {
+    final t = await showTimePicker(
+      context: context,
+      initialTime: _time ?? TimeOfDay.now(),
+    );
+    if (t != null) setState(() => _time = t);
+  }
+
+  static String? _dayKey(DateTime? d) => d?.toIso8601String().split('T').first;
+
   Future<void> _save() async {
     final title = _title.text.trim();
     final uid = Supabase.instance.client.auth.currentUser?.id;
-    if (title.isEmpty || uid == null || _saving) return;
+    if (!_canSave || uid == null) return;
     setState(() => _saving = true);
     HapticFeedback.lightImpact();
+    final original = widget.task;
     try {
       final task = HomeTask(
-        id: '',
+        id: original?.id ?? '',
         homeId: widget.homeId,
         title: title[0].toUpperCase() + title.substring(1),
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        points: _points,
+        effortPoints: original?.effortPoints ?? 10,
         recurrence: _repeat,
+        intervalCount: original?.intervalCount,
+        intervalUnit: original?.intervalUnit,
+        weekdays: _weekdays.toList()..sort(),
         assignedTo: _assigned,
         dueDate: _due,
+        dueTime: _time == null
+            ? null
+            : '${_time!.hour.toString().padLeft(2, '0')}:'
+                  '${_time!.minute.toString().padLeft(2, '0')}',
       );
-      await Supabase.instance.client
-          .from('tasks')
-          .insert(task.toInsertMap(createdBy: uid));
+      final map = task.toInsertMap(createdBy: uid);
+      final client = Supabase.instance.client;
+      if (original == null) {
+        await client.from('tasks').insert(map);
+      } else {
+        map
+          ..remove('created_by')
+          ..remove('home_id');
+        // Si no se tocó la fecha, la recurrente sigue donde iba.
+        if (_dayKey(original.dueDate) == _dayKey(_due) &&
+            original.nextDue != null) {
+          map['next_due'] = _dayKey(original.nextDue);
+        }
+        await client.from('tasks').update(map).eq('id', original.id);
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -1594,54 +1669,78 @@ class _NewTaskSheetState extends State<_NewTaskSheet> {
     child: Text(text, style: AppTextStyles.label),
   );
 
+  Widget _chip(
+    String label,
+    bool selected,
+    VoidCallback onTap, {
+    IconData? icon,
+  }) => ChoiceChip(
+    avatar: icon == null ? null : Icon(icon, size: 18),
+    label: Text(label),
+    selected: selected,
+    onSelected: (_) {
+      HapticFeedback.selectionClick();
+      onTap();
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
     final dateLabel = _when == 2 && _date != null
         ? '${_date!.day}/${_date!.month}'
         : 'Otro día';
+    final repeats = [
+      ('once', 'No'),
+      ('daily', 'Cada día'),
+      ('weekly', 'Cada semana'),
+      ('custom_weekdays', 'Algunos días'),
+      // Las de "cada N días" se crearon antes; se conservan al editarlas.
+      if (widget.task?.recurrence == 'custom_interval')
+        ('custom_interval', widget.task!.recurrenceLabel),
+    ];
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-        ),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Nueva tarea', style: AppTextStyles.headline),
-            const SizedBox(height: AppSpacing.md),
-            // Tareas típicas: icono y nombre, un toque y listo.
-            LayoutBuilder(
-              builder: (context, c) {
-                final w = (c.maxWidth - AppSpacing.sm * 3) / 4;
-                return Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: [
-                    for (final p in taskPresets)
-                      SizedBox(
-                        width: w,
-                        child: _PresetTile(
-                          title: p.title,
-                          selected: _title.text == p.title,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() {
-                              _title.text = p.title;
-                              _repeat = p.recurrence;
-                            });
-                          },
-                        ),
-                      ),
-                  ],
-                );
-              },
+            Text(
+              _editing ? 'Editar tarea' : 'Nueva tarea',
+              style: AppTextStyles.headline,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
+            if (!_editing) ...[
+              // Tareas típicas: icono y nombre, un toque y listo.
+              LayoutBuilder(
+                builder: (context, c) {
+                  final w = (c.maxWidth - AppSpacing.sm * 3) / 4;
+                  return Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      for (final p in taskPresets)
+                        SizedBox(
+                          width: w,
+                          child: _PresetTile(
+                            title: p.title,
+                            selected: _title.text == p.title,
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _title.text = p.title;
+                                _repeat = p.recurrence;
+                              });
+                            },
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
             TextField(
               controller: _title,
               textCapitalization: TextCapitalization.sentences,
@@ -1649,91 +1748,222 @@ class _NewTaskSheetState extends State<_NewTaskSheet> {
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _save(),
               decoration: InputDecoration(
-                hintText: 'O escribe otra',
+                hintText: _editing ? 'Nombre de la tarea' : 'O escribe otra',
                 prefixIcon: Icon(taskKindFor(_title.text).icon),
               ),
             ),
             _label('Cuándo'),
             Wrap(
               spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
               children: [
-                ChoiceChip(
-                  label: const Text('Hoy'),
-                  selected: _when == 0,
-                  onSelected: (_) => setState(() => _when = 0),
+                _chip('Hoy', _when == 0, () => setState(() => _when = 0)),
+                _chip('Mañana', _when == 1, () => setState(() => _when = 1)),
+                _chip(
+                  dateLabel,
+                  _when == 2,
+                  _pickDate,
+                  icon: Icons.event_rounded,
                 ),
-                ChoiceChip(
-                  label: const Text('Mañana'),
-                  selected: _when == 1,
-                  onSelected: (_) => setState(() => _when = 1),
-                ),
-                ChoiceChip(
-                  avatar: const Icon(Icons.event_rounded, size: 18),
-                  label: Text(dateLabel),
-                  selected: _when == 2,
-                  onSelected: (_) => _pickDate(),
+                _chip(
+                  'Sin fecha',
+                  _when == -1,
+                  () => setState(() => _when = -1),
                 ),
               ],
             ),
             _label('Se repite'),
             Wrap(
               spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
               children: [
-                for (final r in const [
-                  ('once', 'No'),
-                  ('daily', 'Cada día'),
-                  ('weekly', 'Cada semana'),
-                ])
-                  ChoiceChip(
-                    label: Text(r.$2),
-                    selected: _repeat == r.$1,
-                    onSelected: (_) => setState(() => _repeat = r.$1),
+                for (final r in repeats)
+                  _chip(
+                    r.$2,
+                    _repeat == r.$1,
+                    () => setState(() => _repeat = r.$1),
                   ),
               ],
             ),
+            if (_repeat == 'custom_weekdays') ...[
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  for (var day = 1; day <= 7; day++)
+                    _WeekdayDot(
+                      label: HomeTask.weekdayShort[day - 1],
+                      tooltip: HomeTask.weekdayLong[day - 1],
+                      selected: _weekdays.contains(day),
+                      onTap: () => setState(
+                        () => _weekdays.contains(day)
+                            ? _weekdays.remove(day)
+                            : _weekdays.add(day),
+                      ),
+                    ),
+                ],
+              ),
+            ],
             if (widget.members.length > 1) ...[
               _label('Quién'),
               Wrap(
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.xs,
                 children: [
-                  ChoiceChip(
-                    label: const Text('Cualquiera'),
-                    selected: _assigned == null,
-                    onSelected: (_) => setState(() => _assigned = null),
+                  _chip(
+                    'Cualquiera',
+                    _assigned == null,
+                    () => setState(() => _assigned = null),
                   ),
                   for (final e in widget.members.entries)
-                    ChoiceChip(
-                      label: Text(
-                        e.key == widget.currentUserId ? 'Yo' : e.value,
-                      ),
-                      selected: _assigned == e.key,
-                      onSelected: (_) => setState(() => _assigned = e.key),
+                    _chip(
+                      e.key == widget.currentUserId ? 'Yo' : e.value,
+                      _assigned == e.key,
+                      () => setState(() => _assigned = e.key),
                     ),
                 ],
               ),
             ],
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.md),
+            // Lo menos habitual, un nivel más abajo y en la misma hoja.
+            InkWell(
+              onTap: () => setState(() => _details = !_details),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Text('Detalles', style: AppTextStyles.label),
+                    const Spacer(),
+                    AnimatedRotation(
+                      turns: _details ? 0.5 : 0,
+                      duration: AppMotion.fast,
+                      child: Icon(
+                        Icons.expand_more_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            AnimatedSize(
+              duration: AppMotion.fast,
+              alignment: Alignment.topCenter,
+              child: !_details
+                  ? const SizedBox(width: double.infinity)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          children: [
+                            _chip(
+                              _time == null
+                                  ? 'Sin hora'
+                                  : _time!.format(context),
+                              _time != null,
+                              _pickTime,
+                              icon: Icons.schedule_rounded,
+                            ),
+                            if (_time != null)
+                              IconButton(
+                                tooltip: 'Quitar hora',
+                                onPressed: () => setState(() => _time = null),
+                                icon: const Icon(Icons.close_rounded, size: 20),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        TextField(
+                          controller: _notes,
+                          textCapitalization: TextCapitalization.sentences,
+                          maxLines: 2,
+                          minLines: 1,
+                          decoration: const InputDecoration(hintText: 'Notas'),
+                        ),
+                        if (widget.pointsEnabled)
+                          Row(
+                            children: [
+                              Text('Puntos', style: AppTextStyles.body),
+                              const Spacer(),
+                              IconButton(
+                                tooltip: 'Menos',
+                                icon: const Icon(Icons.remove_circle_outline),
+                                onPressed: _points > 5
+                                    ? () => setState(() => _points -= 5)
+                                    : null,
+                              ),
+                              Text('$_points', style: AppTextStyles.title),
+                              IconButton(
+                                tooltip: 'Más',
+                                icon: const Icon(Icons.add_circle_outline),
+                                onPressed: _points < 100
+                                    ? () => setState(() => _points += 5)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             FilledButton(
-              onPressed: _title.text.trim().isEmpty || _saving ? null : _save,
+              onPressed: _canSave ? _save : null,
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
                 backgroundColor: AppColors.ink,
                 foregroundColor: AppColors.cream,
               ),
-              child: const Text(
-                'Añadir tarea',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              child: Text(
+                _editing ? 'Guardar' : 'Añadir tarea',
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false);
-                widget.onMoreOptions();
-              },
-              child: const Text('Más opciones'),
-            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Día de la semana como círculo que se marca con un toque.
+class _WeekdayDot extends StatelessWidget {
+  const _WeekdayDot({
+    required this.label,
+    required this.tooltip,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final String tooltip;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: tooltip,
+      selected: selected,
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: selected ? AppColors.wood : AppColors.card,
+          ),
+          child: Text(
+            label,
+            style: AppTextStyles.bodyStrong.copyWith(color: AppColors.ink),
+          ),
         ),
       ),
     );

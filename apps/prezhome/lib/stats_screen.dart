@@ -12,6 +12,7 @@ import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/animations/animated_counter.dart';
 import 'widgets/animations/staggered_entrance.dart';
+import 'widgets/food_category_icon.dart';
 
 /// "Tus datos": gráficas de gasto (con previsión), compra, despensa, comidas
 /// y tareas del hogar en una sola pantalla.
@@ -188,7 +189,14 @@ class _StatsScreenState extends State<StatsScreen> {
       final d = DateTime.tryParse(it['created_at'] as String? ?? '')?.toLocal();
       if (d == null || d.isBefore(monthStart)) continue;
       final raw = (it['category'] as String?)?.trim() ?? '';
-      final cat = raw.isEmpty ? 'Sin categoría' : _cap(raw);
+      // Los tickets antiguos guardaban la clave ("lacteos"); los nuevos, el nombre.
+      final cat = raw.isEmpty
+          ? 'Sin categoría'
+          : FoodCategory.values
+                    .where((c) => c.name == raw)
+                    .firstOrNull
+                    ?.label ??
+                _cap(raw);
       byCategory[cat] =
           (byCategory[cat] ?? 0) +
           ((it['total_price'] as num?)?.toDouble() ?? 0);

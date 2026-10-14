@@ -15,6 +15,22 @@ bool isShoppingTask(String title) {
   return RegExp(r'\bcompra(s)?\b').hasMatch(t);
 }
 
+/// ¿El producto [ticketName] de un ticket es [listName] de la lista? Cada
+/// palabra de la lista ha de estar en el ticket ("garbanzos" ⊂ "Garbanzos
+/// cocidos"; "tomate" ~ "tomates").
+bool ticketCovers(String ticketName, String listName) {
+  List<String> words(String s) => CategoryIcons.normalize(
+    s,
+  ).split(RegExp(r'[^a-z0-9]+')).where((w) => w.length >= 3).toList();
+  final ticket = words(ticketName);
+  final list = words(listName);
+  if (list.isEmpty) return false;
+  // Igual o en plural: "tomate" ~ "tomates", pero "pan" no es "panceta".
+  bool same(String a, String b) =>
+      a == b || a == '${b}s' || a == '${b}es' || b == '${a}s' || b == '${a}es';
+  return list.every((l) => ticket.any((t) => same(t, l)));
+}
+
 /// Pasa lo comprado de la lista a la despensa, cada cosa a su zona (nevera,
 /// congelador, especias…). Funciona sin conexión: todo va por la cola local.
 class ShoppingCheckout {
@@ -67,6 +83,29 @@ class ShoppingCheckout {
       await setBought(item, true, homeId: homeId);
     }
     return pending.length;
+  }
+
+  /// Tacha de la lista lo que viene en un ticket, sin sumarlo otra vez a la
+  /// despensa (de eso ya se encarga el ticket). Devuelve cuántos tachó.
+  Future<int> markBoughtFromTicket(List<String> ticketNames) async {
+    final rows = await _shopping.readCached();
+    var n = 0;
+    for (final r in rows) {
+      final item = ShoppingListItem.fromMap(r);
+      if (r['checked'] == true || item.id == null) continue;
+      if (!ticketNames.any((t) => ticketCovers(t, item.name))) continue;
+      await _shopping.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'checked': true},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      n++;
+    }
+    return n;
   }
 
   /// Igual que [markAllBought] pero averigua el hogar del usuario.

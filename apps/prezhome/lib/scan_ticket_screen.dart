@@ -7,8 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/inventory_item.dart';
 import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
+import 'services/shopping_checkout.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
+import 'widgets/food_category_icon.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
 /// pantalla de revisión editable antes de guardar. Aprende las correcciones.
@@ -158,9 +160,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           'home_id': homeId,
           'raw_name': it.rawName,
           'name': name,
-          'category': it.category.text.trim().isEmpty
-              ? null
-              : it.category.text.trim(),
+          'category': it.category.label,
           'quantity': _num(it.quantity.text),
           'total_price': _num(it.totalPrice.text),
           'position': pos++,
@@ -198,9 +198,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             'home_id': homeId,
             'raw_name': raw,
             'correct_name': name,
-            'category': it.category.text.trim().isEmpty
-                ? null
-                : it.category.text.trim(),
+            'category': it.category.label,
             'updated_at': DateTime.now().toIso8601String(),
           };
         }
@@ -235,7 +233,30 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         }
       }
 
-      if (mounted) Navigator.of(context).pop(true);
+      // 5. Tachar de la lista lo que trae el ticket. También secundario.
+      var crossed = 0;
+      try {
+        crossed = await ShoppingCheckout().markBoughtFromTicket([
+          for (final it in _items)
+            if (it.name.text.trim().isNotEmpty) it.name.text.trim(),
+        ]);
+      } catch (e) {
+        debugPrint('No se pudo tachar de la lista: $e');
+      }
+
+      if (!mounted) return;
+      if (crossed > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              crossed == 1
+                  ? '1 producto tachado de la lista'
+                  : '$crossed productos tachados de la lista',
+            ),
+          ),
+        );
+      }
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -563,9 +584,21 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: it.category,
+                child: DropdownButtonFormField<FoodCategory>(
+                  initialValue: it.category,
+                  isExpanded: true,
                   decoration: _dec('Categoría'),
+                  items: [
+                    for (final c in FoodCategory.values)
+                      DropdownMenuItem(
+                        value: c,
+                        child: Text(
+                          '${c.emoji} ${c.label}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (c) => it.category = c ?? it.category,
                 ),
               ),
               const SizedBox(width: 8),
@@ -654,10 +687,20 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   );
 }
 
+/// La del ticket si es una de las nuestras; si no ("otros", "higiene"…),
+/// la que sugiere el nombre del producto.
+FoodCategory guessTicketCategory(String fromTicket, String name) {
+  final key = CategoryIcons.normalize(fromTicket);
+  for (final c in FoodCategory.values) {
+    if (c != FoodCategory.otros && c.name == key) return c;
+  }
+  return CategoryIcons.categoryFor(name);
+}
+
 class _ItemRow {
   final String rawName;
   final TextEditingController name;
-  final TextEditingController category;
+  FoodCategory category;
   final TextEditingController quantity;
   final TextEditingController totalPrice;
 
@@ -668,13 +711,12 @@ class _ItemRow {
     String quantity = '1',
     String totalPrice = '',
   }) : name = TextEditingController(text: name),
-       category = TextEditingController(text: category),
+       category = guessTicketCategory(category, name),
        quantity = TextEditingController(text: quantity),
        totalPrice = TextEditingController(text: totalPrice);
 
   void dispose() {
     name.dispose();
-    category.dispose();
     quantity.dispose();
     totalPrice.dispose();
   }

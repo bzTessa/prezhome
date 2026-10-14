@@ -579,14 +579,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-  /// Ajustes del plan, a un toque pero fuera de la vista: qué comidas se ven,
-  /// desayuno de siempre y si se cocina en tanda.
+  /// Ajustes del plan, a un toque pero fuera de la vista: qué comidas se ven
+  /// y si se cocina en tanda.
   Future<void> _openPlanSettings(_PlanData data) async {
     final prefs = PlanPrefs.current.value;
     final hidden = {...prefs.hidden};
-    final breakfastCtrl = TextEditingController(
-      text: prefs.fixedBreakfast ?? '',
-    );
     var batch = data.isMealPrep;
     await showModalBottomSheet<void>(
       context: context,
@@ -625,18 +622,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     ),
                   ),
                   mealSwitch('breakfast'),
-                  if (!hidden.contains('breakfast'))
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                      child: TextField(
-                        controller: breakfastCtrl,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Desayuno de siempre',
-                          hintText: 'Café con leche',
-                        ),
-                      ),
-                    ),
                   mealSwitch('snack'),
                   SwitchListTile(
                     value: batch,
@@ -653,11 +638,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         },
       ),
     );
-    final fixed = breakfastCtrl.text.trim();
-    breakfastCtrl.dispose();
-    await PlanPrefs.save(
-      PlanPrefs(hidden: hidden, fixedBreakfast: fixed.isEmpty ? null : fixed),
-    );
+    await PlanPrefs.save(PlanPrefs(hidden: hidden));
     if (batch != data.isMealPrep) {
       try {
         await _client
@@ -1082,17 +1063,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         for (final t in types)
           () {
             final e = byType[t];
-            if (e == null && t == 'breakfast' && prefs.fixedBreakfast != null) {
-              return MealSlotCard(
-                mealType: t,
-                title: prefs.fixedBreakfast,
-                detail: Text(
-                  'Cada día',
-                  style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
-                ),
-                onTap: () => _openPlanSettings(data),
-              );
-            }
             final recipe = e == null ? null : data.recipesById[e.recipeId];
             return MealSlotCard(
               mealType: t,
