@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:device_calendar_plus/device_calendar_plus.dart' show Calendar;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,6 +11,7 @@ import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'month_calendar_screen.dart';
+import 'services/calendar_sync.dart';
 import 'services/household_servings.dart';
 import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
@@ -23,6 +25,7 @@ import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/plan/plan_parts.dart';
 import 'widgets/recipe_image.dart';
+import 'widgets/segmented_pill.dart';
 import 'utils/friendly_error.dart';
 
 /// Planificador semanal de comidas (v1).
@@ -119,6 +122,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .maybeSingle();
     final homeId = profile?['home_id'] as String?;
     if (homeId == null) return _PlanData(homeId: null);
+    unawaited(CalendarSync.sync(_client));
 
     final myProfile = NutritionProfile.fromMap(profile!);
     // Comidas activas (con % > 0)
@@ -585,15 +589,51 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
   }
 
+  /// Elige el calendario del móvil donde se pasan comidas y tareas.
+  Future<Calendar?> _pickCalendar(BuildContext ctx) async {
+    final cals = await CalendarSync.writableCalendars();
+    if (!ctx.mounted) return null;
+    if (cals.isEmpty) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        const SnackBar(
+          content: Text('Da permiso al calendario en los ajustes del móvil'),
+        ),
+      );
+      return null;
+    }
+    return showModalBottomSheet<Calendar>(
+      context: ctx,
+      backgroundColor: AppColors.cream,
+      builder: (c) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final cal in cals)
+              ListTile(
+                leading: Icon(Icons.circle, color: cal.color, size: 14),
+                title: Text(cal.name),
+                onTap: () => Navigator.pop(c, cal),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-  /// Ajustes del plan, a un toque pero fuera de la vista: qué comidas se ven
-  /// y si se cocina en tanda.
+  /// Ajustes del plan, a un toque pero fuera de la vista: qué comidas se ven,
+  /// a qué hora, ayuno, calendario y si se cocina en tanda.
   Future<void> _openPlanSettings(_PlanData data) async {
-    final prefs = PlanPrefs.current.value;
+    var prefs = PlanPrefs.current.value;
     final hidden = {...prefs.hidden};
+    final times = {...prefs.times};
+    var fast = prefs.fastHours;
+    var calendarId = prefs.calendarId;
+    String? calendarName;
     var batch = data.isMealPrep;
+    const fasts = [null, 12, 14, 16];
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -603,6 +643,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) {
+          final draft = prefs.copyWith(times: times, fastHours: () => fast);
+          final window = draft.eatingWindow;
           Widget mealSwitch(String type) => SwitchListTile(
             value: !hidden.contains(type),
             activeThumbColor: AppColors.woodDark,
@@ -610,44 +652,132 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             onChanged: (v) =>
                 setSheet(() => v ? hidden.remove(type) : hidden.add(type)),
           );
+          Widget mealTime(String type) => ListTile(
+            dense: true,
+            title: Text(_mealLabels[type]!),
+            trailing: Text(
+              draft.timeOf(type),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: draft.inFast(type)
+                    ? AppColors.inkMuted
+                    : AppColors.woodDark,
+              ),
+            ),
+            subtitle: draft.inFast(type) ? const Text('Cae en el ayuno') : null,
+            onTap: () async {
+              final m = draft.minutesOf(type);
+              final t = await showTimePicker(
+                context: ctx,
+                initialTime: TimeOfDay(hour: m ~/ 60, minute: m % 60),
+              );
+              if (t != null) {
+                setSheet(() => times[type] = t.hour * 60 + t.minute);
+              }
+            },
+          );
+          Widget title(String text) => Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: AppColors.ink,
+              ),
+            ),
+          );
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(ctx).viewInsets.bottom,
             ),
             child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                    child: Text(
-                      'Ajustes del plan',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.ink,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    title('Ajustes del plan'),
+                    mealSwitch('breakfast'),
+                    mealSwitch('snack'),
+                    SwitchListTile(
+                      value: batch,
+                      activeThumbColor: AppColors.woodDark,
+                      title: const Text('Cocino en tanda'),
+                      subtitle: const Text('Día de compra, de cocina y tápers'),
+                      onChanged: (v) => setSheet(() => batch = v),
+                    ),
+                    title('Horas'),
+                    for (final t in _mainMealTypes)
+                      if (!hidden.contains(t)) mealTime(t),
+                    title('Ayuno intermitente'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SegmentedPill(
+                        labels: const ['No', '12:12', '14:10', '16:8'],
+                        selected: fasts.indexOf(fast),
+                        onChanged: (i) => setSheet(() => fast = fasts[i]),
                       ),
                     ),
-                  ),
-                  mealSwitch('breakfast'),
-                  mealSwitch('snack'),
-                  SwitchListTile(
-                    value: batch,
-                    activeThumbColor: AppColors.woodDark,
-                    title: const Text('Cocino en tanda'),
-                    subtitle: const Text('Día de compra, de cocina y tápers'),
-                    onChanged: (v) => setSheet(() => batch = v),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                    if (window != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                        child: Text(
+                          'Comes de ${PlanPrefs.formatMinutes(window.start)} '
+                          'a ${PlanPrefs.formatMinutes(window.end)}. '
+                          'Se mueve con la hora de la cena.',
+                          style: TextStyle(color: AppColors.inkMuted),
+                        ),
+                      ),
+                    title('Calendario'),
+                    ListTile(
+                      leading: const Icon(Icons.event_rounded),
+                      title: Text(
+                        calendarId == null
+                            ? 'Pasar al calendario'
+                            : (calendarName ?? 'Calendario conectado'),
+                      ),
+                      subtitle: Text(
+                        calendarId == null
+                            ? 'Comidas y tareas con hora, en Google Calendar'
+                            : 'Se actualiza al abrir el plan',
+                      ),
+                      trailing: calendarId == null
+                          ? null
+                          : TextButton(
+                              onPressed: () =>
+                                  setSheet(() => calendarId = null),
+                              child: const Text('Quitar'),
+                            ),
+                      onTap: () async {
+                        final cal = await _pickCalendar(ctx);
+                        if (cal != null) {
+                          setSheet(() {
+                            calendarId = cal.id;
+                            calendarName = cal.name;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
           );
         },
       ),
     );
-    await PlanPrefs.save(PlanPrefs(hidden: hidden));
+    prefs = prefs.copyWith(
+      hidden: hidden,
+      times: times,
+      fastHours: () => fast,
+      calendarId: () => calendarId,
+    );
+    await PlanPrefs.save(prefs);
+    if (calendarId != null) {
+      CalendarSync.sync(_client, force: true);
+    }
     if (batch != data.isMealPrep) {
       try {
         await _client
@@ -1075,6 +1205,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             final recipe = e == null ? null : data.recipesById[e.recipeId];
             return MealSlotCard(
               mealType: t,
+              time: prefs.timeOf(t),
+              inFast: prefs.inFast(t),
               title: e == null ? null : (recipe?.title ?? 'Receta'),
               image: recipe == null
                   ? null

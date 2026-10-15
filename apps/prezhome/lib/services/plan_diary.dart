@@ -6,20 +6,15 @@ import '../models/food_log_entry.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/nutrition_profile.dart';
 import 'file_local_store.dart';
+import 'plan_prefs.dart';
 
 /// Apunta en el diario de calorías las comidas del plan que ya han pasado.
 ///
 /// Cada comida se apunta una sola vez: se recuerda en el dispositivo hasta
 /// cuándo se ha apuntado, así lo que la persona borre del diario no vuelve.
 class PlanDiary {
-  /// Hora a partir de la cual cada comida se da por comida.
-  static const doneHour = {
-    'breakfast': 11,
-    'lunch': 16,
-    'dessert': 16,
-    'snack': 19,
-    'dinner': 23,
-  };
+  /// Cada comida se da por comida dos horas y media después de su hora.
+  static const _doneAfter = 150;
 
   /// Comidas de [entries] que pasaron entre [since] (excluido) y [now], con
   /// receta, sin saltar y que [me] come en casa.
@@ -27,14 +22,16 @@ class PlanDiary {
     List<MealPlanEntry> entries,
     NutritionProfile me,
     DateTime since,
-    DateTime now,
-  ) {
+    DateTime now, {
+    PlanPrefs prefs = const PlanPrefs(),
+  }) {
     bool due(MealPlanEntry e) {
       final at = DateTime(
         e.date.year,
         e.date.month,
         e.date.day,
-        doneHour[e.mealType] ?? 23,
+        0,
+        prefs.minutesOf(e.mealType) + _doneAfter,
       );
       return at.isAfter(since) && !at.isAfter(now);
     }
@@ -92,6 +89,7 @@ class PlanDiary {
           NutritionProfile.fromMap(row!),
           since,
           now,
+          prefs: PlanPrefs.current.value,
         );
         if (due.isNotEmpty) added = await _log(client, user.id, due, since);
       }

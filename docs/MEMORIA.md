@@ -94,7 +94,14 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (`month_calendar_screen.dart`, único, con comidas, tareas y cocina en lote) y
   ajustes (`services/plan_prefs.dart`, en el dispositivo: ocultar
   desayuno/merienda; "Cocino en tanda" = cooking_mode; sin "desayuno de
-  siempre", Tessa lo quitó).
+  siempre", Tessa lo quitó; horas de cada comida, que usa también el diario
+  automático; ayuno 12:12/14:10/16:8, ventana que acaba 1 h tras la cena,
+  tarjeta en Hoy `widgets/fasting_card.dart`; calendario).
+- Calendario: `services/calendar_sync.dart` con `device_calendar_plus`
+  (calendarios del móvil, incluido Google, sin OAuth). Al abrir plan/tareas
+  borra y recrea sus eventos (descripción "Desde PrezHome") de 7 días:
+  comidas a su hora y tareas con hora. En la hoja de tarea sugiere
+  "Libre a las…" con el primer hueco libre.
   La pestaña Hoy usa icono de casa, no de calendario.
 - Cuestionario (Hogar > Perfil): `profile_wizard_screen.dart`. Primero
   pregunta si lleva calorías (si no, se salta peso y medidas y oculta su

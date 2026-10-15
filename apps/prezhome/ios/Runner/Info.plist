@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCalendarsUsageDescription</key>
+	<string>PrezHome pasa tus comidas y tareas a tu calendario y mira tus huecos libres.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>PrezHome pasa tus comidas y tareas a tu calendario y mira tus huecos libres.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>PrezHome pasa tus comidas y tareas a tu calendario.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>PrezHome usa la cámara para escanear códigos de barras de productos.</string>
 	<key>NSMicrophoneUsageDescription</key>
