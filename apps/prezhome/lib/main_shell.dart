@@ -60,21 +60,20 @@ class _TabDescriptor {
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
-  /// Clave global del shell vivo. HomeSessionScreen construye el shell con esta
-  /// clave, de modo que cualquier flujo que necesite avisar al shell (p. ej. el
-  /// wizard de perfil, que puede cambiar los módulos activados) pueda alcanzar
-  /// su State sin acoplarse a la posición en el árbol de widgets. Es necesario
-  /// porque las rutas que empuja Navigator.push (como el wizard abierto desde
-  /// la pantalla de perfil) son hermanas del shell bajo el Navigator raíz, no
-  /// descendientes, así que findAncestorStateOfType no las alcanzaría.
-  static final GlobalKey<MainShellState> shellKey = GlobalKey<MainShellState>();
+  /// El shell vivo (el último montado), para que cualquier flujo que necesite
+  /// avisarle (p. ej. el wizard de perfil, que puede cambiar los módulos)
+  /// lo alcance aunque esté en otra ruta. No es una GlobalKey: al entrar o
+  /// salir de un hogar se monta un shell nuevo mientras el viejo sigue en su
+  /// ruta, y una misma GlobalKey en los dos rompía la app (pantalla roja
+  /// '_dependents.isEmpty').
+  static MainShellState? current;
 
   /// Recarga las prefs del shell vivo y reconstruye la barra de navegación para
   /// reflejar un cambio de módulos. No hace nada si el shell no está montado
   /// (p. ej. durante tests que no usan el shell). Lo llaman las entradas al
   /// wizard que no pasan por refreshHome() (aviso de calorías en Inicio y la
   /// pantalla de perfil nutricional).
-  static void reloadModules() => shellKey.currentState?.reloadModules();
+  static void reloadModules() => current?.reloadModules();
 
   @override
   State<MainShell> createState() => MainShellState();
@@ -111,10 +110,17 @@ class MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+    MainShell.current = this;
     // Arrancar en Inicio con el índice calculado por identidad semántica.
     _index = _indexOf(TabId.inicio);
     _loadPrefs();
     _loadSuggestions();
+  }
+
+  @override
+  void dispose() {
+    if (identical(MainShell.current, this)) MainShell.current = null;
+    super.dispose();
   }
 
   /// Carga best-effort las sugerencias de caducidad del Asistente Proactivo.

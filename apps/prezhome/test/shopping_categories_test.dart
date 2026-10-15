@@ -52,8 +52,19 @@ void main() {
       expect(defaultCategoryFor('Salmón'), 'Carnes y Pescados');
     });
 
+    test('pasillos nuevos y lo de casa', () {
+      expect(defaultCategoryFor('Helado de vainilla'), 'Congelados');
+      expect(defaultCategoryFor('Croquetas de jamón'), 'Platos preparados');
+      expect(defaultCategoryFor('Champú'), 'Higiene');
+      // Apuntado como Hogar/Limpieza aunque el nombre no diga nada.
+      expect(
+        defaultCategoryFor('Cosa rara', itemType: 'hogar'),
+        'Limpieza y Hogar',
+      );
+    });
+
     test('sin match claro -> Sin categorizar', () {
-      expect(defaultCategoryFor('Chuchería rara xyz'), kUncategorizedName);
+      expect(defaultCategoryFor('Cosa rara xyz'), kUncategorizedName);
       expect(defaultCategoryFor(''), kUncategorizedName);
     });
 

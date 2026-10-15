@@ -328,7 +328,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
     );
     if (p == null || !mounted) return;
     final cat = CategoryIcons.categoryFor(p.name);
-    final isHome = cat == FoodCategory.limpieza || cat == FoodCategory.hogar;
+    final isHome = CategoryIcons.isHousehold(cat);
     final pkg = parsePackageQuantity(p.quantity);
     setState(() {
       _product = p;

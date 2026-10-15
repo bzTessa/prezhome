@@ -134,7 +134,12 @@ class ShelfLife {
     FoodCategory.pescado: (null, 2, 120),
     FoodCategory.lacteos: (null, 10, 90),
     FoodCategory.bebidas: (180, 7, null),
-    FoodCategory.panaderia: (120, null, 60),
+    FoodCategory.panaderia: (7, null, 60),
+    FoodCategory.cereales: (365, null, null),
+    FoodCategory.preparados: (null, 4, 90),
+    FoodCategory.conservas: (730, null, null),
+    FoodCategory.congelados: (null, null, 180),
+    FoodCategory.dulces: (120, 20, 180),
     // Especias: no caducan de forma relevante -> sin fecha.
     FoodCategory.especias: (null, null, null),
     FoodCategory.otros: (30, 10, 90),
@@ -246,14 +251,18 @@ class ShelfLife {
     FoodCategory.lacteos: 'Nevera',
     FoodCategory.bebidas: 'Bebidas',
     FoodCategory.panaderia: 'Despensa',
+    FoodCategory.cereales: 'Despensa',
+    FoodCategory.preparados: 'Nevera',
+    FoodCategory.conservas: 'Despensa',
+    FoodCategory.congelados: 'Congelador',
+    FoodCategory.dulces: 'Despensa',
     FoodCategory.especias: 'Especias',
+    FoodCategory.limpieza: 'Limpieza',
+    FoodCategory.higiene: 'Hogar',
+    FoodCategory.hogar: 'Hogar',
     FoodCategory.otros: 'Despensa',
   };
 
-  /// Sugiere la UBICACIÓN lógica ('Nevera' | 'Congelador' | 'Despensa' |
-  /// 'Especias') para un alimento recién comprado, según su nombre. Nunca
-  /// sugiere 'Congelador' automáticamente (congelar es una decisión del
-  /// usuario). Por defecto 'Despensa'.
   /// Zonas válidas de la despensa (las mismas que admite la base de datos).
   static const Set<String> pantryZones = {
     'Despensa',
@@ -275,20 +284,24 @@ class ShelfLife {
     String? category,
   }) {
     if (category != null && pantryZones.contains(category)) return category;
-    if (itemType == 'hogar') {
-      return CategoryIcons.categoryFor(name) == FoodCategory.limpieza
-          ? 'Limpieza'
-          : 'Hogar';
-    }
+    final cat = CategoryIcons.categoryFor(name, itemType: itemType);
+    // Lo de casa nunca va con la comida, aunque se apuntara como comida.
+    if (CategoryIcons.isHousehold(cat)) return _locationByCategory[cat]!;
     final aisle = CategoryIcons.normalize(category ?? '');
+    if (aisle.contains('higiene')) return 'Hogar';
+    if (aisle.contains('limpieza')) return 'Limpieza';
     if (aisle.contains('bebida')) return 'Bebidas';
     if (aisle.contains('especia') || aisle.contains('condiment')) {
       return 'Especias';
     }
     if (aisle.contains('congelad')) return 'Congelador';
+    if (aisle.contains('preparad')) return 'Nevera';
     return suggestLocation(name);
   }
 
+  /// Sugiere la UBICACIÓN lógica para un producto recién comprado, según su
+  /// nombre. Solo propone 'Congelador' para lo que se vende congelado
+  /// (helados, "congelado"…). Por defecto 'Despensa'.
   static String suggestLocation(String name) {
     final normalized = CategoryIcons.normalize(name);
     final tokens = normalized

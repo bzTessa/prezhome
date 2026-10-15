@@ -203,6 +203,8 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
         return Icons.air;
       case 'microwave':
         return Icons.microwave;
+      case 'blender':
+        return Icons.blender;
       default:
         return Icons.restaurant;
     }

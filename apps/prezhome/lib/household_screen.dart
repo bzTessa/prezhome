@@ -138,6 +138,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final code = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: const Text('Unirme a un hogar'),
         content: TextField(
           controller: controller,
@@ -257,6 +258,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         backgroundColor: AppColors.cream,
         title: const Text('Nombre del hogar'),
         content: TextField(

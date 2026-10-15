@@ -90,7 +90,11 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.82,
+        // Cabe con el teclado abierto.
+        height:
+            (MediaQuery.sizeOf(context).height -
+                MediaQuery.viewInsetsOf(context).bottom) *
+            0.82,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

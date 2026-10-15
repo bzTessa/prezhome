@@ -35,6 +35,7 @@ const Map<String, String> _etiquetasAparato = {
   'pot': 'la olla',
   'airfryer': 'la freidora de aire',
   'microwave': 'el microondas',
+  'blender': 'la batidora',
 };
 
 /// Datos mínimos de una receta que necesita el orquestador. Es un espejo

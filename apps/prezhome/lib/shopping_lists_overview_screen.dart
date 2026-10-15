@@ -285,6 +285,7 @@ Future<String?> _promptName(
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
+      scrollable: true,
       backgroundColor: AppColors.cream,
       title: Text(title),
       content: TextField(

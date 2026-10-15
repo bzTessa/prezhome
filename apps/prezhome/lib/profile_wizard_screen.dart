@@ -766,7 +766,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     return _stepScroll(
       children: [
         _stepHeader('Alergias o intolerancias', 'Opcional.'),
-        _chips({for (final a in _commonAllergies) a: a}, _allergies),
+        _chips({
+          for (final a in _commonAllergies)
+            a: a == 'gluten' ? 'gluten (celiaquía)' : a,
+        }, _allergies),
       ],
     );
   }

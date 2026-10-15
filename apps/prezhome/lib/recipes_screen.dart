@@ -32,6 +32,7 @@ enum _RecipeFilter {
   dinner,
   snack,
   dessert,
+  drink,
   favorites,
   quick,
 }
@@ -257,6 +258,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
         return recipes.where((r) => r.mealTypes.contains('snack')).toList();
       case _RecipeFilter.dessert:
         return recipes.where((r) => r.mealTypes.contains('dessert')).toList();
+      case _RecipeFilter.drink:
+        return recipes.where((r) => r.mealTypes.contains('drink')).toList();
     }
   }
 
@@ -553,6 +556,7 @@ class _FilterBar extends StatelessWidget {
     MapEntry('dinner', Icons.dinner_dining),
     MapEntry('snack', Icons.fastfood),
     MapEntry('dessert', Icons.cake),
+    MapEntry('drink', Icons.local_drink),
   ];
 
   static _RecipeFilter _filterForType(String type) {
@@ -567,6 +571,8 @@ class _FilterBar extends StatelessWidget {
         return _RecipeFilter.snack;
       case 'dessert':
         return _RecipeFilter.dessert;
+      case 'drink':
+        return _RecipeFilter.drink;
       default:
         return _RecipeFilter.all;
     }

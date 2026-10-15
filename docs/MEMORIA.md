@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0051.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0052.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -81,13 +81,21 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   en `AppMotion` (`fluidDefault`/`fluidBouncy`/`miauSpring`) vía `SpringValue`;
   deslizar con `SwipeAction` (rubber-band). Miau sin animación por fotogramas.
 - Icono de la app: logo de Tessa en `apps/prezhome/assets/brand/app_icon.png`
-  (1024, fondo crema); los de Android/iOS se generan redimensionándolo.
+  (1024, fondo crema); los de Android/iOS se generan redimensionándolo. Android
+  8+ usa icono adaptativo (`mipmap-anydpi-v26`): dibujo recortado sin fondo
+  dentro del círculo seguro de 66dp + fondo crema `#F0EAD2`.
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta
   con `OfflineRepository.changes`), `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
-  Especias, Bebidas, Limpieza, Hogar).
+  Especias, Bebidas, Limpieza, Hogar). Zonas en `utils/kitchen_zones.dart`:
+  Limpieza y "Higiene y hogar" (category 'Hogar'); lo de casa va ahí aunque
+  se guardara como comida.
+- Clasificar productos: una sola fuente, `CategoryIcons.categoryFor`
+  (`widgets/food_category_icon.dart`, palabras en castellano y catalán; gana
+  la que sale antes en el nombre). Los pasillos de la compra
+  (`defaultCategoryFor`) y la zona de la despensa salen de ahí.
 - Plan de comidas: un solo plan semanal, `meal_plan_screen.dart` (semana con
   flechas; vive en Comidas > Plan; Hoy lleva ahí con `onNavigateToPlan`, no abre
   otra copia). Iconos discretos junto al día: calendario del mes
@@ -131,7 +139,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   tickets" (siempre visible; puntos solo con Modo Puntos, `showPoints`).
   Escanear ticket: `scan_ticket_screen.dart` (categoría con selector de
   `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre;
-  al guardar tacha de la lista lo comprado con `ticketCovers`).
+  al guardar tacha de la lista lo comprado con `ticketCovers`). El gasto por
+  mes va por la fecha del ticket (`purchased_at`, `utils/ticket_date.dart`).
+- Añadir receta (`add_recipe_chooser.dart`): pegar enlace de vídeo
+  (TikTok/Instagram/YouTube → `import-recipe-link`), escribir el nombre, ideas,
+  a mano, código. Si se cancela el enlace o el nombre, vuelve atrás.
 - Borrar cuenta (lo piden las tiendas): "Borrar mi cuenta" al final de Mi
   Hogar → función `delete-account` (sale del hogar, borra el hogar si queda
   vacío y el usuario de Auth).

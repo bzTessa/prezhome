@@ -82,7 +82,7 @@ function metaContent(html: string, keys: string[]): string | null {
   return null;
 }
 
-// Intenta el endpoint oEmbed de TikTok/Instagram para sacar título y autor.
+// Intenta el endpoint oEmbed de TikTok/Instagram/YouTube para sacar título y autor.
 async function fetchOEmbed(url: string): Promise<string | null> {
   try {
     const host = new URL(url).host;
@@ -92,6 +92,8 @@ async function fetchOEmbed(url: string): Promise<string | null> {
     } else if (host.includes("instagram.com")) {
       // oEmbed público (sin token) de Instagram; puede no responder siempre.
       endpoint = `https://api.instagram.com/oembed?url=${encodeURIComponent(url)}`;
+    } else if (host.includes("youtube.com") || host.includes("youtu.be")) {
+      endpoint = `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url)}`;
     }
     if (!endpoint) return null;
     const res = await fetch(endpoint, { headers: { "User-Agent": BROWSER_UA } });
@@ -141,7 +143,7 @@ async function fetchPageText(url: string): Promise<string | null> {
 
 function buildPrompt(sourceText: string, url: string): string {
   return `Eres un asistente de cocina. A partir del TEXTO de la descripción de
-un vídeo/post de redes sociales (TikTok/Instagram) de una receta, deduce y
+un vídeo/post de redes sociales (TikTok/Instagram/YouTube) de una receta, deduce y
 estructura la receta completa. El texto puede estar incompleto, con emojis,
 hashtags o abreviado; completa de forma RAZONABLE lo que falte (cantidades,
 macros, pasos) manteniéndote fiel a lo que describe.
@@ -160,8 +162,8 @@ forma:
   "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
   "description": string,
   "servings": number,
-  "meal_types": string[],
-  "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave",
+  "meal_types": string[],  // de: "breakfast","lunch","dinner","snack","dessert","drink"
+  "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave" | "blender",
   "prep_minutes": number,
   "cook_minutes": number,
   "freezable": boolean,
@@ -277,13 +279,13 @@ serveAi("import_link", async (req, useCredit) => {
     if (sourceText.length < 15) {
       // No hay texto útil: muchas publicaciones son privadas o no exponen la
       // receta en la descripción. Avisamos para que la app sugiera pegar el
-      // texto a mano en "Rellenar con IA".
+      // texto a mano en "Escribe el nombre".
       return json(
         {
           error:
             "No pude leer la receta de ese enlace (puede ser privado o no " +
             "tener la receta escrita en la descripción). Prueba a copiar el " +
-            "texto de la receta y pegarlo en 'Completar receta'.",
+            "texto de la receta y pegarlo en 'Escribe el nombre'.",
         },
         422,
       );

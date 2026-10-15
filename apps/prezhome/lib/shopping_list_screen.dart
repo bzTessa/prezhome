@@ -327,6 +327,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             .eq('home_id', homeId)
             .order('position');
       }
+      // Pasillos nuevos para los hogares que ya tenían categorías (una vez:
+      // si la persona borra alguno, no vuelve mientras quede otro).
+      final have = {
+        for (final m in catRows) normalizeCategoryText('${m['name']}'),
+      };
+      if (!kNewShoppingCategories.any(
+        (n) => have.contains(normalizeCategoryText(n)),
+      )) {
+        await _addNewCategories(homeId, catRows.length);
+        catRows = await _client
+            .from('shopping_categories')
+            .select()
+            .eq('home_id', homeId)
+            .order('position');
+      }
       final categories = (catRows as List)
           .map(
             (m) =>
@@ -366,6 +381,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       await _client.from('shopping_categories').insert(rows);
     } catch (_) {
       // Si falla el seed, no pasa nada: la UI tolera categorías vacías.
+    }
+  }
+
+  Future<void> _addNewCategories(String homeId, int from) async {
+    try {
+      await _client.from('shopping_categories').insert([
+        for (var i = 0; i < kNewShoppingCategories.length; i++)
+          ShoppingCategory(
+            homeId: homeId,
+            name: kNewShoppingCategories[i],
+            position: from + i,
+          ).toInsertMap(),
+      ]);
+    } catch (_) {
+      // Best-effort, como el seed.
     }
   }
 
@@ -936,6 +966,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDialog) => AlertDialog(
+            scrollable: true,
             backgroundColor: AppColors.cream,
             title: const Text('Añadir a la lista'),
             content: Column(
@@ -985,7 +1016,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                           decimal: true,
                         ),
                         decoration: const InputDecoration(
-                          labelText: 'Cantidad (opcional)',
+                          labelText: 'Cantidad',
                         ),
                       ),
                     ),
@@ -993,9 +1024,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     Expanded(
                       child: TextField(
                         controller: unitCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Unidad (opcional)',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Unidad'),
                       ),
                     ),
                   ],
@@ -1053,7 +1082,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final entry = parseQuickAdd(text);
     if (entry == null) return;
     final cat = CategoryIcons.categoryFor(entry.name);
-    final isHome = cat == FoodCategory.limpieza || cat == FoodCategory.hogar;
+    final isHome = CategoryIcons.isHousehold(cat);
     await _addItem(
       name: entry.name,
       quantity: entry.quantity,
@@ -1078,7 +1107,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       return;
     }
     final cat = CategoryIcons.categoryFor(product.name);
-    final isHome = cat == FoodCategory.limpieza || cat == FoodCategory.hogar;
+    final isHome = CategoryIcons.isHousehold(cat);
     await _addItem(
       name: product.displayName,
       quantity: entry?.quantity,
@@ -1126,7 +1155,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       final now = DateTime.now();
       final nowMillis = now.millisecondsSinceEpoch;
       final localId = newLocalId(nowMillis: nowMillis, seq: _nextSeq());
-      final catName = defaultCategoryFor(name);
+      final catName = defaultCategoryFor(name, itemType: itemType);
       final item = ShoppingListItem(
         id: localId,
         homeId: homeId,
@@ -1307,8 +1336,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               SliverToBoxAdapter(
                 child: PendingSyncIndicator(pendingCount: _pendingCount),
               ),
-            if (items.isEmpty)
-              SliverFillRemaining(hasScrollBody: false, child: _emptyState()),
+            // Caja simple y no SliverFillRemaining: el hueco que queda cambia
+            // al abrir el teclado.
+            if (items.isEmpty) SliverToBoxAdapter(child: _emptyState()),
             if (compraTerminada)
               SliverToBoxAdapter(child: _CompraCelebracion(celebrar: celebrar)),
             ..._buildPendientesSlivers(pendientes),
@@ -1320,6 +1350,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           return Stack(
             children: [
               CustomScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 slivers: [
                   SliverPadding(
                     // Abajo deja sitio a la barra de terminar la compra.

@@ -60,8 +60,8 @@ exactamente esta forma:
   "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
   "description": string,
   "servings": number,
-  "meal_types": string[],  // uno o varios de: "breakfast","lunch","dinner","snack","dessert"
-  "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave",
+  "meal_types": string[],  // uno o varios de: "breakfast","lunch","dinner","snack","dessert","drink"
+  "appliance": "none" | "oven" | "stovetop" | "pot" | "airfryer" | "microwave" | "blender",
   "prep_minutes": number,
   "cook_minutes": number,
   "freezable": boolean,
@@ -77,7 +77,7 @@ exactamente esta forma:
 }
 
 En "meal_types" incluye TODAS las comidas para las que sirva la receta (por
-ejemplo ["lunch","dinner"] si vale para comida y cena; usa "dessert" para postres).
+ejemplo ["lunch","dinner"] si vale para comida y cena; usa "dessert" para postres y "drink" para bebidas, batidos o zumos).
 Los macros y calorías son POR RACIÓN. Estima "grams_per_serving" (el peso en
 gramos de una ración del plato ya preparado).
 

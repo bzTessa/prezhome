@@ -81,6 +81,8 @@ IconData mealTypeIcon(String type) {
       return Icons.fastfood;
     case 'dessert':
       return Icons.cake;
+    case 'drink':
+      return Icons.local_drink;
     default:
       return Icons.restaurant;
   }
