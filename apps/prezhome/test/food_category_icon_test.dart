@@ -33,11 +33,68 @@ void main() {
       expect(CategoryIcons.categoryFor('ajo picado'), FoodCategory.verdura);
     });
 
-    test('"arroz" es panaderia/cereales', () {
-      expect(CategoryIcons.categoryFor('arroz'), FoodCategory.panaderia);
+    test('"arroz" es pasta, arroz y legumbres', () {
+      expect(CategoryIcons.categoryFor('arroz'), FoodCategory.cereales);
       expect(
         CategoryIcons.categoryFor('arroz integral'),
-        FoodCategory.panaderia,
+        FoodCategory.cereales,
+      );
+    });
+
+    test('gana la palabra que sale antes en el nombre', () {
+      expect(
+        CategoryIcons.categoryFor('Tortilla de patata con chorizo'),
+        FoodCategory.preparados,
+      );
+      expect(
+        CategoryIcons.categoryFor('Yogur de chocolate'),
+        FoodCategory.lacteos,
+      );
+      expect(CategoryIcons.categoryFor('Tarta de queso'), FoodCategory.dulces);
+      expect(CategoryIcons.categoryFor('Patatas fritas'), FoodCategory.dulces);
+      expect(
+        CategoryIcons.categoryFor('Pasta de dientes'),
+        FoodCategory.higiene,
+      );
+      expect(
+        CategoryIcons.categoryFor('Gel de baño coco'),
+        FoodCategory.higiene,
+      );
+    });
+
+    test('casos reales de tickets y la despensa (también en catalán)', () {
+      expect(
+        CategoryIcons.categoryFor('Coulant de chocolate'),
+        FoodCategory.dulces,
+      );
+      expect(
+        CategoryIcons.categoryFor('Ensaladilla rusa'),
+        FoodCategory.preparados,
+      );
+      expect(
+        CategoryIcons.categoryFor('Civada torrada'),
+        FoodCategory.cereales,
+      );
+      expect(
+        CategoryIcons.categoryFor('TRUITA PATATA-XORIÇO'),
+        FoodCategory.preparados,
+      );
+      expect(
+        CategoryIcons.categoryFor('Helado de proteínas'),
+        FoodCategory.congelados,
+      );
+      expect(CategoryIcons.categoryFor('Butifarra fresca'), FoodCategory.carne);
+      expect(
+        CategoryIcons.categoryFor('Guantes de nitrilo'),
+        FoodCategory.limpieza,
+      );
+      expect(
+        CategoryIcons.categoryFor('Bolsas de basura extra'),
+        FoodCategory.limpieza,
+      );
+      expect(
+        CategoryIcons.categoryFor('Bolsa de plástico'),
+        FoodCategory.hogar,
       );
     });
 
@@ -85,15 +142,13 @@ void main() {
       );
     });
 
-    test('productos de limpieza/hogar nuevos se clasifican como limpieza', () {
-      // Casos del feedback real de la usuaria: "Bastoncillos" ya no debe caer
-      // en la casa generica.
-      expect(CategoryIcons.categoryFor('Bastoncillos'), FoodCategory.limpieza);
+    test('productos de limpieza/higiene no caen en la casa generica', () {
+      expect(CategoryIcons.categoryFor('Bastoncillos'), FoodCategory.higiene);
       expect(
         CategoryIcons.categoryFor('bastoncillos', itemType: 'hogar'),
-        FoodCategory.limpieza,
+        FoodCategory.higiene,
       );
-      expect(CategoryIcons.categoryFor('algodon'), FoodCategory.limpieza);
+      expect(CategoryIcons.categoryFor('algodon'), FoodCategory.higiene);
       expect(
         CategoryIcons.categoryFor('papel de cocina'),
         FoodCategory.limpieza,
@@ -106,7 +161,7 @@ void main() {
 
     test('un producto de limpieza NO muestra el icono de casa generica', () {
       expect(CategoryIcons.iconFor('Bastoncillos'), isNot(Icons.home));
-      expect(CategoryIcons.iconFor('Bastoncillos'), Icons.cleaning_services);
+      expect(CategoryIcons.iconFor('Bastoncillos'), Icons.soap);
     });
 
     test('normalize ignora acentos y mayusculas', () {

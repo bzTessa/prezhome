@@ -9,6 +9,12 @@ void main() {
       guessTicketCategory('otros', 'Garbanzos cocidos'),
       CategoryIcons.categoryFor('Garbanzos cocidos'),
     );
-    expect(guessTicketCategory('higiene', 'Xyz'), FoodCategory.otros);
+    expect(guessTicketCategory('higiene', 'Xyz'), FoodCategory.higiene);
+    expect(guessTicketCategory('rara', 'Xyz'), FoodCategory.otros);
+    // Si el nombre no dice nada, el texto del ticket (en catalán).
+    expect(
+      guessTicketCategory('otros', 'Coulant', 'COULANT XOCOLATA'),
+      FoodCategory.dulces,
+    );
   });
 }

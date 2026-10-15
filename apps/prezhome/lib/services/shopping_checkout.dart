@@ -130,7 +130,15 @@ class ShoppingCheckout {
     required String homeId,
   }) async {
     final nKey = CategoryIcons.normalize(item.name);
-    final isHome = item.itemType == 'hogar';
+    // La categoría de la compra es el pasillo; en la despensa va a su zona.
+    final zone = ShelfLife.pantryZoneFor(
+      name: item.name,
+      itemType: item.itemType,
+      category: item.category,
+    );
+    // Lo de limpieza o higiene apuntado como comida se guarda como de casa.
+    final isHome =
+        item.itemType == 'hogar' || zone == 'Limpieza' || zone == 'Hogar';
     final existing = await _inventory.readCached();
     String? foundId;
     double foundQty = 0;
@@ -159,19 +167,13 @@ class ShoppingCheckout {
       return;
     }
 
-    // La categoría de la compra es el pasillo; en la despensa va a su zona.
-    final zone = ShelfLife.pantryZoneFor(
-      name: item.name,
-      itemType: item.itemType,
-      category: item.category,
-    );
     final localId = newLocalId(nowMillis: now, seq: _nextSeq());
     final inv = InventoryItem(
       id: localId,
       homeId: homeId,
       name: item.name,
       category: zone,
-      itemType: item.itemType,
+      itemType: isHome ? 'hogar' : 'comida',
       quantity: addQty,
       unit: item.unit ?? 'unidades',
       kind: 'ingredient',

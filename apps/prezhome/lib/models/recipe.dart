@@ -13,8 +13,9 @@ class Recipe {
   final double? protein;
   final double? carbs;
   final double? fat;
-  final String appliance; // none | oven | stovetop | pot | airfryer | microwave
-  final List<String> mealTypes; // breakfast/lunch/dinner/snack/dessert
+  final String
+  appliance; // none | oven | stovetop | pot | airfryer | microwave | blender
+  final List<String> mealTypes; // breakfast/lunch/dinner/snack/dessert/drink
   final bool isFavorite;
   final bool freezable;
   final double? gramsPerServing; // peso de una ración ya preparada
@@ -197,6 +198,7 @@ class Recipe {
     'pot': 'Olla',
     'airfryer': 'Airfryer',
     'microwave': 'Microondas',
+    'blender': 'Batidora',
   };
 
   static const Map<String, String> mealTypeLabels = {
@@ -205,6 +207,7 @@ class Recipe {
     'dinner': 'Cena',
     'snack': 'Merienda',
     'dessert': 'Postre',
+    'drink': 'Bebida',
   };
 
   String get applianceLabel => applianceLabels[appliance] ?? 'Ninguno';
@@ -221,6 +224,7 @@ class Recipe {
   IconData get placeholderIcon {
     if (mealTypes.contains('breakfast')) return Icons.free_breakfast;
     if (mealTypes.contains('dessert')) return Icons.cake;
+    if (mealTypes.contains('drink')) return Icons.local_drink;
     if (mealTypes.contains('snack')) return Icons.fastfood;
     return Icons.restaurant;
   }

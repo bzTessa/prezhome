@@ -18,7 +18,7 @@ void main() {
       // Lácteos
       expect(CategoryIcons.iconFor('leche'), FoodCategory.lacteos.icon);
       // Panadería/Cereales
-      expect(CategoryIcons.iconFor('arroz'), FoodCategory.panaderia.icon);
+      expect(CategoryIcons.iconFor('arroz'), FoodCategory.cereales.icon);
     });
 
     test('nombre raro cae en el icono neutro de "otros"', () {

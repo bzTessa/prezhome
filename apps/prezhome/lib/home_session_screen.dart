@@ -33,14 +33,6 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
   // aperturas del cuestionario.
   bool _wizardLaunched = false;
 
-  // Clave de MainShell para refrescar la pestana Inicio cuando el wizard
-  // automatico se cierra, de modo que el dashboard refleje el objetivo recien
-  // calculado sin que el usuario tenga que cambiar de pestana. Es la clave
-  // compartida del shell (MainShell.shellKey) para que otras entradas al wizard
-  // (aviso de calorias en Inicio, perfil nutricional) tambien puedan avisar al
-  // shell del cambio de modulos.
-  final GlobalKey<MainShellState> _shellKey = MainShell.shellKey;
-
   @override
   void initState() {
     super.initState();
@@ -100,7 +92,7 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
       // Al volver del cuestionario, refrescamos la pestana Inicio para que el
       // aviso de calorias y la tarjeta reflejen el objetivo ya calculado.
       if (!mounted) return;
-      _shellKey.currentState?.refreshHome();
+      MainShell.current?.refreshHome();
     });
   }
 
@@ -130,7 +122,7 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
           // cuestionario encima una sola vez, siempre con salida.
           _maybeLaunchWizard();
         }
-        return MainShell(key: _shellKey);
+        return const MainShell();
       },
     );
   }

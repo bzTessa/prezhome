@@ -712,7 +712,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final shown = items
         .where((i) => review ? _isUrgent(i) : zone!.matches(i))
         .toList();
-    if (zone == KitchenZone.especias || zone == KitchenZone.hogar) {
+    if (zone == KitchenZone.especias ||
+        zone == KitchenZone.limpieza ||
+        zone == KitchenZone.hogar) {
       shown.sort(
         (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
       );

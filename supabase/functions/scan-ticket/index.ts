@@ -79,13 +79,22 @@ Devuelve SOLO un objeto JSON válido (sin markdown) con esta forma:
     {
       "raw_name": string,    // texto EXACTO tal como aparece en el ticket
       "name": string,        // nombre legible y corregido en español
-      "category": string,    // categoria: lacteos, verdura, fruta, carne, pescado, panaderia, bebidas, limpieza, higiene, otros
+      "category": string,    // una de: verdura, fruta, carne, pescado, lacteos, preparados, panaderia, cereales, conservas, congelados, dulces, bebidas, especias, higiene, limpieza, hogar, otros
       "quantity": number,
       "unit_price": number,  // precio por unidad si se puede deducir, si no el total de la linea
       "total_price": number  // precio total de esa linea
     }
   ]
 }
+
+Categorías: "preparados" = platos hechos (tortilla, pizza, ensaladilla,
+croquetas, lasaña…); "cereales" = pasta, arroz, legumbres, avena y harina;
+"dulces" = chocolate, postres, bollería dulce, golosinas, patatas fritas y
+frutos secos; "congelados" = helados y todo lo que se vende congelado;
+"higiene" = cuidado personal (gel, champú, pasta de dientes…); "hogar" = bolsas,
+pilas, bombillas, papel de aluminio. Usa "otros" solo si no encaja nada.
+El ticket puede estar en catalán u otro idioma (TRUITA = tortilla,
+XOCOLATA = chocolate, CIVADA = avena, LLET = leche): el "name" va en español.
 
 Corrige las abreviaturas a nombres legibles en "name" (aplica las correcciones
 aprendidas si encajan). Mantén el texto original en "raw_name". Si un dato no se

@@ -34,6 +34,7 @@ class RecipeImage extends StatelessWidget {
     final types = recipe.mealTypes;
     if (types.contains('breakfast')) return Icons.free_breakfast_outlined;
     if (types.contains('dessert')) return Icons.cake_outlined;
+    if (types.contains('drink')) return Icons.local_drink_outlined;
     if (types.contains('snack')) return Icons.cookie_outlined;
     if (types.contains('dinner')) return Icons.dinner_dining_outlined;
     return Icons.restaurant_outlined;
