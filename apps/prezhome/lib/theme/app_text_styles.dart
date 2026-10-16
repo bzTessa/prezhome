@@ -3,7 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_theme.dart';
 
-/// Escala tipográfica SEMÁNTICA de PrezHome sobre la fuente Nunito.
+/// Escala tipográfica SEMÁNTICA de PrezHome sobre Plus Jakarta Sans.
+///
+/// Títulos apretados (tracking negativo, alto de línea 1.15) y cuerpo con aire
+/// (1.45).
 ///
 /// Estos estilos sustituyen los `TextStyle` inline repartidos por las
 /// pantallas (tamaños sueltos 10.5 / 11 / 13 / 14 / 15 / 22 / 24 y
@@ -23,17 +26,17 @@ class AppTextStyles {
     fontSize: 28,
     fontWeight: FontWeight.w800,
     color: AppColors.ink,
-    letterSpacing: -0.6,
+    letterSpacing: -0.4,
     height: 1.15,
   );
 
   /// ~22 / bold — cabeceras de sección / AppBar.
   static TextStyle get headline => GoogleFonts.plusJakartaSans(
     fontSize: 22,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w800,
     color: AppColors.ink,
     letterSpacing: -0.4,
-    height: 1.2,
+    height: 1.15,
   );
 
   /// ~16 / semibold — títulos de tarjeta.
@@ -41,17 +44,17 @@ class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w700,
     color: AppColors.ink,
-    letterSpacing: -0.1,
-    height: 1.25,
+    letterSpacing: -0.2,
+    height: 1.15,
   );
 
   /// ~14 / semibold — variante pequeña de título (subtítulos de tarjeta).
   static TextStyle get titleSmall => GoogleFonts.plusJakartaSans(
     fontSize: 14,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     color: AppColors.ink,
-    letterSpacing: 0,
-    height: 1.3,
+    letterSpacing: -0.2,
+    height: 1.15,
   );
 
   /// ~14 / regular — cuerpo de texto estándar.
@@ -60,7 +63,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.ink,
     letterSpacing: 0,
-    height: 1.4,
+    height: 1.45,
   );
 
   /// ~14 / semibold — cuerpo con énfasis (datos destacados en línea).
@@ -69,7 +72,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     color: AppColors.ink,
     letterSpacing: 0,
-    height: 1.4,
+    height: 1.45,
   );
 
   /// ~12 / medium — etiquetas, chips y textos pequeños.
@@ -96,7 +99,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.inkMuted,
     letterSpacing: 0,
-    height: 1.4,
+    height: 1.45,
   );
 
   /// Cifras de ancho fijo (cantidades, precios, contadores): no bailan al

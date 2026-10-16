@@ -48,6 +48,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Hogar y ajustes; sin sesión, siempre claro) (no usar `const` con `AppColors`; nada de `Colors.white`
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
+- Estilo táctil (reglas en `.kiro/steering/design-system.md`): tarjetas con
+  trazo carbón y sombra dura (`AppElevation`, `surfaceDecoration`,
+  `tactileDecoration`), radios 20/14/10. El nombre de la mascota no sale en
+  ningún texto. `MiauCharacter` respira, salta al cambiar de pose e
+  `interactive:` reacciona al toque (solo transformaciones, PNG estáticos).
 - Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
   poses `miau_*` (`MiauMood`),
   `vacio_*` (EmptyState `image:`), `zona_<etiqueta>` (Mi cocina), `onb_*`.

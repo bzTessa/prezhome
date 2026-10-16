@@ -2136,7 +2136,7 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Ya tienes todo lo de la lista. Miau esta orgulloso.',
+                  'Ya tienes todo lo de la lista. ¡Buen trabajo!',
                   style: TextStyle(color: AppColors.ink),
                 ),
               ],

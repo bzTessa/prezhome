@@ -11,6 +11,7 @@ import 'tabs/comidas_tab.dart';
 import 'tabs/despensa_tab.dart';
 import 'shopping_list_screen.dart';
 import 'tasks_screen.dart';
+import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'widgets/proactive_suggestions_banner.dart';
 import 'services/onboarding_applier.dart';
@@ -413,11 +414,16 @@ class MainShellState extends State<MainShell> {
           items: [for (final t in _tabs) t.destination],
           selectedIndex: _index,
           onSelected: _onDestinationSelected,
+          // Píldora con trazo y sombra dura; la pestaña activa se desliza
+          // con muelle. Sin translucidez: el contenido no pasa por debajo.
           backgroundColor: AppColors.card,
+          border: Border.all(color: AppColors.stroke, width: 2),
           indicatorColor: AppColors.wood,
           selectedColor: AppColors.ink,
           unselectedColor: AppColors.inkMuted,
-          shadow: AppElevation.level2,
+          shadow: AppElevation.level1,
+          duration: AppMotion.slow,
+          curve: AppMotion.springCurve(AppMotion.fluidDefault),
         ),
       ),
     );

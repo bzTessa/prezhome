@@ -969,7 +969,11 @@ class HomeTabState extends State<HomeTab> {
                   ),
                 ),
               ),
-              const MiauCharacter(mood: MiauMood.greeting, size: 56),
+              const MiauCharacter(
+                mood: MiauMood.greeting,
+                size: 56,
+                interactive: true,
+              ),
             ],
           ),
           const SizedBox(height: 4),

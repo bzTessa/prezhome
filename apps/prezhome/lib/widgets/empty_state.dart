@@ -48,7 +48,7 @@ class EmptyState extends StatelessWidget {
             if (image != null)
               _Floating(child: Image.asset(image!, width: 160, height: 160))
             else
-              MiauCharacter(mood: mood, size: 112, float: true),
+              MiauCharacter(mood: mood, size: 112, interactive: true),
             const SizedBox(height: AppSpacing.lg),
             Text(
               title,

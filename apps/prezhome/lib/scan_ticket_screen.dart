@@ -747,13 +747,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.softShadow,
-            blurRadius: 10,
-            offset: Offset(0, -2),
-          ),
-        ],
+        border: Border(top: BorderSide(color: AppColors.stroke, width: 1.5)),
       ),
       child: SafeArea(
         top: false,

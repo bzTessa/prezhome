@@ -90,6 +90,15 @@ class AppMotion {
         (dimension + constant * overshoot.abs());
   }
 
+  /// Proyección de momento de Apple: hasta dónde llegaría por inercia algo
+  /// soltado a [velocity] px/s con la deceleración de un scroll de iOS
+  /// ([decelerationRate] por milisegundo). Decide el destino de un gesto según
+  /// la fuerza del lanzamiento (p. ej. a qué paso ir).
+  static double projectMomentum(
+    double velocity, {
+    double decelerationRate = 0.998,
+  }) => (velocity / 1000) * decelerationRate / (1 - decelerationRate);
+
   // --- Lógica pura (testable) ------------------------------------------------
 
   /// Devuelve la duración EFECTIVA de una animación según [reduceMotion].

@@ -109,17 +109,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                 ),
                 const SizedBox(height: 48),
                 Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                  decoration: AppTheme.surfaceDecoration(),
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [

@@ -1,10 +1,12 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../theme/app_motion.dart';
 import 'spring_value.dart';
 
 /// Envoltorio que da feedback táctil al pulsar: encoge sutilmente su [child]
-/// (1.0 → ~0.96) desde que el dedo toca y vuelve al soltar con un muelle.
+/// (1.0 → ~0.96) y lo hunde 2,5 px desde que el dedo toca, y vuelve al soltar
+/// con un muelle interrumpible y un toque háptico.
 ///
 /// Pensado para botones de acceso rápido y tarjetas pulsables. Propaga el
 /// gesto mediante [onTap] sin romper taps existentes.
@@ -50,9 +52,8 @@ class _PressScaleState extends State<PressScale> {
     // Encoge en cuanto el dedo toca (pointer-down, sin esperar al tap) y
     // vuelve con un muelle con rebote. Con reduce-motion no escala nunca.
     final bool reduceMotion = AppMotion.reduceMotionOf(context);
-    final double scale = (!reduceMotion && _pressed)
-        ? widget.pressedScale
-        : 1.0;
+    final double target = (!reduceMotion && _pressed) ? 1 : 0;
+    final VoidCallback? onTap = widget.onTap;
 
     return Listener(
       behavior: widget.behavior,
@@ -61,13 +62,23 @@ class _PressScaleState extends State<PressScale> {
       onPointerCancel: (_) => _setPressed(false),
       child: GestureDetector(
         behavior: widget.behavior,
-        onTap: widget.onTap,
+        onTap: onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
         onLongPress: widget.onLongPress,
         child: SpringValue(
-          value: scale,
+          value: target,
           spring: AppMotion.fluidBouncy,
-          builder: (context, s, child) =>
-              Transform.scale(scale: s, child: child),
+          builder: (context, p, child) => Transform.translate(
+            offset: Offset(0, 2.5 * p),
+            child: Transform.scale(
+              scale: 1 - (1 - widget.pressedScale) * p,
+              child: child,
+            ),
+          ),
           child: widget.child,
         ),
       ),

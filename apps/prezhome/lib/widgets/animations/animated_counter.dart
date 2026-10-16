@@ -12,14 +12,15 @@ typedef CounterFormatter = String Function(double value);
 
 /// Muestra un valor numérico que se anima de su valor anterior al nuevo.
 ///
-/// Usa [TweenAnimationBuilder] para interpolar entre el valor previo y
-/// [value] con [AppMotion.base] / [AppMotion.easeOut]. El texto se construye
-/// con [formatter], de modo que el llamante controla el formato (euros, kcal,
+/// Interpola entre el valor previo y [value] con [AppMotion.base] /
+/// [AppMotion.easeOut] y, a la vez, el número sube un poco al crecer y baja al
+/// decrecer (dirección semántica vertical). El texto se construye con
+/// [formatter], de modo que el llamante controla el formato (euros, kcal,
 /// puntos...).
 ///
 /// Respeta "reducir movimiento": si [AppMotion.reduceMotionOf] es `true`
 /// muestra directamente el valor final sin animar.
-class AnimatedCounter extends StatelessWidget {
+class AnimatedCounter extends StatefulWidget {
   /// Valor objetivo a mostrar.
   final double value;
 
@@ -41,22 +42,41 @@ class AnimatedCounter extends StatelessWidget {
   });
 
   @override
+  State<AnimatedCounter> createState() => _AnimatedCounterState();
+}
+
+class _AnimatedCounterState extends State<AnimatedCounter> {
+  late double _from = widget.value;
+
+  @override
+  void didUpdateWidget(AnimatedCounter old) {
+    super.didUpdateWidget(old);
+    if (old.value != widget.value) _from = old.value;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool reduceMotion = AppMotion.reduceMotionOf(context);
     final Duration effective = AppMotion.effectiveDuration(
-      duration,
+      widget.duration,
       reduceMotion: reduceMotion,
     );
+    final double to = widget.value;
+    // Al subir entra desde abajo; al bajar, desde arriba.
+    final double dir = to > _from ? 1 : -1;
 
-    // TweenAnimationBuilder recuerda el `end` anterior y lo usa como `begin`
-    // cuando [value] cambia, animando del valor previo al nuevo. Dejamos
-    // `begin` por si es el primer render (así parte del valor final).
+    // TweenAnimationBuilder parte del valor que estaba mostrando cuando
+    // [value] cambia; `begin` solo cuenta en el primer render.
     return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: value, end: value),
+      tween: Tween<double>(begin: to, end: to),
       duration: effective,
       curve: AppMotion.easeOut,
-      builder: (context, animatedValue, child) {
-        return Text(formatter(animatedValue), style: style);
+      builder: (context, v, child) {
+        final double left = to == _from ? 0 : ((to - v) / (to - _from));
+        return Transform.translate(
+          offset: Offset(0, dir * 6 * left.clamp(0.0, 1.0)),
+          child: Text(widget.formatter(v), style: widget.style),
+        );
       },
     );
   }

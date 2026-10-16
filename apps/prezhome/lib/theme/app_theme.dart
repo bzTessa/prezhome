@@ -19,7 +19,7 @@ class AppColors {
   static bool dark = false;
 
   static Color get cream => dark
-      ? const Color(0xFF1C1915)
+      ? const Color(0xFF181512)
       : const Color(0xFFF9F5EB); // crema del logo
   static Color get wood => dark
       ? const Color(0xFF7A6238)
@@ -31,7 +31,7 @@ class AppColors {
       ? const Color(0xFFF2EBD9)
       : const Color(0xFF1E1E1E); // gris muy oscuro (texto)
   static Color get card =>
-      dark ? const Color(0xFF27231E) : const Color(0xFFFFFFFF);
+      dark ? const Color(0xFF24201C) : const Color(0xFFFFFDF7);
   static Color get softShadow =>
       dark ? const Color(0x40000000) : const Color(0x14000000);
 
@@ -41,7 +41,7 @@ class AppColors {
   /// Derivado del tono `ink` pero más claro para dar jerarquía sin perder
   /// la calidez de la paleta.
   static Color get inkMuted =>
-      dark ? const Color(0xFFA89F8E) : const Color(0xFF6B6B6B);
+      dark ? const Color(0xFFA89F8E) : const Color(0xFF6E6558);
 
   /// Línea suave crema para separadores, asas de hojas y bordes discretos.
   static Color get line =>
@@ -72,7 +72,10 @@ class AppColors {
   static Color get terracottaBg =>
       dark ? const Color(0xFF3A2A22) : const Color(0xFFF6E0D4);
   static Color get terracotta =>
-      dark ? const Color(0xFFD9906A) : const Color(0xFFD85A32);
+      dark ? const Color(0xFFE56B43) : const Color(0xFFD85A32);
+
+  /// Terracota al pulsar.
+  static Color get terracottaPressed => const Color(0xFF9E3B1C);
 
   /// Melocotón suave: tipo de comida principal.
   static Color get peachBg =>
@@ -87,7 +90,8 @@ class AppColors {
       dark ? const Color(0xFF8DB3C7) : const Color(0xFF4A7489);
 
   /// Dorado de la corona del logo: favorita y puntos.
-  static Color get gold => const Color(0xFFE8A923);
+  static Color get gold =>
+      dark ? const Color(0xFFF2B632) : const Color(0xFFE8A923);
   static Color get favorite => gold;
 
   /// Fondo de las insignias de puntos.
@@ -97,16 +101,15 @@ class AppColors {
   // --- Estilo táctil del logo ("Warm Tactile") -------------------------------
 
   /// Tarjeta táctil: papel cálido con borde de trazo.
-  static Color get paper =>
-      dark ? const Color(0xFF27231E) : const Color(0xFFFFFDF7);
+  static Color get paper => card;
 
   /// Hueco crema para iconos dentro de una tarjeta táctil.
   static Color get iconTile =>
-      dark ? const Color(0xFF332D25) : const Color(0xFFF2E9D8);
+      dark ? const Color(0xFF302A24) : const Color(0xFFF2E9D8);
 
   /// Trazo carbón de bordes y sombras duras (en oscuro, uno que se vea).
   static Color get stroke =>
-      dark ? const Color(0xFF5A5042) : const Color(0xFF1E1E1E);
+      dark ? const Color(0xFF3E362E) : const Color(0xFF1E1E1E);
 
   /// Verde de "hecho": producto en el carro, tarea completada.
   static Color get done =>
@@ -129,21 +132,22 @@ class AppColors {
 
   /// Verde suave: alimento fresco, aún queda tiempo.
   static Color get freshBg =>
-      dark ? const Color(0xFF2A3326) : const Color(0xFFE6EFE0);
+      dark ? const Color(0xFF233026) : const Color(0xFFE6F4EA);
   static Color get fresh =>
-      dark ? const Color(0xFF7E9C6E) : const Color(0xFF5C7A4F);
+      dark ? const Color(0xFF5FAF7E) : const Color(0xFF3B8A5A);
 
   /// Ámbar suave: caduca pronto, conviene usarlo ya.
   static Color get soonBg =>
-      dark ? const Color(0xFF3A3220) : const Color(0xFFF8ECCF);
+      dark ? const Color(0xFF3A3220) : const Color(0xFFFFF3D6);
+  // Texto ámbar más oscuro que el #E89B23 de las insignias para que se lea.
   static Color get soon =>
       dark ? const Color(0xFFE0B46A) : const Color(0xFFB5863C);
 
   /// Rojo terroso suave: caducado (cálido, no alarmante).
   static Color get expiredBg =>
-      dark ? const Color(0xFF3D2420) : const Color(0xFFF4DAD4);
+      dark ? const Color(0xFF3D2420) : const Color(0xFFFDE8E6);
   static Color get expired =>
-      dark ? const Color(0xFFD26A5C) : const Color(0xFFB24A3C);
+      dark ? const Color(0xFFE5675A) : const Color(0xFFD93829);
 }
 
 class AppTheme {
@@ -153,9 +157,15 @@ class AppTheme {
       brightness: AppColors.dark ? Brightness.dark : Brightness.light,
       scaffoldBackgroundColor: AppColors.cream,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.wood,
-        primary: AppColors.wood,
+        seedColor: AppColors.terracotta,
+        primary: AppColors.terracotta,
+        onPrimary: AppColors.onBrand,
+        secondary: AppColors.gold,
+        onSecondary: AppColors.onBrand,
         surface: AppColors.card,
+        onSurface: AppColors.ink,
+        surfaceContainerHighest: AppColors.iconTile,
+        outline: AppColors.stroke,
         brightness: AppColors.dark ? Brightness.dark : Brightness.light,
       ),
     );
@@ -180,7 +190,10 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.card,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.lgRadius,
+          side: BorderSide(color: AppColors.stroke, width: 1.5),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -267,11 +280,15 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.ink,
-        foregroundColor: AppColors.cream,
-        elevation: 2,
+        backgroundColor: AppColors.terracotta,
+        foregroundColor: AppColors.onBrand,
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: AppColors.stroke, width: 2),
         ),
       ),
       switchTheme: SwitchThemeData(
@@ -355,17 +372,8 @@ class AppTheme {
   /// Se conserva por compatibilidad con el código existente. Para nuevas
   /// pantallas prefiere [surfaceDecoration], que usa la escala [AppRadius] y
   /// los niveles [AppElevation].
-  static BoxDecoration cardDecoration({double radius = 24}) => BoxDecoration(
-    color: AppColors.card,
-    borderRadius: BorderRadius.circular(radius),
-    boxShadow: [
-      BoxShadow(
-        color: AppColors.softShadow,
-        blurRadius: 12,
-        offset: Offset(0, 4),
-      ),
-    ],
-  );
+  static BoxDecoration cardDecoration({double radius = AppRadius.lg}) =>
+      surfaceDecoration(radius: radius);
 
   /// Tarjeta táctil del logo: papel, borde de trazo y sombra dura debajo
   /// (sin desenfoque), como si estuviera dibujada a mano.
@@ -406,6 +414,7 @@ class AppTheme {
     return BoxDecoration(
       color: color ?? AppColors.card,
       borderRadius: BorderRadius.circular(radius),
+      border: elevation == 0 ? null : AppElevation.border,
       boxShadow: shadow,
     );
   }

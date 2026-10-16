@@ -2,8 +2,15 @@
 
 Aplica estas reglas en TODO cambio de interfaz de PrezHome. PrezHome evoluciona
 hacia un **"Asistente de Vida Proactivo"** para rutinas del hogar y batch
-cooking. La identidad es **Cozy** (cálida, cercana, con la mascota Presidente
-Miau) y la ejecución debe sentirse **profesional, viva e interactiva**.
+cooking. La identidad es **Warm Tactile** (cálida, cercana, con la mascota del
+logo) y la ejecución debe sentirse **profesional, viva e interactiva**.
+
+## 0bis. El nombre de la mascota no aparece nunca
+Ningún texto de la interfaz (títulos, avisos, banners, estados vacíos,
+etiquetas de accesibilidad) nombra a la mascota. Se habla de forma genérica
+("Asistente", "Consejo del día", "Compañero de cocina") o solo de la acción.
+La mascota es apoyo visual: imágenes estáticas movidas con transformaciones
+(flotar, squish, saltito), nunca animación por fotogramas.
 
 ## 0. Regla de oro: PROHIBIDO el término "IA"
 La interfaz **nunca** muestra "IA", "Inteligencia Artificial", "AI", "modelo",
@@ -11,7 +18,7 @@ La interfaz **nunca** muestra "IA", "Inteligencia Artificial", "AI", "modelo",
 
 En su lugar, usa lenguaje de producto cercano:
 - "Sugerencias predictivas" / "Sugerencias para ti"
-- "Tu asistente de cocina" / "Miau te propone"
+- "Tu asistente de cocina" / "Consejo del día"
 - "Planificando…" / "Pensando una idea…" / "Preparando sugerencias…"
 
 Esto aplica a textos visibles, labels de botones, títulos, placeholders,
@@ -30,12 +37,13 @@ pueden seguir siendo técnicos; lo que se veta es lo que **ve la usuaria**.
 - Grises: usar `AppColors.inkMuted`, nunca `Colors.grey[xxx]`.
 
 ## 2. Forma: radios y superficies
-- **Radio estándar de UI = `BorderRadius.circular(16)`** para tarjetas, modales,
-  botones, campos de formulario y bottom sheets. Equivale a `AppRadius.md16`.
-  Usar `AppRadius.pill999` solo para chips/píldoras y `AppRadius.lg24` para
-  superficies grandes contenedoras cuando aporte jerarquía.
-- Tarjetas/superficies mediante `AppTheme.surfaceDecoration(...)` con elevación
-  **con intención**: lo interactivo "flota" (nivel 1–2), el fondo es plano.
+- Radios: `AppRadius.lg` (20) tarjetas grandes y hojas, `AppRadius.md` (14)
+  celdas de despensa, tareas y compra y campos, `AppRadius.sm` (10) botones y
+  chips, `AppRadius.pill` solo para píldoras.
+- Superficies táctiles: borde carbón `AppColors.stroke` de 1,5–2 px y sombra
+  dura sin desenfoque (`AppElevation.level1` = 3 px, `level2` = 6 px,
+  `pressed` = 0: la pieza baja al pulsar). Usar `AppTheme.surfaceDecoration`
+  o `AppTheme.tactileDecoration`; nada de sombras difusas.
 
 ## 3. Motion Design — animaciones "cero esfuerzo"
 Objetivo: dar vida a una app con **PNGs estáticos** de la mascota, sin Lottie
@@ -69,21 +77,22 @@ Regla: un empty state de PrezHome **siempre** muestra a Miau con su pose y
 efecto correctos y un texto cercano (sin tono de error).
 
 ## 4. Formularios
-- `TextFormField` con `OutlineInputBorder` de radio 16.
+- `TextFormField` con `OutlineInputBorder` de radio `AppRadius.md`.
 - Campos de contraseña: `suffixIcon` de ojo para alternar `obscureText`.
 - Respetar `SafeArea`; el teclado nunca debe tapar los botones de acción
   (usar scroll/`resizeToAvoidBottomInset` y padding por el inset del teclado).
 
 ## 5. Lenguaje y tono
 - Todo en **español**, cercano y claro, pensado para una usuaria no técnica.
-- Preferir verbos de acción y mensajes breves. Miau habla en primera persona
-  con calidez ("Te he preparado…", "Miau está orgulloso").
+- Preferir verbos de acción y mensajes breves. La app habla en primera persona
+  con calidez ("Te he preparado…"), sin nombrar a la mascota.
 - No inventar cifras ni datos. Los importes/aproximados deben etiquetarse como
   tales ("coste estimado", "aprox.").
 
 ## 6. Checklist antes de dar por terminada una pantalla
 1. ¿Aparece en algún sitio la palabra "IA"/"AI"? → eliminar y reemplazar.
-2. ¿Radios a 16 en tarjetas/modales/botones/campos? ¿Tokens en vez de literales?
+2. ¿Radios y sombras de los tokens (`AppRadius`, `AppElevation`)? ¿Sale el nombre
+   de la mascota en algún texto?
 3. ¿El empty state usa la pose + efecto de Miau que toca?
 4. ¿Las animaciones respetan reduce-motion?
 5. ¿Formularios con SafeArea y sin que el teclado tape acciones?

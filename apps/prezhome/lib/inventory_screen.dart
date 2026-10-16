@@ -16,7 +16,9 @@ import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/list_skeleton.dart';
 import 'utils/offline_actions.dart';
+import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_image.dart';
+import 'widgets/shopping/shopping_parts.dart';
 import 'utils/shopping_display.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
@@ -821,13 +823,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final zoneLabel = showZone
         ? KitchenZone.values.firstWhere((z) => z.matches(item)).label
         : null;
+    // Lo contable se cambia con − / + en la fila; el resto, en "Editar".
+    final stepUnit = shoppingQtyNext(1, item.unit, up: true) == 2;
     final subtitle = [
-      inventoryQtyLabel(item.quantity, item.unit),
+      if (!stepUnit) inventoryQtyLabel(item.quantity, item.unit),
       ?zoneLabel,
       if (item.isStaple) 'No se compra',
     ].where((t) => t.isNotEmpty).join(' · ');
 
-    return InkWell(
+    final row = InkWell(
       onTap: () => _openItemActions(item),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -865,31 +869,95 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
                     ),
                   ],
+                  // Insignia de caducidad bajo el nombre: no compite por
+                  // ancho con el − / +.
+                  if (expiry != null) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: expiry.$2.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        expiry.$1,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: expiry.$2,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            if (expiry != null) ...[
+            if (stepUnit) ...[
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: expiry.$2.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: Text(
-                  expiry.$1,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: expiry.$2,
-                  ),
-                ),
+              QuantityStepper(
+                label: shoppingQtyLabel(item.quantity, item.unit),
+                onMinus: item.quantity <= 1
+                    ? null
+                    : () => _setQuantity(item, item.quantity - 1),
+                onPlus: () => _setQuantity(item, item.quantity + 1),
               ),
             ],
           ],
         ),
       ),
     );
+    // Deslizar a la izquierda lo apunta en la lista de la compra.
+    return SwipeAction(
+      key: ValueKey(item.id),
+      radius: 0,
+      toLeft: SwipeSide(
+        icon: Icons.add_shopping_cart_rounded,
+        color: AppColors.terracotta,
+        label: 'A la compra',
+        onTrigger: () => _addToShopping(item),
+      ),
+      child: row,
+    );
+  }
+
+  Future<void> _setQuantity(InventoryItem item, double quantity) async {
+    HapticFeedback.selectionClick();
+    try {
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: {'quantity': quantity},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
+      );
+    }
+  }
+
+  Future<void> _addToShopping(InventoryItem item) async {
+    try {
+      await _restockDepletedStaple(item, previousQty: item.quantity);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            friendlyError(e, 'No pude añadir ${item.name} a la compra'),
+          ),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
   }
 
   /// Menú de limpieza: quitar lo caducado (de toda la cocina), vaciar la zona
