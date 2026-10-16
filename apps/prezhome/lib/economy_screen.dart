@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'product_stats_screen.dart';
 import 'scan_ticket_screen.dart';
 import 'services/task_scheduler.dart';
+import 'services/home_people.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/animated_counter.dart';
 import 'widgets/animations/celebrate.dart';
@@ -172,6 +173,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           ? p['full_name'] as String
           : 'Miembro';
     }
+    memberNames.addAll(await HomePeople(_client).load(homeId));
 
     // Puntos ganados por usuario (suma de task_points.points).
     final earnedRes = await _client
