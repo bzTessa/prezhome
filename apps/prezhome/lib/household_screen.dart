@@ -8,6 +8,7 @@ import 'stats_screen.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/supermarket.dart';
 import 'services/home_invites.dart';
+import 'services/home_people.dart';
 import 'services/offline_provider.dart';
 import 'nutrition_profile_screen.dart';
 import 'home_session_screen.dart';
@@ -114,10 +115,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         ? rawSupers.map((e) => e.toString()).toList()
         : <String>[];
 
+    final people = await HomePeople(_client).load(homeId);
+
     return _HouseholdData(
       homeId: homeId,
       homeName: (home?['name'] as String?) ?? 'Mi Hogar',
       members: members,
+      people: people,
       supermarkets: supermarkets,
       pointsEnabled: pointsEnabled,
       invite: invite,
@@ -212,6 +216,85 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     if (ok != true) return;
     try {
       await HomeInvites(_client).removeMember(m.userId);
+      _reload();
+    } catch (e) {
+      _snack(friendlyError(e, 'No se pudo quitar'), error: true);
+    }
+  }
+
+  Future<void> _addPerson(String homeId) async {
+    final ctrl = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        scrollable: true,
+        title: const Text('Añadir persona sin cuenta'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Para alguien de casa que no usa la app. Podrás asignarle '
+              'tareas y apuntar las que haga.',
+              style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              maxLength: 40,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Nombre'),
+              onSubmitted: (v) => Navigator.of(ctx).pop(v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(ctrl.text),
+            child: const Text('Añadir'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (name == null || name.trim().isEmpty) return;
+    try {
+      await HomePeople(_client).add(homeId, name);
+      _reload();
+    } catch (e) {
+      _snack(friendlyError(e, 'No se pudo añadir'), error: true);
+    }
+  }
+
+  Future<void> _removePerson(String id, String name) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Quitar a $name?'),
+        content: const Text(
+          'Se borrarán sus puntos y sus tareas quedarán sin asignar.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Quitar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await HomePeople(_client).remove(id);
       _reload();
     } catch (e) {
       _snack(friendlyError(e, 'No se pudo quitar'), error: true);
@@ -496,9 +579,9 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       ],
                     ),
                     Text(
-                      data.members.length == 1
+                      data.peopleCount == 1
                           ? 'Tu hogar, de momento para ti.'
-                          : 'Un hogar de ${data.members.length} personas.',
+                          : 'Un hogar de ${data.peopleCount} personas.',
                       style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                   ],
@@ -517,7 +600,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Miembros (${data.members.length})',
+                'Miembros (${data.peopleCount})',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -569,6 +652,35 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       : null,
                 );
               }),
+              for (final p in data.people.entries)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: _memberAvatar(p.value),
+                  title: Text(
+                    p.value,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text('Sin cuenta'),
+                  trailing: IconButton(
+                    tooltip: 'Quitar',
+                    icon: Icon(
+                      Icons.person_remove_outlined,
+                      color: AppColors.inkMuted,
+                    ),
+                    onPressed: () => _removePerson(p.key, p.value),
+                  ),
+                ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => _addPerson(data.homeId!),
+                  icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                  label: const Text('Añadir persona sin cuenta'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.woodDark,
+                  ),
+                ),
+              ),
               const SizedBox(height: 4),
               TextButton.icon(
                 onPressed: _leaveHome,
@@ -965,6 +1077,10 @@ class _HouseholdData {
   final String? homeId;
   final String? homeName;
   final List<_Member> members;
+
+  /// Personas de casa sin cuenta (id -> nombre).
+  final Map<String, String> people;
+  int get peopleCount => members.length + people.length;
   final List<String> supermarkets; // claves canónicas de súper del hogar
 
   /// Código de invitación vigente (null si no hay).
@@ -978,6 +1094,7 @@ class _HouseholdData {
     required this.homeId,
     this.homeName,
     this.members = const [],
+    this.people = const {},
     this.supermarkets = const [],
     this.pointsEnabled = true,
     this.invite,

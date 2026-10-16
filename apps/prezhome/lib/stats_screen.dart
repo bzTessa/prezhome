@@ -7,6 +7,7 @@ import 'economy_screen.dart';
 import 'product_stats_screen.dart';
 import 'scan_ticket_screen.dart';
 import 'services/spend_forecast.dart';
+import 'services/home_people.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
@@ -244,6 +245,7 @@ class _StatsScreenState extends State<StatsScreen> {
       final full = (p['full_name'] as String?)?.trim() ?? '';
       names[p['id'] as String] = full.isEmpty ? 'Miembro' : full.split(' ')[0];
     }
+    names.addAll(await HomePeople(_client).load(homeId));
     final byPerson = <String, double>{};
     final tasksPerWeek = List<double>.filled(4, 0);
     for (final r in (results[5] as List)) {
