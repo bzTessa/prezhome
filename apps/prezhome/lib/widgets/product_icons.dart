@@ -4,8 +4,9 @@ import 'food_category_icon.dart';
 /// compra se ve siempre el mismo dibujo, en vez de una foto de Open Food Facts
 /// que a veces es otro producto ("tortilla de cebolla" por cebolla).
 ///
-/// Dibujos de Fluent Emoji 3D (Microsoft, licencia MIT) en
-/// `assets/icons/products/`.
+/// Los dibujos de Tessa van en `assets/icons/products/<nombre>.png` (el
+/// nombre es el valor del mapa) y se apuntan en [_own]. Lo que aún no tiene
+/// el suyo sale con su dibujo estilo Miau compartido (`DrawnIcons`).
 class ProductIcons {
   ProductIcons._();
 
@@ -362,10 +363,16 @@ class ProductIcons {
         : clean;
   }
 
-  /// Ruta del icono de [name], o null si no hay uno que lo represente.
+  /// Iconos dibujados por Tessa que ya están en `assets/icons/products/`.
+  static const Set<String> _own = {};
+
+  /// Nombre del fichero del icono de [name] ("onion"), lo haya o no.
+  static String? iconNameFor(String name) => _find(_tokens(name))?.$3.value;
+
+  /// Ruta del icono propio de [name], o null si aún no lo hay.
   static String? assetFor(String name) {
-    final hit = _find(_tokens(name));
-    return hit == null ? null : 'assets/icons/products/${hit.$3.value}.png';
+    final icon = iconNameFor(name);
+    return _own.contains(icon) ? 'assets/icons/products/$icon.png' : null;
   }
 
   /// Si [name] es un producto genérico ("cebollas", "leche entera"), sin

@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,13 +14,6 @@ import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Iconos de productos: Fluent Emoji (MIT), su licencia va con la app.
-  LicenseRegistry.addLicense(() async* {
-    yield LicenseEntryWithLineBreaks([
-      'Fluent Emoji',
-    ], await rootBundle.loadString('assets/icons/products/LICENSE.txt'));
-  });
-
   await Supabase.initialize(
     url: 'https://ubrihtnnkbwcbchvvlno.supabase.co',
     publishableKey: 'sb_publishable_9bsI8HUy7IlctmudvIljtg_zxZmKoAu',

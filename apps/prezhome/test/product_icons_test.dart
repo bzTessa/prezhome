@@ -6,27 +6,17 @@ import 'package:prezhome/widgets/product_icons.dart';
 
 void main() {
   test('cada producto lleva su propio icono', () {
-    expect(ProductIcons.assetFor('Cebolla'), 'assets/icons/products/onion.png');
-    expect(
-      ProductIcons.assetFor('patatas'),
-      'assets/icons/products/potato.png',
-    );
-    expect(
-      ProductIcons.assetFor('Pechugas de pollo'),
-      endsWith('poultry_leg.png'),
-    );
-    expect(
-      ProductIcons.assetFor('Zumo de naranja'),
-      endsWith('beverage_box.png'),
-    );
-    expect(
-      ProductIcons.assetFor('Pasta de dientes'),
-      endsWith('toothbrush.png'),
-    );
-    expect(ProductIcons.assetFor('nueces'), endsWith('peanuts.png'));
-    expect(ProductIcons.assetFor('Salmón'), endsWith('fish.png'));
+    expect(ProductIcons.iconNameFor('Cebolla'), 'onion');
+    expect(ProductIcons.iconNameFor('patatas'), 'potato');
+    expect(ProductIcons.iconNameFor('Pechugas de pollo'), 'poultry_leg');
+    expect(ProductIcons.iconNameFor('Zumo de naranja'), 'beverage_box');
+    expect(ProductIcons.iconNameFor('Pasta de dientes'), 'toothbrush');
+    expect(ProductIcons.iconNameFor('nueces'), 'peanuts');
+    expect(ProductIcons.iconNameFor('Salmón'), 'fish');
     // Palabras cortas no casan por prefijo: salmón no es sal, panceta no es pan.
-    expect(ProductIcons.assetFor('Panceta'), endsWith('bacon.png'));
+    expect(ProductIcons.iconNameFor('Panceta'), 'bacon');
+    expect(ProductIcons.iconNameFor('Quinoa'), isNull);
+    // Sin el dibujo de Tessa en assets, no hay icono propio.
     expect(ProductIcons.assetFor('Quinoa'), isNull);
   });
 
@@ -40,15 +30,14 @@ void main() {
     expect(ProductIcons.isGeneric('Quinoa'), isFalse);
   });
 
-  test('todos los iconos existen', () {
+  test('los iconos propios apuntados existen', () {
     final src = File('lib/widgets/product_icons.dart').readAsStringSync();
-    final names = RegExp(r"': '([a-z_]+)',").allMatches(src).map((m) => m[1]);
-    expect(names, isNotEmpty);
-    for (final n in names) {
+    final own = RegExp(r'_own = \{([^}]*)\}').firstMatch(src)![1]!;
+    for (final m in RegExp(r"'([a-z_]+)'").allMatches(own)) {
       expect(
-        File('assets/icons/products/$n.png').existsSync(),
+        File('assets/icons/products/${m[1]}.png').existsSync(),
         isTrue,
-        reason: n,
+        reason: m[1],
       );
     }
   });
