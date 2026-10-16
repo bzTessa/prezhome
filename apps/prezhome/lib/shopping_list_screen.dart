@@ -36,6 +36,7 @@ import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/food_image.dart';
+import 'widgets/drawn_icons.dart';
 import 'widgets/product_icons.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'widgets/product_search_sheet.dart';
@@ -753,6 +754,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 title: const Text('Generar foto'),
                 onTap: () => Navigator.of(ctx).pop('generate'),
               ),
+            if (ProductIcons.assetFor(item.name) == null &&
+                ProductIcons.photoKeyFor(item.name) != null)
+              ListTile(
+                leading: Icon(Icons.brush_outlined, color: AppColors.woodDark),
+                title: Text(
+                  DrawnIcons.isDrawn(item.imageUrl)
+                      ? 'Otro dibujo'
+                      : 'Usar un dibujo',
+                ),
+                onTap: () => Navigator.of(ctx).pop('drawing'),
+              ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Quitar de la lista'),
@@ -776,6 +788,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         break;
       case 'generate':
         await _generatePhoto(item);
+        break;
+      case 'drawing':
+        await _useDrawing(item);
         break;
       case 'delete':
         await _removeWithUndo([
@@ -875,6 +890,49 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, 'No se pudo crear la foto')),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
+  /// Pone como foto el dibujo compartido del producto; si ya lo tiene,
+  /// dibuja otro (sustituye el compartido).
+  Future<void> _useDrawing(ShoppingListItem item) async {
+    if (item.id == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Dibujando…'),
+        duration: Duration(seconds: 30),
+      ),
+    );
+    try {
+      final url = DrawnIcons.isDrawn(item.imageUrl)
+          ? await DrawnIcons.redraw(item.name)
+          : await DrawnIcons.urlFor(item.name, retry: true);
+      messenger.hideCurrentSnackBar();
+      if (url == null) throw Exception('Sin dibujo');
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: item.id!,
+          changes: {'image_url': url},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      final homeId = await _homeId();
+      await FoodPhotoService(
+        _client,
+      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
+      await _reload();
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, 'No se pudo hacer el dibujo')),
           backgroundColor: AppColors.expired,
         ),
       );

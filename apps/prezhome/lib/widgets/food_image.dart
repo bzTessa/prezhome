@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/product_photo_resolver.dart';
+import 'drawn_icons.dart';
 import 'food_category_icon.dart';
 import 'product_icons.dart';
 
@@ -85,7 +86,9 @@ class FoodImage extends StatelessWidget {
         width: w,
         height: h,
         child: _hasPhoto
-            ? _isPackshot
+            ? DrawnIcons.isDrawn(imageUrl)
+                  ? _iconBox(_network(BoxFit.contain, w))
+                  : _isPackshot
                   // Foto de envase: entera y reducida sobre blanco, para que
                   // se reconozca el producto (recortada no se entiende).
                   ? ColoredBox(
@@ -140,21 +143,49 @@ class FoodImage extends StatelessWidget {
     return (logicalWidth * dpr).round();
   }
 
-  /// Ilustración cozy de respaldo: fondo cálido de la categoría + icono
-  /// vectorial Material centrado. Durante la carga de la foto se superpone un
-  /// spinner suave sobre esta misma ilustración para que no haya saltos.
+  /// Ilustración de respaldo: el icono propio del producto, su dibujo
+  /// compartido o el icono de la categoría. Mientras carga la foto, un
+  /// spinner sobre el fondo de la categoría.
   Widget _cozyIllustration({bool loading = false}) {
-    final style = CategoryIcons.styleFor(name, itemType: itemType);
-    final asset = loading ? null : ProductIcons.assetFor(name);
+    if (loading) return _categoryIcon(loading: true);
+    final asset = ProductIcons.assetFor(name);
     if (asset != null) {
-      return ColoredBox(
-        color: style.background,
-        child: Padding(
-          padding: EdgeInsets.all((width ?? size) * 0.14),
-          child: Image.asset(asset, fit: BoxFit.contain),
-        ),
-      );
+      return _iconBox(Image.asset(asset, fit: BoxFit.contain));
     }
+    // Sin icono propio: su dibujo compartido (se dibuja la primera vez).
+    final drawn = DrawnIcons.urlFor(name);
+    if (drawn == null) return _categoryIcon();
+    return FutureBuilder<String?>(
+      future: drawn,
+      builder: (context, snap) {
+        final url = snap.data;
+        if (url == null) return _categoryIcon();
+        return _iconBox(
+          Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stack) => _categoryIcon(),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Icono de producto sobre el fondo cálido de su categoría.
+  Widget _iconBox(Widget icon) {
+    final style = CategoryIcons.styleFor(name, itemType: itemType);
+    return ColoredBox(
+      color: style.background,
+      child: Padding(
+        padding: EdgeInsets.all((width ?? size) * 0.14),
+        child: icon,
+      ),
+    );
+  }
+
+  /// Icono vectorial de la categoría (o un spinner mientras carga la foto).
+  Widget _categoryIcon({bool loading = false}) {
+    final style = CategoryIcons.styleFor(name, itemType: itemType);
     return LayoutBuilder(
       builder: (context, constraints) {
         final side = constraints.hasBoundedHeight && constraints.maxHeight > 0

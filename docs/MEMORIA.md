@@ -63,7 +63,11 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `product-image` (Nano Banana, una por producto para todos los hogares en
   `recipe-images/generic/`; gratis la primera vez si está en `keywords.json`,
   que un test mantiene igual que el mapa; "Generar foto" en la compra crea otra
-  y gasta cupo `meal_photo`). El icono queda mientras no hay foto. Con marca u
+  y gasta cupo `meal_photo`). El icono queda mientras no hay foto. Sin
+  icono propio, `widgets/drawn_icons.dart` pide un dibujo estilo Miau a la
+  función `product-icon` (uno por producto para todos los hogares en
+  `recipe-images/icons/`; cupo oculto `product_icon` 30/150 al mes);
+  "Usar un dibujo" / "Otro dibujo" en la compra. Con marca u
   otras palabras se busca envase en OFF. Una foto de la persona gana siempre.
 - Fotos: `services/product_photo_resolver.dart` (caché `food_photo_cache` →
   búsqueda OFF), `services/product_search_service.dart` (8/min, caché; las
