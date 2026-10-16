@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
+import '../animations/spring_value.dart';
 import '../../utils/kitchen_zones.dart';
 
 /// "Mi cocina": rejilla con todas las zonas (nevera, congelador, despensa…)
@@ -188,74 +189,82 @@ class _ZoneTile extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          child: AnimatedContainer(
-            duration: AppMotion.fast,
-            width: width,
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-            decoration: BoxDecoration(
-              color: s.bg,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: selected ? s.fg : Colors.transparent,
-                width: 2,
-              ),
+          // Pieza táctil: la elegida queda "hundida" (sin sombra, 3 px más
+          // abajo) con un muelle.
+          child: SpringValue(
+            value: selected ? 1 : 0,
+            spring: AppMotion.fluidBouncy,
+            builder: (context, p, child) => Transform.translate(
+              offset: Offset(0, AppElevation.restOffset * p),
+              child: child,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (isAll)
-                      SizedBox.square(
-                        dimension: 30,
-                        child: Icon(s.icon, color: s.fg, size: 20),
-                      )
-                    else
-                      // Ilustración: assets/images/zona_<1.ª palabra>.png
-                      Image.asset(
-                        'assets/images/zona_${z.zone.label.split(' ').first.toLowerCase()}.png',
-                        width: 30,
-                        height: 30,
-                        errorBuilder: (_, _, _) =>
-                            Icon(s.icon, color: s.fg, size: 20),
+            child: AnimatedContainer(
+              duration: AppMotion.fast,
+              width: width,
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+              decoration: AppTheme.tactileDecoration(
+                radius: AppRadius.md,
+                color: s.bg,
+                borderWidth: selected ? 2 : 1.5,
+                shadow: selected ? 0 : AppElevation.restOffset,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (isAll)
+                        SizedBox.square(
+                          dimension: 30,
+                          child: Icon(s.icon, color: s.fg, size: 20),
+                        )
+                      else
+                        // Ilustración: assets/images/zona_<1.ª palabra>.png
+                        Image.asset(
+                          'assets/images/zona_${z.zone.label.split(' ').first.toLowerCase()}.png',
+                          width: 30,
+                          height: 30,
+                          errorBuilder: (_, _, _) =>
+                              Icon(s.icon, color: s.fg, size: 20),
+                        ),
+                      const Spacer(),
+                      Text(
+                        '$count',
+                        style: TextStyle(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                          fontSize: 18,
+                          height: 1,
+                          fontWeight: FontWeight.w900,
+                          color: s.fg,
+                        ),
                       ),
-                    const Spacer(),
-                    Text(
-                      '$count',
-                      style: TextStyle(
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        fontSize: 18,
-                        height: 1,
-                        fontWeight: FontWeight.w900,
-                        color: s.fg,
-                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      color: AppColors.ink,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    color: AppColors.ink,
                   ),
-                ),
-                Text(
-                  alert?.$1 ?? 'Al día',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: alert == null
-                        ? FontWeight.w500
-                        : FontWeight.w800,
-                    color: alert?.$2 ?? AppColors.inkMuted,
+                  Text(
+                    alert?.$1 ?? 'Al día',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: alert == null
+                          ? FontWeight.w500
+                          : FontWeight.w800,
+                      color: alert?.$2 ?? AppColors.inkMuted,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/services/proactive_suggestions_service.dart';
 import 'package:prezhome/widgets/proactive_suggestions_banner.dart';
@@ -28,5 +29,30 @@ void main() {
       expect(msg, contains('2 alimentos a punto de caducar'));
       expect(msg.toLowerCase(), isNot(contains('ia')));
     });
+  });
+
+  testWidgets('el aviso cabe en un móvil estrecho y no nombra a la mascota', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProactiveSuggestionsBanner(
+            suggestions: const [
+              ExpiringSuggestion(name: 'Pechuga de pollo', daysUntilExpiry: 1),
+            ],
+            onAction: () {},
+            onDismiss: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
+    expect(find.text('Consejo del día'), findsOneWidget);
+    expect(find.textContaining('Miau'), findsNothing);
   });
 }

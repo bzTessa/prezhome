@@ -96,4 +96,15 @@ void main() {
     await tester.pump();
     expect(find.text('Parar'), findsOneWidget);
   });
+
+  test('el gesto proyecta su impulso y avanza como mucho un paso', () {
+    // Arrastre corto y lento: vuelve al paso en el que estaba.
+    expect(CookStepPhysics.targetPage(1.1 * 400, 50, 400), 1);
+    // Mismo arrastre lanzado con fuerza: pasa al siguiente.
+    expect(CookStepPhysics.targetPage(1.1 * 400, 800, 400), 2);
+    // Un lanzamiento enorme no se salta pasos.
+    expect(CookStepPhysics.targetPage(1.1 * 400, 20000, 400), 2);
+    // Hacia atrás.
+    expect(CookStepPhysics.targetPage(0.9 * 400, -800, 400), 0);
+  });
 }

@@ -178,4 +178,10 @@ void main() {
       expect(AppMotion.rubberBand(50, 300), lessThan(50));
     });
   });
+
+  test('projectMomentum: más velocidad llega más lejos, en su sentido', () {
+    expect(AppMotion.projectMomentum(0), 0);
+    expect(AppMotion.projectMomentum(1000), closeTo(499, 1));
+    expect(AppMotion.projectMomentum(-1000), closeTo(-499, 1));
+  });
 }

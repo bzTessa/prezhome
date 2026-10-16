@@ -2,23 +2,23 @@ import 'package:flutter/widgets.dart';
 
 /// Escala de radios de borde de PrezHome.
 ///
-/// Única fuente de verdad para los `borderRadius`. Mantiene coherencia con los
-/// radios reales ya usados en la app (12 / 16 / 24) y añade un valor "pill"
-/// para chips totalmente redondeados.
+/// Única fuente de verdad para los `borderRadius`: 10 botones y chips, 14
+/// celdas (despensa, tareas, compra) y 20 tarjetas grandes y hojas, más un
+/// valor "pill" para chips totalmente redondeados.
 ///
 /// Usa `BorderRadius.circular(AppRadius.lg)` o directamente los helpers
 /// `AppRadius.lgRadius`.
 class AppRadius {
   const AppRadius._();
 
-  /// 12 — radio pequeño (chips, inputs, elementos compactos).
-  static const double sm = 12;
+  /// 10 — botones, chips y elementos compactos.
+  static const double sm = 10;
 
-  /// 16 — radio medio (botones, tarjetas internas).
-  static const double md = 16;
+  /// 14 — celdas de despensa, tareas y compra; campos de texto.
+  static const double md = 14;
 
-  /// 24 — radio grande (tarjetas principales, superficies destacadas).
-  static const double lg = 24;
+  /// 20 — tarjetas grandes, hojas y superficies destacadas.
+  static const double lg = 20;
 
   /// 999 — pastilla totalmente redondeada (chips tipo "pill", avatares).
   static const double pill = 999;

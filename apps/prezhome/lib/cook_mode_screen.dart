@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'services/hands_free.dart';
+import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/cook_voice.dart';
 import 'utils/recipe_steps.dart';
@@ -375,6 +376,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
           Expanded(
             child: PageView.builder(
               controller: _pages,
+              physics: const CookStepPhysics(),
               itemCount: _total,
               onPageChanged: _onPageChanged,
               itemBuilder: (_, i) => _stepPage(i),
@@ -593,6 +595,54 @@ class _CookModeScreenState extends State<CookModeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Paso a paso con gestos de iOS: el destino se decide proyectando el
+/// impulso del dedo ([AppMotion.projectMomentum]), como mucho un paso por
+/// gesto, y los extremos estiran con rubber-banding.
+class CookStepPhysics extends PageScrollPhysics {
+  const CookStepPhysics({ScrollPhysics? parent})
+    : super(parent: parent ?? const BouncingScrollPhysics());
+
+  @override
+  CookStepPhysics applyTo(ScrollPhysics? ancestor) =>
+      CookStepPhysics(parent: buildParent(ancestor));
+
+  /// Página de destino desde [pixels] lanzado a [velocity], en páginas de
+  /// [width]: la vecina hacia donde apunta la proyección.
+  static double targetPage(double pixels, double velocity, double width) {
+    final from = pixels / width;
+    final projected = (pixels + AppMotion.projectMomentum(velocity)) / width;
+    return projected.roundToDouble().clamp(
+      from.floorToDouble(),
+      from.ceilToDouble(),
+    );
+  }
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    if (position.outOfRange || position.viewportDimension == 0) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+    final w = position.viewportDimension;
+    final target = (targetPage(position.pixels, velocity, w) * w).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    if ((target - position.pixels).abs() < toleranceFor(position).distance) {
+      return null;
+    }
+    return ScrollSpringSimulation(
+      AppMotion.fluidDefault,
+      position.pixels,
+      target,
+      velocity,
+      tolerance: toleranceFor(position),
     );
   }
 }

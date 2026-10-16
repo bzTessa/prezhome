@@ -34,8 +34,8 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `screens` -> `services`: 67
 - `screens` -> `models`: 52
 - `screens` -> `utils`: 49
-- `screens` -> `theme`: 34
-- `widgets` -> `theme`: 33
+- `screens` -> `theme`: 36
+- `widgets` -> `theme`: 35
 - `services` -> `models`: 22
 - `tabs` -> `screens`: 14
 - `tabs` -> `widgets`: 8

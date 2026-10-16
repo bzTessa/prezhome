@@ -1097,20 +1097,9 @@ class _OptionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
+        decoration: AppTheme.tactileDecoration(
           color: selected ? AppColors.wood : AppColors.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? AppColors.woodDark : Colors.transparent,
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.softShadow,
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
+          shadow: selected ? 0 : AppElevation.restOffset,
         ),
         child: Row(
           children: [

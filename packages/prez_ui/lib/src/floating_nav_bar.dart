@@ -59,6 +59,7 @@ class FloatingNavBar extends StatelessWidget {
     this.actionColor,
     this.actionForegroundColor,
     this.shadow,
+    this.border,
     this.duration = const Duration(milliseconds: 260),
     this.curve = Curves.easeOutCubic,
   }) : assert(items.length >= 2),
@@ -82,6 +83,9 @@ class FloatingNavBar extends StatelessWidget {
   /// Sombra de la píldora y del botón. Por defecto, una sombra suave.
   final List<BoxShadow>? shadow;
 
+  /// Borde de la píldora y del botón (por defecto, ninguno).
+  final BoxBorder? border;
+
   final Duration duration;
   final Curve curve;
 
@@ -95,13 +99,14 @@ class FloatingNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final shadows = shadow ?? _defaultShadow;
-    final pill = Container(
+    final radius = BorderRadius.circular(height / 2);
+    Widget pill = Container(
       height: height,
       padding: const EdgeInsets.all(_padding),
       decoration: BoxDecoration(
         color: backgroundColor ?? scheme.surface,
-        borderRadius: BorderRadius.circular(height / 2),
-        boxShadow: shadows,
+        borderRadius: radius,
+        border: border,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -149,6 +154,11 @@ class FloatingNavBar extends StatelessWidget {
       ),
     );
 
+    pill = DecoratedBox(
+      decoration: BoxDecoration(borderRadius: radius, boxShadow: shadows),
+      child: pill,
+    );
+
     final a = action;
     if (a == null) return pill;
     return Row(
@@ -161,6 +171,7 @@ class FloatingNavBar extends StatelessWidget {
           color: actionColor ?? scheme.primary,
           foregroundColor: actionForegroundColor ?? scheme.onPrimary,
           shadow: shadows,
+          border: border,
         ),
       ],
     );
@@ -263,6 +274,7 @@ class _ActionButton extends StatelessWidget {
     required this.color,
     required this.foregroundColor,
     required this.shadow,
+    this.border,
   });
 
   final FloatingNavAction action;
@@ -270,6 +282,7 @@ class _ActionButton extends StatelessWidget {
   final Color color;
   final Color foregroundColor;
   final List<BoxShadow> shadow;
+  final BoxBorder? border;
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +293,11 @@ class _ActionButton extends StatelessWidget {
         label: action.tooltip,
         excludeSemantics: true,
         child: DecoratedBox(
-          decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: shadow),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: shadow,
+            border: border,
+          ),
           child: Material(
             color: color,
             shape: const CircleBorder(),

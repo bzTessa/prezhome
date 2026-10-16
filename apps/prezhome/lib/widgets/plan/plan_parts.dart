@@ -190,125 +190,135 @@ class MealSlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = mealStyle(mealType);
     final empty = title == null;
+    // Hueco con receta: tarjeta táctil (trazo y sombra dura). Vacío: plano
+    // y tenue, para que se vea que falta algo.
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Material(
-        color: empty ? s.bg.withValues(alpha: 0.55) : AppColors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: empty ? s.fg.withValues(alpha: 0.35) : s.bg,
-                width: 1.5,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: empty ? AppElevation.level0 : AppElevation.level1,
+        ),
+        child: Material(
+          color: empty ? s.bg.withValues(alpha: 0.55) : AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(
+                  color: empty
+                      ? s.fg.withValues(alpha: 0.35)
+                      : AppColors.stroke,
+                  width: 1.5,
+                ),
               ),
-            ),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                if (!empty && image != null)
-                  Opacity(opacity: skipped ? 0.4 : 1, child: image!)
-                else
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: empty ? AppColors.card : s.bg,
-                      borderRadius: BorderRadius.circular(16),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  if (!empty && image != null)
+                    Opacity(opacity: skipped ? 0.4 : 1, child: image!)
+                  else
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: empty ? AppColors.card : s.bg,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(s.icon, color: s.fg, size: 28),
                     ),
-                    child: Icon(s.icon, color: s.fg, size: 28),
-                  ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(s.icon, size: 14, color: s.fg),
-                          const SizedBox(width: 4),
-                          Text(
-                            s.label.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.6,
-                              color: s.fg,
-                            ),
-                          ),
-                          if (time != null) ...[
-                            const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(s.icon, size: 14, color: s.fg),
+                            const SizedBox(width: 4),
                             Text(
-                              inFast ? '$time · Ayuno' : time!,
+                              s.label.toUpperCase(),
                               style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.inkMuted,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.6,
+                                color: s.fg,
                               ),
                             ),
-                          ],
-                          if (skipped) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              '· Fuera',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.inkMuted,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        empty ? 'Añadir ${s.label.toLowerCase()}' : title!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: empty ? AppColors.inkMuted : AppColors.ink,
-                          decoration: skipped
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                      ),
-                      if (!empty && detail != null) detail!,
-                      if (fromFreezer)
-                        Padding(
-                          padding: EdgeInsets.only(top: 2),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.ac_unit_rounded,
-                                size: 13,
-                                color: AppColors.frost,
-                              ),
-                              SizedBox(width: 4),
+                            if (time != null) ...[
+                              const SizedBox(width: 6),
                               Text(
-                                'Del congelador',
+                                inFast ? '$time · Ayuno' : time!,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.frost,
                                   fontWeight: FontWeight.w600,
+                                  color: AppColors.inkMuted,
                                 ),
                               ),
                             ],
+                            if (skipped) ...[
+                              const SizedBox(width: 6),
+                              Text(
+                                '· Fuera',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.inkMuted,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          empty ? 'Añadir ${s.label.toLowerCase()}' : title!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: empty ? AppColors.inkMuted : AppColors.ink,
+                            decoration: skipped
+                                ? TextDecoration.lineThrough
+                                : null,
                           ),
                         ),
-                    ],
+                        if (!empty && detail != null) detail!,
+                        if (fromFreezer)
+                          Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.ac_unit_rounded,
+                                  size: 13,
+                                  color: AppColors.frost,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Del congelador',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.frost,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                Icon(
-                  empty ? Icons.add_circle_rounded : Icons.more_horiz_rounded,
-                  color: empty ? s.fg : AppColors.inkMuted,
-                  size: empty ? 28 : 22,
-                ),
-              ],
+                  Icon(
+                    empty ? Icons.add_circle_rounded : Icons.more_horiz_rounded,
+                    color: empty ? s.fg : AppColors.inkMuted,
+                    size: empty ? 28 : 22,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
