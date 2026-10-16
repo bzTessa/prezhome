@@ -57,13 +57,18 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Compra: `shopping_list_screen.dart`, `services/shopping_checkout.dart`
   (comprado → despensa por zona, "Todo comprado", tarea "compra" completada
   marca la lista), `services/plan_shopping.dart` (lista desde el plan).
-- Iconos de producto: `widgets/product_icons.dart` (palabra clave → PNG de
-  Fluent Emoji 3D, MIT, en `assets/icons/products/`). Lo genérico ("cebollas",
+- Iconos de producto: `widgets/product_icons.dart` (palabra clave → nombre de
+  icono). Nada de iconos de Microsoft (Tessa no los quiere): solo sus dibujos,
+  apuntados en `_own` (`assets/icons/products/`). Lo genérico ("cebollas",
   "leche entera") no busca envase en OFF: pide su foto genérica a la función
   `product-image` (Nano Banana, una por producto para todos los hogares en
   `recipe-images/generic/`; gratis la primera vez si está en `keywords.json`,
   que un test mantiene igual que el mapa; "Generar foto" en la compra crea otra
-  y gasta cupo `meal_photo`). El icono queda mientras no hay foto. Con marca u
+  y gasta cupo `meal_photo`). El icono queda mientras no hay foto. Sin
+  icono propio (gratis la primera vez si está en `keywords.json`), `widgets/drawn_icons.dart` pide un dibujo estilo Miau a la
+  función `product-icon` (uno por producto para todos los hogares en
+  `recipe-images/icons/`; cupo oculto `product_icon` 30/150 al mes);
+  "Usar un dibujo" / "Otro dibujo" en la compra. Con marca u
   otras palabras se busca envase en OFF. Una foto de la persona gana siempre.
 - Fotos: `services/product_photo_resolver.dart` (caché `food_photo_cache` →
   búsqueda OFF), `services/product_search_service.dart` (8/min, caché; las

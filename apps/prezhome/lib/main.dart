@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,22 +8,25 @@ import 'home_session_screen.dart';
 import 'services/offline_provider.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_preference.dart';
+import 'widgets/drawn_icons.dart';
 import 'services/plan_prefs.dart';
 import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Iconos de productos: Fluent Emoji (MIT), su licencia va con la app.
-  LicenseRegistry.addLicense(() async* {
-    yield LicenseEntryWithLineBreaks([
-      'Fluent Emoji',
-    ], await rootBundle.loadString('assets/icons/products/LICENSE.txt'));
-  });
-
   await Supabase.initialize(
     url: 'https://ubrihtnnkbwcbchvvlno.supabase.co',
     publishableKey: 'sb_publishable_9bsI8HUy7IlctmudvIljtg_zxZmKoAu',
   );
+
+  DrawnIcons.fetch = (key, {again = false}) async {
+    final res = await Supabase.instance.client.functions.invoke(
+      'product-icon',
+      body: {'key': key, 'again': again},
+    );
+    final url = (res.data is Map ? res.data['url'] : null)?.toString();
+    return url == null || url.isEmpty ? null : url;
+  };
 
   await ThemePreference.load();
   await PlanPrefs.load();

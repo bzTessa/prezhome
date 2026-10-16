@@ -13,7 +13,12 @@ export function aiLimitMessage(now = new Date()): string {
 }
 
 // Funciones con cupo propio en plan_quotas (migración 0049).
-export type AiFeature = "scan_ticket" | "recipes" | "meal_photo" | "import_link";
+export type AiFeature =
+  | "scan_ticket"
+  | "recipes"
+  | "meal_photo"
+  | "import_link"
+  | "product_icon";
 
 export type UseCredit = (
   admin: SupabaseClient,

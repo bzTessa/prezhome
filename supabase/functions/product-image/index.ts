@@ -17,6 +17,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
+import { geminiImage } from "../_shared/gemini_image.ts";
 import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 import keywords from "./keywords.json" with { type: "json" };
 
@@ -37,26 +38,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-// Modelos de Gemini que devuelven imágenes con generateContent (los nombres
-// cambian con el tiempo, así que se piden a Google). Flash primero.
-async function imageModels(apiKey: string): Promise<string[]> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
-  );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return (data?.models ?? [])
-    .filter((m: any) =>
-      String(m?.name ?? "").includes("image") &&
-      m?.supportedGenerationMethods?.includes("generateContent")
-    )
-    .map((m: any) => m.name as string)
-    .sort((a: string, b: string) =>
-      Number(!a.includes("flash")) - Number(!b.includes("flash")) ||
-      b.localeCompare(a)
-    );
-}
-
 function prompt(key: string): string {
   return `Fotografía de catálogo de supermercado online de: ${key}.
 El producto genérico tal como se compra en un supermercado de España, sin marca
@@ -67,36 +48,10 @@ sin manos, sin platos cocinados, sin decoración. Formato cuadrado.`;
 }
 
 async function generate(apiKey: string, key: string): Promise<Uint8Array | null> {
-  for (const model of await imageModels(apiKey)) {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt(key) }] }],
-          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
-        }),
-      },
-    );
-    if (!res.ok) {
-      console.error(`${model}: HTTP ${res.status} ${await res.text()}`);
-      continue;
-    }
-    const data = await res.json();
-    const part = (data?.candidates?.[0]?.content?.parts ?? []).find(
-      (p: any) => p?.inlineData?.data,
-    );
-    if (!part) continue;
-    const raw = Uint8Array.from(
-      atob(part.inlineData.data),
-      (c) => c.charCodeAt(0),
-    );
-    // En JPEG pesa ~10 veces menos que el PNG que devuelve Gemini.
-    const img = await Image.decode(raw);
-    return await img.encodeJPEG(80);
-  }
-  return null;
+  const raw = await geminiImage(apiKey, prompt(key));
+  if (!raw) return null;
+  // En JPEG pesa ~10 veces menos que el PNG que devuelve Gemini.
+  return await (await Image.decode(raw)).encodeJPEG(80);
 }
 
 serveAi("meal_photo", async (req, useCredit) => {
