@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0052.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0053.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -127,7 +127,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   color de `utils/task_kinds.dart`, próximos días, hechas hoy; nueva tarea en
   `_TaskSheet`, la única hoja para crear y editar: típicas, cuándo, se repite
   (incl. algunos días), quién y "Detalles" con hora, notas y puntos).
-  Si solo hay una persona no se pregunta quién la hizo.
+  Si solo hay una persona no se pregunta quién la hizo. Personas sin cuenta:
+  tabla `home_people` (0053, `services/home_people.dart`), se añaden en Hogar
+  y cuentan como miembros en Tareas, puntos y estadísticas (sus ids van en
+  `assigned_to`/`completed_by`/`task_points.user_id`, ya sin FK a auth.users).
 - Plan de comidas (código): `services/meal_planner.dart` (equilibrio por
   grupo legumbre/pescado/huevo/carne y límite de repeticiones),
   `meal_prep_*` (`prepAgenda`: compra, día de cocina con tápers nevera/congelador,

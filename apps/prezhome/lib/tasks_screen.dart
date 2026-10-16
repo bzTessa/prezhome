@@ -11,6 +11,7 @@ import 'services/calendar_sync.dart';
 import 'services/plan_prefs.dart';
 import 'services/shopping_checkout.dart';
 import 'services/task_scheduler.dart';
+import 'services/home_people.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/animated_counter.dart';
@@ -206,6 +207,7 @@ class _TasksScreenState extends State<TasksScreen> {
           ? p['full_name'] as String
           : 'Miembro';
     }
+    members.addAll(await HomePeople(_client).load(homeId));
 
     // Tareas
     final tasksRes = await _client
@@ -2020,6 +2022,13 @@ class _TaskSheetState extends State<_TaskSheet> {
                       () => setState(() => _assigned = e.key),
                     ),
                 ],
+              ),
+            ] else ...[
+              _label('Quién'),
+              Text(
+                'Para asignarla a alguien, añade a esa persona en Hogar '
+                '(aunque no tenga cuenta).',
+                style: AppTextStyles.bodyMuted,
               ),
             ],
             const SizedBox(height: AppSpacing.md),
