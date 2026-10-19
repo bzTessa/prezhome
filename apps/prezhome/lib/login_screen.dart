@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -83,7 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
       // Requiere tener el proveedor Google configurado en Supabase.
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: null, // usa el configurado en Supabase
+        // En móvil vuelve a la app por deep link; en web, a la URL del sitio.
+        redirectTo: kIsWeb ? null : 'com.example.prezhome://login-callback',
       );
       // El flujo continúa vía redirección; el AuthGate detecta la sesión.
     } catch (e) {
