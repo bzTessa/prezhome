@@ -308,8 +308,9 @@ class HomeTabState extends State<HomeTab> {
         // Micro-celebración reutilizable (respeta reduce-motion: no hace nada
         // visible aparatoso) además del SnackBar de puntos existente.
         Celebrate.show(context);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('+${task.points} puntos')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('+${task.points} puntos')));
       }
       await _loadTasksSummary();
     } catch (e) {
@@ -768,14 +769,16 @@ class HomeTabState extends State<HomeTab> {
   }
 
   Future<void> _openStats() async {
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const StatsScreen()));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const StatsScreen()));
     if (mounted) _loadDashboard();
   }
 
   Future<void> _openHousehold() async {
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const HouseholdScreen()));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const HouseholdScreen()));
     if (mounted) _loadDashboard();
   }
 
@@ -1271,8 +1274,9 @@ class HomeTabState extends State<HomeTab> {
         );
         break;
       case QuickAction.scanTicket:
-        await Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
         break;
       case QuickAction.shopping:
         final goShopping = widget.onNavigateToShopping;
@@ -1292,8 +1296,9 @@ class HomeTabState extends State<HomeTab> {
         _openMealPlan();
         break;
       case QuickAction.diary:
-        await Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
         break;
     }
     if (mounted) _loadDashboard();
@@ -1851,8 +1856,9 @@ class HomeTabState extends State<HomeTab> {
     return InkWell(
       borderRadius: AppRadius.lgRadius,
       onTap: () async {
-        await Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
         _loadCaloriesSummary(); // refrescar al volver del diario
       },
       child: Container(
