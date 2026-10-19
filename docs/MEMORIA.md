@@ -91,9 +91,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   en `AppMotion` (`fluidDefault`/`fluidBouncy`/`miauSpring`) vía `SpringValue`;
   deslizar con `SwipeAction` (rubber-band). Miau sin animación por fotogramas.
 - Icono de la app: logo de Tessa en `apps/prezhome/assets/brand/app_icon.png`
-  (1024, fondo crema); los de Android/iOS se generan redimensionándolo. Android
+  (1024, fondo amarillo #F6D57F, de `/mnt/project-files/logo/prezhome-logo.svg`); los de Android/iOS se generan redimensionándolo. Android
   8+ usa icono adaptativo (`mipmap-anydpi-v26`): dibujo recortado sin fondo
-  dentro del círculo seguro de 66dp + fondo crema `#F0EAD2`.
+  con su diagonal en 72 de 108dp + fondo `#F6D57F`.
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta
@@ -157,6 +157,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Añadir receta (`add_recipe_chooser.dart`): pegar enlace de vídeo
   (TikTok/Instagram/YouTube → `import-recipe-link`), escribir el nombre, ideas,
   a mano, código. Si se cancela el enlace o el nombre, vuelve atrás.
+- Tiendas: id `com.prezhome.app` (Android e iOS; deep link del login
+  `com.prezhome.app://login-callback`), iOS solo iPhone, firma Android con
+  `android/key.properties`. Política en `docs/privacidad.md`; ficha y pasos en
+  `/mnt/project-files/tiendas/`. En iPhone hay "Continuar con Apple".
 - Borrar cuenta (lo piden las tiendas): "Borrar mi cuenta" al final de Mi
   Hogar → función `delete-account` (sale del hogar, borra el hogar si queda
   vacío y el usuario de Auth).
