@@ -91,9 +91,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   en `AppMotion` (`fluidDefault`/`fluidBouncy`/`miauSpring`) vía `SpringValue`;
   deslizar con `SwipeAction` (rubber-band). Miau sin animación por fotogramas.
 - Icono de la app: logo de Tessa en `apps/prezhome/assets/brand/app_icon.png`
-  (1024, fondo crema); los de Android/iOS se generan redimensionándolo. Android
+  (1024, fondo amarillo #F6D57F, de `/mnt/project-files/logo/prezhome-logo.svg`); los de Android/iOS se generan redimensionándolo. Android
   8+ usa icono adaptativo (`mipmap-anydpi-v26`): dibujo recortado sin fondo
-  dentro del círculo seguro de 66dp + fondo crema `#F0EAD2`.
+  con su diagonal en 72 de 108dp + fondo `#F6D57F`.
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta
