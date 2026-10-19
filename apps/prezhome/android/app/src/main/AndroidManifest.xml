@@ -6,7 +6,7 @@
     <!-- Manos libres del modo cocina (órdenes por voz). -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
-        android:label="prezhome"
+        android:label="PrezHome"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -35,7 +35,7 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="com.example.prezhome" android:host="login-callback"/>
+                <data android:scheme="com.prezhome.app" android:host="login-callback"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   late bool _isLoginMode = !widget.startInSignUp;
   bool _isLoading = false;
-  bool _googleLoading = false;
+  bool _oauthLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -78,27 +79,27 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    setState(() => _googleLoading = true);
+  Future<void> _signInWith(OAuthProvider provider, String name) async {
+    setState(() => _oauthLoading = true);
     try {
-      // Requiere tener el proveedor Google configurado en Supabase.
+      // Requiere tener el proveedor configurado en Supabase.
       await Supabase.instance.client.auth.signInWithOAuth(
-        OAuthProvider.google,
+        provider,
         // En móvil vuelve a la app por deep link; en web, a la URL del sitio.
-        redirectTo: kIsWeb ? null : 'com.example.prezhome://login-callback',
+        redirectTo: kIsWeb ? null : 'com.prezhome.app://login-callback',
       );
       // El flujo continúa vía redirección; el AuthGate detecta la sesión.
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo iniciar con Google')),
+            content: Text(friendlyError(e, 'No se pudo iniciar con $name')),
             backgroundColor: AppColors.expired,
           ),
         );
       }
     } finally {
-      if (mounted) setState(() => _googleLoading = false);
+      if (mounted) setState(() => _oauthLoading = false);
     }
   }
 
@@ -193,10 +194,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 28),
 
                   // Botón de Google
-                  _GoogleButton(
-                    loading: _googleLoading,
-                    onPressed: _googleLoading ? null : _signInWithGoogle,
+                  _OAuthButton(
+                    label: 'Continuar con Google',
+                    icon: const Text(
+                      'G',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Color(0xFF4285F4),
+                      ),
+                    ),
+                    loading: _oauthLoading,
+                    onPressed: _oauthLoading
+                        ? null
+                        : () => _signInWith(OAuthProvider.google, 'Google'),
                   ),
+                  // App Store exige "Iniciar sesión con Apple" si hay Google.
+                  if (!kIsWeb &&
+                      defaultTargetPlatform == TargetPlatform.iOS) ...[
+                    const SizedBox(height: 12),
+                    _OAuthButton(
+                      label: 'Continuar con Apple',
+                      icon: const Icon(Icons.apple, size: 22),
+                      loading: _oauthLoading,
+                      onPressed: _oauthLoading
+                          ? null
+                          : () => _signInWith(OAuthProvider.apple, 'Apple'),
+                    ),
+                  ],
                   const SizedBox(height: 16),
 
                   Row(
@@ -306,10 +331,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _GoogleButton extends StatelessWidget {
+class _OAuthButton extends StatelessWidget {
+  final String label;
+  final Widget icon;
   final bool loading;
   final VoidCallback? onPressed;
-  const _GoogleButton({required this.loading, required this.onPressed});
+  const _OAuthButton({
+    required this.label,
+    required this.icon,
+    required this.loading,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -332,16 +364,9 @@ class _GoogleButton extends StatelessWidget {
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Text(
-                'G',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: Color(0xFF4285F4),
-                ),
-              ),
-        label: const Text(
-          'Continuar con Google',
+            : icon,
+        label: Text(
+          label,
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
       ),
