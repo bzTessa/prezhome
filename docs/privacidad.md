@@ -6,7 +6,7 @@ PrezHome es una app para organizar el hogar: compra, despensa, comidas,
 recetas, tareas y gastos. Aquí explicamos qué datos usa, para qué y cómo
 puedes borrarlos.
 
-**Responsable:** [NOMBRE DEL RESPONSABLE] · Contacto: prezhomeapp@gmail.com
+**Responsable:** Tessa Barrionuevo Zoranovic · Contacto: prezhomeapp@gmail.com
 
 ## Qué datos guardamos
 
