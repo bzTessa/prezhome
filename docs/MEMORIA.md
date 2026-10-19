@@ -157,6 +157,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Añadir receta (`add_recipe_chooser.dart`): pegar enlace de vídeo
   (TikTok/Instagram/YouTube → `import-recipe-link`), escribir el nombre, ideas,
   a mano, código. Si se cancela el enlace o el nombre, vuelve atrás.
+- Tiendas: id `com.prezhome.app` (Android e iOS; deep link del login
+  `com.prezhome.app://login-callback`), iOS solo iPhone, firma Android con
+  `android/key.properties`. Política en `docs/privacidad.md`; ficha y pasos en
+  `/mnt/project-files/tiendas/`. En iPhone hay "Continuar con Apple".
 - Borrar cuenta (lo piden las tiendas): "Borrar mi cuenta" al final de Mi
   Hogar → función `delete-account` (sale del hogar, borra el hogar si queda
   vacío y el usuario de Auth).
