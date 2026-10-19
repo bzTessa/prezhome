@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'pro_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
+import 'widgets/tactile_button.dart';
 
 /// Una función con cupo mensual: cuántas veces se ha usado este mes.
 class PlanUsage {
@@ -53,7 +55,7 @@ class PlanUsageScreen extends StatefulWidget {
 
 class _PlanUsageScreenState extends State<PlanUsageScreen> {
   final SupabaseClient _client = Supabase.instance.client;
-  late final Future<(String, List<PlanUsage>)> _future = _load();
+  late Future<(String, List<PlanUsage>)> _future = _load();
 
   Future<(String, List<PlanUsage>)> _load() async {
     // El servidor cuenta por mes en UTC (date_trunc sobre now()).
@@ -108,6 +110,19 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
               ),
               const SizedBox(height: 20),
               for (final r in rows) _usageRow(r),
+              if (plan != 'pro') ...[
+                const SizedBox(height: 8),
+                TactileButton(
+                  label: 'Pasar a Pro',
+                  onPressed: () async {
+                    final pro = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(builder: (_) => const ProScreen()),
+                    );
+                    // El servidor recibe la compra por webhook; se recarga.
+                    if (pro == true) setState(() => _future = _load());
+                  },
+                ),
+              ],
             ],
           );
         },
