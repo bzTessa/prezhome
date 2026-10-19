@@ -6,7 +6,7 @@ PrezHome es una app para organizar el hogar: compra, despensa, comidas,
 recetas, tareas y gastos. Aquí explicamos qué datos usa, para qué y cómo
 puedes borrarlos.
 
-**Responsable:** [NOMBRE DEL RESPONSABLE] · Contacto: [CORREO DE SOPORTE]
+**Responsable:** [NOMBRE DEL RESPONSABLE] · Contacto: prezhomeapp@gmail.com
 
 ## Qué datos guardamos
 
@@ -57,13 +57,13 @@ Las personas de tu hogar ven lo que compartís dentro del hogar.
 Guardamos tus datos mientras tengas cuenta. Puedes borrarla en cualquier
 momento desde **Mi hogar > Borrar mi cuenta**: se borra tu usuario y, si eres
 la última persona del hogar, todo el hogar. Si no puedes entrar en la app,
-escribe a [CORREO DE SOPORTE] desde el correo de tu cuenta y la borraremos en
+escribe a prezhomeapp@gmail.com desde el correo de tu cuenta y la borraremos en
 un plazo máximo de 30 días.
 
 ## Tus derechos
 
 Puedes pedir acceso, corrección, borrado, portabilidad u oponerte al uso de
-tus datos escribiendo a [CORREO DE SOPORTE]. Si crees que no los tratamos
+tus datos escribiendo a prezhomeapp@gmail.com. Si crees que no los tratamos
 bien, puedes reclamar ante la Agencia Española de Protección de Datos
 (aepd.es).
 
