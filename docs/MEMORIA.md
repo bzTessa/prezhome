@@ -23,8 +23,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `supabase/functions/_shared/ai_limit.ts`: cobra con
   `consume_ai_credit(hogar, función)` y devuelve el uso
   (`refund_ai_credit`) si la respuesta es un error. `friendlyError` enseña el
-  `{error}` de cualquier función. Plan Pro aún sin cobro (RevenueCat
-  pendiente; plan en `subscriptions.plan`). La pantalla "Tu plan"
+  `{error}` de cualquier función. Pro se cobra con RevenueCat
+  (`services/pro_purchases.dart`, `pro_screen.dart`, claves por
+  `--dart-define=REVENUECAT_IOS_KEY/REVENUECAT_ANDROID_KEY`, permiso `pro`;
+  app_user_id = id de Supabase). La función `revenuecat-webhook`
+  (`--no-verify-jwt`, secreto `REVENUECAT_WEBHOOK_AUTH`) pone
+  `subscriptions.plan` del hogar de quien compra. La pantalla "Tu plan"
   (`plan_usage_screen.dart`) lee `plan_quotas` y `ai_usage` (solo lectura, RLS).
 - No ejecutar SQL de prueba largo en producción (se corta a 60 s).
 
