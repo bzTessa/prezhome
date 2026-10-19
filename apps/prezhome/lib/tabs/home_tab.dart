@@ -669,6 +669,19 @@ class HomeTabState extends State<HomeTab> {
                 StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
                 const SizedBox(height: AppSpacing.md),
               ],
+
+              // Como "Editar" en los resúmenes: al final, no compitiendo con
+              // el saludo.
+              Center(
+                child: TextButton.icon(
+                  onPressed: _openCustomize,
+                  icon: const Icon(Icons.tune_rounded, size: 18),
+                  label: const Text('Personalizar Inicio'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.inkMuted,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -716,12 +729,6 @@ class HomeTabState extends State<HomeTab> {
         ),
         const SizedBox(width: AppSpacing.sm),
         _roundButton(
-          icon: Icons.tune_rounded,
-          tooltip: 'Personalizar Inicio',
-          onTap: _openCustomize,
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        _roundButton(
           icon: Icons.home_rounded,
           tooltip: 'Tu hogar',
           filled: true,
@@ -741,7 +748,9 @@ class HomeTabState extends State<HomeTab> {
       message: tooltip,
       child: Material(
         color: filled ? AppColors.ink : AppColors.card,
-        shape: const CircleBorder(),
+        shape: CircleBorder(
+          side: BorderSide(color: AppColors.stroke, width: 1.5),
+        ),
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
@@ -805,102 +814,107 @@ class HomeTabState extends State<HomeTab> {
     if (next == null) return _emptyMealHero();
     final style = mealStyle(next.mealType);
     final others = _todayItems.where((i) => !identical(i, next)).toList();
-    return Material(
-      color: AppColors.card,
-      borderRadius: BorderRadius.circular(28),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: _openMealPlan,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Stack(
-              children: [
-                if (next.recipe != null)
-                  RecipeImage(recipe: next.recipe!, height: 190, radius: 0)
-                else
-                  Container(
-                    height: 190,
-                    color: style.bg,
-                    child: Icon(style.icon, size: 64, color: style.fg),
-                  ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.62),
-                        ],
-                        stops: const [0.35, 1],
+    return Container(
+      // El relleno deja ver el borde por encima de la foto.
+      padding: const EdgeInsets.all(1.5),
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      child: Material(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg - 1.5),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _openMealPlan,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                children: [
+                  if (next.recipe != null)
+                    RecipeImage(recipe: next.recipe!, height: 190, radius: 0)
+                  else
+                    Container(
+                      height: 190,
+                      color: style.bg,
+                      child: Icon(style.icon, size: 64, color: style.fg),
+                    ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.62),
+                          ],
+                          stops: const [0.35, 1],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: AppSpacing.lg,
-                  top: AppSpacing.lg,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(style.icon, size: 14, color: style.fg),
-                        const SizedBox(width: 4),
-                        Text(
-                          'HOY · ${style.label.toUpperCase()}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                            color: style.fg,
+                  Positioned(
+                    left: AppSpacing.lg,
+                    top: AppSpacing.lg,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(style.icon, size: 14, color: style.fg),
+                          const SizedBox(width: 4),
+                          Text(
+                            'HOY · ${style.label.toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              color: style.fg,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: AppSpacing.lg,
-                  right: AppSpacing.lg,
-                  bottom: AppSpacing.lg,
-                  child: Text(
-                    next.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      letterSpacing: -0.4,
-                      height: 1.15,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                  Positioned(
+                    left: AppSpacing.lg,
+                    right: AppSpacing.lg,
+                    bottom: AppSpacing.lg,
+                    child: Text(
+                      next.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        letterSpacing: -0.4,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            if (others.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.md,
-                  AppSpacing.lg,
-                  AppSpacing.md,
-                ),
-                child: Column(
-                  children: [for (final o in others) _otherMealRow(o)],
-                ),
+                ],
               ),
-          ],
+              if (others.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                  ),
+                  child: Column(
+                    children: [for (final o in others) _otherMealRow(o)],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -949,9 +963,9 @@ class HomeTabState extends State<HomeTab> {
   Widget _emptyMealHero() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
         color: AppColors.peachBg,
-        borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1071,42 +1085,53 @@ class HomeTabState extends State<HomeTab> {
     return Semantics(
       button: onTap != null,
       label: '$value $label',
-      child: Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, color: fg, size: 22),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  '$value',
-                  style: TextStyle(
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    fontSize: 28,
-                    letterSpacing: -0.6,
-                    height: 1,
-                    fontWeight: FontWeight.w900,
-                    color: fg,
+      // En cero la ficha se queda en papel y gris: solo llama la atención lo
+      // que pide algo.
+      child: Container(
+        decoration: AppTheme.surfaceDecoration(
+          radius: AppRadius.md,
+          color: value == 0 ? AppColors.card : bg,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: AppRadius.mdRadius,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    icon,
+                    color: value == 0 ? AppColors.inkMuted : fg,
+                    size: 22,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkMuted,
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    '$value',
+                    style: TextStyle(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontSize: 28,
+                      letterSpacing: -0.6,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                      color: value == 0 ? AppColors.inkMuted : fg,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1220,7 +1245,11 @@ class HomeTabState extends State<HomeTab> {
           Container(
             width: 60,
             height: 60,
-            decoration: BoxDecoration(color: accent.$1, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: accent.$1,
+              shape: BoxShape.circle,
+              border: AppElevation.border,
+            ),
             child: Icon(action.icon, color: accent.$2, size: 26),
           ),
           const SizedBox(height: 6),
