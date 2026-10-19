@@ -9,6 +9,7 @@ Claude Code en la nube (allí no se cargan los plugins instalados en local).
 | security-audit | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) | c1c8a8c | MIT (`cloudflare-security-audit-LICENSE`) |
 | diagnosing-superpowers, dispatching-parallel-agents, executing-plans, finishing-a-development-branch, receiving-code-review, requesting-code-review, subagent-driven-development, systematic-debugging, test-driven-development, using-git-worktrees, verification-before-completion, writing-plans, writing-skills | [obra/superpowers](https://github.com/obra/superpowers) | bb92a77 | MIT (`superpowers-LICENSE`) |
 | taste-skill, redesign-skill | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | d237dd3 | MIT (`taste-skill-LICENSE`) |
+| supabase, supabase-postgres-best-practices | [supabase/agent-skills](https://github.com/supabase/agent-skills) | c9be0e9 | MIT (`supabase-agent-skills-LICENSE`) |
 
 Son guías de referencia: si chocan con las reglas del proyecto (`AGENTS.md`,
 p. ej. la arquitectura actual sin BLoC/Riverpod ni Dio), mandan las del
