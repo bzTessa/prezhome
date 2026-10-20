@@ -83,9 +83,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   // Semanas desde la actual (0 = esta, 1 = la próxima…).
   int _weekOffset = 0;
 
+  // Vista de la semana entera en vez de un solo día.
+  bool _weekView = false;
+
   void _moveWeek(int delta) {
     _weekOffset += delta;
     _selectedDay = null;
+    _reload();
+  }
+
+  /// Lleva el plan a la semana y el día de [day] (p. ej. desde el calendario).
+  void _goToDay(DateTime day) {
+    final monday = DateTime(day.year, day.month, day.day - (day.weekday - 1));
+    _weekOffset += (monday.difference(_weekStart).inHours / (24 * 7)).round();
+    _selectedDay = day.weekday - 1;
+    _weekView = false;
     _reload();
   }
 
@@ -982,7 +994,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       body: FutureBuilder<_PlanData>(
         future: _future,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          final loading = snapshot.connectionState == ConnectionState.waiting;
+          // Al cambiar de semana se queda lo anterior con una barrita, sin
+          // parpadeo de pantalla en blanco.
+          if (loading && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
@@ -995,7 +1010,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           if (data.recipes.isEmpty) {
             return _needRecipes();
           }
-          return _buildPlan(data);
+          return Stack(
+            children: [
+              _buildPlan(data, loading: loading),
+              if (loading) const LinearProgressIndicator(minHeight: 2),
+            ],
+          );
         },
       ),
       floatingActionButton: FutureBuilder<_PlanData>(
@@ -1054,7 +1074,26 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// Tipos de comida que siempre se ven como huecos del día.
   static const _mainMealTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
 
-  Widget _buildPlan(_PlanData data) {
+  /// Huecos de comida que se ven en un día: los principales (salvo los
+  /// ocultos en ajustes, si están vacíos) y cualquier otro ya planificado.
+  List<String> _slotTypes(Map<String, MealPlanEntry> byType) {
+    final prefs = PlanPrefs.current.value;
+    return [
+      ..._mainMealTypes.where(
+        (t) => !prefs.hidden.contains(t) || byType.containsKey(t),
+      ),
+      ...byType.keys.where((t) => !_mainMealTypes.contains(t)),
+    ];
+  }
+
+  Future<void> _openCalendar() async {
+    final day = await Navigator.of(context).push<DateTime>(
+      MaterialPageRoute(builder: (_) => const MonthCalendarScreen()),
+    );
+    if (day != null && mounted) _goToDay(day);
+  }
+
+  Widget _buildPlan(_PlanData data, {bool loading = false}) {
     // Agrupar entries por fecha.
     String keyOf(DateTime d) => d.toIso8601String().split('T').first;
     final byDate = <String, List<MealPlanEntry>>{};
@@ -1075,12 +1114,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final dayEntries = byDate[keyOf(date)] ?? const <MealPlanEntry>[];
     final byType = {for (final e in dayEntries) e.mealType: e};
     final prefs = PlanPrefs.current.value;
-    final types = [
-      ..._mainMealTypes.where(
-        (t) => !prefs.hidden.contains(t) || byType.containsKey(t),
-      ),
-      ...byType.keys.where((t) => !_mainMealTypes.contains(t)),
-    ];
+    final types = _slotTypes(byType);
     final agenda = data.isMealPrep
         ? prepAgenda(_buildMealPrepPlan(data), earliest: _today)
         : const <PrepEvent>[];
@@ -1096,30 +1130,43 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               icon: const Icon(Icons.chevron_left_rounded),
             ),
             Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    switch (_weekOffset) {
-                      0 => 'Esta semana',
-                      1 => 'La próxima semana',
-                      -1 => 'La semana pasada',
-                      _ => 'Semana',
-                    },
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.woodDark,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                onTap: _weekOffset == 0 ? null : () => _goToDay(now),
+                child: Column(
+                  children: [
+                    Text(
+                      switch (_weekOffset) {
+                        0 => 'Esta semana',
+                        1 => 'La próxima semana',
+                        -1 => 'La semana pasada',
+                        _ => 'Semana',
+                      },
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.woodDark,
+                      ),
                     ),
-                  ),
-                  Text(
-                    range,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
+                    Text(
+                      range,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
                     ),
-                  ),
-                ],
+                    if (_weekOffset != 0)
+                      Text(
+                        'Volver a hoy',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.terracotta,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
             IconButton(
@@ -1130,54 +1177,23 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        WeekDayStrip(
-          days: days,
-          selected: sel,
-          today: now,
-          mealsPerDay: [
-            for (final d in days)
-              (byDate[keyOf(d)] ?? const []).where((e) => !e.skipped).length,
-          ],
-          onSelect: (i) => setState(() => _selectedDay = i),
-        ),
-        const SizedBox(height: 16),
         Row(
           children: [
-            Text(
-              '${_dayNames[date.weekday - 1]} ${date.day}',
-              style: TextStyle(
-                fontSize: 22,
-                letterSpacing: -0.4,
-                fontWeight: FontWeight.w900,
-                color: AppColors.ink,
+            Expanded(
+              child: SegmentedPill(
+                labels: const ['Día', 'Semana'],
+                selected: _weekView ? 1 : 0,
+                onChanged: (i) => setState(() => _weekView = i == 1),
               ),
             ),
-            if (sel == todayIndex) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.wood,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Hoy',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-                ),
-              ),
-            ],
-            const Spacer(),
+            const SizedBox(width: 4),
             IconButton(
               tooltip: 'Calendario del mes',
               icon: Icon(
                 Icons.calendar_month_outlined,
                 color: AppColors.inkMuted,
               ),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const MonthCalendarScreen(),
-                ),
-              ),
+              onPressed: _openCalendar,
             ),
             IconButton(
               tooltip: 'Ajustes del plan',
@@ -1187,46 +1203,99 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        for (final ev in agenda)
-          if (_isSameDay(ev.date, date)) PrepEventTile(event: ev),
-        if (data.entries.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              'Aún no hay plan para esta semana.',
-              style: TextStyle(color: AppColors.inkMuted),
+        if (_weekView)
+          for (var i = 0; i < 7; i++)
+            _weekDayCard(
+              data,
+              days[i],
+              byDate[keyOf(days[i])] ?? const [],
+              i,
+              isToday: i == todayIndex,
             ),
+        if (!_weekView) ...[
+          WeekDayStrip(
+            days: days,
+            selected: sel,
+            today: now,
+            mealsPerDay: [
+              for (final d in days)
+                (byDate[keyOf(d)] ?? const []).where((e) => !e.skipped).length,
+            ],
+            onSelect: (i) => setState(() => _selectedDay = i),
           ),
-        for (final t in types)
-          () {
-            final e = byType[t];
-            final recipe = e == null ? null : data.recipesById[e.recipeId];
-            return MealSlotCard(
-              mealType: t,
-              time: prefs.timeOf(t),
-              inFast: prefs.inFast(t),
-              title: e == null ? null : (recipe?.title ?? 'Receta'),
-              image: recipe == null
-                  ? null
-                  : RecipeImage(
-                      recipe: recipe,
-                      width: 64,
-                      height: 64,
-                      radius: 18,
-                    ),
-              detail: e == null ? null : _servingsLine(data, e),
-              skipped: e?.skipped ?? false,
-              fromFreezer: e?.fromFreezer ?? false,
-              onTap: e == null
-                  ? () => _addEntryToDay(
-                      data,
-                      date,
-                      dayEntries,
-                      presetMealType: t,
-                    )
-                  : () => _openEntryActions(data, e),
-            );
-          }(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text(
+                '${_dayNames[date.weekday - 1]} ${date.day}',
+                style: TextStyle(
+                  fontSize: 22,
+                  letterSpacing: -0.4,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.ink,
+                ),
+              ),
+              if (sel == todayIndex) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.wood,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Hoy',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final ev in agenda)
+            if (_isSameDay(ev.date, date)) PrepEventTile(event: ev),
+          if (data.entries.isEmpty && !loading)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Aún no hay plan para esta semana.',
+                style: TextStyle(color: AppColors.inkMuted),
+              ),
+            ),
+          for (final t in types)
+            () {
+              final e = byType[t];
+              final recipe = e == null ? null : data.recipesById[e.recipeId];
+              return MealSlotCard(
+                mealType: t,
+                time: prefs.timeOf(t),
+                inFast: prefs.inFast(t),
+                title: e == null ? null : (recipe?.title ?? 'Receta'),
+                image: recipe == null
+                    ? null
+                    : RecipeImage(
+                        recipe: recipe,
+                        width: 64,
+                        height: 64,
+                        radius: 18,
+                      ),
+                detail: e == null ? null : _servingsLine(data, e),
+                skipped: e?.skipped ?? false,
+                fromFreezer: e?.fromFreezer ?? false,
+                onTap: e == null
+                    ? () => _addEntryToDay(
+                        data,
+                        date,
+                        dayEntries,
+                        presetMealType: t,
+                      )
+                    : () => _openEntryActions(data, e),
+              );
+            }(),
+        ],
         const SizedBox(height: 12),
         Text(
           'Esta semana',
@@ -1245,6 +1314,148 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ],
         if (_plannedRecipes(data).isNotEmpty) _cookModeCard(data),
       ],
+    );
+  }
+
+  /// Un día en la vista de semana: sus comidas en una línea cada una. Tocar
+  /// una comida abre sus acciones (o añade si está vacía); tocar el día lo abre.
+  Widget _weekDayCard(
+    _PlanData data,
+    DateTime date,
+    List<MealPlanEntry> dayEntries,
+    int index, {
+    required bool isToday,
+  }) {
+    final byType = {for (final e in dayEntries) e.mealType: e};
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Container(
+        decoration: AppTheme.cardDecoration(radius: AppRadius.lg),
+        padding: const EdgeInsets.fromLTRB(14, 4, 6, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              onTap: () => setState(() {
+                _selectedDay = index;
+                _weekView = false;
+              }),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Text(
+                      '${_dayNames[date.weekday - 1]} ${date.day}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    if (isToday) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.wood,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Hoy',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    Icon(Icons.chevron_right, color: AppColors.inkMuted),
+                  ],
+                ),
+              ),
+            ),
+            for (final t in _slotTypes(byType))
+              () {
+                final e = byType[t];
+                final s = mealStyle(t);
+                final title = e == null
+                    ? null
+                    : (data.recipesById[e.recipeId]?.title ?? 'Receta');
+                return InkWell(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  onTap: e == null
+                      ? () => _addEntryToDay(
+                          data,
+                          date,
+                          dayEntries,
+                          presetMealType: t,
+                        )
+                      : () => _openEntryActions(data, e),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Icon(s.icon, size: 16, color: s.fg),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 76,
+                          child: Text(
+                            s.label,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: s.fg,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            title ?? 'Añadir',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: title == null
+                                  ? FontWeight.w500
+                                  : FontWeight.w700,
+                              color: title == null || e!.skipped
+                                  ? AppColors.inkMuted
+                                  : AppColors.ink,
+                              decoration: e?.skipped ?? false
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        if (e?.fromFreezer ?? false)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Icon(
+                              Icons.ac_unit_rounded,
+                              size: 14,
+                              color: AppColors.frost,
+                            ),
+                          ),
+                        if (e == null)
+                          Icon(
+                            Icons.add_rounded,
+                            size: 18,
+                            color: AppColors.inkMuted,
+                          ),
+                        const SizedBox(width: 8),
+                      ],
+                    ),
+                  ),
+                );
+              }(),
+          ],
+        ),
+      ),
     );
   }
 
