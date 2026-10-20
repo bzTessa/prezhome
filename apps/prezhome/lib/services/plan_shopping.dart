@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/ingredient.dart';
@@ -6,6 +8,7 @@ import '../utils/practical_quantity.dart';
 import '../utils/shopping_categories.dart';
 import '../widgets/food_category_icon.dart';
 import 'food_photo_service.dart';
+import 'meal_prep_planner.dart';
 import 'product_photo_resolver.dart';
 
 /// Lo que hay en casa de un producto (para descontarlo del plan).
@@ -85,6 +88,43 @@ List<PlanNeed> planShoppingNeeds(
     }
   }
   return needs;
+}
+
+/// Lógica PURA: lo que hace falta para cocinar las [batches] de una tanda.
+/// Cada ingrediente de [rows] (filas de recipe_ingredients) se multiplica por
+/// las raciones de su tanda entre las que da la receta ([servingsByRecipe]) y
+/// se suma con los iguales. Devuelve líneas como "1,5 kg pollo".
+List<String> batchIngredientLines(
+  List<Map<String, dynamic>> rows,
+  List<PrepBatch> batches,
+  Map<String, int> servingsByRecipe,
+) {
+  final factor = {
+    for (final b in batches)
+      b.recipeId: b.totalServings / max(1, servingsByRecipe[b.recipeId] ?? 1),
+  };
+  final scaled = <Ingredient>[];
+  for (final row in rows) {
+    final ing = Ingredient.fromMap(row);
+    final f = factor[row['recipe_id']];
+    if (f == null) continue;
+    final q = ing.quantity == null ? null : ing.quantity! * f;
+    scaled.add(
+      Ingredient(
+        name: ing.name,
+        unit: ing.unit,
+        quantity: q == null
+            ? null
+            : q >= 10
+            ? q.roundToDouble()
+            : (q * 10).round() / 10,
+      ),
+    );
+  }
+  return [
+    for (final n in planShoppingNeeds(scaled, const []))
+      Ingredient(name: n.name, quantity: n.quantity, unit: n.unit).display,
+  ];
 }
 
 /// Pasa las necesidades a cantidades de súper ("1 ud" de pimienta) y junta

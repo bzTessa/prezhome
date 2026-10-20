@@ -5,6 +5,7 @@ import 'models/meal_plan_entry.dart';
 import 'models/recipe.dart';
 import 'models/task.dart';
 import 'services/meal_prep_planner.dart';
+import 'services/plan_prefs.dart';
 import 'services/plan_prep.dart';
 import 'services/task_scheduler.dart';
 import 'theme/app_theme.dart';
@@ -196,7 +197,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
           entries: entries,
           recipesById: recipes,
           weekStart: w,
-          today: today,
+          energyLevel: PlanPrefs.current.value.energy,
         );
         for (final ev in prepAgenda(plan, earliest: today)) {
           (prepByDay[ev.date] ??= []).add(ev);

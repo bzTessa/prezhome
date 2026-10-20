@@ -75,7 +75,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   ];
 
   bool _generating = false;
-  int _energyLevel = 1; // 0=cocinar poco, 1=normal, 2=cocinar mucho
+  int get _energyLevel => PlanPrefs.current.value.energy;
 
   // Día elegido en la tira de la semana (0 = lunes). null = hoy.
   int? _selectedDay;
@@ -1299,6 +1299,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             builder: (_) => BatchPrepTimelineScreen(
               recipes: recipes,
               batches: day?.batches ?? const [],
+              cookDay: day?.date,
             ),
           ),
         );
@@ -1350,7 +1351,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     entries: data.entries,
     recipesById: data.recipesById,
     weekStart: _weekStart,
-    today: _today,
     energyLevel: _energyLevel,
   );
 
@@ -1540,7 +1540,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     label: Text(labels[i]),
                     selected: selected,
                     backgroundColor: AppColors.cream,
-                    onSelected: (_) => setState(() => _energyLevel = i),
+                    onSelected: (_) async {
+                      await PlanPrefs.save(
+                        PlanPrefs.current.value.copyWith(energy: i),
+                      );
+                      if (mounted) setState(() {});
+                    },
                   ),
                 ),
               );
