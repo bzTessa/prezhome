@@ -11,6 +11,7 @@ import 'theme/app_theme.dart';
 import 'utils/quick_items.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/food_image.dart';
+import 'widgets/product_photo_menu.dart';
 import 'widgets/product_search_sheet.dart';
 import 'utils/friendly_error.dart';
 
@@ -49,6 +50,9 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   // mientras no se cambie el nombre.
   SupermarketProduct? _product;
 
+  // Foto elegida a mano en esta pantalla (gana a cualquier otra).
+  String? _photoUrl;
+
   // ¿La usuaria ha fijado la fecha a mano? Si es así, no la pisamos con la
   // estimación automática. Al escribir el nombre o cambiar de ubicación, si la
   // fecha sigue siendo automática, la recalculamos.
@@ -63,8 +67,17 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   ];
   static const List<String> _homeCategories = ['Limpieza', 'Hogar'];
 
-  List<String> get _categories =>
-      _itemType == 'hogar' ? _homeCategories : _foodCategories;
+  // La categoría guardada sale siempre, aunque no sea de la lista (si no, el
+  // desplegable no puede mostrarla).
+  List<String> get _categories {
+    final base = _itemType == 'hogar' ? _homeCategories : _foodCategories;
+    final saved = widget.item?.category;
+    return saved != null &&
+            !base.contains(saved) &&
+            _itemType == widget.item!.itemType
+        ? [...base, saved]
+        : base;
+  }
 
   final List<String> _units = [
     'unidades',
@@ -91,6 +104,10 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
           : it.quantity.toString();
       _itemType = it.itemType;
       _selectedCategory = it.category;
+      // Una unidad que no está en la lista se conserva tal cual.
+      if (it.unit.trim().isNotEmpty && !_units.contains(it.unit)) {
+        _units.add(it.unit);
+      }
       _selectedUnit = _units.contains(it.unit) ? it.unit : 'unidades';
       _kind = it.kind;
       _frozenOn = it.frozenOn;
@@ -238,7 +255,9 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       String? imageUrl = editing?.imageUrl;
       final nameChanged = editing == null || editing.name.trim() != name;
       final picked = _product;
-      if (picked != null &&
+      if (_photoUrl != null) {
+        imageUrl = _photoUrl;
+      } else if (picked != null &&
           picked.imageUrl != null &&
           picked.displayName == name) {
         imageUrl = picked.imageUrl;
@@ -313,6 +332,45 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   }
 
   InputDecoration _dec(String label) => InputDecoration(labelText: label);
+
+  /// Cambia la foto del producto (cámara, galería, súper, generada o dibujo).
+  Future<void> _changePhoto() async {
+    final item = widget.item!;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ...productPhotoTiles(
+              ctx,
+              name: item.name,
+              imageUrl: _photoUrl ?? item.imageUrl,
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+    final keys = await HomeSupermarkets(Supabase.instance.client).load();
+    final homeId = item.homeId.isNotEmpty ? item.homeId : keys.homeId;
+    if (homeId == null || !mounted) return;
+    final url = await pickProductPhoto(
+      context,
+      action,
+      homeId: homeId,
+      name: item.name,
+      imageUrl: _photoUrl ?? item.imageUrl,
+      supermarketKey: keys.keys.isEmpty ? null : keys.keys.first,
+    );
+    if (url != null && mounted) setState(() => _photoUrl = url);
+  }
 
   bool get isEditingItem => widget.item != null;
 
@@ -416,19 +474,34 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             // nueva (sin item/id) no hay Hero.
             if (widget.item != null && widget.item!.id.isNotEmpty) ...[
               Center(
-                child: Hero(
-                  tag: 'inv-${widget.item!.id}',
-                  child: FoodImage(
-                    name: widget.item!.name,
-                    itemType: widget.item!.itemType,
-                    imageUrl: widget.item!.imageUrl,
-                    size: 120,
-                    radius: AppRadius.md,
-                    forceIllustration: widget.item!.category == 'Especias',
+                child: GestureDetector(
+                  onTap: _changePhoto,
+                  child: Hero(
+                    tag: 'inv-${widget.item!.id}',
+                    child: FoodImage(
+                      name: widget.item!.name,
+                      itemType: widget.item!.itemType,
+                      imageUrl: _photoUrl ?? widget.item!.imageUrl,
+                      size: 120,
+                      radius: AppRadius.md,
+                      forceIllustration:
+                          _photoUrl == null &&
+                          widget.item!.category == 'Especias',
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _changePhoto,
+                  icon: const Icon(Icons.image_outlined, size: 18),
+                  label: const Text('Cambiar foto'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.woodDark,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
             // Tipo de producto (comida u hogar/limpieza)
             const Text(
@@ -505,7 +578,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             if (_product != null &&
                 _product!.displayName == _nameController.text.trim())
               _pickedProductCard(_product!)
-            else if (!isEditingItem)
+            else
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
@@ -686,9 +759,21 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: InputDecorator(
-                  decoration: _dec(
-                    _expirationManual ? 'Caduca el' : 'Caduca el (aprox.)',
-                  ),
+                  decoration:
+                      _dec(
+                        _expirationManual ? 'Caduca el' : 'Caduca el (aprox.)',
+                      ).copyWith(
+                        suffixIcon: _expirationDate == null
+                            ? null
+                            : IconButton(
+                                tooltip: 'Sin fecha',
+                                icon: const Icon(Icons.close_rounded),
+                                onPressed: () => setState(() {
+                                  _expirationDate = null;
+                                  _expirationManual = true;
+                                }),
+                              ),
+                      ),
                   child: Text(
                     _expirationDate == null
                         ? 'Sin fecha'

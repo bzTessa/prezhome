@@ -8,8 +8,10 @@ import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
 import 'models/shopping_list_item.dart';
 import 'scan_barcode_screen.dart';
+import 'services/home_supermarkets.dart';
 import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
+import 'services/pantry_usage.dart';
 import 'services/product_photo_resolver.dart';
 import 'services/proactive_suggestions_service.dart';
 import 'theme/app_theme.dart';
@@ -18,7 +20,9 @@ import 'widgets/list_skeleton.dart';
 import 'utils/offline_actions.dart';
 import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_image.dart';
+import 'widgets/product_photo_menu.dart';
 import 'widgets/shopping/shopping_parts.dart';
+import 'widgets/tactile_button.dart';
 import 'utils/shopping_display.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
@@ -61,6 +65,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     // refrescamos desde Supabase (que, al llegar, reemplaza la lista).
     _itemsFuture = _loadFromCache();
     _refreshFromRemote();
+    _usePlanIngredients();
     // Lo comprado en la lista entra por el mismo repositorio: repintamos al
     // momento aunque esta pestaña ya estuviera abierta.
     _changesSub = _repo.changes.listen((_) async {
@@ -77,6 +82,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void dispose() {
     _changesSub?.cancel();
     super.dispose();
+  }
+
+  /// Quita de la despensa lo que se ha usado en las comidas del plan que ya
+  /// han pasado y lo avisa.
+  Future<void> _usePlanIngredients() async {
+    final cooked = await PantryUsage.syncPlan(Supabase.instance.client);
+    if (cooked.isEmpty || !mounted) return;
+    await _reload();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          cooked.length == 1
+              ? 'Quitado lo que usaste en ${cooked.first}'
+              : 'Quitado lo que usaste en ${cooked.length} comidas del plan',
+        ),
+        persist: false,
+        action: SnackBarAction(label: 'Ver', onPressed: _openHistory),
+      ),
+    );
   }
 
   /// Siguiente número de secuencia para encolar/identificar ops de forma
@@ -714,9 +739,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final shown = items
         .where((i) => review ? _isUrgent(i) : zone!.matches(i))
         .toList();
-    if (zone == KitchenZone.especias ||
+    final alphabetical =
+        zone == KitchenZone.especias ||
         zone == KitchenZone.limpieza ||
-        zone == KitchenZone.hogar) {
+        zone == KitchenZone.hogar;
+    if (alphabetical) {
       shown.sort(
         (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
       );
@@ -791,21 +818,69 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           )
         else
-          Container(
-            decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                for (var k = 0; k < shown.length; k++) ...[
-                  if (k > 0)
-                    Divider(height: 1, indent: 76, color: AppColors.line),
-                  _itemRow(shown[k], showZone: review),
+          for (final g in _groups(shown, byExpiry: !alphabetical)) ...[
+            if (g.label != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 4, 0, 6),
+                child: Text(
+                  g.label!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: g.color ?? AppColors.inkMuted,
+                  ),
+                ),
+              ),
+            Container(
+              decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (var k = 0; k < g.items.length; k++) ...[
+                    if (k > 0)
+                      Divider(height: 1, indent: 76, color: AppColors.line),
+                    _itemRow(g.items[k], showZone: review),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.md),
+          ],
       ],
     );
+  }
+
+  /// Parte la lista por cuándo caduca (ya viene ordenada) para verla de un
+  /// vistazo: caducado, esta semana, más adelante y sin fecha. Con un solo
+  /// grupo no se pone título.
+  List<({String? label, Color? color, List<InventoryItem> items})> _groups(
+    List<InventoryItem> items, {
+    required bool byExpiry,
+  }) {
+    if (!byExpiry) return [(label: null, color: null, items: items)];
+    final buckets = <String, List<InventoryItem>>{};
+    for (final i in items) {
+      final d = _tracksExpiry(i) ? i.daysUntilExpiry : null;
+      final key = switch (d) {
+        null => 'Sin fecha',
+        < 0 => 'Caducado',
+        <= 7 => 'Esta semana',
+        _ => 'Más adelante',
+      };
+      buckets.putIfAbsent(key, () => []).add(i);
+    }
+    final groups = [
+      for (final k in ['Caducado', 'Esta semana', 'Más adelante', 'Sin fecha'])
+        if (buckets[k] case final list?)
+          (
+            label: k,
+            color: k == 'Caducado' ? AppColors.expired : null,
+            items: list,
+          ),
+    ];
+    return groups.length == 1
+        ? [(label: null, color: null, items: items)]
+        : groups;
   }
 
   /// Fila de producto: foto, nombre, cantidad y, si caduca, cuándo.
@@ -831,88 +906,112 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (item.isStaple) 'No se compra',
     ].where((t) => t.isNotEmpty).join(' · ');
 
-    final row = InkWell(
-      onTap: () => _openItemActions(item),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Row(
-          children: [
-            FoodImage(
-              name: item.name,
-              itemType: item.itemType,
-              imageUrl: item.imageUrl,
-              size: 52,
-              radius: 14,
-              forceIllustration: item.category == 'Especias',
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    shoppingCleanName(item.name),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
+    // Fondo opaco: al deslizar, el color de la acción no se ve a través.
+    final row = Material(
+      color: AppColors.card,
+      child: InkWell(
+        onTap: () => _openItemActions(item),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Row(
+            children: [
+              // Tocar la foto permite cambiarla, como en la compra.
+              Semantics(
+                button: true,
+                label: 'Cambiar foto',
+                child: GestureDetector(
+                  onTap: () => _changePhoto(item),
+                  child: FoodImage(
+                    name: item.name,
+                    itemType: item.itemType,
+                    imageUrl: item.imageUrl,
+                    size: 52,
+                    radius: 14,
+                    forceIllustration: item.category == 'Especias',
                   ),
-                  if (subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      subtitle,
+                      shoppingCleanName(item.name),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
                     ),
-                  ],
-                  // Insignia de caducidad bajo el nombre: no compite por
-                  // ancho con el − / +.
-                  if (expiry != null) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: expiry.$2.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text(
-                        expiry.$1,
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: expiry.$2,
+                          fontSize: 13,
+                          color: AppColors.inkMuted,
                         ),
                       ),
-                    ),
+                    ],
+                    // Insignia de caducidad bajo el nombre: no compite por
+                    // ancho con el − / +.
+                    if (expiry != null) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: expiry.$2.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text(
+                          expiry.$1,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: expiry.$2,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            if (stepUnit) ...[
-              const SizedBox(width: 8),
-              QuantityStepper(
-                label: shoppingQtyLabel(item.quantity, item.unit),
-                onMinus: item.quantity <= 1
-                    ? null
-                    : () => _setQuantity(item, item.quantity - 1),
-                onPlus: () => _setQuantity(item, item.quantity + 1),
-              ),
+              if (stepUnit) ...[
+                const SizedBox(width: 8),
+                QuantityStepper(
+                  label: shoppingQtyLabel(item.quantity, item.unit),
+                  // Bajar del último lo da por consumido hoy (con deshacer).
+                  onMinus: item.quantity <= 1
+                      ? () => _consume(item)
+                      : () => _setQuantity(item, item.quantity - 1),
+                  onPlus: () => _setQuantity(item, item.quantity + 1),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
-    // Deslizar a la izquierda lo apunta en la lista de la compra.
+    // Derecha: consumido hoy. Izquierda: a la lista de la compra.
     return SwipeAction(
       key: ValueKey(item.id),
       radius: 0,
+      toRight: item.itemType == 'comida'
+          ? SwipeSide(
+              icon: Icons.check_rounded,
+              color: AppColors.done,
+              label: 'Consumido',
+              onTrigger: () => _consume(item),
+            )
+          : null,
       toLeft: SwipeSide(
         icon: Icons.add_shopping_cart_rounded,
         color: AppColors.terracotta,
@@ -982,10 +1081,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ? 'Caducado eliminado'
               : '${expired.length} caducados eliminados',
         ),
+        'history' => _openHistory(),
         'zone' => _confirmEmpty(inZone, zone!.label),
         _ => _confirmEmpty(all, 'Mi cocina'),
       },
       itemBuilder: (_) => [
+        const PopupMenuItem(
+          value: 'history',
+          child: Text('Lo que se ha gastado'),
+        ),
         PopupMenuItem(
           value: 'expired',
           enabled: expired.isNotEmpty,
@@ -1135,21 +1239,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     : const Text('Para básicos que siempre tienes'),
                 onTap: () => Navigator.of(ctx).pop('staple'),
               ),
-            // "Se ha agotado": solo para comida (coherente con el ListTile de
-            // staple). Pone la cantidad a 0 y, si es básico, lo repone en la
-            // compra automáticamente.
             if (item.itemType == 'comida')
               ListTile(
                 leading: Icon(
-                  Icons.production_quantity_limits,
+                  Icons.check_circle_outline_rounded,
                   color: AppColors.woodDark,
                 ),
-                title: const Text('Se ha agotado'),
+                title: const Text('Consumido'),
                 subtitle: item.isStaple
                     ? const Text('Lo añadiré a la compra')
                     : null,
-                onTap: () => Navigator.of(ctx).pop('depleted'),
+                onTap: () => Navigator.of(ctx).pop('consumed'),
               ),
+            ListTile(
+              leading: Icon(Icons.image_outlined, color: AppColors.woodDark),
+              title: const Text('Cambiar foto'),
+              onTap: () => Navigator.of(ctx).pop('photo'),
+            ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Eliminar'),
@@ -1168,8 +1274,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (changed != null) await _applyUpsert(changed, editing: true);
     } else if (action == 'staple') {
       await _toggleStaple(item, !item.isStaple);
-    } else if (action == 'depleted') {
-      await _markDepleted(item);
+    } else if (action == 'consumed') {
+      final picked = await _askConsumed(item);
+      if (picked != null) {
+        await _consume(item, on: picked.on, amount: picked.amount);
+      }
+    } else if (action == 'photo') {
+      await _changePhoto(item);
     } else if (action == 'delete') {
       final ok = await showDialog<bool>(
         context: context,
@@ -1196,5 +1307,371 @@ class _InventoryScreenState extends State<InventoryScreen> {
         await _deleteItem(item);
       }
     }
+  }
+
+  /// Saca [amount] (todo, si es null) de la despensa como consumido el día
+  /// [on] (hoy, si es null) y lo apunta en el historial. Se puede deshacer.
+  Future<void> _consume(
+    InventoryItem item, {
+    DateTime? on,
+    double? amount,
+  }) async {
+    HapticFeedback.mediumImpact();
+    final now = DateTime.now();
+    final day = on ?? DateTime(now.year, now.month, now.day);
+    final used = (amount ?? item.quantity).clamp(0, item.quantity).toDouble();
+    final left = item.quantity - used;
+    final name = shoppingCleanName(item.name);
+    try {
+      if (left <= 0 && item.isStaple) {
+        // Básico: queda a 0 y vuelve a la compra (avisa él mismo).
+        await _markDepleted(item);
+      } else {
+        await _repo.applyLocalWrite(
+          left <= 0
+              ? buildDeleteOp(
+                  table: kInventoryTable,
+                  id: item.id,
+                  nowMillis: now.millisecondsSinceEpoch,
+                  seq: _nextSeq(),
+                )
+              : buildUpdateOp(
+                  table: kInventoryTable,
+                  id: item.id,
+                  changes: {'quantity': left},
+                  nowMillis: now.millisecondsSinceEpoch,
+                  seq: _nextSeq(),
+                ),
+        );
+        await _reload();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, 'No se pudo actualizar')),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+      return;
+    }
+    final logId = await _logConsumed(item, used, day);
+    if (!mounted || (left <= 0 && item.isStaple)) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$name, consumido ${_dayLabel(day)}'),
+        persist: false,
+        action: SnackBarAction(
+          label: 'Deshacer',
+          onPressed: () async {
+            if (left <= 0) {
+              await _applyUpsert(item, editing: false);
+            } else {
+              await _setQuantity(item, item.quantity);
+            }
+            if (logId != null) {
+              try {
+                await Supabase.instance.client
+                    .from('pantry_log')
+                    .delete()
+                    .eq('id', logId);
+              } catch (_) {}
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Apunta en el historial lo consumido. Devuelve su id (null si no hay red).
+  // shortcut: el historial necesita conexión (no pasa por la cola offline);
+  // meterlo en OfflineProvider si hace falta apuntarlo sin red.
+  Future<String?> _logConsumed(
+    InventoryItem item,
+    double used,
+    DateTime day,
+  ) async {
+    try {
+      final homeId = item.homeId.isNotEmpty ? item.homeId : await _homeId();
+      final row = await Supabase.instance.client
+          .from('pantry_log')
+          .insert({
+            'home_id': homeId,
+            'name': item.name,
+            'quantity': used,
+            'unit': item.unit,
+            'reason': 'consumido',
+            'used_on': day.toIso8601String().split('T').first,
+          })
+          .select('id')
+          .single();
+      return row['id'] as String?;
+    } catch (e) {
+      debugPrint('pantry_log: $e');
+      return null;
+    }
+  }
+
+  static String _dayLabel(DateTime day) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(day.year, day.month, day.day);
+    final diff = today.difference(d).inDays;
+    if (diff == 0) return 'hoy';
+    if (diff == 1) return 'ayer';
+    return 'el ${d.day}/${d.month}';
+  }
+
+  /// Hoja "Consumido": qué día y, si hay varios, cuántos.
+  Future<({DateTime on, double amount})?> _askConsumed(
+    InventoryItem item,
+  ) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    var day = today;
+    var amount = item.quantity;
+    final countable =
+        shoppingQtyNext(1, item.unit, up: true) == 2 && item.quantity > 1;
+    return showModalBottomSheet<({DateTime on, double amount})>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) {
+          final yesterday = today.subtract(const Duration(days: 1));
+          final other = day != today && day != yesterday;
+          Widget dayChip(String label, bool selected, VoidCallback onTap) =>
+              ChoiceChip(
+                label: Text(label),
+                selected: selected,
+                showCheckmark: false,
+                selectedColor: AppColors.wood,
+                backgroundColor: AppColors.card,
+                onSelected: (_) => onTap(),
+              );
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shoppingCleanName(item.name),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '¿Cuándo?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      dayChip('Hoy', day == today, () {
+                        setSheet(() => day = today);
+                      }),
+                      dayChip('Ayer', day == yesterday, () {
+                        setSheet(() => day = yesterday);
+                      }),
+                      dayChip(
+                        other ? 'El ${day.day}/${day.month}' : 'Otro día',
+                        other,
+                        () async {
+                          final picked = await showDatePicker(
+                            context: ctx,
+                            initialDate: day,
+                            firstDate: today.subtract(const Duration(days: 60)),
+                            lastDate: today,
+                            helpText: '¿Qué día?',
+                          );
+                          if (picked != null) setSheet(() => day = picked);
+                        },
+                      ),
+                    ],
+                  ),
+                  if (countable) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      '¿Cuántos?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    QuantityStepper(
+                      label: amount == item.quantity
+                          ? 'Todo (${shoppingQtyLabel(amount, item.unit)})'
+                          : shoppingQtyLabel(amount, item.unit),
+                      onMinus: amount <= 1
+                          ? null
+                          : () => setSheet(() => amount -= 1),
+                      onPlus: () => setSheet(
+                        () => amount = (amount + 1).clamp(1, item.quantity),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TactileButton(
+                      label: 'Consumido',
+                      icon: Icons.check_rounded,
+                      onPressed: () =>
+                          Navigator.of(ctx).pop((on: day, amount: amount)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Cambia la foto del producto (cámara, galería, súper, generada o dibujo).
+  Future<void> _changePhoto(InventoryItem item) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ...productPhotoTiles(ctx, name: item.name, imageUrl: item.imageUrl),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+    try {
+      final homeId = item.homeId.isNotEmpty ? item.homeId : await _homeId();
+      final keys = await HomeSupermarkets(Supabase.instance.client).load();
+      if (!mounted) return;
+      final url = await pickProductPhoto(
+        context,
+        action,
+        homeId: homeId,
+        name: item.name,
+        imageUrl: item.imageUrl,
+        supermarketKey: keys.keys.isEmpty ? null : keys.keys.first,
+      );
+      if (url == null) return;
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: {'image_url': url},
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, 'No se pudo cambiar la foto'))),
+      );
+    }
+  }
+
+  /// Lo que ha salido de la despensa estas semanas y qué día.
+  Future<void> _openHistory() async {
+    final rows = Supabase.instance.client
+        .from('pantry_log')
+        .select('name, quantity, unit, reason, used_on')
+        .order('used_on', ascending: false)
+        .order('created_at', ascending: false)
+        .limit(60);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        builder: (ctx, scroll) => FutureBuilder<List<Map<String, dynamic>>>(
+          future: rows,
+          builder: (ctx, snap) {
+            if (!snap.hasData) {
+              return snap.hasError
+                  ? Center(
+                      child: Text(
+                        friendlyError(snap.error, 'No se pudo cargar'),
+                      ),
+                    )
+                  : const Center(child: CircularProgressIndicator());
+            }
+            final list = snap.data!;
+            return ListView(
+              controller: scroll,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              children: [
+                Text(
+                  'Lo que se ha gastado',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (list.isEmpty)
+                  Text(
+                    'Aún no hay nada.',
+                    style: TextStyle(color: AppColors.inkMuted),
+                  ),
+                for (final r in list)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: FoodImage(
+                      name: (r['name'] ?? '').toString(),
+                      size: 40,
+                      radius: 10,
+                    ),
+                    title: Text(
+                      shoppingCleanName((r['name'] ?? '').toString()),
+                    ),
+                    subtitle: Text(
+                      [
+                        inventoryQtyLabel(
+                          (r['quantity'] as num?)?.toDouble(),
+                          r['unit'] as String?,
+                        ),
+                        r['reason'] == 'receta' ? 'Al cocinar' : 'Consumido',
+                      ].where((t) => t.isNotEmpty).join(' · '),
+                    ),
+                    trailing: Text(
+                      _dayLabel(DateTime.parse(r['used_on'] as String)),
+                      style: TextStyle(color: AppColors.inkMuted),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 }

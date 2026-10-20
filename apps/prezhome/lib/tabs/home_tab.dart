@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,6 +21,7 @@ import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/smart_reminders.dart';
+import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
 import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
@@ -385,6 +388,8 @@ class HomeTabState extends State<HomeTab> {
       final user = _client.auth.currentUser;
       if (user == null) return;
       await PlanDiary.sync(_client);
+      // Lo usado en las comidas del plan sale también de la despensa.
+      unawaited(PantryUsage.syncPlan(_client));
 
       final profileRow = await _client
           .from('profiles')
