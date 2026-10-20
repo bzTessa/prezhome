@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_shell.dart';
+import 'onboarding/onboarding_widgets.dart';
 import 'services/home_invites.dart';
 import 'theme/app_theme.dart';
+import 'widgets/miau_character.dart';
 
 class HomeOnboardingScreen extends StatefulWidget {
   const HomeOnboardingScreen({super.key});
@@ -15,6 +17,7 @@ class HomeOnboardingScreen extends StatefulWidget {
 class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
   final _homeIdController = TextEditingController();
   bool _isLoading = false;
+  bool _joining = false;
 
   SupabaseClient get _client => Supabase.instance.client;
 
@@ -74,133 +77,80 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Configura tu hogar',
-          style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  '¿Qué ambiente deseas crear en casa?',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 28,
-                    letterSpacing: -0.6,
-                    fontWeight: FontWeight.w600,
+      backgroundColor: AppColors.cream,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const MiauCharacter(mood: MiauMood.greeting, size: 120),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Último paso: tu hogar',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      letterSpacing: -0.6,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Crea tu santuario culinario o únete al hogar que comparte tu familia. Comenzaremos a diseñar tu experiencia.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, height: 1.4),
-                ),
-                const SizedBox(height: 48),
-                Container(
-                  decoration: AppTheme.surfaceDecoration(),
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _createHome,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(
-                            0xFFC85A32,
-                          ), // Warm Terracotta
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(56),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          elevation: 0,
-                          textStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Comenzar un hogar nuevo'),
-                      ),
-                      const SizedBox(height: 32),
-                      const Divider(),
-                      const SizedBox(height: 24),
-                      const Text(
-                        '¿Ya tienes una invitación?',
+                  const SizedBox(height: 10),
+                  Text(
+                    'Créalo ahora y, cuando quieras, invita a quien viva '
+                    'contigo desde Inicio.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.4,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  OnboardingButton(
+                    label: _isLoading ? 'Un momento…' : 'Crear mi hogar',
+                    onPressed: _isLoading ? null : _createHome,
+                  ),
+                  const SizedBox(height: 12),
+                  if (!_joining)
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => setState(() => _joining = true),
+                      child: Text(
+                        'Me han invitado a un hogar',
                         style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _homeIdController,
-                        enabled: !_isLoading,
-                        textCapitalization: TextCapitalization.characters,
-                        decoration: InputDecoration(
-                          labelText: 'Código de invitación',
-                          hintText: 'ABCD-EFGH',
-                          filled: true,
-                          fillColor: Theme.of(context).scaffoldBackgroundColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      OutlinedButton(
-                        onPressed: _isLoading ? null : _joinHome,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurface,
-                          minimumSize: const Size.fromHeight(56),
-                          side: BorderSide(
-                            color: Theme.of(
-                              context,
-                            ).dividerColor.withOpacity(0.2),
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        child: const Text('Unirme a un hogar'),
+                    )
+                  else ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _homeIdController,
+                      enabled: !_isLoading,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(
+                        labelText: 'Código de invitación',
+                        hintText: 'ABCD-EFGH',
                       ),
-                    ],
-                  ),
-                ),
-              ],
+                    ),
+                    const SizedBox(height: 12),
+                    OnboardingButton(
+                      label: 'Unirme a un hogar',
+                      outlined: true,
+                      onPressed: _isLoading ? null : _joinHome,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),

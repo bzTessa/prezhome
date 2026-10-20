@@ -4,18 +4,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_onboarding_screen.dart';
 import 'main_shell.dart';
 import 'login_screen.dart';
-import 'models/nutrition_profile.dart';
-import 'profile_wizard_screen.dart';
 import 'services/offline_provider.dart';
 import 'widgets/miau_character.dart';
 
 /// Resultado de evaluar el estado del usuario para decidir a donde llevarlo:
-/// si pertenece a un hogar y si su perfil nutricional esta completo.
+/// si pertenece a un hogar. El perfil de calorías NO se pide al entrar: se
+/// ofrece desde Inicio y Perfil para no alargar el primer arranque.
 class _SessionState {
   final bool hasHome;
-  final bool profileComplete;
 
-  const _SessionState({required this.hasHome, required this.profileComplete});
+  const _SessionState({required this.hasHome});
 }
 
 class HomeSessionScreen extends StatefulWidget {
@@ -28,11 +26,6 @@ class HomeSessionScreen extends StatefulWidget {
 class _HomeSessionScreenState extends State<HomeSessionScreen> {
   late Future<_SessionState> _session;
 
-  // Evita lanzar el wizard automatico mas de una vez por montaje de la pantalla
-  // (p. ej. si el FutureBuilder se reconstruye), asi no hay bucles ni dobles
-  // aperturas del cuestionario.
-  bool _wizardLaunched = false;
-
   @override
   void initState() {
     super.initState();
@@ -42,22 +35,17 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
   Future<_SessionState> _loadSession() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      return const _SessionState(hasHome: false, profileComplete: false);
+      return const _SessionState(hasHome: false);
     }
 
-    // Solo necesitamos home_id y las columnas que consume isComplete; incluimos
-    // 'id' porque NutritionProfile.fromMap lo lee. Asi no cargamos el perfil
-    // entero en la ruta critica del arranque.
     final profile = await Supabase.instance.client
         .from('profiles')
-        .select('id, home_id, sex, birth_date, height_cm, weight_kg')
+        .select('home_id')
         .eq('id', user.id)
         .maybeSingle();
 
     final homeId = profile?['home_id'];
     final hasHome = homeId is String && homeId.isNotEmpty;
-    final profileComplete =
-        profile != null && NutritionProfile.fromMap(profile).isComplete;
 
     // OFFLINE-FIRST (Paso 7): namespaceamos la caché local por hogar. Si el
     // hogar resuelto difiere del cacheado, switchHome separa (borra) la caché y
@@ -67,32 +55,13 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
       await OfflineProvider.instance.switchHome(homeId);
     }
 
-    return _SessionState(hasHome: hasHome, profileComplete: profileComplete);
+    return _SessionState(hasHome: hasHome);
   }
 
   void _retry() {
     final future = _loadSession();
     setState(() {
       _session = future;
-    });
-  }
-
-  /// Lanza el cuestionario UNA sola vez sobre MainShell en el primer frame,
-  /// cuando el usuario ya tiene hogar pero el perfil no esta completo. El
-  /// wizard siempre tiene salida (el usuario puede cerrarlo y entrar a la app),
-  /// por lo que no hay bucles ni callejones sin salida.
-  void _maybeLaunchWizard() {
-    if (_wizardLaunched) return;
-    _wizardLaunched = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const ProfileWizardScreen()));
-      // Al volver del cuestionario, refrescamos la pestana Inicio para que el
-      // aviso de calorias y la tarjeta reflejen el objetivo ya calculado.
-      if (!mounted) return;
-      MainShell.current?.refreshHome();
     });
   }
 
@@ -116,11 +85,6 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
         final state = snapshot.data!;
         if (!state.hasHome) {
           return const HomeOnboardingScreen();
-        }
-        if (!state.profileComplete) {
-          // Hogar + perfil incompleto: entramos a la app y abrimos el
-          // cuestionario encima una sola vez, siempre con salida.
-          _maybeLaunchWizard();
         }
         return const MainShell();
       },
