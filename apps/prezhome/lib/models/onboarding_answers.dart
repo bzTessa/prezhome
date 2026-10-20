@@ -136,7 +136,6 @@ class OnboardingAnswers {
     final hidden = <DashboardCard>{
       if (!goals.contains(HomeGoal.comidas)) DashboardCard.meals,
       if (!goals.contains(HomeGoal.comidas)) DashboardCard.calories,
-      if (!goals.contains(HomeGoal.despensa)) DashboardCard.expiry,
       if (!goals.contains(HomeGoal.tareas)) DashboardCard.tasks,
       if (!goals.contains(HomeGoal.gastos)) DashboardCard.spending,
     };

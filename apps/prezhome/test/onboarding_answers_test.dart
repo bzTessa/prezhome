@@ -43,7 +43,6 @@ void main() {
       expect(p.enabledModules, isEmpty);
       expect(p.hidden, contains(DashboardCard.tasks));
       expect(p.hidden, contains(DashboardCard.spending));
-      expect(p.hidden, isNot(contains(DashboardCard.expiry)));
       expect(p.quick.first, QuickAction.shopping);
       expect(p.cookingStyle, CookingStyle.daily);
     });

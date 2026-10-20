@@ -9,7 +9,6 @@ enum DashboardCard {
     Icons.notifications_active_outlined,
   ),
   meals('meals', 'Comidas de hoy', Icons.restaurant_menu),
-  expiry('expiry', 'Caducidades', Icons.schedule),
   calories('calories', 'Calorías de hoy', Icons.local_fire_department),
   tasks('tasks', 'Tareas', Icons.check_circle_outline),
   spending('spending', 'Gasto del mes', Icons.savings_outlined);
