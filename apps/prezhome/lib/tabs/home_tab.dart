@@ -20,7 +20,6 @@ import '../models/meal_plan_entry.dart';
 import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
-import '../services/smart_reminders.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
 import '../services/taper_sync.dart';
