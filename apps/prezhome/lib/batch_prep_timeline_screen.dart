@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'cook_mode_screen.dart';
 import 'models/recipe.dart';
 import 'services/meal_prep_orchestrator.dart';
 import 'services/meal_prep_planner.dart';
+import 'services/plan_shopping.dart';
 import 'theme/app_theme.dart';
 import 'utils/recipe_steps.dart';
 import 'widgets/animations/celebrate.dart';
@@ -37,10 +39,14 @@ class BatchPrepTimelineScreen extends StatefulWidget {
   /// cocción). Si viene, se añade el reparto en tápers al final.
   final List<PrepBatch> batches;
 
+  /// Día de la tanda: dice qué se come recién hecho y qué va en táper.
+  final DateTime? cookDay;
+
   const BatchPrepTimelineScreen({
     super.key,
     required this.recipes,
     this.batches = const [],
+    this.cookDay,
   });
 
   @override
@@ -95,6 +101,28 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
     _timers = List<Timer?>.filled(count, null);
     _running = List<bool>.filled(count, false);
     _remainingSeconds = _plan.steps.map((s) => s.durationMinutes * 60).toList();
+    _loadIngredients();
+  }
+
+  /// Ingredientes de toda la tanda, ya multiplicados por las raciones.
+  List<String> _ingredients = const [];
+
+  Future<void> _loadIngredients() async {
+    if (widget.batches.isEmpty) return;
+    try {
+      final res = await Supabase.instance.client
+          .from('recipe_ingredients')
+          .select()
+          .inFilter('recipe_id', [for (final b in widget.batches) b.recipeId]);
+      final lines = batchIngredientLines(
+        [for (final m in res as List) Map<String, dynamic>.from(m as Map)],
+        widget.batches,
+        {for (final r in widget.recipes) r.id: r.servings},
+      );
+      if (mounted) setState(() => _ingredients = lines);
+    } catch (_) {
+      // Sin red se cocina igual con los pasos.
+    }
   }
 
   @override
@@ -247,15 +275,13 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
         CookStep(_taperText(b)!, note: 'Tápers · ${b.title}'),
   ];
 
-  /// "2 raciones a la nevera y 4 al congelador", o null si no hay nada.
+  /// "Nevera para el mié y vie · congelador para el sáb", o null si no hay
+  /// nada.
   String? _taperText(PrepBatch b) {
-    String r(int n) => n == 1 ? '1 ración' : '$n raciones';
-    final parts = [
-      if (b.fridgeServings > 0) '${r(b.fridgeServings)} a la nevera',
-      if (b.freezerServings > 0) '${r(b.freezerServings)} al congelador',
-    ];
-    if (parts.isEmpty) return null;
-    final text = parts.join(' y ');
+    final day = widget.cookDay;
+    if (day == null) return null;
+    final text = taperPlan(b, day);
+    if (text.isEmpty) return null;
     return '${text[0].toUpperCase()}${text.substring(1)}.';
   }
 
@@ -279,7 +305,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
                   builder: (_) => CookModeScreen(
                     title: 'Cocina en tanda',
                     steps: _cookSteps(),
-                    ingredients: const [],
+                    ingredients: _ingredients,
                   ),
                 ),
               );
@@ -338,17 +364,48 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
     final steps = _plan.steps;
     return ListView.builder(
       padding: AppSpacing.screenPadding,
-      // +1 por la cabecera (índice 0) y +1 por los tápers (al final).
-      itemCount: steps.length + 2,
+      // Cabecera y lo que necesitas (0 y 1) y los tápers (al final).
+      itemCount: steps.length + 3,
       itemBuilder: (context, i) {
         if (i == 0) return _buildHeader();
-        if (i == steps.length + 1) return _buildTapers();
-        final index = i - 1;
+        if (i == 1) return _buildIngredients();
+        if (i == steps.length + 2) return _buildTapers();
+        final index = i - 2;
         return StaggeredEntrance(
           index: index,
           child: _buildStepCard(index, steps[index]),
         );
       },
+    );
+  }
+
+  /// Todo lo que hace falta para la tanda, sumado entre recetas.
+  Widget _buildIngredients() {
+    if (_ingredients.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      child: Container(
+        padding: AppSpacing.cardPadding,
+        decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.shopping_basket_outlined, color: AppColors.sage),
+                const SizedBox(width: AppSpacing.sm),
+                Text('Lo que necesitas', style: AppTextStyles.title),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final line in _ingredients)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(line, style: AppTextStyles.body),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -372,6 +429,8 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
               Text('Reparte en tápers', style: AppTextStyles.title),
             ],
           ),
+          const SizedBox(height: AppSpacing.xs),
+          Text('Se apuntan solos en Mi cocina', style: AppTextStyles.bodyMuted),
           for (final (title, text) in rows) ...[
             const SizedBox(height: AppSpacing.md),
             Text(title, style: AppTextStyles.bodyStrong),

@@ -213,19 +213,32 @@ class MealPrepPlanner {
     );
     final cookDates = _chooseCookDates(mealDays, maxCookingDays, weekStartDay);
 
-    // Para cada día de cocción, asignamos las comidas del bloque que arranca en
-    // ese día de cocción y acaba antes del siguiente día de cocción.
+    // Cada comida va al bloque que arranca en su día de cocción y acaba antes
+    // del siguiente. Si la receta ya se cocina en un bloque anterior y aguanta
+    // en la nevera hasta ese día ([kDiasNevera]), se hace toda esa vez: así no
+    // se cocinan las mismas lentejas dos días.
+    final blockOf = <PrepMeal, int>{};
+    final firstBlockOf = <String, int>{};
+    for (final m in relevant) {
+      var b = cookDates.lastIndexWhere((d) => !m._day.isBefore(d));
+      if (b < 0) b = 0;
+      final first = firstBlockOf[m.recipeId];
+      if (first != null &&
+          first < b &&
+          m._day.difference(cookDates[first]).inDays <= kDiasNevera) {
+        b = first;
+      }
+      firstBlockOf.putIfAbsent(m.recipeId, () => b);
+      blockOf[m] = b;
+    }
+
     final cookingDays = <CookingDay>[];
     for (var i = 0; i < cookDates.length; i++) {
       final cookDate = cookDates[i];
-      final nextCook = i + 1 < cookDates.length ? cookDates[i + 1] : null;
-
-      final mealsOfBlock = relevant.where((m) {
-        final day = m._day;
-        final afterStart = !day.isBefore(cookDate);
-        final beforeNext = nextCook == null || day.isBefore(nextCook);
-        return afterStart && beforeNext;
-      }).toList();
+      final mealsOfBlock = [
+        for (final m in relevant)
+          if (blockOf[m] == i) m,
+      ];
 
       final batches = _batchesForDay(
         cookDate: cookDate,
@@ -489,36 +502,28 @@ List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
   final events = <PrepEvent>[];
   final firstCook = plan.cookingDays.first.date;
   var shop = firstCook.subtract(const Duration(days: 1));
-  if (earliest != null) {
-    final e = DateTime(earliest.year, earliest.month, earliest.day);
-    if (shop.isBefore(e)) shop = firstCook.isBefore(e) ? e : firstCook;
+  final from = earliest == null
+      ? null
+      : DateTime(earliest.year, earliest.month, earliest.day);
+  if (from != null && shop.isBefore(from)) shop = from;
+  // Si la primera tanda ya pasó, la compra también.
+  if (from == null || !firstCook.isBefore(from)) {
+    events.add(
+      PrepEvent(
+        date: shop,
+        kind: PrepEventKind.compra,
+        title: 'Hacer la compra',
+        lines: ['Para cocinar en tanda el ${_diaSemana(firstCook)}'],
+      ),
+    );
   }
-  events.add(
-    PrepEvent(
-      date: shop,
-      kind: PrepEventKind.compra,
-      title: 'Hacer la compra',
-      lines: ['Para cocinar en tanda el ${_diaSemana(firstCook)}'],
-    ),
-  );
 
   // Por día de consumo: qué sacar del congelador la víspera.
   final thaw = <DateTime, List<String>>{};
   for (final day in plan.cookingDays) {
     final lines = <String>[];
     for (final b in day.batches) {
-      final parts = <String>[];
-      if (b.fridgeServings > 0) {
-        parts.add('${b.fridgeServings} a la nevera (${_dias(b.fridgeByDay)})');
-      }
-      if (b.freezerServings > 0) {
-        parts.add(
-          '${b.freezerServings} al congelador (${_dias(b.freezerByDay)})',
-        );
-      }
-      lines.add(
-        '${_capitalizar(b.title)} x${b.totalServings}: ${parts.join(', ')}',
-      );
+      lines.add('${_capitalizar(b.title)}: ${taperPlan(b, day.date)}');
       b.freezerByDay.forEach((eat, n) {
         var out = eat.subtract(const Duration(days: kDiasSacarAntes));
         if (out.isBefore(day.date)) out = day.date;
@@ -528,7 +533,7 @@ List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
         );
       });
     }
-    lines.add('Pon a cada táper el día que toca');
+    lines.add('Los tápers se apuntan solos en Mi cocina');
     events.add(
       PrepEvent(
         date: day.date,
@@ -548,6 +553,8 @@ List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
       ),
     );
   });
+  // Lo que ya pasó no se enseña (el plan no se mueve al pasar los días).
+  if (from != null) events.removeWhere((e) => e.date.isBefore(from));
   events.sort((a, b) {
     final c = a.date.compareTo(b.date);
     return c != 0 ? c : a.kind.index.compareTo(b.kind.index);
@@ -555,10 +562,102 @@ List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
   return events;
 }
 
-/// "lun, mar" a partir de los días de un mapa.
+/// Qué hace la app sola con un táper de la cocina en lote.
+enum TaperStep { guardar, descongelar, comido }
+
+/// Un táper que la app pone, mueve o quita de Mi cocina a su hora: se guarda
+/// el día de cocina, pasa del congelador a la nevera la víspera y se quita
+/// cuando ya se ha comido.
+class TaperMove {
+  final DateTime at;
+  final TaperStep step;
+  final String recipeId;
+  final String title;
+
+  /// Día en que se come; da nombre al táper ("Lentejas (vie 10)").
+  final DateTime eatDay;
+  final int servings;
+  final bool frozen;
+  final DateTime cookDay;
+
+  const TaperMove({
+    required this.at,
+    required this.step,
+    required this.recipeId,
+    required this.title,
+    required this.eatDay,
+    required this.servings,
+    required this.frozen,
+    required this.cookDay,
+  });
+
+  /// Nombre del táper en Mi cocina; también sirve para encontrarlo.
+  String get name =>
+      '${_capitalizar(title)} (${_diaSemana(eatDay).substring(0, 3)} '
+      '${eatDay.day})';
+}
+
+/// Los pasos de cada táper del [plan], ordenados por hora. Se guardan a la
+/// hora [cookMinute] del día de cocina, se descongelan a la hora [thawMinute]
+/// de la víspera y se dan por comidos al acabar su día. Lo que se come el
+/// mismo día de cocina no lleva táper.
+List<TaperMove> taperMoves(
+  MealPrepPlan plan, {
+  int cookMinute = 13 * 60,
+  int thawMinute = 21 * 60,
+}) {
+  DateTime at(DateTime d, int minute) =>
+      DateTime(d.year, d.month, d.day, 0, minute);
+  final moves = <TaperMove>[];
+  for (final day in plan.cookingDays) {
+    for (final b in day.batches) {
+      void add(Map<DateTime, int> byDay, bool frozen) {
+        byDay.forEach((eat, n) {
+          if (!eat.isAfter(day.date)) return;
+          TaperMove move(TaperStep step, DateTime when) => TaperMove(
+            at: when,
+            step: step,
+            recipeId: b.recipeId,
+            title: b.title,
+            eatDay: eat,
+            servings: n,
+            frozen: frozen,
+            cookDay: day.date,
+          );
+          moves.add(move(TaperStep.guardar, at(day.date, cookMinute)));
+          if (frozen) {
+            var out = eat.subtract(const Duration(days: kDiasSacarAntes));
+            if (out.isBefore(day.date)) out = day.date;
+            moves.add(move(TaperStep.descongelar, at(out, thawMinute)));
+          }
+          moves.add(move(TaperStep.comido, at(eat, 24 * 60)));
+        });
+      }
+
+      add(b.fridgeByDay, false);
+      add(b.freezerByDay, true);
+    }
+  }
+  moves.sort((a, b) => a.at.compareTo(b.at));
+  return moves;
+}
+
+/// Adónde va cada táper de [b] cocinado el [cookDay]: "recién hecho · nevera
+/// para el mié y vie · congelador para el sáb".
+String taperPlan(PrepBatch b, DateTime cookDay) {
+  final fridge = {...b.fridgeByDay}..remove(cookDay);
+  return [
+    if (b.fridgeByDay.containsKey(cookDay)) 'recién hecho',
+    if (fridge.isNotEmpty) 'nevera para el ${_dias(fridge)}',
+    if (b.freezerByDay.isNotEmpty)
+      'congelador para el ${_dias(b.freezerByDay)}',
+  ].join(' · ');
+}
+
+/// "lun, mar y jue" a partir de los días de un mapa.
 String _dias(Map<DateTime, int> byDay) {
   final days = byDay.keys.toList()..sort();
-  return days.map((d) => _diaSemana(d).substring(0, 3)).join(', ');
+  return _unirConY([for (final d in days) _diaSemana(d).substring(0, 3)]);
 }
 
 /// Une una lista con comas y una "y" final: ["a","b","c"] -> "a, b y c".
