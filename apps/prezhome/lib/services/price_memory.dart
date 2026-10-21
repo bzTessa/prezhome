@@ -198,9 +198,31 @@ class RecipeCost {
 /// Un ingrediente para calcular el coste de la receta.
 typedef CostIngredient = ({String name, double? quantity, String? unit});
 
+/// Unidades en las que la cantidad de la receta se puede multiplicar por el
+/// precio del ticket (que es por unidad/paquete comprado). En g, ml,
+/// cucharadas… multiplicar daría 400 g × 0,40 € = 160 €.
+const Set<String> _countableUnits = {
+  '',
+  'unidad',
+  'unidades',
+  'ud',
+  'uds',
+  'pieza',
+  'piezas',
+  'huevo',
+  'huevos',
+  'lata',
+  'latas',
+  'bote',
+  'botes',
+  'paquete',
+  'paquetes',
+};
+
 /// Calcula el coste de una receta sumando sus ingredientes. Para cada uno:
-///   1. si hay PRECIO REAL del ticket (prices) -> precio por unidad × cantidad;
-///   2. si no, PRECIO APROXIMADO por tipo de alimento ([ApproxPrice]).
+///   1. si hay PRECIO REAL del ticket (prices) y la cantidad va en unidades
+///      contables -> precio por unidad × cantidad;
+///   2. si no (sin precio, o cantidad en g/ml/cucharadas…), PRECIO APROXIMADO por tipo de alimento ([ApproxPrice]).
 /// Devuelve el total y por ración, y marca approx=true si se usó alguna
 /// estimación. Lógica PURA (recibe la función de aproximado inyectada para no
 /// acoplar con utils en el test).
@@ -215,7 +237,10 @@ RecipeCost computeRecipeCost({
   var usedApprox = false;
   for (final ing in ingredients) {
     final p = prices[PriceMemory.keyFor(ing.name)];
-    final real = p?.bestPrice;
+    final countable = _countableUnits.contains(
+      (ing.unit ?? '').trim().toLowerCase(),
+    );
+    final real = countable ? p?.bestPrice : null;
     if (real != null) {
       // Precio real por unidad del ticket × cantidad (o 1 si no hay cantidad).
       total += real * (ing.quantity ?? 1);

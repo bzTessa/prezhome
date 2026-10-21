@@ -5,12 +5,10 @@
 /// utils/measure_format.dart, sin Flutter), de modo que todo se puede testear
 /// en la Dart VM con días/fechas fijos sin plugins nativos.
 ///
-/// Es COMPLEMENTARIO a smart_reminders.dart, no lo duplica:
-///  - smart_reminders.dart = panel INFORMATIVO "Hoy toca" en Inicio.
-///  - este servicio = sugerencias ACCIONABLES: (a) tarjeta de caducidad que
-///    invita a aprovechar un alimento en el próximo Batch Cooking/Modo cocina
-///    (se pintará en main_shell) y (b) reposición automática de básicos
-///    agotados hacia la lista de la compra.
+/// Sugerencias ACCIONABLES: (a) tarjeta de caducidad que invita a aprovechar
+/// un alimento en el próximo Batch Cooking/Modo cocina (se pinta en
+/// main_shell) y (b) reposición automática de básicos agotados hacia la lista
+/// de la compra.
 ///
 /// La UI (FEAT-003) consume estas funciones; aquí no hay nada de presentación.
 library;
@@ -19,8 +17,7 @@ import '../models/shopping_list_item.dart';
 
 /// Espejo reducido de un alimento del inventario para calcular caducidades.
 ///
-/// [daysUntilExpiry] viene YA calculado por quien llama (igual que en
-/// [ReminderStockItem] de smart_reminders): es `InventoryItem.daysUntilExpiry`
+/// [daysUntilExpiry] viene YA calculado por quien llama: es `InventoryItem.daysUntilExpiry`
 /// sobre la caducidad efectiva. Negativo = ya caducado, `null` = sin fecha.
 /// [isFood] distingue comida de artículos de hogar (solo la comida caduca de
 /// forma relevante para cocinar).

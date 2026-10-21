@@ -24,19 +24,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     await _tapText(tester, 'Comenzar');
-    expect(find.text('¿Dónde vives?'), findsOneWidget);
-
-    // Sin respuesta no se puede continuar.
-    final continueBtn = find.widgetWithText(FilledButton, 'Continuar');
-    expect(tester.widget<FilledButton>(continueBtn).onPressed, isNull);
-
-    await _tapText(tester, 'Piso');
-    await _tapText(tester, 'Continuar');
     expect(find.text('¿Cuántas personas vivís?'), findsOneWidget);
     expect(find.text('2 personas'), findsOneWidget);
     await _tapText(tester, 'Continuar');
 
     expect(find.text('¿Qué quieres quitarte de la cabeza?'), findsOneWidget);
+    // Sin respuesta no se puede continuar.
+    final continueBtn = find.widgetWithText(FilledButton, 'Elige al menos una');
+    expect(tester.widget<FilledButton>(continueBtn).onPressed, isNull);
     await _tapText(tester, 'La compra');
     await _tapText(tester, 'Tareas del hogar');
     await _tapText(tester, 'Continuar (2)');
@@ -46,13 +41,7 @@ void main() {
 
     expect(find.text('¿Dónde compras?'), findsOneWidget);
     await _tapText(tester, 'Mercadona');
-    await _tapText(tester, 'Continuar');
-
-    await _tapText(tester, 'Una vez por semana');
-    await _tapText(tester, 'Continuar');
-
-    await _tapText(tester, 'Sí, avísame');
-    await _tapText(tester, 'Ver mi perfil de hogar');
+    await _tapText(tester, 'Ver mi hogar');
 
     expect(find.text('Tu perfil de hogar'), findsOneWidget);
     expect(find.text('El Dúo'), findsOneWidget);

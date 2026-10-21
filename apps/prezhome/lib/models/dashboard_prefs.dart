@@ -3,13 +3,7 @@ import 'package:flutter/material.dart';
 /// Tarjetas que pueden aparecer en el dashboard de Inicio. El id se guarda en
 /// las preferencias (profiles.dashboard_prefs); label/icon son para el editor.
 enum DashboardCard {
-  reminders(
-    'reminders',
-    'Hoy toca (recordatorios)',
-    Icons.notifications_active_outlined,
-  ),
   meals('meals', 'Comidas de hoy', Icons.restaurant_menu),
-  expiry('expiry', 'Caducidades', Icons.schedule),
   calories('calories', 'Calorías de hoy', Icons.local_fire_department),
   tasks('tasks', 'Tareas', Icons.check_circle_outline),
   spending('spending', 'Gasto del mes', Icons.savings_outlined);

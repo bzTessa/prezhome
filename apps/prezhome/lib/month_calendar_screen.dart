@@ -18,7 +18,8 @@ import 'utils/friendly_error.dart';
 /// cocina en lote (compra, día de cocinar y qué pasar a la nevera).
 ///
 /// Es el ÚNICO calendario mensual de la app; se abre desde Comidas > Plan.
-/// Al tocar un día se ve su detalle en el panel inferior.
+/// Al tocar un día se ve su detalle debajo; "Ver en el plan" cierra el
+/// calendario devolviendo ese día (`Navigator.pop<DateTime>`).
 class MonthCalendarScreen extends StatefulWidget {
   const MonthCalendarScreen({super.key});
 
@@ -35,13 +36,6 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
   // Dia seleccionado para ver su detalle (comidas + tareas).
   late DateTime _selectedDay;
 
-  static const _mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Merienda',
-    'dessert': 'Postre',
-  };
   static const _mealOrder = [
     'breakfast',
     'lunch',
@@ -91,7 +85,10 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
   }
 
   void _changeMonth(int delta) {
-    final m = DateTime(_visibleMonth.year, _visibleMonth.month + delta, 1);
+    _showMonth(DateTime(_visibleMonth.year, _visibleMonth.month + delta, 1));
+  }
+
+  void _showMonth(DateTime m) {
     setState(() {
       _visibleMonth = m;
       // Al cambiar de mes, seleccionamos su dia 1 (o hoy si es el mes actual).
@@ -233,7 +230,8 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
       body: FutureBuilder<_MonthData>(
         future: _future,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          final loading = snapshot.connectionState == ConnectionState.waiting;
+          if (loading && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
@@ -243,12 +241,26 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
           if (data.homeId == null) {
             return const Center(child: Text('No perteneces a ningún hogar.'));
           }
-          return Column(
+          return Stack(
             children: [
-              _header(),
-              _weekdayRow(),
-              Expanded(child: SingleChildScrollView(child: _grid(data))),
-              _dayDetail(data),
+              ListView(
+                padding: const EdgeInsets.only(bottom: 24),
+                children: [
+                  _header(),
+                  _weekdayRow(),
+                  // Deslizar a los lados cambia de mes.
+                  GestureDetector(
+                    onHorizontalDragEnd: (d) {
+                      final v = d.primaryVelocity ?? 0;
+                      if (v.abs() > 200) _changeMonth(v < 0 ? 1 : -1);
+                    },
+                    child: _grid(data),
+                  ),
+                  _legend(data),
+                  _dayDetail(data),
+                ],
+              ),
+              if (loading) const LinearProgressIndicator(minHeight: 2),
             ],
           );
         },
@@ -259,6 +271,8 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
   Widget _header() {
     final label =
         '${_monthNames[_visibleMonth.month - 1]} ${_visibleMonth.year}';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
@@ -284,6 +298,11 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
             icon: Icon(Icons.chevron_right, color: AppColors.woodDark),
             onPressed: () => _changeMonth(1),
           ),
+          if (_selectedDay != today)
+            TextButton(
+              onPressed: () => _showMonth(DateTime(now.year, now.month, 1)),
+              child: const Text('Hoy'),
+            ),
         ],
       ),
     );
@@ -396,6 +415,50 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
     );
   }
 
+  /// Qué significa cada color de puntito (solo los que salen este mes).
+  Widget _legend(_MonthData data) {
+    final kinds = {
+      for (final l in data.prepByDay.values)
+        for (final e in l) e.kind,
+    };
+    final items = <(Color, String)>[
+      if (data.mealsByDay.isNotEmpty) (AppColors.woodDark, 'Comidas'),
+      if (data.tasksByDay.isNotEmpty) (AppColors.sage, 'Tareas'),
+      for (final k in PrepEventKind.values)
+        if (kinds.contains(k))
+          (
+            prepEventStyle(k).fg,
+            switch (k) {
+              PrepEventKind.compra => 'Compra',
+              PrepEventKind.cocina => 'Cocinar',
+              PrepEventKind.sacar => 'Sacar',
+            },
+          ),
+    ];
+    if (items.isEmpty) return const SizedBox(height: 4);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+      child: Wrap(
+        spacing: 14,
+        runSpacing: 4,
+        children: [
+          for (final (color, label) in items)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _dot(color),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _dot(Color color) {
     return Container(
       width: 6,
@@ -416,7 +479,6 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxHeight: 320),
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       padding: const EdgeInsets.all(16),
       decoration: AppTheme.cardDecoration(),
@@ -424,13 +486,24 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: AppColors.ink,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => Navigator.of(context).pop(_selectedDay),
+                icon: const Icon(Icons.restaurant_menu_rounded, size: 18),
+                label: Text(meals.isEmpty ? 'Planificar' : 'Ver en el plan'),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           if (empty)
@@ -447,86 +520,89 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
               ],
             )
           else
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final ev in prep) PrepEventTile(event: ev),
-                    if (meals.isNotEmpty) ...[
-                      _sectionTitle('Comidas'),
-                      ...meals.map(
-                        (m) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 80,
-                                child: Text(
-                                  _mealLabels[m.mealType] ?? m.mealType,
-                                  style: TextStyle(
-                                    color: AppColors.inkMuted,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  m.title,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    decoration: m.skipped
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color: m.skipped
-                                        ? AppColors.inkMuted
-                                        : AppColors.ink,
-                                  ),
-                                ),
-                              ),
-                            ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final ev in prep) PrepEventTile(event: ev),
+                if (meals.isNotEmpty) ...[
+                  _sectionTitle('Comidas'),
+                  ...meals.map(
+                    (m) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        children: [
+                          Icon(
+                            mealStyle(m.mealType).icon,
+                            size: 16,
+                            color: mealStyle(m.mealType).fg,
                           ),
-                        ),
-                      ),
-                    ],
-                    if (tasks.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      _sectionTitle('Tareas'),
-                      ...tasks.map(
-                        (t) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.check_circle_outline,
-                                size: 16,
-                                color: AppColors.sage,
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 76,
+                            child: Text(
+                              mealStyle(m.mealType).label,
+                              style: TextStyle(
+                                color: mealStyle(m.mealType).fg,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  t.title,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.ink,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                t.recurrenceLabel,
-                                style: TextStyle(
-                                  color: AppColors.inkMuted,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                          Expanded(
+                            child: Text(
+                              m.title,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                decoration: m.skipped
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: m.skipped
+                                    ? AppColors.inkMuted
+                                    : AppColors.ink,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+                ],
+                if (tasks.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _sectionTitle('Tareas'),
+                  ...tasks.map(
+                    (t) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 16,
+                            color: AppColors.sage,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              t.title,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            t.recurrenceLabel,
+                            style: TextStyle(
+                              color: AppColors.inkMuted,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
         ],
       ),

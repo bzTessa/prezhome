@@ -43,6 +43,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Trabajar con autonomía y entregar en PR; respuestas en español.
 
 ## Mapa del código (`apps/prezhome/lib`)
+- Inicio ya no tiene "Hoy toca" (Tessa lo quitó; borrado `smart_reminders`).
 - Navegación: `main_shell.dart` + barra `packages/prez_ui/lib/src/floating_nav_bar.dart`
   (se desliza el dedo para cambiar). Pestañas en `tabs/`.
 - Diseño: `theme/` (`AppColors`, `AppTextStyles` Plus Jakarta Sans,
@@ -112,8 +113,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (`defaultCategoryFor`) y la zona de la despensa salen de ahí.
 - Plan de comidas: un solo plan semanal, `meal_plan_screen.dart` (semana con
   flechas; vive en Comidas > Plan; Hoy lleva ahí con `onNavigateToPlan`, no abre
-  otra copia). Iconos discretos junto al día: calendario del mes
-  (`month_calendar_screen.dart`, único, con comidas, tareas y cocina en lote) y
+  otra copia; vista Día/Semana con `SegmentedPill`; sin deslizar de día porque
+  Comidas es un `TabBarView`). Iconos junto a Día/Semana: calendario del mes
+  (`month_calendar_screen.dart`, único, con comidas, tareas y cocina en lote;
+  se desliza de mes y "Ver en el plan" devuelve el día con `pop<DateTime>`) y
   ajustes (`services/plan_prefs.dart`, en el dispositivo: ocultar
   desayuno/merienda; "Cocino en tanda" = cooking_mode; sin "desayuno de
   siempre", Tessa lo quitó; horas de cada comida, que usa también el diario
