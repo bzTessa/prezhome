@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0053.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0059.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -102,7 +102,15 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta
-  con `OfflineRepository.changes`), `services/shelf_life.dart`
+  con `OfflineRepository.changes`; lista partida en Caducado / Esta semana /
+  Más adelante / Sin fecha). "Consumido" (deslizar a la derecha, − en el
+  último o la hoja con día y cuántos) lo saca y lo apunta en `pantry_log`
+  ("Lo que se ha gastado" en el menú ···). `services/pantry_usage.dart`
+  descuenta solo los ingredientes de las comidas del plan cuya hora ha pasado
+  (una vez por hogar con `meal_plan_entries.pantry_used_at`; no toca básicos,
+  especias ni "siempre en casa"; sin medida convertible gasta un envase).
+  Foto: `widgets/product_photo_menu.dart`, la misma hoja que la compra.
+  `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
   Especias, Bebidas, Limpieza, Hogar). Zonas en `utils/kitchen_zones.dart`:
   Limpieza y "Higiene y hogar" (category 'Hogar'); lo de casa va ahí aunque
