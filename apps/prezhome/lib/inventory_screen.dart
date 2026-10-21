@@ -1624,7 +1624,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         friendlyError(snap.error, 'No se pudo cargar'),
                       ),
                     )
-                  : const Center(child: CircularProgressIndicator());
+                  : const ListSkeleton(rows: 5);
             }
             final list = snap.data!;
             return ListView(

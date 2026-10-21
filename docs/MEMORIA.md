@@ -194,4 +194,4 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
-- Ofrecido, sin decidir: precios con Open Prices; selector manual claro/oscuro.
+- Ofrecido, sin decidir: precios con Open Prices.

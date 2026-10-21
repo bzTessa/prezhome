@@ -26,6 +26,7 @@ import 'utils/friendly_error.dart';
 import 'utils/pantry_ideas.dart';
 import 'utils/recipe_steps.dart';
 import 'utils/shopping_categories.dart';
+import 'widgets/list_skeleton.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -965,10 +966,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       future: _ingredientsFuture,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const ListSkeleton(rows: 5, leading: false);
         }
         final ings = snap.data ?? [];
         final split = splitByPantry([for (final i in ings) i.name], _pantry);

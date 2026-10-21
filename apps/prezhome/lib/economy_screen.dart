@@ -15,6 +15,7 @@ import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'utils/ticket_date.dart';
+import 'widgets/list_skeleton.dart';
 
 class EconomyScreen extends StatefulWidget {
   const EconomyScreen({super.key, this.showPoints = true});
@@ -497,7 +498,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton(rows: 5, leading: false);
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));

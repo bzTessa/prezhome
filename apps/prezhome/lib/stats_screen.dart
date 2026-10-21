@@ -15,6 +15,7 @@ import 'utils/ticket_date.dart';
 import 'widgets/animations/animated_counter.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/food_category_icon.dart';
+import 'widgets/list_skeleton.dart';
 
 /// "Tus datos": gráficas de gasto (con previsión), compra, despensa, comidas
 /// y tareas del hogar en una sola pantalla.
@@ -304,7 +305,7 @@ class _StatsScreenState extends State<StatsScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton(rows: 4, leading: false);
           }
           if (snap.hasError) {
             return Center(child: Text(friendlyError(snap.error)));

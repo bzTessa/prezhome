@@ -17,6 +17,7 @@ import 'theme/app_theme.dart';
 import 'theme/theme_preference.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
+import 'widgets/list_skeleton.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({super.key});
@@ -473,7 +474,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton(rows: 4);
           }
           if (snapshot.hasError) {
             return Center(

@@ -4,6 +4,7 @@ import '../models/supermarket.dart';
 import '../services/product_search_service.dart';
 import '../theme/app_theme.dart';
 import 'food_image.dart';
+import 'list_skeleton.dart';
 
 /// Abre el buscador de productos del súper. Devuelve el producto elegido o
 /// null si se cierra sin elegir (quien llama añade entonces el texto tal cual,
@@ -157,9 +158,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
 
   Widget _body() {
     if (_loading) {
-      return Center(
-        child: CircularProgressIndicator(color: AppColors.woodDark),
-      );
+      return const ListSkeleton(rows: 5);
     }
     final r = _result;
     if (r == null) {

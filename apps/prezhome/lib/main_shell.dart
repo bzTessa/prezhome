@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
 import 'models/inventory_item.dart';
+import 'services/connection_status.dart';
 import 'services/offline_provider.dart';
 import 'services/proactive_suggestions_service.dart';
 import 'tabs/home_tab.dart';
@@ -13,6 +14,7 @@ import 'shopping_list_screen.dart';
 import 'tasks_screen.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'widgets/offline_banner.dart';
 import 'widgets/proactive_suggestions_banner.dart';
 import 'services/onboarding_applier.dart';
 
@@ -116,6 +118,7 @@ class MainShellState extends State<MainShell> {
     _index = _indexOf(TabId.inicio);
     _loadPrefs();
     _loadSuggestions();
+    ConnectionStatus.instance.start();
   }
 
   @override
@@ -377,37 +380,56 @@ class MainShellState extends State<MainShell> {
         _index != _indexOf(TabId.inicio);
     return Scaffold(
       backgroundColor: AppColors.cream,
-      // Banner descartable del Asistente Proactivo ARRIBA + IndexedStack abajo.
-      // El IndexedStack conserva su index y children intactos; la barra de
-      // navegación no se toca.
-      body: Column(
-        children: [
-          if (showBanner)
-            // SafeArea(bottom:false) para que el banner no se meta bajo la
-            // barra de estado del dispositivo (notch/isla). La parte inferior
-            // la gestiona ya la bottomNavigationBar con su propio SafeArea.
-            SafeArea(
-              bottom: false,
-              child: ProactiveSuggestionsBanner(
-                suggestions: _suggestions,
-                onAction: _onSuggestionsAction,
-                onDismiss: () => setState(() => _suggestionsDismissed = true),
+      // Avisos ARRIBA (servidor caído / incidencia y Asistente Proactivo) +
+      // IndexedStack abajo. El IndexedStack conserva su index y children
+      // intactos; la barra de navegación no se toca.
+      body: ListenableBuilder(
+        listenable: Listenable.merge([
+          ConnectionStatus.instance.online,
+          ConnectionStatus.instance.notice,
+        ]),
+        builder: (context, _) {
+          final online = ConnectionStatus.instance.online.value;
+          final notice = ConnectionStatus.instance.notice.value;
+          final showStatus = !online || notice != null;
+          final showTop = showStatus || showBanner;
+          return Column(
+            children: [
+              if (showTop)
+                // SafeArea(bottom:false) para que los avisos no se metan bajo
+                // la barra de estado del dispositivo (notch/isla). La parte
+                // inferior la gestiona la bottomNavigationBar.
+                SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      if (showStatus)
+                        OfflineBanner(online: online, notice: notice),
+                      if (showBanner)
+                        ProactiveSuggestionsBanner(
+                          suggestions: _suggestions,
+                          onAction: _onSuggestionsAction,
+                          onDismiss: () =>
+                              setState(() => _suggestionsDismissed = true),
+                        ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                // Con avisos arriba, la barra de estado ya está cubierta: las
+                // pestañas no deben volver a dejar su hueco.
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeTop: showTop,
+                  child: IndexedStack(
+                    index: _index,
+                    children: [for (final t in _tabs) t.page],
+                  ),
+                ),
               ),
-            ),
-          Expanded(
-            // Con el banner arriba, la barra de estado ya está cubierta: las
-            // pestañas no deben volver a dejar su hueco (quedaba un espacio
-            // vacío entre el banner y el título).
-            child: MediaQuery.removePadding(
-              context: context,
-              removeTop: showBanner,
-              child: IndexedStack(
-                index: _index,
-                children: [for (final t in _tabs) t.page],
-              ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
       // Barra flotante compartida (packages/prez_ui): píldora con la pestaña
       // activa expandida (icono + texto) y las demás solo con icono.
