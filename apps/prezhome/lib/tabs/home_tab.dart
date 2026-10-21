@@ -1141,18 +1141,13 @@ class HomeTabState extends State<HomeTab> {
 
   /// Par de colores (fondo pastel + acento) para el cuadro de icono de cada
   /// tarjeta del dashboard, dando vida y color por tipo de información de forma
-  /// coherente con la paleta Cozy. Caducidades cambia según su estado.
+  /// coherente con la paleta Cozy.
   (Color, Color) _cardAccent(DashboardCard card) {
     switch (card) {
       case DashboardCard.reminders:
         return (AppColors.soonBg, AppColors.woodDark);
       case DashboardCard.meals:
         return (AppColors.peachBg, AppColors.peach);
-      case DashboardCard.expiry:
-        final hasExpired = _expired > 0;
-        return hasExpired
-            ? (AppColors.expiredBg, AppColors.expired)
-            : (AppColors.soonBg, AppColors.soon);
       case DashboardCard.calories:
         return (AppColors.terracottaBg, AppColors.terracotta);
       case DashboardCard.tasks:
@@ -1183,8 +1178,6 @@ class HomeTabState extends State<HomeTab> {
         return _remindersCard();
       case DashboardCard.meals:
         return _mealsCard();
-      case DashboardCard.expiry:
-        return _expiryCard();
       case DashboardCard.calories:
         return _caloriesCard();
       case DashboardCard.tasks:
@@ -1436,121 +1429,6 @@ class HomeTabState extends State<HomeTab> {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  /// Tarjeta 'Caducidades': resume cuántos alimentos caducan pronto y cuántos
-  /// ya han caducado. Al tocarla cambia a la pestaña Despensa > Inventario, que
-  /// es donde el inventario vive de verdad, y al volver a Inicio MainShell
-  /// refresca el recuento. Si no hay nada que avisar, muestra un mensaje
-  /// tranquilizador con el tono cozy de Miau.
-  Widget _expiryCard() {
-    final accent = _cardAccent(DashboardCard.expiry);
-    final hasAlerts = _expiringSoon > 0 || _expired > 0;
-
-    return InkWell(
-      borderRadius: AppRadius.lgRadius,
-      onTap: () {
-        // El inventario vive en la pestaña Despensa > Inventario; en vez de
-        // abrir una InventoryScreen suelta a pantalla completa, cambiamos a esa
-        // pestaña (sub-tab Inventario por defecto). Al volver a Inicio,
-        // MainShell refresca la vista activa, así que el recuento de
-        // caducidades se actualiza solo.
-        widget.onNavigateToDespensa?.call();
-      },
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (hasAlerts)
-              const MiauCharacter(
-                mood: MiauMood.worried,
-                size: 48,
-                float: false,
-              )
-            else
-              _cardIconBox(Icons.event_busy, accent),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Caducidades', style: AppTextStyles.title),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (!hasAlerts)
-                    Text(
-                      'Todo fresco por aquí.',
-                      style: AppTextStyles.bodyMuted,
-                    )
-                  else
-                    Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.xs,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (_expiringSoon > 0)
-                          _expiryCountChip(
-                            count: _expiringSoon,
-                            singular: 'alimento caduca pronto',
-                            plural: 'alimentos caducan pronto',
-                            bg: AppColors.soonBg,
-                            fg: AppColors.soon,
-                          ),
-                        if (_expired > 0)
-                          _expiryCountChip(
-                            count: _expired,
-                            singular: 'alimento caducado',
-                            plural: 'alimentos caducados',
-                            bg: AppColors.expiredBg,
-                            fg: AppColors.expired,
-                          ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.inkMuted.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Chip con recuento animado (AnimatedCounter) + etiqueta, para las alertas
-  /// de caducidad. Reutiliza los MISMOS textos singular/plural de siempre.
-  Widget _expiryCountChip({
-    required int count,
-    required String singular,
-    required String plural,
-    required Color bg,
-    required Color fg,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(color: bg, borderRadius: AppRadius.smRadius),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedCounter(
-            value: count.toDouble(),
-            formatter: (v) => '${v.round()}',
-            style: AppTextStyles.bodyStrong.copyWith(color: fg),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            count == 1 ? singular : plural,
-            style: AppTextStyles.label.copyWith(color: fg),
-          ),
         ],
       ),
     );
