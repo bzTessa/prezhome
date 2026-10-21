@@ -2,22 +2,35 @@ import '../models/meal_plan_entry.dart';
 import '../models/recipe.dart';
 import 'meal_prep_planner.dart';
 
-/// Plan de cocina en lote de la semana que empieza en [weekStart], solo con
-/// lo que queda por comer desde [today]. Lo comparten el plan semanal y el
-/// calendario del mes para que digan lo mismo.
+/// Plan de cocina en lote de la semana que empieza en [weekStart], desde el
+/// día en que se hizo el plan. No cambia al pasar los días: así los tápers
+/// que ya se guardaron cuadran con lo que se ve. Lo comparten el plan semanal,
+/// el calendario del mes y los tápers automáticos para que digan lo mismo.
 MealPrepPlan prepPlanForWeek({
   required List<MealPlanEntry> entries,
   required Map<String, Recipe> recipesById,
   required DateTime weekStart,
-  required DateTime today,
   int energyLevel = 1,
 }) {
-  final from = weekStart.isAfter(today) ? weekStart : today;
   final end = weekStart.add(const Duration(days: 7));
+  // Rehacer el plan borra la semana y la vuelve a crear: la fila más antigua
+  // dice cuándo se hizo.
+  DateTime? made;
+  for (final e in entries) {
+    final c = e.createdAt;
+    if (c == null || e.date.isBefore(weekStart) || !e.date.isBefore(end)) {
+      continue;
+    }
+    final d = DateTime(c.year, c.month, c.day);
+    if (made == null || d.isBefore(made)) made = d;
+  }
+  final from = made != null && made.isAfter(weekStart) ? made : weekStart;
   final meals = <PrepMeal>[
     for (final e in entries)
-      // Sin raciones (nadie come en casa o plan antiguo) no se cocina.
+      // Sin raciones (nadie come en casa o plan antiguo) no se cocina; lo que
+      // sale del congelador ya está hecho.
       if (!e.skipped &&
+          !e.fromFreezer &&
           e.recipeId != null &&
           (e.servings ?? 0) > 0 &&
           !e.date.isBefore(from) &&

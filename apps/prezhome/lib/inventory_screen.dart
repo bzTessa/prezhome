@@ -14,6 +14,7 @@ import 'services/offline_repository.dart';
 import 'services/pantry_usage.dart';
 import 'services/product_photo_resolver.dart';
 import 'services/proactive_suggestions_service.dart';
+import 'services/taper_sync.dart';
 import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/list_skeleton.dart';
@@ -150,6 +151,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   /// con la caché. setState con cuerpo de bloque (nunca arrow con Future).
   Future<void> _refreshFromRemote() async {
     try {
+      // Antes de leer, que estén los tápers de la cocina en lote al día.
+      await TaperSync.sync(Supabase.instance.client);
       final rows = await _repo.refreshFromRemote();
       var items = _rowsToItems(rows);
       if (await _mergeDuplicates(items)) {

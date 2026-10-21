@@ -23,6 +23,7 @@ import '../models/task.dart';
 import '../services/smart_reminders.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
+import '../services/taper_sync.dart';
 import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
@@ -90,10 +91,6 @@ class HomeTabState extends State<HomeTab> {
   int _expiringSoon = 0;
   int _expired = 0;
 
-  // Recordatorios inteligentes unificados (cocina/congelador/caducidad/tareas/
-  // compra). Se calculan sin IA cruzando los datos del día.
-  List<Reminder> _reminders = [];
-
   // Productos pendientes en la lista de la compra (para el acceso de un
   // vistazo).
   int _pendingShopping = 0;
@@ -138,7 +135,7 @@ class HomeTabState extends State<HomeTab> {
       _loadEconomySummary(),
       _loadCaloriesSummary(),
       _loadExpirySummary(),
-      _loadReminders(),
+      _loadPendingShopping(),
     ]);
   }
 
@@ -390,6 +387,7 @@ class HomeTabState extends State<HomeTab> {
       await PlanDiary.sync(_client);
       // Lo usado en las comidas del plan sale también de la despensa.
       unawaited(PantryUsage.syncPlan(_client));
+      unawaited(TaperSync.sync(_client));
 
       final profileRow = await _client
           .from('profiles')
@@ -482,10 +480,8 @@ class HomeTabState extends State<HomeTab> {
     }
   }
 
-  /// Construye los recordatorios inteligentes (sin IA) cruzando: inventario de
-  /// comida (caducidades y congelador), comidas de hoy, tareas de hoy y compra
-  /// pendiente. Best-effort: si algo falla, la tarjeta se ve con lo que haya.
-  Future<void> _loadReminders() async {
+  /// Cuenta lo pendiente en la lista de la compra para el acceso rápido.
+  Future<void> _loadPendingShopping() async {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
@@ -496,83 +492,14 @@ class HomeTabState extends State<HomeTab> {
           .maybeSingle();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
-
-      // Inventario de comida con caducidad.
-      final invRes = await _client
-          .from('inventory_items')
-          .select()
-          .eq('home_id', homeId);
-      final items = (invRes as List)
-          .map((m) => InventoryItem.fromMap(m as Map<String, dynamic>))
-          .where((it) => it.itemType == 'comida')
-          .toList();
-
-      final stock = <ReminderStockItem>[];
-      final takeOuts = <ReminderTakeOut>[];
-      for (final it in items) {
-        final frozen = it.category == 'Congelador';
-        stock.add(
-          ReminderStockItem(
-            name: it.name,
-            daysUntilExpiry: it.daysUntilExpiry,
-            isFrozen: frozen,
-          ),
-        );
-        // Platos congelados que convviene sacar: si su consumo preferente está
-        // muy cerca (<=2 días), sugerimos sacarlos. Es una señal simple y útil
-        // sin depender del plan.
-        if (frozen && it.kind == 'dish') {
-          final d = it.daysUntilExpiry;
-          if (d != null && d <= 2) {
-            // daysUntilTakeOut 0 = hoy. Si ya caducó (d<0) -> ya tocaba.
-            takeOuts.add(
-              ReminderTakeOut(name: it.name, daysUntilTakeOut: d < 0 ? -1 : 0),
-            );
-          }
-        }
-      }
-
-      // Tareas que vencen hoy o están vencidas (de las ya cargadas).
-      final today = DateTime.now();
-      final todayKey = DateTime(today.year, today.month, today.day);
-      final tareasHoy = <String>[];
-      for (final t in _pendingTasks) {
-        final due = t.dueDate;
-        if (due == null) continue;
-        final dd = DateTime(due.year, due.month, due.day);
-        if (!dd.isAfter(todayKey)) tareasHoy.add(t.title);
-      }
-
-      // Compra pendiente (no comprada).
-      int pending = 0;
-      try {
-        final shopRes = await _client
-            .from('shopping_list_items')
-            .select('id')
-            .eq('home_id', homeId)
-            .eq('checked', false);
-        pending = (shopRes as List).length;
-      } catch (_) {}
-
-      final reminders = buildReminders(
-        mealsToday: [
-          for (final m in _todayItems)
-            if (!m.skipped) m.title,
-        ],
-        stock: stock,
-        takeOuts: takeOuts,
-        tasksToday: tareasHoy,
-        pendingShopping: pending,
-      );
-
-      if (mounted) {
-        setState(() {
-          _reminders = reminders;
-          _pendingShopping = pending;
-        });
-      }
+      final shopRes = await _client
+          .from('shopping_list_items')
+          .select('id')
+          .eq('home_id', homeId)
+          .eq('checked', false);
+      if (mounted) setState(() => _pendingShopping = (shopRes as List).length);
     } catch (e) {
-      debugPrint('HomeTab._loadReminders error: $e');
+      debugPrint('HomeTab._loadPendingShopping error: $e');
     }
   }
 
@@ -1146,18 +1073,11 @@ class HomeTabState extends State<HomeTab> {
 
   /// Par de colores (fondo pastel + acento) para el cuadro de icono de cada
   /// tarjeta del dashboard, dando vida y color por tipo de información de forma
-  /// coherente con la paleta Cozy. Caducidades cambia según su estado.
+  /// coherente con la paleta Cozy.
   (Color, Color) _cardAccent(DashboardCard card) {
     switch (card) {
-      case DashboardCard.reminders:
-        return (AppColors.soonBg, AppColors.woodDark);
       case DashboardCard.meals:
         return (AppColors.peachBg, AppColors.peach);
-      case DashboardCard.expiry:
-        final hasExpired = _expired > 0;
-        return hasExpired
-            ? (AppColors.expiredBg, AppColors.expired)
-            : (AppColors.soonBg, AppColors.soon);
       case DashboardCard.calories:
         return (AppColors.terracottaBg, AppColors.terracotta);
       case DashboardCard.tasks:
@@ -1184,12 +1104,8 @@ class HomeTabState extends State<HomeTab> {
   /// Devuelve el widget de una tarjeta del dashboard por su tipo.
   Widget _cardWidget(DashboardCard card) {
     switch (card) {
-      case DashboardCard.reminders:
-        return _remindersCard();
       case DashboardCard.meals:
         return _mealsCard();
-      case DashboardCard.expiry:
-        return _expiryCard();
       case DashboardCard.calories:
         return _caloriesCard();
       case DashboardCard.tasks:
@@ -1319,6 +1235,116 @@ class HomeTabState extends State<HomeTab> {
     if (result != null) await _savePrefs(result);
   }
 
+  /// Tarjeta 'Caducidades': resume cuántos alimentos caducan pronto y cuántos
+  /// ya han caducado. Al tocarla cambia a la pestaña Despensa > Inventario, que
+  /// es donde el inventario vive de verdad, y al volver a Inicio MainShell
+  /// refresca el recuento. Si no hay nada que avisar, muestra un mensaje
+  /// tranquilizador con el tono cozy de Miau.
+  Widget _expiryCard() {
+    final accent = _cardAccent(DashboardCard.expiry);
+    final hasAlerts = _expiringSoon > 0 || _expired > 0;
+
+    return InkWell(
+      borderRadius: AppRadius.lgRadius,
+      onTap: () {
+        // El inventario vive en la pestaña Despensa > Inventario; en vez de
+        // abrir una InventoryScreen suelta a pantalla completa, cambiamos a esa
+        // pestaña (sub-tab Inventario por defecto). Al volver a Inicio,
+        // MainShell refresca la vista activa, así que el recuento de
+        // caducidades se actualiza solo.
+        widget.onNavigateToDespensa?.call();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasAlerts)
+              const MiauCharacter(
+                mood: MiauMood.worried,
+                size: 48,
+                float: false,
+              )
+            else
+              _cardIconBox(Icons.event_busy, accent),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Caducidades', style: AppTextStyles.title),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (!hasAlerts)
+                    Text(
+                      'Todo fresco por aquí.',
+                      style: AppTextStyles.bodyMuted,
+                    )
+                  else
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (_expiringSoon > 0)
+                          _expiryCountChip(
+                            count: _expiringSoon,
+                            singular: 'alimento caduca pronto',
+                            plural: 'alimentos caducan pronto',
+                            bg: AppColors.soonBg,
+                            fg: AppColors.soon,
+                          ),
+                        if (_expired > 0)
+                          _expiryCountChip(
+                            count: _expired,
+                            singular: 'alimento caducado',
+                            plural: 'alimentos caducados',
+                            bg: AppColors.expiredBg,
+                            fg: AppColors.expired,
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.inkMuted.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Chip con recuento animado (AnimatedCounter) + etiqueta, para las alertas
+  /// de caducidad. Reutiliza los MISMOS textos singular/plural de siempre.
+  Widget _expiryCountChip({
+    required int count,
+    required String singular,
+    required String plural,
+    required Color bg,
+    required Color fg,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(color: bg, borderRadius: AppRadius.smRadius),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedCounter(
+            value: count.toDouble(),
+            formatter: (v) => '${v.round()}',
+            style: AppTextStyles.bodyStrong.copyWith(color: fg),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            count == 1 ? singular : plural,
+            style: AppTextStyles.label.copyWith(color: fg),
+          ),
   /// Tarjeta 'Hoy toca': centro de recordatorios inteligentes unificados
   /// (cocina, congelador, caducidades, tareas, compra), ordenados por urgencia.
   Widget _remindersCard() {
@@ -1441,121 +1467,6 @@ class HomeTabState extends State<HomeTab> {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  /// Tarjeta 'Caducidades': resume cuántos alimentos caducan pronto y cuántos
-  /// ya han caducado. Al tocarla cambia a la pestaña Despensa > Inventario, que
-  /// es donde el inventario vive de verdad, y al volver a Inicio MainShell
-  /// refresca el recuento. Si no hay nada que avisar, muestra un mensaje
-  /// tranquilizador con el tono cozy de Miau.
-  Widget _expiryCard() {
-    final accent = _cardAccent(DashboardCard.expiry);
-    final hasAlerts = _expiringSoon > 0 || _expired > 0;
-
-    return InkWell(
-      borderRadius: AppRadius.lgRadius,
-      onTap: () {
-        // El inventario vive en la pestaña Despensa > Inventario; en vez de
-        // abrir una InventoryScreen suelta a pantalla completa, cambiamos a esa
-        // pestaña (sub-tab Inventario por defecto). Al volver a Inicio,
-        // MainShell refresca la vista activa, así que el recuento de
-        // caducidades se actualiza solo.
-        widget.onNavigateToDespensa?.call();
-      },
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (hasAlerts)
-              const MiauCharacter(
-                mood: MiauMood.worried,
-                size: 48,
-                float: false,
-              )
-            else
-              _cardIconBox(Icons.event_busy, accent),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Caducidades', style: AppTextStyles.title),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (!hasAlerts)
-                    Text(
-                      'Todo fresco por aquí.',
-                      style: AppTextStyles.bodyMuted,
-                    )
-                  else
-                    Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.xs,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (_expiringSoon > 0)
-                          _expiryCountChip(
-                            count: _expiringSoon,
-                            singular: 'alimento caduca pronto',
-                            plural: 'alimentos caducan pronto',
-                            bg: AppColors.soonBg,
-                            fg: AppColors.soon,
-                          ),
-                        if (_expired > 0)
-                          _expiryCountChip(
-                            count: _expired,
-                            singular: 'alimento caducado',
-                            plural: 'alimentos caducados',
-                            bg: AppColors.expiredBg,
-                            fg: AppColors.expired,
-                          ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.inkMuted.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Chip con recuento animado (AnimatedCounter) + etiqueta, para las alertas
-  /// de caducidad. Reutiliza los MISMOS textos singular/plural de siempre.
-  Widget _expiryCountChip({
-    required int count,
-    required String singular,
-    required String plural,
-    required Color bg,
-    required Color fg,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(color: bg, borderRadius: AppRadius.smRadius),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedCounter(
-            value: count.toDouble(),
-            formatter: (v) => '${v.round()}',
-            style: AppTextStyles.bodyStrong.copyWith(color: fg),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            count == 1 ? singular : plural,
-            style: AppTextStyles.label.copyWith(color: fg),
-          ),
         ],
       ),
     );

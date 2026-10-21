@@ -7,17 +7,6 @@ import 'dashboard_prefs.dart';
 /// preferencias (módulos, estilo de cocina, tarjetas de Inicio) y al hogar
 /// (supermercados). Lógica PURA para poder testearla.
 
-enum HousingType {
-  piso('piso', 'Piso', 'En un edificio'),
-  casa('casa', 'Casa', 'Con o sin jardín'),
-  compartido('compartido', 'Piso compartido', 'Con compañeros o residencia');
-
-  const HousingType(this.id, this.label, this.subtitle);
-  final String id;
-  final String label;
-  final String subtitle;
-}
-
 /// Lo que la persona quiere quitarse de la cabeza. Cada objetivo activa
 /// partes concretas de la app.
 enum HomeGoal {
@@ -46,21 +35,6 @@ enum CookingHabit {
   final String subtitle;
 }
 
-enum ShoppingFrequency {
-  pocosDias('pocos_dias', 'Cada pocos días', '2-3 veces por semana', 3),
-  semanal('semanal', 'Una vez por semana', 'La compra grande del finde', 7),
-  quincenal('quincenal', 'Cada dos semanas', 'Compra grande y reposición', 14),
-  mensual('mensual', 'Una vez al mes', 'Gran compra mensual', 30);
-
-  const ShoppingFrequency(this.id, this.label, this.subtitle, this.days);
-  final String id;
-  final String label;
-  final String subtitle;
-
-  /// Días que debería cubrir la lista de la compra.
-  final int days;
-}
-
 /// Resultado del cuestionario que se enseña al final.
 class HouseholdProfile {
   const HouseholdProfile({
@@ -80,43 +54,31 @@ class HouseholdProfile {
 
 class OnboardingAnswers {
   const OnboardingAnswers({
-    this.housing,
     this.people = 2,
     this.goals = const {},
     this.cooking,
     this.supermarkets = const [],
-    this.shopping,
-    this.reminders = true,
   });
 
-  final HousingType? housing;
   final int people;
   final Set<HomeGoal> goals;
   final CookingHabit? cooking;
 
   /// Claves de `Supermarket` en el orden elegido (el primero es el principal).
   final List<String> supermarkets;
-  final ShoppingFrequency? shopping;
-  final bool reminders;
 
   static const String storageKey = 'onboarding_answers';
 
   OnboardingAnswers copyWith({
-    HousingType? housing,
     int? people,
     Set<HomeGoal>? goals,
     CookingHabit? cooking,
     List<String>? supermarkets,
-    ShoppingFrequency? shopping,
-    bool? reminders,
   }) => OnboardingAnswers(
-    housing: housing ?? this.housing,
     people: people ?? this.people,
     goals: goals ?? this.goals,
     cooking: cooking ?? this.cooking,
     supermarkets: supermarkets ?? this.supermarkets,
-    shopping: shopping ?? this.shopping,
-    reminders: reminders ?? this.reminders,
   );
 
   // ---- Perfil de hogar ------------------------------------------------------
@@ -124,12 +86,7 @@ class OnboardingAnswers {
   HouseholdProfile get profile {
     final String name;
     final String description;
-    if (housing == HousingType.compartido) {
-      name = 'El Piso Compartido';
-      description =
-          'Varias personas, cada una con su ritmo. PrezHome deja claro quién '
-          'hace qué y qué hay en la nevera, sin notas en la puerta.';
-    } else if (people <= 1) {
+    if (people <= 1) {
       name = 'En Solitario';
       description =
           'Toda la casa depende de ti. PrezHome se acuerda de lo que hay, lo '
@@ -179,7 +136,6 @@ class OnboardingAnswers {
     final hidden = <DashboardCard>{
       if (!goals.contains(HomeGoal.comidas)) DashboardCard.meals,
       if (!goals.contains(HomeGoal.comidas)) DashboardCard.calories,
-      if (!goals.contains(HomeGoal.despensa)) DashboardCard.expiry,
       if (!goals.contains(HomeGoal.tareas)) DashboardCard.tasks,
       if (!goals.contains(HomeGoal.gastos)) DashboardCard.spending,
     };
@@ -203,13 +159,10 @@ class OnboardingAnswers {
   // ---- Guardado ----------------------------------------------------------------
 
   String encode() => jsonEncode({
-    'housing': housing?.id,
     'people': people,
     'goals': goals.map((g) => g.id).toList(),
     'cooking': cooking?.id,
     'supermarkets': supermarkets,
-    'shopping': shopping?.id,
-    'reminders': reminders,
   });
 
   /// Tolerante: null si no hay datos o están corruptos.
@@ -226,7 +179,6 @@ class OnboardingAnswers {
       }
 
       return OnboardingAnswers(
-        housing: byId(HousingType.values, (h) => h.id, m['housing']),
         people: (m['people'] is int) ? (m['people'] as int).clamp(1, 12) : 2,
         goals: {
           for (final g in (m['goals'] is List ? m['goals'] as List : const []))
@@ -236,8 +188,6 @@ class OnboardingAnswers {
         supermarkets: (m['supermarkets'] is List)
             ? (m['supermarkets'] as List).map((e) => e.toString()).toList()
             : const [],
-        shopping: byId(ShoppingFrequency.values, (s) => s.id, m['shopping']),
-        reminders: m['reminders'] != false,
       );
     } catch (_) {
       return null;

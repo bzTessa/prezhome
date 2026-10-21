@@ -35,7 +35,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   late int _page = widget.initialPage;
   late OnboardingAnswers _a = widget.initialAnswers;
 
-  static const int _questions = 7;
+  static const int _questions = 4;
 
   void _next() => setState(() => _page++);
   void _back() => setState(() => _page = (_page - 1).clamp(0, _page));
@@ -87,31 +87,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           onLogin: () => _finish(signUp: false),
         );
       case 1:
-        return _single<HousingType>(
-          section: 'Tu casa',
-          title: '¿Dónde vives?',
-          illustration: 'assets/images/onb_hogar.png',
-          subtitle: 'Así adaptamos tareas y recordatorios a tu hogar.',
-          values: HousingType.values,
-          selected: _a.housing,
-          label: (v) => v.label,
-          sub: (v) => v.subtitle,
-          icon: (v) => switch (v) {
-            HousingType.piso => Icons.apartment_rounded,
-            HousingType.casa => Icons.house_rounded,
-            HousingType.compartido => Icons.groups_rounded,
-          },
-          color: (v) => switch (v) {
-            HousingType.piso => AppColors.frost,
-            HousingType.casa => AppColors.terracotta,
-            HousingType.compartido => AppColors.sage,
-          },
-          onSelect: (v) => _a = _a.copyWith(housing: v),
-        );
-      case 2:
         return QuestionScaffold(
           section: 'Tu hogar',
-          step: 2,
+          step: 1,
           total: _questions,
           title: '¿Cuántas personas vivís?',
           illustration: 'assets/images/onb_personas.png',
@@ -123,10 +101,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             onChanged: (v) => setState(() => _a = _a.copyWith(people: v)),
           ),
         );
-      case 3:
+      case 2:
         return QuestionScaffold(
           section: 'Lo que te ocupa',
-          step: 3,
+          step: 2,
           total: _questions,
           title: '¿Qué quieres quitarte de la cabeza?',
           illustration: 'assets/images/onb_cabeza.png',
@@ -154,7 +132,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             ],
           ),
         );
-      case 4:
+      case 3:
         return _single<CookingHabit>(
           section: 'En la cocina',
           title: '¿Cómo cocináis?',
@@ -177,10 +155,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           },
           onSelect: (v) => _a = _a.copyWith(cooking: v),
         );
-      case 5:
+      case 4:
         return QuestionScaffold(
           section: 'La compra',
-          step: 5,
+          step: 4,
           total: _questions,
           title: '¿Dónde compras?',
           illustration: 'assets/images/onb_compra.png',
@@ -189,45 +167,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               'productos fáciles de encontrar allí.',
           onBack: _back,
           onContinue: _next,
-          continueLabel: _a.supermarkets.isEmpty ? 'Saltar' : 'Continuar',
+          continueLabel: _a.supermarkets.isEmpty
+              ? 'Saltar y ver mi hogar'
+              : 'Ver mi hogar',
           child: _SupermarketPicker(
             selected: _a.supermarkets,
             onChanged: (v) => setState(() => _a = _a.copyWith(supermarkets: v)),
           ),
-        );
-      case 6:
-        return _single<ShoppingFrequency>(
-          section: 'La compra',
-          title: '¿Cada cuánto haces la compra?',
-          subtitle: 'Para que la lista cubra justo hasta la siguiente.',
-          values: ShoppingFrequency.values,
-          selected: _a.shopping,
-          label: (v) => v.label,
-          sub: (v) => v.subtitle,
-          icon: (v) => switch (v) {
-            ShoppingFrequency.pocosDias => Icons.shopping_basket_rounded,
-            ShoppingFrequency.semanal => Icons.calendar_view_week_rounded,
-            ShoppingFrequency.quincenal => Icons.date_range_rounded,
-            ShoppingFrequency.mensual => Icons.calendar_month_rounded,
-          },
-          color: (_) => AppColors.sage,
-          onSelect: (v) => _a = _a.copyWith(shopping: v),
-        );
-      case 7:
-        return _single<bool>(
-          section: 'Avisos',
-          title: '¿Quieres que te avisemos?',
-          subtitle: 'De lo que caduca, lo que toca hacer y lo que falta.',
-          values: const [true, false],
-          selected: _a.reminders,
-          label: (v) => v ? 'Sí, avísame' : 'Sin avisos',
-          sub: (v) => v ? 'Solo lo importante' : 'Ya lo miro yo',
-          icon: (v) => v
-              ? Icons.notifications_active_rounded
-              : Icons.notifications_off_rounded,
-          color: (v) => v ? AppColors.favorite : AppColors.inkMuted,
-          onSelect: (v) => _a = _a.copyWith(reminders: v),
-          continueLabel: 'Ver mi perfil de hogar',
         );
       default:
         return _ResultPage(

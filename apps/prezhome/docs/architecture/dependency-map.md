@@ -11,6 +11,7 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 | `onboarding` | 2 |
 | `screens` | 31 |
 | `services` | 40 |
+| `services` | 38 |
 | `tabs` | 3 |
 | `theme` | 7 |
 | `utils` | 18 |
@@ -32,10 +33,16 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 
 - `screens` -> `widgets`: 75
 - `screens` -> `services`: 70
+- `screens` -> `widgets`: 73
+- `screens` -> `services`: 71
 - `screens` -> `models`: 52
+- `screens` -> `widgets`: 74
+- `screens` -> `services`: 68
+- `screens` -> `models`: 51
 - `screens` -> `utils`: 50
 - `screens` -> `theme`: 37
 - `widgets` -> `theme`: 36
+- `widgets` -> `theme`: 35
 - `services` -> `models`: 25
 - `tabs` -> `screens`: 14
 - `services` -> `utils`: 10
@@ -44,7 +51,9 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `services` -> `widgets`: 6
 - `tabs` -> `models`: 6
 - `tabs` -> `services`: 6
+- `widgets` -> `services`: 5
 - `onboarding` -> `theme`: 4
+- `tabs` -> `services`: 4
 - `utils` -> `widgets`: 4
 - `widgets` -> `utils`: 4
 - `screens` -> `tabs`: 3
@@ -52,11 +61,11 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `widgets` -> `models`: 3
 - `models` -> `utils`: 2
 - `onboarding` -> `models`: 2
+- `screens` -> `onboarding`: 2
 - `utils` -> `models`: 2
 - `onboarding` -> `screens`: 1
 - `onboarding` -> `services`: 1
 - `onboarding` -> `widgets`: 1
-- `screens` -> `onboarding`: 1
 - `services` -> `data`: 1
 - `tabs` -> `utils`: 1
 - `theme` -> `services`: 1

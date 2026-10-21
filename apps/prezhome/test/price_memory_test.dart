@@ -110,5 +110,16 @@ void main() {
       expect(cost.perServing, closeTo(1.0, 0.001));
       expect(cost.approx, isFalse);
     });
+
+    test('en gramos no multiplica el precio del ticket por los gramos', () {
+      final cost = computeRecipeCost(
+        ingredients: [(name: 'Leche', quantity: 400, unit: 'ml')],
+        prices: prices,
+        servings: 2,
+        approxOf: (_, _, _) => 0.4,
+      );
+      expect(cost.total, closeTo(0.4, 0.001));
+      expect(cost.approx, isTrue);
+    });
   });
 }
