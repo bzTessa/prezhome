@@ -53,12 +53,12 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `models` -> `utils`: 2
 - `onboarding` -> `models`: 2
 - `screens` -> `onboarding`: 2
+- `tabs` -> `utils`: 2
 - `utils` -> `models`: 2
 - `onboarding` -> `screens`: 1
 - `onboarding` -> `services`: 1
 - `onboarding` -> `widgets`: 1
 - `services` -> `data`: 1
-- `tabs` -> `utils`: 1
 - `theme` -> `services`: 1
 - `utils` -> `services`: 1
 - `utils` -> `theme`: 1
