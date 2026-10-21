@@ -116,11 +116,9 @@ class ApproxPrice {
     FoodCategory.otros: 4.0,
   };
 
-  static List<String> _tokens(String name) =>
-      CategoryIcons.normalize(name)
-          .split(RegExp(r'[^a-z0-9]+'))
-          .where((t) => t.isNotEmpty)
-          .toList();
+  static List<String> _tokens(String name) => CategoryIcons.normalize(
+    name,
+  ).split(RegExp(r'[^a-z0-9]+')).where((t) => t.isNotEmpty).toList();
 
   static double? _match(Map<String, double> table, List<String> tokens) {
     for (final entry in table.entries) {

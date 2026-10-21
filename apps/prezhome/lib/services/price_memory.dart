@@ -145,7 +145,7 @@ class PriceMemory {
   }
 
   /// Carga todos los precios conocidos del hogar, indexados por clave, y
-  /// rellena los que faltan con la mediana anónima de otros hogares (0063).
+  /// rellena los que faltan con la mediana anónima de otros hogares (0064).
   Future<Map<String, ProductPrice>> loadAll(String homeId) async {
     final out = <String, ProductPrice>{};
     if (homeId.isEmpty) return out;
