@@ -55,6 +55,20 @@ void main() {
       expect(r.missing, ['Nata para cocinar']);
     });
 
+    test('lo que falta no casa por una palabra suelta', () {
+      final r = splitByPantry(
+        [
+          'Aceitunas negras',
+          'Diente de ajo',
+          'Pimienta negra',
+          'Sal (al gusto)',
+        ],
+        ['Aceite de oliva', 'Ajo', 'Pimienta negra molida'],
+      );
+      expect(r.have, ['Diente de ajo', 'Pimienta negra']);
+      expect(r.missing, ['Aceitunas negras']);
+    });
+
     test('los básicos nunca faltan', () {
       final r = splitByPantry(['Sal', 'Aceite de oliva', 'Agua'], []);
       expect(r.have, isEmpty);

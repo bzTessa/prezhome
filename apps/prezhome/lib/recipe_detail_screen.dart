@@ -973,6 +973,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         final ings = snap.data ?? [];
         final split = splitByPantry([for (final i in ings) i.name], _pantry);
         final have = split.have.toSet();
+        final missing = split.missing.toSet();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -996,7 +997,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       _ingredientRow(
                         i,
                         ings[i],
-                        inPantry: have.contains(ings[i].name.trim()),
+                        // Básicos que no están: sin etiqueta (se suponen).
+                        inPantry: _pantry.isEmpty
+                            ? null
+                            : have.contains(ings[i].name.trim())
+                            ? true
+                            : missing.contains(ings[i].name.trim())
+                            ? false
+                            : null,
                       ),
                   ],
                 ),
@@ -1123,7 +1131,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  Widget _ingredientRow(int i, Ingredient ing, {required bool inPantry}) {
+  Widget _ingredientRow(int i, Ingredient ing, {required bool? inPantry}) {
     final checked = _checkedIngs.contains(i);
     final p = _ingredientParts(ing);
     return InkWell(
@@ -1175,19 +1183,19 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ),
             ),
-            if (inPantry)
+            if (inPantry != null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.sageBg,
+                  color: inPantry ? AppColors.sageBg : AppColors.terracottaBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  'En casa',
+                  inPantry ? 'En casa' : 'Falta',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.sage,
+                    color: inPantry ? AppColors.sage : AppColors.terracotta,
                   ),
                 ),
               ),
@@ -1428,7 +1436,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       final items = (rows as List)
           .map((r) => InventoryItem.fromMap(Map<String, dynamic>.from(r)))
           .toList();
-      if (mounted) setState(() => _pantry = pantryNamesForIdeas(items));
+      if (mounted)
+        setState(() => _pantry = pantryNamesForIdeas(items, max: 1000));
     } catch (_) {
       // Sin despensa no se marca nada.
     }

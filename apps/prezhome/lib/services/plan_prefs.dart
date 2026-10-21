@@ -15,6 +15,7 @@ class PlanPrefs {
     this.times = const {},
     this.fastHours,
     this.calendarId,
+    this.energy = 1,
   });
 
   final Set<String> hidden;
@@ -28,6 +29,9 @@ class PlanPrefs {
 
   /// Calendario del móvil al que se pasan comidas y tareas, o null.
   final String? calendarId;
+
+  /// Cuánto cocinar (0 poco, 1 normal, 2 mucho): cuántos días de tanda hay.
+  final int energy;
 
   static const defaultTimes = {
     'breakfast': 8 * 60 + 30,
@@ -93,11 +97,13 @@ class PlanPrefs {
     Map<String, int>? times,
     int? Function()? fastHours,
     String? Function()? calendarId,
+    int? energy,
   }) => PlanPrefs(
     hidden: hidden ?? this.hidden,
     times: times ?? this.times,
     fastHours: fastHours == null ? this.fastHours : fastHours(),
     calendarId: calendarId == null ? this.calendarId : calendarId(),
+    energy: energy ?? this.energy,
   );
 
   static Future<void> load() async {
@@ -114,6 +120,7 @@ class PlanPrefs {
         },
         fastHours: m['fast_hours'] as int?,
         calendarId: m['calendar_id'] as String?,
+        energy: m['energy'] as int? ?? 1,
       );
     } catch (_) {}
   }
@@ -128,6 +135,7 @@ class PlanPrefs {
           'times': p.times,
           'fast_hours': p.fastHours,
           'calendar_id': p.calendarId,
+          'energy': p.energy,
         }),
       );
     } catch (_) {}

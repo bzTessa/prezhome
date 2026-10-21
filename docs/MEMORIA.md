@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0053.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0059.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -102,7 +102,15 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Despensa ("Mi cocina"): `inventory_screen.dart` (zonas en rejilla de 3, sin
   deslizar, como pestañas +
   "Revisar"; filas compactas; une repetidos con `findPantryDuplicates`; repinta
-  con `OfflineRepository.changes`), `services/shelf_life.dart`
+  con `OfflineRepository.changes`; lista partida en Caducado / Esta semana /
+  Más adelante / Sin fecha). "Consumido" (deslizar a la derecha, − en el
+  último o la hoja con día y cuántos) lo saca y lo apunta en `pantry_log`
+  ("Lo que se ha gastado" en el menú ···). `services/pantry_usage.dart`
+  descuenta solo los ingredientes de las comidas del plan cuya hora ha pasado
+  (una vez por hogar con `meal_plan_entries.pantry_used_at`; no toca básicos,
+  especias ni "siempre en casa"; sin medida convertible gasta un envase).
+  Foto: `widgets/product_photo_menu.dart`, la misma hoja que la compra.
+  `services/shelf_life.dart`
   (`pantryZoneFor`; categorías válidas: Despensa, Nevera, Congelador,
   Especias, Bebidas, Limpieza, Hogar). Zonas en `utils/kitchen_zones.dart`:
   Limpieza y "Higiene y hogar" (category 'Hogar'); lo de casa va ahí aunque
@@ -151,8 +159,16 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `recipe_detail_screen.dart`, `cook_mode_screen.dart` (paso a paso con
   `CookStep`, varios temporizadores, pantalla encendida, manos libres por voz:
   `services/hands_free.dart` + `utils/cook_voice.dart`), `utils/recipe_steps.dart`.
-  Tanda: `batch_prep_timeline_screen.dart` (cada receta se prepara antes de ir a
-  su aparato; acaba con el reparto en tápers del `PrepBatch`).
+  Tanda: `batch_prep_timeline_screen.dart` ("Lo que necesitas" con los
+  ingredientes por raciones, `batchIngredientLines`; cada receta se prepara
+  antes de ir a su aparato; acaba con el reparto en tápers del `PrepBatch`).
+  El plan de tanda sale del día en que se hizo el plan (`created_at`), no de
+  hoy, para que no se mueva; una receta repetida que aguanta en la nevera se
+  cocina una sola vez. "Cuánto cocinar" (`PlanPrefs.energy`) se guarda.
+  Tápers solos: `services/taper_sync.dart` (como `PlanDiary`) los pone en Mi
+  cocina a la hora de comer del día de tanda ("Lentejas (vie 23)", kind dish),
+  los pasa a la nevera la víspera a la hora de cenar y los quita al acabar su
+  día (`taperMoves`). Se llama al abrir Inicio y Mi cocina.
 - Gasto y datos: `stats_screen.dart` ("Tus datos": gráficas de gasto con
   previsión `services/spend_forecast.dart`, compra, despensa, comidas y
   tareas; se abre desde Inicio y Hogar). `economy_screen.dart` = "Gastos y

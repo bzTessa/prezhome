@@ -55,29 +55,41 @@ const Set<String> _pantryBasics = {
 };
 
 /// Separa los ingredientes de una idea en los que ya hay en casa y los que
-/// faltan. Un ingrediente "se tiene" si alguna palabra significativa coincide
-/// con algo de la despensa ("pechuga de pollo" ↔ "pollo"). Los básicos
-/// (sal, aceite, agua…) nunca cuentan como que faltan.
+/// faltan (ver [pantryNameMatches]). Los básicos (sal, aceite, agua…) cuentan
+/// como que se tienen si están en la despensa y, si no, no salen en ninguna
+/// de las dos listas: se dan por supuestos.
 ({List<String> have, List<String> missing}) splitByPantry(
   List<String> ingredients,
   List<String> pantry,
 ) {
-  final pantryWords = <String>{for (final p in pantry) ..._significantWords(p)};
   final have = <String>[];
   final missing = <String>[];
   for (final raw in ingredients) {
     final name = raw.trim();
     if (name.isEmpty) continue;
-    final norm = CategoryIcons.normalize(name);
-    if (_pantryBasics.contains(norm)) continue;
-    final words = _significantWords(name);
-    if (words.any(pantryWords.contains)) {
+    if (pantry.any((p) => pantryNameMatches(name, p))) {
       have.add(name);
-    } else {
+    } else if (!isPantryBasic(name)) {
       missing.add(name);
     }
   }
   return (have: have, missing: missing);
+}
+
+/// Sal, aceite, agua…: se suponen en cualquier cocina.
+bool isPantryBasic(String name) => _pantryBasics.contains(
+  CategoryIcons.normalize(name.replaceAll(RegExp(r'\(.*?\)'), '').trim()),
+);
+
+/// ¿El ingrediente [ingredient] es el producto [pantryName]? Todas las
+/// palabras del nombre más corto tienen que estar en el otro ("pollo" ↔
+/// "pechuga de pollo", "ajo" ↔ "diente de ajo"), así "aceite de oliva" no
+/// casa con "aceitunas de oliva".
+bool pantryNameMatches(String ingredient, String pantryName) {
+  final a = _significantWords(ingredient);
+  final b = _significantWords(pantryName);
+  if (a.isEmpty || b.isEmpty) return false;
+  return a.length <= b.length ? b.containsAll(a) : a.containsAll(b);
 }
 
 /// Palabras que identifican el alimento, en singular aproximado
@@ -108,6 +120,7 @@ Set<String> _significantWords(String name) {
     'picada',
     'entero',
     'entera',
+    'gusto',
   };
   return CategoryIcons.normalize(name)
       .split(RegExp(r'[^a-z0-9]+'))

@@ -8,6 +8,7 @@ class MealPlanEntry {
   final bool fromFreezer; // true = se consume de un plato congelado
   final String? inventoryItemId; // item del congelador del que procede
   final int? servings; // raciones a cocinar (nº de personas que comen en casa)
+  final DateTime? createdAt; // cuándo se hizo el plan (fija la cocina en lote)
 
   MealPlanEntry({
     this.id,
@@ -19,6 +20,7 @@ class MealPlanEntry {
     this.fromFreezer = false,
     this.inventoryItemId,
     this.servings,
+    this.createdAt,
   });
 
   factory MealPlanEntry.fromMap(Map<String, dynamic> map) {
@@ -36,6 +38,9 @@ class MealPlanEntry {
       fromFreezer: (map['from_freezer'] as bool?) ?? false,
       inventoryItemId: map['inventory_item_id'] as String?,
       servings: (map['servings'] as num?)?.toInt(),
+      createdAt: map['created_at'] == null
+          ? null
+          : DateTime.tryParse(map['created_at'].toString())?.toLocal(),
     );
   }
 

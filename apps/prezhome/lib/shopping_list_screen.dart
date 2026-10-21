@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/shopping_list_item.dart';
@@ -36,9 +35,8 @@ import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/food_image.dart';
-import 'widgets/drawn_icons.dart';
-import 'widgets/product_icons.dart';
 import 'widgets/pending_sync_indicator.dart';
+import 'widgets/product_photo_menu.dart';
 import 'widgets/product_search_sheet.dart';
 import 'widgets/shopping/shopping_parts.dart';
 import 'widgets/tactile_button.dart';
@@ -61,7 +59,6 @@ class ShoppingListScreen extends StatefulWidget {
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final SupabaseClient _client = Supabase.instance.client;
-  final ImagePicker _picker = ImagePicker();
 
   // Repositorios offline-first COMPARTIDOS (singletons): esta pantalla y su
   // gemela embebida/ruta comparten la misma caché y la misma cola en memoria.
@@ -724,47 +721,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
               ),
             ),
-            ListTile(
-              leading: Icon(
-                Icons.photo_camera_outlined,
-                color: AppColors.woodDark,
-              ),
-              title: const Text('Hacer una foto'),
-              onTap: () => Navigator.of(ctx).pop('camera'),
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.photo_library_outlined,
-                color: AppColors.woodDark,
-              ),
-              title: const Text('Elegir de la galería'),
-              onTap: () => Navigator.of(ctx).pop('gallery'),
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.storefront_rounded,
-                color: AppColors.woodDark,
-              ),
-              title: const Text('Elegir producto del súper'),
-              onTap: () => Navigator.of(ctx).pop('store'),
-            ),
-            if (ProductIcons.photoKeyFor(item.name) != null)
-              ListTile(
-                leading: Icon(Icons.image_outlined, color: AppColors.woodDark),
-                title: const Text('Generar foto'),
-                onTap: () => Navigator.of(ctx).pop('generate'),
-              ),
-            if (ProductIcons.assetFor(item.name) == null &&
-                ProductIcons.photoKeyFor(item.name) != null)
-              ListTile(
-                leading: Icon(Icons.brush_outlined, color: AppColors.woodDark),
-                title: Text(
-                  DrawnIcons.isDrawn(item.imageUrl)
-                      ? 'Otro dibujo'
-                      : 'Usar un dibujo',
-                ),
-                onTap: () => Navigator.of(ctx).pop('drawing'),
-              ),
+            ...productPhotoTiles(ctx, name: item.name, imageUrl: item.imageUrl),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Quitar de la lista'),
@@ -776,22 +733,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ),
     );
     if (!mounted || action == null) return;
+    if (productPhotoActions.contains(action)) {
+      await _setPhoto(item, action);
+      return;
+    }
     switch (action) {
-      case 'camera':
-        await _pickPhoto(item, ImageSource.camera);
-        break;
-      case 'gallery':
-        await _pickPhoto(item, ImageSource.gallery);
-        break;
-      case 'store':
-        await _pickStoreProductPhoto(item);
-        break;
-      case 'generate':
-        await _generatePhoto(item);
-        break;
-      case 'drawing':
-        await _useDrawing(item);
-        break;
       case 'delete':
         await _removeWithUndo([
           item,
@@ -800,76 +746,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  /// Sube una foto de la galería al bucket y la fija como foto del artículo.
-  /// El bucket recipe-images se reutiliza (ya tiene políticas públicas).
-  Future<void> _pickPhoto(ShoppingListItem item, ImageSource source) async {
+  /// Cambia la foto del artículo (cámara, galería, súper, generada o dibujo).
+  Future<void> _setPhoto(ShoppingListItem item, String action) async {
     if (item.id == null) return;
     try {
-      final file = await _picker.pickImage(
-        source: source,
-        maxWidth: 1000,
-        imageQuality: 82,
-      );
-      if (file == null) return;
       final homeId = await _homeId();
-      final bytes = await file.readAsBytes();
-      final ext = file.name.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
-      final path = '$homeId/shop_${DateTime.now().millisecondsSinceEpoch}.$ext';
-      await _client.storage
-          .from('recipe-images')
-          .uploadBinary(
-            path,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
-              upsert: false,
-            ),
-          );
-      final url = _client.storage.from('recipe-images').getPublicUrl(path);
-      // La foto ya está subida (requiere red); el cambio de image_url pasa por
-      // el repositorio para que la caché lo refleje al instante.
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kShoppingTable,
-          id: item.id!,
-          changes: {'image_url': url},
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      // Memorizamos la foto para ese alimento en la caché del hogar, de modo
-      // que la próxima vez (y en la despensa) se reutilice.
-      await FoodPhotoService(
-        _client,
-      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
-      await _reload();
-    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendlyError(e, 'No se pudo subir la foto')),
-          backgroundColor: AppColors.expired,
-        ),
+      final url = await pickProductPhoto(
+        context,
+        action,
+        homeId: homeId,
+        name: item.name,
+        imageUrl: item.imageUrl,
+        supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
       );
-    }
-  }
-
-  /// Crea otra foto genérica del producto (sustituye la compartida).
-  Future<void> _generatePhoto(ShoppingListItem item) async {
-    if (item.id == null) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Creando la foto…'),
-        duration: Duration(seconds: 30),
-      ),
-    );
-    try {
-      final url = await ProductPhotoResolver(
-        _client,
-      ).genericPhoto(item.name, again: true);
-      messenger.hideCurrentSnackBar();
-      if (url == null) throw Exception('Sin foto');
+      if (url == null) return;
       await _repo.applyLocalWrite(
         buildUpdateOp(
           table: kShoppingTable,
@@ -879,90 +770,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           seq: _nextSeq(),
         ),
       );
-      final homeId = await _homeId();
-      await FoodPhotoService(
-        _client,
-      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
-      await _reload();
-    } catch (e) {
-      messenger.hideCurrentSnackBar();
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(friendlyError(e, 'No se pudo crear la foto')),
-          backgroundColor: AppColors.expired,
-        ),
-      );
-    }
-  }
-
-  /// Pone como foto el dibujo compartido del producto; si ya lo tiene,
-  /// dibuja otro (sustituye el compartido).
-  Future<void> _useDrawing(ShoppingListItem item) async {
-    if (item.id == null) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Dibujando…'),
-        duration: Duration(seconds: 30),
-      ),
-    );
-    try {
-      final url = DrawnIcons.isDrawn(item.imageUrl)
-          ? await DrawnIcons.redraw(item.name)
-          : await DrawnIcons.urlFor(item.name, retry: true);
-      messenger.hideCurrentSnackBar();
-      if (url == null) throw Exception('Sin dibujo');
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kShoppingTable,
-          id: item.id!,
-          changes: {'image_url': url},
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      final homeId = await _homeId();
-      await FoodPhotoService(
-        _client,
-      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
-      await _reload();
-    } catch (e) {
-      messenger.hideCurrentSnackBar();
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(friendlyError(e, 'No se pudo hacer el dibujo')),
-          backgroundColor: AppColors.expired,
-        ),
-      );
-    }
-  }
-
-  /// Pone como foto la del envase de un producto del súper.
-  Future<void> _pickStoreProductPhoto(ShoppingListItem item) async {
-    if (item.id == null) return;
-    final product = await showProductSearchSheet(
-      context,
-      initialQuery: shoppingCleanName(item.name),
-      supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
-    );
-    final url = product?.imageUrl;
-    if (url == null || !mounted) return;
-    try {
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kShoppingTable,
-          id: item.id!,
-          changes: {'image_url': url},
-          nowMillis: DateTime.now().millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      final homeId = await _homeId();
-      await FoodPhotoService(
-        _client,
-      ).rememberPhoto(homeId: homeId, name: item.name, url: url);
       await _reload();
     } catch (e) {
       if (!mounted) return;
