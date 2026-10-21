@@ -27,6 +27,7 @@ import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
+import '../widgets/streak_card.dart';
 import '../widgets/fasting_card.dart';
 import '../widgets/list_skeleton.dart';
 import '../widgets/miau_character.dart';
@@ -124,8 +125,12 @@ class HomeTabState extends State<HomeTab> {
 
   /// Carga todas las secciones del dashboard. Cada carga tiene su propio
   /// try/catch, de modo que un fallo en una no impide ver las demás.
+  // Nueva clave en cada recarga para que la racha se vuelva a leer.
+  Key _streakKey = UniqueKey();
+
   Future<void> _loadDashboard() async {
     _profileFuture = null; // perfil fresco en cada recarga
+    _streakKey = UniqueKey();
     await Future.wait([
       _loadPrefs(),
       _loadTodayPlan(),
@@ -579,6 +584,9 @@ class HomeTabState extends State<HomeTab> {
                 // su pestaña.
                 StaggeredEntrance(index: 2, child: _glanceRow()),
                 const SizedBox(height: AppSpacing.lg),
+
+                StaggeredEntrance(index: 3, child: StreakCard(key: _streakKey)),
+                const SizedBox(height: AppSpacing.md),
 
                 if (_prefs.visibleCards.contains(DashboardCard.calories) &&
                     (!_profileComplete ||
