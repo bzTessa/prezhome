@@ -12,11 +12,10 @@ void main() {
     expect(ProductIcons.iconNameFor('Zumo de naranja'), 'beverage_box');
     expect(ProductIcons.iconNameFor('Pasta de dientes'), 'toothbrush');
     expect(ProductIcons.iconNameFor('nueces'), 'peanuts');
-    expect(ProductIcons.iconNameFor('Salmón'), 'fish');
+    expect(ProductIcons.iconNameFor('Salmón'), 'salmon_fillet');
     // Palabras cortas no casan por prefijo: salmón no es sal, panceta no es pan.
     expect(ProductIcons.iconNameFor('Panceta'), 'bacon');
     expect(ProductIcons.iconNameFor('Quinoa'), isNull);
-    // Sin el dibujo de Tessa en assets, no hay icono propio.
     expect(ProductIcons.assetFor('Quinoa'), isNull);
   });
 
@@ -30,16 +29,30 @@ void main() {
     expect(ProductIcons.isGeneric('Quinoa'), isFalse);
   });
 
-  test('los iconos propios apuntados existen', () {
+  test('cada icono del mapa tiene su dibujo', () {
     final src = File('lib/widgets/product_icons.dart').readAsStringSync();
-    final own = RegExp(r'_own = \{([^}]*)\}').firstMatch(src)![1]!;
-    for (final m in RegExp(r"'([a-z_]+)'").allMatches(own)) {
+    final icons = RegExp(
+      r"^\s+'[a-z ]+': '([a-z_]+)',",
+      multiLine: true,
+    ).allMatches(src).map((m) => m[1]!).toSet();
+    for (final icon in icons) {
       expect(
-        File('assets/icons/products/${m[1]}.png').existsSync(),
+        File('assets/icons/products/$icon.png').existsSync(),
         isTrue,
-        reason: m[1],
+        reason: icon,
       );
     }
+  });
+
+  test('los dibujos nuevos casan con su producto', () {
+    expect(ProductIcons.assetFor('Cebolla'), 'assets/icons/products/onion.png');
+    expect(ProductIcons.iconNameFor('Tortilla de patata'), 'tortilla_patata');
+    expect(ProductIcons.iconNameFor('Queso rallado'), 'grated_cheese');
+    expect(ProductIcons.iconNameFor('Yogur de avena'), 'yogurt_cup');
+    expect(ProductIcons.iconNameFor('Pastilla de caldo'), 'stock_cube');
+    expect(ProductIcons.iconNameFor('Salsa de soja'), 'soy_sauce');
+    expect(ProductIcons.iconNameFor('Pañales'), 'diapers');
+    expect(ProductIcons.iconNameFor('Coca-Cola'), 'soda_can');
   });
 
   test('clave de la foto genérica', () {
