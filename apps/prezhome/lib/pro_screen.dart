@@ -9,6 +9,7 @@ import 'services/pro_purchases.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/tactile_button.dart';
+import 'widgets/list_skeleton.dart';
 
 /// Condiciones de uso estándar de Apple para suscripciones (EULA).
 const _termsUrl =
@@ -85,7 +86,7 @@ class _ProScreenState extends State<ProScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton(rows: 4, leading: false);
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));

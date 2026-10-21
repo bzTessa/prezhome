@@ -12,6 +12,7 @@ import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/plan/plan_parts.dart';
 import 'utils/friendly_error.dart';
+import 'widgets/list_skeleton.dart';
 
 /// Calendario MENSUAL del hogar, todo junto: comidas planificadas, tareas
 /// (con las apariciones futuras de las recurrentes, [TaskOccurrences]) y la
@@ -232,7 +233,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
         builder: (context, snapshot) {
           final loading = snapshot.connectionState == ConnectionState.waiting;
           if (loading && !snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton(leading: false);
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));

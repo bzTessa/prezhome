@@ -7,6 +7,7 @@ import 'models/nutrition_profile.dart';
 import 'profile_wizard_screen.dart';
 import 'utils/friendly_error.dart';
 import 'theme/app_theme.dart';
+import 'widgets/list_skeleton.dart';
 
 class NutritionProfileScreen extends StatefulWidget {
   const NutritionProfileScreen({super.key});
@@ -228,7 +229,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const ListSkeleton(rows: 6, leading: false)
           : ListView(
               padding: const EdgeInsets.all(24),
               children: [

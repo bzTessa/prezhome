@@ -28,6 +28,7 @@ import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fasting_card.dart';
+import '../widgets/list_skeleton.dart';
 import '../widgets/miau_character.dart';
 import '../widgets/plan/plan_parts.dart';
 import '../widgets/recipe_image.dart';
@@ -98,6 +99,9 @@ class HomeTabState extends State<HomeTab> {
   // tarjetas y accesos rápidos). Por usuario, en profiles.dashboard_prefs.
   DashboardPrefs _prefs = DashboardPrefs.defaults();
 
+  // Hasta la primera carga completa se ven esqueletos, no tarjetas a cero.
+  bool _loaded = false;
+
   static const _mealLabels = {
     'breakfast': 'Desayuno',
     'lunch': 'Comida',
@@ -127,6 +131,7 @@ class HomeTabState extends State<HomeTab> {
   /// Carga todas las secciones del dashboard. Cada carga tiene su propio
   /// try/catch, de modo que un fallo en una no impide ver las demás.
   Future<void> _loadDashboard() async {
+    _profileFuture = null; // perfil fresco en cada recarga
     await Future.wait([
       _loadPrefs(),
       _loadTodayPlan(),
@@ -136,7 +141,17 @@ class HomeTabState extends State<HomeTab> {
       _loadExpirySummary(),
       _loadPendingShopping(),
     ]);
+    if (mounted && !_loaded) setState(() => _loaded = true);
   }
+
+  // Todas las tarjetas leen la misma fila de perfil: una sola petición en vez
+  // de una por tarjeta.
+  Future<Map<String, dynamic>?>? _profileFuture;
+  Future<Map<String, dynamic>?> _profile() => _profileFuture ??= _client
+      .from('profiles')
+      .select()
+      .eq('id', _client.auth.currentUser!.id)
+      .maybeSingle();
 
   /// Carga las preferencias del dashboard del usuario (orden/visibilidad de
   /// tarjetas y accesos rápidos). Si no hay, usa las por defecto.
@@ -144,11 +159,7 @@ class HomeTabState extends State<HomeTab> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
-      final row = await _client
-          .from('profiles')
-          .select('dashboard_prefs')
-          .eq('id', user.id)
-          .maybeSingle();
+      final row = await _profile();
       final raw = row?['dashboard_prefs'];
       final prefs = raw is Map
           ? DashboardPrefs.fromJson(Map<String, dynamic>.from(raw))
@@ -178,11 +189,7 @@ class HomeTabState extends State<HomeTab> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
+      final profile = await _profile();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
 
@@ -235,11 +242,7 @@ class HomeTabState extends State<HomeTab> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
+      final profile = await _profile();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
 
@@ -331,11 +334,7 @@ class HomeTabState extends State<HomeTab> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
+      final profile = await _profile();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
 
@@ -345,19 +344,20 @@ class HomeTabState extends State<HomeTab> {
       final startStr = monthStart.toIso8601String().split('T').first;
       final endStr = monthEnd.toIso8601String().split('T').first;
 
-      final budgetRow = await _client
-          .from('budgets')
-          .select('monthly_amount')
-          .eq('home_id', homeId)
-          .maybeSingle();
+      final (budgetRow, ticketsRes) = await (
+        _client
+            .from('budgets')
+            .select('monthly_amount')
+            .eq('home_id', homeId)
+            .maybeSingle(),
+        _client
+            .from('tickets')
+            .select('total_amount')
+            .eq('home_id', homeId)
+            .gte('created_at', startStr)
+            .lt('created_at', endStr),
+      ).wait;
       final budget = (budgetRow?['monthly_amount'] as num?)?.toDouble() ?? 0;
-
-      final ticketsRes = await _client
-          .from('tickets')
-          .select('total_amount')
-          .eq('home_id', homeId)
-          .gte('created_at', startStr)
-          .lt('created_at', endStr);
       final spent = (ticketsRes as List).fold<double>(
         0,
         (a, t) => a + ((t['total_amount'] as num?)?.toDouble() ?? 0),
@@ -388,11 +388,7 @@ class HomeTabState extends State<HomeTab> {
       unawaited(PantryUsage.syncPlan(_client));
       unawaited(TaperSync.sync(_client));
 
-      final profileRow = await _client
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
+      final profileRow = await _profile();
       final profile = profileRow != null
           ? NutritionProfile.fromMap(profileRow)
           : null;
@@ -432,11 +428,7 @@ class HomeTabState extends State<HomeTab> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
+      final profile = await _profile();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
 
@@ -484,11 +476,7 @@ class HomeTabState extends State<HomeTab> {
     try {
       final user = _client.auth.currentUser;
       if (user == null) return;
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
+      final profile = await _profile();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
       final shopRes = await _client
@@ -562,6 +550,13 @@ class HomeTabState extends State<HomeTab> {
               StaggeredEntrance(index: 0, child: _header()),
               const SizedBox(height: AppSpacing.xl),
 
+              if (!_loaded)
+                const ListSkeleton(
+                  rows: 4,
+                  leading: false,
+                  padding: EdgeInsets.zero,
+                )
+              else ...[
               ValueListenableBuilder(
                 valueListenable: PlanPrefs.current,
                 builder: (_, p, _) => p.fastHours == null
@@ -599,6 +594,7 @@ class HomeTabState extends State<HomeTab> {
               for (final (i, card) in rest.indexed) ...[
                 StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
                 const SizedBox(height: AppSpacing.md),
+              ],
               ],
 
               // Como "Editar" en los resúmenes: al final, no compitiendo con
