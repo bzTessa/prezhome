@@ -143,7 +143,8 @@ class PriceMemory {
     }
   }
 
-  /// Carga todos los precios conocidos del hogar, indexados por clave.
+  /// Carga todos los precios conocidos del hogar, indexados por clave, y
+  /// rellena los que faltan con la mediana anónima de otros hogares (0063).
   Future<Map<String, ProductPrice>> loadAll(String homeId) async {
     final out = <String, ProductPrice>{};
     if (homeId.isEmpty) return out;
@@ -154,7 +155,31 @@ class PriceMemory {
         out[p.nameNormalized] = p;
       }
     } catch (_) {}
+    try {
+      // shortcut: trae todos los agregados; filtrar por nombres si crece mucho.
+      final shared = await _client.rpc('shared_product_prices');
+      mergeShared(out, (shared as List).cast<Map<String, dynamic>>());
+    } catch (_) {}
     return out;
+  }
+
+  /// Añade a [own] los precios compartidos de productos que el hogar no tiene.
+  /// El precio propio del hogar siempre gana.
+  static void mergeShared(
+    Map<String, ProductPrice> own,
+    List<Map<String, dynamic>> shared,
+  ) {
+    for (final m in shared) {
+      final key = (m['name_normalized'] ?? '').toString();
+      final price = (m['median_unit_price'] as num?)?.toDouble();
+      if (key.isEmpty || price == null || own.containsKey(key)) continue;
+      own[key] = ProductPrice(
+        nameNormalized: key,
+        lastUnitPrice: price,
+        avgUnitPrice: price,
+        samples: (m['homes'] as num?)?.toInt() ?? 0,
+      );
+    }
   }
 
   /// Estima el coste de una lista de productos {name, quantity} usando los

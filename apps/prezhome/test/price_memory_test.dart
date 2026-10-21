@@ -122,4 +122,24 @@ void main() {
       expect(cost.approx, isTrue);
     });
   });
+
+  group('PriceMemory.mergeShared', () {
+    test('rellena los que faltan y no pisa el precio propio', () {
+      final own = {
+        'leche': const ProductPrice(
+          nameNormalized: 'leche',
+          lastUnitPrice: 1.1,
+          samples: 1,
+        ),
+      };
+      PriceMemory.mergeShared(own, [
+        {'name_normalized': 'leche', 'median_unit_price': 0.9, 'homes': 5},
+        {'name_normalized': 'pan', 'median_unit_price': 0.85, 'homes': 3},
+        {'name_normalized': '', 'median_unit_price': 1, 'homes': 3},
+      ]);
+      expect(own['leche']!.bestPrice, 1.1);
+      expect(own['pan']!.bestPrice, 0.85);
+      expect(own.length, 2);
+    });
+  });
 }
