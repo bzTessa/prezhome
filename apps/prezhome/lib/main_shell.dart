@@ -373,7 +373,11 @@ class MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final showBanner = _suggestions.isNotEmpty && !_suggestionsDismissed;
+    // En Inicio no: la ficha "Por caducar" ya lo cuenta.
+    final showBanner =
+        _suggestions.isNotEmpty &&
+        !_suggestionsDismissed &&
+        _index != _indexOf(TabId.inicio);
     return Scaffold(
       backgroundColor: AppColors.cream,
       // Avisos ARRIBA (servidor caído / incidencia y Asistente Proactivo) +
