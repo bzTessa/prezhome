@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home_session_screen.dart';
+import 'services/connection_status.dart';
 import 'services/offline_provider.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_preference.dart';
@@ -70,6 +71,17 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
   @override
   void didChangePlatformBrightness() => _applyTheme();
 
+  // En segundo plano no comprobamos la conexión; al volver, al momento.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (Supabase.instance.client.auth.currentSession == null) return;
+    if (state == AppLifecycleState.resumed) {
+      ConnectionStatus.instance.start();
+    } else if (state == AppLifecycleState.paused) {
+      ConnectionStatus.instance.stop();
+    }
+  }
+
   void _applyTheme() {
     final before = AppColors.dark;
     _syncBrightness();
@@ -134,6 +146,7 @@ class _AuthGateState extends State<_AuthGate> {
             snapshot.data!.event == AuthChangeEvent.signedOut) {
           // Best-effort y sin bloquear el build: si falla no rompe el arranque.
           OfflineProvider.instance.clearForLogout();
+          ConnectionStatus.instance.stop();
         }
         final session = Supabase.instance.client.auth.currentSession;
         if (session != null) {
