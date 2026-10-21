@@ -11,6 +11,7 @@ import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
 import 'utils/friendly_error.dart';
 import 'theme/app_theme.dart';
+import 'widgets/list_skeleton.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -817,7 +818,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         elevation: 0,
       ),
       body: _loadingInitial
-          ? const Center(child: CircularProgressIndicator())
+          ? const ListSkeleton(rows: 6, leading: false)
           : _aiLoading
           ? Center(
               child: Column(

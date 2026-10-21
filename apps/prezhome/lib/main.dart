@@ -14,6 +14,8 @@ import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Las preferencias locales se leen a la vez que arranca Supabase.
+  final prefs = Future.wait([ThemePreference.load(), PlanPrefs.load()]);
   await Supabase.initialize(
     url: 'https://ubrihtnnkbwcbchvvlno.supabase.co',
     publishableKey: 'sb_publishable_9bsI8HUy7IlctmudvIljtg_zxZmKoAu',
@@ -28,8 +30,7 @@ Future<void> main() async {
     return url == null || url.isEmpty ? null : url;
   };
 
-  await ThemePreference.load();
-  await PlanPrefs.load();
+  await prefs;
   runApp(const PrezHomeApp());
 }
 

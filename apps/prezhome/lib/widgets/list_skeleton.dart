@@ -7,9 +7,15 @@ import '../theme/app_theme.dart';
 /// de un círculo girando: la pantalla ya "tiene su forma" mientras llegan los
 /// datos. Late suavemente; con "reducir movimiento" queda quieto.
 class ListSkeleton extends StatefulWidget {
-  const ListSkeleton({super.key, this.rows = 7, this.leading = true});
+  const ListSkeleton({
+    super.key,
+    this.rows = 7,
+    this.leading = true,
+    this.padding = const EdgeInsets.all(AppSpacing.xl),
+  });
 
   final int rows;
+  final EdgeInsetsGeometry padding;
 
   /// Mostrar el hueco de la foto/icono a la izquierda.
   final bool leading;
@@ -60,8 +66,10 @@ class _ListSkeletonState extends State<ListSkeleton>
           end: 1.0,
         ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut)),
         child: ListView.separated(
+          // shrinkWrap: también cabe dentro de otra lista (Inicio, pestañas).
+          shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: widget.padding,
           itemCount: widget.rows,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
           itemBuilder: (_, i) => Container(

@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
+import 'widgets/list_skeleton.dart';
 
 /// Estadísticas curiosas de productos y precios del hogar, a partir de los
 /// tickets escaneados (ticket_items). Muestra: lo que más compras, en qué más
@@ -66,7 +67,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const ListSkeleton(rows: 4, leading: false);
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));
