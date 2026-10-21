@@ -1,0 +1,79 @@
+-- ============================================================================
+-- PrezWallet · Cartera de inversión (estilo getquin, precios a mano)
+-- ============================================================================
+-- Idempotente. Una posición es un valor (acción, ETF, fondo, cripto…) con
+-- cuántas participaciones hay, a qué precio medio se compraron y el precio
+-- actual, que de momento escribe el usuario. Tipo, sector y región sirven
+-- para el reparto de la cartera. Los dividendos cobrados van aparte, ligados
+-- a su posición. Mismo modelo de acceso que el resto de wallet_*.
+-- ============================================================================
+
+create table if not exists public.wallet_holdings (
+  id          uuid primary key default gen_random_uuid(),
+  owner_id    uuid not null default auth.uid()
+                references auth.users (id) on delete cascade,
+  home_id     uuid references public.homes (id) on delete cascade,
+  name        text not null check (length(trim(name)) > 0),
+  ticker      text,
+  kind        text not null default 'stock'
+                check (kind in ('stock', 'etf', 'fund', 'crypto', 'bond', 'other')),
+  sector      text,
+  region      text,
+  quantity    numeric not null check (quantity >= 0),
+  avg_price   numeric not null check (avg_price >= 0),
+  price       numeric not null check (price >= 0),
+  created_at  timestamptz not null default now()
+);
+create index if not exists wallet_holdings_owner_idx on public.wallet_holdings (owner_id);
+create index if not exists wallet_holdings_home_idx on public.wallet_holdings (home_id);
+
+create table if not exists public.wallet_dividends (
+  id          uuid primary key default gen_random_uuid(),
+  owner_id    uuid not null default auth.uid()
+                references auth.users (id) on delete cascade,
+  home_id     uuid references public.homes (id) on delete cascade,
+  holding_id  uuid not null references public.wallet_holdings (id) on delete cascade,
+  amount      numeric not null check (amount > 0),
+  paid_on     date not null default current_date,
+  created_at  timestamptz not null default now()
+);
+create index if not exists wallet_dividends_owner_idx on public.wallet_dividends (owner_id);
+create index if not exists wallet_dividends_home_idx on public.wallet_dividends (home_id);
+create index if not exists wallet_dividends_holding_idx on public.wallet_dividends (holding_id);
+
+do $$
+declare t text;
+begin
+  foreach t in array array['wallet_holdings', 'wallet_dividends'] loop
+    execute format('alter table public.%I enable row level security', t);
+
+    execute format('drop policy if exists %I on public.%I', t || '_select', t);
+    execute format($p$create policy %I on public.%I for select using (
+      owner_id = auth.uid()
+      or (home_id is not null and home_id = public.auth_home_id()))$p$,
+      t || '_select', t);
+
+    execute format('drop policy if exists %I on public.%I', t || '_insert', t);
+    execute format($p$create policy %I on public.%I for insert with check (
+      owner_id = auth.uid()
+      and (home_id is null or home_id = public.auth_home_id()))$p$,
+      t || '_insert', t);
+
+    execute format('drop policy if exists %I on public.%I', t || '_update', t);
+    execute format($p$create policy %I on public.%I for update using (
+      owner_id = auth.uid()
+      or (home_id is not null and home_id = public.auth_home_id()))
+      with check (
+      (home_id is null and owner_id = auth.uid())
+      or (home_id is not null and home_id = public.auth_home_id()))$p$,
+      t || '_update', t);
+
+    execute format('drop policy if exists %I on public.%I', t || '_delete', t);
+    execute format($p$create policy %I on public.%I for delete using (
+      owner_id = auth.uid()
+      or (home_id is not null and home_id = public.auth_home_id()))$p$,
+      t || '_delete', t);
+
+    execute format('grant select, insert, update, delete on public.%I to authenticated', t);
+  end loop;
+end $$;
