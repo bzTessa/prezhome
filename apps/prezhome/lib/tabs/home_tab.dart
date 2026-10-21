@@ -557,44 +557,44 @@ class HomeTabState extends State<HomeTab> {
                   padding: EdgeInsets.zero,
                 )
               else ...[
-              ValueListenableBuilder(
-                valueListenable: PlanPrefs.current,
-                builder: (_, p, _) => p.fastHours == null
-                    ? const SizedBox.shrink()
-                    : const Padding(
-                        padding: EdgeInsets.only(bottom: AppSpacing.lg),
-                        child: FastingCard(),
-                      ),
-              ),
+                ValueListenableBuilder(
+                  valueListenable: PlanPrefs.current,
+                  builder: (_, p, _) => p.fastHours == null
+                      ? const SizedBox.shrink()
+                      : const Padding(
+                          padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                          child: FastingCard(),
+                        ),
+                ),
 
-              // Lo primero: qué se come hoy, con la foto de la receta.
-              if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
-                StaggeredEntrance(index: 1, child: _todayMealHero()),
-                const SizedBox(height: AppSpacing.lg),
-              ],
+                // Lo primero: qué se come hoy, con la foto de la receta.
+                if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
+                  StaggeredEntrance(index: 1, child: _todayMealHero()),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
 
-              // De un vistazo: caducidades, tareas y compra. Tocar lleva a su
-              // pestaña.
-              StaggeredEntrance(index: 2, child: _glanceRow()),
-              const SizedBox(height: AppSpacing.xl),
-
-              if (_prefs.quick.isNotEmpty) ...[
-                StaggeredEntrance(index: 3, child: _quickAccessRow()),
+                // De un vistazo: caducidades, tareas y compra. Tocar lleva a su
+                // pestaña.
+                StaggeredEntrance(index: 2, child: _glanceRow()),
                 const SizedBox(height: AppSpacing.xl),
-              ],
 
-              if (_prefs.visibleCards.contains(DashboardCard.calories) &&
-                  (!_profileComplete ||
-                      _targetCalories == null ||
-                      _targetCalories! <= 0)) ...[
-                StaggeredEntrance(index: 4, child: _calorieGoalPrompt()),
-                const SizedBox(height: AppSpacing.md),
-              ],
+                if (_prefs.quick.isNotEmpty) ...[
+                  StaggeredEntrance(index: 3, child: _quickAccessRow()),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
 
-              for (final (i, card) in rest.indexed) ...[
-                StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
-                const SizedBox(height: AppSpacing.md),
-              ],
+                if (_prefs.visibleCards.contains(DashboardCard.calories) &&
+                    (!_profileComplete ||
+                        _targetCalories == null ||
+                        _targetCalories! <= 0)) ...[
+                  StaggeredEntrance(index: 4, child: _calorieGoalPrompt()),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+
+                for (final (i, card) in rest.indexed) ...[
+                  StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
+                  const SizedBox(height: AppSpacing.md),
+                ],
               ],
 
               // Como "Editar" en los resúmenes: al final, no compitiendo con
