@@ -103,13 +103,6 @@ class HomeTabState extends State<HomeTab> {
   // Hasta la primera carga completa se ven esqueletos, no tarjetas a cero.
   bool _loaded = false;
 
-  static const _mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Merienda',
-    'dessert': 'Postre',
-  };
   static const _mealOrder = [
     'breakfast',
     'lunch',
@@ -576,60 +569,39 @@ class HomeTabState extends State<HomeTab> {
                         ),
                 ),
 
-              // De un vistazo: caducidades, tareas y compra. Tocar lleva a su
-              // pestaña.
-              StaggeredEntrance(index: 2, child: _glanceRow()),
-              const SizedBox(height: AppSpacing.lg),
-
-              if (_prefs.visibleCards.contains(DashboardCard.calories) &&
-                  (!_profileComplete ||
-                      _targetCalories == null ||
-                      _targetCalories! <= 0)) ...[
-                StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
-                const SizedBox(height: AppSpacing.md),
-              ],
-
-              for (final (i, card) in rest.indexed) ...[
-                StaggeredEntrance(index: 4 + i, child: _cardWidget(card)),
-                const SizedBox(height: AppSpacing.md),
                 // Lo primero: qué se come hoy, con la foto de la receta.
                 if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
                   StaggeredEntrance(index: 1, child: _todayMealHero()),
                   const SizedBox(height: AppSpacing.lg),
                 ],
 
-                // De un vistazo: caducidades, tareas y compra. Tocar lleva a su
-                // pestaña.
+                // De un vistazo: caducidades, tareas y compra. Tocar lleva a
+                // su pestaña.
                 StaggeredEntrance(index: 2, child: _glanceRow()),
-                const SizedBox(height: AppSpacing.xl),
-
-                if (_prefs.quick.isNotEmpty) ...[
-                  StaggeredEntrance(index: 3, child: _quickAccessRow()),
-                  const SizedBox(height: AppSpacing.xl),
-                ],
+                const SizedBox(height: AppSpacing.lg),
 
                 if (_prefs.visibleCards.contains(DashboardCard.calories) &&
                     (!_profileComplete ||
                         _targetCalories == null ||
                         _targetCalories! <= 0)) ...[
-                  StaggeredEntrance(index: 4, child: _calorieGoalPrompt()),
+                  StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
                   const SizedBox(height: AppSpacing.md),
                 ],
 
                 for (final (i, card) in rest.indexed) ...[
-                  StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
+                  StaggeredEntrance(index: 4 + i, child: _cardWidget(card)),
                   const SizedBox(height: AppSpacing.md),
                 ],
-              ],
 
-              // Atajos al final: son para hacer algo, no para leer el día.
-              if (_prefs.quick.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.sm),
-                StaggeredEntrance(
-                  index: 4 + rest.length,
-                  child: _quickAccessRow(),
-                ),
-                const SizedBox(height: AppSpacing.lg),
+                // Atajos al final: son para hacer algo, no para leer el día.
+                if (_prefs.quick.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  StaggeredEntrance(
+                    index: 4 + rest.length,
+                    child: _quickAccessRow(),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
               ],
 
               Center(
