@@ -1065,16 +1065,11 @@ class HomeTabState extends State<HomeTab> {
 
   /// Par de colores (fondo pastel + acento) para el cuadro de icono de cada
   /// tarjeta del dashboard, dando vida y color por tipo de información de forma
-  /// coherente con la paleta Cozy. Caducidades cambia según su estado.
+  /// coherente con la paleta Cozy.
   (Color, Color) _cardAccent(DashboardCard card) {
     switch (card) {
       case DashboardCard.meals:
         return (AppColors.peachBg, AppColors.peach);
-      case DashboardCard.expiry:
-        final hasExpired = _expired > 0;
-        return hasExpired
-            ? (AppColors.expiredBg, AppColors.expired)
-            : (AppColors.soonBg, AppColors.soon);
       case DashboardCard.calories:
         return (AppColors.terracottaBg, AppColors.terracotta);
       case DashboardCard.tasks:
@@ -1103,8 +1098,6 @@ class HomeTabState extends State<HomeTab> {
     switch (card) {
       case DashboardCard.meals:
         return _mealsCard();
-      case DashboardCard.expiry:
-        return _expiryCard();
       case DashboardCard.calories:
         return _caloriesCard();
       case DashboardCard.tasks:
@@ -1344,6 +1337,128 @@ class HomeTabState extends State<HomeTab> {
             count == 1 ? singular : plural,
             style: AppTextStyles.label.copyWith(color: fg),
           ),
+  /// Tarjeta 'Hoy toca': centro de recordatorios inteligentes unificados
+  /// (cocina, congelador, caducidades, tareas, compra), ordenados por urgencia.
+  Widget _remindersCard() {
+    final items = _reminders;
+    final accent = _cardAccent(DashboardCard.reminders);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notifications_active_outlined, color: accent.$2),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Hoy toca', style: AppTextStyles.title),
+              if (items.isNotEmpty) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: accent.$1,
+                    borderRadius: AppRadius.smRadius,
+                  ),
+                  child: AnimatedCounter(
+                    value: items.length.toDouble(),
+                    formatter: (v) => '${v.round()}',
+                    style: AppTextStyles.label.copyWith(color: accent.$2),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (items.isEmpty)
+            Row(
+              children: [
+                const MiauCharacter(
+                  mood: MiauMood.sleeping,
+                  size: 48,
+                  float: false,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    'Nada urgente ahora mismo. Todo bajo control.',
+                    style: AppTextStyles.bodyMuted,
+                  ),
+                ),
+              ],
+            )
+          else
+          // Mostramos hasta 6 para no saturar; el resto se resume.
+          ...[
+            for (final r in items.take(6)) _reminderRow(r),
+            if (items.length > 6)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(
+                  'y ${items.length - 6} más…',
+                  style: AppTextStyles.labelMuted,
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _reminderRow(Reminder r) {
+    // Icono y color por área + urgencia.
+    final IconData icon;
+    switch (r.kind) {
+      case ReminderKind.congelador:
+        icon = Icons.ac_unit;
+        break;
+      case ReminderKind.caducidad:
+        icon = Icons.schedule;
+        break;
+      case ReminderKind.cocina:
+        icon = Icons.restaurant_menu;
+        break;
+      case ReminderKind.tarea:
+        icon = Icons.check_circle_outline;
+        break;
+      case ReminderKind.compra:
+        icon = Icons.shopping_cart_outlined;
+        break;
+    }
+    final Color color = switch (r.urgency) {
+      ReminderUrgency.urgente => AppColors.expired,
+      ReminderUrgency.hoy => AppColors.woodDark,
+      ReminderUrgency.pronto => AppColors.sage,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: Text(r.text, style: AppTextStyles.body)),
+          if (r.urgency == ReminderUrgency.urgente)
+            Container(
+              margin: const EdgeInsets.only(left: AppSpacing.sm, top: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.expiredBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Ya',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.expired,
+                ),
+              ),
+            ),
         ],
       ),
     );
