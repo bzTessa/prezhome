@@ -22,6 +22,14 @@ analyzer:
     # nuevas que la del proyecto (p.ej. groupValue/onChanged de Radio). Se
     # ignora para no bloquear el CI mientras no migremos a la nueva API.
     deprecated_member_use: ignore
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   # The lint rules applied to this project can be customized in the

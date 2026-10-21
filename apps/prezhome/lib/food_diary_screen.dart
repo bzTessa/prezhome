@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/dashboard_prefs.dart';
 import 'models/food_log_entry.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
@@ -100,6 +101,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     // Perfil propio para leer el objetivo diario (puede ser null si está
     // incompleto). El perfil es por usuario: id = auth user id.
     int? targetCalories;
+    var prefs = DashboardPrefs.defaults();
     final profileRow = await _client
         .from('profiles')
         .select()
@@ -107,6 +109,10 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         .maybeSingle();
     if (profileRow != null) {
       targetCalories = NutritionProfile.fromMap(profileRow).targetCalories;
+      final raw = profileRow['dashboard_prefs'];
+      if (raw is Map) {
+        prefs = DashboardPrefs.fromJson(Map<String, dynamic>.from(raw));
+      }
     }
 
     // Entradas del día.
@@ -157,6 +163,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     }
 
     return _DiaryData(
+      prefs: prefs,
       entries: entries,
       totalCalories: total,
       targetCalories: targetCalories,
@@ -633,6 +640,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               _dayNavigator(),
               const SizedBox(height: 12),
               _summaryCard(data),
+              _askedCard(),
               if (data.last7Days.any((d) => d.calories > 0)) ...[
                 const SizedBox(height: 16),
                 _caloriesChartCard(data),
@@ -646,6 +654,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 _empty()
               else
                 ..._buildGroups(data.entries),
+              if (data.prefs.trackCalories) _askSwitch(data.prefs),
             ],
           );
         },
@@ -1106,6 +1115,100 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     );
   }
 
+  /// "¿Has comido X?" por cada comida del plan pendiente de respuesta.
+  Widget _askedCard() {
+    return ValueListenableBuilder<List<FoodLogEntry>>(
+      valueListenable: PlanDiary.asked,
+      builder: (context, asked, _) {
+        if (asked.isEmpty) return const SizedBox.shrink();
+        final today = DateTime.now();
+        return Container(
+          margin: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+          decoration: AppTheme.cardDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '¿Has comido lo del plan?',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              for (final e in asked)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${e.logDate.day == today.day ? 'Hoy' : 'Ayer'}, '
+                        '${(FoodLogEntry.mealTypeLabels[e.mealType] ?? '').toLowerCase()}: '
+                        '${e.name} · ${e.calories?.round()} kcal',
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _answer(e, ate: false),
+                      child: const Text('No'),
+                    ),
+                    TextButton(
+                      onPressed: () => _answer(e, ate: true),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.terracotta,
+                      ),
+                      child: const Text(
+                        'Sí',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _answer(FoodLogEntry e, {required bool ate}) async {
+    try {
+      await PlanDiary.answer(_client, e, ate: ate);
+    } catch (err) {
+      debugPrint('FoodDiary._answer error: $err');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo guardar la respuesta.')),
+      );
+      return;
+    }
+    if (ate && mounted) _reload();
+  }
+
+  Widget _askSwitch(DashboardPrefs prefs) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      title: const Text('Preguntarme antes de apuntar el plan'),
+      subtitle: Text(
+        prefs.askMeals
+            ? 'Te preguntamos si has comido cada comida del plan.'
+            : 'Las comidas del plan se apuntan solas al pasar su hora.',
+      ),
+      value: prefs.askMeals,
+      onChanged: (v) async {
+        try {
+          await _client
+              .from('profiles')
+              .update({'dashboard_prefs': prefs.copyWith(askMeals: v).toJson()})
+              .eq('id', _client.auth.currentUser!.id);
+        } catch (e) {
+          debugPrint('FoodDiary._askSwitch error: $e');
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudo guardar el ajuste.')),
+          );
+          return;
+        }
+        if (mounted) _reload();
+      },
+    );
+  }
+
   Widget _empty() {
     return Padding(
       padding: const EdgeInsets.only(top: 24),
@@ -1125,6 +1228,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 }
 
 class _DiaryData {
+  final DashboardPrefs prefs;
   final List<FoodLogEntry> entries;
   final double totalCalories;
   final int? targetCalories;
@@ -1139,6 +1243,7 @@ class _DiaryData {
   final double dayFat;
 
   _DiaryData({
+    required this.prefs,
     required this.entries,
     required this.totalCalories,
     required this.targetCalories,
