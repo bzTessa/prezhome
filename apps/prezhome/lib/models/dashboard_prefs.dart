@@ -136,6 +136,9 @@ class DashboardPrefs {
   /// apuntan solas en su diario.
   final bool trackCalories;
 
+  /// En vez de apuntarlas solas, pregunta "¿Has comido X?" en el diario.
+  final bool askMeals;
+
   const DashboardPrefs({
     required this.order,
     required this.hidden,
@@ -145,6 +148,7 @@ class DashboardPrefs {
     this.cuisines = const {},
     this.appliances,
     this.trackCalories = true,
+    this.askMeals = false,
   });
 
   static const Map<String, String> cuisineLabels = {
@@ -255,6 +259,7 @@ class DashboardPrefs {
       cuisines: strings(json['cuisines']) ?? const {},
       appliances: strings(json['appliances']),
       trackCalories: json['track_calories'] != false,
+      askMeals: json['ask_meals'] == true,
     );
   }
 
@@ -267,6 +272,7 @@ class DashboardPrefs {
     'cuisines': cuisines.toList(),
     'appliances': ?appliances?.toList(),
     'track_calories': trackCalories,
+    'ask_meals': askMeals,
   };
 
   DashboardPrefs copyWith({
@@ -278,6 +284,7 @@ class DashboardPrefs {
     Set<String>? cuisines,
     Set<String>? appliances,
     bool? trackCalories,
+    bool? askMeals,
   }) => DashboardPrefs(
     order: order ?? this.order,
     hidden: hidden ?? this.hidden,
@@ -287,5 +294,6 @@ class DashboardPrefs {
     cuisines: cuisines ?? this.cuisines,
     appliances: appliances ?? this.appliances,
     trackCalories: trackCalories ?? this.trackCalories,
+    askMeals: askMeals ?? this.askMeals,
   );
 }

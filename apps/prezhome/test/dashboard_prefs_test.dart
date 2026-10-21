@@ -196,4 +196,10 @@ void main() {
       },
     );
   });
+
+  test('preguntar antes de apuntar: apagado por defecto y se guarda', () {
+    expect(DashboardPrefs.fromJson({}).askMeals, isFalse);
+    final on = DashboardPrefs.defaults().copyWith(askMeals: true);
+    expect(DashboardPrefs.fromJson(on.toJson()).askMeals, isTrue);
+  });
 }
