@@ -40,10 +40,10 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `tabs` -> `screens`: 14
 - `services` -> `utils`: 10
 - `tabs` -> `widgets`: 8
-- `tabs` -> `services`: 7
 - `widgets` -> `services`: 7
 - `services` -> `widgets`: 6
 - `tabs` -> `models`: 6
+- `tabs` -> `services`: 6
 - `onboarding` -> `theme`: 4
 - `utils` -> `widgets`: 4
 - `widgets` -> `utils`: 4
