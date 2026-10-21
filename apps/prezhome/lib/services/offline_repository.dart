@@ -399,6 +399,8 @@ class OfflineRepository {
       // Todo lo de esta tabla salió: la red responde, rearmamos el gate.
       gate.registerResult(success: true);
     }
+    // Para que el aviso de "pendiente de sincronizar" se apague solo.
+    if (sent > 0) _changes.add(null);
 
     return DrainResult(
       sent: sent,
