@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/approx_price.dart';
 import '../widgets/food_category_icon.dart';
 
 /// Precio conocido de un producto (aprendido de los tickets del hogar).
@@ -160,7 +161,36 @@ class PriceMemory {
       final shared = await _client.rpc('shared_product_prices');
       mergeShared(out, (shared as List).cast<Map<String, dynamic>>());
     } catch (_) {}
+    try {
+      // shortcut: país fijo 'ES' hasta que el hogar guarde su país.
+      final market = await _client
+          .from('market_prices')
+          .select('keyword, unit, median_price')
+          .eq('country_code', 'ES');
+      ApproxPrice.market = marketFrom(
+        (market as List).cast<Map<String, dynamic>>(),
+      );
+    } catch (_) {}
     return out;
+  }
+
+  /// Agrupa filas de market_prices por unidad base (kg, l, ud).
+  static MarketPrices marketFrom(List<Map<String, dynamic>> rows) {
+    final kg = <String, double>{}, l = <String, double>{};
+    final ud = <String, double>{};
+    for (final m in rows) {
+      final key = (m['keyword'] ?? '').toString();
+      final price = (m['median_price'] as num?)?.toDouble();
+      if (key.isEmpty || price == null) continue;
+      final target = switch (m['unit']) {
+        'kg' => kg,
+        'l' => l,
+        'ud' => ud,
+        _ => null,
+      };
+      target?[key] = price;
+    }
+    return (kg: kg, l: l, ud: ud);
   }
 
   /// Añade a [own] los precios compartidos de productos que el hogar no tiene.
