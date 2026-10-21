@@ -36,6 +36,7 @@ import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
 import '../widgets/animations/staggered_entrance.dart';
 import '../utils/friendly_error.dart';
+import '../utils/pantry_ideas.dart' show formatEuros;
 
 /// Pestaña de Inicio: dashboard con el resumen del día del hogar (comidas de
 /// hoy, calorías, tareas y gasto). El plan semanal/mensual vive ahora en la
@@ -98,13 +99,6 @@ class HomeTabState extends State<HomeTab> {
   // tarjetas y accesos rápidos). Por usuario, en profiles.dashboard_prefs.
   DashboardPrefs _prefs = DashboardPrefs.defaults();
 
-  static const _mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Merienda',
-    'dessert': 'Postre',
-  };
   static const _mealOrder = [
     'breakfast',
     'lunch',
@@ -541,8 +535,16 @@ class HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
+    // Tareas solo si el módulo está activo y hay algo para hoy: el recuento
+    // ya lo da la ficha de un vistazo.
     final rest = _prefs.visibleCards
         .where((c) => c != DashboardCard.meals)
+        .where(
+          (c) =>
+              c != DashboardCard.tasks ||
+              (_prefs.isModuleEnabled(HomeModule.tasks) &&
+                  _todayTasks.isNotEmpty),
+        )
         .toList();
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -581,28 +583,31 @@ class HomeTabState extends State<HomeTab> {
               // De un vistazo: caducidades, tareas y compra. Tocar lleva a su
               // pestaña.
               StaggeredEntrance(index: 2, child: _glanceRow()),
-              const SizedBox(height: AppSpacing.xl),
-
-              if (_prefs.quick.isNotEmpty) ...[
-                StaggeredEntrance(index: 3, child: _quickAccessRow()),
-                const SizedBox(height: AppSpacing.xl),
-              ],
+              const SizedBox(height: AppSpacing.lg),
 
               if (_prefs.visibleCards.contains(DashboardCard.calories) &&
                   (!_profileComplete ||
                       _targetCalories == null ||
                       _targetCalories! <= 0)) ...[
-                StaggeredEntrance(index: 4, child: _calorieGoalPrompt()),
+                StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
                 const SizedBox(height: AppSpacing.md),
               ],
 
               for (final (i, card) in rest.indexed) ...[
-                StaggeredEntrance(index: 5 + i, child: _cardWidget(card)),
+                StaggeredEntrance(index: 4 + i, child: _cardWidget(card)),
                 const SizedBox(height: AppSpacing.md),
               ],
 
-              // Como "Editar" en los resúmenes: al final, no compitiendo con
-              // el saludo.
+              // Atajos al final: son para hacer algo, no para leer el día.
+              if (_prefs.quick.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                StaggeredEntrance(
+                  index: 4 + rest.length,
+                  child: _quickAccessRow(),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+
               Center(
                 child: TextButton.icon(
                   onPressed: _openCustomize,
@@ -1070,41 +1075,11 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
-  /// Par de colores (fondo pastel + acento) para el cuadro de icono de cada
-  /// tarjeta del dashboard, dando vida y color por tipo de información de forma
-  /// coherente con la paleta Cozy.
-  (Color, Color) _cardAccent(DashboardCard card) {
-    switch (card) {
-      case DashboardCard.meals:
-        return (AppColors.peachBg, AppColors.peach);
-      case DashboardCard.calories:
-        return (AppColors.terracottaBg, AppColors.terracotta);
-      case DashboardCard.tasks:
-        return (AppColors.sageBg, AppColors.sage);
-      case DashboardCard.spending:
-        return (AppColors.peachBg, AppColors.woodDark);
-    }
-  }
-
-  /// Cuadro de icono reutilizable para las tarjetas: fondo pastel + icono en el
-  /// acento correspondiente.
-  Widget _cardIconBox(IconData icon, (Color, Color) accent) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: accent.$1,
-        borderRadius: AppRadius.mdRadius,
-      ),
-      child: Icon(icon, color: accent.$2),
-    );
-  }
-
   /// Devuelve el widget de una tarjeta del dashboard por su tipo.
   Widget _cardWidget(DashboardCard card) {
     switch (card) {
       case DashboardCard.meals:
-        return _mealsCard();
+        return _todayMealHero(); // build() ya la pinta arriba; no llega aquí
       case DashboardCard.calories:
         return _caloriesCard();
       case DashboardCard.tasks:
@@ -1114,73 +1089,51 @@ class HomeTabState extends State<HomeTab> {
     }
   }
 
-  /// Fila horizontal de accesos rápidos elegidos por el usuario. Cada botón
-  /// aparece de forma escalonada (StaggeredEntrance por index) y da feedback
-  /// táctil al pulsar (PressScale), sin tocar la navegación _runQuickAction.
+  /// Atajos elegidos por el usuario como pastillas compactas (icono +
+  /// texto) que caben en una o dos líneas, con feedback táctil (PressScale).
   Widget _quickAccessRow() {
-    final items = _prefs.quick;
-    return SizedBox(
-      height: 96,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        clipBehavior: Clip.none,
-        itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
-        itemBuilder: (context, i) => SizedBox(
-          width: 72,
-          child: StaggeredEntrance(
-            index: i,
-            child: _quickAccessButton(items[i]),
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _cardLabel(
+          icon: Icons.bolt_rounded,
+          color: AppColors.gold,
+          text: 'Atajos',
         ),
-      ),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [for (final q in _prefs.quick) _quickAccessButton(q)],
+        ),
+      ],
     );
   }
 
-  /// Par pastel (fondo + acento) por acceso rápido, para dar vida al cuadro del
-  /// icono en vez de usar siempre el mismo color plano, cuidando el contraste.
-  (Color, Color) _quickAccent(QuickAction action) {
-    switch (action) {
-      case QuickAction.addInventory:
-        return (AppColors.sageBg, AppColors.sage);
-      case QuickAction.scanTicket:
-        return (AppColors.peachBg, AppColors.peach);
-      case QuickAction.shopping:
-        return (AppColors.frostBg, AppColors.frost);
-      case QuickAction.addRecipe:
-        return (AppColors.terracottaBg, AppColors.terracotta);
-      case QuickAction.mealPlan:
-        return (AppColors.soonBg, AppColors.woodDark);
-      case QuickAction.diary:
-        return (AppColors.terracottaBg, AppColors.terracotta);
-    }
-  }
-
   Widget _quickAccessButton(QuickAction action) {
-    final accent = _quickAccent(action);
     return PressScale(
       onTap: () => _runQuickAction(action),
-      child: Column(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: accent.$1,
-              shape: BoxShape.circle,
-              border: AppElevation.border,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 16, 10),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(999),
+          border: AppElevation.border,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(action.icon, size: 18, color: AppColors.woodDark),
+            const SizedBox(width: 6),
+            Text(
+              action.label,
+              style: AppTextStyles.label.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+              ),
             ),
-            child: Icon(action.icon, color: accent.$2, size: 26),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            action.label,
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.label.copyWith(fontSize: 11, height: 1.1),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1234,167 +1187,75 @@ class HomeTabState extends State<HomeTab> {
     if (result != null) await _savePrefs(result);
   }
 
-  /// Tarjeta 'Comidas de hoy' con el plan real de meal_plan_entries.
-  Widget _mealsCard() {
-    final accent = _cardAccent(DashboardCard.meals);
+  /// Tarjeta 'Para hoy': las tareas de HOY (y atrasadas o sin fecha), cada una
+  /// marcable de un toque con el mismo flujo de puntos + reprogramación que la
+  /// pantalla de Tareas. El recuento ya está en la ficha de un vistazo, así
+  /// que aquí solo va la lista. Sin tareas para hoy no se pinta (ver build).
+  Widget _tasksCard() {
+    final today = _todayTasks;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppTheme.surfaceDecoration(
-        radius: AppRadius.lg,
-        elevation: 2,
-        color: Color.alphaBlend(
-          accent.$1.withValues(alpha: 0.28),
-          AppColors.card,
-        ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.md,
       ),
-      child: Row(
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardIconBox(Icons.restaurant_menu, accent),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Comidas de hoy', style: AppTextStyles.title),
-                const SizedBox(height: AppSpacing.sm),
-                if (_todayItems.isEmpty)
-                  Text(
-                    'Aún no hay un plan para hoy',
-                    style: AppTextStyles.bodyMuted,
-                  )
-                else
-                  ..._todayItems.map(
-                    (it) => Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xs,
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 80,
-                            child: Text(
-                              _mealLabels[it.mealType] ?? it.mealType,
-                              style: AppTextStyles.labelMuted,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              it.title,
-                              style: AppTextStyles.titleSmall.copyWith(
-                                decoration: it.skipped
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                                color: it.skipped
-                                    ? AppColors.inkMuted
-                                    : AppColors.ink,
-                              ),
-                            ),
-                          ),
-                          if (it.skipped)
-                            Text('Fuera', style: AppTextStyles.labelMuted),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          _cardLabel(
+            icon: Icons.check_circle_outline_rounded,
+            color: AppColors.sage,
+            text: 'Para hoy',
+            onMore: widget.onNavigateToTasks,
           ),
+          const SizedBox(height: AppSpacing.sm),
+          ...today.map(_todayTaskRow),
         ],
       ),
     );
   }
 
-  /// Tarjeta 'Tareas del hogar': muestra las tareas de HOY (y atrasadas o sin
-  /// fecha) y permite marcarlas como hechas de un toque directamente desde el
-  /// Dashboard, con el mismo flujo de puntos + reprogramacion que la pantalla
-  /// de Tareas. Debajo, un recuento del total de pendientes.
-  Widget _tasksCard() {
-    final accent = _cardAccent(DashboardCard.tasks);
-    final count = _pendingTasks.length;
-    final today = _todayTasks;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppTheme.surfaceDecoration(
-        radius: AppRadius.lg,
-        elevation: 2,
-        color: Color.alphaBlend(
-          accent.$1.withValues(alpha: 0.24),
-          AppColors.card,
+  /// Cabecera pequeña común a las tarjetas: icono de color, etiqueta en
+  /// versalitas y, si se puede ir a la pantalla completa, "Ver todo".
+  Widget _cardLabel({
+    required IconData icon,
+    required Color color,
+    required String text,
+    VoidCallback? onMore,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            text.toUpperCase(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: AppColors.inkMuted,
+            ),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _cardIconBox(Icons.check_circle_outline, accent),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Tareas del hogar',
-                            style: AppTextStyles.title,
-                          ),
-                        ),
-                        if (count > 0) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: accent.$1,
-                              borderRadius: AppRadius.smRadius,
-                            ),
-                            child: AnimatedCounter(
-                              value: count.toDouble(),
-                              formatter: (v) => '${v.round()}',
-                              style: AppTextStyles.label.copyWith(
-                                color: accent.$2,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    if (count == 0)
-                      Text('Todo al día', style: AppTextStyles.bodyMuted)
-                    else if (today.isEmpty)
-                      Text(
-                        count == 1
-                            ? '1 tarea pendiente (ninguna para hoy)'
-                            : '$count tareas pendientes (ninguna para hoy)',
-                        style: AppTextStyles.titleSmall,
-                      )
-                    else
-                      Text(
-                        today.length == 1
-                            ? 'Para hoy: 1 tarea'
-                            : 'Para hoy: ${today.length} tareas',
-                        style: AppTextStyles.titleSmall,
-                      ),
-                  ],
+        if (onMore != null)
+          InkWell(
+            onTap: onMore,
+            borderRadius: AppRadius.smRadius,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                'Ver todo',
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.woodDark,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
+            ),
           ),
-          // Lista de tareas de hoy, cada una marcable de un toque.
-          if (today.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            ...today.map(_todayTaskRow),
-          ],
-        ],
-      ),
+      ],
     );
   }
 
@@ -1426,9 +1287,10 @@ class HomeTabState extends State<HomeTab> {
               style: AppTextStyles.titleSmall,
             ),
           ),
-          if (_taskWhen(t) != null) ...[
+          // "Hoy" sobra bajo el título "Para hoy"; la hora o el atraso no.
+          if (_taskWhen(t) case final label? when label != 'Hoy') ...[
             const SizedBox(width: AppSpacing.sm),
-            Text(_taskWhen(t)!, style: AppTextStyles.labelMuted),
+            Text(label, style: AppTextStyles.labelMuted),
           ],
           const SizedBox(width: AppSpacing.sm),
           Text(
@@ -1520,140 +1382,115 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
-  /// Tarjeta 'Calorías de hoy': total consumido del diario personal y, si el
-  /// perfil tiene objetivo, barra de progreso con lo que queda o el exceso.
-  /// Al tocarla abre el diario del día y refresca al volver.
-  Widget _caloriesCard() {
-    final accent = _cardAccent(DashboardCard.calories);
-    final total = _todayCalories;
-    final target = _targetCalories;
+  /// Tarjeta de cifra con progreso (calorías, gasto): etiqueta, número grande
+  /// con su referencia ("de 2046 kcal"), barra y una línea de lo que queda.
+  /// Sin referencia (sin objetivo o presupuesto) solo muestra la cifra.
+  Widget _progressCard({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required double value,
+    required String Function(double) format,
+    required double? target,
+    required String Function(double) leftText,
+    required String Function(double) overText,
+    required VoidCallback onTap,
+  }) {
     final hasTarget = target != null && target > 0;
-    final ratio = hasTarget ? (total / target).clamp(0.0, 1.0) : 0.0;
-    final over = hasTarget && total > target;
-
-    return InkWell(
-      borderRadius: AppRadius.lgRadius,
-      onTap: () async {
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
-        _loadCaloriesSummary(); // refrescar al volver del diario
-      },
+    final over = hasTarget && value > target;
+    return PressScale(
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _cardIconBox(Icons.local_fire_department_outlined, accent),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Calorías de hoy', style: AppTextStyles.title),
-                  const SizedBox(height: AppSpacing.sm),
-                  AnimatedCounter(
-                    value: total,
-                    formatter: (v) => hasTarget
-                        ? 'Hoy has comido ${v.round()} kcal de $target'
-                        : 'Hoy has comido ${v.round()} kcal',
-                    style: AppTextStyles.titleSmall,
+            _cardLabel(icon: icon, color: color, text: label),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                AnimatedCounter(
+                  value: value,
+                  formatter: format,
+                  style: AppTextStyles.display.copyWith(fontSize: 26),
+                ),
+                if (hasTarget) ...[
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'de ${format(target)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyMuted,
+                    ),
                   ),
-                  if (hasTarget) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: ratio,
-                        minHeight: 10,
-                        backgroundColor: AppColors.line,
-                        color: over ? AppColors.expired : AppColors.wood,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      over
-                          ? 'Te has pasado ${(total - target).round()} kcal'
-                          : 'Te quedan ${(target - total).round()} kcal',
-                      style: AppTextStyles.label.copyWith(
-                        color: over ? AppColors.expired : AppColors.inkMuted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
                 ],
+                const Spacer(),
+                Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+              ],
+            ),
+            if (hasTarget) ...[
+              const SizedBox(height: AppSpacing.md),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: (value / target).clamp(0.0, 1.0),
+                  minHeight: 8,
+                  backgroundColor: AppColors.line,
+                  color: over ? AppColors.expired : color,
+                ),
               ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.inkMuted.withValues(alpha: 0.5),
-            ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                over ? overText(value - target) : leftText(target - value),
+                style: AppTextStyles.label.copyWith(
+                  color: over ? AppColors.expired : AppColors.inkMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  /// Tarjeta 'Gasto del mes': gasto acumulado y, si hay presupuesto, barra de
-  /// progreso con el restante o el exceso (misma lógica que economy_screen).
-  Widget _spendingCard() {
-    final accent = _cardAccent(DashboardCard.spending);
-    final spent = _monthSpent;
-    final budget = _monthBudget;
-    final ratio = budget > 0 ? (spent / budget).clamp(0.0, 1.0) : 0.0;
-    final over = budget > 0 && spent > budget;
+  /// Calorías de hoy del diario personal frente al objetivo del perfil. Al
+  /// tocarla abre el diario del día y refresca al volver.
+  Widget _caloriesCard() {
+    return _progressCard(
+      icon: Icons.local_fire_department_outlined,
+      color: AppColors.terracotta,
+      label: 'Calorías de hoy',
+      value: _todayCalories,
+      format: (v) => '${v.round()} kcal',
+      target: _targetCalories?.toDouble(),
+      leftText: (d) => 'Te quedan ${d.round()} kcal',
+      overText: (d) => 'Te has pasado ${d.round()} kcal',
+      onTap: () async {
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
+        _loadCaloriesSummary(); // refrescar al volver del diario
+      },
+    );
+  }
 
-    return PressScale(
+  /// Gasto del mes frente al presupuesto (misma lógica que economy_screen).
+  Widget _spendingCard() {
+    return _progressCard(
+      icon: Icons.savings_outlined,
+      color: AppColors.gold,
+      label: 'Gasto del mes',
+      value: _monthSpent,
+      format: formatEuros,
+      target: _monthBudget,
+      leftText: (d) => 'Te quedan ${formatEuros(d)}',
+      overText: (d) => 'Te has pasado ${formatEuros(d)} del presupuesto',
       onTap: _openStats,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _cardIconBox(Icons.savings_outlined, accent),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Gasto del mes', style: AppTextStyles.title),
-                  const SizedBox(height: AppSpacing.sm),
-                  AnimatedCounter(
-                    value: spent,
-                    formatter: (v) => '${v.toStringAsFixed(2)} €',
-                    style: AppTextStyles.display.copyWith(fontSize: 24),
-                  ),
-                  if (budget > 0) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: ratio,
-                        minHeight: 10,
-                        backgroundColor: AppColors.line,
-                        color: over ? AppColors.expired : AppColors.wood,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      over
-                          ? 'Te has pasado ${(spent - budget).toStringAsFixed(2)} € del presupuesto'
-                          : 'Te quedan ${(budget - spent).toStringAsFixed(2)} €',
-                      style: AppTextStyles.label.copyWith(
-                        color: over ? AppColors.expired : AppColors.inkMuted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
-          ],
-        ),
-      ),
     );
   }
 }
