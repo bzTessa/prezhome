@@ -10,6 +10,7 @@ import 'models/supermarket.dart';
 import 'services/home_invites.dart';
 import 'services/home_people.dart';
 import 'services/offline_provider.dart';
+import 'services/reminders.dart';
 import 'nutrition_profile_screen.dart';
 import 'home_session_screen.dart';
 import 'login_screen.dart';
@@ -728,6 +729,28 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       foregroundColor: AppColors.ink,
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Avisos en el móvil',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              ValueListenableBuilder(
+                valueListenable: Reminders.off,
+                builder: (context, off, _) => Column(
+                  children: [
+                    for (final k in Reminders.kinds.entries)
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(k.value),
+                        value: !off.contains(k.key),
+                        onChanged: (v) async {
+                          await Reminders.setOn(k.key, v);
+                          await Reminders.sync(_client);
+                        },
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
