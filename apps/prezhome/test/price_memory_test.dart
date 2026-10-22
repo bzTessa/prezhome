@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/services/price_memory.dart';
+import 'package:prezhome/utils/approx_price.dart';
 
 void main() {
   group('ProductPrice.bestPrice', () {
@@ -120,6 +121,52 @@ void main() {
       );
       expect(cost.total, closeTo(0.4, 0.001));
       expect(cost.approx, isTrue);
+    });
+  });
+
+  group('PriceMemory.mergeShared', () {
+    test('rellena los que faltan y no pisa el precio propio', () {
+      final own = {
+        'leche': const ProductPrice(
+          nameNormalized: 'leche',
+          lastUnitPrice: 1.1,
+          samples: 1,
+        ),
+      };
+      PriceMemory.mergeShared(own, [
+        {'name_normalized': 'leche', 'median_unit_price': 0.9, 'homes': 5},
+        {'name_normalized': 'pan', 'median_unit_price': 0.85, 'homes': 3},
+        {'name_normalized': '', 'median_unit_price': 1, 'homes': 3},
+      ]);
+      expect(own['leche']!.bestPrice, 1.1);
+      expect(own['pan']!.bestPrice, 0.85);
+      expect(own.length, 2);
+    });
+  });
+
+  group('Precios de mercado (Open Prices)', () {
+    tearDown(() => ApproxPrice.market = null);
+
+    test('marketFrom agrupa por unidad e ignora filas raras', () {
+      final m = PriceMemory.marketFrom([
+        {'keyword': 'tomate', 'unit': 'kg', 'median_price': 2.85},
+        {'keyword': 'leche', 'unit': 'l', 'median_price': 1.1},
+        {'keyword': 'aguacate', 'unit': 'ud', 'median_price': 0.9},
+        {'keyword': 'x', 'unit': 'caja', 'median_price': 1},
+        {'keyword': '', 'unit': 'kg', 'median_price': 1},
+      ]);
+      expect(m.kg, {'tomate': 2.85});
+      expect(m.l, {'leche': 1.1});
+      expect(m.ud, {'aguacate': 0.9});
+    });
+
+    test('ApproxPrice usa el precio de mercado antes que la tabla fija', () {
+      final fixed = ApproxPrice.estimate('Tomate', 1000, 'g')!;
+      ApproxPrice.market = (kg: {'tomate': 3.0}, l: {}, ud: {});
+      expect(ApproxPrice.estimate('Tomate', 1000, 'g'), closeTo(3.0, 1e-9));
+      expect(fixed, isNot(closeTo(3.0, 1e-9)));
+      // Sin precio de mercado para ese alimento, sigue la tabla fija.
+      expect(ApproxPrice.estimate('Cebolla', 1000, 'g'), closeTo(1.3, 1e-9));
     });
   });
 }

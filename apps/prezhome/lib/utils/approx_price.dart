@@ -9,8 +9,27 @@ import '../widgets/food_category_icon.dart';
 /// Filosofía (como el resto de PrezHome): no busca exactitud, sino un número
 /// razonable para que la receta nunca se quede sin coste. El precio REAL de
 /// los tickets de la usuaria siempre tiene prioridad sobre esta estimación.
+/// Precio de mercado por clave de alimento, según la unidad base.
+typedef MarketPrices = ({
+  Map<String, double> kg,
+  Map<String, double> l,
+  Map<String, double> ud,
+});
+
 class ApproxPrice {
   ApproxPrice._();
+
+  /// Medianas reales de Open Prices del país del hogar (tabla market_prices),
+  /// por kg, litro y unidad. Las carga PriceMemory.loadAll; si están, ganan a
+  /// las tablas fijas de abajo.
+  static MarketPrices? market;
+
+  static double? _kg(List<String> t) =>
+      _match(market?.kg ?? const {}, t) ?? _match(_perKg, t);
+  static double? _l(List<String> t) =>
+      _match(market?.l ?? const {}, t) ?? _match(_perL, t);
+  static double? _ud(List<String> t) =>
+      _match(market?.ud ?? const {}, t) ?? _match(_perUnit, t);
 
   /// Precio aproximado por KILO de alimentos concretos (€/kg) o, para los que
   /// se cuentan por unidad, se tratan aparte en [_byUnit]. Claves normalizadas
@@ -137,10 +156,10 @@ class ApproxPrice {
       'dientes',
     };
     if (unitUnits.contains(u)) {
-      final perUnit = _match(_perUnit, tokens);
+      final perUnit = _ud(tokens);
       if (perUnit != null) return perUnit * qty;
       // Si no hay precio por unidad, asumimos ~0.2 kg por pieza para estimar.
-      final perKg = _match(_perKg, tokens) ?? _byCategoryKg(name);
+      final perKg = _kg(tokens) ?? _byCategoryKg(name);
       if (perKg != null) return perKg * 0.2 * qty;
       return null;
     }
@@ -153,7 +172,7 @@ class ApproxPrice {
       kg = qty;
     }
     if (kg != null) {
-      final perKg = _match(_perKg, tokens) ?? _byCategoryKg(name);
+      final perKg = _kg(tokens) ?? _byCategoryKg(name);
       if (perKg != null) return perKg * kg;
       return null;
     }
@@ -166,7 +185,7 @@ class ApproxPrice {
       l = qty;
     }
     if (l != null) {
-      final perL = _match(_perL, tokens);
+      final perL = _l(tokens);
       if (perL != null) return perL * l;
       return null;
     }
@@ -177,7 +196,7 @@ class ApproxPrice {
     }
 
     // Sin unidad clara: asumimos ~0.15 kg por el precio del alimento/categoría.
-    final perKg = _match(_perKg, tokens) ?? _byCategoryKg(name);
+    final perKg = _kg(tokens) ?? _byCategoryKg(name);
     if (perKg != null) return perKg * 0.15 * qty;
     return null;
   }
