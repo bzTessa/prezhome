@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_session_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
+import 'widgets/tactile_button.dart';
 import 'utils/friendly_error.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -179,12 +180,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const MiauCharacter(mood: MiauMood.greeting, size: 120),
                   const SizedBox(height: 20),
                   Text(
-                    _isLoginMode ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
-                    style: const TextStyle(
-                      fontSize: 26,
-                      letterSpacing: -0.4,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    _isLoginMode ? 'Hola de nuevo' : 'Crea tu cuenta',
+                    style: AppTextStyles.display,
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -297,11 +294,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
+                          child: TactileButton(
+                            label: _isLoading
+                                ? 'Un momento…'
+                                : (_isLoginMode ? 'Entrar' : 'Registrarme'),
                             onPressed: _isLoading ? null : _submitAuth,
-                            child: _isLoading
-                                ? const CircularProgressIndicator()
-                                : Text(_isLoginMode ? 'Entrar' : 'Registrarme'),
                           ),
                         ),
                       ],
@@ -353,10 +350,7 @@ class _OAuthButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.card,
           foregroundColor: AppColors.ink,
-          side: BorderSide(color: AppColors.line),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          side: BorderSide(color: AppColors.stroke, width: 1.5),
         ),
         icon: loading
             ? const SizedBox(
@@ -365,10 +359,7 @@ class _OAuthButton extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : icon,
-        label: Text(
-          label,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-        ),
+        label: Text(label, style: AppTextStyles.title),
       ),
     );
   }

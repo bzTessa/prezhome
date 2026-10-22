@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tactile_button.dart';
 
 /// Piezas visuales del cuestionario inicial.
 
-/// Botón principal grande (tinta sobre crema).
+/// Botón del cuestionario: el principal es el [TactileButton] terracota de la
+/// app; el secundario, una píldora de papel con trazo carbón a juego.
 class OnboardingButton extends StatelessWidget {
   const OnboardingButton({
     super.key,
@@ -20,34 +22,20 @@ class OnboardingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-    );
-    const size = Size.fromHeight(58);
-    const text = TextStyle(fontSize: 18, fontWeight: FontWeight.w800);
-    if (outlined) {
-      return OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          minimumSize: size,
-          shape: shape,
-          foregroundColor: AppColors.ink,
-          side: BorderSide(color: AppColors.ink, width: 1.5),
-          textStyle: text,
-        ),
-        child: Text(label),
+    if (!outlined) {
+      return SizedBox(
+        width: double.infinity,
+        child: TactileButton(label: label, onPressed: onPressed),
       );
     }
-    return FilledButton(
+    return OutlinedButton(
       onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        minimumSize: size,
-        shape: shape,
-        backgroundColor: AppColors.ink,
-        foregroundColor: AppColors.cream,
-        disabledBackgroundColor: AppColors.ink.withValues(alpha: 0.15),
-        disabledForegroundColor: AppColors.inkMuted,
-        textStyle: text,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        backgroundColor: AppColors.paper,
+        foregroundColor: AppColors.ink,
+        side: BorderSide(color: AppColors.stroke, width: 1.5),
+        textStyle: AppTextStyles.title,
       ),
       child: Text(label),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/onboarding/onboarding_flow.dart';
+import 'package:prezhome/widgets/tactile_button.dart';
 
 Future<void> _tapText(WidgetTester tester, String text) async {
   await tester.ensureVisible(find.text(text));
@@ -30,8 +31,11 @@ void main() {
 
     expect(find.text('¿Qué quieres quitarte de la cabeza?'), findsOneWidget);
     // Sin respuesta no se puede continuar.
-    final continueBtn = find.widgetWithText(FilledButton, 'Elige al menos una');
-    expect(tester.widget<FilledButton>(continueBtn).onPressed, isNull);
+    final continueBtn = find.widgetWithText(
+      TactileButton,
+      'Elige al menos una',
+    );
+    expect(tester.widget<TactileButton>(continueBtn).onPressed, isNull);
     await _tapText(tester, 'La compra');
     await _tapText(tester, 'Tareas del hogar');
     await _tapText(tester, 'Continuar (2)');

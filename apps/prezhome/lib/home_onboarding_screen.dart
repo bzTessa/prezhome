@@ -5,6 +5,7 @@ import 'main_shell.dart';
 import 'onboarding/onboarding_widgets.dart';
 import 'services/home_invites.dart';
 import 'theme/app_theme.dart';
+import 'utils/friendly_error.dart';
 import 'widgets/miau_character.dart';
 
 class HomeOnboardingScreen extends StatefulWidget {
@@ -54,9 +55,12 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
         );
       }
     } on PostgrestException catch (error) {
+      // Las funciones del hogar lanzan mensajes ya en español.
       if (mounted) _showError(error.message);
     } catch (error) {
-      if (mounted) _showError('No se pudo configurar el hogar: $error');
+      if (mounted) {
+        _showError(friendlyError(error, 'No se pudo configurar el hogar'));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
