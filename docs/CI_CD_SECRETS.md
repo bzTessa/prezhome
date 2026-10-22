@@ -145,6 +145,17 @@ para la CLI y las migraciones).
   **Secret** (ya sea como secret de Edge Function en Supabase, que es donde se
   usa hoy, o como repository secret de Actions si en el futuro hiciera falta).
 
+### 5. SUPABASE_SERVICE_ROLE_KEY
+
+- **Para que sirve:** la usa el workflow semanal `open-prices.yml` para guardar
+  en la tabla `market_prices` los precios de referencia de Open Prices. Es la
+  clave de servicio del proyecto: salta las reglas de seguridad (RLS), asi que
+  solo debe vivir en este secret, nunca en la app ni en el codigo.
+- **Donde va este secret:** repository secret de GitHub Actions.
+- **Donde conseguirlo:** Panel de Supabase, Project Settings -> API Keys, la
+  clave `service_role` (o la nueva "secret key").
+- **Que pegar:** la clave completa.
+
 ## Tabla resumen
 
 | Nombre del secret | Para que sirve | Donde conseguirlo |
@@ -153,6 +164,7 @@ para la CLI y las migraciones).
 | `SUPABASE_PROJECT_REF` | Identifica a que proyecto de Supabase conectarse | Valor fijo de este proyecto: `ubrihtnnkbwcbchvvlno` (parte anterior a `.supabase.co` en `https://ubrihtnnkbwcbchvvlno.supabase.co`) |
 | `SUPABASE_DB_PASSWORD` | Contrasena de la base de datos, necesaria para aplicar los cambios | Panel de Supabase, Project Settings -> Database -> Database password |
 | `GEMINI_API_KEY` | Clave de Google Gemini que usan las Edge Functions de Supabase | Google AI Studio: https://aistudio.google.com/app/apikey |
+| `SUPABASE_SERVICE_ROLE_KEY` | Guarda cada semana los precios de Open Prices | Panel de Supabase, Project Settings -> API Keys (`service_role`) |
 
 > Recuerda: los nombres deben coincidir EXACTAMENTE con los que usan los
 > workflows. Copialos tal cual aparecen en esta tabla (mayusculas y guiones
