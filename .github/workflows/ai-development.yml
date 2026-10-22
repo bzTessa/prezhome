@@ -48,6 +48,11 @@ jobs:
           # Lista de ficheros de migracion modificados o borrados respecto a la base.
           CAMBIADOS=$(git diff --name-status "$BASE"...HEAD -- 'supabase/migrations/' || true)
 
+          # Prefijo mas alto que ya hay en la rama destino: `supabase db push`
+          # rechaza migraciones nuevas que queden por detras de la ultima aplicada.
+          MAX_BASE=$(git ls-tree --name-only "$BASE" supabase/migrations/ | xargs -n1 basename | grep -oE '^[0-9]{4}' | sort | tail -n1 || true)
+          MAX_BASE=$((10#${MAX_BASE:-0}))
+
           FALLO=0
           while IFS=$'\t' read -r ESTADO FICHERO RESTO; do
             [ -z "${FICHERO:-}" ] && continue
@@ -69,6 +74,10 @@ jobs:
                 # Fichero anadido: debe ser 0021 o superior.
                 if [ "$NUM" -lt 21 ]; then
                   echo "ERROR: no se puede anadir una migracion con prefijo $PREFIJO. Las nuevas deben ser 0021 o superior."
+                  FALLO=1
+                fi
+                if [ "$NUM" -le "$MAX_BASE" ]; then
+                  echo "ERROR: '$BASENAME' debe tener un numero mayor que la ultima migracion de $BASE_REF ($(printf '%04d' "$MAX_BASE")). Trae main a la rama y renumerala."
                   FALLO=1
                 fi
                 ;;
