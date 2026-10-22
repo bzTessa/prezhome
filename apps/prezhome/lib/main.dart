@@ -11,12 +11,17 @@ import 'theme/app_theme.dart';
 import 'theme/theme_preference.dart';
 import 'widgets/drawn_icons.dart';
 import 'services/plan_prefs.dart';
+import 'services/reminders.dart';
 import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Las preferencias locales se leen a la vez que arranca Supabase.
-  final prefs = Future.wait([ThemePreference.load(), PlanPrefs.load()]);
+  final prefs = Future.wait([
+    ThemePreference.load(),
+    PlanPrefs.load(),
+    Reminders.load(),
+  ]);
   await Supabase.initialize(
     url: 'https://ubrihtnnkbwcbchvvlno.supabase.co',
     publishableKey: 'sb_publishable_9bsI8HUy7IlctmudvIljtg_zxZmKoAu',
@@ -54,9 +59,15 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ThemePreference.mode.addListener(_applyTheme);
-    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen(
-      (_) => _applyTheme(),
-    );
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((s) {
+      _applyTheme();
+      if (s.event == AuthChangeEvent.signedOut) {
+        unawaited(Reminders.clear());
+      } else if (s.event == AuthChangeEvent.initialSession ||
+          s.event == AuthChangeEvent.signedIn) {
+        unawaited(Reminders.sync(Supabase.instance.client));
+      }
+    });
     _syncBrightness();
   }
 
@@ -79,6 +90,8 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
       ConnectionStatus.instance.start();
     } else if (state == AppLifecycleState.paused) {
       ConnectionStatus.instance.stop();
+      // Al salir, los avisos se rehacen con lo que se haya hecho en la app.
+      unawaited(Reminders.sync(Supabase.instance.client));
     }
   }
 
