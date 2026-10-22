@@ -28,6 +28,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
+import { isPublicUrl } from "./url_guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -114,11 +115,22 @@ async function fetchOEmbed(url: string): Promise<string | null> {
 // Descarga la página y extrae texto útil de sus metadatos (OG/description/title).
 async function fetchPageText(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": BROWSER_UA, "Accept-Language": "es,en" },
-      redirect: "follow",
-    });
-    if (!res.ok) return null;
+    // Redirecciones a mano para comprobar cada salto con isPublicUrl.
+    let res: Response | null = null;
+    for (let hop = 0; hop < 5; hop++) {
+      if (!isPublicUrl(url)) return null;
+      res = await fetch(url, {
+        headers: { "User-Agent": BROWSER_UA, "Accept-Language": "es,en" },
+        redirect: "manual",
+        signal: AbortSignal.timeout(8000),
+      });
+      const next = res.headers.get("location");
+      if (res.status < 300 || res.status >= 400 || !next) break;
+      await res.body?.cancel();
+      url = new URL(next, url).toString();
+      res = null;
+    }
+    if (!res?.ok) return null;
     const html = await res.text();
     const parts: string[] = [];
     const ogTitle = metaContent(html, ["og:title", "twitter:title"]);
@@ -259,6 +271,9 @@ serveAi("import_link", async (req, useCredit) => {
     }
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return json({ error: "El enlace debe empezar por http(s)" }, 400);
+    }
+    if (!isPublicUrl(url)) {
+      return json({ error: "El enlace no es válido" }, 400);
     }
 
     // 3. Consumir crédito de IA (igual que generate-recipe)
