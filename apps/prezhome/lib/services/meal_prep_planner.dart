@@ -211,7 +211,25 @@ class MealPrepPlanner {
       weekStart.month,
       weekStart.day,
     );
-    final cookDates = _chooseCookDates(mealDays, maxCookingDays, weekStartDay);
+    final cookDates = [
+      ..._chooseCookDates(mealDays, maxCookingDays, weekStartDay),
+    ];
+
+    // Lo no congelable no puede pasar más de [kDiasNevera] días en la nevera:
+    // si su día de cocción queda más lejos, se cocina el mismo día que se come
+    // (un día de cocina más, aunque supere lo que pide la energía).
+    for (final m in relevant) {
+      if (recipesById[m.recipeId]!.freezable) continue;
+      final cook = cookDates.lastWhere(
+        (d) => !m._day.isBefore(d),
+        orElse: () => cookDates.first,
+      );
+      if (m._day.difference(cook).inDays > kDiasNevera) {
+        cookDates
+          ..add(m._day)
+          ..sort();
+      }
+    }
 
     // Cada comida va al bloque que arranca en su día de cocción y acaba antes
     // del siguiente. Si la receta ya se cocina en un bloque anterior y aguanta
