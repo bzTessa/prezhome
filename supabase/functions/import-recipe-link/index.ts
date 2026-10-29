@@ -10,15 +10,19 @@
 // Flujo:
 //   1. Seguridad igual que las demás funciones: valida JWT, obtiene home_id y
 //      consume el límite mensual de IA (consume_ai_credit, server-side).
-//   2. Recibe { "url": <enlace> }. Valida que sea http(s).
+//   2. Recibe { "url": <enlace> } y/o { "text": <texto pegado> }. Si llega
+//      texto (p. ej. la descripción de un post de Instagram copiada a mano)
+//      se usa tal cual; si no, se valida que la URL sea http(s) pública.
 //   3. Extrae el texto público del enlace:
-//        a) oEmbed (TikTok e Instagram ofrecen un endpoint oEmbed con el
-//           título/autor del post sin autenticación).
+//        a) oEmbed (TikTok y YouTube ofrecen un endpoint oEmbed con el
+//           título/autor del post sin autenticación; el de Instagram exige
+//           token de Meta desde 2020).
 //        b) Metadatos Open Graph de la página (og:description, og:title,
 //           description) como respaldo general para cualquier web.
 //      Todo best-effort: si una vía falla, se intenta la siguiente.
-//   4. Si no se consigue texto útil, devuelve 422 con un mensaje claro para que
-//      la app sugiera pegar la receta a mano.
+//   4. Si no se consigue texto útil, devuelve 422 con need_text para que la
+//      app pida pegar el texto. Instagram casi nunca deja leer un post sin
+//      iniciar sesión, así que ahí es lo habitual. No se gasta crédito de IA.
 //   5. Pasa el texto a Gemini (mismo prompt/esquema que generate-recipe) y
 //      devuelve { recipe }.
 //
@@ -83,16 +87,13 @@ function metaContent(html: string, keys: string[]): string | null {
   return null;
 }
 
-// Intenta el endpoint oEmbed de TikTok/Instagram/YouTube para sacar título y autor.
+// Intenta el endpoint oEmbed de TikTok/YouTube para sacar título y autor.
 async function fetchOEmbed(url: string): Promise<string | null> {
   try {
     const host = new URL(url).host;
     let endpoint: string | null = null;
     if (host.includes("tiktok.com")) {
       endpoint = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
-    } else if (host.includes("instagram.com")) {
-      // oEmbed público (sin token) de Instagram; puede no responder siempre.
-      endpoint = `https://api.instagram.com/oembed?url=${encodeURIComponent(url)}`;
     } else if (host.includes("youtube.com") || host.includes("youtu.be")) {
       endpoint = `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url)}`;
     }
@@ -160,7 +161,7 @@ estructura la receta completa. El texto puede estar incompleto, con emojis,
 hashtags o abreviado; completa de forma RAZONABLE lo que falte (cantidades,
 macros, pasos) manteniéndote fiel a lo que describe.
 
-Enlace original: ${url}
+Enlace original: ${url || "(texto pegado por el usuario)"}
 
 Texto del post:
 """
@@ -260,51 +261,65 @@ serveAi("import_link", async (req, useCredit) => {
     }
     const homeId = profile.home_id as string;
 
-    // 2. Validar la URL
+    // 2. Validar la entrada: texto pegado y/o enlace.
     const body = await req.json().catch(() => ({}));
     const url = (body?.url ?? "").toString().trim();
-    let parsed: URL;
-    try {
-      parsed = new URL(url);
-    } catch (_e) {
-      return json({ error: "El enlace no es válido" }, 400);
-    }
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return json({ error: "El enlace debe empezar por http(s)" }, 400);
-    }
-    if (!isPublicUrl(url)) {
-      return json({ error: "El enlace no es válido" }, 400);
+    const pasted = (body?.text ?? "").toString().trim().substring(0, 8000);
+    if (url) {
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch (_e) {
+        return json({ error: "El enlace no es válido" }, 400);
+      }
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return json({ error: "El enlace debe empezar por http(s)" }, 400);
+      }
+      if (!isPublicUrl(url)) {
+        return json({ error: "El enlace no es válido" }, 400);
+      }
+    } else if (!pasted) {
+      return json({ error: "Pega un enlace o el texto de la receta" }, 400);
     }
 
-    // 3. Consumir crédito de IA (igual que generate-recipe)
+    // 3. Texto de la receta: el pegado o, si no, el que se pueda leer del
+    // enlace (oEmbed + metadatos OG, best-effort). Antes de gastar crédito.
+    let sourceText = pasted;
+    if (!sourceText) {
+      const oembed = await fetchOEmbed(url);
+      const page = await fetchPageText(url);
+      sourceText = [oembed, page]
+        .filter((s): s is string => !!s && s.length > 0)
+        .join(". ")
+        .trim();
+    }
+
+    if (sourceText.length < 15) {
+      if (pasted) {
+        return json({ error: "Ese texto es muy corto para ser una receta" }, 400);
+      }
+      const insta = /(^|\.)instagram\.com$/i.test(new URL(url).hostname);
+      return json(
+        {
+          need_text: true,
+          error: insta
+            ? "Instagram no deja leer sus publicaciones desde fuera de la " +
+              "app. Abre el post, copia la descripción con la receta y " +
+              "pégala aquí."
+            : "No pude leer la receta de ese enlace (puede ser privado o no " +
+              "tener la receta escrita). Copia el texto de la receta y " +
+              "pégalo aquí.",
+        },
+        422,
+      );
+    }
+
+    // 4. Consumir crédito de IA (igual que generate-recipe)
     const credit = await useCredit(admin, homeId);
     if (credit === "error") {
       return json({ error: "No se pudo verificar el límite de uso" }, 500);
     }
     if (credit === "limit") return json({ error: aiLimitMessage() }, 429);
-
-    // 4. Extraer texto del enlace (oEmbed + metadatos OG, best-effort).
-    const oembed = await fetchOEmbed(url);
-    const page = await fetchPageText(url);
-    const sourceText = [oembed, page]
-      .filter((s): s is string => !!s && s.length > 0)
-      .join(". ")
-      .trim();
-
-    if (sourceText.length < 15) {
-      // No hay texto útil: muchas publicaciones son privadas o no exponen la
-      // receta en la descripción. Avisamos para que la app sugiera pegar el
-      // texto a mano en "Escribe el nombre".
-      return json(
-        {
-          error:
-            "No pude leer la receta de ese enlace (puede ser privado o no " +
-            "tener la receta escrita en la descripción). Prueba a copiar el " +
-            "texto de la receta y pegarlo en 'Escribe el nombre'.",
-        },
-        422,
-      );
-    }
 
     // 5. Estructurar con Gemini
     const models = await pickModels(geminiKey);
