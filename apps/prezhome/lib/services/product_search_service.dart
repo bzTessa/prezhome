@@ -29,18 +29,21 @@ class SupermarketProduct {
 }
 
 /// Resultado de una búsqueda. [throttled] indica que se ha pedido demasiado
-/// en poco tiempo y no se ha llamado a OFF.
+/// en poco tiempo y no se ha llamado a OFF. [failed] es que OFF no ha
+/// respondido bien y [offline], que ni siquiera se ha podido conectar.
 class ProductSearchResult {
   const ProductSearchResult(
     this.products, {
     this.throttled = false,
     this.failed = false,
+    this.offline = false,
     this.filteredByStore = false,
   });
 
   final List<SupermarketProduct> products;
   final bool throttled;
   final bool failed;
+  final bool offline;
 
   /// Los resultados son solo del súper pedido (si no había, se repite sin él).
   final bool filteredByStore;
@@ -61,35 +64,29 @@ String? offStoreTag(String? supermarketKey) => switch (supermarketKey) {
   _ => null,
 };
 
-/// URL de búsqueda de OFF: productos vendidos en España y, si se indica, en
-/// la tienda [storeTag].
+/// URL de búsqueda de OFF (search-a-licious; la antigua cgi/search.pl ya no
+/// responde a apps sin cuenta): productos vendidos en España y, si se indica,
+/// en la tienda [storeTag].
 Uri buildProductSearchUri(String query, {String? storeTag}) {
-  final params = <String, String>{
-    'search_terms': query.trim(),
-    'search_simple': '1',
-    'action': 'process',
-    'json': '1',
+  // Fuera la sintaxis de búsqueda (comillas, dos puntos…): solo palabras.
+  final words = query.replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ');
+  final q = StringBuffer('${words.trim()} countries_tags:"en:spain"');
+  if (storeTag != null) q.write(' stores:"$storeTag"');
+  return Uri.https('search.openfoodfacts.org', '/search', {
+    'q': q.toString(),
+    'langs': 'es',
     'page_size': '24',
-    'lc': 'es',
     'fields':
         'code,product_name_es,product_name,brands,quantity,'
         'image_front_small_url,image_front_url',
-    'tagtype_0': 'countries',
-    'tag_contains_0': 'contains',
-    'tag_0': 'spain',
-  };
-  if (storeTag != null) {
-    params['tagtype_1'] = 'stores';
-    params['tag_contains_1'] = 'contains';
-    params['tag_1'] = storeTag;
-  }
-  return Uri.https('es.openfoodfacts.org', '/cgi/search.pl', params);
+  });
 }
 
-/// Convierte la respuesta JSON de OFF en productos. Descarta los que no
-/// tienen nombre y los repetidos (mismo nombre y marca).
+/// Convierte la respuesta JSON de OFF (`hits` de la búsqueda o `products`)
+/// en productos. Descarta los que no tienen nombre y los repetidos (mismo
+/// nombre y marca).
 List<SupermarketProduct> parseProductSearch(Map<String, dynamic> json) {
-  final raw = json['products'];
+  final raw = json['hits'] ?? json['products'];
   if (raw is! List) return const [];
   String? clean(Object? v) {
     final s = v?.toString().trim();
@@ -102,8 +99,13 @@ List<SupermarketProduct> parseProductSearch(Map<String, dynamic> json) {
     if (p is! Map) continue;
     final name = clean(p['product_name_es']) ?? clean(p['product_name']);
     if (name == null) continue;
-    // OFF da las marcas separadas por comas: nos quedamos con la primera.
-    final brand = clean(p['brands']?.toString().split(',').first);
+    // OFF da las marcas en lista o separadas por comas: la primera.
+    final brands = p['brands'];
+    final brand = clean(
+      brands is List
+          ? (brands.isEmpty ? null : brands.first)
+          : brands?.toString().split(',').first,
+    );
     final key = '${name.toLowerCase()}|${brand?.toLowerCase()}';
     if (!seen.add(key)) continue;
     out.add(
@@ -431,6 +433,9 @@ class ProductSearchService {
       return _cache[key] = ProductSearchResult(
         rankProducts(q, [...inStore, ...all.where((p) => seen.add(p.code))]),
       );
+    } on http.ClientException {
+      // El móvil no llega a ningún servidor (sin datos, modo avión…).
+      return const ProductSearchResult([], failed: true, offline: true);
     } catch (_) {
       return const ProductSearchResult([], failed: true);
     }

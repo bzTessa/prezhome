@@ -290,19 +290,18 @@ async function searchOFFPhoto(query: string): Promise<string | null> {
   const q = query.trim();
   if (!q) return null;
   try {
+    // search-a-licious: la antigua cgi/search.pl da 503 sin cuenta.
     const params = new URLSearchParams({
-      search_terms: q,
-      search_simple: "1",
-      action: "process",
-      json: "1",
+      q: q.replace(/[^\p{L}\p{N}]+/gu, " ").trim(),
+      langs: "es",
       page_size: "10",
       fields: "image_url,image_front_url,image_front_small_url",
     });
-    const url = `https://es.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
+    const url = `https://search.openfoodfacts.org/search?${params.toString()}`;
     const res = await fetch(url, { headers: { "User-Agent": OFF_UA } });
     if (!res.ok) return null;
     const data = await res.json();
-    const products = Array.isArray(data?.products) ? data.products : [];
+    const products = Array.isArray(data?.hits) ? data.hits : [];
     for (const p of products) {
       const img = productImageUrl(p ?? {});
       if (img) return img;
