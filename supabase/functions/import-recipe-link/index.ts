@@ -426,7 +426,9 @@ serveAi("import_link", async (req, useCredit) => {
     // enlace (descripción completa, YouTube API, oEmbed, OG; best-effort).
     // Antes de gastar crédito.
     let sourceText = pasted;
-    let ytId: string | null = null;
+    // El móvil manda el texto que leyó, pero en YouTube el vídeo sigue
+    // sirviendo si ese texto no trae la receta.
+    let ytId: string | null = url ? youtubeId(url) : null;
     if (!sourceText) {
       const page = await fetchPage(url);
       ytId = youtubeId(page.url);

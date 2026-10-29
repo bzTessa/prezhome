@@ -9,6 +9,7 @@ import 'models/supermarket.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
+import 'services/link_text.dart';
 import 'utils/friendly_error.dart';
 import 'theme/app_theme.dart';
 import 'widgets/list_skeleton.dart';
@@ -401,9 +402,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     String? needText;
     setState(() => _aiLoading = true);
     try {
+      // Primero intentamos leer el post desde el móvil (al servidor lo
+      // bloquean); si no sale nada, el servidor lo intenta por su cuenta.
+      final text = isUrl ? await fetchLinkText(input) : input;
       final res = await _client.functions.invoke(
         'import-recipe-link',
-        body: {'url': ?url, if (!isUrl) 'text': input},
+        body: {'url': ?url, 'text': ?text},
       );
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {
