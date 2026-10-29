@@ -250,8 +250,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       // (antes devolvía siempre el mismo primer resultado).
       final current = _recipe.externalImageUrl;
       if (current != null) _seenPhotoUrls.add(current);
-      final url = await RecipePhotoService(_client)
-          .find(title: _recipe.title, exclude: _seenPhotoUrls);
+      final url = await RecipePhotoService(
+        _client,
+      ).find(title: _recipe.title, exclude: _seenPhotoUrls);
       if (url != null) _seenPhotoUrls.add(url);
       if (!mounted) return;
       if (url == null) {

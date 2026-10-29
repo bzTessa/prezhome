@@ -606,8 +606,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ..sort((a, b) => (b.freezable ? 1 : 0) - (a.freezable ? 1 : 0));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(friendlyError(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
       return;
     }
@@ -664,8 +665,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
       homeId = await _homeId();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(friendlyError(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
       return;
     }
