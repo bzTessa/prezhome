@@ -625,8 +625,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   void _openScanTicket() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
   }
 
   Future<void> _toggleChecked(ShoppingListItem item, bool value) async {
@@ -999,8 +1000,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       String? imageUrl = productPhoto;
       if (imageUrl != null) {
         // Se recuerda para la próxima vez que se escriba este producto.
-        await FoodPhotoService(_client)
-            .rememberPhoto(homeId: homeId, name: name, url: imageUrl);
+        await FoodPhotoService(
+          _client,
+        ).rememberPhoto(homeId: homeId, name: name, url: imageUrl);
       } else {
         // Foto del envase en Open Food Facts (o la ya guardada). Si tarda,
         // el producto entra sin foto y se le pone después.
@@ -1442,8 +1444,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final homeId = _superHomeId;
     if (picked == null || picked == current || homeId == null) return;
     try {
-      final next = await HomeSupermarkets(_client)
-          .setPrimary(homeId, _superKeys, picked);
+      final next = await HomeSupermarkets(
+        _client,
+      ).setPrimary(homeId, _superKeys, picked);
       if (mounted) setState(() => _superKeys = next);
     } catch (_) {
       if (!mounted) return;
