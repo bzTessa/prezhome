@@ -78,12 +78,7 @@ String? _meta(String html, String key) {
   return null;
 }
 
-const _entities = {
-  '&quot;': '"',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&nbsp;': ' ',
-};
+const _entities = {'&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' '};
 
 String _decode(String s) {
   s = s.replaceAllMapped(RegExp(r'&#(x?)([0-9a-fA-F]+);'), (m) {
