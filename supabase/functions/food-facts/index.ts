@@ -9,8 +9,9 @@
 //   - nutrición por 100 g (kcal y macros) para poder calcular las calorías de
 //     la receta sumando ingredientes en vez de estimarlas a ojo.
 //
-// OFF es colaborativo y gratuito (sin clave). La búsqueda por TEXTO va por el
-// endpoint v1 cgi/search.pl (la v2 no soporta full-text). Degradamos SIEMPRE:
+// OFF es colaborativo y gratuito (sin clave). La búsqueda por TEXTO va por
+// search-a-licious (search.openfoodfacts.org): la antigua cgi/search.pl
+// devuelve 503 a quien no tiene cuenta. Degradamos SIEMPRE:
 // si no hay match o falla la red, devolvemos { found: false } (status 200) y la
 // app usa su comportamiento previo (estimación IA). NUNCA 500 por esto.
 //
@@ -102,6 +103,12 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Texto libre para search-a-licious sin su sintaxis (comillas, dos puntos…),
+// más los filtros que se le añadan.
+function offQuery(text: string, filters = ""): string {
+  return `${text.replace(/[^\p{L}\p{N}]+/gu, " ").trim()} ${filters}`.trim();
+}
+
 // Busca en OFF por texto (y opcionalmente marca). Devuelve el primer producto
 // con datos nutricionales utilizables, o null.
 async function searchOFF(
@@ -110,24 +117,17 @@ async function searchOFF(
 ): Promise<FoodFacts | null> {
   try {
     const params = new URLSearchParams({
-      search_terms: query,
-      search_simple: "1",
-      action: "process",
-      json: "1",
+      q: offQuery(query, brand ? `brands:"${offQuery(brand)}"` : ""),
+      langs: "es",
       page_size: "15",
       fields:
         "product_name,brands,quantity,product_quantity,product_quantity_unit,nutriments,image_url,image_front_url,image_front_small_url",
     });
-    if (brand) {
-      params.set("tagtype_0", "brands");
-      params.set("tag_contains_0", "contains");
-      params.set("tag_0", brand);
-    }
-    const url = `https://es.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
+    const url = `https://search.openfoodfacts.org/search?${params.toString()}`;
     const res = await fetch(url, { headers: { "User-Agent": OFF_UA } });
     if (!res.ok) return null;
     const data = await res.json();
-    const products = Array.isArray(data?.products) ? data.products : [];
+    const products = Array.isArray(data?.hits) ? data.hits : [];
     if (products.length === 0) return null;
 
     // Elegimos el primer producto que tenga calorías por 100 g (dato clave).
@@ -138,7 +138,11 @@ async function searchOFF(
       return {
         found: true,
         productName: typeof p.product_name === "string" ? p.product_name : "",
-        brand: typeof p.brands === "string" ? p.brands : "",
+        brand: Array.isArray(p.brands)
+          ? p.brands.join(", ")
+          : typeof p.brands === "string"
+          ? p.brands
+          : "",
         packageQuantity: num(p.product_quantity),
         packageUnit: typeof p.product_quantity_unit === "string"
           ? p.product_quantity_unit
