@@ -83,6 +83,11 @@ class MealPlanner {
     ProteinGroup? lastMainGroup;
 
     for (var d = 0; d < days; d++) {
+      // Planes de varias semanas: la pauta y los usos cuentan por semana.
+      if (d > 0 && d % 7 == 0) {
+        uses.clear();
+        groupCount.clear();
+      }
       final date = DateTime(startDate.year, startDate.month, startDate.day + d);
       final dayMap = <String, String>{};
 

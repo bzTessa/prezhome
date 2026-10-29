@@ -212,7 +212,78 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
-  Future<void> _generatePlan(_PlanData data) async {
+  /// ¿Para cuánto tiempo hacer el plan? Una semana, dos, un mes o las fechas
+  /// que se elijan. Empieza en el lunes de la semana que se está viendo.
+  Future<void> _askPlanRange(_PlanData data) async {
+    final weeks = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Text(
+                '¿Para cuánto tiempo?',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            for (final (n, label) in const [
+              (1, 'Esta semana'),
+              (2, '2 semanas'),
+              (4, 'Un mes (4 semanas)'),
+            ])
+              ListTile(
+                leading: Icon(
+                  Icons.date_range_rounded,
+                  color: AppColors.woodDark,
+                ),
+                title: Text(label),
+                onTap: () => Navigator.of(ctx).pop(n),
+              ),
+            ListTile(
+              leading: Icon(
+                Icons.edit_calendar_rounded,
+                color: AppColors.woodDark,
+              ),
+              title: const Text('Elegir fechas'),
+              onTap: () => Navigator.of(ctx).pop(0),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || weeks == null) return;
+    if (weeks > 0) {
+      return _generatePlan(data, _weekStart, weeks * 7);
+    }
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+      helpText: 'Fechas del plan',
+    );
+    if (range == null || !mounted) return;
+    final days = range.end.difference(range.start).inDays + 1;
+    if (days > 62) {
+      _showMiau('Como mucho dos meses de una vez.');
+      return;
+    }
+    await _generatePlan(data, range.start, days);
+  }
+
+  Future<void> _generatePlan(_PlanData data, DateTime start, int days) async {
     setState(() => _generating = true);
     try {
       // Peso por receta a partir del feedback histórico.
@@ -256,8 +327,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           .toList();
       final planner = MealPlanner();
       final plan = planner.generate(
-        startDate: _weekStart,
-        days: 7,
+        startDate: start,
+        days: days,
         mealTypes: PlanPrefs.current.value.planned(data.activeMeals),
         recipes: cookable.isEmpty ? data.recipes : cookable,
         scoreByRecipe: scores,
@@ -266,9 +337,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         batch: data.isMealPrep,
       );
 
-      // Borrar el plan anterior de la semana y guardar el nuevo.
-      final start = _weekStart;
-      final end = start.add(const Duration(days: 7));
+      // Borrar el plan anterior de esas fechas y guardar el nuevo.
+      final end = start.add(Duration(days: days));
       await _client
           .from('meal_plan_entries')
           .delete()
@@ -314,7 +384,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         await _client.from('meal_plan_entries').insert(rows);
       }
       _reload();
-      if (rows.isNotEmpty) await _fillShoppingFromPlan(data.homeId!);
+      if (rows.isNotEmpty) {
+        await _fillShoppingFromPlan(data.homeId!, start, end);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -331,13 +403,17 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   /// La lista de la compra se hace sola con el plan nuevo: lo que piden las
   /// recetas menos lo que ya hay en casa, con foto de cada producto.
-  Future<void> _fillShoppingFromPlan(String homeId) async {
+  Future<void> _fillShoppingFromPlan(
+    String homeId,
+    DateTime from,
+    DateTime to,
+  ) async {
     try {
       final service = PlanShoppingService(_client);
       final added = await service.syncFromPlan(
         homeId: homeId,
-        from: _weekStart,
-        to: _weekStart.add(const Duration(days: 7)),
+        from: from,
+        to: to,
       );
       if (added.isNotEmpty) {
         unawaited(service.fillMissingPhotos(homeId, added));
@@ -1028,7 +1104,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           }
           return FloatingActionButton.extended(
             heroTag: 'fab-meal-plan',
-            onPressed: _generating ? null : () => _generatePlan(data),
+            onPressed: _generating ? null : () => _askPlanRange(data),
             icon: _generating
                 ? const SizedBox(
                     width: 18,
