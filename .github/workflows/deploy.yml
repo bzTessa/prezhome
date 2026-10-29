@@ -148,3 +148,6 @@ jobs:
 
       - name: Desplegar wallet-prices
         run: supabase functions deploy wallet-prices --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Desplegar wallet-analysis
+        run: supabase functions deploy wallet-analysis --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
