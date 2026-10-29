@@ -88,6 +88,9 @@ class _LoginScreenState extends State<LoginScreen> {
         provider,
         // En móvil vuelve a la app por deep link; en web, a la URL del sitio.
         redirectTo: kIsWeb ? null : 'com.prezhome.app://login-callback',
+        // Chrome normal no devuelve el control a la app tras la redirección
+        // (se queda cargando); la pestaña integrada sí.
+        authScreenLaunchMode: LaunchMode.inAppBrowserView,
       );
       // El flujo continúa vía redirección; el AuthGate detecta la sesión.
     } catch (e) {
