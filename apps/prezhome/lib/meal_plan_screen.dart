@@ -17,12 +17,14 @@ import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
 import 'services/plan_prefs.dart';
+import 'services/plan_repeats.dart';
 import 'services/plan_prep.dart';
 import 'services/plan_shopping.dart';
 import 'shopping_list_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
+import 'widgets/tactile_button.dart';
 import 'widgets/plan/plan_parts.dart';
 import 'widgets/recipe_image.dart';
 import 'widgets/segmented_pill.dart';
@@ -184,9 +186,15 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final recRes = await _client.from('recipes').select().eq('home_id', homeId);
     final recipes = (recRes as List).map((m) => Recipe.fromMap(m)).toList();
 
-    // Plan de esta semana
+    // Plan de esta semana, con las comidas que se repiten ya puestas.
     final start = _weekStart;
     final end = start.add(const Duration(days: 7));
+    await PlanRepeats.fill(
+      _client,
+      homeId,
+      end,
+      servingsFor: (type, d) => servingsCountForMeal(members, type, d.weekday),
+    );
     final planRes = await _client
         .from('meal_plan_entries')
         .select()
@@ -339,12 +347,30 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
       // Borrar el plan anterior de esas fechas y guardar el nuevo.
       final end = start.add(Duration(days: days));
+      // Las comidas que se repiten se quedan y el plan llena el resto.
       await _client
           .from('meal_plan_entries')
           .delete()
           .eq('home_id', data.homeId!)
+          .isFilter('repeat_id', null)
           .gte('plan_date', start.toIso8601String().split('T').first)
           .lt('plan_date', end.toIso8601String().split('T').first);
+      await PlanRepeats.fill(
+        _client,
+        data.homeId!,
+        end,
+        servingsFor: (type, d) =>
+            servingsCountForMeal(data.members, type, d.weekday),
+      );
+      final keptRes = await _client
+          .from('meal_plan_entries')
+          .select('plan_date, meal_type')
+          .eq('home_id', data.homeId!)
+          .gte('plan_date', start.toIso8601String().split('T').first)
+          .lt('plan_date', end.toIso8601String().split('T').first);
+      final kept = {
+        for (final k in keptRes as List) '${k['plan_date']}|${k['meal_type']}',
+      };
 
       // Recetas que SÍ tienen platos congelados, para preferir usarlas primero.
       final frozenByRecipe = <String, List<_FrozenMeal>>{};
@@ -355,6 +381,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       final rows = <Map<String, dynamic>>[];
       plan.forEach((date, meals) {
         meals.forEach((type, recipeId) {
+          final day = date.toIso8601String().split('T').first;
+          if (kept.contains('$day|$type')) return;
           // Si hay una unidad congelada de esta receta, la usamos (del congelador).
           _FrozenMeal? frozen;
           final pool = frozenByRecipe[recipeId];
@@ -586,6 +614,23 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               title: Text(e.skipped ? 'Marcar en casa' : 'Marcar como fuera'),
               onTap: () => Navigator.of(ctx).pop('skip'),
             ),
+            if (e.repeatId != null)
+              ListTile(
+                leading: Icon(
+                  Icons.repeat_on_rounded,
+                  color: AppColors.woodDark,
+                ),
+                title: const Text('Dejar de repetir'),
+                subtitle: const Text('Quita las siguientes veces'),
+                onTap: () => Navigator.of(ctx).pop('unrepeat'),
+              )
+            else if (recipe != null && e.id != null)
+              ListTile(
+                leading: Icon(Icons.repeat_rounded, color: AppColors.woodDark),
+                title: const Text('Repetir'),
+                subtitle: const Text('Cada día, cada semana… o para siempre'),
+                onTap: () => Navigator.of(ctx).pop('repeat'),
+              ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: const Text('Quitar del plan'),
@@ -610,6 +655,131 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       case 'remove':
         await _removeEntry(e);
         break;
+      case 'repeat':
+        await _repeatEntry(data, e);
+        break;
+      case 'unrepeat':
+        try {
+          await PlanRepeats.stop(_client, e.repeatId!);
+          _reload();
+        } catch (err) {
+          _showError(err);
+        }
+        break;
+    }
+  }
+
+  /// Repite esta comida cada N días, hasta una fecha o para siempre.
+  Future<void> _repeatEntry(_PlanData data, MealPlanEntry e) async {
+    var every = 1;
+    int? months; // null = para siempre
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) {
+          Widget chip(String label, bool selected, VoidCallback onTap) =>
+              ChoiceChip(
+                label: Text(label),
+                selected: selected,
+                showCheckmark: false,
+                selectedColor: AppColors.wood,
+                backgroundColor: AppColors.card,
+                onSelected: (_) => setSheet(onTap),
+              );
+          Widget label(String text) => Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 8),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.inkMuted,
+              ),
+            ),
+          );
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Repetir ${(_mealLabels[e.mealType] ?? e.mealType).toLowerCase()}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  label('¿Cada cuánto?'),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final (n, text) in const [
+                        (1, 'Cada día'),
+                        (2, 'Cada 2 días'),
+                        (3, 'Cada 3 días'),
+                        (7, 'Cada semana'),
+                        (14, 'Cada 2 semanas'),
+                      ])
+                        chip(text, every == n, () => every = n),
+                    ],
+                  ),
+                  label('¿Hasta cuándo?'),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final (n, text) in const [
+                        (null, 'Para siempre'),
+                        (1, '1 mes'),
+                        (3, '3 meses'),
+                      ])
+                        chip(text, months == n, () => months = n),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TactileButton(
+                      label: 'Repetir',
+                      icon: Icons.repeat_rounded,
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await PlanRepeats.create(
+        _client,
+        homeId: data.homeId!,
+        entryId: e.id!,
+        recipeId: e.recipeId!,
+        mealType: e.mealType,
+        start: e.date,
+        everyDays: every,
+        end: months == null
+            ? null
+            : DateTime(e.date.year, e.date.month + months!, e.date.day),
+      );
+      _showMiau(
+        'Hecho. Lo verás en el plan las próximas semanas; si un día '
+        'ya tiene otra cosa, se respeta.',
+      );
+      _reload();
+    } catch (err) {
+      _showError(err);
     }
   }
 

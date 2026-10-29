@@ -9,6 +9,7 @@ class MealPlanEntry {
   final String? inventoryItemId; // item del congelador del que procede
   final int? servings; // raciones a cocinar (nº de personas que comen en casa)
   final DateTime? createdAt; // cuándo se hizo el plan (fija la cocina en lote)
+  final String? repeatId; // regla de meal_plan_repeats si se repite
 
   MealPlanEntry({
     this.id,
@@ -21,6 +22,7 @@ class MealPlanEntry {
     this.inventoryItemId,
     this.servings,
     this.createdAt,
+    this.repeatId,
   });
 
   factory MealPlanEntry.fromMap(Map<String, dynamic> map) {
@@ -41,6 +43,7 @@ class MealPlanEntry {
       createdAt: map['created_at'] == null
           ? null
           : DateTime.tryParse(map['created_at'].toString())?.toLocal(),
+      repeatId: map['repeat_id'] as String?,
     );
   }
 
