@@ -27,7 +27,7 @@ import 'widgets/plan/plan_parts.dart';
 import 'widgets/recipe_image.dart';
 import 'widgets/segmented_pill.dart';
 import 'utils/friendly_error.dart';
-import 'widgets/list_skeleton.dart';
+import 'widgets/skeleton.dart';
 
 /// Planificador semanal de comidas (v1).
 class MealPlanScreen extends StatefulWidget {
@@ -999,7 +999,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           // Al cambiar de semana se queda lo anterior con una barrita, sin
           // parpadeo de pantalla en blanco.
           if (loading && !snapshot.hasData) {
-            return const ListSkeleton();
+            return const PlanSkeleton();
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));
