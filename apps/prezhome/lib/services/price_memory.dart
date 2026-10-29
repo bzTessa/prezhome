@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'home_country.dart';
 
 import '../utils/approx_price.dart';
 import '../widgets/food_category_icon.dart';
@@ -162,11 +163,10 @@ class PriceMemory {
       mergeShared(out, (shared as List).cast<Map<String, dynamic>>());
     } catch (_) {}
     try {
-      // shortcut: país fijo 'ES' hasta que el hogar guarde su país.
       final market = await _client
           .from('market_prices')
           .select('keyword, unit, median_price')
-          .eq('country_code', 'ES');
+          .eq('country_code', HomeCountry.current.value.code);
       ApproxPrice.market = marketFrom(
         (market as List).cast<Map<String, dynamic>>(),
       );

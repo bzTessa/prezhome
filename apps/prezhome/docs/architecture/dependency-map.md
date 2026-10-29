@@ -7,36 +7,38 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 | Módulo | Ficheros Dart |
 | --- | ---: |
 | `data` | 1 |
-| `models` | 13 |
+| `l10n` | 9 |
+| `models` | 14 |
 | `onboarding` | 2 |
 | `screens` | 31 |
-| `services` | 43 |
+| `services` | 44 |
 | `tabs` | 3 |
 | `theme` | 7 |
-| `utils` | 18 |
+| `utils` | 19 |
 | `widgets` | 30 |
 
 ## Dependencias entre módulos
 
 - `data` -> (sin dependencias internas)
+- `l10n` -> `l10n`
 - `models` -> `models`, `utils`
 - `onboarding` -> `models`, `onboarding`, `screens`, `services`, `theme`, `widgets`
-- `screens` -> `models`, `onboarding`, `screens`, `services`, `tabs`, `theme`, `utils`, `widgets`
+- `screens` -> `l10n`, `models`, `onboarding`, `screens`, `services`, `tabs`, `theme`, `utils`, `widgets`
 - `services` -> `data`, `models`, `services`, `utils`, `widgets`
 - `tabs` -> `models`, `screens`, `services`, `theme`, `utils`, `widgets`
 - `theme` -> `services`, `theme`
-- `utils` -> `models`, `services`, `theme`, `widgets`
+- `utils` -> `models`, `services`, `theme`, `utils`, `widgets`
 - `widgets` -> `models`, `services`, `theme`, `utils`, `widgets`
 
 ## Importaciones cruzadas (conteo por módulo origen/destino)
 
 - `screens` -> `widgets`: 90
-- `screens` -> `services`: 77
-- `screens` -> `models`: 52
-- `screens` -> `utils`: 51
+- `screens` -> `services`: 80
+- `screens` -> `utils`: 56
+- `screens` -> `models`: 53
 - `widgets` -> `theme`: 38
 - `screens` -> `theme`: 37
-- `services` -> `models`: 30
+- `services` -> `models`: 31
 - `tabs` -> `screens`: 14
 - `services` -> `utils`: 11
 - `tabs` -> `widgets`: 10
@@ -44,11 +46,13 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `services` -> `widgets`: 6
 - `tabs` -> `models`: 6
 - `tabs` -> `services`: 6
+- `widgets` -> `utils`: 5
 - `onboarding` -> `theme`: 4
 - `utils` -> `widgets`: 4
-- `widgets` -> `utils`: 4
+- `screens` -> `l10n`: 3
 - `screens` -> `tabs`: 3
 - `tabs` -> `theme`: 3
+- `utils` -> `services`: 3
 - `widgets` -> `models`: 3
 - `models` -> `utils`: 2
 - `onboarding` -> `models`: 2
@@ -60,11 +64,11 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `onboarding` -> `services`: 1
 - `services` -> `data`: 1
 - `theme` -> `services`: 1
-- `utils` -> `services`: 1
 - `utils` -> `theme`: 1
 
 ## Ciclos detectados
 
+- `l10n` -> `l10n`
 - `models` -> `models`
 - `models` -> `utils` -> `models`
 - `models` -> `utils` -> `services` -> `models`
@@ -79,4 +83,5 @@ Archivo generado por `dart run tool/architecture/dependency_map.dart`.
 - `services` -> `widgets` -> `theme` -> `services`
 - `services` -> `widgets` -> `utils` -> `services`
 - `theme` -> `theme`
+- `utils` -> `utils`
 - `widgets` -> `widgets`

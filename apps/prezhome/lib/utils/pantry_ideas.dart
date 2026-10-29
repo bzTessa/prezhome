@@ -4,6 +4,7 @@ library;
 
 import '../models/inventory_item.dart';
 import '../widgets/food_category_icon.dart';
+import 'money.dart';
 
 /// Nombres de la despensa que se mandan a la IA para proponer recetas.
 ///
@@ -148,6 +149,5 @@ List<String> withPrimarySupermarket(List<String> current, String key) {
   return [k, ...current.where((s) => s != k)];
 }
 
-/// "1,80 €" con coma decimal.
-String formatEuros(double value) =>
-    '${value.toStringAsFixed(2).replaceAll('.', ',')} €';
+/// Importe en la moneda del hogar ("1,80 €" en España).
+String formatEuros(double value) => money(value);

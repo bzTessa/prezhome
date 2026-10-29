@@ -86,6 +86,6 @@ void main() {
   });
 
   test('formatEuros usa coma decimal', () {
-    expect(formatEuros(1.8), '1,80 €');
+    expect(formatEuros(1.8), '1,80\u00A0€');
   });
 }

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'utils/money.dart';
 
 import 'add_recipe_screen.dart';
 import 'cook_mode_screen.dart';
@@ -777,8 +778,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (_cost != null)
         _stat(
           Icons.euro_rounded,
-          _cost!.perServing.toStringAsFixed(2).replaceAll('.', ','),
-          '€/ración',
+          money(_cost!.perServing),
+          'por ración',
           AppColors.sage,
           AppColors.sageBg,
         )
@@ -1349,7 +1350,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     Icon(Icons.euro_rounded, size: 18, color: AppColors.sage),
                     const SizedBox(width: 8),
                     Text(
-                      '${_cost!.perServing.toStringAsFixed(2).replaceAll('.', ',')} € por ración',
+                      '${money(_cost!.perServing)} por ración',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -1357,7 +1358,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      '≈ ${_cost!.total.toStringAsFixed(2).replaceAll('.', ',')} € total',
+                      '≈ ${money(_cost!.total)} total',
                       style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                   ],

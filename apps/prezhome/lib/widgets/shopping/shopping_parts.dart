@@ -7,6 +7,7 @@ import '../animations/animated_counter.dart';
 import '../animations/press_scale.dart';
 import '../animations/spring_value.dart';
 import '../miau_character.dart';
+import '../../utils/money.dart';
 
 /// Piezas visuales de la lista de la compra. Sin acceso a datos: reciben lo
 /// que pintan y callbacks, para poder probarlas y previsualizarlas aparte.
@@ -145,8 +146,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                   if (estimate != null)
                     AnimatedCounter(
                       value: estimate!,
-                      formatter: (v) =>
-                          '≈ ${v.toStringAsFixed(2).replaceAll('.', ',')} €',
+                      formatter: (v) => '≈ ${money(v)}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,

@@ -92,7 +92,7 @@ void main() {
       ),
     );
     expect(find.text('3 por comprar · 1 en el carro'), findsOneWidget);
-    expect(find.text('≈ 12,40 €'), findsOneWidget);
+    expect(find.text('≈ 12,40\u00A0€'), findsOneWidget);
     expect(find.byType(CartProgressBar), findsOneWidget);
   });
 }

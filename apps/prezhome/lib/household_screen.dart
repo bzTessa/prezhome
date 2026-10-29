@@ -5,8 +5,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'economy_screen.dart';
 import 'plan_usage_screen.dart';
 import 'stats_screen.dart';
+import 'l10n/l10n.dart';
+import 'models/country.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/supermarket.dart';
+import 'services/home_country.dart';
 import 'services/home_invites.dart';
 import 'services/home_people.dart';
 import 'services/offline_provider.dart';
@@ -133,6 +136,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Future<void> _createHome() async {
     try {
       await _client.rpc('create_home_and_join');
+      await HomeCountry.load(_client);
       _reload();
     } catch (e) {
       _snack(friendlyError(e, 'No se pudo crear el hogar'), error: true);
@@ -754,6 +758,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
               ),
               const SizedBox(height: 8),
+              ValueListenableBuilder(
+                valueListenable: HomeCountry.current,
+                builder: (context, country, _) => _settingTile(
+                  icon: Icons.public_rounded,
+                  title:
+                      '${context.l.country}: ${country.flag} ${country.name}',
+                  subtitle: context.l.countryHint,
+                  onTap: () => _pickCountry(data.homeId!),
+                ),
+              ),
               // Gastos y tickets siempre; los puntos dentro solo con el
               // "Modo Puntos".
               _settingTile(
@@ -956,6 +970,41 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         ],
       ),
     );
+  }
+
+  /// Elige el país del hogar (moneda y precios de referencia).
+  Future<void> _pickCountry(String homeId) async {
+    final picked = await showModalBottomSheet<Country>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          children: [
+            for (final c in Country.all)
+              ListTile(
+                leading: Text(c.flag, style: const TextStyle(fontSize: 24)),
+                title: Text(c.name),
+                trailing: c == HomeCountry.current.value
+                    ? Icon(Icons.check_rounded, color: AppColors.woodDark)
+                    : null,
+                onTap: () => Navigator.pop(ctx, c),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null) return;
+    try {
+      await HomeCountry.set(_client, homeId, picked);
+    } catch (e) {
+      _snack(friendlyError(e, 'No se pudo cambiar el país'), error: true);
+    }
   }
 
   /// Bottom sheet para elegir uno o varios supermercados (opcional). Guarda la
