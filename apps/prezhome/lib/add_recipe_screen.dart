@@ -403,7 +403,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     try {
       final res = await _client.functions.invoke(
         'import-recipe-link',
-        body: {if (url != null) 'url': url, if (!isUrl) 'text': input},
+        body: {'url': ?url, if (!isUrl) 'text': input},
       );
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {
