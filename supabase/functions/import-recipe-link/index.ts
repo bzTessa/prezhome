@@ -2,10 +2,11 @@
 // PrezHome · Edge Function: import-recipe-link
 // ============================================================================
 // Importa una receta a partir de un ENLACE de TikTok / Instagram (o cualquier
-// web de recetas). La idea (estilo app "mise"): NO transcribimos el vídeo (no
-// es viable), sino que leemos el TEXTO público del post —el caption/descripción
-// y el título—, que es donde casi siempre está escrita la receta, y se lo
-// pasamos a Gemini con el MISMO esquema que generate-recipe para estructurarla.
+// web de recetas). La idea (estilo app "mise"): leemos el TEXTO público del
+// post —el caption/descripción y el título—, que es donde casi siempre está
+// escrita la receta, y se lo pasamos a Gemini con el MISMO esquema que
+// generate-recipe. Solo en YouTube, si el texto no trae la receta, Gemini ve
+// el vídeo.
 //
 // Flujo:
 //   1. Seguridad igual que las demás funciones: valida JWT, obtiene home_id y
@@ -13,26 +14,36 @@
 //   2. Recibe { "url": <enlace> } y/o { "text": <texto pegado> }. Si llega
 //      texto (p. ej. la descripción de un post de Instagram copiada a mano)
 //      se usa tal cual; si no, se valida que la URL sea http(s) pública.
-//   3. Extrae el texto público del enlace:
-//        a) oEmbed (TikTok y YouTube ofrecen un endpoint oEmbed con el
-//           título/autor del post sin autenticación; el de Instagram exige
-//           token de Meta desde 2020).
-//        b) Metadatos Open Graph de la página (og:description, og:title,
-//           description) como respaldo general para cualquier web.
+//   3. Extrae el texto público del enlace (siguiendo antes los enlaces cortos
+//      tipo vm.tiktok.com / youtu.be):
+//        a) Descripción COMPLETA incrustada en la página (TikTok: "desc";
+//           YouTube: "shortDescription"). Los metadatos OG vienen recortados
+//           y por eso antes se perdían los ingredientes.
+//        b) YouTube Data API (si existe el secreto YOUTUBE_API_KEY): título,
+//           descripción y comentarios del propio autor (el fijado suele ser la
+//           receta). YouTube bloquea a menudo la página a servidores, así que
+//           es la vía fiable.
+//        c) oEmbed (título/autor) y metadatos Open Graph como respaldo.
 //      Todo best-effort: si una vía falla, se intenta la siguiente.
 //   4. Si no se consigue texto útil, devuelve 422 con need_text para que la
 //      app pida pegar el texto. Instagram casi nunca deja leer un post sin
 //      iniciar sesión, así que ahí es lo habitual. No se gasta crédito de IA.
-//   5. Pasa el texto a Gemini (mismo prompt/esquema que generate-recipe) y
-//      devuelve { recipe }.
+//   5. Pasa el texto a Gemini (mismo esquema que generate-recipe). Gemini dice
+//      si el texto trae de verdad los ingredientes (source_has_recipe). Si no:
+//        - YouTube: se repite viendo el VÍDEO (Gemini acepta enlaces públicos
+//          de YouTube).
+//        - Resto: 422 need_text, en vez de inventar una receta genérica.
+//      TikTok no permite a Gemini ver el vídeo: ahí solo vale la descripción.
 //
 // Despliegue AUTOMÁTICO por CI (deploy.yml) al mergear a main, igual que el
-// resto de funciones. Reusa el secreto GEMINI_API_KEY ya configurado.
+// resto de funciones. Reusa el secreto GEMINI_API_KEY ya configurado;
+// YOUTUBE_API_KEY es opcional.
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
 import { isPublicUrl } from "./url_guard.ts";
+import { tiktokDescription, youtubeDescription, youtubeId } from "./extract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,15 +124,23 @@ async function fetchOEmbed(url: string): Promise<string | null> {
   }
 }
 
-// Descarga la página y extrae texto útil de sus metadatos (OG/description/title).
-async function fetchPageText(url: string): Promise<string | null> {
+// Descarga la página siguiendo redirecciones. Devuelve la URL final (los
+// enlaces cortos de TikTok/YouTube apuntan al vídeo real) y el HTML si hubo 200.
+async function fetchPage(
+  url: string,
+): Promise<{ url: string; html: string | null }> {
   try {
     // Redirecciones a mano para comprobar cada salto con isPublicUrl.
     let res: Response | null = null;
     for (let hop = 0; hop < 5; hop++) {
-      if (!isPublicUrl(url)) return null;
+      if (!isPublicUrl(url)) return { url, html: null };
       res = await fetch(url, {
-        headers: { "User-Agent": BROWSER_UA, "Accept-Language": "es,en" },
+        // SOCS: acepta el aviso de cookies de Google en servidores europeos.
+        headers: {
+          "User-Agent": BROWSER_UA,
+          "Accept-Language": "es,en",
+          "Cookie": "SOCS=CAI",
+        },
         redirect: "manual",
         signal: AbortSignal.timeout(8000),
       });
@@ -131,10 +150,59 @@ async function fetchPageText(url: string): Promise<string | null> {
       url = new URL(next, url).toString();
       res = null;
     }
-    if (!res?.ok) return null;
-    const html = await res.text();
+    if (!res?.ok) {
+      await res?.body?.cancel();
+      return { url, html: null };
+    }
+    return { url, html: await res.text() };
+  } catch (_e) {
+    return { url, html: null };
+  }
+}
+
+// YouTube Data API: título, descripción y comentarios del autor del vídeo.
+// shortcut: solo los 20 comentarios más relevantes; el fijado suele estar ahí.
+async function fetchYoutubeApi(id: string): Promise<string | null> {
+  const key = Deno.env.get("YOUTUBE_API_KEY");
+  if (!key) return null;
+  const api = "https://www.googleapis.com/youtube/v3";
+  try {
+    const v = await fetch(
+      `${api}/videos?part=snippet&id=${id}&key=${key}`,
+      { signal: AbortSignal.timeout(8000) },
+    ).then((r) => r.json());
+    const s = v?.items?.[0]?.snippet;
+    if (!s) return null;
+    const parts: string[] = [s.title, s.description].filter(Boolean);
+    const c = await fetch(
+      `${api}/commentThreads?part=snippet&videoId=${id}&order=relevance` +
+        `&maxResults=20&textFormat=plainText&key=${key}`,
+      { signal: AbortSignal.timeout(8000) },
+    ).then((r) => r.json()).catch(() => null);
+    for (const t of c?.items ?? []) {
+      const top = t?.snippet?.topLevelComment?.snippet;
+      if (top?.authorChannelId?.value === s.channelId && top?.textOriginal) {
+        parts.push(`Comentario del autor: ${top.textOriginal}`);
+      }
+    }
+    return parts.join("\n\n");
+  } catch (_e) {
+    return null;
+  }
+}
+
+// Texto útil de la página: la descripción completa incrustada (TikTok/YouTube)
+// o, si no hay, los metadatos OG/description/title.
+function pageText(html: string, url: string): string | null {
+  try {
     const parts: string[] = [];
     const ogTitle = metaContent(html, ["og:title", "twitter:title"]);
+    // "desc" es una clave genérica: solo se mira en TikTok.
+    const full = youtubeDescription(html) ??
+      (/(^|\.)tiktok\.com$/i.test(new URL(url).hostname)
+        ? tiktokDescription(html)
+        : null);
+    if (full) return [ogTitle, full].filter(Boolean).join(". ");
     const ogDesc = metaContent(html, [
       "og:description",
       "twitter:description",
@@ -154,12 +222,23 @@ async function fetchPageText(url: string): Promise<string | null> {
   }
 }
 
-function buildPrompt(sourceText: string, url: string): string {
+function buildPrompt(sourceText: string, url: string, video = false): string {
+  const fuente = video ? "del VÍDEO adjunto y del texto" : "del texto";
   return `Eres un asistente de cocina. A partir del TEXTO de la descripción de
 un vídeo/post de redes sociales (TikTok/Instagram/YouTube) de una receta, deduce y
-estructura la receta completa. El texto puede estar incompleto, con emojis,
-hashtags o abreviado; completa de forma RAZONABLE lo que falte (cantidades,
-macros, pasos) manteniéndote fiel a lo que describe.
+estructura la receta completa. El texto puede venir con emojis, hashtags o
+abreviado.${video
+    ? "\nAdemás tienes el VÍDEO: saca ingredientes, cantidades y pasos de lo que se\nve y se dice en él (y de los textos que aparecen en pantalla)."
+    : ""}
+
+REGLAS DE FIDELIDAD:
+- Los ingredientes y cantidades que vengan ${fuente} se copian TAL CUAL
+  (solo pásalos a las unidades de abajo). No añadas ingredientes que no salgan.
+- Solo puedes estimar cantidades que falten, macros y tiempos.
+- "source_has_recipe": true SOLO si ${fuente} trae la lista de ingredientes de
+  la receta. Si solo trae el nombre del plato, una descripción genérica o nada
+  de cocina, pon false y NO inventes la receta (deja "ingredients": []), pero
+  rellena "title" con el plato si se sabe.
 
 Enlace original: ${url || "(texto pegado por el usuario)"}
 
@@ -171,6 +250,7 @@ ${sourceText}
 Responde SOLO con un objeto JSON válido (sin markdown) con exactamente esta
 forma:
 {
+  "source_has_recipe": boolean,
   "title": string,
   "photo_query_en": string,  // nombre corto del plato EN INGLÉS para buscar una foto (p. ej. "spanish lentil stew with chorizo")
   "description": string,
@@ -223,6 +303,66 @@ async function pickModels(apiKey: string): Promise<string[]> {
   } catch (_e) {
     return [];
   }
+}
+
+function needTextMessage(url: string): string {
+  const insta = /(^|\.)instagram\.com$/i.test(new URL(url).hostname);
+  return insta
+    ? "Instagram no deja leer sus publicaciones desde fuera de la app. Abre " +
+      "el post, copia la descripción con la receta y pégala aquí."
+    : "No pude leer la receta de ese enlace (puede ser privado o no tener la " +
+      "receta escrita). Copia el texto de la receta y pégalo aquí.";
+}
+
+// deno-lint-ignore no-explicit-any
+type GeminiResult = { recipe: Record<string, any> } | { error: string };
+
+// La IA no encontró ingredientes de verdad en la fuente.
+function hasNoRecipe(r: GeminiResult): boolean {
+  if ("error" in r) return false;
+  const ings = r.recipe.ingredients;
+  return r.recipe.source_has_recipe === false || !Array.isArray(ings) ||
+    ings.length === 0;
+}
+
+// Llama a Gemini probando modelos en orden y devuelve la receta parseada.
+async function askGemini(
+  models: string[],
+  key: string,
+  parts: unknown[],
+  extraConfig: Record<string, unknown> = {},
+): Promise<GeminiResult> {
+  const requestBody = JSON.stringify({
+    contents: [{ parts }],
+    generationConfig: { responseMimeType: "application/json", ...extraConfig },
+  });
+  let lastError = "";
+  for (const model of models) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: requestBody,
+      },
+    );
+    if (!res.ok) {
+      lastError = `${model}: HTTP ${res.status} — ${await res.text()}`;
+      console.error("Gemini error:", lastError);
+      if (res.status === 401 || res.status === 403) break;
+      continue;
+    }
+    const data = await res.json();
+    const text: string | undefined =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) return { error: "No se recibió ninguna receta" };
+    try {
+      const recipe = JSON.parse(text);
+      if (recipe && typeof recipe === "object") return { recipe };
+    } catch (_e) { /* cae al error de formato */ }
+    return { error: "Respuesta con un formato inesperado" };
+  }
+  return { error: `Error del servicio → ${lastError.substring(0, 300)}` };
 }
 
 serveAi("import_link", async (req, useCredit) => {
@@ -283,35 +423,31 @@ serveAi("import_link", async (req, useCredit) => {
     }
 
     // 3. Texto de la receta: el pegado o, si no, el que se pueda leer del
-    // enlace (oEmbed + metadatos OG, best-effort). Antes de gastar crédito.
+    // enlace (descripción completa, YouTube API, oEmbed, OG; best-effort).
+    // Antes de gastar crédito.
     let sourceText = pasted;
+    let ytId: string | null = null;
     if (!sourceText) {
-      const oembed = await fetchOEmbed(url);
-      const page = await fetchPageText(url);
-      sourceText = [oembed, page]
+      const page = await fetchPage(url);
+      ytId = youtubeId(page.url);
+      const fromApi = ytId ? await fetchYoutubeApi(ytId) : null;
+      const fromPage = page.html ? pageText(page.html, page.url) : null;
+      // La API y la descripción completa ya traen el título: oEmbed solo suma
+      // cuando no hay nada mejor.
+      const oembed = fromApi || fromPage ? null : await fetchOEmbed(page.url);
+      sourceText = [fromApi ?? fromPage, oembed]
         .filter((s): s is string => !!s && s.length > 0)
         .join(". ")
-        .trim();
+        .trim()
+        .substring(0, 12000);
     }
 
-    if (sourceText.length < 15) {
+    // En YouTube, aunque no haya texto, Gemini puede ver el vídeo.
+    if (sourceText.length < 15 && !ytId) {
       if (pasted) {
         return json({ error: "Ese texto es muy corto para ser una receta" }, 400);
       }
-      const insta = /(^|\.)instagram\.com$/i.test(new URL(url).hostname);
-      return json(
-        {
-          need_text: true,
-          error: insta
-            ? "Instagram no deja leer sus publicaciones desde fuera de la " +
-              "app. Abre el post, copia la descripción con la receta y " +
-              "pégala aquí."
-            : "No pude leer la receta de ese enlace (puede ser privado o no " +
-              "tener la receta escrita). Copia el texto de la receta y " +
-              "pégalo aquí.",
-        },
-        422,
-      );
+      return json({ need_text: true, error: needTextMessage(url) }, 422);
     }
 
     // 4. Consumir crédito de IA (igual que generate-recipe)
@@ -327,50 +463,41 @@ serveAi("import_link", async (req, useCredit) => {
       return json({ error: "No hay modelos de Gemini disponibles." }, 502);
     }
 
-    const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: buildPrompt(sourceText, url) }] }],
-      generationConfig: { responseMimeType: "application/json" },
-    });
-
-    let geminiData: any;
-    let lastError = "";
-    for (const model of models) {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${geminiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: requestBody,
-        },
-      );
-      if (res.ok) {
-        geminiData = await res.json();
-        break;
-      }
-      lastError = `${model}: HTTP ${res.status} — ${await res.text()}`;
-      console.error("Gemini error:", lastError);
-      if (res.status === 401 || res.status === 403) break;
+    let result: GeminiResult | null = sourceText.length >= 15
+      ? await askGemini(models, geminiKey, [
+        { text: buildPrompt(sourceText, url) },
+      ])
+      : null;
+    // YouTube sin receta escrita: que Gemini vea el vídeo.
+    if (ytId && (!result || hasNoRecipe(result))) {
+      const video = await askGemini(models, geminiKey, [
+        { file_data: { file_uri: `https://www.youtube.com/watch?v=${ytId}` } },
+        { text: buildPrompt(sourceText || "(sin descripción)", url, true) },
+      ], { mediaResolution: "MEDIA_RESOLUTION_LOW" });
+      // Si ver el vídeo falla, nos quedamos con lo que dijo el texto.
+      if (!("error" in video) || !result) result = video;
     }
+    if (!result) return json({ error: "No se recibió ninguna receta" }, 502);
+    if ("error" in result) return json({ error: result.error }, 502);
 
-    if (geminiData === undefined) {
+    // Sin ingredientes reales: mejor pedir el texto que inventar la receta.
+    if (hasNoRecipe(result)) {
+      const plato = typeof result.recipe.title === "string"
+        ? result.recipe.title.trim()
+        : "";
       return json(
-        { error: `Error del servicio → ${lastError.substring(0, 300)}` },
-        502,
+        {
+          need_text: true,
+          error: (plato ? `El vídeo de «${plato}» no` : "Ese enlace no") +
+            " trae los ingredientes escritos en la descripción (solo salen " +
+            "en el vídeo). Si están en un comentario o en la web del autor, " +
+            "cópialos y pégalos aquí.",
+        },
+        422,
       );
     }
 
-    const text: string | undefined =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return json({ error: "No se recibió ninguna receta" }, 502);
-
-    let recipe: unknown;
-    try {
-      recipe = JSON.parse(text);
-    } catch (_e) {
-      return json({ error: "Respuesta con un formato inesperado" }, 502);
-    }
-
-    return json({ recipe });
+    return json({ recipe: result.recipe });
   } catch (e) {
     console.error(e);
     return json({ error: "Error inesperado en el servidor" }, 500);
