@@ -55,7 +55,7 @@ class AddRecipeChooser extends StatelessWidget {
               context,
               icon: Icons.link_rounded,
               title: 'Pegar enlace de vídeo',
-              subtitle: 'De TikTok, Instagram o YouTube',
+              subtitle: 'De TikTok o YouTube, o el texto de Instagram',
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
