@@ -262,9 +262,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
           picked.displayName == name) {
         imageUrl = picked.imageUrl;
         if (homeId != null) {
-          await FoodPhotoService(
-            Supabase.instance.client,
-          ).rememberPhoto(homeId: homeId, name: name, url: imageUrl!);
+          await FoodPhotoService(Supabase.instance.client)
+              .rememberPhoto(homeId: homeId, name: name, url: imageUrl!);
         }
       } else if (isFood &&
           name.isNotEmpty &&
@@ -272,9 +271,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
           nameChanged &&
           homeId != null) {
         try {
-          imageUrl = await FoodPhotoService(
-            Supabase.instance.client,
-          ).resolvePhotoUrl(homeId: homeId, name: name, mode: 'ingredient');
+          imageUrl = await FoodPhotoService(Supabase.instance.client)
+              .resolvePhotoUrl(homeId: homeId, name: name, mode: 'ingredient');
         } catch (_) {
           imageUrl = editing?.imageUrl;
         }
@@ -289,6 +287,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         quantity: qty,
         unit: _selectedUnit,
         kind: isFood ? _kind : 'ingredient',
+        // Que editar un plato congelado no lo desenlace de su receta.
+        recipeId: editing?.recipeId,
         servings: (isFood && _kind != 'ingredient')
             ? double.tryParse(
                 _servingsController.text.trim().replaceAll(',', '.'),
