@@ -5,14 +5,14 @@ import 'package:prezhome/models/onboarding_answers.dart';
 void main() {
   group('perfil de hogar', () {
     test('dos personas = El Dúo', () {
-      expect(const OnboardingAnswers(people: 2).profile.name, 'El Dúo');
+      expect(const OnboardingAnswers(people: 2).profile.kind, 'duo');
     });
     test('una persona = En Solitario', () {
-      expect(const OnboardingAnswers(people: 1).profile.name, 'En Solitario');
+      expect(const OnboardingAnswers(people: 1).profile.kind, 'solo');
     });
     test('familia grande', () {
-      expect(const OnboardingAnswers(people: 4).profile.name, 'La Familia');
-      expect(const OnboardingAnswers(people: 6).profile.name, 'La Tribu');
+      expect(const OnboardingAnswers(people: 4).profile.kind, 'familia');
+      expect(const OnboardingAnswers(people: 6).profile.kind, 'tribu');
     });
     test('la carga con la app es menor y ambas entre 1 y 10', () {
       const a = OnboardingAnswers(

@@ -10,42 +10,39 @@ import 'dashboard_prefs.dart';
 /// Lo que la persona quiere quitarse de la cabeza. Cada objetivo activa
 /// partes concretas de la app.
 enum HomeGoal {
-  comidas('comidas', 'Qué comemos', 'Plan de comidas y recetas'),
-  compra('compra', 'La compra', 'Lista que se escribe sola'),
-  despensa('despensa', 'Lo que hay en casa', 'Despensa, nevera y caducidades'),
-  tareas('tareas', 'Tareas del hogar', 'Reparto justo y recordatorios'),
-  lote('lote', 'Cocinar en lote', 'Táperes y congelador organizados'),
-  gastos('gastos', 'El gasto de la casa', 'Presupuesto y tickets');
+  comidas('comidas'),
+  compra('compra'),
+  despensa('despensa'),
+  tareas('tareas'),
+  lote('lote'),
+  gastos('gastos');
 
-  const HomeGoal(this.id, this.label, this.subtitle);
+  // Textos en lib/l10n (goalLabel, goalHint).
+  const HomeGoal(this.id);
   final String id;
-  final String label;
-  final String subtitle;
 }
 
 enum CookingHabit {
-  diario('diario', 'Cada día', 'Cocino lo del momento'),
-  lote('lote', 'En lote', 'Preparo varios días de una vez'),
-  mixto('mixto', 'Un poco de todo', 'Algunos días en lote'),
-  poco('poco', 'Casi nunca', 'Como fuera o algo rápido');
+  diario('diario'),
+  lote('lote'),
+  mixto('mixto'),
+  poco('poco');
 
-  const CookingHabit(this.id, this.label, this.subtitle);
+  // Textos en lib/l10n (cookingLabel, cookingHint).
+  const CookingHabit(this.id);
   final String id;
-  final String label;
-  final String subtitle;
 }
 
 /// Resultado del cuestionario que se enseña al final.
 class HouseholdProfile {
   const HouseholdProfile({
-    required this.name,
-    required this.description,
+    required this.kind,
     required this.loadToday,
     required this.loadWithApp,
   });
 
-  final String name;
-  final String description;
+  /// solo, duo, familia o tribu: nombre y texto en lib/l10n (onbProfile*).
+  final String kind;
 
   /// Carga mental estimada hoy y con la app, de 1 a 10.
   final int loadToday;
@@ -84,32 +81,16 @@ class OnboardingAnswers {
   // ---- Perfil de hogar ------------------------------------------------------
 
   HouseholdProfile get profile {
-    final String name;
-    final String description;
-    if (people <= 1) {
-      name = 'En Solitario';
-      description =
-          'Toda la casa depende de ti. PrezHome se acuerda de lo que hay, lo '
-          'que caduca y lo que toca, para que tú no tengas que hacerlo.';
-    } else if (people == 2) {
-      name = 'El Dúo';
-      description =
-          'Dos personas y una casa. PrezHome reparte la carga a la vista, '
-          'para que nadie lleve la cuenta de todo en la cabeza.';
-    } else {
-      name = people >= 5 ? 'La Tribu' : 'La Familia';
-      description =
-          'Muchas bocas y muchas cosas a la vez. PrezHome planifica comidas, '
-          'compra y tareas para todos, y avisa a cada uno de lo suyo.';
-    }
+    final kind = people <= 1
+        ? 'solo'
+        : people == 2
+        ? 'duo'
+        : people >= 5
+        ? 'tribu'
+        : 'familia';
     final today = (3 + goals.length + (people - 1).clamp(0, 3)).clamp(3, 10);
     final withApp = (today - goals.length - 1).clamp(2, today);
-    return HouseholdProfile(
-      name: name,
-      description: description,
-      loadToday: today,
-      loadWithApp: withApp,
-    );
+    return HouseholdProfile(kind: kind, loadToday: today, loadWithApp: withApp);
   }
 
   // ---- Aplicar a la app -------------------------------------------------------
