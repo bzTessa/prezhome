@@ -542,4 +542,166 @@ class AppLocalizationsBs extends AppLocalizations {
   String shopAdd(String name) {
     return 'Dodaj $name';
   }
+
+  @override
+  String get shopLiveOffline =>
+      'Trenutno nema veze uživo; ažurirat će se pri ponovnom učitavanju.';
+
+  @override
+  String get couldNotUpdate => 'Ažuriranje nije uspjelo';
+
+  @override
+  String shopSavedToPantry(int count) {
+    return '$count proizvoda spremljeno u ostavu';
+  }
+
+  @override
+  String get shopRemoveFromList => 'Ukloni s liste';
+
+  @override
+  String shopRemovedOne(String name) {
+    return 'Uklonjeno \"$name\"';
+  }
+
+  @override
+  String get couldNotChangePhoto => 'Fotografija nije promijenjena';
+
+  @override
+  String get shopAddToList => 'Dodaj na listu';
+
+  @override
+  String get shopTypeFood => 'Hrana';
+
+  @override
+  String get shopTypeHome => 'Dom/Čišćenje';
+
+  @override
+  String get name => 'Naziv';
+
+  @override
+  String get product => 'Proizvod';
+
+  @override
+  String get quantity => 'Količina';
+
+  @override
+  String get unit => 'Jedinica';
+
+  @override
+  String get cancel => 'Otkaži';
+
+  @override
+  String get add => 'Dodaj';
+
+  @override
+  String get nameEmpty => 'Naziv ne može biti prazan.';
+
+  @override
+  String get couldNotAdd => 'Dodavanje nije uspjelo';
+
+  @override
+  String get shopPlanAllAtHome => 'Već imaš kod kuće sve iz plana';
+
+  @override
+  String shopAddedFromPlan(int count) {
+    return 'Dodano $count proizvoda iz plana';
+  }
+
+  @override
+  String get shopListTitle => 'Lista za kupovinu';
+
+  @override
+  String get shopMainList => 'Glavna lista';
+
+  @override
+  String get couldNotCreateList => 'Lista nije kreirana';
+
+  @override
+  String get shopRecipesUseStore =>
+      'Recepti će koristiti proizvode iz ovog supermarketa.';
+
+  @override
+  String get shopStoreSaveError => 'Supermarket nije sačuvan. Pokušaj ponovo.';
+
+  @override
+  String get shopGroupByAisle => 'Grupiši po odjeljku';
+
+  @override
+  String get shopGroupHint => 'Povrće, meso, čišćenje…';
+
+  @override
+  String get shopShowPhotos => 'Prikaži fotografije proizvoda';
+
+  @override
+  String get shopMyLists => 'Moje liste';
+
+  @override
+  String get categories => 'Kategorije';
+
+  @override
+  String get shopFinish => 'Završi kupovinu';
+
+  @override
+  String shopFinishCount(int count) {
+    return 'Završi kupovinu ($count)';
+  }
+
+  @override
+  String get shopScanTicket => 'Skeniraj račun';
+
+  @override
+  String get shopAllBought => 'Sve kupljeno';
+
+  @override
+  String get shopToBuy => 'Za kupiti';
+
+  @override
+  String get shopUsual => 'Uobičajeno';
+
+  @override
+  String get shopInCart => 'U korpi';
+
+  @override
+  String shopRemovedMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uklonjeno $count proizvoda',
+      one: 'Uklonjen 1 proizvod',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get couldNotRemove => 'Uklanjanje nije uspjelo';
+
+  @override
+  String get undo => 'Poništi';
+
+  @override
+  String get couldNotUndo => 'Poništavanje nije uspjelo';
+
+  @override
+  String get shopToCart => 'U korpu';
+
+  @override
+  String get shopFromPlan => 'Iz sedmičnog plana';
+
+  @override
+  String get changePhoto => 'Promijeni fotografiju';
+
+  @override
+  String get shopEmptyTitle => 'Tvoja lista je prazna';
+
+  @override
+  String get shopEmptyHint => 'Upiši gore šta ti treba ili preuzmi iz plana.';
+
+  @override
+  String get shopFromPlanAction => 'Iz plana';
+
+  @override
+  String get shopDoneTitle => 'Kupovina završena';
+
+  @override
+  String get shopDoneHint => 'Imaš sve s liste. Odlično!';
 }

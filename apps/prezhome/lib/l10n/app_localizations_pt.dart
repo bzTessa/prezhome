@@ -545,4 +545,168 @@ class AppLocalizationsPt extends AppLocalizations {
   String shopAdd(String name) {
     return 'Adicionar $name';
   }
+
+  @override
+  String get shopLiveOffline =>
+      'Sem ligação em direto agora; atualiza ao recarregar.';
+
+  @override
+  String get couldNotUpdate => 'Não foi possível atualizar';
+
+  @override
+  String shopSavedToPantry(int count) {
+    return '$count produtos guardados na despensa';
+  }
+
+  @override
+  String get shopRemoveFromList => 'Tirar da lista';
+
+  @override
+  String shopRemovedOne(String name) {
+    return 'Removido \"$name\"';
+  }
+
+  @override
+  String get couldNotChangePhoto => 'Não foi possível mudar a foto';
+
+  @override
+  String get shopAddToList => 'Adicionar à lista';
+
+  @override
+  String get shopTypeFood => 'Comida';
+
+  @override
+  String get shopTypeHome => 'Casa/Limpeza';
+
+  @override
+  String get name => 'Nome';
+
+  @override
+  String get product => 'Produto';
+
+  @override
+  String get quantity => 'Quantidade';
+
+  @override
+  String get unit => 'Unidade';
+
+  @override
+  String get cancel => 'Cancelar';
+
+  @override
+  String get add => 'Adicionar';
+
+  @override
+  String get nameEmpty => 'O nome não pode estar vazio.';
+
+  @override
+  String get couldNotAdd => 'Não foi possível adicionar';
+
+  @override
+  String get shopPlanAllAtHome => 'Já tens em casa tudo o que o plano pede';
+
+  @override
+  String shopAddedFromPlan(int count) {
+    return 'Adicionados $count produtos do plano';
+  }
+
+  @override
+  String get shopListTitle => 'Lista de compras';
+
+  @override
+  String get shopMainList => 'Lista principal';
+
+  @override
+  String get couldNotCreateList => 'Não foi possível criar a lista';
+
+  @override
+  String get shopRecipesUseStore =>
+      'As receitas vão usar produtos deste supermercado.';
+
+  @override
+  String get shopStoreSaveError =>
+      'Não foi possível guardar o supermercado. Tenta novamente.';
+
+  @override
+  String get shopGroupByAisle => 'Agrupar por corredor';
+
+  @override
+  String get shopGroupHint => 'Legumes, carne, limpeza…';
+
+  @override
+  String get shopShowPhotos => 'Mostrar fotos dos produtos';
+
+  @override
+  String get shopMyLists => 'As minhas listas';
+
+  @override
+  String get categories => 'Categorias';
+
+  @override
+  String get shopFinish => 'Terminar compras';
+
+  @override
+  String shopFinishCount(int count) {
+    return 'Terminar compras ($count)';
+  }
+
+  @override
+  String get shopScanTicket => 'Ler talão';
+
+  @override
+  String get shopAllBought => 'Tudo comprado';
+
+  @override
+  String get shopToBuy => 'Por comprar';
+
+  @override
+  String get shopUsual => 'O habitual';
+
+  @override
+  String get shopInCart => 'No carrinho';
+
+  @override
+  String shopRemovedMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Removidos $count produtos',
+      one: 'Removido 1 produto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get couldNotRemove => 'Não foi possível remover';
+
+  @override
+  String get undo => 'Desfazer';
+
+  @override
+  String get couldNotUndo => 'Não foi possível desfazer';
+
+  @override
+  String get shopToCart => 'Para o carrinho';
+
+  @override
+  String get shopFromPlan => 'Do plano da semana';
+
+  @override
+  String get changePhoto => 'Mudar foto';
+
+  @override
+  String get shopEmptyTitle => 'A tua lista está vazia';
+
+  @override
+  String get shopEmptyHint =>
+      'Escreve em cima o que precisas ou traz o do plano.';
+
+  @override
+  String get shopFromPlanAction => 'Do plano';
+
+  @override
+  String get shopDoneTitle => 'Compras concluídas';
+
+  @override
+  String get shopDoneHint => 'Já tens tudo o que está na lista. Bom trabalho!';
 }

@@ -839,6 +839,294 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Añadir {name}'**
   String shopAdd(String name);
+
+  /// No description provided for @shopLiveOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión en vivo ahora mismo; se actualizará al recargar.'**
+  String get shopLiveOffline;
+
+  /// No description provided for @couldNotUpdate.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo actualizar'**
+  String get couldNotUpdate;
+
+  /// No description provided for @shopSavedToPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} productos guardados en la despensa'**
+  String shopSavedToPantry(int count);
+
+  /// No description provided for @shopRemoveFromList.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de la lista'**
+  String get shopRemoveFromList;
+
+  /// No description provided for @shopRemovedOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitado \"{name}\"'**
+  String shopRemovedOne(String name);
+
+  /// No description provided for @couldNotChangePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cambiar la foto'**
+  String get couldNotChangePhoto;
+
+  /// No description provided for @shopAddToList.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir a la lista'**
+  String get shopAddToList;
+
+  /// No description provided for @shopTypeFood.
+  ///
+  /// In es, this message translates to:
+  /// **'Comida'**
+  String get shopTypeFood;
+
+  /// No description provided for @shopTypeHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Hogar/Limpieza'**
+  String get shopTypeHome;
+
+  /// No description provided for @name.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get name;
+
+  /// No description provided for @product.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto'**
+  String get product;
+
+  /// No description provided for @quantity.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantidad'**
+  String get quantity;
+
+  /// No description provided for @unit.
+  ///
+  /// In es, this message translates to:
+  /// **'Unidad'**
+  String get unit;
+
+  /// No description provided for @cancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get cancel;
+
+  /// No description provided for @add.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get add;
+
+  /// No description provided for @nameEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre no puede estar vacío.'**
+  String get nameEmpty;
+
+  /// No description provided for @couldNotAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo añadir'**
+  String get couldNotAdd;
+
+  /// No description provided for @shopPlanAllAtHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes en casa todo lo del plan'**
+  String get shopPlanAllAtHome;
+
+  /// No description provided for @shopAddedFromPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadidos {count} productos del plan'**
+  String shopAddedFromPlan(int count);
+
+  /// No description provided for @shopListTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista de la compra'**
+  String get shopListTitle;
+
+  /// No description provided for @shopMainList.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista principal'**
+  String get shopMainList;
+
+  /// No description provided for @couldNotCreateList.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo crear la lista'**
+  String get couldNotCreateList;
+
+  /// No description provided for @shopRecipesUseStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Las recetas usarán productos de este súper.'**
+  String get shopRecipesUseStore;
+
+  /// No description provided for @shopStoreSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el supermercado. Inténtalo de nuevo.'**
+  String get shopStoreSaveError;
+
+  /// No description provided for @shopGroupByAisle.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrupar por pasillo'**
+  String get shopGroupByAisle;
+
+  /// No description provided for @shopGroupHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Verduras, carne, limpieza…'**
+  String get shopGroupHint;
+
+  /// No description provided for @shopShowPhotos.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar fotos de los productos'**
+  String get shopShowPhotos;
+
+  /// No description provided for @shopMyLists.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis listas'**
+  String get shopMyLists;
+
+  /// No description provided for @categories.
+  ///
+  /// In es, this message translates to:
+  /// **'Categorías'**
+  String get categories;
+
+  /// No description provided for @shopFinish.
+  ///
+  /// In es, this message translates to:
+  /// **'Terminar compra'**
+  String get shopFinish;
+
+  /// No description provided for @shopFinishCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Terminar compra ({count})'**
+  String shopFinishCount(int count);
+
+  /// No description provided for @shopScanTicket.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanear ticket'**
+  String get shopScanTicket;
+
+  /// No description provided for @shopAllBought.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo comprado'**
+  String get shopAllBought;
+
+  /// No description provided for @shopToBuy.
+  ///
+  /// In es, this message translates to:
+  /// **'Por comprar'**
+  String get shopToBuy;
+
+  /// No description provided for @shopUsual.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo habitual'**
+  String get shopUsual;
+
+  /// No description provided for @shopInCart.
+  ///
+  /// In es, this message translates to:
+  /// **'En el carrito'**
+  String get shopInCart;
+
+  /// No description provided for @shopRemovedMany.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Quitado 1 producto} other{Quitados {count} productos}}'**
+  String shopRemovedMany(int count);
+
+  /// No description provided for @couldNotRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo quitar'**
+  String get couldNotRemove;
+
+  /// No description provided for @undo.
+  ///
+  /// In es, this message translates to:
+  /// **'Deshacer'**
+  String get undo;
+
+  /// No description provided for @couldNotUndo.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo deshacer'**
+  String get couldNotUndo;
+
+  /// No description provided for @shopToCart.
+  ///
+  /// In es, this message translates to:
+  /// **'Al carrito'**
+  String get shopToCart;
+
+  /// No description provided for @shopFromPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Del plan de la semana'**
+  String get shopFromPlan;
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar foto'**
+  String get changePhoto;
+
+  /// No description provided for @shopEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu lista está vacía'**
+  String get shopEmptyTitle;
+
+  /// No description provided for @shopEmptyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe arriba lo que necesitas o trae lo del plan.'**
+  String get shopEmptyHint;
+
+  /// No description provided for @shopFromPlanAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde el plan'**
+  String get shopFromPlanAction;
+
+  /// No description provided for @shopDoneTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra completada'**
+  String get shopDoneTitle;
+
+  /// No description provided for @shopDoneHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes todo lo de la lista. ¡Buen trabajo!'**
+  String get shopDoneHint;
 }
 
 class _AppLocalizationsDelegate
