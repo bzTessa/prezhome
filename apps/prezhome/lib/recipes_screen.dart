@@ -13,6 +13,7 @@ import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
 import 'widgets/skeleton.dart';
 import 'utils/friendly_error.dart';
+import 'l10n/l10n.dart';
 
 class RecipesScreen extends StatefulWidget {
   /// Cuando va dentro de una pestaña con su propio AppBar, lo ocultamos.
@@ -110,7 +111,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo actualizar')),
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -149,14 +150,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
               ),
               title: Text(
                 recipe.isFavorite
-                    ? 'Quitar de favoritas'
-                    : 'Marcar como favorita',
+                    ? context.l.recUnfavorite
+                    : context.l.recFavorite,
               ),
               onTap: () => Navigator.of(ctx).pop('favorite'),
             ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
-              title: const Text('Eliminar receta'),
+              title: Text(context.l.recDelete),
               onTap: () => Navigator.of(ctx).pop('delete'),
             ),
             const SizedBox(height: 8),
@@ -178,12 +179,12 @@ class _RecipesScreenState extends State<RecipesScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.cream,
-        title: const Text('¿Eliminar receta?'),
-        content: Text('Se borrará "${recipe.title}" y sus ingredientes.'),
+        title: Text(context.l.recDeleteAsk),
+        content: Text(context.l.recRemoveAsk(recipe.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -192,7 +193,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
               elevation: 0,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(context.l.delete),
           ),
         ],
       ),
@@ -206,14 +207,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
       await supabase.from('recipes').delete().eq('id', recipe.id);
       _reload();
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('"${recipe.title}" eliminada.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l.recDeleted(recipe.title))),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo eliminar')),
+          content: Text(friendlyError(e, context.l.couldNotDelete)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -271,9 +272,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
       appBar: widget.embedded
           ? null
           : AppBar(
-              title: const Text(
-                'Recetas',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              title: Text(
+                context.l.recTitle,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               backgroundColor: AppColors.cream,
               elevation: 0,
@@ -284,9 +285,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
         backgroundColor: AppColors.wood,
         foregroundColor: AppColors.ink,
         icon: const Icon(Icons.add),
-        label: const Text(
-          'Nueva receta',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          context.l.recNew,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: FutureBuilder<_RecipesData>(
@@ -298,10 +299,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
           }
           if (snapshot.hasError) {
             return _ErrorState(
-              message: friendlyError(
-                snapshot.error,
-                'No he podido cargar las recetas',
-              ),
+              message: friendlyError(snapshot.error, context.l.recLoadError),
               onRetry: _reload,
             );
           }
@@ -312,11 +310,11 @@ class _RecipesScreenState extends State<RecipesScreen> {
           if (allRecipes.isEmpty) {
             return EmptyState(
               image: 'assets/images/vacio_recetas.png',
-              title: 'Aún no hay recetas',
-              message: 'Crea la primera o pide ideas con lo que tienes.',
-              actionLabel: 'Nueva receta',
+              title: context.l.recEmptyTitle,
+              message: context.l.recEmptyHint,
+              actionLabel: context.l.recNew,
               onAction: _openAdd,
-              secondaryLabel: 'Ideas con lo que tengo',
+              secondaryLabel: context.l.recIdeas,
               onSecondary: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
@@ -363,9 +361,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                   child: Text(
                     visible.isEmpty
-                        ? 'Sin resultados'
-                        : '${visible.length} '
-                              '${visible.length == 1 ? 'receta' : 'recetas'}',
+                        ? context.l.recNoResults
+                        : context.l.recCount(visible.length),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -447,7 +444,7 @@ class _PantryBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '¿Qué cocino con lo que tengo?',
+                        context.l.recWhatToCook,
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
@@ -456,7 +453,7 @@ class _PantryBanner extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Ideas con lo que hay en tu despensa',
+                        context.l.recPantryIdeas,
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.inkMuted,
@@ -504,14 +501,14 @@ class _FilterBar extends StatelessWidget {
 
     final chips = <Widget>[
       _FilterChip(
-        label: 'Todas',
+        label: context.l.recAll,
         icon: Icons.grid_view_rounded,
         selected: active == _RecipeFilter.all,
         onTap: () => onSelected(_RecipeFilter.all),
       ),
       if (hasFavorites)
         _FilterChip(
-          label: 'Favoritas',
+          label: context.l.recFavorites,
           icon: Icons.star_rounded,
           selected: active == _RecipeFilter.favorites,
           onTap: () => onSelected(_RecipeFilter.favorites),
@@ -519,7 +516,7 @@ class _FilterBar extends StatelessWidget {
       for (final entry in _typeOrder)
         if (presentTypes.contains(entry.key))
           _FilterChip(
-            label: Recipe.mealTypeLabels[entry.key] ?? entry.key,
+            label: context.l.mealType(entry.key),
             icon: entry.value,
             selected: active == _filterForType(entry.key),
             onTap: () => onSelected(_filterForType(entry.key)),
@@ -810,7 +807,7 @@ class _NoMatchesState extends StatelessWidget {
             const MiauCharacter(mood: MiauMood.curious, size: 96),
             const SizedBox(height: 16),
             Text(
-              'No hay recetas con este filtro.\nPrueba con otra categoría.',
+              context.l.recNoFilter,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -854,7 +851,7 @@ class _ErrorState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Reintentar'),
+              label: Text(context.l.retry),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.woodDark,
                 side: BorderSide(color: AppColors.wood, width: 1.4),
@@ -890,7 +887,7 @@ class _SearchBar extends StatelessWidget {
         textInputAction: TextInputAction.search,
         style: TextStyle(color: AppColors.ink, fontSize: 15),
         decoration: InputDecoration(
-          hintText: 'Buscar receta...',
+          hintText: context.l.planSearchRecipe,
           hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
           prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
           suffixIcon: controller.text.isEmpty
@@ -898,7 +895,7 @@ class _SearchBar extends StatelessWidget {
               : IconButton(
                   icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
                   onPressed: onClear,
-                  tooltip: 'Limpiar',
+                  tooltip: context.l.clear,
                 ),
           filled: true,
           fillColor: AppColors.card,
@@ -933,7 +930,7 @@ class _NoSearchResults extends StatelessWidget {
             const MiauCharacter(mood: MiauMood.curious, size: 96),
             const SizedBox(height: 16),
             Text(
-              'No hay recetas que coincidan con\n"$query".',
+              context.l.recNoMatch(query),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,

@@ -358,6 +358,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'snack': 'Snack',
       'dinner': 'Dinner',
       'dessert': 'Dessert',
+      'drink': 'Drink',
       'other': 'Meal',
     });
     return '$_temp0';
@@ -1306,4 +1307,248 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planNoMatch => 'No matching recipes.';
+
+  @override
+  String get diaDeleteError => 'Couldn\'t delete the meal.';
+
+  @override
+  String get diaManual => 'Manually';
+
+  @override
+  String get diaManualHint => 'Type the name and calories';
+
+  @override
+  String get diaFromRecipe => 'From a recipe';
+
+  @override
+  String get diaFromRecipeHint => 'Log one of your recipes as a meal';
+
+  @override
+  String get diaWithPhoto => 'With a photo';
+
+  @override
+  String get diaWithPhotoHint =>
+      'Take a photo of the dish and we\'ll work out the calories';
+
+  @override
+  String get diaAddManual => 'Add manually';
+
+  @override
+  String get diaKcalField => 'Calories (kcal)';
+
+  @override
+  String get diaMealTypeOptional => 'Meal type (optional)';
+
+  @override
+  String get diaNoType => 'No type';
+
+  @override
+  String get diaProteinG => 'Protein (g)';
+
+  @override
+  String get diaCarbsG => 'Carbs (g)';
+
+  @override
+  String get diaFatG => 'Fat (g)';
+
+  @override
+  String get diaNeedNameKcal => 'Enter at least a name and the calories.';
+
+  @override
+  String get diaSaveError => 'Couldn\'t save the meal.';
+
+  @override
+  String get diaRecipesLoadError => 'Couldn\'t load the recipes.';
+
+  @override
+  String get diaNoRecipes => 'You don\'t have any recipes to log yet.';
+
+  @override
+  String diaKcalPerServing(int kcal) {
+    return '$kcal kcal per serving';
+  }
+
+  @override
+  String get diaNoKcal => 'No calories recorded';
+
+  @override
+  String get diaServings => 'Servings';
+
+  @override
+  String get diaServingsError => 'Enter a number of servings above 0.';
+
+  @override
+  String get diaLog => 'Log';
+
+  @override
+  String get diaRecipeLogError => 'Couldn\'t log the recipe.';
+
+  @override
+  String get diaTitle => 'My diary';
+
+  @override
+  String get diaAddMeal => 'Add meal';
+
+  @override
+  String get previous => 'Previous';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get diaDayCalories => 'Calories today';
+
+  @override
+  String diaOfTarget(int kcal) {
+    return 'of $kcal kcal';
+  }
+
+  @override
+  String get diaNoTarget =>
+      'Complete your profile to set a daily calorie goal and see how much you have left each day.';
+
+  @override
+  String get diaCompleteProfile => 'Complete my profile';
+
+  @override
+  String get diaOthers => 'Other';
+
+  @override
+  String get diaMeal => 'Meal';
+
+  @override
+  String get diaLast7 => 'Your last 7 days';
+
+  @override
+  String diaTargetPerDay(int kcal) {
+    return 'Goal: $kcal kcal a day';
+  }
+
+  @override
+  String get diaTarget => 'Goal';
+
+  @override
+  String get diaTodaySplit => 'Today\'s split';
+
+  @override
+  String get diaNoMacros => 'No macros logged today yet.';
+
+  @override
+  String get diaProtein => 'Protein';
+
+  @override
+  String get diaCarbs => 'Carbs';
+
+  @override
+  String get diaFat => 'Fat';
+
+  @override
+  String get diaAteThePlan => 'Did you eat what was planned?';
+
+  @override
+  String diaAskLine(String day, String meal, String name, int kcal) {
+    return '$day, $meal: $name · $kcal kcal';
+  }
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get diaAnswerError => 'Couldn\'t save the answer.';
+
+  @override
+  String get diaAskFirst => 'Ask me before logging the plan';
+
+  @override
+  String get diaAskOn => 'We\'ll ask whether you ate each planned meal.';
+
+  @override
+  String get diaAskOff =>
+      'Planned meals are logged automatically once their time has passed.';
+
+  @override
+  String get diaSettingError => 'Couldn\'t save the setting.';
+
+  @override
+  String get diaEmpty =>
+      'You haven\'t logged anything this day yet.\nAdd your first meal.';
+
+  @override
+  String get recUnfavorite => 'Remove from favourites';
+
+  @override
+  String get recFavorite => 'Mark as favourite';
+
+  @override
+  String get recDelete => 'Delete recipe';
+
+  @override
+  String get recDeleteAsk => 'Delete recipe?';
+
+  @override
+  String recRemoveAsk(String name) {
+    return '\"$name\" and its ingredients will be deleted.';
+  }
+
+  @override
+  String recDeleted(String name) {
+    return '\"$name\" deleted.';
+  }
+
+  @override
+  String get recTitle => 'Recipes';
+
+  @override
+  String get recNew => 'New recipe';
+
+  @override
+  String get recLoadError => 'I couldn\'t load the recipes';
+
+  @override
+  String get recEmptyTitle => 'No recipes yet';
+
+  @override
+  String get recEmptyHint =>
+      'Create the first one or ask for ideas with what you have.';
+
+  @override
+  String get recIdeas => 'Ideas with what I have';
+
+  @override
+  String get recNoResults => 'No results';
+
+  @override
+  String recCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recipes',
+      one: '1 recipe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recWhatToCook => 'What can I cook with what I have?';
+
+  @override
+  String get recPantryIdeas => 'Ideas with what\'s in your pantry';
+
+  @override
+  String get recAll => 'All';
+
+  @override
+  String get recFavorites => 'Favourites';
+
+  @override
+  String get recNoFilter =>
+      'No recipes with this filter.\nTry another category.';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String recNoMatch(String query) {
+    return 'No recipes match\n\"$query\".';
+  }
 }

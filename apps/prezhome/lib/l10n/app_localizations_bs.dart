@@ -355,6 +355,7 @@ class AppLocalizationsBs extends AppLocalizations {
       'snack': 'Užina',
       'dinner': 'Večera',
       'dessert': 'Desert',
+      'drink': 'Piće',
       'other': 'Obrok',
     });
     return '$_temp0';
@@ -1300,4 +1301,246 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get planNoMatch => 'Nema odgovarajućih recepata.';
+
+  @override
+  String get diaDeleteError => 'Obrok nije obrisan.';
+
+  @override
+  String get diaManual => 'Ručno';
+
+  @override
+  String get diaManualHint => 'Upiši naziv i kalorije';
+
+  @override
+  String get diaFromRecipe => 'Iz recepta';
+
+  @override
+  String get diaFromRecipeHint => 'Zabilježi svoj recept kao obrok';
+
+  @override
+  String get diaWithPhoto => 'Fotografijom';
+
+  @override
+  String get diaWithPhotoHint => 'Fotografiši jelo i izračunat ćemo kalorije';
+
+  @override
+  String get diaAddManual => 'Dodaj ručno';
+
+  @override
+  String get diaKcalField => 'Kalorije (kcal)';
+
+  @override
+  String get diaMealTypeOptional => 'Vrsta obroka (neobavezno)';
+
+  @override
+  String get diaNoType => 'Bez vrste';
+
+  @override
+  String get diaProteinG => 'Proteini (g)';
+
+  @override
+  String get diaCarbsG => 'Ugljikohidrati (g)';
+
+  @override
+  String get diaFatG => 'Masti (g)';
+
+  @override
+  String get diaNeedNameKcal => 'Unesi barem naziv i kalorije.';
+
+  @override
+  String get diaSaveError => 'Obrok nije sačuvan.';
+
+  @override
+  String get diaRecipesLoadError => 'Recepti nisu učitani.';
+
+  @override
+  String get diaNoRecipes => 'Još nemaš recepata za bilježenje.';
+
+  @override
+  String diaKcalPerServing(int kcal) {
+    return '$kcal kcal po porciji';
+  }
+
+  @override
+  String get diaNoKcal => 'Nema zabilježenih kalorija';
+
+  @override
+  String get diaServings => 'Porcije';
+
+  @override
+  String get diaServingsError => 'Unesi broj porcija veći od 0.';
+
+  @override
+  String get diaLog => 'Zabilježi';
+
+  @override
+  String get diaRecipeLogError => 'Recept nije zabilježen.';
+
+  @override
+  String get diaTitle => 'Moj dnevnik';
+
+  @override
+  String get diaAddMeal => 'Dodaj obrok';
+
+  @override
+  String get previous => 'Prethodno';
+
+  @override
+  String get next => 'Sljedeće';
+
+  @override
+  String get diaDayCalories => 'Kalorije dana';
+
+  @override
+  String diaOfTarget(int kcal) {
+    return 'od $kcal kcal';
+  }
+
+  @override
+  String get diaNoTarget =>
+      'Dopuni profil da postaviš dnevni cilj kalorija i vidiš koliko ti ostaje svaki dan.';
+
+  @override
+  String get diaCompleteProfile => 'Dopuni moj profil';
+
+  @override
+  String get diaOthers => 'Ostalo';
+
+  @override
+  String get diaMeal => 'Obrok';
+
+  @override
+  String get diaLast7 => 'Tvojih zadnjih 7 dana';
+
+  @override
+  String diaTargetPerDay(int kcal) {
+    return 'Cilj: $kcal kcal dnevno';
+  }
+
+  @override
+  String get diaTarget => 'Cilj';
+
+  @override
+  String get diaTodaySplit => 'Današnja raspodjela';
+
+  @override
+  String get diaNoMacros => 'Danas još nema zabilježenih makroa.';
+
+  @override
+  String get diaProtein => 'Proteini';
+
+  @override
+  String get diaCarbs => 'Ugljikohidrati';
+
+  @override
+  String get diaFat => 'Masti';
+
+  @override
+  String get diaAteThePlan => 'Jesi li jeo ono iz plana?';
+
+  @override
+  String diaAskLine(String day, String meal, String name, int kcal) {
+    return '$day, $meal: $name · $kcal kcal';
+  }
+
+  @override
+  String get yes => 'Da';
+
+  @override
+  String get diaAnswerError => 'Odgovor nije sačuvan.';
+
+  @override
+  String get diaAskFirst => 'Pitaj me prije bilježenja plana';
+
+  @override
+  String get diaAskOn => 'Pitamo te jesi li pojeo svaki obrok iz plana.';
+
+  @override
+  String get diaAskOff =>
+      'Obroci iz plana bilježe se sami kad prođe njihovo vrijeme.';
+
+  @override
+  String get diaSettingError => 'Postavka nije sačuvana.';
+
+  @override
+  String get diaEmpty =>
+      'Još nisi ništa zabilježio ovog dana.\nDodaj svoj prvi obrok.';
+
+  @override
+  String get recUnfavorite => 'Ukloni iz omiljenih';
+
+  @override
+  String get recFavorite => 'Označi kao omiljeni';
+
+  @override
+  String get recDelete => 'Obriši recept';
+
+  @override
+  String get recDeleteAsk => 'Obrisati recept?';
+
+  @override
+  String recRemoveAsk(String name) {
+    return '\"$name\" i njegovi sastojci bit će obrisani.';
+  }
+
+  @override
+  String recDeleted(String name) {
+    return '\"$name\" obrisan.';
+  }
+
+  @override
+  String get recTitle => 'Recepti';
+
+  @override
+  String get recNew => 'Novi recept';
+
+  @override
+  String get recLoadError => 'Nisam mogao učitati recepte';
+
+  @override
+  String get recEmptyTitle => 'Još nema recepata';
+
+  @override
+  String get recEmptyHint => 'Napravi prvi ili zatraži ideje s onim što imaš.';
+
+  @override
+  String get recIdeas => 'Ideje s onim što imam';
+
+  @override
+  String get recNoResults => 'Nema rezultata';
+
+  @override
+  String recCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recepata',
+      one: '1 recept',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recWhatToCook => 'Šta da skuham s onim što imam?';
+
+  @override
+  String get recPantryIdeas => 'Ideje s onim što je u tvojoj ostavi';
+
+  @override
+  String get recAll => 'Svi';
+
+  @override
+  String get recFavorites => 'Omiljeni';
+
+  @override
+  String get recNoFilter =>
+      'Nema recepata s ovim filterom.\nProbaj drugu kategoriju.';
+
+  @override
+  String get clear => 'Očisti';
+
+  @override
+  String recNoMatch(String query) {
+    return 'Nema recepata koji odgovaraju\n\"$query\".';
+  }
 }

@@ -573,7 +573,7 @@ abstract class AppLocalizations {
   /// No description provided for @mealType.
   ///
   /// In es, this message translates to:
-  /// **'{type, select, breakfast{Desayuno} lunch{Comida} snack{Merienda} dinner{Cena} dessert{Postre} other{Comida}}'**
+  /// **'{type, select, breakfast{Desayuno} lunch{Comida} snack{Merienda} dinner{Cena} dessert{Postre} drink{Bebida} other{Comida}}'**
   String mealType(String type);
 
   /// No description provided for @homeEatingOut.
@@ -2033,6 +2033,438 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin recetas que coincidan.'**
   String get planNoMatch;
+
+  /// No description provided for @diaDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo borrar la comida.'**
+  String get diaDeleteError;
+
+  /// No description provided for @diaManual.
+  ///
+  /// In es, this message translates to:
+  /// **'A mano'**
+  String get diaManual;
+
+  /// No description provided for @diaManualHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el nombre y las calorías'**
+  String get diaManualHint;
+
+  /// No description provided for @diaFromRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde una receta'**
+  String get diaFromRecipe;
+
+  /// No description provided for @diaFromRecipeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Registra una receta tuya como comida'**
+  String get diaFromRecipeHint;
+
+  /// No description provided for @diaWithPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Con una foto'**
+  String get diaWithPhoto;
+
+  /// No description provided for @diaWithPhotoHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Haz una foto al plato y calculamos las calorías'**
+  String get diaWithPhotoHint;
+
+  /// No description provided for @diaAddManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir a mano'**
+  String get diaAddManual;
+
+  /// No description provided for @diaKcalField.
+  ///
+  /// In es, this message translates to:
+  /// **'Calorías (kcal)'**
+  String get diaKcalField;
+
+  /// No description provided for @diaMealTypeOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de comida (opcional)'**
+  String get diaMealTypeOptional;
+
+  /// No description provided for @diaNoType.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin tipo'**
+  String get diaNoType;
+
+  /// No description provided for @diaProteinG.
+  ///
+  /// In es, this message translates to:
+  /// **'Proteína (g)'**
+  String get diaProteinG;
+
+  /// No description provided for @diaCarbsG.
+  ///
+  /// In es, this message translates to:
+  /// **'Carbos (g)'**
+  String get diaCarbsG;
+
+  /// No description provided for @diaFatG.
+  ///
+  /// In es, this message translates to:
+  /// **'Grasa (g)'**
+  String get diaFatG;
+
+  /// No description provided for @diaNeedNameKcal.
+  ///
+  /// In es, this message translates to:
+  /// **'Pon al menos un nombre y las calorías.'**
+  String get diaNeedNameKcal;
+
+  /// No description provided for @diaSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar la comida.'**
+  String get diaSaveError;
+
+  /// No description provided for @diaRecipesLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar las recetas.'**
+  String get diaRecipesLoadError;
+
+  /// No description provided for @diaNoRecipes.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes recetas que registrar.'**
+  String get diaNoRecipes;
+
+  /// No description provided for @diaKcalPerServing.
+  ///
+  /// In es, this message translates to:
+  /// **'{kcal} kcal por ración'**
+  String diaKcalPerServing(int kcal);
+
+  /// No description provided for @diaNoKcal.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin calorías registradas'**
+  String get diaNoKcal;
+
+  /// No description provided for @diaServings.
+  ///
+  /// In es, this message translates to:
+  /// **'Raciones'**
+  String get diaServings;
+
+  /// No description provided for @diaServingsError.
+  ///
+  /// In es, this message translates to:
+  /// **'Pon un número de raciones mayor que 0.'**
+  String get diaServingsError;
+
+  /// No description provided for @diaLog.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar'**
+  String get diaLog;
+
+  /// No description provided for @diaRecipeLogError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo registrar la receta.'**
+  String get diaRecipeLogError;
+
+  /// No description provided for @diaTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi diario'**
+  String get diaTitle;
+
+  /// No description provided for @diaAddMeal.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir comida'**
+  String get diaAddMeal;
+
+  /// No description provided for @previous.
+  ///
+  /// In es, this message translates to:
+  /// **'Anterior'**
+  String get previous;
+
+  /// No description provided for @next.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente'**
+  String get next;
+
+  /// No description provided for @diaDayCalories.
+  ///
+  /// In es, this message translates to:
+  /// **'Calorías del día'**
+  String get diaDayCalories;
+
+  /// No description provided for @diaOfTarget.
+  ///
+  /// In es, this message translates to:
+  /// **'de {kcal} kcal'**
+  String diaOfTarget(int kcal);
+
+  /// No description provided for @diaNoTarget.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa tu perfil para fijar un objetivo diario de calorías y ver cuánto te queda cada día.'**
+  String get diaNoTarget;
+
+  /// No description provided for @diaCompleteProfile.
+  ///
+  /// In es, this message translates to:
+  /// **'Completar mi perfil'**
+  String get diaCompleteProfile;
+
+  /// No description provided for @diaOthers.
+  ///
+  /// In es, this message translates to:
+  /// **'Otras'**
+  String get diaOthers;
+
+  /// No description provided for @diaMeal.
+  ///
+  /// In es, this message translates to:
+  /// **'Comida'**
+  String get diaMeal;
+
+  /// No description provided for @diaLast7.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus últimos 7 días'**
+  String get diaLast7;
+
+  /// No description provided for @diaTargetPerDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Objetivo: {kcal} kcal al día'**
+  String diaTargetPerDay(int kcal);
+
+  /// No description provided for @diaTarget.
+  ///
+  /// In es, this message translates to:
+  /// **'Objetivo'**
+  String get diaTarget;
+
+  /// No description provided for @diaTodaySplit.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparto de hoy'**
+  String get diaTodaySplit;
+
+  /// No description provided for @diaNoMacros.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay macros registrados hoy.'**
+  String get diaNoMacros;
+
+  /// No description provided for @diaProtein.
+  ///
+  /// In es, this message translates to:
+  /// **'Proteína'**
+  String get diaProtein;
+
+  /// No description provided for @diaCarbs.
+  ///
+  /// In es, this message translates to:
+  /// **'Carbos'**
+  String get diaCarbs;
+
+  /// No description provided for @diaFat.
+  ///
+  /// In es, this message translates to:
+  /// **'Grasa'**
+  String get diaFat;
+
+  /// No description provided for @diaAteThePlan.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Has comido lo del plan?'**
+  String get diaAteThePlan;
+
+  /// No description provided for @diaAskLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{day}, {meal}: {name} · {kcal} kcal'**
+  String diaAskLine(String day, String meal, String name, int kcal);
+
+  /// No description provided for @yes.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí'**
+  String get yes;
+
+  /// No description provided for @diaAnswerError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar la respuesta.'**
+  String get diaAnswerError;
+
+  /// No description provided for @diaAskFirst.
+  ///
+  /// In es, this message translates to:
+  /// **'Preguntarme antes de apuntar el plan'**
+  String get diaAskFirst;
+
+  /// No description provided for @diaAskOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Te preguntamos si has comido cada comida del plan.'**
+  String get diaAskOn;
+
+  /// No description provided for @diaAskOff.
+  ///
+  /// In es, this message translates to:
+  /// **'Las comidas del plan se apuntan solas al pasar su hora.'**
+  String get diaAskOff;
+
+  /// No description provided for @diaSettingError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el ajuste.'**
+  String get diaSettingError;
+
+  /// No description provided for @diaEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no has apuntado nada este día.\nAñade tu primera comida.'**
+  String get diaEmpty;
+
+  /// No description provided for @recUnfavorite.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de favoritas'**
+  String get recUnfavorite;
+
+  /// No description provided for @recFavorite.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como favorita'**
+  String get recFavorite;
+
+  /// No description provided for @recDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar receta'**
+  String get recDelete;
+
+  /// No description provided for @recDeleteAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar receta?'**
+  String get recDeleteAsk;
+
+  /// No description provided for @recRemoveAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borrará \"{name}\" y sus ingredientes.'**
+  String recRemoveAsk(String name);
+
+  /// No description provided for @recDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'\"{name}\" eliminada.'**
+  String recDeleted(String name);
+
+  /// No description provided for @recTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Recetas'**
+  String get recTitle;
+
+  /// No description provided for @recNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva receta'**
+  String get recNew;
+
+  /// No description provided for @recLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No he podido cargar las recetas'**
+  String get recLoadError;
+
+  /// No description provided for @recEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay recetas'**
+  String get recEmptyTitle;
+
+  /// No description provided for @recEmptyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea la primera o pide ideas con lo que tienes.'**
+  String get recEmptyHint;
+
+  /// No description provided for @recIdeas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ideas con lo que tengo'**
+  String get recIdeas;
+
+  /// No description provided for @recNoResults.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin resultados'**
+  String get recNoResults;
+
+  /// No description provided for @recCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 receta} other{{count} recetas}}'**
+  String recCount(int count);
+
+  /// No description provided for @recWhatToCook.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué cocino con lo que tengo?'**
+  String get recWhatToCook;
+
+  /// No description provided for @recPantryIdeas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ideas con lo que hay en tu despensa'**
+  String get recPantryIdeas;
+
+  /// No description provided for @recAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get recAll;
+
+  /// No description provided for @recFavorites.
+  ///
+  /// In es, this message translates to:
+  /// **'Favoritas'**
+  String get recFavorites;
+
+  /// No description provided for @recNoFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay recetas con este filtro.\nPrueba con otra categoría.'**
+  String get recNoFilter;
+
+  /// No description provided for @clear.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar'**
+  String get clear;
+
+  /// No description provided for @recNoMatch.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay recetas que coincidan con\n\"{query}\".'**
+  String recNoMatch(String query);
 }
 
 class _AppLocalizationsDelegate
