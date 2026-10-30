@@ -16,6 +16,7 @@
   "oneMoment": "Un momento…",
   "retry": "Reintentar",
   "loginAccountCreated": "Cuenta creada. Te damos la bienvenida a PrezHome",
+  "loginConfirmEmailSent": "Te hemos enviado un correo para confirmar tu cuenta. Ábrelo desde este móvil y entrarás solo.",
   "loginAuthError": "Error de autenticación",
   "loginProviderError": "No se pudo iniciar con {provider}",
   "@loginProviderError": {
