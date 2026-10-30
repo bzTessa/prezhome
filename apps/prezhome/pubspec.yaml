@@ -44,6 +44,9 @@ dependencies:
   google_fonts: ^8.2.1
   image_picker: ^1.1.2
   url_launcher: ^6.3.0
+  # Login nativo de Google (hoja de cuentas del móvil, sin navegador)
+  google_sign_in: ^7.2.0
+  crypto: ^3.0.6
   fl_chart: ^1.2.0
   # path_provider: ya es transitiva de supabase_flutter; la promovemos a
   # dependencia directa para resolver el directorio de documentos en
