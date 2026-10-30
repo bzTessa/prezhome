@@ -425,5 +425,257 @@
   "shopEmptyHint": "Escribe arriba lo que necesitas o trae lo del plan.",
   "shopFromPlanAction": "Desde el plan",
   "shopDoneTitle": "Compra completada",
-  "shopDoneHint": "Ya tienes todo lo de la lista. ¡Buen trabajo!"
+  "shopDoneHint": "Ya tienes todo lo de la lista. ¡Buen trabajo!",
+  "panUsedInOne": "Quitado lo que usaste en {meal}",
+  "@panUsedInOne": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "panUsedInMany": "Quitado lo que usaste en {count} comidas del plan",
+  "@panUsedInMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "view": "Ver",
+  "couldNotDelete": "No se pudo eliminar",
+  "panNoLongerShop": "{name} ya no aparecerá en la compra.",
+  "@panNoLongerShop": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panBackToShop": "{name} volverá a aparecer en la compra.",
+  "@panBackToShop": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panCouldNotMarkOut": "No se pudo marcar {name} como agotado",
+  "@panCouldNotMarkOut": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panMarkedOut": "He marcado {name} como agotado.",
+  "@panMarkedOut": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panOutNotAdded": "{name} quedó agotado, pero no pude añadirlo a la compra",
+  "@panOutNotAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panAlreadyInList": "{name} ya está en tu lista de la compra.",
+  "@panAlreadyInList": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panAddedToShop": "He añadido {name} a la compra",
+  "@panAddedToShop": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panAddManual": "Añadir a mano",
+  "panScanBarcode": "Escanear código de barras",
+  "panFreezeDish": "Plato cocinado al congelador",
+  "panFreezeDishHint": "Elige la receta y cuántas raciones",
+  "panSaveRecipeFirst": "Primero guarda alguna receta.",
+  "panWhichDish": "¿Qué plato vas a congelar?",
+  "panHowManyServings": "¿Cuántas raciones congelas?",
+  "panTitle": "Despensa y Nevera",
+  "panAddTooltip": "Añadir a la despensa",
+  "panLoadError": "No se pudo cargar el inventario",
+  "panEmptyTitle": "Tu despensa está vacía",
+  "panEmptyHint": "Añade lo que tienes en casa o tacha la compra y llegará solo.",
+  "panAddProduct": "Añadir producto",
+  "panWhatToCook": "¿Qué cocino con esto?",
+  "panExpiringHeader": "Caducados y a punto de caducar",
+  "panNothingHere": "Aquí no hay nada.",
+  "kitchenZone": "{zone, select, nevera{Nevera} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpieza} hogar{Higiene y hogar} other{{zone}}}",
+  "@kitchenZone": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
+  "kitchenReview": "Revisar",
+  "expiryGroup": "{group, select, expired{Caducado} week{Esta semana} later{Más adelante} other{Sin fecha}}",
+  "@expiryGroup": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "panExpiredAgo": "Caducó hace {days} días",
+  "@panExpiredAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "panExpiredYesterday": "Caducó ayer",
+  "panExpiresToday": "Caduca hoy",
+  "panExpiresTomorrow": "Caduca mañana",
+  "panExpiresIn": "Caduca en {days} días",
+  "@panExpiresIn": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "panDays": "{days} días",
+  "@panDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "panNotBought": "No se compra",
+  "panConsumed": "Consumido",
+  "panToShopping": "A la compra",
+  "panCouldNotAddToShop": "No pude añadir {name} a la compra",
+  "@panCouldNotAddToShop": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panExpiredDeleted": "{count, plural, =1{Caducado eliminado} other{{count} caducados eliminados}}",
+  "@panExpiredDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "panMyKitchen": "Mi cocina",
+  "panUsedHistory": "Lo que se ha gastado",
+  "panNothingExpired": "Nada caducado",
+  "panDeleteExpired": "Eliminar caducados ({count})",
+  "@panDeleteExpired": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "panEmptyZone": "Vaciar {where}",
+  "@panEmptyZone": {
+    "placeholders": {
+      "where": {
+        "type": "String"
+      }
+    }
+  },
+  "panEmptyAsk": "¿Vaciar {where}?",
+  "@panEmptyAsk": {
+    "placeholders": {
+      "where": {
+        "type": "String"
+      }
+    }
+  },
+  "panWillDelete": "Se eliminarán {count} productos.",
+  "@panWillDelete": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "panEmpty": "Vaciar",
+  "panDeleted": "{count} productos eliminados",
+  "@panDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "edit": "Editar",
+  "panShopAgain": "Volver a añadir a la compra",
+  "panDontShop": "No añadir a la compra",
+  "panStapleHint": "Para básicos que siempre tienes",
+  "panWillAddToShop": "Lo añadiré a la compra",
+  "delete": "Eliminar",
+  "panDeleteAsk": "¿Eliminar {name}?",
+  "@panDeleteAsk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "panConsumedOn": "{name}, consumido {day}",
+  "@panConsumedOn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "todayLower": "hoy",
+  "yesterdayLower": "ayer",
+  "panOnDate": "el {day}/{month}",
+  "@panOnDate": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "month": {
+        "type": "int"
+      }
+    }
+  },
+  "panWhen": "¿Cuándo?",
+  "today": "Hoy",
+  "yesterday": "Ayer",
+  "panOtherDay": "Otro día",
+  "panWhichDay": "¿Qué día?",
+  "panHowMany": "¿Cuántos?",
+  "panAll": "Todo ({qty})",
+  "@panAll": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotLoad": "No se pudo cargar",
+  "panNothingYet": "Aún no hay nada.",
+  "panWhenCooking": "Al cocinar"
 }

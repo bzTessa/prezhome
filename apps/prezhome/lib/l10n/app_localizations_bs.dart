@@ -704,4 +704,290 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get shopDoneHint => 'Imaš sve s liste. Odlično!';
+
+  @override
+  String panUsedInOne(String meal) {
+    return 'Uklonjeno ono što si iskoristio za $meal';
+  }
+
+  @override
+  String panUsedInMany(int count) {
+    return 'Uklonjeno ono što si iskoristio za $count obroka iz plana';
+  }
+
+  @override
+  String get view => 'Pogledaj';
+
+  @override
+  String get couldNotDelete => 'Brisanje nije uspjelo';
+
+  @override
+  String panNoLongerShop(String name) {
+    return '$name se više neće pojavljivati u kupovini.';
+  }
+
+  @override
+  String panBackToShop(String name) {
+    return '$name će se ponovo pojavljivati u kupovini.';
+  }
+
+  @override
+  String panCouldNotMarkOut(String name) {
+    return 'Nije moguće označiti $name kao potrošeno';
+  }
+
+  @override
+  String panMarkedOut(String name) {
+    return 'Označio sam $name kao potrošeno.';
+  }
+
+  @override
+  String panOutNotAdded(String name) {
+    return '$name je potrošeno, ali ga nisam mogao dodati u kupovinu';
+  }
+
+  @override
+  String panAlreadyInList(String name) {
+    return '$name je već na tvojoj listi za kupovinu.';
+  }
+
+  @override
+  String panAddedToShop(String name) {
+    return 'Dodao sam $name u kupovinu';
+  }
+
+  @override
+  String get panAddManual => 'Dodaj ručno';
+
+  @override
+  String get panScanBarcode => 'Skeniraj barkod';
+
+  @override
+  String get panFreezeDish => 'Kuhano jelo u zamrzivač';
+
+  @override
+  String get panFreezeDishHint => 'Izaberi recept i broj porcija';
+
+  @override
+  String get panSaveRecipeFirst => 'Prvo sačuvaj neki recept.';
+
+  @override
+  String get panWhichDish => 'Koje jelo zamrzavaš?';
+
+  @override
+  String get panHowManyServings => 'Koliko porcija zamrzavaš?';
+
+  @override
+  String get panTitle => 'Ostava i Frižider';
+
+  @override
+  String get panAddTooltip => 'Dodaj u ostavu';
+
+  @override
+  String get panLoadError => 'Zalihe nisu učitane';
+
+  @override
+  String get panEmptyTitle => 'Tvoja ostava je prazna';
+
+  @override
+  String get panEmptyHint =>
+      'Dodaj ono što imaš kod kuće ili označi kupovinu i stići će samo.';
+
+  @override
+  String get panAddProduct => 'Dodaj proizvod';
+
+  @override
+  String get panWhatToCook => 'Šta da skuham s ovim?';
+
+  @override
+  String get panExpiringHeader => 'Istekli i pred istekom';
+
+  @override
+  String get panNothingHere => 'Ovdje nema ničega.';
+
+  @override
+  String kitchenZone(String zone) {
+    String _temp0 = intl.Intl.selectLogic(zone, {
+      'nevera': 'Frižider',
+      'congelador': 'Zamrzivač',
+      'despensa': 'Ostava',
+      'bebidas': 'Pića',
+      'especias': 'Začini',
+      'limpieza': 'Čišćenje',
+      'hogar': 'Higijena i dom',
+      'other': '$zone',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get kitchenReview => 'Provjeri';
+
+  @override
+  String expiryGroup(String group) {
+    String _temp0 = intl.Intl.selectLogic(group, {
+      'expired': 'Isteklo',
+      'week': 'Ove sedmice',
+      'later': 'Kasnije',
+      'other': 'Bez datuma',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String panExpiredAgo(int days) {
+    return 'Isteklo prije $days dana';
+  }
+
+  @override
+  String get panExpiredYesterday => 'Isteklo jučer';
+
+  @override
+  String get panExpiresToday => 'Ističe danas';
+
+  @override
+  String get panExpiresTomorrow => 'Ističe sutra';
+
+  @override
+  String panExpiresIn(int days) {
+    return 'Ističe za $days dana';
+  }
+
+  @override
+  String panDays(int days) {
+    return '$days dana';
+  }
+
+  @override
+  String get panNotBought => 'Ne kupuje se';
+
+  @override
+  String get panConsumed => 'Potrošeno';
+
+  @override
+  String get panToShopping => 'U kupovinu';
+
+  @override
+  String panCouldNotAddToShop(String name) {
+    return 'Nisam mogao dodati $name u kupovinu';
+  }
+
+  @override
+  String panExpiredDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count isteklih obrisano',
+      one: 'Isteklo obrisano',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get panMyKitchen => 'Moja kuhinja';
+
+  @override
+  String get panUsedHistory => 'Šta je potrošeno';
+
+  @override
+  String get panNothingExpired => 'Ništa nije isteklo';
+
+  @override
+  String panDeleteExpired(int count) {
+    return 'Obriši istekle ($count)';
+  }
+
+  @override
+  String panEmptyZone(String where) {
+    return 'Isprazni $where';
+  }
+
+  @override
+  String panEmptyAsk(String where) {
+    return 'Isprazniti $where?';
+  }
+
+  @override
+  String panWillDelete(int count) {
+    return 'Bit će obrisano $count proizvoda.';
+  }
+
+  @override
+  String get panEmpty => 'Isprazni';
+
+  @override
+  String panDeleted(int count) {
+    return '$count proizvoda obrisano';
+  }
+
+  @override
+  String get edit => 'Uredi';
+
+  @override
+  String get panShopAgain => 'Ponovo dodavaj u kupovinu';
+
+  @override
+  String get panDontShop => 'Ne dodaji u kupovinu';
+
+  @override
+  String get panStapleHint => 'Za osnovne stvari koje uvijek imaš';
+
+  @override
+  String get panWillAddToShop => 'Dodat ću ga u kupovinu';
+
+  @override
+  String get delete => 'Obriši';
+
+  @override
+  String panDeleteAsk(String name) {
+    return 'Obrisati $name?';
+  }
+
+  @override
+  String panConsumedOn(String name, String day) {
+    return '$name, potrošeno $day';
+  }
+
+  @override
+  String get todayLower => 'danas';
+
+  @override
+  String get yesterdayLower => 'jučer';
+
+  @override
+  String panOnDate(int day, int month) {
+    return '$day.$month.';
+  }
+
+  @override
+  String get panWhen => 'Kada?';
+
+  @override
+  String get today => 'Danas';
+
+  @override
+  String get yesterday => 'Jučer';
+
+  @override
+  String get panOtherDay => 'Drugi dan';
+
+  @override
+  String get panWhichDay => 'Koji dan?';
+
+  @override
+  String get panHowMany => 'Koliko?';
+
+  @override
+  String panAll(String qty) {
+    return 'Sve ($qty)';
+  }
+
+  @override
+  String get couldNotLoad => 'Učitavanje nije uspjelo';
+
+  @override
+  String get panNothingYet => 'Još ništa.';
+
+  @override
+  String get panWhenCooking => 'Pri kuhanju';
 }

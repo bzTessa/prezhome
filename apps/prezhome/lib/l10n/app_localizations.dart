@@ -1127,6 +1127,432 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ya tienes todo lo de la lista. ¡Buen trabajo!'**
   String get shopDoneHint;
+
+  /// No description provided for @panUsedInOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitado lo que usaste en {meal}'**
+  String panUsedInOne(String meal);
+
+  /// No description provided for @panUsedInMany.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitado lo que usaste en {count} comidas del plan'**
+  String panUsedInMany(int count);
+
+  /// No description provided for @view.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver'**
+  String get view;
+
+  /// No description provided for @couldNotDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar'**
+  String get couldNotDelete;
+
+  /// No description provided for @panNoLongerShop.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} ya no aparecerá en la compra.'**
+  String panNoLongerShop(String name);
+
+  /// No description provided for @panBackToShop.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} volverá a aparecer en la compra.'**
+  String panBackToShop(String name);
+
+  /// No description provided for @panCouldNotMarkOut.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo marcar {name} como agotado'**
+  String panCouldNotMarkOut(String name);
+
+  /// No description provided for @panMarkedOut.
+  ///
+  /// In es, this message translates to:
+  /// **'He marcado {name} como agotado.'**
+  String panMarkedOut(String name);
+
+  /// No description provided for @panOutNotAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} quedó agotado, pero no pude añadirlo a la compra'**
+  String panOutNotAdded(String name);
+
+  /// No description provided for @panAlreadyInList.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} ya está en tu lista de la compra.'**
+  String panAlreadyInList(String name);
+
+  /// No description provided for @panAddedToShop.
+  ///
+  /// In es, this message translates to:
+  /// **'He añadido {name} a la compra'**
+  String panAddedToShop(String name);
+
+  /// No description provided for @panAddManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir a mano'**
+  String get panAddManual;
+
+  /// No description provided for @panScanBarcode.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanear código de barras'**
+  String get panScanBarcode;
+
+  /// No description provided for @panFreezeDish.
+  ///
+  /// In es, this message translates to:
+  /// **'Plato cocinado al congelador'**
+  String get panFreezeDish;
+
+  /// No description provided for @panFreezeDishHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige la receta y cuántas raciones'**
+  String get panFreezeDishHint;
+
+  /// No description provided for @panSaveRecipeFirst.
+  ///
+  /// In es, this message translates to:
+  /// **'Primero guarda alguna receta.'**
+  String get panSaveRecipeFirst;
+
+  /// No description provided for @panWhichDish.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué plato vas a congelar?'**
+  String get panWhichDish;
+
+  /// No description provided for @panHowManyServings.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuántas raciones congelas?'**
+  String get panHowManyServings;
+
+  /// No description provided for @panTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Despensa y Nevera'**
+  String get panTitle;
+
+  /// No description provided for @panAddTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir a la despensa'**
+  String get panAddTooltip;
+
+  /// No description provided for @panLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cargar el inventario'**
+  String get panLoadError;
+
+  /// No description provided for @panEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu despensa está vacía'**
+  String get panEmptyTitle;
+
+  /// No description provided for @panEmptyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade lo que tienes en casa o tacha la compra y llegará solo.'**
+  String get panEmptyHint;
+
+  /// No description provided for @panAddProduct.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir producto'**
+  String get panAddProduct;
+
+  /// No description provided for @panWhatToCook.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué cocino con esto?'**
+  String get panWhatToCook;
+
+  /// No description provided for @panExpiringHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'Caducados y a punto de caducar'**
+  String get panExpiringHeader;
+
+  /// No description provided for @panNothingHere.
+  ///
+  /// In es, this message translates to:
+  /// **'Aquí no hay nada.'**
+  String get panNothingHere;
+
+  /// No description provided for @kitchenZone.
+  ///
+  /// In es, this message translates to:
+  /// **'{zone, select, nevera{Nevera} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpieza} hogar{Higiene y hogar} other{{zone}}}'**
+  String kitchenZone(String zone);
+
+  /// No description provided for @kitchenReview.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisar'**
+  String get kitchenReview;
+
+  /// No description provided for @expiryGroup.
+  ///
+  /// In es, this message translates to:
+  /// **'{group, select, expired{Caducado} week{Esta semana} later{Más adelante} other{Sin fecha}}'**
+  String expiryGroup(String group);
+
+  /// No description provided for @panExpiredAgo.
+  ///
+  /// In es, this message translates to:
+  /// **'Caducó hace {days} días'**
+  String panExpiredAgo(int days);
+
+  /// No description provided for @panExpiredYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'Caducó ayer'**
+  String get panExpiredYesterday;
+
+  /// No description provided for @panExpiresToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Caduca hoy'**
+  String get panExpiresToday;
+
+  /// No description provided for @panExpiresTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Caduca mañana'**
+  String get panExpiresTomorrow;
+
+  /// No description provided for @panExpiresIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Caduca en {days} días'**
+  String panExpiresIn(int days);
+
+  /// No description provided for @panDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{days} días'**
+  String panDays(int days);
+
+  /// No description provided for @panNotBought.
+  ///
+  /// In es, this message translates to:
+  /// **'No se compra'**
+  String get panNotBought;
+
+  /// No description provided for @panConsumed.
+  ///
+  /// In es, this message translates to:
+  /// **'Consumido'**
+  String get panConsumed;
+
+  /// No description provided for @panToShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'A la compra'**
+  String get panToShopping;
+
+  /// No description provided for @panCouldNotAddToShop.
+  ///
+  /// In es, this message translates to:
+  /// **'No pude añadir {name} a la compra'**
+  String panCouldNotAddToShop(String name);
+
+  /// No description provided for @panExpiredDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Caducado eliminado} other{{count} caducados eliminados}}'**
+  String panExpiredDeleted(int count);
+
+  /// No description provided for @panMyKitchen.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi cocina'**
+  String get panMyKitchen;
+
+  /// No description provided for @panUsedHistory.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que se ha gastado'**
+  String get panUsedHistory;
+
+  /// No description provided for @panNothingExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada caducado'**
+  String get panNothingExpired;
+
+  /// No description provided for @panDeleteExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar caducados ({count})'**
+  String panDeleteExpired(int count);
+
+  /// No description provided for @panEmptyZone.
+  ///
+  /// In es, this message translates to:
+  /// **'Vaciar {where}'**
+  String panEmptyZone(String where);
+
+  /// No description provided for @panEmptyAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Vaciar {where}?'**
+  String panEmptyAsk(String where);
+
+  /// No description provided for @panWillDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Se eliminarán {count} productos.'**
+  String panWillDelete(int count);
+
+  /// No description provided for @panEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Vaciar'**
+  String get panEmpty;
+
+  /// No description provided for @panDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} productos eliminados'**
+  String panDeleted(int count);
+
+  /// No description provided for @edit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar'**
+  String get edit;
+
+  /// No description provided for @panShopAgain.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a añadir a la compra'**
+  String get panShopAgain;
+
+  /// No description provided for @panDontShop.
+  ///
+  /// In es, this message translates to:
+  /// **'No añadir a la compra'**
+  String get panDontShop;
+
+  /// No description provided for @panStapleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Para básicos que siempre tienes'**
+  String get panStapleHint;
+
+  /// No description provided for @panWillAddToShop.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo añadiré a la compra'**
+  String get panWillAddToShop;
+
+  /// No description provided for @delete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get delete;
+
+  /// No description provided for @panDeleteAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar {name}?'**
+  String panDeleteAsk(String name);
+
+  /// No description provided for @panConsumedOn.
+  ///
+  /// In es, this message translates to:
+  /// **'{name}, consumido {day}'**
+  String panConsumedOn(String name, String day);
+
+  /// No description provided for @todayLower.
+  ///
+  /// In es, this message translates to:
+  /// **'hoy'**
+  String get todayLower;
+
+  /// No description provided for @yesterdayLower.
+  ///
+  /// In es, this message translates to:
+  /// **'ayer'**
+  String get yesterdayLower;
+
+  /// No description provided for @panOnDate.
+  ///
+  /// In es, this message translates to:
+  /// **'el {day}/{month}'**
+  String panOnDate(int day, int month);
+
+  /// No description provided for @panWhen.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuándo?'**
+  String get panWhen;
+
+  /// No description provided for @today.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get today;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayer'**
+  String get yesterday;
+
+  /// No description provided for @panOtherDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro día'**
+  String get panOtherDay;
+
+  /// No description provided for @panWhichDay.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué día?'**
+  String get panWhichDay;
+
+  /// No description provided for @panHowMany.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuántos?'**
+  String get panHowMany;
+
+  /// No description provided for @panAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo ({qty})'**
+  String panAll(String qty);
+
+  /// No description provided for @couldNotLoad.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cargar'**
+  String get couldNotLoad;
+
+  /// No description provided for @panNothingYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay nada.'**
+  String get panNothingYet;
+
+  /// No description provided for @panWhenCooking.
+  ///
+  /// In es, this message translates to:
+  /// **'Al cocinar'**
+  String get panWhenCooking;
 }
 
 class _AppLocalizationsDelegate

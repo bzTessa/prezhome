@@ -711,4 +711,290 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get shopDoneHint => 'Hai tutto quello della lista. Ottimo lavoro!';
+
+  @override
+  String panUsedInOne(String meal) {
+    return 'Tolto ciò che hai usato per $meal';
+  }
+
+  @override
+  String panUsedInMany(int count) {
+    return 'Tolto ciò che hai usato per $count pasti del piano';
+  }
+
+  @override
+  String get view => 'Vedi';
+
+  @override
+  String get couldNotDelete => 'Impossibile eliminare';
+
+  @override
+  String panNoLongerShop(String name) {
+    return '$name non apparirà più nella spesa.';
+  }
+
+  @override
+  String panBackToShop(String name) {
+    return '$name riapparirà nella spesa.';
+  }
+
+  @override
+  String panCouldNotMarkOut(String name) {
+    return 'Impossibile segnare $name come finito';
+  }
+
+  @override
+  String panMarkedOut(String name) {
+    return 'Ho segnato $name come finito.';
+  }
+
+  @override
+  String panOutNotAdded(String name) {
+    return '$name è finito, ma non sono riuscito ad aggiungerlo alla spesa';
+  }
+
+  @override
+  String panAlreadyInList(String name) {
+    return '$name è già nella tua lista della spesa.';
+  }
+
+  @override
+  String panAddedToShop(String name) {
+    return 'Ho aggiunto $name alla spesa';
+  }
+
+  @override
+  String get panAddManual => 'Aggiungi a mano';
+
+  @override
+  String get panScanBarcode => 'Scansiona codice a barre';
+
+  @override
+  String get panFreezeDish => 'Piatto cucinato in freezer';
+
+  @override
+  String get panFreezeDishHint => 'Scegli la ricetta e quante porzioni';
+
+  @override
+  String get panSaveRecipeFirst => 'Prima salva una ricetta.';
+
+  @override
+  String get panWhichDish => 'Quale piatto congeli?';
+
+  @override
+  String get panHowManyServings => 'Quante porzioni congeli?';
+
+  @override
+  String get panTitle => 'Dispensa e Frigo';
+
+  @override
+  String get panAddTooltip => 'Aggiungi alla dispensa';
+
+  @override
+  String get panLoadError => 'Impossibile caricare l\'inventario';
+
+  @override
+  String get panEmptyTitle => 'La tua dispensa è vuota';
+
+  @override
+  String get panEmptyHint =>
+      'Aggiungi ciò che hai in casa o spunta la spesa e arriverà da solo.';
+
+  @override
+  String get panAddProduct => 'Aggiungi prodotto';
+
+  @override
+  String get panWhatToCook => 'Cosa cucino con questo?';
+
+  @override
+  String get panExpiringHeader => 'Scaduti e in scadenza';
+
+  @override
+  String get panNothingHere => 'Qui non c\'è niente.';
+
+  @override
+  String kitchenZone(String zone) {
+    String _temp0 = intl.Intl.selectLogic(zone, {
+      'nevera': 'Frigo',
+      'congelador': 'Freezer',
+      'despensa': 'Dispensa',
+      'bebidas': 'Bevande',
+      'especias': 'Condimenti',
+      'limpieza': 'Pulizia',
+      'hogar': 'Igiene e casa',
+      'other': '$zone',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get kitchenReview => 'Controlla';
+
+  @override
+  String expiryGroup(String group) {
+    String _temp0 = intl.Intl.selectLogic(group, {
+      'expired': 'Scaduto',
+      'week': 'Questa settimana',
+      'later': 'Più avanti',
+      'other': 'Senza data',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String panExpiredAgo(int days) {
+    return 'Scaduto da $days giorni';
+  }
+
+  @override
+  String get panExpiredYesterday => 'Scaduto ieri';
+
+  @override
+  String get panExpiresToday => 'Scade oggi';
+
+  @override
+  String get panExpiresTomorrow => 'Scade domani';
+
+  @override
+  String panExpiresIn(int days) {
+    return 'Scade tra $days giorni';
+  }
+
+  @override
+  String panDays(int days) {
+    return '$days giorni';
+  }
+
+  @override
+  String get panNotBought => 'Non si compra';
+
+  @override
+  String get panConsumed => 'Consumato';
+
+  @override
+  String get panToShopping => 'Alla spesa';
+
+  @override
+  String panCouldNotAddToShop(String name) {
+    return 'Non sono riuscito ad aggiungere $name alla spesa';
+  }
+
+  @override
+  String panExpiredDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count scaduti eliminati',
+      one: 'Scaduto eliminato',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get panMyKitchen => 'La mia cucina';
+
+  @override
+  String get panUsedHistory => 'Ciò che è stato consumato';
+
+  @override
+  String get panNothingExpired => 'Niente di scaduto';
+
+  @override
+  String panDeleteExpired(int count) {
+    return 'Elimina scaduti ($count)';
+  }
+
+  @override
+  String panEmptyZone(String where) {
+    return 'Svuota $where';
+  }
+
+  @override
+  String panEmptyAsk(String where) {
+    return 'Svuotare $where?';
+  }
+
+  @override
+  String panWillDelete(int count) {
+    return 'Verranno eliminati $count prodotti.';
+  }
+
+  @override
+  String get panEmpty => 'Svuota';
+
+  @override
+  String panDeleted(int count) {
+    return '$count prodotti eliminati';
+  }
+
+  @override
+  String get edit => 'Modifica';
+
+  @override
+  String get panShopAgain => 'Aggiungi di nuovo alla spesa';
+
+  @override
+  String get panDontShop => 'Non aggiungere alla spesa';
+
+  @override
+  String get panStapleHint => 'Per i prodotti base che hai sempre';
+
+  @override
+  String get panWillAddToShop => 'Lo aggiungerò alla spesa';
+
+  @override
+  String get delete => 'Elimina';
+
+  @override
+  String panDeleteAsk(String name) {
+    return 'Eliminare $name?';
+  }
+
+  @override
+  String panConsumedOn(String name, String day) {
+    return '$name, consumato $day';
+  }
+
+  @override
+  String get todayLower => 'oggi';
+
+  @override
+  String get yesterdayLower => 'ieri';
+
+  @override
+  String panOnDate(int day, int month) {
+    return 'il $day/$month';
+  }
+
+  @override
+  String get panWhen => 'Quando?';
+
+  @override
+  String get today => 'Oggi';
+
+  @override
+  String get yesterday => 'Ieri';
+
+  @override
+  String get panOtherDay => 'Un altro giorno';
+
+  @override
+  String get panWhichDay => 'Quale giorno?';
+
+  @override
+  String get panHowMany => 'Quanti?';
+
+  @override
+  String panAll(String qty) {
+    return 'Tutto ($qty)';
+  }
+
+  @override
+  String get couldNotLoad => 'Impossibile caricare';
+
+  @override
+  String get panNothingYet => 'Ancora niente.';
+
+  @override
+  String get panWhenCooking => 'Cucinando';
 }

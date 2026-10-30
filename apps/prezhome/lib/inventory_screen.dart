@@ -33,6 +33,7 @@ import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
 import 'discover_recipes_screen.dart';
+import 'l10n/l10n.dart';
 
 class InventoryScreen extends StatefulWidget {
   final bool embedded;
@@ -99,11 +100,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
       SnackBar(
         content: Text(
           cooked.length == 1
-              ? 'Quitado lo que usaste en ${cooked.first}'
-              : 'Quitado lo que usaste en ${cooked.length} comidas del plan',
+              ? context.l.panUsedInOne(cooked.first)
+              : context.l.panUsedInMany(cooked.length),
         ),
         persist: false,
-        action: SnackBarAction(label: 'Ver', onPressed: _openHistory),
+        action: SnackBarAction(label: context.l.view, onPressed: _openHistory),
       ),
     );
   }
@@ -282,7 +283,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo eliminar')),
+            content: Text(friendlyError(e, context.l.couldNotDelete)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -310,8 +311,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
         SnackBar(
           content: Text(
             value
-                ? '${item.name} ya no aparecerá en la compra.'
-                : '${item.name} volverá a aparecer en la compra.',
+                ? context.l.panNoLongerShop(item.name)
+                : context.l.panBackToShop(item.name),
           ),
         ),
       );
@@ -319,7 +320,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo actualizar')),
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -357,7 +358,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            friendlyError(e, 'No se pudo marcar ${item.name} como agotado'),
+            friendlyError(e, context.l.panCouldNotMarkOut(item.name)),
           ),
           backgroundColor: AppColors.expired,
         ),
@@ -373,7 +374,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       // No es básico: dejamos la cantidad a 0 sin tocar la compra y avisamos
       // de forma simple.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('He marcado ${item.name} como agotado.')),
+        SnackBar(content: Text(context.l.panMarkedOut(item.name))),
       );
       return;
     }
@@ -387,12 +388,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            friendlyError(
-              e,
-              '${item.name} quedó agotado, pero no pude añadirlo a la compra',
-            ),
-          ),
+          content: Text(friendlyError(e, context.l.panOutNotAdded(item.name))),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -437,9 +433,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       // Ya estaba en la compra: nada que insertar, pero confirmamos el agotado.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${item.name} ya está en tu lista de la compra.'),
-        ),
+        SnackBar(content: Text(context.l.panAlreadyInList(item.name))),
       );
       return;
     }
@@ -476,11 +470,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     // offline-first).
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('He añadido ${item.name} a la compra'),
+        content: Text(context.l.panAddedToShop(item.name)),
         // Con acción Flutter la deja fija; que se vaya sola.
         persist: false,
         action: SnackBarAction(
-          label: 'Deshacer',
+          label: context.l.undo,
           onPressed: () => _undoRestock(
             item: item,
             shoppingLocalId: localId,
@@ -523,7 +517,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo deshacer')),
+          content: Text(friendlyError(e, context.l.couldNotUndo)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -571,18 +565,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit_note_rounded),
-              title: const Text('Añadir a mano'),
+              title: Text(context.l.panAddManual),
               onTap: () => Navigator.of(ctx).pop('manual'),
             ),
             ListTile(
               leading: const Icon(Icons.qr_code_scanner_rounded),
-              title: const Text('Escanear código de barras'),
+              title: Text(context.l.panScanBarcode),
               onTap: () => Navigator.of(ctx).pop('scan'),
             ),
             ListTile(
               leading: const Icon(Icons.ac_unit),
-              title: const Text('Plato cocinado al congelador'),
-              subtitle: const Text('Elige la receta y cuántas raciones'),
+              title: Text(context.l.panFreezeDish),
+              subtitle: Text(context.l.panFreezeDishHint),
               onTap: () => Navigator.of(ctx).pop('dish'),
             ),
           ],
@@ -615,9 +609,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
     if (!mounted) return;
     if (recipes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Primero guarda alguna receta.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.panSaveRecipeFirst)));
       return;
     }
     final recipe = await showModalBottomSheet<Recipe>(
@@ -633,11 +627,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
           child: ListView(
             shrinkWrap: true,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Text(
-                  '¿Qué plato vas a congelar?',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  context.l.panWhichDish,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               for (final r in recipes)
@@ -658,7 +655,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       context,
       recipe: recipe,
       initial: recipe.servings,
-      title: '¿Cuántas raciones congelas?',
+      title: context.l.panHowManyServings,
     );
     if (servings == null || !mounted) return;
     final String homeId;
@@ -741,7 +738,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ? null
           : AppBar(
               title: Text(
-                'Despensa y Nevera',
+                context.l.panTitle,
                 style: TextStyle(
                   color: AppColors.ink,
                   fontWeight: FontWeight.bold,
@@ -758,7 +755,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         onPressed: _openAddOptions,
         backgroundColor: AppColors.ink,
         foregroundColor: AppColors.cream,
-        tooltip: 'Añadir a la despensa',
+        tooltip: context.l.panAddTooltip,
         child: const Icon(Icons.add_rounded, size: 30),
       ),
       body: FutureBuilder<List<InventoryItem>>(
@@ -771,10 +768,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                friendlyError(
-                  snapshot.error,
-                  'No se pudo cargar el inventario',
-                ),
+                friendlyError(snapshot.error, context.l.panLoadError),
               ),
             );
           }
@@ -783,11 +777,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
           if (items.isEmpty) {
             return EmptyState(
               image: 'assets/images/vacio_despensa.png',
-              title: 'Tu despensa está vacía',
-              message:
-                  'Añade lo que tienes en casa o tacha la compra y '
-                  'llegará solo.',
-              actionLabel: 'Añadir producto',
+              title: context.l.panEmptyTitle,
+              message: context.l.panEmptyHint,
+              actionLabel: context.l.panAddProduct,
               onAction: _openAddOptions,
             );
           }
@@ -883,7 +875,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           ),
           icon: const Icon(Icons.soup_kitchen_outlined, size: 20),
-          label: const Text('¿Qué cocino con esto?'),
+          label: Text(context.l.panWhatToCook),
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(44),
             backgroundColor: AppColors.wood.withValues(alpha: 0.35),
@@ -896,8 +888,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.sm),
           child: Text(
             review
-                ? 'Caducados y a punto de caducar'
-                : '${zone!.label} · ${shown.length}',
+                ? context.l.panExpiringHeader
+                : '${context.l.kitchenZone(zone!.name)} · ${shown.length}',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -909,7 +901,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 32),
             child: Text(
-              'Aquí no hay nada.',
+              context.l.panNothingHere,
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.inkMuted),
             ),
@@ -963,19 +955,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
     for (final i in items) {
       final d = _tracksExpiry(i) ? i.daysUntilExpiry : null;
       final key = switch (d) {
-        null => 'Sin fecha',
-        < 0 => 'Caducado',
-        <= 7 => 'Esta semana',
-        _ => 'Más adelante',
+        null => 'none',
+        < 0 => 'expired',
+        <= 7 => 'week',
+        _ => 'later',
       };
       buckets.putIfAbsent(key, () => []).add(i);
     }
     final groups = [
-      for (final k in ['Caducado', 'Esta semana', 'Más adelante', 'Sin fecha'])
+      for (final k in ['expired', 'week', 'later', 'none'])
         if (buckets[k] case final list?)
           (
-            label: k,
-            color: k == 'Caducado' ? AppColors.expired : null,
+            label: context.l.expiryGroup(k),
+            color: k == 'expired' ? AppColors.expired : null,
             items: list,
           ),
     ];
@@ -989,22 +981,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final days = _tracksExpiry(item) ? item.daysUntilExpiry : null;
     final (String, Color)? expiry = switch (days) {
       null => null,
-      < -1 => ('Caducó hace ${-days} días', AppColors.expired),
-      -1 => ('Caducó ayer', AppColors.expired),
-      0 => ('Caduca hoy', AppColors.expired),
-      1 => ('Caduca mañana', AppColors.soon),
-      <= 3 => ('Caduca en $days días', AppColors.soon),
-      _ => ('$days días', AppColors.fresh),
+      < -1 => (context.l.panExpiredAgo(-days), AppColors.expired),
+      -1 => (context.l.panExpiredYesterday, AppColors.expired),
+      0 => (context.l.panExpiresToday, AppColors.expired),
+      1 => (context.l.panExpiresTomorrow, AppColors.soon),
+      <= 3 => (context.l.panExpiresIn(days), AppColors.soon),
+      _ => (context.l.panDays(days), AppColors.fresh),
     };
     final zoneLabel = showZone
-        ? KitchenZone.values.firstWhere((z) => z.matches(item)).label
+        ? context.l.kitchenZone(
+            KitchenZone.values.firstWhere((z) => z.matches(item)).name,
+          )
         : null;
     // Lo contable se cambia con − / + en la fila; el resto, en "Editar".
     final stepUnit = shoppingQtyNext(1, item.unit, up: true) == 2;
     final subtitle = [
       if (!stepUnit) inventoryQtyLabel(item.quantity, item.unit),
       ?zoneLabel,
-      if (item.isStaple) 'No se compra',
+      if (item.isStaple) context.l.panNotBought,
     ].where((t) => t.isNotEmpty).join(' · ');
 
     // Fondo opaco: al deslizar, el color de la acción no se ve a través.
@@ -1019,7 +1013,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               // Tocar la foto permite cambiarla, como en la compra.
               Semantics(
                 button: true,
-                label: 'Cambiar foto',
+                label: context.l.changePhoto,
                 child: GestureDetector(
                   onTap: () => _changePhoto(item),
                   child: FoodImage(
@@ -1109,14 +1103,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ? SwipeSide(
               icon: Icons.check_rounded,
               color: AppColors.done,
-              label: 'Consumido',
+              label: context.l.panConsumed,
               onTrigger: () => _consume(item),
             )
           : null,
       toLeft: SwipeSide(
         icon: Icons.add_shopping_cart_rounded,
         color: AppColors.terracotta,
-        label: 'A la compra',
+        label: context.l.panToShopping,
         onTrigger: () => _addToShopping(item),
       ),
       child: row,
@@ -1139,7 +1133,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
+        SnackBar(content: Text(friendlyError(e, context.l.couldNotUpdate))),
       );
     }
   }
@@ -1152,7 +1146,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            friendlyError(e, 'No pude añadir ${item.name} a la compra'),
+            friendlyError(e, context.l.panCouldNotAddToShop(item.name)),
           ),
           backgroundColor: AppColors.expired,
         ),
@@ -1172,46 +1166,41 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ? <InventoryItem>[]
         : all.where(zone.matches).toList();
     return PopupMenuButton<String>(
-      tooltip: 'Más opciones',
+      tooltip: context.l.moreOptions,
       icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
       color: AppColors.card,
       onSelected: (v) => switch (v) {
         'expired' => _deleteMany(
           expired,
-          done: expired.length == 1
-              ? 'Caducado eliminado'
-              : '${expired.length} caducados eliminados',
+          done: context.l.panExpiredDeleted(expired.length),
         ),
         'history' => _openHistory(),
-        'zone' => _confirmEmpty(inZone, zone!.label),
-        _ => _confirmEmpty(all, 'Mi cocina'),
+        'zone' => _confirmEmpty(inZone, context.l.kitchenZone(zone!.name)),
+        _ => _confirmEmpty(all, context.l.panMyKitchen),
       },
       itemBuilder: (_) => [
-        const PopupMenuItem(
-          value: 'history',
-          child: Text('Lo que se ha gastado'),
-        ),
+        PopupMenuItem(value: 'history', child: Text(context.l.panUsedHistory)),
         PopupMenuItem(
           value: 'expired',
           enabled: expired.isNotEmpty,
           child: Text(
             expired.isEmpty
-                ? 'Nada caducado'
-                : 'Eliminar caducados (${expired.length})',
+                ? context.l.panNothingExpired
+                : context.l.panDeleteExpired(expired.length),
           ),
         ),
         if (inZone.isNotEmpty)
           PopupMenuItem(
             value: 'zone',
             child: Text(
-              'Vaciar ${zone!.label}',
+              context.l.panEmptyZone(context.l.kitchenZone(zone!.name)),
               style: TextStyle(color: AppColors.expired),
             ),
           ),
         PopupMenuItem(
           value: 'all',
           child: Text(
-            'Vaciar Mi cocina',
+            context.l.panEmptyZone(context.l.panMyKitchen),
             style: TextStyle(color: AppColors.expired),
           ),
         ),
@@ -1223,12 +1212,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('¿Vaciar $where?'),
-        content: Text('Se eliminarán ${items.length} productos.'),
+        title: Text(context.l.panEmptyAsk(where)),
+        content: Text(context.l.panWillDelete(items.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -1236,13 +1225,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
               backgroundColor: AppColors.expired,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Vaciar'),
+            child: Text(context.l.panEmpty),
           ),
         ],
       ),
     );
-    if (ok == true) {
-      await _deleteMany(items, done: '${items.length} productos eliminados');
+    if (ok == true && mounted) {
+      await _deleteMany(items, done: context.l.panDeleted(items.length));
     }
   }
 
@@ -1272,7 +1261,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           // Con acción Flutter la deja fija; que se vaya sola.
           persist: false,
           action: SnackBarAction(
-            label: 'Deshacer',
+            label: context.l.undo,
             onPressed: () async {
               for (final item in items) {
                 await _applyUpsert(item, editing: false);
@@ -1286,7 +1275,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo eliminar')),
+          content: Text(friendlyError(e, context.l.couldNotDelete)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -1319,7 +1308,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
             ListTile(
               leading: Icon(Icons.edit_outlined, color: AppColors.woodDark),
-              title: const Text('Editar'),
+              title: Text(context.l.edit),
               onTap: () => Navigator.of(ctx).pop('edit'),
             ),
             if (item.itemType == 'comida')
@@ -1332,12 +1321,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 title: Text(
                   item.isStaple
-                      ? 'Volver a añadir a la compra'
-                      : 'No añadir a la compra',
+                      ? context.l.panShopAgain
+                      : context.l.panDontShop,
                 ),
-                subtitle: item.isStaple
-                    ? null
-                    : const Text('Para básicos que siempre tienes'),
+                subtitle: item.isStaple ? null : Text(context.l.panStapleHint),
                 onTap: () => Navigator.of(ctx).pop('staple'),
               ),
             if (item.itemType == 'comida')
@@ -1346,20 +1333,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   Icons.check_circle_outline_rounded,
                   color: AppColors.woodDark,
                 ),
-                title: const Text('Consumido'),
+                title: Text(context.l.panConsumed),
                 subtitle: item.isStaple
-                    ? const Text('Lo añadiré a la compra')
+                    ? Text(context.l.panWillAddToShop)
                     : null,
                 onTap: () => Navigator.of(ctx).pop('consumed'),
               ),
             ListTile(
               leading: Icon(Icons.image_outlined, color: AppColors.woodDark),
-              title: const Text('Cambiar foto'),
+              title: Text(context.l.changePhoto),
               onTap: () => Navigator.of(ctx).pop('photo'),
             ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
-              title: const Text('Eliminar'),
+              title: Text(context.l.delete),
               onTap: () => Navigator.of(ctx).pop('delete'),
             ),
             const SizedBox(height: 8),
@@ -1386,11 +1373,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text('¿Eliminar ${shoppingCleanName(item.name)}?'),
+          title: Text(context.l.panDeleteAsk(shoppingCleanName(item.name))),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancelar'),
+              child: Text(context.l.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
@@ -1398,7 +1385,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 backgroundColor: AppColors.expired,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Eliminar'),
+              child: Text(context.l.delete),
             ),
           ],
         ),
@@ -1450,7 +1437,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo actualizar')),
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -1460,10 +1447,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (!mounted || (left <= 0 && item.isStaple)) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$name, consumido ${_dayLabel(day)}'),
+        content: Text(context.l.panConsumedOn(name, _dayLabel(context, day))),
         persist: false,
         action: SnackBarAction(
-          label: 'Deshacer',
+          label: context.l.undo,
           onPressed: () async {
             if (left <= 0) {
               await _applyUpsert(item, editing: false);
@@ -1513,14 +1500,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
   }
 
-  static String _dayLabel(DateTime day) {
+  static String _dayLabel(BuildContext context, DateTime day) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final d = DateTime(day.year, day.month, day.day);
     final diff = today.difference(d).inDays;
-    if (diff == 0) return 'hoy';
-    if (diff == 1) return 'ayer';
-    return 'el ${d.day}/${d.month}';
+    if (diff == 0) return context.l.todayLower;
+    if (diff == 1) return context.l.yesterdayLower;
+    return context.l.panOnDate(d.day, d.month);
   }
 
   /// Hoja "Consumido": qué día y, si hay varios, cuántos.
@@ -1569,7 +1556,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '¿Cuándo?',
+                    context.l.panWhen,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.inkMuted,
@@ -1579,14 +1566,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   Wrap(
                     spacing: 8,
                     children: [
-                      dayChip('Hoy', day == today, () {
+                      dayChip(context.l.today, day == today, () {
                         setSheet(() => day = today);
                       }),
-                      dayChip('Ayer', day == yesterday, () {
+                      dayChip(context.l.yesterday, day == yesterday, () {
                         setSheet(() => day = yesterday);
                       }),
                       dayChip(
-                        other ? 'El ${day.day}/${day.month}' : 'Otro día',
+                        other
+                            ? '${day.day}/${day.month}'
+                            : context.l.panOtherDay,
                         other,
                         () async {
                           final picked = await showDatePicker(
@@ -1594,7 +1583,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             initialDate: day,
                             firstDate: today.subtract(const Duration(days: 60)),
                             lastDate: today,
-                            helpText: '¿Qué día?',
+                            helpText: context.l.panWhichDay,
                           );
                           if (picked != null) setSheet(() => day = picked);
                         },
@@ -1604,7 +1593,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   if (countable) ...[
                     const SizedBox(height: 16),
                     Text(
-                      '¿Cuántos?',
+                      context.l.panHowMany,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.inkMuted,
@@ -1613,7 +1602,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     const SizedBox(height: 8),
                     QuantityStepper(
                       label: amount == item.quantity
-                          ? 'Todo (${shoppingQtyLabel(amount, item.unit)})'
+                          ? context.l.panAll(
+                              shoppingQtyLabel(amount, item.unit),
+                            )
                           : shoppingQtyLabel(amount, item.unit),
                       onMinus: amount <= 1
                           ? null
@@ -1627,7 +1618,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: TactileButton(
-                      label: 'Consumido',
+                      label: context.l.panConsumed,
                       icon: Icons.check_rounded,
                       onPressed: () =>
                           Navigator.of(ctx).pop((on: day, amount: amount)),
@@ -1688,7 +1679,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo cambiar la foto'))),
+        SnackBar(
+          content: Text(friendlyError(e, context.l.couldNotChangePhoto)),
+        ),
       );
     }
   }
@@ -1719,7 +1712,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               return snap.hasError
                   ? Center(
                       child: Text(
-                        friendlyError(snap.error, 'No se pudo cargar'),
+                        friendlyError(snap.error, context.l.couldNotLoad),
                       ),
                     )
                   : const ListSkeleton(rows: 5);
@@ -1730,7 +1723,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               children: [
                 Text(
-                  'Lo que se ha gastado',
+                  context.l.panUsedHistory,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
@@ -1740,7 +1733,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 const SizedBox(height: 12),
                 if (list.isEmpty)
                   Text(
-                    'Aún no hay nada.',
+                    context.l.panNothingYet,
                     style: TextStyle(color: AppColors.inkMuted),
                   ),
                 for (final r in list)
@@ -1760,11 +1753,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           (r['quantity'] as num?)?.toDouble(),
                           r['unit'] as String?,
                         ),
-                        r['reason'] == 'receta' ? 'Al cocinar' : 'Consumido',
+                        r['reason'] == 'receta'
+                            ? context.l.panWhenCooking
+                            : context.l.panConsumed,
                       ].where((t) => t.isNotEmpty).join(' · '),
                     ),
                     trailing: Text(
-                      _dayLabel(DateTime.parse(r['used_on'] as String)),
+                      _dayLabel(ctx, DateTime.parse(r['used_on'] as String)),
                       style: TextStyle(color: AppColors.inkMuted),
                     ),
                   ),
