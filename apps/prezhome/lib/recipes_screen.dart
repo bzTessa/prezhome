@@ -11,6 +11,7 @@ import 'widgets/empty_state.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
+import 'widgets/skeleton.dart';
 import 'utils/friendly_error.dart';
 
 class RecipesScreen extends StatefulWidget {
@@ -293,7 +294,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
         builder: (context, snapshot) {
           if (!snapshot.hasData &&
               snapshot.connectionState == ConnectionState.waiting) {
-            return const _LoadingGrid();
+            return const RecipesSkeleton();
           }
           if (snapshot.hasError) {
             return _ErrorState(
@@ -384,13 +385,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
                   sliver: SliverGrid.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 240,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 0.74,
-                        ),
+                    gridDelegate: recipeGridDelegate,
                     itemCount: visible.length,
                     itemBuilder: (context, index) {
                       final recipe = visible[index];
@@ -867,69 +862,6 @@ class _ErrorState extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Esqueleto de carga: una rejilla de tarjetas atenuadas para que la espera se
-/// sienta cuidada y coherente con el resultado final.
-class _LoadingGrid extends StatelessWidget {
-  const _LoadingGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 14,
-        childAspectRatio: 0.78,
-      ),
-      itemCount: 6,
-      itemBuilder: (context, index) => const _SkeletonCard(),
-    );
-  }
-}
-
-class _SkeletonCard extends StatelessWidget {
-  const _SkeletonCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: AppTheme.cardDecoration(radius: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(height: 120, color: AppColors.cream),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _bar(width: double.infinity),
-                const SizedBox(height: 8),
-                _bar(width: 80),
-                const SizedBox(height: 14),
-                _bar(width: 60, height: 18),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _bar({required double width, double height = 12}) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.circular(6),
       ),
     );
   }

@@ -289,6 +289,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         quantity: qty,
         unit: _selectedUnit,
         kind: isFood ? _kind : 'ingredient',
+        // Que editar un plato congelado no lo desenlace de su receta.
+        recipeId: editing?.recipeId,
         servings: (isFood && _kind != 'ingredient')
             ? double.tryParse(
                 _servingsController.text.trim().replaceAll(',', '.'),
