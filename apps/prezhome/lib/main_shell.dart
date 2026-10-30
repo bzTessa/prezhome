@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:prez_ui/prez_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'l10n/l10n.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/inventory_item.dart';
 import 'services/connection_status.dart';
@@ -49,11 +50,13 @@ List<TabId> computeVisibleTabIds(DashboardPrefs prefs) {
 class _TabDescriptor {
   final TabId id;
   final Widget page;
-  final FloatingNavItem destination;
+  final IconData icon;
+  final IconData selectedIcon;
   const _TabDescriptor({
     required this.id,
     required this.page,
-    required this.destination,
+    required this.icon,
+    required this.selectedIcon,
   });
 }
 
@@ -231,11 +234,8 @@ class MainShellState extends State<MainShell> {
         return _TabDescriptor(
           id: id,
           page: const ComidasTab(),
-          destination: const FloatingNavItem(
-            icon: Icons.restaurant_menu_outlined,
-            selectedIcon: Icons.restaurant_menu,
-            label: 'Comida',
-          ),
+          icon: Icons.restaurant_menu_outlined,
+          selectedIcon: Icons.restaurant_menu,
         );
       case TabId.compra:
         return _TabDescriptor(
@@ -247,21 +247,15 @@ class MainShellState extends State<MainShell> {
               child: ShoppingListScreen(embedded: true),
             ),
           ),
-          destination: const FloatingNavItem(
-            icon: Icons.shopping_cart_outlined,
-            selectedIcon: Icons.shopping_cart,
-            label: 'Compra',
-          ),
+          icon: Icons.shopping_cart_outlined,
+          selectedIcon: Icons.shopping_cart,
         );
       case TabId.despensa:
         return _TabDescriptor(
           id: id,
           page: const DespensaTab(),
-          destination: const FloatingNavItem(
-            icon: Icons.kitchen_outlined,
-            selectedIcon: Icons.kitchen,
-            label: 'Despensa',
-          ),
+          icon: Icons.kitchen_outlined,
+          selectedIcon: Icons.kitchen,
         );
       case TabId.inicio:
         return _TabDescriptor(
@@ -276,21 +270,15 @@ class MainShellState extends State<MainShell> {
             },
             onNavigateToPlan: () => goToTab(_indexOf(TabId.comidas)),
           ),
-          destination: const FloatingNavItem(
-            icon: Icons.home_outlined,
-            selectedIcon: Icons.home_rounded,
-            label: 'Hoy',
-          ),
+          icon: Icons.home_outlined,
+          selectedIcon: Icons.home_rounded,
         );
       case TabId.tareas:
         return _TabDescriptor(
           id: id,
           page: const TasksScreen(),
-          destination: const FloatingNavItem(
-            icon: Icons.check_circle_outline,
-            selectedIcon: Icons.check_circle,
-            label: 'Tareas',
-          ),
+          icon: Icons.check_circle_outline,
+          selectedIcon: Icons.check_circle,
         );
     }
   }
@@ -437,7 +425,14 @@ class MainShellState extends State<MainShell> {
         top: false,
         minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         child: FloatingNavBar(
-          items: [for (final t in _tabs) t.destination],
+          items: [
+            for (final t in _tabs)
+              FloatingNavItem(
+                icon: t.icon,
+                selectedIcon: t.selectedIcon,
+                label: context.l.tabLabel(t.id.name),
+              ),
+          ],
           selectedIndex: _index,
           onSelected: _onDestinationSelected,
           // Píldora con trazo y sombra dura; la pestaña activa se desliza

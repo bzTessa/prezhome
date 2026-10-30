@@ -1,0 +1,6 @@
+{
+  "@@locale": "bs",
+  "tabLabel": "{tab, select, inicio{Danas} comidas{Obroci} compra{Kupovina} despensa{Ostava} tareas{Zadaci} other{}}",
+  "country": "Država",
+  "countryHint": "Valuta, supermarketi i okvirne cijene"
+}

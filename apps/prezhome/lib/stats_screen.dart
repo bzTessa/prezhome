@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'utils/money.dart';
 
 import 'economy_screen.dart';
 import 'product_stats_screen.dart';
@@ -436,7 +437,7 @@ class _StatsScreenState extends State<StatsScreen> {
           const SizedBox(height: AppSpacing.xs),
           AnimatedCounter(
             value: d.spent,
-            formatter: (v) => '${v.toStringAsFixed(2)} €',
+            formatter: (v) => money(v),
             style: AppTextStyles.display.copyWith(fontSize: 34),
           ),
           if (d.spent > 0 || avg > 0) ...[
@@ -455,7 +456,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       children: [
                         const TextSpan(text: 'Previsión: '),
                         TextSpan(
-                          text: '${d.forecast.toStringAsFixed(0)} €',
+                          text: money(d.forecast, decimals: 0),
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                         if (diff != null && diff.abs() >= 5)
@@ -650,8 +651,8 @@ class _BudgetBar extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           over
-              ? 'A este ritmo te pasarás ${(forecast - budget).toStringAsFixed(0)} € del presupuesto'
-              : 'Presupuesto: ${budget.toStringAsFixed(0)} €',
+              ? 'A este ritmo te pasarás ${money(forecast - budget, decimals: 0)} del presupuesto'
+              : 'Presupuesto: ${money(budget, decimals: 0)}',
           style: AppTextStyles.labelMuted.copyWith(
             color: over ? AppColors.expired : null,
           ),
@@ -679,8 +680,7 @@ class _ColumnChart extends StatelessWidget {
   final double? lastGhost;
   final double? guide;
 
-  String _fmt(double v) =>
-      euros ? '${v.toStringAsFixed(0)} €' : v.toStringAsFixed(0);
+  String _fmt(double v) => euros ? money(v, decimals: 0) : v.toStringAsFixed(0);
 
   @override
   Widget build(BuildContext context) {
@@ -833,9 +833,7 @@ class _BarList extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      euros
-                          ? '${v.toStringAsFixed(2)} €'
-                          : v.toStringAsFixed(0),
+                      euros ? money(v) : v.toStringAsFixed(0),
                       style: AppTextStyles.label.copyWith(
                         fontWeight: FontWeight.w800,
                       ),

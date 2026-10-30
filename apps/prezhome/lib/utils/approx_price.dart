@@ -1,4 +1,5 @@
 import '../widgets/food_category_icon.dart';
+import '../services/home_country.dart';
 
 /// Precio APROXIMADO de alimentos, por si no tenemos el precio real de los
 /// tickets todavía. Son valores ORIENTATIVOS de supermercado español (€/kg
@@ -24,12 +25,16 @@ class ApproxPrice {
   /// las tablas fijas de abajo.
   static MarketPrices? market;
 
+  /// Las tablas fijas son precios de España en euros: fuera del euro no valen.
+  static bool get _fixed => HomeCountry.current.value.currency == 'EUR';
+
   static double? _kg(List<String> t) =>
-      _match(market?.kg ?? const {}, t) ?? _match(_perKg, t);
+      _match(market?.kg ?? const {}, t) ?? (_fixed ? _match(_perKg, t) : null);
   static double? _l(List<String> t) =>
-      _match(market?.l ?? const {}, t) ?? _match(_perL, t);
+      _match(market?.l ?? const {}, t) ?? (_fixed ? _match(_perL, t) : null);
   static double? _ud(List<String> t) =>
-      _match(market?.ud ?? const {}, t) ?? _match(_perUnit, t);
+      _match(market?.ud ?? const {}, t) ??
+      (_fixed ? _match(_perUnit, t) : null);
 
   /// Precio aproximado por KILO de alimentos concretos (€/kg) o, para los que
   /// se cuentan por unidad, se tratan aparte en [_byUnit]. Claves normalizadas
@@ -210,6 +215,7 @@ class ApproxPrice {
   }
 
   static double? _byCategoryKg(String name) {
+    if (!_fixed) return null;
     final cat = CategoryIcons.categoryFor(name);
     return _perKgByCategory[cat];
   }

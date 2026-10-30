@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_shell.dart';
 import 'onboarding/onboarding_widgets.dart';
+import 'services/home_country.dart';
 import 'services/home_invites.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
@@ -25,6 +26,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
   Future<void> _createHome() async {
     await _runHomeAction(() async {
       await _client.rpc('create_home_and_join');
+      await HomeCountry.load(_client);
     });
   }
 

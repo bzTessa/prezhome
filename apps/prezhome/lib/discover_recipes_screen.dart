@@ -7,6 +7,8 @@ import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'models/shopping_list_item.dart';
 import 'models/supermarket.dart';
+import 'services/home_country.dart';
+import 'utils/money.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/price_memory.dart';
@@ -605,8 +607,12 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     final query = _superSearch.text;
     final ordered = [
       for (final k in _homeSupermarkets)
-        ...Supermarket.all.where((s) => s.key == k),
-      ...Supermarket.all.where((s) => !_homeSupermarkets.contains(s.key)),
+        ...Supermarket.forCountry(
+          HomeCountry.current.value.code,
+        ).where((s) => s.key == k),
+      ...Supermarket.forCountry(
+        HomeCountry.current.value.code,
+      ).where((s) => !_homeSupermarkets.contains(s.key)),
     ];
     final visible = query.trim().isEmpty
         ? [
@@ -847,9 +853,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Opcional, p. ej. 2,50',
-                  suffixText: '€',
+                  suffixText: currencySymbol(),
                 ),
               ),
             ),
