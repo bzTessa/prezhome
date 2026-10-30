@@ -88,6 +88,13 @@
 				<string>com.prezhome.app</string>
 			</array>
 		</dict>
+		<dict>
+			<!-- Vuelta del login nativo de Google (ID de cliente iOS al revés). -->
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.732472235947-dkqhd9t0rf57b0m2utoqe7rgjathv63k</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

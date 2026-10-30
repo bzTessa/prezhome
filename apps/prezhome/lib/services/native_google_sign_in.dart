@@ -9,8 +9,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // IDs de cliente OAuth de Google Cloud (no son secretos). El web es el mismo
 // que está en Supabase > Authentication > Providers > Google.
-const googleWebClientId = '';
-const googleIosClientId = '';
+const googleWebClientId =
+    '732472235947-rths32d9u7ofkhpmb9he8s5alea5v259.apps.googleusercontent.com';
+const googleIosClientId =
+    '732472235947-dkqhd9t0rf57b0m2utoqe7rgjathv63k.apps.googleusercontent.com';
 
 /// Sin IDs se sigue usando el login por navegador de Supabase.
 bool get nativeGoogleAvailable =>
