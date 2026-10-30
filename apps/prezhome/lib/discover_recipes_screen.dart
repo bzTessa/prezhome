@@ -89,6 +89,10 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   // hogar (homes.supermarkets) pero se pueden ajustar aquí sin cambiar los del
   // hogar. Opcional: si está vacío, la IA no se ciñe a ningún súper.
   final Set<String> _supermarkets = {};
+  // Los del hogar, tal como se cargaron: van primero en el selector. No se usa
+  // la selección viva para no reordenar las tarjetas al tocarlas.
+  List<String> _homeSupermarkets = [];
+  final _superSearch = TextEditingController();
 
   // Preferencias de comida del perfil del usuario (FEAT-001/002). Se usan para
   // personalizar la generación: la dieta se envía como etiqueta legible y las
@@ -228,9 +232,10 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       final raw = home?['supermarkets'];
       if (raw is List && mounted) {
         setState(() {
+          _homeSupermarkets = raw.map((e) => e.toString()).toList();
           _supermarkets
             ..clear()
-            ..addAll(raw.map((e) => e.toString()));
+            ..addAll(_homeSupermarkets);
         });
       }
     } catch (_) {
@@ -266,6 +271,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   @override
   void dispose() {
     _maxCostController.dispose();
+    _superSearch.dispose();
     super.dispose();
   }
 
@@ -590,76 +596,128 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     );
   }
 
-  /// Tarjetas de supermercado con su insignia de marca, desplazables.
-  Widget _supermarketTiles() {
-    return SizedBox(
-      height: 96,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: Supermarket.all.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (_, i) {
-          final s = Supermarket.all[i];
-          final sel = _supermarkets.contains(s.key);
-          return Semantics(
-            selected: sel,
-            button: true,
-            label: s.label,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => setState(() {
-                if (!_supermarkets.remove(s.key)) _supermarkets.add(s.key);
-              }),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 84,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: sel ? AppColors.peachBg : AppColors.paper,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: sel ? AppColors.wood : AppColors.line,
-                    width: sel ? 2 : 1,
+  /// Buscador de supermercados: los del hogar y los más usados primero. Sin
+  /// texto muestra los primeros [_superPreview] (y los elegidos); al escribir,
+  /// todos los que encajan.
+  static const _superPreview = 8;
+
+  Widget _supermarketPicker() {
+    final query = _superSearch.text;
+    final ordered = [
+      for (final k in _homeSupermarkets)
+        ...Supermarket.all.where((s) => s.key == k),
+      ...Supermarket.all.where((s) => !_homeSupermarkets.contains(s.key)),
+    ];
+    final visible = query.trim().isEmpty
+        ? [
+            for (final (i, s) in ordered.indexed)
+              if (i < _superPreview || _supermarkets.contains(s.key)) s,
+          ]
+        : ordered.where((s) => s.matches(query)).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _superSearch,
+          onChanged: (_) => setState(() {}),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Buscar supermercado...',
+            prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
+            suffixIcon: query.isEmpty
+                ? null
+                : IconButton(
+                    icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
+                    tooltip: 'Limpiar',
+                    onPressed: () => setState(_superSearch.clear),
                   ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        SupermarketBadge(supermarket: s, size: 42),
-                        if (sel)
-                          Positioned(
-                            right: -4,
-                            bottom: -4,
-                            child: Icon(
-                              Icons.check_circle,
-                              size: 18,
-                              color: AppColors.sage,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        s.label.split(' /').first,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+            isDense: true,
+            filled: true,
+            fillColor: AppColors.paper,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.line),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.line),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (visible.isEmpty)
+          Text(
+            'No encontramos ese súper.',
+            style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+          )
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [for (final s in visible) _supermarketTile(s)],
+          ),
+      ],
+    );
+  }
+
+  Widget _supermarketTile(Supermarket s) {
+    final sel = _supermarkets.contains(s.key);
+    return Semantics(
+      selected: sel,
+      button: true,
+      label: s.label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => setState(() {
+          if (!_supermarkets.remove(s.key)) _supermarkets.add(s.key);
+        }),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 84,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: sel ? AppColors.peachBg : AppColors.paper,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: sel ? AppColors.wood : AppColors.line,
+              width: sel ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  SupermarketBadge(supermarket: s, size: 42),
+                  if (sel)
+                    Positioned(
+                      right: -4,
+                      bottom: -4,
+                      child: Icon(
+                        Icons.check_circle,
+                        size: 18,
+                        color: AppColors.sage,
                       ),
                     ),
-                  ],
+                ],
+              ),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  s.label.split(' /').first,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -731,7 +789,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
             _section(
               Icons.storefront_rounded,
               'Supermercados',
-              _supermarketTiles(),
+              _supermarketPicker(),
               hint: 'Opcional. Usaremos productos fáciles de encontrar ahí.',
             ),
             _section(

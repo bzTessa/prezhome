@@ -101,6 +101,14 @@ class ApproxPrice {
     'lata': 1.2,
     'bote': 1.3,
     'yogur': 0.5,
+    // Condimentos: la lista de la compra los pide como "1 ud" (bote/botella).
+    'aceite': 6.0,
+    'vinagre': 1.0,
+    'sal': 0.5,
+    'pimienta': 1.5,
+    'pimenton': 1.2,
+    'oregano': 1.0,
+    'tomillo': 1.0,
   };
 
   /// Precio por KILO por CATEGORÍA, para cuando no hay match de alimento.

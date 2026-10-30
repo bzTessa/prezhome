@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/supermarket.dart';
 
-/// Insignia redonda de un supermercado: sus iniciales sobre su color de marca.
+/// Insignia de un supermercado: su logo, o sus iniciales sobre su color de
+/// marca si no tiene logo.
 class SupermarketBadge extends StatelessWidget {
   const SupermarketBadge({
     super.key,
@@ -25,6 +26,13 @@ class SupermarketBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final logo = supermarket.logo;
+    if (logo != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.24),
+        child: Image.asset(logo, width: size, height: size, fit: BoxFit.cover),
+      );
+    }
     return Container(
       width: size,
       height: size,

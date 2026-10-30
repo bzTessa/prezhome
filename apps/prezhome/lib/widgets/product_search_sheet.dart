@@ -173,10 +173,17 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
         'Demasiadas búsquedas seguidas. Prueba en un minuto.',
       );
     }
-    if (r.failed) {
+    if (r.offline) {
       return _message(
         Icons.wifi_off_rounded,
-        'No se ha podido buscar ahora. Puedes añadirlo igualmente.',
+        'Sin conexión a internet. Puedes añadirlo igualmente.',
+      );
+    }
+    if (r.failed) {
+      return _message(
+        Icons.cloud_off_rounded,
+        'El buscador de productos no responde ahora. Prueba en un rato o '
+        'añádelo igualmente.',
       );
     }
     if (r.products.isEmpty) {

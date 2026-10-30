@@ -347,61 +347,197 @@ class MealSlotCard extends StatelessWidget {
       ),
     };
 
-/// Un aviso de la cocina en lote (compra, cocinar, pasar a la nevera).
+/// Un aviso de la cocina en lote (compra, cocinar, pasar a la nevera): icono
+/// en un círculo de color, fecha pequeña y el texto sobre la tarjeta, sin
+/// bloque de color de fondo.
 class PrepEventTile extends StatelessWidget {
-  const PrepEventTile({super.key, required this.event, this.showDate = false});
+  const PrepEventTile({
+    super.key,
+    required this.event,
+    this.showDate = false,
+    this.batches = const [],
+  });
 
   final PrepEvent event;
 
-  /// En la agenda de la semana se antepone el día ("Dom 12 · …").
+  /// En la agenda de la semana se antepone el día ("JUE 29").
   final bool showDate;
 
-  static const _abbr = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  /// Tandas de ese día de cocina: si vienen, cada receta se pinta en su fila
+  /// con chips de adónde va (en lugar de las líneas de texto del aviso).
+  final List<PrepBatch> batches;
+
+  static const _abbr = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
   @override
   Widget build(BuildContext context) {
     final s = prepEventStyle(event.kind);
     final d = event.date;
-    final title = showDate
-        ? '${_abbr[d.weekday - 1]} ${d.day} · ${event.title}'
-        : event.title;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: s.bg,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
+    final structured = batches.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(s.icon, size: 20, color: s.fg),
-          const SizedBox(width: 10),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(color: s.bg, shape: BoxShape.circle),
+            child: Icon(s.icon, size: 19, color: s.fg),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (showDate)
+                  Text(
+                    '${_abbr[d.weekday - 1]} ${d.day}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                      color: s.fg,
+                    ),
+                  ),
                 Text(
-                  title,
+                  event.title,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
+                    fontSize: 15,
                     color: AppColors.ink,
                   ),
                 ),
-                for (final l in event.lines)
+                if (structured) ...[
+                  for (final b in batches) _BatchRow(batch: b, cookDay: d),
                   Padding(
-                    padding: const EdgeInsets.only(top: 3),
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      l,
+                      'Los tápers se apuntan solos en Mi cocina',
                       style: TextStyle(
-                        fontSize: 13,
-                        height: 1.3,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
                         color: AppColors.inkMuted,
                       ),
                     ),
                   ),
+                ] else
+                  for (final l in event.lines)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        l,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.3,
+                          color: AppColors.inkMuted,
+                        ),
+                      ),
+                    ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Una receta del día de cocina: nombre, raciones y chips de adónde va.
+class _BatchRow extends StatelessWidget {
+  const _BatchRow({required this.batch, required this.cookDay});
+
+  final PrepBatch batch;
+  final DateTime cookDay;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = batch.title;
+    final n = batch.totalServings;
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  t.isEmpty ? t : t[0].toUpperCase() + t.substring(1),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$n ${n == 1 ? 'ración' : 'rac.'}',
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final (spot, days) in taperSpots(batch, cookDay))
+                _spotChip(spot, days),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _spotChip(TaperSpot spot, String days) {
+    final (icon, label, fg, bg) = switch (spot) {
+      TaperSpot.reciente => (
+        Icons.restaurant_rounded,
+        'Recién hecho',
+        AppColors.woodDark,
+        AppColors.goldBg,
+      ),
+      TaperSpot.nevera => (
+        Icons.kitchen_outlined,
+        'Nevera · $days',
+        AppColors.sage,
+        AppColors.sageBg,
+      ),
+      TaperSpot.congelador => (
+        Icons.ac_unit_rounded,
+        'Congelador · $days',
+        AppColors.frost,
+        AppColors.frostBg,
+      ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink,
             ),
           ),
         ],
