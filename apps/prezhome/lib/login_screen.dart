@@ -9,6 +9,7 @@ import 'widgets/miau_character.dart';
 import 'widgets/tactile_button.dart';
 import 'services/native_google_sign_in.dart';
 import 'utils/friendly_error.dart';
+import 'l10n/l10n.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.startInSignUp = false});
@@ -55,9 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cuenta creada. Te damos la bienvenida a PrezHome'),
-            ),
+            SnackBar(content: Text(context.l.loginAccountCreated)),
           );
         }
       }
@@ -71,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error de autenticación')),
+            content: Text(friendlyError(e, context.l.loginAuthError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -102,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo iniciar con $name')),
+            content: Text(friendlyError(e, context.l.loginProviderError(name))),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -115,31 +114,22 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Escribe primero tu correo y te enviaré el enlace para '
-            'restablecer tu contraseña.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.loginResetNeedsEmail)));
       return;
     }
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(email);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Te he enviado un correo para restablecer tu contraseña.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.loginResetSent)));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo enviar el correo')),
+          content: Text(friendlyError(e, context.l.loginResetError)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -188,19 +178,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   const MiauCharacter(mood: MiauMood.greeting, size: 120),
                   const SizedBox(height: 20),
                   Text(
-                    _isLoginMode ? 'Hola de nuevo' : 'Crea tu cuenta',
+                    _isLoginMode
+                        ? context.l.loginWelcomeBack
+                        : context.l.loginCreateAccount,
                     style: AppTextStyles.display,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'PrezHome, tu hogar organizado',
-                    style: AppTextStyles.bodyMuted,
-                  ),
+                  Text(context.l.loginTagline, style: AppTextStyles.bodyMuted),
                   const SizedBox(height: 28),
 
                   // Botón de Google
                   _OAuthButton(
-                    label: 'Continuar con Google',
+                    label: context.l.loginContinueWith('Google'),
                     icon: const Text(
                       'G',
                       style: TextStyle(
@@ -219,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       defaultTargetPlatform == TargetPlatform.iOS) ...[
                     const SizedBox(height: 12),
                     _OAuthButton(
-                      label: 'Continuar con Apple',
+                      label: context.l.loginContinueWith('Apple'),
                       icon: const Icon(Icons.apple, size: 22),
                       loading: _oauthLoading,
                       onPressed: _oauthLoading
@@ -235,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          'o con tu correo',
+                          context.l.loginOrEmail,
                           style: AppTextStyles.bodyMuted,
                         ),
                       ),
@@ -251,12 +240,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: _dec('Correo electrónico'),
+                          decoration: _dec(context.l.loginEmail),
                           validator: (value) {
                             if (value == null ||
                                 value.isEmpty ||
                                 !value.contains('@')) {
-                              return 'Introduce un correo válido';
+                              return context.l.loginEmailInvalid;
                             }
                             return null;
                           },
@@ -266,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: _dec(
-                            'Contraseña',
+                            context.l.loginPassword,
                             suffixIcon: IconButton(
                               onPressed: () => setState(
                                 () => _obscurePassword = !_obscurePassword,
@@ -278,13 +267,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: AppColors.inkMuted,
                               ),
                               tooltip: _obscurePassword
-                                  ? 'Mostrar contraseña'
-                                  : 'Ocultar contraseña',
+                                  ? context.l.loginShowPassword
+                                  : context.l.loginHidePassword,
                             ),
                           ),
                           validator: (value) {
                             if (value == null || value.length < 6) {
-                              return 'Mínimo 6 caracteres';
+                              return context.l.loginPasswordShort;
                             }
                             return null;
                           },
@@ -294,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: TextButton(
                             onPressed: _resetPassword,
                             child: Text(
-                              '¿Has olvidado tu contraseña?',
+                              context.l.loginForgot,
                               style: AppTextStyles.labelMuted,
                             ),
                           ),
@@ -304,8 +293,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           child: TactileButton(
                             label: _isLoading
-                                ? 'Un momento…'
-                                : (_isLoginMode ? 'Entrar' : 'Registrarme'),
+                                ? context.l.oneMoment
+                                : (_isLoginMode
+                                      ? context.l.loginSignIn
+                                      : context.l.loginSignUp),
                             onPressed: _isLoading ? null : _submitAuth,
                           ),
                         ),
@@ -318,8 +309,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         setState(() => _isLoginMode = !_isLoginMode),
                     child: Text(
                       _isLoginMode
-                          ? '¿No tienes cuenta? Regístrate'
-                          : '¿Ya tienes cuenta? Inicia sesión',
+                          ? context.l.loginNoAccount
+                          : context.l.loginHaveAccount,
                       style: TextStyle(
                         color: AppColors.ink,
                         fontWeight: FontWeight.w600,

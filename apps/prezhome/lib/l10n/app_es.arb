@@ -3,8 +3,165 @@
   "tabLabel": "{tab, select, inicio{Hoy} comidas{Comida} compra{Compra} despensa{Despensa} tareas{Tareas} other{}}",
   "@tabLabel": {
     "description": "Pestaña de la barra inferior",
-    "placeholders": { "tab": { "type": "String" } }
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
   },
   "country": "País",
-  "countryHint": "Moneda, supermercados y precios de referencia"
+  "countryHint": "Moneda, supermercados y precios de referencia",
+  "continueLabel": "Continuar",
+  "back": "Atrás",
+  "oneMoment": "Un momento…",
+  "retry": "Reintentar",
+  "loginAccountCreated": "Cuenta creada. Te damos la bienvenida a PrezHome",
+  "loginAuthError": "Error de autenticación",
+  "loginProviderError": "No se pudo iniciar con {provider}",
+  "@loginProviderError": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "loginResetNeedsEmail": "Escribe primero tu correo y te enviaré el enlace para restablecer tu contraseña.",
+  "loginResetSent": "Te he enviado un correo para restablecer tu contraseña.",
+  "loginResetError": "No se pudo enviar el correo",
+  "loginWelcomeBack": "Hola de nuevo",
+  "loginCreateAccount": "Crea tu cuenta",
+  "loginTagline": "PrezHome, tu hogar organizado",
+  "loginContinueWith": "Continuar con {provider}",
+  "@loginContinueWith": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "loginOrEmail": "o con tu correo",
+  "loginEmail": "Correo electrónico",
+  "loginEmailInvalid": "Introduce un correo válido",
+  "loginPassword": "Contraseña",
+  "loginShowPassword": "Mostrar contraseña",
+  "loginHidePassword": "Ocultar contraseña",
+  "loginPasswordShort": "Mínimo 6 caracteres",
+  "loginForgot": "¿Has olvidado tu contraseña?",
+  "loginSignIn": "Entrar",
+  "loginSignUp": "Registrarme",
+  "loginNoAccount": "¿No tienes cuenta? Regístrate",
+  "loginHaveAccount": "¿Ya tienes cuenta? Inicia sesión",
+  "homeCodeFormat": "El código tiene 8 letras y números (por ejemplo ABCD-EFGH).",
+  "homeSetupError": "No se pudo configurar el hogar",
+  "homeLastStep": "Último paso: tu hogar",
+  "homeCreateHint": "Créalo ahora y, cuando quieras, invita a quien viva contigo desde Inicio.",
+  "homeCreate": "Crear mi hogar",
+  "homeInvited": "Me han invitado a un hogar",
+  "homeInviteCode": "Código de invitación",
+  "homeJoin": "Unirme a un hogar",
+  "sessionLoadError": "No se pudo cargar tu perfil.",
+  "onbSectionHome": "Tu hogar",
+  "onbPeopleTitle": "¿Cuántas personas vivís?",
+  "onbPeopleHint": "Para calcular raciones, la compra y el reparto de tareas.",
+  "onbSectionGoals": "Lo que te ocupa",
+  "onbGoalsTitle": "¿Qué quieres quitarte de la cabeza?",
+  "onbGoalsHint": "Elige todo lo que quieras. Lo demás quedará escondido.",
+  "onbPickOne": "Elige al menos una",
+  "onbContinueCount": "Continuar ({count})",
+  "@onbContinueCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onbSectionKitchen": "En la cocina",
+  "onbCookingTitle": "¿Cómo cocináis?",
+  "onbCookingHint": "Así sabemos si organizar tandas y congelador.",
+  "onbSectionShopping": "La compra",
+  "onbShopTitle": "¿Dónde compras?",
+  "onbShopHint": "El primero será tu súper principal: las recetas usarán productos fáciles de encontrar allí.",
+  "onbSkipSeeHome": "Saltar y ver mi hogar",
+  "onbSeeHome": "Ver mi hogar",
+  "onbSlogan": "La casa en orden, la cabeza tranquila.",
+  "onbStart": "Comenzar",
+  "onbHaveAccount": "Ya tengo cuenta",
+  "onbOneLess": "Una menos",
+  "onbOneMore": "Una más",
+  "onbPeopleCount": "{count, plural, =1{Solo yo} other{{count} personas}}",
+  "@onbPeopleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onbProfileBadge": "Tu perfil de hogar",
+  "onbProfileName": "{kind, select, solo{En Solitario} duo{El Dúo} tribu{La Tribu} other{La Familia}}",
+  "@onbProfileName": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "onbProfileDescription": "{kind, select, solo{Toda la casa depende de ti. PrezHome se acuerda de lo que hay, lo que caduca y lo que toca, para que tú no tengas que hacerlo.} duo{Dos personas y una casa. PrezHome reparte la carga a la vista, para que nadie lleve la cuenta de todo en la cabeza.} other{Muchas bocas y muchas cosas a la vez. PrezHome planifica comidas, compra y tareas para todos, y avisa a cada uno de lo suyo.}}",
+  "@onbProfileDescription": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "onbLoadToday": "Carga mental hoy",
+  "onbLoadWithApp": "Con PrezHome",
+  "onbLoad": "{level, select, high{pesada} medium{media} other{ligera}}",
+  "@onbLoad": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "onbCreateAccount": "Crear mi cuenta",
+  "onbFeature": "{f, select, compra{Lista de la compra} comidas{Qué comemos} despensa{Despensa y caducidades} tareas{Tareas del hogar} other{Gasto de la casa}}",
+  "@onbFeature": {
+    "placeholders": {
+      "f": {
+        "type": "String"
+      }
+    }
+  },
+  "goalLabel": "{g, select, comidas{Qué comemos} compra{La compra} despensa{Lo que hay en casa} tareas{Tareas del hogar} lote{Cocinar en lote} other{El gasto de la casa}}",
+  "@goalLabel": {
+    "placeholders": {
+      "g": {
+        "type": "String"
+      }
+    }
+  },
+  "goalHint": "{g, select, comidas{Plan de comidas y recetas} compra{Lista que se escribe sola} despensa{Despensa, nevera y caducidades} tareas{Reparto justo y recordatorios} lote{Táperes y congelador organizados} other{Presupuesto y tickets}}",
+  "@goalHint": {
+    "placeholders": {
+      "g": {
+        "type": "String"
+      }
+    }
+  },
+  "cookingLabel": "{c, select, diario{Cada día} lote{En lote} mixto{Un poco de todo} other{Casi nunca}}",
+  "@cookingLabel": {
+    "placeholders": {
+      "c": {
+        "type": "String"
+      }
+    }
+  },
+  "cookingHint": "{c, select, diario{Cocino lo del momento} lote{Preparo varios días de una vez} mixto{Algunos días en lote} other{Como fuera o algo rápido}}",
+  "@cookingHint": {
+    "placeholders": {
+      "c": {
+        "type": "String"
+      }
+    }
+  }
 }
