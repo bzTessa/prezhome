@@ -11,7 +11,7 @@ import 'services/offline_repository.dart';
 import 'services/price_memory.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
-import 'widgets/list_skeleton.dart';
+import 'widgets/skeleton.dart';
 import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
@@ -1136,7 +1136,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           // Al refrescar se sigue viendo la lista anterior (sin parpadeo).
           if (!snapshot.hasData &&
               snapshot.connectionState == ConnectionState.waiting) {
-            return const ListSkeleton();
+            return const ShoppingSkeleton();
           }
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));

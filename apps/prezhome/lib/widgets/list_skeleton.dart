@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
+import 'skeleton.dart';
 
-/// Esqueleto de carga con la forma de una lista (foto + dos líneas), en vez
-/// de un círculo girando: la pantalla ya "tiene su forma" mientras llegan los
-/// datos. Late suavemente; con "reducir movimiento" queda quieto.
-class ListSkeleton extends StatefulWidget {
+/// Esqueleto de carga genérico con forma de lista (foto + dos líneas), para
+/// las pantallas secundarias. Las principales tienen el suyo en
+/// skeleton.dart, con la forma exacta de su contenido.
+class ListSkeleton extends StatelessWidget {
   const ListSkeleton({
     super.key,
     this.rows = 7,
@@ -21,81 +21,34 @@ class ListSkeleton extends StatefulWidget {
   final bool leading;
 
   @override
-  State<ListSkeleton> createState() => _ListSkeletonState();
-}
-
-class _ListSkeletonState extends State<ListSkeleton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1100),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (AppMotion.reduceMotionOf(context)) {
-      _pulse.stop();
-    } else if (!_pulse.isAnimating) {
-      _pulse.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  Widget _block(double w, double h, {double radius = 8}) => Container(
-    width: w,
-    height: h,
-    decoration: BoxDecoration(
-      color: AppColors.line,
-      borderRadius: BorderRadius.circular(radius),
-    ),
-  );
-
-  @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Cargando',
-      child: FadeTransition(
-        opacity: Tween(
-          begin: 0.55,
-          end: 1.0,
-        ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut)),
-        child: ListView.separated(
-          // shrinkWrap: también cabe dentro de otra lista (Inicio, pestañas).
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: widget.padding,
-          itemCount: widget.rows,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-          itemBuilder: (_, i) => Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Row(
-              children: [
-                if (widget.leading) ...[
-                  _block(44, 44, radius: AppRadius.sm),
-                  const SizedBox(width: AppSpacing.md),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _block(i.isEven ? 160 : 120, 12),
-                      const SizedBox(height: AppSpacing.sm),
-                      _block(80, 10),
-                    ],
-                  ),
-                ),
+    return Skeleton(
+      child: ListView.separated(
+        // shrinkWrap: también cabe dentro de otra lista.
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: padding,
+        itemCount: rows,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (_, i) => BoneCard(
+          radius: AppRadius.md,
+          child: Row(
+            children: [
+              if (leading) ...[
+                const Bone(width: 44, height: 44, radius: AppRadius.sm),
+                const SizedBox(width: AppSpacing.md),
               ],
-            ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Bone(width: i.isEven ? 160 : 120, height: 12),
+                    const SizedBox(height: AppSpacing.sm),
+                    const Bone(width: 80, height: 10),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
