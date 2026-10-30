@@ -352,7 +352,7 @@ String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
 }
 
 /// Súpers con catálogo propio en supermarket_products (scripts/*_sync.py).
-const catalogStores = {'mercadona', 'rewe'};
+const catalogStores = {'mercadona', 'dia', 'consum', 'rewe'};
 
 /// Catálogo que pone la foto a lo genérico (fruta, verdura…) en cada país.
 const catalogForCountry = {'ES': 'mercadona', 'DE': 'rewe'};
@@ -363,6 +363,10 @@ const freshCategories = [
   'Fruta y verdura',
   'Carne',
   'Marisco y pescado',
+  'frutas',
+  'verduras',
+  'carnes',
+  'pescados-y-mariscos',
   'Obst & Gemüse',
   'Fleisch, Wurst & Fisch',
 ];
