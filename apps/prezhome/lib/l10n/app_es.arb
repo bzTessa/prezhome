@@ -980,5 +980,175 @@
         "type": "String"
       }
     }
-  }
+  },
+  "rdPhoto": "Foto de la receta",
+  "rdAutoPhoto": "Buscar otra foto automática",
+  "rdAutoPhotoHint": "Busca una imagen nueva por el nombre",
+  "rdGallery": "Elegir de la galería",
+  "rdNoBetterPhoto": "No he encontrado otra foto mejor por ahora",
+  "rdUploadError": "No se pudo subir la foto",
+  "rdShareText": "Te paso mi receta de {title} en PrezHome. En la app, ve a Recetas, toca Añadir receta y luego Con un código: {code}",
+  "@rdShareText": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "rdSavedFreezer": "Guardado en el congelador.",
+  "couldNotSave": "No se pudo guardar",
+  "rdVideoError": "No se pudo abrir el enlace del video",
+  "rdWatchVideo": "Ver vídeo",
+  "share": "Compartir",
+  "rdEdit": "Editar receta",
+  "rdMinutes": "Minutos",
+  "rdKcalServing": "Kcal/ración",
+  "rdPerServingShort": "por ración",
+  "rdServingWord": "{count, plural, =1{Ración} other{Raciones}}",
+  "@rdServingWord": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rdFreezable": "Congelable",
+  "rdIngredients": "Ingredientes",
+  "rdStepsWord": "Pasos",
+  "rdSteps": "Pasos ({count})",
+  "@rdSteps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rdNutrition": "Nutrición",
+  "rdNoIngredients": "Sin ingredientes registrados.",
+  "rdOriginal": "Receta original: {servings}",
+  "@rdOriginal": {
+    "placeholders": {
+      "servings": {
+        "type": "String"
+      }
+    }
+  },
+  "rdForHome": "Para tu hogar hoy: {servings}",
+  "@rdForHome": {
+    "placeholders": {
+      "servings": {
+        "type": "String"
+      }
+    }
+  },
+  "rdHaveAll": "Tienes todo en casa",
+  "rdHaveSome": "Tienes {have} de {total} en casa",
+  "@rdHaveSome": {
+    "placeholders": {
+      "have": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "rdMissing": "Faltan {count}",
+  "@rdMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rdAtHome": "En casa",
+  "rdLacking": "Falta",
+  "rdNoSteps": "Esta receta no tiene pasos. Puedes añadirlos editándola.",
+  "rdPerServingTitle": "Por ración",
+  "rdNoNutrition": "Sin datos de nutrición.",
+  "rdPerServing": "{amount} por ración",
+  "@rdPerServing": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "rdTotal": "≈ {amount} total",
+  "@rdTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "rdApproxCost": "Coste aproximado. Escanea tickets para afinarlo con tus precios reales.",
+  "rdStartCooking": "Empezar a cocinar",
+  "rdAddedMissing": "{count, plural, =1{Añadido a la lista de la compra} other{Añadidos {count} productos a la compra}}",
+  "@rdAddedMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rdNeedProfile": "Completa un Perfil Nutricional para ver cuántos gramos y calorías corresponden a cada persona.",
+  "rdMember": "Miembro",
+  "rdAdjustSplit": "Ajusta el reparto de calorías por comida en el perfil para este tipo de receta.",
+  "rdByProfile": "Según el perfil de cada uno",
+  "rdByProfileHint": "Cantidad y calorías por persona para esta comida.",
+  "arWriteName": "Escribe el nombre",
+  "arWriteNameHint": "Escribe el nombre o pega una receta entera…",
+  "arGenerate": "Generar",
+  "arFilled": "Receta rellenada. Revísala antes de guardar.",
+  "arFillError": "No se pudo completar la receta",
+  "arImport": "Importar receta",
+  "arPasteRecipe": "Pega la receta",
+  "arImportHint": "Pega el enlace de TikTok, YouTube o una web, o el texto de la receta. En Instagram copia la descripción del post y pégala aquí.",
+  "arLinkOrText": "Enlace o texto de la receta",
+  "arRecipeText": "Texto de la receta",
+  "paste": "Pegar",
+  "arImportBtn": "Importar",
+  "arNeedLink": "Pega un enlace o el texto completo de la receta.",
+  "arImported": "Receta importada. Revísala antes de guardar.",
+  "arImportLinkError": "No pude importar la receta de ese enlace",
+  "arImportError": "No se pudo importar",
+  "arPickMealType": "Elige al menos un tipo de comida.",
+  "arVideoNotUrl": "El enlace de video no parece una URL, pero lo guardamos igual.",
+  "arRecalculated": "Calorías y macros recalculadas con los ingredientes.",
+  "arPhotoFailed": "Receta guardada, pero la foto no se pudo subir: {error}",
+  "@arPhotoFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "arSaveError": "Error al guardar",
+  "arReadingVideo": "Leyendo la receta del vídeo…",
+  "arCompleting": "Completando la receta…",
+  "arAddPhoto": "Añadir foto (opcional)",
+  "arTitleField": "Título",
+  "arTitleRequired": "Ponle un título",
+  "arDescription": "Descripción (opcional)",
+  "arVideoLink": "Enlace de video (opcional)",
+  "arMealTypes": "Tipo de comida (puedes elegir varios)",
+  "arAuto": "Auto",
+  "arServingsHelper": "Para cuántas es",
+  "arGramsServing": "Gramos / ración",
+  "arNutritionTitle": "Valores nutricionales (por ración)",
+  "arCooking": "Cocina",
+  "arPrepMin": "Preparación (min)",
+  "arCookMin": "Cocción (min)",
+  "arAppliance": "Aparato principal",
+  "arFreezable": "Es congelable",
+  "arAddIngredient": "Añadir ingrediente",
+  "arStepsTitle": "Pasos de preparación",
+  "arStepsHint": "Escribe los pasos, uno por línea…",
+  "arSaveChanges": "Guardar cambios",
+  "arSaveRecipe": "Guardar Receta",
+  "arIngredient": "Ingrediente"
 }

@@ -2465,6 +2465,528 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No hay recetas que coincidan con\n\"{query}\".'**
   String recNoMatch(String query);
+
+  /// No description provided for @rdPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto de la receta'**
+  String get rdPhoto;
+
+  /// No description provided for @rdAutoPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar otra foto automática'**
+  String get rdAutoPhoto;
+
+  /// No description provided for @rdAutoPhotoHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Busca una imagen nueva por el nombre'**
+  String get rdAutoPhotoHint;
+
+  /// No description provided for @rdGallery.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir de la galería'**
+  String get rdGallery;
+
+  /// No description provided for @rdNoBetterPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'No he encontrado otra foto mejor por ahora'**
+  String get rdNoBetterPhoto;
+
+  /// No description provided for @rdUploadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo subir la foto'**
+  String get rdUploadError;
+
+  /// No description provided for @rdShareText.
+  ///
+  /// In es, this message translates to:
+  /// **'Te paso mi receta de {title} en PrezHome. En la app, ve a Recetas, toca Añadir receta y luego Con un código: {code}'**
+  String rdShareText(String title, String code);
+
+  /// No description provided for @rdSavedFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardado en el congelador.'**
+  String get rdSavedFreezer;
+
+  /// No description provided for @couldNotSave.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar'**
+  String get couldNotSave;
+
+  /// No description provided for @rdVideoError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir el enlace del video'**
+  String get rdVideoError;
+
+  /// No description provided for @rdWatchVideo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver vídeo'**
+  String get rdWatchVideo;
+
+  /// No description provided for @share.
+  ///
+  /// In es, this message translates to:
+  /// **'Compartir'**
+  String get share;
+
+  /// No description provided for @rdEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar receta'**
+  String get rdEdit;
+
+  /// No description provided for @rdMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'Minutos'**
+  String get rdMinutes;
+
+  /// No description provided for @rdKcalServing.
+  ///
+  /// In es, this message translates to:
+  /// **'Kcal/ración'**
+  String get rdKcalServing;
+
+  /// No description provided for @rdPerServingShort.
+  ///
+  /// In es, this message translates to:
+  /// **'por ración'**
+  String get rdPerServingShort;
+
+  /// No description provided for @rdServingWord.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Ración} other{Raciones}}'**
+  String rdServingWord(int count);
+
+  /// No description provided for @rdFreezable.
+  ///
+  /// In es, this message translates to:
+  /// **'Congelable'**
+  String get rdFreezable;
+
+  /// No description provided for @rdIngredients.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingredientes'**
+  String get rdIngredients;
+
+  /// No description provided for @rdStepsWord.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasos'**
+  String get rdStepsWord;
+
+  /// No description provided for @rdSteps.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasos ({count})'**
+  String rdSteps(int count);
+
+  /// No description provided for @rdNutrition.
+  ///
+  /// In es, this message translates to:
+  /// **'Nutrición'**
+  String get rdNutrition;
+
+  /// No description provided for @rdNoIngredients.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin ingredientes registrados.'**
+  String get rdNoIngredients;
+
+  /// No description provided for @rdOriginal.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta original: {servings}'**
+  String rdOriginal(String servings);
+
+  /// No description provided for @rdForHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Para tu hogar hoy: {servings}'**
+  String rdForHome(String servings);
+
+  /// No description provided for @rdHaveAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes todo en casa'**
+  String get rdHaveAll;
+
+  /// No description provided for @rdHaveSome.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes {have} de {total} en casa'**
+  String rdHaveSome(int have, int total);
+
+  /// No description provided for @rdMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Faltan {count}'**
+  String rdMissing(int count);
+
+  /// No description provided for @rdAtHome.
+  ///
+  /// In es, this message translates to:
+  /// **'En casa'**
+  String get rdAtHome;
+
+  /// No description provided for @rdLacking.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta'**
+  String get rdLacking;
+
+  /// No description provided for @rdNoSteps.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta receta no tiene pasos. Puedes añadirlos editándola.'**
+  String get rdNoSteps;
+
+  /// No description provided for @rdPerServingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Por ración'**
+  String get rdPerServingTitle;
+
+  /// No description provided for @rdNoNutrition.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin datos de nutrición.'**
+  String get rdNoNutrition;
+
+  /// No description provided for @rdPerServing.
+  ///
+  /// In es, this message translates to:
+  /// **'{amount} por ración'**
+  String rdPerServing(String amount);
+
+  /// No description provided for @rdTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'≈ {amount} total'**
+  String rdTotal(String amount);
+
+  /// No description provided for @rdApproxCost.
+  ///
+  /// In es, this message translates to:
+  /// **'Coste aproximado. Escanea tickets para afinarlo con tus precios reales.'**
+  String get rdApproxCost;
+
+  /// No description provided for @rdStartCooking.
+  ///
+  /// In es, this message translates to:
+  /// **'Empezar a cocinar'**
+  String get rdStartCooking;
+
+  /// No description provided for @rdAddedMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Añadido a la lista de la compra} other{Añadidos {count} productos a la compra}}'**
+  String rdAddedMissing(int count);
+
+  /// No description provided for @rdNeedProfile.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa un Perfil Nutricional para ver cuántos gramos y calorías corresponden a cada persona.'**
+  String get rdNeedProfile;
+
+  /// No description provided for @rdMember.
+  ///
+  /// In es, this message translates to:
+  /// **'Miembro'**
+  String get rdMember;
+
+  /// No description provided for @rdAdjustSplit.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajusta el reparto de calorías por comida en el perfil para este tipo de receta.'**
+  String get rdAdjustSplit;
+
+  /// No description provided for @rdByProfile.
+  ///
+  /// In es, this message translates to:
+  /// **'Según el perfil de cada uno'**
+  String get rdByProfile;
+
+  /// No description provided for @rdByProfileHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantidad y calorías por persona para esta comida.'**
+  String get rdByProfileHint;
+
+  /// No description provided for @arWriteName.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el nombre'**
+  String get arWriteName;
+
+  /// No description provided for @arWriteNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el nombre o pega una receta entera…'**
+  String get arWriteNameHint;
+
+  /// No description provided for @arGenerate.
+  ///
+  /// In es, this message translates to:
+  /// **'Generar'**
+  String get arGenerate;
+
+  /// No description provided for @arFilled.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta rellenada. Revísala antes de guardar.'**
+  String get arFilled;
+
+  /// No description provided for @arFillError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo completar la receta'**
+  String get arFillError;
+
+  /// No description provided for @arImport.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar receta'**
+  String get arImport;
+
+  /// No description provided for @arPasteRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Pega la receta'**
+  String get arPasteRecipe;
+
+  /// No description provided for @arImportHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Pega el enlace de TikTok, YouTube o una web, o el texto de la receta. En Instagram copia la descripción del post y pégala aquí.'**
+  String get arImportHint;
+
+  /// No description provided for @arLinkOrText.
+  ///
+  /// In es, this message translates to:
+  /// **'Enlace o texto de la receta'**
+  String get arLinkOrText;
+
+  /// No description provided for @arRecipeText.
+  ///
+  /// In es, this message translates to:
+  /// **'Texto de la receta'**
+  String get arRecipeText;
+
+  /// No description provided for @paste.
+  ///
+  /// In es, this message translates to:
+  /// **'Pegar'**
+  String get paste;
+
+  /// No description provided for @arImportBtn.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar'**
+  String get arImportBtn;
+
+  /// No description provided for @arNeedLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Pega un enlace o el texto completo de la receta.'**
+  String get arNeedLink;
+
+  /// No description provided for @arImported.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta importada. Revísala antes de guardar.'**
+  String get arImported;
+
+  /// No description provided for @arImportLinkError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pude importar la receta de ese enlace'**
+  String get arImportLinkError;
+
+  /// No description provided for @arImportError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo importar'**
+  String get arImportError;
+
+  /// No description provided for @arPickMealType.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige al menos un tipo de comida.'**
+  String get arPickMealType;
+
+  /// No description provided for @arVideoNotUrl.
+  ///
+  /// In es, this message translates to:
+  /// **'El enlace de video no parece una URL, pero lo guardamos igual.'**
+  String get arVideoNotUrl;
+
+  /// No description provided for @arRecalculated.
+  ///
+  /// In es, this message translates to:
+  /// **'Calorías y macros recalculadas con los ingredientes.'**
+  String get arRecalculated;
+
+  /// No description provided for @arPhotoFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta guardada, pero la foto no se pudo subir: {error}'**
+  String arPhotoFailed(String error);
+
+  /// No description provided for @arSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar'**
+  String get arSaveError;
+
+  /// No description provided for @arReadingVideo.
+  ///
+  /// In es, this message translates to:
+  /// **'Leyendo la receta del vídeo…'**
+  String get arReadingVideo;
+
+  /// No description provided for @arCompleting.
+  ///
+  /// In es, this message translates to:
+  /// **'Completando la receta…'**
+  String get arCompleting;
+
+  /// No description provided for @arAddPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir foto (opcional)'**
+  String get arAddPhoto;
+
+  /// No description provided for @arTitleField.
+  ///
+  /// In es, this message translates to:
+  /// **'Título'**
+  String get arTitleField;
+
+  /// No description provided for @arTitleRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ponle un título'**
+  String get arTitleRequired;
+
+  /// No description provided for @arDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
+  String get arDescription;
+
+  /// No description provided for @arVideoLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Enlace de video (opcional)'**
+  String get arVideoLink;
+
+  /// No description provided for @arMealTypes.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de comida (puedes elegir varios)'**
+  String get arMealTypes;
+
+  /// No description provided for @arAuto.
+  ///
+  /// In es, this message translates to:
+  /// **'Auto'**
+  String get arAuto;
+
+  /// No description provided for @arServingsHelper.
+  ///
+  /// In es, this message translates to:
+  /// **'Para cuántas es'**
+  String get arServingsHelper;
+
+  /// No description provided for @arGramsServing.
+  ///
+  /// In es, this message translates to:
+  /// **'Gramos / ración'**
+  String get arGramsServing;
+
+  /// No description provided for @arNutritionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Valores nutricionales (por ración)'**
+  String get arNutritionTitle;
+
+  /// No description provided for @arCooking.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocina'**
+  String get arCooking;
+
+  /// No description provided for @arPrepMin.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparación (min)'**
+  String get arPrepMin;
+
+  /// No description provided for @arCookMin.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocción (min)'**
+  String get arCookMin;
+
+  /// No description provided for @arAppliance.
+  ///
+  /// In es, this message translates to:
+  /// **'Aparato principal'**
+  String get arAppliance;
+
+  /// No description provided for @arFreezable.
+  ///
+  /// In es, this message translates to:
+  /// **'Es congelable'**
+  String get arFreezable;
+
+  /// No description provided for @arAddIngredient.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir ingrediente'**
+  String get arAddIngredient;
+
+  /// No description provided for @arStepsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasos de preparación'**
+  String get arStepsTitle;
+
+  /// No description provided for @arStepsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe los pasos, uno por línea…'**
+  String get arStepsHint;
+
+  /// No description provided for @arSaveChanges.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get arSaveChanges;
+
+  /// No description provided for @arSaveRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar Receta'**
+  String get arSaveRecipe;
+
+  /// No description provided for @arIngredient.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrediente'**
+  String get arIngredient;
 }
 
 class _AppLocalizationsDelegate
