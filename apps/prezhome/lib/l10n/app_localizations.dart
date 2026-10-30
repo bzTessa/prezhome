@@ -1553,6 +1553,486 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Al cocinar'**
   String get panWhenCooking;
+
+  /// No description provided for @planHowLong.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Para cuánto tiempo?'**
+  String get planHowLong;
+
+  /// No description provided for @thisWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta semana'**
+  String get thisWeek;
+
+  /// No description provided for @planWeeks.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} semanas'**
+  String planWeeks(int count);
+
+  /// No description provided for @planMonth4.
+  ///
+  /// In es, this message translates to:
+  /// **'Un mes (4 semanas)'**
+  String get planMonth4;
+
+  /// No description provided for @planPickDates.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir fechas'**
+  String get planPickDates;
+
+  /// No description provided for @planDates.
+  ///
+  /// In es, this message translates to:
+  /// **'Fechas del plan'**
+  String get planDates;
+
+  /// No description provided for @planMaxTwoMonths.
+  ///
+  /// In es, this message translates to:
+  /// **'Como mucho dos meses de una vez.'**
+  String get planMaxTwoMonths;
+
+  /// No description provided for @planReadyAllHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan listo. Ya tienes en casa todo lo que necesitas'**
+  String get planReadyAllHome;
+
+  /// No description provided for @planListReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan listo. Lista de la compra con {count} productos'**
+  String planListReady(int count);
+
+  /// No description provided for @planBackInPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Vuelve a estar en el plan'**
+  String get planBackInPlan;
+
+  /// No description provided for @planEntryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{meal} · {recipe}'**
+  String planEntryTitle(String meal, String recipe);
+
+  /// No description provided for @planNoRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin receta'**
+  String get planNoRecipe;
+
+  /// No description provided for @planChangeRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar receta'**
+  String get planChangeRecipe;
+
+  /// No description provided for @planWhoEats.
+  ///
+  /// In es, this message translates to:
+  /// **'Quién come'**
+  String get planWhoEats;
+
+  /// No description provided for @planMarkHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar en casa'**
+  String get planMarkHome;
+
+  /// No description provided for @planMarkOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como fuera'**
+  String get planMarkOut;
+
+  /// No description provided for @planStopRepeat.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejar de repetir'**
+  String get planStopRepeat;
+
+  /// No description provided for @planStopRepeatHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Quita las siguientes veces'**
+  String get planStopRepeatHint;
+
+  /// No description provided for @planRepeat.
+  ///
+  /// In es, this message translates to:
+  /// **'Repetir'**
+  String get planRepeat;
+
+  /// No description provided for @planRepeatHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada día, cada semana… o para siempre'**
+  String get planRepeatHint;
+
+  /// No description provided for @planRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar del plan'**
+  String get planRemove;
+
+  /// No description provided for @planRepeatTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Repetir {meal}'**
+  String planRepeatTitle(String meal);
+
+  /// No description provided for @planHowOften.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cada cuánto?'**
+  String get planHowOften;
+
+  /// No description provided for @planEveryDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, =1{Cada día} other{Cada {days} días}}'**
+  String planEveryDays(int days);
+
+  /// No description provided for @planEveryWeeks.
+  ///
+  /// In es, this message translates to:
+  /// **'{weeks, plural, =1{Cada semana} other{Cada {weeks} semanas}}'**
+  String planEveryWeeks(int weeks);
+
+  /// No description provided for @planUntilWhen.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Hasta cuándo?'**
+  String get planUntilWhen;
+
+  /// No description provided for @planForever.
+  ///
+  /// In es, this message translates to:
+  /// **'Para siempre'**
+  String get planForever;
+
+  /// No description provided for @planMonths.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 mes} other{{count} meses}}'**
+  String planMonths(int count);
+
+  /// No description provided for @planRepeatDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho. Lo verás en el plan las próximas semanas; si un día ya tiene otra cosa, se respeta.'**
+  String get planRepeatDone;
+
+  /// No description provided for @planWhoAtHome.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quién come en casa?'**
+  String get planWhoAtHome;
+
+  /// No description provided for @planCalendarPermission.
+  ///
+  /// In es, this message translates to:
+  /// **'Da permiso al calendario en los ajustes del móvil'**
+  String get planCalendarPermission;
+
+  /// No description provided for @planInFast.
+  ///
+  /// In es, this message translates to:
+  /// **'Cae en el ayuno'**
+  String get planInFast;
+
+  /// No description provided for @planSettings.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes del plan'**
+  String get planSettings;
+
+  /// No description provided for @planBatchCook.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocino en tanda'**
+  String get planBatchCook;
+
+  /// No description provided for @planBatchCookHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Día de compra, de cocina y tápers'**
+  String get planBatchCookHint;
+
+  /// No description provided for @planTimes.
+  ///
+  /// In es, this message translates to:
+  /// **'Horas'**
+  String get planTimes;
+
+  /// No description provided for @planFasting.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayuno intermitente'**
+  String get planFasting;
+
+  /// No description provided for @no.
+  ///
+  /// In es, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @planEatWindow.
+  ///
+  /// In es, this message translates to:
+  /// **'Comes de {from} a {to}. Se mueve con la hora de la cena.'**
+  String planEatWindow(String from, String to);
+
+  /// No description provided for @planCalendar.
+  ///
+  /// In es, this message translates to:
+  /// **'Calendario'**
+  String get planCalendar;
+
+  /// No description provided for @planToCalendar.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasar al calendario'**
+  String get planToCalendar;
+
+  /// No description provided for @planCalendarLinked.
+  ///
+  /// In es, this message translates to:
+  /// **'Calendario conectado'**
+  String get planCalendarLinked;
+
+  /// No description provided for @planCalendarHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Comidas y tareas con hora, en Google Calendar'**
+  String get planCalendarHint;
+
+  /// No description provided for @planCalendarUpdates.
+  ///
+  /// In es, this message translates to:
+  /// **'Se actualiza al abrir el plan'**
+  String get planCalendarUpdates;
+
+  /// No description provided for @remove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar'**
+  String get remove;
+
+  /// No description provided for @planPickRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige una receta'**
+  String get planPickRecipe;
+
+  /// No description provided for @planDayFull.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese día ya tiene todas las comidas.'**
+  String get planDayFull;
+
+  /// No description provided for @planWhichMeal.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué comida añades?'**
+  String get planWhichMeal;
+
+  /// No description provided for @planTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan semanal'**
+  String get planTitle;
+
+  /// No description provided for @planNoHome.
+  ///
+  /// In es, this message translates to:
+  /// **'No perteneces a ningún hogar.'**
+  String get planNoHome;
+
+  /// No description provided for @planMake.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer plan'**
+  String get planMake;
+
+  /// No description provided for @planRemake.
+  ///
+  /// In es, this message translates to:
+  /// **'Rehacer plan'**
+  String get planRemake;
+
+  /// No description provided for @planNeedRecipes.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade algunas recetas primero'**
+  String get planNeedRecipes;
+
+  /// No description provided for @planNeedRecipesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'El planificador reparte tus recetas por la semana. Guarda unas cuantas en la pestaña Comidas.'**
+  String get planNeedRecipesHint;
+
+  /// No description provided for @planPrevWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Semana anterior'**
+  String get planPrevWeek;
+
+  /// No description provided for @planNextWeekLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'La próxima semana'**
+  String get planNextWeekLabel;
+
+  /// No description provided for @planLastWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'La semana pasada'**
+  String get planLastWeek;
+
+  /// No description provided for @planWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Semana'**
+  String get planWeek;
+
+  /// No description provided for @planBackToToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a hoy'**
+  String get planBackToToday;
+
+  /// No description provided for @planNextWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Semana siguiente'**
+  String get planNextWeek;
+
+  /// No description provided for @planDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día'**
+  String get planDay;
+
+  /// No description provided for @planMonthCalendar.
+  ///
+  /// In es, this message translates to:
+  /// **'Calendario del mes'**
+  String get planMonthCalendar;
+
+  /// No description provided for @planNoPlanYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay plan para esta semana.'**
+  String get planNoPlanYet;
+
+  /// No description provided for @recipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta'**
+  String get recipe;
+
+  /// No description provided for @planCookMode.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo cocina'**
+  String get planCookMode;
+
+  /// No description provided for @planCookWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocina la semana de una vez'**
+  String get planCookWeek;
+
+  /// No description provided for @planBatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocina en lote'**
+  String get planBatch;
+
+  /// No description provided for @planCookDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, =1{1 día de cocina} other{{days} días de cocina}} · {recipes, plural, =1{1 receta} other{{recipes} recetas}}'**
+  String planCookDays(int days, int recipes);
+
+  /// No description provided for @planBatchEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Con el plan hecho te digo cuándo comprar, cuándo cocinar y qué va a la nevera o al congelador.'**
+  String get planBatchEmpty;
+
+  /// No description provided for @planCookedToFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya cocinado · al congelador'**
+  String get planCookedToFreezer;
+
+  /// No description provided for @planFrozen.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Guardado en el congelador con su foto.} other{{count} platos guardados en el congelador.}}'**
+  String planFrozen(int count);
+
+  /// No description provided for @planEnergyLow.
+  ///
+  /// In es, this message translates to:
+  /// **'Poco'**
+  String get planEnergyLow;
+
+  /// No description provided for @planEnergyNormal.
+  ///
+  /// In es, this message translates to:
+  /// **'Normal'**
+  String get planEnergyNormal;
+
+  /// No description provided for @planEnergyHigh.
+  ///
+  /// In es, this message translates to:
+  /// **'Mucho'**
+  String get planEnergyHigh;
+
+  /// No description provided for @planEnergyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Con \"poco\" el plan tira más del congelador.'**
+  String get planEnergyHint;
+
+  /// No description provided for @planHowMuchCook.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuánto cocinar'**
+  String get planHowMuchCook;
+
+  /// No description provided for @planServings.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ración} other{{count} raciones}}'**
+  String planServings(int count);
+
+  /// No description provided for @close.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar'**
+  String get close;
+
+  /// No description provided for @planSearchRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar receta...'**
+  String get planSearchRecipe;
+
+  /// No description provided for @planNoMatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin recetas que coincidan.'**
+  String get planNoMatch;
 }
 
 class _AppLocalizationsDelegate

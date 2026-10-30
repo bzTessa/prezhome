@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:device_calendar_plus/device_calendar_plus.dart' show Calendar;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'batch_prep_timeline_screen.dart';
@@ -31,6 +32,7 @@ import 'widgets/recipe_image.dart';
 import 'widgets/segmented_pill.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/skeleton.dart';
+import 'l10n/l10n.dart';
 
 /// Planificador semanal de comidas (v1).
 class MealPlanScreen extends StatefulWidget {
@@ -47,36 +49,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   final SupabaseClient _client = Supabase.instance.client;
   late Future<_PlanData> _future;
 
-  static const _mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Merienda',
-    'dessert': 'Postre',
-  };
-  static const _monthNames = [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
+  static const _mealTypes = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'snack',
+    'dessert',
   ];
-  static const _dayNames = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-  ];
+
+  String get _locale => Localizations.localeOf(context).toString();
+
+  /// "Lunes 3" en el idioma de la app.
+  String _dayLabel(DateTime d) {
+    final name = DateFormat.EEEE(_locale).format(d);
+    return '${name[0].toUpperCase()}${name.substring(1)} ${d.day}';
+  }
 
   bool _generating = false;
   int get _energyLevel => PlanPrefs.current.value.energy;
@@ -263,7 +250,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Text(
-                '¿Para cuánto tiempo?',
+                context.l.planHowLong,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -271,10 +258,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 ),
               ),
             ),
-            for (final (n, label) in const [
-              (1, 'Esta semana'),
-              (2, '2 semanas'),
-              (4, 'Un mes (4 semanas)'),
+            for (final (n, label) in [
+              (1, context.l.thisWeek),
+              (2, context.l.planWeeks(2)),
+              (4, context.l.planMonth4),
             ])
               ListTile(
                 leading: Icon(
@@ -289,7 +276,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 Icons.edit_calendar_rounded,
                 color: AppColors.woodDark,
               ),
-              title: const Text('Elegir fechas'),
+              title: Text(context.l.planPickDates),
               onTap: () => Navigator.of(ctx).pop(0),
             ),
             const SizedBox(height: 8),
@@ -307,12 +294,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       context: context,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365)),
-      helpText: 'Fechas del plan',
+      helpText: context.l.planDates,
     );
     if (range == null || !mounted) return;
     final days = range.end.difference(range.start).inDays + 1;
     if (days > 62) {
-      _showMiau('Como mucho dos meses de una vez.');
+      _showMiau(context.l.planMaxTwoMonths);
       return;
     }
     await _generatePlan(data, range.start, days);
@@ -495,14 +482,14 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         SnackBar(
           content: Text(
             added.isEmpty
-                ? 'Plan listo. Ya tienes en casa todo lo que necesitas'
-                : 'Plan listo. Lista de la compra con ${added.length} productos',
+                ? context.l.planReadyAllHome
+                : context.l.planListReady(added.length),
           ),
           persist: false,
           action: added.isEmpty
               ? null
               : SnackBarAction(
-                  label: 'Ver',
+                  label: context.l.view,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const ShoppingListScreen(),
@@ -532,7 +519,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             .update({'skipped': false})
             .eq('id', e.id!);
         if (mounted) {
-          _showMiau('Vuelve a estar en el plan');
+          _showMiau(context.l.planBackInPlan);
         }
         _reload();
         return;
@@ -624,8 +611,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Text(
-                '${_mealLabels[e.mealType] ?? e.mealType} · '
-                '${recipe?.title ?? 'Sin receta'}',
+                context.l.planEntryTitle(
+                  context.l.mealType(e.mealType),
+                  recipe?.title ?? context.l.planNoRecipe,
+                ),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -638,7 +627,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 Icons.swap_horiz_rounded,
                 color: AppColors.woodDark,
               ),
-              title: const Text('Cambiar receta'),
+              title: Text(context.l.planChangeRecipe),
               onTap: () => Navigator.of(ctx).pop('change'),
             ),
             if (data.members.length > 1 && !e.skipped)
@@ -647,7 +636,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   Icons.people_outline_rounded,
                   color: AppColors.woodDark,
                 ),
-                title: const Text('Quién come'),
+                title: Text(context.l.planWhoEats),
                 onTap: () => Navigator.of(ctx).pop('who'),
               ),
             ListTile(
@@ -655,7 +644,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 e.skipped ? Icons.restore : Icons.no_meals_outlined,
                 color: AppColors.woodDark,
               ),
-              title: Text(e.skipped ? 'Marcar en casa' : 'Marcar como fuera'),
+              title: Text(
+                e.skipped ? context.l.planMarkHome : context.l.planMarkOut,
+              ),
               onTap: () => Navigator.of(ctx).pop('skip'),
             ),
             if (e.repeatId != null)
@@ -664,20 +655,20 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   Icons.repeat_on_rounded,
                   color: AppColors.woodDark,
                 ),
-                title: const Text('Dejar de repetir'),
-                subtitle: const Text('Quita las siguientes veces'),
+                title: Text(context.l.planStopRepeat),
+                subtitle: Text(context.l.planStopRepeatHint),
                 onTap: () => Navigator.of(ctx).pop('unrepeat'),
               )
             else if (recipe != null && e.id != null)
               ListTile(
                 leading: Icon(Icons.repeat_rounded, color: AppColors.woodDark),
-                title: const Text('Repetir'),
-                subtitle: const Text('Cada día, cada semana… o para siempre'),
+                title: Text(context.l.planRepeat),
+                subtitle: Text(context.l.planRepeatHint),
                 onTap: () => Navigator.of(ctx).pop('repeat'),
               ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
-              title: const Text('Quitar del plan'),
+              title: Text(context.l.planRemove),
               onTap: () => Navigator.of(ctx).pop('remove'),
             ),
             const SizedBox(height: 8),
@@ -752,37 +743,37 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Repetir ${(_mealLabels[e.mealType] ?? e.mealType).toLowerCase()}',
+                    context.l.planRepeatTitle(context.l.mealType(e.mealType)),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: AppColors.ink,
                     ),
                   ),
-                  label('¿Cada cuánto?'),
+                  label(context.l.planHowOften),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final (n, text) in const [
-                        (1, 'Cada día'),
-                        (2, 'Cada 2 días'),
-                        (3, 'Cada 3 días'),
-                        (7, 'Cada semana'),
-                        (14, 'Cada 2 semanas'),
+                      for (final (n, text) in [
+                        (1, context.l.planEveryDays(1)),
+                        (2, context.l.planEveryDays(2)),
+                        (3, context.l.planEveryDays(3)),
+                        (7, context.l.planEveryWeeks(1)),
+                        (14, context.l.planEveryWeeks(2)),
                       ])
                         chip(text, every == n, () => every = n),
                     ],
                   ),
-                  label('¿Hasta cuándo?'),
+                  label(context.l.planUntilWhen),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final (n, text) in const [
-                        (null, 'Para siempre'),
-                        (1, '1 mes'),
-                        (3, '3 meses'),
+                      for (final (n, text) in [
+                        (null, context.l.planForever),
+                        (1, context.l.planMonths(1)),
+                        (3, context.l.planMonths(3)),
                       ])
                         chip(text, months == n, () => months = n),
                     ],
@@ -791,7 +782,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: TactileButton(
-                      label: 'Repetir',
+                      label: context.l.planRepeat,
                       icon: Icons.repeat_rounded,
                       onPressed: () => Navigator.of(ctx).pop(true),
                     ),
@@ -817,10 +808,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             ? null
             : DateTime(e.date.year, e.date.month + months!, e.date.day),
       );
-      _showMiau(
-        'Hecho. Lo verás en el plan las próximas semanas; si un día '
-        'ya tiene otra cosa, se respeta.',
-      );
+      if (mounted) _showMiau(context.l.planRepeatDone);
       _reload();
     } catch (err) {
       _showError(err);
@@ -848,7 +836,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                 child: Text(
-                  '¿Quién come en casa?',
+                  context.l.planWhoAtHome,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -869,7 +857,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
-                    child: const Text('Guardar'),
+                    child: Text(context.l.save),
                   ),
                 ),
               ),
@@ -897,11 +885,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final cals = await CalendarSync.writableCalendars();
     if (!ctx.mounted) return null;
     if (cals.isEmpty) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        const SnackBar(
-          content: Text('Da permiso al calendario en los ajustes del móvil'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        ctx,
+      ).showSnackBar(SnackBar(content: Text(ctx.l.planCalendarPermission)));
       return null;
     }
     return showModalBottomSheet<Calendar>(
@@ -951,13 +937,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           Widget mealSwitch(String type) => SwitchListTile(
             value: !hidden.contains(type),
             activeThumbColor: AppColors.woodDark,
-            title: Text(_mealLabels[type]!),
+            title: Text(context.l.mealType(type)),
             onChanged: (v) =>
                 setSheet(() => v ? hidden.remove(type) : hidden.add(type)),
           );
           Widget mealTime(String type) => ListTile(
             dense: true,
-            title: Text(_mealLabels[type]!),
+            title: Text(context.l.mealType(type)),
             trailing: Text(
               draft.timeOf(type),
               style: TextStyle(
@@ -967,7 +953,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     : AppColors.woodDark,
               ),
             ),
-            subtitle: draft.inFast(type) ? const Text('Cae en el ayuno') : null,
+            subtitle: draft.inFast(type) ? Text(context.l.planInFast) : null,
             onTap: () async {
               final m = draft.minutesOf(type);
               final t = await showTimePicker(
@@ -1000,24 +986,24 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    title('Ajustes del plan'),
+                    title(context.l.planSettings),
                     mealSwitch('breakfast'),
                     mealSwitch('snack'),
                     SwitchListTile(
                       value: batch,
                       activeThumbColor: AppColors.woodDark,
-                      title: const Text('Cocino en tanda'),
-                      subtitle: const Text('Día de compra, de cocina y tápers'),
+                      title: Text(context.l.planBatchCook),
+                      subtitle: Text(context.l.planBatchCookHint),
                       onChanged: (v) => setSheet(() => batch = v),
                     ),
-                    title('Horas'),
+                    title(context.l.planTimes),
                     for (final t in _mainMealTypes)
                       if (!hidden.contains(t)) mealTime(t),
-                    title('Ayuno intermitente'),
+                    title(context.l.planFasting),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: SegmentedPill(
-                        labels: const ['No', '12:12', '14:10', '16:8'],
+                        labels: [context.l.no, '12:12', '14:10', '16:8'],
                         selected: fasts.indexOf(fast),
                         onChanged: (i) => setSheet(() => fast = fasts[i]),
                       ),
@@ -1026,33 +1012,34 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                         child: Text(
-                          'Comes de ${PlanPrefs.formatMinutes(window.start)} '
-                          'a ${PlanPrefs.formatMinutes(window.end)}. '
-                          'Se mueve con la hora de la cena.',
+                          context.l.planEatWindow(
+                            PlanPrefs.formatMinutes(window.start),
+                            PlanPrefs.formatMinutes(window.end),
+                          ),
                           style: TextStyle(color: AppColors.inkMuted),
                         ),
                       ),
                     // En web no hay calendario del dispositivo al que escribir.
-                    if (!kIsWeb) title('Calendario'),
+                    if (!kIsWeb) title(context.l.planCalendar),
                     if (!kIsWeb)
                       ListTile(
                         leading: const Icon(Icons.event_rounded),
                         title: Text(
                           calendarId == null
-                              ? 'Pasar al calendario'
-                              : (calendarName ?? 'Calendario conectado'),
+                              ? context.l.planToCalendar
+                              : (calendarName ?? context.l.planCalendarLinked),
                         ),
                         subtitle: Text(
                           calendarId == null
-                              ? 'Comidas y tareas con hora, en Google Calendar'
-                              : 'Se actualiza al abrir el plan',
+                              ? context.l.planCalendarHint
+                              : context.l.planCalendarUpdates,
                         ),
                         trailing: calendarId == null
                             ? null
                             : TextButton(
                                 onPressed: () =>
                                     setSheet(() => calendarId = null),
-                                child: const Text('Quitar'),
+                                child: Text(context.l.remove),
                               ),
                         onTap: () async {
                           final cal = await _pickCalendar(ctx);
@@ -1103,7 +1090,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// congelador") porque el plato ya no es el mismo.
   Future<void> _changeRecipe(_PlanData data, MealPlanEntry e) async {
     if (e.id == null) return;
-    final chosen = await _pickRecipe(data, title: 'Elige una receta');
+    final chosen = await _pickRecipe(data, title: context.l.planPickRecipe);
     if (chosen == null) return;
     try {
       await _client
@@ -1142,11 +1129,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     String? presetMealType,
   }) async {
     final usados = dayEntries.map((e) => e.mealType).toSet();
-    final disponibles = _mealLabels.keys
-        .where((t) => !usados.contains(t))
-        .toList();
+    final disponibles = _mealTypes.where((t) => !usados.contains(t)).toList();
     if (disponibles.isEmpty) {
-      _showMiau('Ese día ya tiene todas las comidas.');
+      _showMiau(context.l.planDayFull);
       return;
     }
 
@@ -1166,7 +1151,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 Padding(
                   padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
                   child: Text(
-                    '¿Qué comida añades?',
+                    context.l.planWhichMeal,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -1176,7 +1161,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 ),
                 for (final t in disponibles)
                   ListTile(
-                    title: Text(_mealLabels[t] ?? t),
+                    title: Text(context.l.mealType(t)),
                     onTap: () => Navigator.of(ctx).pop(t),
                   ),
                 const SizedBox(height: 8),
@@ -1186,7 +1171,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         );
     if (!mounted || mealType == null) return;
 
-    final chosen = await _pickRecipe(data, title: 'Elige una receta');
+    final chosen = await _pickRecipe(data, title: context.l.planPickRecipe);
     if (chosen == null) return;
 
     try {
@@ -1281,9 +1266,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: widget.embedded
-          ? null
-          : AppBar(title: const Text('Plan semanal')),
+      appBar: widget.embedded ? null : AppBar(title: Text(context.l.planTitle)),
       body: FutureBuilder<_PlanData>(
         future: _future,
         builder: (context, snapshot) {
@@ -1298,7 +1281,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           }
           final data = snapshot.data!;
           if (data.homeId == null) {
-            return const Center(child: Text('No perteneces a ningún hogar.'));
+            return Center(child: Text(context.l.planNoHome));
           }
           if (data.recipes.isEmpty) {
             return _needRecipes();
@@ -1329,7 +1312,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   )
                 : const Icon(Icons.event_available_rounded),
             label: Text(
-              data.entries.isEmpty ? 'Hacer plan' : 'Rehacer plan',
+              data.entries.isEmpty ? context.l.planMake : context.l.planRemake,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           );
@@ -1347,14 +1330,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           children: [
             const MiauCharacter(mood: MiauMood.curious, size: 120),
             const SizedBox(height: 16),
-            const Text(
-              'Añade algunas recetas primero',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Text(
+              context.l.planNeedRecipes,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
             Text(
-              'El planificador reparte tus recetas por la semana. Guarda unas '
-              'cuantas en la pestaña Comidas.',
+              context.l.planNeedRecipesHint,
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.inkMuted),
             ),
@@ -1400,9 +1382,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final sel = (_selectedDay ?? (todayIndex < 0 ? 0 : todayIndex)).clamp(0, 6);
     final last = days.last;
     final range = days.first.month == last.month
-        ? '${days.first.day} – ${last.day} de ${_monthNames[last.month - 1]}'
-        : '${days.first.day} ${_monthNames[days.first.month - 1]} – '
-              '${last.day} ${_monthNames[last.month - 1]}';
+        ? '${days.first.day} – ${DateFormat.MMMMd(_locale).format(last)}'
+        : '${DateFormat.MMMMd(_locale).format(days.first)} – '
+              '${DateFormat.MMMMd(_locale).format(last)}';
     final date = days[sel];
     final dayEntries = byDate[keyOf(date)] ?? const <MealPlanEntry>[];
     final byType = {for (final e in dayEntries) e.mealType: e};
@@ -1419,7 +1401,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         Row(
           children: [
             IconButton(
-              tooltip: 'Semana anterior',
+              tooltip: context.l.planPrevWeek,
               onPressed: () => _moveWeek(-1),
               icon: const Icon(Icons.chevron_left_rounded),
             ),
@@ -1431,10 +1413,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   children: [
                     Text(
                       switch (_weekOffset) {
-                        0 => 'Esta semana',
-                        1 => 'La próxima semana',
-                        -1 => 'La semana pasada',
-                        _ => 'Semana',
+                        0 => context.l.thisWeek,
+                        1 => context.l.planNextWeekLabel,
+                        -1 => context.l.planLastWeek,
+                        _ => context.l.planWeek,
                       },
                       style: TextStyle(
                         fontSize: 12,
@@ -1452,7 +1434,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     ),
                     if (_weekOffset != 0)
                       Text(
-                        'Volver a hoy',
+                        context.l.planBackToToday,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -1464,7 +1446,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               ),
             ),
             IconButton(
-              tooltip: 'Semana siguiente',
+              tooltip: context.l.planNextWeek,
               onPressed: () => _moveWeek(1),
               icon: const Icon(Icons.chevron_right_rounded),
             ),
@@ -1475,14 +1457,14 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           children: [
             Expanded(
               child: SegmentedPill(
-                labels: const ['Día', 'Semana'],
+                labels: [context.l.planDay, context.l.planWeek],
                 selected: _weekView ? 1 : 0,
                 onChanged: (i) => setState(() => _weekView = i == 1),
               ),
             ),
             const SizedBox(width: 4),
             IconButton(
-              tooltip: 'Calendario del mes',
+              tooltip: context.l.planMonthCalendar,
               icon: Icon(
                 Icons.calendar_month_outlined,
                 color: AppColors.inkMuted,
@@ -1490,7 +1472,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               onPressed: _openCalendar,
             ),
             IconButton(
-              tooltip: 'Ajustes del plan',
+              tooltip: context.l.planSettings,
               icon: Icon(Icons.tune_rounded, color: AppColors.inkMuted),
               onPressed: () => _openPlanSettings(data),
             ),
@@ -1521,7 +1503,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           Row(
             children: [
               Text(
-                '${_dayNames[date.weekday - 1]} ${date.day}',
+                _dayLabel(date),
                 style: TextStyle(
                   fontSize: 22,
                   letterSpacing: -0.4,
@@ -1540,9 +1522,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     color: AppColors.wood,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Hoy',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                  child: Text(
+                    context.l.today,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -1556,7 +1541,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                'Aún no hay plan para esta semana.',
+                context.l.planNoPlanYet,
                 style: TextStyle(color: AppColors.inkMuted),
               ),
             ),
@@ -1568,7 +1553,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 mealType: t,
                 time: prefs.timeOf(t),
                 inFast: prefs.inFast(t),
-                title: e == null ? null : (recipe?.title ?? 'Receta'),
+                title: e == null ? null : (recipe?.title ?? context.l.recipe),
                 image: recipe == null
                     ? null
                     : RecipeImage(
@@ -1593,7 +1578,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ],
         const SizedBox(height: 12),
         Text(
-          'Esta semana',
+          context.l.thisWeek,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w900,
@@ -1641,7 +1626,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 child: Row(
                   children: [
                     Text(
-                      '${_dayNames[date.weekday - 1]} ${date.day}',
+                      _dayLabel(date),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -1659,9 +1644,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           color: AppColors.wood,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'Hoy',
-                          style: TextStyle(
+                        child: Text(
+                          context.l.today,
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                           ),
@@ -1680,7 +1665,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 final s = mealStyle(t);
                 final title = e == null
                     ? null
-                    : (data.recipesById[e.recipeId]?.title ?? 'Receta');
+                    : (data.recipesById[e.recipeId]?.title ?? context.l.recipe);
                 return InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   onTap: e == null
@@ -1700,7 +1685,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         SizedBox(
                           width: 76,
                           child: Text(
-                            s.label,
+                            context.l.mealType(t),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -1710,7 +1695,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         ),
                         Expanded(
                           child: Text(
-                            title ?? 'Añadir',
+                            title ?? context.l.add,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -1830,7 +1815,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Modo cocina',
+                    context.l.planCookMode,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -1839,7 +1824,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Cocina la semana de una vez',
+                    context.l.planCookWeek,
                     style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                   ),
                 ],
@@ -1893,18 +1878,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Cocina en lote',
-                      style: TextStyle(
+                    Text(
+                      context.l.planBatch,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     if (recipes > 0)
                       Text(
-                        '${cookDays.length} '
-                        '${cookDays.length == 1 ? 'día' : 'días'} de cocina · '
-                        '$recipes ${recipes == 1 ? 'receta' : 'recetas'}',
+                        context.l.planCookDays(cookDays.length, recipes),
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.inkMuted,
@@ -1918,8 +1901,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           const SizedBox(height: 14),
           if (agenda.isEmpty)
             Text(
-              'Con el plan hecho te digo cuándo comprar, cuándo cocinar y qué '
-              'va a la nevera o al congelador.',
+              context.l.planBatchEmpty,
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             )
           else
@@ -1949,9 +1931,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         ),
                       ),
                       icon: const Icon(Icons.ac_unit, size: 16),
-                      label: const Text(
-                        'Ya cocinado · al congelador',
-                        style: TextStyle(
+                      label: Text(
+                        context.l.planCookedToFreezer,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -2038,11 +2020,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
       _reload();
       if (!mounted) return;
-      _showMiau(
-        count == 1
-            ? 'Guardado en el congelador con su foto.'
-            : '$count platos guardados en el congelador.',
-      );
+      _showMiau(context.l.planFrozen(count));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2056,17 +2034,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   Widget _energyCard() {
-    const labels = ['Poco', 'Normal', 'Mucho'];
-    const subtitle = 'Con "poco" el plan tira más del congelador.';
+    final labels = [
+      context.l.planEnergyLow,
+      context.l.planEnergyNormal,
+      context.l.planEnergyHigh,
+    ];
+    final subtitle = context.l.planEnergyHint;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: AppTheme.cardDecoration(radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Cuánto cocinar',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          Text(
+            context.l.planHowMuchCook,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 4),
           Text(
@@ -2125,8 +2107,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           computed.names.isNotEmpty) {
         text = computed.label;
       } else {
-        final unit = persisted == 1 ? 'ración' : 'raciones';
-        text = '$persisted $unit';
+        text = context.l.planServings(persisted);
       }
     } else {
       // Sin raciones guardadas: fallback al cálculo en vivo.
@@ -2243,7 +2224,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Cerrar',
+                    tooltip: context.l.close,
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -2256,7 +2237,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
                 controller: _searchCtrl,
                 onChanged: (v) => setState(() => _query = v),
                 decoration: InputDecoration(
-                  hintText: 'Buscar receta...',
+                  hintText: context.l.planSearchRecipe,
                   prefixIcon: Icon(
                     Icons.search_rounded,
                     color: AppColors.woodDark,
@@ -2283,7 +2264,7 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
               child: visible.isEmpty
                   ? Center(
                       child: Text(
-                        'Sin recetas que coincidan.',
+                        context.l.planNoMatch,
                         style: TextStyle(color: AppColors.inkMuted),
                       ),
                     )
