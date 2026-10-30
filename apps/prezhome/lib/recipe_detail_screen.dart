@@ -20,6 +20,7 @@ import 'models/recipe.dart';
 import 'models/shopping_list_item.dart';
 import 'models/supermarket.dart';
 import 'theme/app_theme.dart';
+import 'widgets/freeze_dish_sheet.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
 import 'utils/friendly_error.dart';
@@ -49,9 +50,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   RecipeCost? _cost; // coste estimado de la receta (precio real o aproximado)
   List<NutritionProfile> _profiles =
       []; // miembros del hogar con perfil visible
-  NutritionProfile? _myProfile; // perfil del usuario logueado (para el modo)
-
-  bool get _isMealPrep => _myProfile?.isMealPrep ?? false;
 
   // Raciones a preparar elegidas en el conversor (null = las de la receta).
   int? _servings;
@@ -137,10 +135,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             .map((p) => NutritionProfile.fromMap(p))
             .toList();
         _profiles = all.where((p) => p.isComplete).toList();
-        // Mi perfil (para saber el modo de cocina). Puede estar incompleto.
-        for (final p in all) {
-          if (p.id == user.id) _myProfile = p;
-        }
       });
     }
   }
@@ -460,49 +454,24 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return counted > 0 ? total : null;
   }
 
-  /// Registra la receta como cocinada: guarda en el congelador las raciones
-  /// preparadas como "plato listo" (para meal prep). El nº de raciones = nº de
-  /// comidas de hogar (el multiplicador) × personas que comen en casa.
-  Future<void> _markCooked() async {
+  /// Al terminar de cocinar una receta congelable, ofrece guardar raciones en
+  /// el congelador como plato listo (con su foto), para tirar de él en el plan.
+  Future<void> _offerFreeze() async {
+    final r = _recipe;
+    if (!r.freezable) return;
+    final servings = await askFreezeServings(
+      context,
+      recipe: r,
+      initial: _servingsNow,
+    );
+    if (servings == null) return;
     try {
-      final r = _recipe;
-      // Raciones preparadas (las del conversor) y cuántas comidas de hogar son.
-      final servings = _servingsNow.toDouble();
-      final perMeal = _householdServings(r);
-      final meals = perMeal == null || perMeal <= 0
-          ? 1.0
-          : double.parse((servings / perMeal).toStringAsFixed(1));
-
-      final now = DateTime.now();
-      // Consumo preferente: hoy + días recomendados por la IA (o 90 por defecto).
-      final days = r.freezerDays ?? 90;
-      final bestBefore = days > 0
-          ? DateTime(now.year, now.month, now.day + days)
-          : null;
-
-      final item = InventoryItem(
-        id: '',
-        homeId: r.homeId,
-        name: r.title,
-        category: 'Congelador',
-        quantity: meals, // nº de comidas de hogar
-        unit: 'comidas',
-        kind: 'dish',
-        recipeId: r.id,
-        servings: double.parse(servings.toStringAsFixed(1)),
-        frozenOn: now,
-        bestBefore: bestBefore,
-        // El plato congelado lleva la FOTO y el nombre de la receta, para que
-        // en el congelador se vea igual que en el recetario.
-        imageUrl: r.imageUrl,
-      );
-      await _client.from('inventory_items').insert(item.toMap());
-
+      await _client
+          .from('inventory_items')
+          .insert(frozenDishItem(r, servings).toMap());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Guardado en el congelador como plato listo.'),
-          ),
+          const SnackBar(content: Text('Guardado en el congelador.')),
         );
       }
     } catch (e) {
@@ -1054,22 +1023,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ],
           ),
           _servingsHints(r),
-          if (_isMealPrep)
-            Padding(
-              padding: const EdgeInsets.only(right: 8, top: 4),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _markCooked,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.ink,
-                    side: BorderSide(color: AppColors.wood, width: 1.5),
-                  ),
-                  icon: const Icon(Icons.ac_unit),
-                  label: const Text('Ya cocinado → al congelador'),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -1398,7 +1351,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             onPressed: () async {
               final ings = await _ingredientsFuture;
               if (!mounted) return;
-              await Navigator.of(context).push(
+              final done = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
                   builder: (_) => CookModeScreen(
                     title: r.title,
@@ -1407,6 +1360,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                 ),
               );
+              if (done == true && mounted) await _offerFreeze();
             },
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.ink,
