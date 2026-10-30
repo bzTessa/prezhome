@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
 import '../animations/spring_value.dart';
+import '../../l10n/l10n.dart';
 import '../../utils/kitchen_zones.dart';
 
 /// "Mi cocina": rejilla con todas las zonas (nevera, congelador, despensa…)
@@ -169,7 +170,9 @@ class _ZoneTile extends StatelessWidget {
             icon: Icons.notifications_active_rounded,
           )
         : KitchenZonesGrid.styleOf(z.zone);
-    final label = isAll ? 'Revisar' : z.zone.label;
+    final label = isAll
+        ? context.l.kitchenReview
+        : context.l.kitchenZone(z.zone.name);
     final count = z.count;
     final alert = z.expired > 0
         ? (
