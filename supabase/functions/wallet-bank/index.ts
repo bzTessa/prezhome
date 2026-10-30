@@ -5,7 +5,7 @@
 // de Enable Banking (modo personal, gratis, solo sus cuentas).
 //
 // POST { action: "set_key", app_id, pem }  guarda su aplicación (clave en Vault)
-// POST { action: "banks", country }        bancos disponibles en ese país
+// POST { action: "banks", country? }       bancos (todos si no hay país)
 // POST { action: "connect", bank, country } -> { url } para entrar en el banco;
 //      el banco vuelve a bank-callback, que crea las cuentas.
 // POST { action: "sync" } -> { accounts: [{ account_id, balance, rows }] }
@@ -92,10 +92,16 @@ Deno.serve(async (req: Request) => {
     }
 
     if (body.action === "banks") {
-      const country = String(body.country ?? "ES").toUpperCase();
-      const data = await eb(app, `/aspsps?country=${encodeURIComponent(country)}&service=AIS`);
+      // Sin país: todos los bancos de Enable Banking, con su país.
+      const country = body.country
+        ? `&country=${encodeURIComponent(String(body.country).toUpperCase())}`
+        : "";
+      const data = await eb(app, `/aspsps?service=AIS${country}`);
       return json({
-        banks: (data.aspsps ?? []).map((a: { name: string }) => a.name),
+        banks: (data.aspsps ?? []).map((a: { name: string; country: string }) => ({
+          name: a.name,
+          country: a.country,
+        })),
       });
     }
 
