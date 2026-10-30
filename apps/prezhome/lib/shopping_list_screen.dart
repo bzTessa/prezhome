@@ -42,6 +42,7 @@ import 'widgets/product_search_sheet.dart';
 import 'widgets/shopping/shopping_parts.dart';
 import 'widgets/tactile_button.dart';
 import 'utils/friendly_error.dart';
+import 'l10n/l10n.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
 ///
@@ -522,9 +523,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        content: const Text(
-          'Sin conexión en vivo ahora mismo; se actualizará al recargar.',
-        ),
+        content: Text(context.l.shopLiveOffline),
       ),
     );
   }
@@ -609,7 +608,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
+        SnackBar(content: Text(friendlyError(e, context.l.couldNotUpdate))),
       );
     }
   }
@@ -654,7 +653,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo actualizar')),
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -689,12 +688,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       await _reload();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$pending productos guardados en la despensa')),
+        SnackBar(content: Text(context.l.shopSavedToPantry(pending))),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo actualizar'))),
+        SnackBar(content: Text(friendlyError(e, context.l.couldNotUpdate))),
       );
     }
   }
@@ -725,7 +724,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ...productPhotoTiles(ctx, name: item.name, imageUrl: item.imageUrl),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
-              title: const Text('Quitar de la lista'),
+              title: Text(context.l.shopRemoveFromList),
               onTap: () => Navigator.of(ctx).pop('delete'),
             ),
             const SizedBox(height: 8),
@@ -742,7 +741,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       case 'delete':
         await _removeWithUndo([
           item,
-        ], 'Quitado "${shoppingCleanName(item.name)}"');
+        ], context.l.shopRemovedOne(shoppingCleanName(item.name)));
         break;
     }
   }
@@ -775,7 +774,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo cambiar la foto'))),
+        SnackBar(
+          content: Text(friendlyError(e, context.l.couldNotChangePhoto)),
+        ),
       );
     }
   }
@@ -834,7 +835,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           builder: (ctx, setDialog) => AlertDialog(
             scrollable: true,
             backgroundColor: AppColors.cream,
-            title: const Text('Añadir a la lista'),
+            title: Text(context.l.shopAddToList),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -845,7 +846,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     Expanded(
                       child: _typeChoice(
                         'comida',
-                        'Comida',
+                        context.l.shopTypeFood,
                         Icons.restaurant,
                         itemType,
                         (v) => setDialog(() => itemType = v),
@@ -855,7 +856,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     Expanded(
                       child: _typeChoice(
                         'hogar',
-                        'Hogar/Limpieza',
+                        context.l.shopTypeHome,
                         Icons.cleaning_services,
                         itemType,
                         (v) => setDialog(() => itemType = v),
@@ -867,9 +868,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 TextField(
                   controller: nameCtrl,
                   autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                    hintText: 'Producto',
+                  decoration: InputDecoration(
+                    labelText: context.l.name,
+                    hintText: context.l.product,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -881,8 +882,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        decoration: const InputDecoration(
-                          labelText: 'Cantidad',
+                        decoration: InputDecoration(
+                          labelText: context.l.quantity,
                         ),
                       ),
                     ),
@@ -890,7 +891,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     Expanded(
                       child: TextField(
                         controller: unitCtrl,
-                        decoration: const InputDecoration(labelText: 'Unidad'),
+                        decoration: InputDecoration(labelText: context.l.unit),
                       ),
                     ),
                   ],
@@ -900,11 +901,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancelar'),
+                child: Text(context.l.cancel),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Añadir'),
+                child: Text(context.l.add),
               ),
             ],
           ),
@@ -928,9 +929,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
     if (name.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El nombre no puede estar vacío.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.nameEmpty)));
       return;
     }
 
@@ -1050,7 +1051,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo añadir')),
+          content: Text(friendlyError(e, context.l.couldNotAdd)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -1093,8 +1094,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         SnackBar(
           content: Text(
             added.isEmpty
-                ? 'Ya tienes en casa todo lo del plan'
-                : 'Añadidos ${added.length} productos del plan',
+                ? context.l.shopPlanAllAtHome
+                : context.l.shopAddedFromPlan(added.length),
           ),
         ),
       );
@@ -1129,7 +1130,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       backgroundColor: AppColors.cream,
       appBar: widget.embedded
           ? null
-          : AppBar(title: const Text('Lista de la compra')),
+          : AppBar(title: Text(context.l.shopListTitle)),
       body: FutureBuilder<List<ShoppingListItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
@@ -1256,11 +1257,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   /// Nombre visible de la lista ACTIVA ('Lista principal' si es la implícita).
   String get _activeListName {
-    if (_activeListId == null) return 'Lista principal';
+    if (_activeListId == null) return context.l.shopMainList;
     for (final l in _lists) {
       if (l.id == _activeListId) return l.name;
     }
-    return 'Lista principal';
+    return context.l.shopMainList;
   }
 
   /// Abre la vista general de listas (crear/elegir lista). Al volver, aplica la
@@ -1319,7 +1320,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (!mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo crear la lista')),
+          content: Text(friendlyError(e, context.l.couldNotCreateList)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -1425,7 +1426,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               Padding(
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Text(
-                  'Las recetas usarán productos de este súper.',
+                  context.l.shopRecipesUseStore,
                   style: TextStyle(color: AppColors.inkMuted),
                 ),
               ),
@@ -1453,13 +1454,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (mounted) setState(() => _superKeys = next);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No se pudo guardar el supermercado. Inténtalo de nuevo.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.shopStoreSaveError)));
     }
   }
 
@@ -1502,20 +1499,20 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SwitchListTile(
-                  title: const Text('Agrupar por pasillo'),
-                  subtitle: const Text('Verduras, carne, limpieza…'),
+                  title: Text(context.l.shopGroupByAisle),
+                  subtitle: Text(context.l.shopGroupHint),
                   value: _view.groupByAisle,
                   onChanged: (v) => update(_view.copyWith(groupByAisle: v)),
                 ),
                 SwitchListTile(
-                  title: const Text('Mostrar fotos de los productos'),
+                  title: Text(context.l.shopShowPhotos),
                   value: _view.showPhotos,
                   onChanged: (v) => update(_view.copyWith(showPhotos: v)),
                 ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.list_alt_rounded),
-                  title: const Text('Mis listas'),
+                  title: Text(context.l.shopMyLists),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     _openListsOverview();
@@ -1523,7 +1520,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.category_outlined),
-                  title: const Text('Categorías'),
+                  title: Text(context.l.categories),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     _openCategoriesManager();
@@ -1568,18 +1565,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             Expanded(
               child: TactileButton(
                 label: comprados.isEmpty
-                    ? 'Terminar compra'
-                    : 'Terminar compra (${comprados.length})',
+                    ? context.l.shopFinish
+                    : context.l.shopFinishCount(comprados.length),
                 icon: Icons.kitchen_rounded,
                 onPressed: () => _finishShopping(comprados),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
             Tooltip(
-              message: 'Escanear ticket',
+              message: context.l.shopScanTicket,
               child: Semantics(
                 button: true,
-                label: 'Escanear ticket',
+                label: context.l.shopScanTicket,
                 child: PressScale(
                   onTap: _openScanTicket,
                   child: Container(
@@ -1618,7 +1615,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           child: TextButton.icon(
             onPressed: porComprar == 0 ? null : _checkAll,
             icon: const Icon(Icons.done_all_rounded, size: 20),
-            label: const Text('Todo comprado'),
+            label: Text(context.l.shopAllBought),
             style: TextButton.styleFrom(foregroundColor: AppColors.done),
           ),
         ),
@@ -1634,7 +1631,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       return [
         SliverToBoxAdapter(
           child: ShoppingSection(
-            title: 'Por comprar',
+            title: context.l.shopToBuy,
             count: pendientes.where((i) => !i.checked).length,
             complete: pendientes.every((i) => i.checked),
             expanded: expanded,
@@ -1694,7 +1691,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Lo habitual',
+            context.l.shopUsual,
             style: TextStyle(
               color: AppColors.inkMuted,
               fontWeight: FontWeight.w600,
@@ -1753,7 +1750,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// con "Terminar compra".
   Widget _cartCard(List<ShoppingListItem> comprados) {
     return ShoppingSection(
-      title: 'En el carrito',
+      title: context.l.shopInCart,
       count: comprados.length,
       icon: Icons.shopping_cart_rounded,
       iconColor: AppColors.done,
@@ -1767,12 +1764,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Quita de la lista todo lo ya comprado (ya está en la despensa). Sin
   /// pregunta previa: se puede deshacer.
   Future<void> _clearChecked(List<ShoppingListItem> comprados) =>
-      _removeWithUndo(
-        comprados,
-        comprados.length == 1
-            ? 'Quitado 1 producto'
-            : 'Quitados ${comprados.length} productos',
-      );
+      _removeWithUndo(comprados, context.l.shopRemovedMany(comprados.length));
 
   /// Quita [items] al momento y ofrece "Deshacer" (los vuelve a añadir tal
   /// cual estaban).
@@ -1794,6 +1786,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       });
     }
     final messenger = ScaffoldMessenger.of(context);
+    final l = context.l;
     try {
       for (final item in targets) {
         await _repo.applyLocalWrite(
@@ -1808,7 +1801,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       await _reload();
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo quitar'))),
+        SnackBar(content: Text(friendlyError(e, l.couldNotRemove))),
       );
       return;
     }
@@ -1820,7 +1813,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           // Con acción Flutter la deja fija; que se vaya sola.
           persist: false,
           action: SnackBarAction(
-            label: 'Deshacer',
+            label: l.undo,
             onPressed: () => _restore(targets),
           ),
         ),
@@ -1847,7 +1840,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo deshacer'))),
+        SnackBar(content: Text(friendlyError(e, context.l.couldNotUndo))),
       );
     }
   }
@@ -1876,7 +1869,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           : SwipeSide(
               icon: Icons.check_rounded,
               color: AppColors.done,
-              label: 'Al carrito',
+              label: context.l.shopToCart,
               onTrigger: () => _toggleChecked(item, true),
             ),
       child: ShoppingItemTile(
@@ -1886,14 +1879,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         quantity: item.quantity,
         unit: item.unit,
         onQuantityChanged: (q) => _setQuantity(item, q),
-        subtitle: item.source == 'auto' ? 'Del plan de la semana' : null,
+        subtitle: item.source == 'auto' ? context.l.shopFromPlan : null,
         onToggle: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
         // Tocar la foto permite cambiarla (cámara, galería o súper).
         leading: _view.showPhotos
             ? Semantics(
                 button: true,
-                label: 'Cambiar foto',
+                label: context.l.changePhoto,
                 child: GestureDetector(
                   onTap: () => _openItemActions(item),
                   child: photo,
@@ -1907,9 +1900,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Widget _emptyState() {
     return EmptyState(
       image: 'assets/images/vacio_compra.png',
-      title: 'Tu lista está vacía',
-      message: 'Escribe arriba lo que necesitas o trae lo del plan.',
-      actionLabel: 'Desde el plan',
+      title: context.l.shopEmptyTitle,
+      message: context.l.shopEmptyHint,
+      actionLabel: context.l.shopFromPlanAction,
       actionIcon: Icons.event_note_rounded,
       onAction: _generating ? null : _generarDesdePlan,
     );
@@ -1997,7 +1990,7 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Compra completada',
+                  context.l.shopDoneTitle,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -2006,7 +1999,7 @@ class _CompraCelebracionState extends State<_CompraCelebracion>
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Ya tienes todo lo de la lista. ¡Buen trabajo!',
+                  context.l.shopDoneHint,
                   style: TextStyle(color: AppColors.ink),
                 ),
               ],

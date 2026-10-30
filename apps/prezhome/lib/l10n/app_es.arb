@@ -342,5 +342,88 @@
         "type": "String"
       }
     }
-  }
+  },
+  "shopLiveOffline": "Sin conexión en vivo ahora mismo; se actualizará al recargar.",
+  "couldNotUpdate": "No se pudo actualizar",
+  "shopSavedToPantry": "{count} productos guardados en la despensa",
+  "@shopSavedToPantry": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopRemoveFromList": "Quitar de la lista",
+  "shopRemovedOne": "Quitado \"{name}\"",
+  "@shopRemovedOne": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotChangePhoto": "No se pudo cambiar la foto",
+  "shopAddToList": "Añadir a la lista",
+  "shopTypeFood": "Comida",
+  "shopTypeHome": "Hogar/Limpieza",
+  "name": "Nombre",
+  "product": "Producto",
+  "quantity": "Cantidad",
+  "unit": "Unidad",
+  "cancel": "Cancelar",
+  "add": "Añadir",
+  "nameEmpty": "El nombre no puede estar vacío.",
+  "couldNotAdd": "No se pudo añadir",
+  "shopPlanAllAtHome": "Ya tienes en casa todo lo del plan",
+  "shopAddedFromPlan": "Añadidos {count} productos del plan",
+  "@shopAddedFromPlan": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopListTitle": "Lista de la compra",
+  "shopMainList": "Lista principal",
+  "couldNotCreateList": "No se pudo crear la lista",
+  "shopRecipesUseStore": "Las recetas usarán productos de este súper.",
+  "shopStoreSaveError": "No se pudo guardar el supermercado. Inténtalo de nuevo.",
+  "shopGroupByAisle": "Agrupar por pasillo",
+  "shopGroupHint": "Verduras, carne, limpieza…",
+  "shopShowPhotos": "Mostrar fotos de los productos",
+  "shopMyLists": "Mis listas",
+  "categories": "Categorías",
+  "shopFinish": "Terminar compra",
+  "shopFinishCount": "Terminar compra ({count})",
+  "@shopFinishCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopScanTicket": "Escanear ticket",
+  "shopAllBought": "Todo comprado",
+  "shopToBuy": "Por comprar",
+  "shopUsual": "Lo habitual",
+  "shopInCart": "En el carrito",
+  "shopRemovedMany": "{count, plural, =1{Quitado 1 producto} other{Quitados {count} productos}}",
+  "@shopRemovedMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotRemove": "No se pudo quitar",
+  "undo": "Deshacer",
+  "couldNotUndo": "No se pudo deshacer",
+  "shopToCart": "Al carrito",
+  "shopFromPlan": "Del plan de la semana",
+  "changePhoto": "Cambiar foto",
+  "shopEmptyTitle": "Tu lista está vacía",
+  "shopEmptyHint": "Escribe arriba lo que necesitas o trae lo del plan.",
+  "shopFromPlanAction": "Desde el plan",
+  "shopDoneTitle": "Compra completada",
+  "shopDoneHint": "Ya tienes todo lo de la lista. ¡Buen trabajo!"
 }
