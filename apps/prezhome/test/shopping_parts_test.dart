@@ -85,6 +85,7 @@ void main() {
           pending: 3,
           done: 1,
           estimate: 12.4,
+          unpriced: 2,
           onTapList: () {},
           onGenerate: () {},
           onOptions: () {},
@@ -92,7 +93,7 @@ void main() {
       ),
     );
     expect(find.text('3 por comprar · 1 en el carro'), findsOneWidget);
-    expect(find.text('≈ 12,40 €'), findsOneWidget);
+    expect(find.text('≈ 12,40 € · 2 sin precio'), findsOneWidget);
     expect(find.byType(CartProgressBar), findsOneWidget);
   });
 }

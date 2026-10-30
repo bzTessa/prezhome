@@ -7,7 +7,7 @@ import 'package:prezhome/services/product_search_service.dart';
 
 Map<String, dynamic> _off(List<Map<String, dynamic>> products) => {
   'count': products.length,
-  'products': products,
+  'hits': products,
 };
 
 void main() {
@@ -16,17 +16,20 @@ void main() {
   group('buildProductSearchUri', () {
     test('filtra por España y, si se pide, por tienda', () {
       final uri = buildProductSearchUri('leche', storeTag: 'mercadona');
-      expect(uri.host, 'es.openfoodfacts.org');
-      expect(uri.queryParameters['search_terms'], 'leche');
-      expect(uri.queryParameters['tag_0'], 'spain');
-      expect(uri.queryParameters['tagtype_1'], 'stores');
-      expect(uri.queryParameters['tag_1'], 'mercadona');
-      expect(uri.queryParameters['json'], '1');
+      expect(uri.host, 'search.openfoodfacts.org');
+      expect(
+        uri.queryParameters['q'],
+        'leche countries_tags:"en:spain" stores:"mercadona"',
+      );
+      expect(uri.queryParameters['langs'], 'es');
     });
 
-    test('sin tienda no añade el segundo filtro', () {
-      final uri = buildProductSearchUri('leche');
-      expect(uri.queryParameters.containsKey('tag_1'), isFalse);
+    test('sin tienda no filtra por tienda y limpia la sintaxis', () {
+      final uri = buildProductSearchUri('jamón: "serrano"');
+      expect(
+        uri.queryParameters['q'],
+        'jamón serrano countries_tags:"en:spain"',
+      );
     });
   });
 
@@ -67,6 +70,19 @@ void main() {
     },
   );
 
+  test('parseProductSearch acepta marcas en lista (search-a-licious)', () {
+    final products = parseProductSearch(
+      _off([
+        {
+          'code': '1',
+          'product_name': 'Jamón serrano',
+          'brands': ['Hacendado', 'Mercadona'],
+        },
+      ]),
+    );
+    expect(products.single.brand, 'Hacendado');
+  });
+
   test('parsePackageQuantity entiende los formatos habituales', () {
     expect(parsePackageQuantity('1 l'), (quantity: 1.0, unit: 'litros'));
     expect(parsePackageQuantity('500 g'), (quantity: 500.0, unit: 'g'));
@@ -82,12 +98,12 @@ void main() {
       final calls = <Uri>[];
       final client = MockClient((req) async {
         calls.add(req.url);
-        final store = req.url.queryParameters['tag_1'];
+        final inStore = req.url.queryParameters['q']!.contains('stores:');
         return http.Response.bytes(
           utf8.encode(
             jsonEncode(
               _off(
-                store == null
+                !inStore
                     ? [
                         {'code': '9', 'product_name': 'Kéfir'},
                       ]
@@ -141,11 +157,21 @@ void main() {
       expect(calls, 5);
     });
 
-    test('un error de red no lanza', () async {
-      final client = MockClient((_) async => throw Exception('sin red'));
+    test('sin conexión no lanza y lo dice', () async {
+      final client = MockClient(
+        (_) async => throw http.ClientException('sin red'),
+      );
       final r = await ProductSearchService(client: client).search('arroz');
       expect(r.failed, isTrue);
+      expect(r.offline, isTrue);
       expect(r.products, isEmpty);
+    });
+
+    test('si OFF falla no es falta de conexión', () async {
+      final client = MockClient((_) async => http.Response('caído', 503));
+      final r = await ProductSearchService(client: client).search('arroz');
+      expect(r.failed, isTrue);
+      expect(r.offline, isFalse);
     });
   });
 }

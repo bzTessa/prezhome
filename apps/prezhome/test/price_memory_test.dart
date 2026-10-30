@@ -43,9 +43,9 @@ void main() {
 
     test('suma precio x cantidad de lo que conoce y cuenta cobertura', () {
       final est = PriceMemory.estimateCost([
-        (name: 'Leche', quantity: 2), // 2 x 1.0 = 2.0
-        (name: 'Pan', quantity: null), // 1 x 0.8 = 0.8
-        (name: 'Tomates', quantity: 3), // sin precio -> no cuenta
+        (name: 'Leche', quantity: 2, unit: 'ud'), // 2 x 1.0 = 2.0
+        (name: 'Pan', quantity: null, unit: null), // 1 x 0.8 = 0.8
+        (name: 'Agua', quantity: 3, unit: 'l'), // sin precio -> no cuenta
       ], prices);
       expect(est.total, closeTo(2.8, 0.001));
       expect(est.priced, 2);
@@ -56,17 +56,50 @@ void main() {
 
     test('sin precios conocidos: total 0 y no fiable', () {
       final est = PriceMemory.estimateCost([
-        (name: 'Quinoa', quantity: 1),
+        (name: 'Agua', quantity: 1, unit: 'l'),
       ], prices);
       expect(est.total, 0);
       expect(est.priced, 0);
       expect(est.isReliable, isFalse);
     });
 
+    test('en gramos cuenta un paquete, no precio x gramos', () {
+      // Antes: 900 g x 5,60 € = 5.040 €.
+      final est = PriceMemory.estimateCost(
+        [(name: 'Pechuga de pollo', quantity: 900, unit: 'g')],
+        {
+          'pechuga de pollo': const ProductPrice(
+            nameNormalized: 'pechuga de pollo',
+            lastUnitPrice: 5.6,
+            samples: 1,
+          ),
+        },
+      );
+      expect(est.total, closeTo(5.6, 0.001));
+    });
+
+    test('sin ticket usa el aproximado y descarta lo absurdo', () {
+      final est = PriceMemory.estimateCost(
+        [
+          (name: 'Arroz', quantity: 500, unit: 'g'), // 1,3 €/kg -> 0,65 €
+          (name: 'Sal', quantity: 1, unit: 'ud'), // 0,50 €
+          (name: 'Caviar', quantity: 1, unit: 'ud'), // 100 € (ticket) -> fuera
+        ],
+        {
+          'caviar': const ProductPrice(
+            nameNormalized: 'caviar',
+            lastUnitPrice: 100,
+          ),
+        },
+      );
+      expect(est.total, closeTo(1.15, 0.001));
+      expect(est.priced, 2);
+    });
+
     test('la clave normaliza acentos/mayúsculas', () {
       // 'Plátano' normaliza a 'platano'; si no está, no cuenta.
       final est = PriceMemory.estimateCost([
-        (name: 'LECHE', quantity: 1),
+        (name: 'LECHE', quantity: 1, unit: 'ud'),
       ], prices);
       expect(est.priced, 1);
       expect(est.total, closeTo(1.0, 0.001));
