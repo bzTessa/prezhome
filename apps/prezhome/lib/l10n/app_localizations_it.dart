@@ -1552,4 +1552,307 @@ class AppLocalizationsIt extends AppLocalizations {
   String recNoMatch(String query) {
     return 'Nessuna ricetta corrisponde a\n\"$query\".';
   }
+
+  @override
+  String get rdPhoto => 'Foto della ricetta';
+
+  @override
+  String get rdAutoPhoto => 'Cerca un\'altra foto automatica';
+
+  @override
+  String get rdAutoPhotoHint => 'Cerca una nuova immagine dal nome';
+
+  @override
+  String get rdGallery => 'Scegli dalla galleria';
+
+  @override
+  String get rdNoBetterPhoto => 'Per ora non ho trovato una foto migliore';
+
+  @override
+  String get rdUploadError => 'Impossibile caricare la foto';
+
+  @override
+  String rdShareText(String title, String code) {
+    return 'Ecco la mia ricetta di $title su PrezHome. Nell\'app, vai su Ricette, tocca Aggiungi ricetta e poi Con un codice: $code';
+  }
+
+  @override
+  String get rdSavedFreezer => 'Salvato in freezer.';
+
+  @override
+  String get couldNotSave => 'Impossibile salvare';
+
+  @override
+  String get rdVideoError => 'Impossibile aprire il link del video';
+
+  @override
+  String get rdWatchVideo => 'Guarda il video';
+
+  @override
+  String get share => 'Condividi';
+
+  @override
+  String get rdEdit => 'Modifica ricetta';
+
+  @override
+  String get rdMinutes => 'Minuti';
+
+  @override
+  String get rdKcalServing => 'Kcal/porzione';
+
+  @override
+  String get rdPerServingShort => 'a porzione';
+
+  @override
+  String rdServingWord(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Porzioni',
+      one: 'Porzione',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rdFreezable => 'Congelabile';
+
+  @override
+  String get rdIngredients => 'Ingredienti';
+
+  @override
+  String get rdStepsWord => 'Passaggi';
+
+  @override
+  String rdSteps(int count) {
+    return 'Passaggi ($count)';
+  }
+
+  @override
+  String get rdNutrition => 'Nutrizione';
+
+  @override
+  String get rdNoIngredients => 'Nessun ingrediente registrato.';
+
+  @override
+  String rdOriginal(String servings) {
+    return 'Ricetta originale: $servings';
+  }
+
+  @override
+  String rdForHome(String servings) {
+    return 'Per la tua casa oggi: $servings';
+  }
+
+  @override
+  String get rdHaveAll => 'Hai tutto in casa';
+
+  @override
+  String rdHaveSome(int have, int total) {
+    return 'Hai $have su $total in casa';
+  }
+
+  @override
+  String rdMissing(int count) {
+    return 'Ne mancano $count';
+  }
+
+  @override
+  String get rdAtHome => 'In casa';
+
+  @override
+  String get rdLacking => 'Manca';
+
+  @override
+  String get rdNoSteps =>
+      'Questa ricetta non ha passaggi. Puoi aggiungerli modificandola.';
+
+  @override
+  String get rdPerServingTitle => 'A porzione';
+
+  @override
+  String get rdNoNutrition => 'Nessun dato nutrizionale.';
+
+  @override
+  String rdPerServing(String amount) {
+    return '$amount a porzione';
+  }
+
+  @override
+  String rdTotal(String amount) {
+    return '≈ $amount in totale';
+  }
+
+  @override
+  String get rdApproxCost =>
+      'Costo approssimativo. Scansiona gli scontrini per affinarlo con i tuoi prezzi reali.';
+
+  @override
+  String get rdStartCooking => 'Inizia a cucinare';
+
+  @override
+  String rdAddedMissing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Aggiunti $count prodotti alla spesa',
+      one: 'Aggiunto alla lista della spesa',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rdNeedProfile =>
+      'Completa un Profilo nutrizionale per vedere quanti grammi e calorie spettano a ciascuno.';
+
+  @override
+  String get rdMember => 'Membro';
+
+  @override
+  String get rdAdjustSplit =>
+      'Regola la ripartizione delle calorie per pasto nel profilo per questo tipo di ricetta.';
+
+  @override
+  String get rdByProfile => 'Secondo il profilo di ciascuno';
+
+  @override
+  String get rdByProfileHint =>
+      'Quantità e calorie a persona per questo pasto.';
+
+  @override
+  String get arWriteName => 'Scrivi il nome';
+
+  @override
+  String get arWriteNameHint => 'Scrivi il nome o incolla una ricetta intera…';
+
+  @override
+  String get arGenerate => 'Genera';
+
+  @override
+  String get arFilled => 'Ricetta compilata. Controllala prima di salvare.';
+
+  @override
+  String get arFillError => 'Impossibile completare la ricetta';
+
+  @override
+  String get arImport => 'Importa ricetta';
+
+  @override
+  String get arPasteRecipe => 'Incolla la ricetta';
+
+  @override
+  String get arImportHint =>
+      'Incolla il link di TikTok, YouTube o di un sito, o il testo della ricetta. Su Instagram copia la descrizione del post e incollala qui.';
+
+  @override
+  String get arLinkOrText => 'Link o testo della ricetta';
+
+  @override
+  String get arRecipeText => 'Testo della ricetta';
+
+  @override
+  String get paste => 'Incolla';
+
+  @override
+  String get arImportBtn => 'Importa';
+
+  @override
+  String get arNeedLink => 'Incolla un link o il testo completo della ricetta.';
+
+  @override
+  String get arImported => 'Ricetta importata. Controllala prima di salvare.';
+
+  @override
+  String get arImportLinkError =>
+      'Non sono riuscito a importare la ricetta da quel link';
+
+  @override
+  String get arImportError => 'Impossibile importare';
+
+  @override
+  String get arPickMealType => 'Scegli almeno un tipo di pasto.';
+
+  @override
+  String get arVideoNotUrl =>
+      'Il link del video non sembra un URL, ma lo salviamo comunque.';
+
+  @override
+  String get arRecalculated => 'Calorie e macro ricalcolate dagli ingredienti.';
+
+  @override
+  String arPhotoFailed(String error) {
+    return 'Ricetta salvata, ma non è stato possibile caricare la foto: $error';
+  }
+
+  @override
+  String get arSaveError => 'Errore durante il salvataggio';
+
+  @override
+  String get arReadingVideo => 'Leggo la ricetta dal video…';
+
+  @override
+  String get arCompleting => 'Completo la ricetta…';
+
+  @override
+  String get arAddPhoto => 'Aggiungi foto (facoltativo)';
+
+  @override
+  String get arTitleField => 'Titolo';
+
+  @override
+  String get arTitleRequired => 'Dagli un titolo';
+
+  @override
+  String get arDescription => 'Descrizione (facoltativo)';
+
+  @override
+  String get arVideoLink => 'Link del video (facoltativo)';
+
+  @override
+  String get arMealTypes => 'Tipo di pasto (puoi sceglierne più di uno)';
+
+  @override
+  String get arAuto => 'Auto';
+
+  @override
+  String get arServingsHelper => 'Per quante persone';
+
+  @override
+  String get arGramsServing => 'Grammi / porzione';
+
+  @override
+  String get arNutritionTitle => 'Valori nutrizionali (a porzione)';
+
+  @override
+  String get arCooking => 'Cucina';
+
+  @override
+  String get arPrepMin => 'Preparazione (min)';
+
+  @override
+  String get arCookMin => 'Cottura (min)';
+
+  @override
+  String get arAppliance => 'Apparecchio principale';
+
+  @override
+  String get arFreezable => 'Si può congelare';
+
+  @override
+  String get arAddIngredient => 'Aggiungi ingrediente';
+
+  @override
+  String get arStepsTitle => 'Passaggi di preparazione';
+
+  @override
+  String get arStepsHint => 'Scrivi i passaggi, uno per riga…';
+
+  @override
+  String get arSaveChanges => 'Salva modifiche';
+
+  @override
+  String get arSaveRecipe => 'Salva ricetta';
+
+  @override
+  String get arIngredient => 'Ingrediente';
 }

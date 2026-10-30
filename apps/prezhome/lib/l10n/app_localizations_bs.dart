@@ -1543,4 +1543,305 @@ class AppLocalizationsBs extends AppLocalizations {
   String recNoMatch(String query) {
     return 'Nema recepata koji odgovaraju\n\"$query\".';
   }
+
+  @override
+  String get rdPhoto => 'Fotografija recepta';
+
+  @override
+  String get rdAutoPhoto => 'Automatski potraži drugu fotografiju';
+
+  @override
+  String get rdAutoPhotoHint => 'Traži novu sliku po nazivu';
+
+  @override
+  String get rdGallery => 'Izaberi iz galerije';
+
+  @override
+  String get rdNoBetterPhoto => 'Za sada nisam našao bolju fotografiju';
+
+  @override
+  String get rdUploadError => 'Fotografija nije otpremljena';
+
+  @override
+  String rdShareText(String title, String code) {
+    return 'Šaljem ti svoj recept za $title u PrezHome. U aplikaciji idi na Recepti, dodirni Dodaj recept pa S kodom: $code';
+  }
+
+  @override
+  String get rdSavedFreezer => 'Sačuvano u zamrzivaču.';
+
+  @override
+  String get couldNotSave => 'Čuvanje nije uspjelo';
+
+  @override
+  String get rdVideoError => 'Link videa nije otvoren';
+
+  @override
+  String get rdWatchVideo => 'Pogledaj video';
+
+  @override
+  String get share => 'Podijeli';
+
+  @override
+  String get rdEdit => 'Uredi recept';
+
+  @override
+  String get rdMinutes => 'Minute';
+
+  @override
+  String get rdKcalServing => 'Kcal/porcija';
+
+  @override
+  String get rdPerServingShort => 'po porciji';
+
+  @override
+  String rdServingWord(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Porcije',
+      one: 'Porcija',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rdFreezable => 'Može se zamrznuti';
+
+  @override
+  String get rdIngredients => 'Sastojci';
+
+  @override
+  String get rdStepsWord => 'Koraci';
+
+  @override
+  String rdSteps(int count) {
+    return 'Koraci ($count)';
+  }
+
+  @override
+  String get rdNutrition => 'Nutritivne vrijednosti';
+
+  @override
+  String get rdNoIngredients => 'Nema zabilježenih sastojaka.';
+
+  @override
+  String rdOriginal(String servings) {
+    return 'Originalni recept: $servings';
+  }
+
+  @override
+  String rdForHome(String servings) {
+    return 'Za tvoje domaćinstvo danas: $servings';
+  }
+
+  @override
+  String get rdHaveAll => 'Imaš sve kod kuće';
+
+  @override
+  String rdHaveSome(int have, int total) {
+    return 'Imaš $have od $total kod kuće';
+  }
+
+  @override
+  String rdMissing(int count) {
+    return 'Nedostaje $count';
+  }
+
+  @override
+  String get rdAtHome => 'Kod kuće';
+
+  @override
+  String get rdLacking => 'Nedostaje';
+
+  @override
+  String get rdNoSteps =>
+      'Ovaj recept nema koraka. Možeš ih dodati uređivanjem.';
+
+  @override
+  String get rdPerServingTitle => 'Po porciji';
+
+  @override
+  String get rdNoNutrition => 'Nema nutritivnih podataka.';
+
+  @override
+  String rdPerServing(String amount) {
+    return '$amount po porciji';
+  }
+
+  @override
+  String rdTotal(String amount) {
+    return '≈ $amount ukupno';
+  }
+
+  @override
+  String get rdApproxCost =>
+      'Približan trošak. Skeniraj račune da ga preciziraš stvarnim cijenama.';
+
+  @override
+  String get rdStartCooking => 'Počni kuhati';
+
+  @override
+  String rdAddedMissing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dodano $count proizvoda u kupovinu',
+      one: 'Dodano na listu za kupovinu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rdNeedProfile =>
+      'Dopuni nutritivni profil da vidiš koliko grama i kalorija pripada svakoj osobi.';
+
+  @override
+  String get rdMember => 'Član';
+
+  @override
+  String get rdAdjustSplit =>
+      'Prilagodi raspodjelu kalorija po obroku u profilu za ovu vrstu recepta.';
+
+  @override
+  String get rdByProfile => 'Prema profilu svakog';
+
+  @override
+  String get rdByProfileHint => 'Količina i kalorije po osobi za ovaj obrok.';
+
+  @override
+  String get arWriteName => 'Upiši naziv';
+
+  @override
+  String get arWriteNameHint => 'Upiši naziv ili zalijepi cijeli recept…';
+
+  @override
+  String get arGenerate => 'Generiši';
+
+  @override
+  String get arFilled => 'Recept je popunjen. Provjeri ga prije čuvanja.';
+
+  @override
+  String get arFillError => 'Recept nije dovršen';
+
+  @override
+  String get arImport => 'Uvezi recept';
+
+  @override
+  String get arPasteRecipe => 'Zalijepi recept';
+
+  @override
+  String get arImportHint =>
+      'Zalijepi link s TikToka, YouTubea ili web stranice, ili tekst recepta. Na Instagramu kopiraj opis objave i zalijepi ga ovdje.';
+
+  @override
+  String get arLinkOrText => 'Link ili tekst recepta';
+
+  @override
+  String get arRecipeText => 'Tekst recepta';
+
+  @override
+  String get paste => 'Zalijepi';
+
+  @override
+  String get arImportBtn => 'Uvezi';
+
+  @override
+  String get arNeedLink => 'Zalijepi link ili cijeli tekst recepta.';
+
+  @override
+  String get arImported => 'Recept je uvezen. Provjeri ga prije čuvanja.';
+
+  @override
+  String get arImportLinkError => 'Nisam mogao uvesti recept s tog linka';
+
+  @override
+  String get arImportError => 'Uvoz nije uspio';
+
+  @override
+  String get arPickMealType => 'Izaberi barem jednu vrstu obroka.';
+
+  @override
+  String get arVideoNotUrl =>
+      'Link videa ne izgleda kao URL, ali ga ipak čuvamo.';
+
+  @override
+  String get arRecalculated => 'Kalorije i makroi preračunati iz sastojaka.';
+
+  @override
+  String arPhotoFailed(String error) {
+    return 'Recept je sačuvan, ali fotografija nije otpremljena: $error';
+  }
+
+  @override
+  String get arSaveError => 'Greška pri čuvanju';
+
+  @override
+  String get arReadingVideo => 'Čitam recept iz videa…';
+
+  @override
+  String get arCompleting => 'Dovršavam recept…';
+
+  @override
+  String get arAddPhoto => 'Dodaj fotografiju (neobavezno)';
+
+  @override
+  String get arTitleField => 'Naslov';
+
+  @override
+  String get arTitleRequired => 'Daj mu naslov';
+
+  @override
+  String get arDescription => 'Opis (neobavezno)';
+
+  @override
+  String get arVideoLink => 'Link videa (neobavezno)';
+
+  @override
+  String get arMealTypes => 'Vrsta obroka (možeš izabrati više)';
+
+  @override
+  String get arAuto => 'Auto';
+
+  @override
+  String get arServingsHelper => 'Za koliko je';
+
+  @override
+  String get arGramsServing => 'Grami / porcija';
+
+  @override
+  String get arNutritionTitle => 'Nutritivne vrijednosti (po porciji)';
+
+  @override
+  String get arCooking => 'Kuhanje';
+
+  @override
+  String get arPrepMin => 'Priprema (min)';
+
+  @override
+  String get arCookMin => 'Kuhanje (min)';
+
+  @override
+  String get arAppliance => 'Glavni uređaj';
+
+  @override
+  String get arFreezable => 'Može se zamrznuti';
+
+  @override
+  String get arAddIngredient => 'Dodaj sastojak';
+
+  @override
+  String get arStepsTitle => 'Koraci pripreme';
+
+  @override
+  String get arStepsHint => 'Upiši korake, jedan po redu…';
+
+  @override
+  String get arSaveChanges => 'Sačuvaj izmjene';
+
+  @override
+  String get arSaveRecipe => 'Sačuvaj recept';
+
+  @override
+  String get arIngredient => 'Sastojak';
 }
