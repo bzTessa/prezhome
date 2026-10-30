@@ -8,6 +8,7 @@ import '../animations/press_scale.dart';
 import '../animations/spring_value.dart';
 import '../miau_character.dart';
 import '../../utils/money.dart';
+import '../../l10n/l10n.dart';
 
 /// Piezas visuales de la lista de la compra. Sin acceso a datos: reciben lo
 /// que pintan y callbacks, para poder probarlas y previsualizarlas aparte.
@@ -104,7 +105,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                       TextButton.icon(
                         onPressed: onTapStore,
                         icon: const Icon(Icons.storefront_outlined, size: 18),
-                        label: Text(storeLabel ?? 'Elegir supermercado'),
+                        label: Text(storeLabel ?? context.l.shopPickStore),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.woodDark,
                           visualDensity: VisualDensity.compact,
@@ -115,7 +116,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Añadir lo del plan de la semana',
+                tooltip: context.l.shopAddFromPlan,
                 onPressed: generating ? null : onGenerate,
                 icon: generating
                     ? const SizedBox.square(
@@ -126,7 +127,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                 color: AppColors.woodDark,
               ),
               IconButton(
-                tooltip: 'Opciones de la lista',
+                tooltip: context.l.shopListOptions,
                 onPressed: onOptions,
                 icon: const Icon(Icons.tune_rounded),
                 color: AppColors.woodDark,
@@ -142,8 +143,8 @@ class ShoppingSummaryHeader extends StatelessWidget {
                   Expanded(
                     child: Text(
                       pending == 0
-                          ? 'Todo en el carro'
-                          : '$pending por comprar · $done en el carro',
+                          ? context.l.shopAllInCart
+                          : context.l.shopPending(pending, done),
                       style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
                     ),
                   ),
@@ -152,7 +153,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                       value: estimate!,
                       formatter: (v) =>
                           '≈ ${money(v)}'
-                          '${unpriced > 0 ? ' · $unpriced sin precio' : ''}',
+                          '${unpriced > 0 ? context.l.shopUnpriced(unpriced) : ''}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
@@ -276,8 +277,8 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
               textInputAction: TextInputAction.done,
               textCapitalization: TextCapitalization.sentences,
               onSubmitted: (_) => _submit(),
-              decoration: const InputDecoration(
-                hintText: 'Añadir producto',
+              decoration: InputDecoration(
+                hintText: context.l.shopAddProduct,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -289,7 +290,7 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
           ),
           if (widget.onSearch != null)
             IconButton(
-              tooltip: 'Buscar en el súper',
+              tooltip: context.l.shopSearchStore,
               onPressed: () {
                 final text = _controller.text.trim();
                 _controller.clear();
@@ -299,7 +300,7 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
               color: AppColors.woodDark,
             ),
           IconButton(
-            tooltip: 'Más opciones',
+            tooltip: context.l.moreOptions,
             onPressed: widget.onMore,
             icon: const Icon(Icons.more_horiz_rounded),
             color: AppColors.inkMuted,
@@ -706,7 +707,7 @@ class _QuantityStepperState extends State<QuantityStepper> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _button(Icons.remove_rounded, 'Menos', widget.onMinus, false),
+          _button(Icons.remove_rounded, context.l.less, widget.onMinus, false),
           ClipRect(
             child: ConstrainedBox(
               constraints: const BoxConstraints(minWidth: 26),
@@ -742,7 +743,7 @@ class _QuantityStepperState extends State<QuantityStepper> {
               ),
             ),
           ),
-          _button(Icons.add_rounded, 'Más', widget.onPlus, true),
+          _button(Icons.add_rounded, context.l.more, widget.onPlus, true),
         ],
       ),
     );
@@ -767,7 +768,7 @@ class QuickAddChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: added ? '$label, añadido' : 'Añadir $label',
+      label: added ? context.l.shopAdded(label) : context.l.shopAdd(label),
       excludeSemantics: true,
       child: PressScale(
         onTap: onAdd,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prezhome/l10n/l10n.dart';
 import 'package:prezhome/widgets/shopping/shopping_parts.dart';
 
 Widget _host(Widget child) => MaterialApp(
@@ -95,5 +96,29 @@ void main() {
     expect(find.text('3 por comprar · 1 en el carro'), findsOneWidget);
     expect(find.text('≈ 12,40\u00A0€ · 2 sin precio'), findsOneWidget);
     expect(find.byType(CartProgressBar), findsOneWidget);
+  });
+
+  testWidgets('la cabecera sale en inglés con el móvil en inglés', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: Scaffold(
+          body: ShoppingSummaryHeader(
+            listName: 'Main list',
+            pending: 3,
+            done: 1,
+            onTapList: () {},
+            onGenerate: () {},
+            onOptions: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('3 to buy · 1 in the cart'), findsOneWidget);
   });
 }

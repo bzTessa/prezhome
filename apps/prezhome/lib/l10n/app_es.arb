@@ -163,5 +163,184 @@
         "type": "String"
       }
     }
+  },
+  "homeGreeting": "{part, select, morning{Buenos días} afternoon{Buenas tardes} other{Buenas noches}}",
+  "@homeGreeting": {
+    "placeholders": {
+      "part": {
+        "type": "String"
+      }
+    }
+  },
+  "homeCustomize": "Personalizar Inicio",
+  "homeYourData": "Tus datos",
+  "homeYourHome": "Tu hogar",
+  "homeTodayTag": "Hoy · {meal}",
+  "@homeTodayTag": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "mealType": "{type, select, breakfast{Desayuno} lunch{Comida} snack{Merienda} dinner{Cena} dessert{Postre} other{Comida}}",
+  "@mealType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEatingOut": "Fuera de casa",
+  "homeWhatToEat": "¿Qué comemos hoy?",
+  "homeNothingPlanned": "Aún no hay nada planificado para hoy.",
+  "homePlan": "Planificar",
+  "homeWithWhatIHave": "Con lo que tengo",
+  "homeExpiring": "Por caducar",
+  "homeTasksToday": "{count, plural, =1{Tarea hoy} other{Tareas hoy}}",
+  "@homeTasksToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeInShopping": "En la compra",
+  "homeShortcuts": "Atajos",
+  "homeForToday": "Para hoy",
+  "homeSeeAll": "Ver todo",
+  "homePoints": "{points} pts",
+  "@homePoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "homePointsSnack": "+{points} puntos",
+  "@homePointsSnack": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "homeToday": "Hoy",
+  "homeTomorrow": "Mañana",
+  "homeCaloriesTitle": "Calcula tu objetivo de calorías",
+  "homeCaloriesHint": "Responde unas preguntas rápidas y adaptaré PrezHome a ti.",
+  "homeOf": "de {total}",
+  "@homeOf": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "homeCaloriesToday": "Calorías de hoy",
+  "homeKcal": "{kcal} kcal",
+  "@homeKcal": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "homeKcalLeft": "Te quedan {kcal} kcal",
+  "@homeKcalLeft": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "homeKcalOver": "Te has pasado {kcal} kcal",
+  "@homeKcalOver": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "homeMonthSpend": "Gasto del mes",
+  "homeMoneyLeft": "Te quedan {amount}",
+  "@homeMoneyLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeMoneyOver": "Te has pasado {amount} del presupuesto",
+  "@homeMoneyOver": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "save": "Guardar",
+  "homeCardsSection": "Tarjetas (arrastra para ordenar)",
+  "homeQuickSection": "Accesos rápidos",
+  "homeQuickHint": "Elige los atajos que verás arriba del Inicio.",
+  "dashCard": "{id, select, meals{Comidas de hoy} calories{Calorías de hoy} tasks{Tareas} other{Gasto del mes}}",
+  "@dashCard": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "quickAction": "{id, select, add_inventory{Añadir a despensa} scan_ticket{Escanear ticket} shopping{Lista de la compra} add_recipe{Nueva receta} meal_plan{Plan semanal} other{Diario de calorías}}",
+  "@quickAction": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "shopPickStore": "Elegir supermercado",
+  "shopAddFromPlan": "Añadir lo del plan de la semana",
+  "shopListOptions": "Opciones de la lista",
+  "shopAllInCart": "Todo en el carro",
+  "shopPending": "{pending} por comprar · {done} en el carro",
+  "@shopPending": {
+    "placeholders": {
+      "pending": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "shopUnpriced": " · {count} sin precio",
+  "@shopUnpriced": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopAddProduct": "Añadir producto",
+  "shopSearchStore": "Buscar en el súper",
+  "moreOptions": "Más opciones",
+  "less": "Menos",
+  "more": "Más",
+  "shopAdded": "{name}, añadido",
+  "@shopAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shopAdd": "Añadir {name}",
+  "@shopAdd": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

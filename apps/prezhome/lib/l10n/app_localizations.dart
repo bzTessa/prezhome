@@ -539,6 +539,306 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{c, select, diario{Cocino lo del momento} lote{Preparo varios días de una vez} mixto{Algunos días en lote} other{Como fuera o algo rápido}}'**
   String cookingHint(String c);
+
+  /// No description provided for @homeGreeting.
+  ///
+  /// In es, this message translates to:
+  /// **'{part, select, morning{Buenos días} afternoon{Buenas tardes} other{Buenas noches}}'**
+  String homeGreeting(String part);
+
+  /// No description provided for @homeCustomize.
+  ///
+  /// In es, this message translates to:
+  /// **'Personalizar Inicio'**
+  String get homeCustomize;
+
+  /// No description provided for @homeYourData.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos'**
+  String get homeYourData;
+
+  /// No description provided for @homeYourHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu hogar'**
+  String get homeYourHome;
+
+  /// No description provided for @homeTodayTag.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy · {meal}'**
+  String homeTodayTag(String meal);
+
+  /// No description provided for @mealType.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, breakfast{Desayuno} lunch{Comida} snack{Merienda} dinner{Cena} dessert{Postre} other{Comida}}'**
+  String mealType(String type);
+
+  /// No description provided for @homeEatingOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuera de casa'**
+  String get homeEatingOut;
+
+  /// No description provided for @homeWhatToEat.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué comemos hoy?'**
+  String get homeWhatToEat;
+
+  /// No description provided for @homeNothingPlanned.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay nada planificado para hoy.'**
+  String get homeNothingPlanned;
+
+  /// No description provided for @homePlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Planificar'**
+  String get homePlan;
+
+  /// No description provided for @homeWithWhatIHave.
+  ///
+  /// In es, this message translates to:
+  /// **'Con lo que tengo'**
+  String get homeWithWhatIHave;
+
+  /// No description provided for @homeExpiring.
+  ///
+  /// In es, this message translates to:
+  /// **'Por caducar'**
+  String get homeExpiring;
+
+  /// No description provided for @homeTasksToday.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Tarea hoy} other{Tareas hoy}}'**
+  String homeTasksToday(int count);
+
+  /// No description provided for @homeInShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'En la compra'**
+  String get homeInShopping;
+
+  /// No description provided for @homeShortcuts.
+  ///
+  /// In es, this message translates to:
+  /// **'Atajos'**
+  String get homeShortcuts;
+
+  /// No description provided for @homeForToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Para hoy'**
+  String get homeForToday;
+
+  /// No description provided for @homeSeeAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todo'**
+  String get homeSeeAll;
+
+  /// No description provided for @homePoints.
+  ///
+  /// In es, this message translates to:
+  /// **'{points} pts'**
+  String homePoints(int points);
+
+  /// No description provided for @homePointsSnack.
+  ///
+  /// In es, this message translates to:
+  /// **'+{points} puntos'**
+  String homePointsSnack(int points);
+
+  /// No description provided for @homeToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get homeToday;
+
+  /// No description provided for @homeTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get homeTomorrow;
+
+  /// No description provided for @homeCaloriesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Calcula tu objetivo de calorías'**
+  String get homeCaloriesTitle;
+
+  /// No description provided for @homeCaloriesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Responde unas preguntas rápidas y adaptaré PrezHome a ti.'**
+  String get homeCaloriesHint;
+
+  /// No description provided for @homeOf.
+  ///
+  /// In es, this message translates to:
+  /// **'de {total}'**
+  String homeOf(String total);
+
+  /// No description provided for @homeCaloriesToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Calorías de hoy'**
+  String get homeCaloriesToday;
+
+  /// No description provided for @homeKcal.
+  ///
+  /// In es, this message translates to:
+  /// **'{kcal} kcal'**
+  String homeKcal(int kcal);
+
+  /// No description provided for @homeKcalLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'Te quedan {kcal} kcal'**
+  String homeKcalLeft(int kcal);
+
+  /// No description provided for @homeKcalOver.
+  ///
+  /// In es, this message translates to:
+  /// **'Te has pasado {kcal} kcal'**
+  String homeKcalOver(int kcal);
+
+  /// No description provided for @homeMonthSpend.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto del mes'**
+  String get homeMonthSpend;
+
+  /// No description provided for @homeMoneyLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'Te quedan {amount}'**
+  String homeMoneyLeft(String amount);
+
+  /// No description provided for @homeMoneyOver.
+  ///
+  /// In es, this message translates to:
+  /// **'Te has pasado {amount} del presupuesto'**
+  String homeMoneyOver(String amount);
+
+  /// No description provided for @save.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get save;
+
+  /// No description provided for @homeCardsSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjetas (arrastra para ordenar)'**
+  String get homeCardsSection;
+
+  /// No description provided for @homeQuickSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Accesos rápidos'**
+  String get homeQuickSection;
+
+  /// No description provided for @homeQuickHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige los atajos que verás arriba del Inicio.'**
+  String get homeQuickHint;
+
+  /// No description provided for @dashCard.
+  ///
+  /// In es, this message translates to:
+  /// **'{id, select, meals{Comidas de hoy} calories{Calorías de hoy} tasks{Tareas} other{Gasto del mes}}'**
+  String dashCard(String id);
+
+  /// No description provided for @quickAction.
+  ///
+  /// In es, this message translates to:
+  /// **'{id, select, add_inventory{Añadir a despensa} scan_ticket{Escanear ticket} shopping{Lista de la compra} add_recipe{Nueva receta} meal_plan{Plan semanal} other{Diario de calorías}}'**
+  String quickAction(String id);
+
+  /// No description provided for @shopPickStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir supermercado'**
+  String get shopPickStore;
+
+  /// No description provided for @shopAddFromPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir lo del plan de la semana'**
+  String get shopAddFromPlan;
+
+  /// No description provided for @shopListOptions.
+  ///
+  /// In es, this message translates to:
+  /// **'Opciones de la lista'**
+  String get shopListOptions;
+
+  /// No description provided for @shopAllInCart.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo en el carro'**
+  String get shopAllInCart;
+
+  /// No description provided for @shopPending.
+  ///
+  /// In es, this message translates to:
+  /// **'{pending} por comprar · {done} en el carro'**
+  String shopPending(int pending, int done);
+
+  /// No description provided for @shopUnpriced.
+  ///
+  /// In es, this message translates to:
+  /// **' · {count} sin precio'**
+  String shopUnpriced(int count);
+
+  /// No description provided for @shopAddProduct.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir producto'**
+  String get shopAddProduct;
+
+  /// No description provided for @shopSearchStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en el súper'**
+  String get shopSearchStore;
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In es, this message translates to:
+  /// **'Más opciones'**
+  String get moreOptions;
+
+  /// No description provided for @less.
+  ///
+  /// In es, this message translates to:
+  /// **'Menos'**
+  String get less;
+
+  /// No description provided for @more.
+  ///
+  /// In es, this message translates to:
+  /// **'Más'**
+  String get more;
+
+  /// No description provided for @shopAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'{name}, añadido'**
+  String shopAdded(String name);
+
+  /// No description provided for @shopAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir {name}'**
+  String shopAdd(String name);
 }
 
 class _AppLocalizationsDelegate

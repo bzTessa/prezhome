@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../add_inventory_item_screen.dart';
@@ -40,6 +41,7 @@ import '../widgets/animations/press_scale.dart';
 import '../widgets/animations/staggered_entrance.dart';
 import '../utils/friendly_error.dart';
 import '../utils/pantry_ideas.dart' show formatEuros;
+import '../l10n/l10n.dart';
 
 /// Pestaña de Inicio: dashboard con el resumen del día del hogar (comidas de
 /// hoy, calorías, tareas y gasto). El plan semanal/mensual vive ahora en la
@@ -310,9 +312,9 @@ class HomeTabState extends State<HomeTab> {
         // Micro-celebración reutilizable (respeta reduce-motion: no hace nada
         // visible aparatoso) además del SnackBar de puntos existente.
         Celebrate.show(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('+${task.points} puntos')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l.homePointsSnack(task.points))),
+        );
       }
       await _loadTasksSummary();
     } catch (e) {
@@ -503,40 +505,19 @@ class HomeTabState extends State<HomeTab> {
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 6) return 'Buenas noches';
-    if (h < 14) return 'Buenos días';
-    if (h < 21) return 'Buenas tardes';
-    return 'Buenas noches';
+    return context.l.homeGreeting(
+      h >= 6 && h < 14
+          ? 'morning'
+          : h >= 14 && h < 21
+          ? 'afternoon'
+          : 'night',
+    );
   }
 
-  static const _weekdays = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-  ];
-  static const _months = [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ];
-
-  String _todayLabel() {
-    final d = DateTime.now();
-    return '${_weekdays[d.weekday - 1]}, ${d.day} de ${_months[d.month - 1]}';
-  }
+  /// "Jueves, 30 de octubre" en el idioma de la app.
+  String _todayLabel() => DateFormat.MMMMEEEEd(
+    Localizations.localeOf(context).toString(),
+  ).format(DateTime.now());
 
   @override
   Widget build(BuildContext context) {
@@ -624,7 +605,7 @@ class HomeTabState extends State<HomeTab> {
                 child: TextButton.icon(
                   onPressed: _openCustomize,
                   icon: const Icon(Icons.tune_rounded, size: 18),
-                  label: const Text('Personalizar Inicio'),
+                  label: Text(context.l.homeCustomize),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.inkMuted,
                   ),
@@ -672,13 +653,13 @@ class HomeTabState extends State<HomeTab> {
         ),
         _roundButton(
           icon: Icons.insights_rounded,
-          tooltip: 'Tus datos',
+          tooltip: context.l.homeYourData,
           onTap: _openStats,
         ),
         const SizedBox(width: AppSpacing.sm),
         _roundButton(
           icon: Icons.home_rounded,
-          tooltip: 'Tu hogar',
+          tooltip: context.l.homeYourHome,
           filled: true,
           onTap: _openHousehold,
         ),
@@ -818,7 +799,9 @@ class HomeTabState extends State<HomeTab> {
                           Icon(style.icon, size: 14, color: style.fg),
                           const SizedBox(width: 4),
                           Text(
-                            'HOY · ${style.label.toUpperCase()}',
+                            context.l
+                                .homeTodayTag(context.l.mealType(next.mealType))
+                                .toUpperCase(),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -884,7 +867,7 @@ class HomeTabState extends State<HomeTab> {
           SizedBox(
             width: 74,
             child: Text(
-              s.label,
+              context.l.mealType(it.mealType),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -894,7 +877,7 @@ class HomeTabState extends State<HomeTab> {
           ),
           Expanded(
             child: Text(
-              it.skipped ? 'Fuera de casa' : it.title,
+              it.skipped ? context.l.homeEatingOut : it.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -922,7 +905,7 @@ class HomeTabState extends State<HomeTab> {
             children: [
               Expanded(
                 child: Text(
-                  '¿Qué comemos hoy?',
+                  context.l.homeWhatToEat,
                   style: TextStyle(
                     fontSize: 22,
                     letterSpacing: -0.4,
@@ -939,10 +922,7 @@ class HomeTabState extends State<HomeTab> {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            'Aún no hay nada planificado para hoy.',
-            style: AppTextStyles.bodyMuted,
-          ),
+          Text(context.l.homeNothingPlanned, style: AppTextStyles.bodyMuted),
           const SizedBox(height: AppSpacing.lg),
           Wrap(
             spacing: AppSpacing.sm,
@@ -951,7 +931,7 @@ class HomeTabState extends State<HomeTab> {
               FilledButton.icon(
                 onPressed: _openMealPlan,
                 icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                label: const Text('Planificar'),
+                label: Text(context.l.homePlan),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.ink,
                   foregroundColor: AppColors.cream,
@@ -965,7 +945,7 @@ class HomeTabState extends State<HomeTab> {
                   ),
                 ),
                 icon: const Icon(Icons.kitchen_rounded, size: 18),
-                label: const Text('Con lo que tengo'),
+                label: Text(context.l.homeWithWhatIHave),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.ink,
                   side: BorderSide(color: AppColors.ink),
@@ -987,7 +967,7 @@ class HomeTabState extends State<HomeTab> {
         Expanded(
           child: _glanceTile(
             value: expiring,
-            label: 'Por caducar',
+            label: context.l.homeExpiring,
             icon: Icons.hourglass_bottom_rounded,
             bg: _expired > 0 ? AppColors.expiredBg : AppColors.soonBg,
             fg: _expired > 0 ? AppColors.expired : AppColors.soon,
@@ -999,7 +979,7 @@ class HomeTabState extends State<HomeTab> {
           Expanded(
             child: _glanceTile(
               value: tasksToday,
-              label: tasksToday == 1 ? 'Tarea hoy' : 'Tareas hoy',
+              label: context.l.homeTasksToday(tasksToday),
               icon: Icons.check_circle_outline_rounded,
               bg: AppColors.sageBg,
               fg: AppColors.sage,
@@ -1011,7 +991,7 @@ class HomeTabState extends State<HomeTab> {
         Expanded(
           child: _glanceTile(
             value: _pendingShopping,
-            label: 'En la compra',
+            label: context.l.homeInShopping,
             icon: Icons.shopping_cart_outlined,
             bg: AppColors.frostBg,
             fg: AppColors.frost,
@@ -1110,7 +1090,7 @@ class HomeTabState extends State<HomeTab> {
         _cardLabel(
           icon: Icons.bolt_rounded,
           color: AppColors.gold,
-          text: 'Atajos',
+          text: context.l.homeShortcuts,
         ),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
@@ -1138,7 +1118,7 @@ class HomeTabState extends State<HomeTab> {
             Icon(action.icon, size: 18, color: AppColors.woodDark),
             const SizedBox(width: 6),
             Text(
-              action.label,
+              context.l.quickAction(action.id),
               style: AppTextStyles.label.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
@@ -1219,7 +1199,7 @@ class HomeTabState extends State<HomeTab> {
           _cardLabel(
             icon: Icons.check_circle_outline_rounded,
             color: AppColors.sage,
-            text: 'Para hoy',
+            text: context.l.homeForToday,
             onMore: widget.onNavigateToTasks,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -1259,7 +1239,7 @@ class HomeTabState extends State<HomeTab> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               child: Text(
-                'Ver todo',
+                context.l.homeSeeAll,
                 style: AppTextStyles.label.copyWith(
                   color: AppColors.woodDark,
                   fontWeight: FontWeight.w700,
@@ -1300,13 +1280,14 @@ class HomeTabState extends State<HomeTab> {
             ),
           ),
           // "Hoy" sobra bajo el título "Para hoy"; la hora o el atraso no.
-          if (_taskWhen(t) case final label? when label != 'Hoy') ...[
+          if (_taskWhen(t) case final label?
+              when label != context.l.homeToday) ...[
             const SizedBox(width: AppSpacing.sm),
             Text(label, style: AppTextStyles.labelMuted),
           ],
           const SizedBox(width: AppSpacing.sm),
           Text(
-            '${t.points} pts',
+            context.l.homePoints(t.points),
             style: AppTextStyles.label.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1329,9 +1310,9 @@ class HomeTabState extends State<HomeTab> {
     final diff = day.difference(today).inDays;
     String label;
     if (diff == 0) {
-      label = 'Hoy';
+      label = context.l.homeToday;
     } else if (diff == 1) {
-      label = 'Mañana';
+      label = context.l.homeTomorrow;
     } else {
       label =
           '${due.day.toString().padLeft(2, '0')}/'
@@ -1372,13 +1353,10 @@ class HomeTabState extends State<HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Calcula tu objetivo de calorías',
-                    style: AppTextStyles.title,
-                  ),
+                  Text(context.l.homeCaloriesTitle, style: AppTextStyles.title),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Responde unas preguntas rápidas y adaptaré PrezHome a ti.',
+                    context.l.homeCaloriesHint,
                     style: AppTextStyles.bodyMuted,
                   ),
                 ],
@@ -1433,7 +1411,7 @@ class HomeTabState extends State<HomeTab> {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      'de ${format(target)}',
+                      context.l.homeOf(format(target)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyMuted,
@@ -1476,12 +1454,12 @@ class HomeTabState extends State<HomeTab> {
     return _progressCard(
       icon: Icons.local_fire_department_outlined,
       color: AppColors.terracotta,
-      label: 'Calorías de hoy',
+      label: context.l.homeCaloriesToday,
       value: _todayCalories,
-      format: (v) => '${v.round()} kcal',
+      format: (v) => context.l.homeKcal(v.round()),
       target: _targetCalories?.toDouble(),
-      leftText: (d) => 'Te quedan ${d.round()} kcal',
-      overText: (d) => 'Te has pasado ${d.round()} kcal',
+      leftText: (d) => context.l.homeKcalLeft(d.round()),
+      overText: (d) => context.l.homeKcalOver(d.round()),
       onTap: () async {
         await Navigator.of(
           context,
@@ -1496,12 +1474,12 @@ class HomeTabState extends State<HomeTab> {
     return _progressCard(
       icon: Icons.savings_outlined,
       color: AppColors.gold,
-      label: 'Gasto del mes',
+      label: context.l.homeMonthSpend,
       value: _monthSpent,
       format: formatEuros,
       target: _monthBudget,
-      leftText: (d) => 'Te quedan ${formatEuros(d)}',
-      overText: (d) => 'Te has pasado ${formatEuros(d)} del presupuesto',
+      leftText: (d) => context.l.homeMoneyLeft(formatEuros(d)),
+      overText: (d) => context.l.homeMoneyOver(formatEuros(d)),
       onTap: _openStats,
     );
   }
@@ -1560,12 +1538,12 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text('Personalizar Inicio'),
+        title: Text(context.l.homeCustomize),
         actions: [
           TextButton(
             onPressed: _save,
             child: Text(
-              'Guardar',
+              context.l.save,
               style: TextStyle(
                 color: AppColors.woodDark,
                 fontWeight: FontWeight.bold,
@@ -1577,7 +1555,7 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
-          _sectionLabel('Tarjetas (arrastra para ordenar)'),
+          _sectionLabel(context.l.homeCardsSection),
           const SizedBox(height: 8),
           // Reordenable; cada fila tiene un switch para mostrar/ocultar.
           ReorderableListView(
@@ -1602,7 +1580,7 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
                     activeThumbColor: AppColors.woodDark,
                     secondary: Icon(card.icon, color: AppColors.woodDark),
                     title: Text(
-                      card.label,
+                      context.l.dashCard(card.id),
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     onChanged: (visible) => setState(() {
@@ -1617,12 +1595,9 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          _sectionLabel('Accesos rápidos'),
+          _sectionLabel(context.l.homeQuickSection),
           const SizedBox(height: 4),
-          Text(
-            'Elige los atajos que verás arriba del Inicio.',
-            style: AppTextStyles.bodyMuted,
-          ),
+          Text(context.l.homeQuickHint, style: AppTextStyles.bodyMuted),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -1630,7 +1605,7 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
             children: QuickAction.values.map((q) {
               final sel = _quick.contains(q);
               return FilterChip(
-                label: Text(q.label),
+                label: Text(context.l.quickAction(q.id)),
                 avatar: Icon(
                   q.icon,
                   size: 18,

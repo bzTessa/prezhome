@@ -325,4 +325,224 @@ class AppLocalizationsPt extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String homeGreeting(String part) {
+    String _temp0 = intl.Intl.selectLogic(part, {
+      'morning': 'Bom dia',
+      'afternoon': 'Boa tarde',
+      'other': 'Boa noite',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeCustomize => 'Personalizar Hoje';
+
+  @override
+  String get homeYourData => 'Os teus dados';
+
+  @override
+  String get homeYourHome => 'A tua casa';
+
+  @override
+  String homeTodayTag(String meal) {
+    return 'Hoje · $meal';
+  }
+
+  @override
+  String mealType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Pequeno-almoço',
+      'lunch': 'Almoço',
+      'snack': 'Lanche',
+      'dinner': 'Jantar',
+      'dessert': 'Sobremesa',
+      'other': 'Refeição',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeEatingOut => 'Fora de casa';
+
+  @override
+  String get homeWhatToEat => 'O que comemos hoje?';
+
+  @override
+  String get homeNothingPlanned => 'Ainda não há nada planeado para hoje.';
+
+  @override
+  String get homePlan => 'Planear';
+
+  @override
+  String get homeWithWhatIHave => 'Com o que tenho';
+
+  @override
+  String get homeExpiring => 'A expirar';
+
+  @override
+  String homeTasksToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Tarefas hoje',
+      one: 'Tarefa hoje',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeInShopping => 'Na lista';
+
+  @override
+  String get homeShortcuts => 'Atalhos';
+
+  @override
+  String get homeForToday => 'Para hoje';
+
+  @override
+  String get homeSeeAll => 'Ver tudo';
+
+  @override
+  String homePoints(int points) {
+    return '$points pts';
+  }
+
+  @override
+  String homePointsSnack(int points) {
+    return '+$points pontos';
+  }
+
+  @override
+  String get homeToday => 'Hoje';
+
+  @override
+  String get homeTomorrow => 'Amanhã';
+
+  @override
+  String get homeCaloriesTitle => 'Calcula o teu objetivo de calorias';
+
+  @override
+  String get homeCaloriesHint =>
+      'Responde a umas perguntas rápidas e adapto o PrezHome a ti.';
+
+  @override
+  String homeOf(String total) {
+    return 'de $total';
+  }
+
+  @override
+  String get homeCaloriesToday => 'Calorias de hoje';
+
+  @override
+  String homeKcal(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String homeKcalLeft(int kcal) {
+    return 'Faltam-te $kcal kcal';
+  }
+
+  @override
+  String homeKcalOver(int kcal) {
+    return 'Passaste $kcal kcal';
+  }
+
+  @override
+  String get homeMonthSpend => 'Gasto do mês';
+
+  @override
+  String homeMoneyLeft(String amount) {
+    return 'Faltam-te $amount';
+  }
+
+  @override
+  String homeMoneyOver(String amount) {
+    return 'Passaste $amount do orçamento';
+  }
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get homeCardsSection => 'Cartões (arrasta para ordenar)';
+
+  @override
+  String get homeQuickSection => 'Acessos rápidos';
+
+  @override
+  String get homeQuickHint => 'Escolhe os atalhos que vês no topo de Hoje.';
+
+  @override
+  String dashCard(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'meals': 'Refeições de hoje',
+      'calories': 'Calorias de hoje',
+      'tasks': 'Tarefas',
+      'other': 'Gasto do mês',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String quickAction(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'add_inventory': 'Adicionar à despensa',
+      'scan_ticket': 'Ler talão',
+      'shopping': 'Lista de compras',
+      'add_recipe': 'Nova receita',
+      'meal_plan': 'Plano semanal',
+      'other': 'Diário de calorias',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get shopPickStore => 'Escolher supermercado';
+
+  @override
+  String get shopAddFromPlan => 'Adicionar o plano da semana';
+
+  @override
+  String get shopListOptions => 'Opções da lista';
+
+  @override
+  String get shopAllInCart => 'Tudo no carrinho';
+
+  @override
+  String shopPending(int pending, int done) {
+    return '$pending por comprar · $done no carrinho';
+  }
+
+  @override
+  String shopUnpriced(int count) {
+    return ' · $count sem preço';
+  }
+
+  @override
+  String get shopAddProduct => 'Adicionar produto';
+
+  @override
+  String get shopSearchStore => 'Procurar no supermercado';
+
+  @override
+  String get moreOptions => 'Mais opções';
+
+  @override
+  String get less => 'Menos';
+
+  @override
+  String get more => 'Mais';
+
+  @override
+  String shopAdded(String name) {
+    return '$name, adicionado';
+  }
+
+  @override
+  String shopAdd(String name) {
+    return 'Adicionar $name';
+  }
 }
