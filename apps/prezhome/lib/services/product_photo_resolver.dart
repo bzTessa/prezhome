@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/product_icons.dart';
 import 'food_photo_service.dart';
+import 'home_country.dart';
 import 'product_search_service.dart';
 
 /// Foto de banco de imágenes (Unsplash, Pexels): en la compra salen
@@ -78,10 +79,15 @@ class ProductPhotoResolver {
         return url;
       }
     } catch (_) {}
-    // Lo genérico (cebolla, leche...) lleva su foto genérica compartida, no
-    // la de un envase.
+    // Lo genérico (cebolla, leche...) lleva la foto de la sección de frescos
+    // del súper o, si no hay, su foto genérica compartida; nunca un envase.
     if (ProductIcons.isGeneric(name)) {
-      final url = await genericPhoto(name);
+      final store = catalogStores.contains(supermarketKey)
+          ? supermarketKey!
+          : catalogForCountry[HomeCountry.current.value.code];
+      final url =
+          (store == null ? null : await _search.freshPhoto(name, store)) ??
+          await genericPhoto(name);
       if (url != null) {
         await FoodPhotoService(
           _client,

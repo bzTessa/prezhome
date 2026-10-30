@@ -173,5 +173,74 @@ void main() {
       expect(r.failed, isTrue);
       expect(r.offline, isFalse);
     });
+
+    test('Mercadona: usa su catálogo sin llamar a OFF', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response(jsonEncode(_off([])), 200);
+      });
+      final r = await ProductSearchService(
+        client: client,
+        catalog: (q, store, {freshOnly = false}) async => [
+          const SupermarketProduct(
+            code: 'mercadona:1',
+            name: 'Leche entera Hacendado',
+            quantity: '1 l',
+            price: 1.15,
+          ),
+        ],
+      ).search('leche', supermarketKey: 'mercadona');
+      expect(calls, 0);
+      expect(r.filteredByStore, isTrue);
+      expect(r.products.single.price, 1.15);
+    });
+
+    test('si el catálogo falla o no lo tiene, sigue con OFF', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode(
+              _off([
+                {'code': '9', 'product_name': 'Kéfir'},
+              ]),
+            ),
+          ),
+          200,
+        );
+      });
+      final r = await ProductSearchService(
+        client: client,
+        catalog: (q, store, {freshOnly = false}) async =>
+            throw Exception('sin red'),
+      ).search('kéfir', supermarketKey: 'mercadona');
+      expect(calls, greaterThan(0));
+      expect(r.products.single.name, 'Kéfir');
+    });
+
+    test('foto de frescos del súper para lo genérico', () async {
+      bool? fresh;
+      final service = ProductSearchService(
+        client: MockClient((_) async => http.Response('', 500)),
+        catalog: (q, store, {freshOnly = false}) async {
+          fresh = freshOnly;
+          return [
+            const SupermarketProduct(
+              code: 'mercadona:1',
+              name: 'Cebolla tierna',
+              imageUrl: 'https://prod-mercadona.imgix.net/a.jpg',
+            ),
+          ];
+        },
+      );
+      expect(
+        await service.freshPhoto('cebolla', 'mercadona'),
+        'https://prod-mercadona.imgix.net/a.jpg',
+      );
+      expect(fresh, isTrue);
+      expect(await service.freshPhoto('patata', 'mercadona'), isNull);
+    });
   });
 }

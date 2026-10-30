@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/supermarket.dart';
 import '../services/product_search_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/money.dart';
 import 'food_image.dart';
 import 'list_skeleton.dart';
 
@@ -322,7 +323,11 @@ class _ProductTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        [?p.brand, ?p.quantity].join(' · '),
+                        [
+                          ?p.brand,
+                          ?p.quantity,
+                          if (p.price != null) '${money(p.price!)} aprox.',
+                        ].join(' · '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.bodyMuted.copyWith(fontSize: 13),
