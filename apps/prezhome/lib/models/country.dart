@@ -4,23 +4,25 @@ class Country {
   final String code; // 'ES'
   final String name; // nombre en su propio idioma, como en los selectores
   final String currency; // ISO 4217: 'EUR'
+  final String off; // país en Open Food Facts: 'spain' (en:spain)
+  final String lang; // idioma de los productos en OFF
 
-  const Country(this.code, this.name, this.currency);
+  const Country(this.code, this.name, this.currency, this.off, this.lang);
 
   /// Países que la app sabe adaptar, en el orden del selector.
   static const List<Country> all = [
-    Country('ES', 'España', 'EUR'),
-    Country('DE', 'Deutschland', 'EUR'),
-    Country('FR', 'France', 'EUR'),
-    Country('IT', 'Italia', 'EUR'),
-    Country('PT', 'Portugal', 'EUR'),
-    Country('AT', 'Österreich', 'EUR'),
-    Country('BA', 'Bosna i Hercegovina', 'BAM'),
-    Country('HR', 'Hrvatska', 'EUR'),
-    Country('RS', 'Srbija', 'RSD'),
-    Country('GB', 'United Kingdom', 'GBP'),
-    Country('US', 'United States', 'USD'),
-    Country('MX', 'México', 'MXN'),
+    Country('ES', 'España', 'EUR', 'spain', 'es'),
+    Country('DE', 'Deutschland', 'EUR', 'germany', 'de'),
+    Country('FR', 'France', 'EUR', 'france', 'fr'),
+    Country('IT', 'Italia', 'EUR', 'italy', 'it'),
+    Country('PT', 'Portugal', 'EUR', 'portugal', 'pt'),
+    Country('AT', 'Österreich', 'EUR', 'austria', 'de'),
+    Country('BA', 'Bosna i Hercegovina', 'BAM', 'bosnia-and-herzegovina', 'bs'),
+    Country('HR', 'Hrvatska', 'EUR', 'croatia', 'hr'),
+    Country('RS', 'Srbija', 'RSD', 'serbia', 'sr'),
+    Country('GB', 'United Kingdom', 'GBP', 'united-kingdom', 'en'),
+    Country('US', 'United States', 'USD', 'united-states', 'en'),
+    Country('MX', 'México', 'MXN', 'mexico', 'es'),
   ];
 
   /// El país de [code], o España si no está en la lista.

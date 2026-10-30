@@ -212,24 +212,34 @@ class PriceMemory {
     }
   }
 
-  /// Estima el coste de una lista de productos {name, quantity} usando los
-  /// precios conocidos ([prices], de [loadAll]). Multiplica por la cantidad
-  /// cuando la hay; si no, cuenta 1 unidad.
+  /// Estima el coste de una lista de productos {name, quantity, unit}. El
+  /// precio del ticket es por paquete: se multiplica por la cantidad solo en
+  /// unidades contables; en g/ml/kg cuenta un paquete. Sin precio de ticket usa
+  /// [ApproxPrice]. Las líneas sin precio, o con uno absurdo, no suman.
   static CostEstimate estimateCost(
-    List<({String name, double? quantity})> items,
+    List<({String name, double? quantity, String? unit})> items,
     Map<String, ProductPrice> prices,
   ) {
     double total = 0;
     var priced = 0;
     for (final it in items) {
-      final p = prices[keyFor(it.name)];
-      final unit = p?.bestPrice;
-      if (unit == null) continue;
-      total += unit * (it.quantity ?? 1);
+      final real = prices[keyFor(it.name)]?.bestPrice;
+      final countable = _countableUnits.contains(
+        (it.unit ?? '').trim().toLowerCase(),
+      );
+      final cost = real != null
+          ? real * (countable ? (it.quantity ?? 1) : 1)
+          : ApproxPrice.estimate(it.name, it.quantity, it.unit);
+      // shortcut: tope fijo por línea contra precios mal aprendidos; afinar si
+      // aparecen compras legítimas más caras.
+      if (cost == null || cost <= 0 || cost > _maxLineCost) continue;
+      total += cost;
       priced++;
     }
     return CostEstimate(total: total, priced: priced, totalItems: items.length);
   }
+
+  static const double _maxLineCost = 60;
 }
 
 /// Coste estimado de una receta por ración.

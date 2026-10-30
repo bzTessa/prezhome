@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:prezhome/models/country.dart';
+import 'package:prezhome/models/supermarket.dart';
 import 'package:prezhome/services/home_country.dart';
 import 'package:prezhome/utils/approx_price.dart';
 import 'package:prezhome/utils/money.dart';
@@ -34,5 +35,13 @@ void main() {
     expect(ApproxPrice.estimate('pollo', 1, 'kg'), isNotNull);
     HomeCountry.current.value = Country.of('US');
     expect(ApproxPrice.estimate('pollo', 1, 'kg'), isNull);
+  });
+
+  test('súper del país; las etiquetas se encuentran en cualquier país', () {
+    final de = Supermarket.forCountry('DE').map((s) => s.key);
+    expect(de, containsAll(['rewe', 'lidl']));
+    expect(de, isNot(contains('mercadona')));
+    expect(Supermarket.forCountry('ES'), Supermarket.all);
+    expect(Supermarket.labelFor('bingo'), 'Bingo');
   });
 }

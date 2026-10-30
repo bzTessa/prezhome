@@ -309,34 +309,41 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   }
 
   /// Importa una receta desde el enlace de un vídeo (TikTok, Instagram,
-  /// YouTube) o una web. Pide la URL (con botón de pegar), llama a la edge
-  /// function import-recipe-link (que lee el texto público del post y lo
-  /// estructura) y rellena el formulario. Además guarda el enlace en el campo
-  /// de vídeo para tenerlo a mano. Devuelve true si la receta quedó rellenada.
-  Future<bool> _importFromLink() async {
-    final url = await showDialog<String>(
+  /// YouTube) o una web, o desde el texto de la receta pegado a mano. Llama a
+  /// la edge function import-recipe-link (que lee el texto público del post y
+  /// lo estructura) y rellena el formulario. Si el enlace no se puede leer
+  /// (Instagram casi nunca deja), vuelve a abrir el diálogo pidiendo pegar la
+  /// descripción del post. Devuelve true si la receta quedó rellenada.
+  Future<bool> _importFromLink({String? link, String? note}) async {
+    final input = await showDialog<String>(
       context: context,
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
           scrollable: true,
           backgroundColor: AppColors.cream,
-          title: const Text('Pegar enlace de vídeo'),
+          title: Text(link == null ? 'Importar receta' : 'Pega la receta'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'De TikTok, Instagram o YouTube. La receta se saca de su '
-                'descripción.',
-                style: TextStyle(fontSize: 13),
+              Text(
+                note ??
+                    'Pega el enlace de TikTok, YouTube o una web, o el texto '
+                        'de la receta. En Instagram copia la descripción del '
+                        'post y pégala aquí.',
+                style: const TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
                 autofocus: true,
-                keyboardType: TextInputType.url,
+                minLines: 1,
+                maxLines: 6,
+                keyboardType: TextInputType.multiline,
                 decoration: InputDecoration(
-                  hintText: 'https://...',
+                  hintText: link == null
+                      ? 'Enlace o texto de la receta'
+                      : 'Texto de la receta',
                   suffixIcon: IconButton(
                     tooltip: 'Pegar',
                     icon: const Icon(Icons.content_paste_rounded),
@@ -378,20 +385,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       },
     );
 
-    if (url == null || url.isEmpty) return false;
+    if (input == null || input.isEmpty) return false;
     if (!mounted) return false;
-    if (!_looksLikeUrl(url)) {
+    final isUrl = link == null && _looksLikeUrl(input);
+    final url = link ?? (isUrl ? input : null);
+    if (!isUrl && input.length < 15) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Eso no parece un enlace válido.')),
+        const SnackBar(
+          content: Text('Pega un enlace o el texto completo de la receta.'),
+        ),
       );
       return false;
     }
 
+    String? needText;
     setState(() => _aiLoading = true);
     try {
       final res = await _client.functions.invoke(
         'import-recipe-link',
-        body: {'url': url},
+        body: {'url': ?url, if (!isUrl) 'text': input},
       );
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {
@@ -399,7 +411,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           Map<String, dynamic>.from(data['recipe'] as Map),
         );
         // Guardamos el enlace en el campo de vídeo para conservar la fuente.
-        _videoController.text = url;
+        if (url != null) _videoController.text = url;
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -415,7 +427,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         throw msg;
       }
     } catch (e) {
-      if (mounted) {
+      final d = e is FunctionException ? e.details : null;
+      if (isUrl && d is Map && d['need_text'] == true) {
+        needText = d['error']?.toString();
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo importar')),
@@ -425,6 +440,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       }
     } finally {
       if (mounted) setState(() => _aiLoading = false);
+    }
+    // El enlace no se pudo leer: pedimos el texto sin perder el enlace.
+    if (needText != null && mounted) {
+      return _importFromLink(link: url, note: needText);
     }
     return false;
   }

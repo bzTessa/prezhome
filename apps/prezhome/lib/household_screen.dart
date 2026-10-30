@@ -1040,22 +1040,25 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 Flexible(
                   child: ListView(
                     shrinkWrap: true,
-                    children: Supermarket.all.map((s) {
-                      final isSel = selected.contains(s.key);
-                      return CheckboxListTile(
-                        value: isSel,
-                        activeColor: AppColors.woodDark,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(s.label),
-                        onChanged: (v) => setSheet(() {
-                          if (v == true) {
-                            selected.add(s.key);
-                          } else {
-                            selected.remove(s.key);
-                          }
-                        }),
-                      );
-                    }).toList(),
+                    children:
+                        Supermarket.forCountry(
+                          HomeCountry.current.value.code,
+                        ).map((s) {
+                          final isSel = selected.contains(s.key);
+                          return CheckboxListTile(
+                            value: isSel,
+                            activeColor: AppColors.woodDark,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(s.label),
+                            onChanged: (v) => setSheet(() {
+                              if (v == true) {
+                                selected.add(s.key);
+                              } else {
+                                selected.remove(s.key);
+                              }
+                            }),
+                          );
+                        }).toList(),
                   ),
                 ),
                 const SizedBox(height: 8),

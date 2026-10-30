@@ -1430,92 +1430,96 @@ class _TaskTile extends StatelessWidget {
         onTap: onMore,
         pressedScale: 0.97,
         child: Container(
+          // El relleno deja el borde por encima de la franja de color.
+          padding: const EdgeInsets.all(1.5),
           decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Franja de color, como el lomo del calendario.
-              Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: fg,
-                  border: Border(
-                    bottom: BorderSide(color: AppColors.stroke, width: 1.5),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.lg - 1.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Franja de color, como el lomo del calendario.
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: fg,
+                    border: Border(
+                      bottom: BorderSide(color: AppColors.stroke, width: 1.5),
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _KindBadge(kind: kind),
-                        const Spacer(),
-                        Semantics(
-                          button: true,
-                          label: 'Marcar ${task.title} como hecha',
-                          child: InkResponse(
-                            onTap: onDone,
-                            radius: 26,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.paper,
-                                border: Border.all(
-                                  color: AppColors.stroke,
-                                  width: 2,
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _KindBadge(kind: kind),
+                          const Spacer(),
+                          Semantics(
+                            button: true,
+                            label: 'Marcar ${task.title} como hecha',
+                            child: InkResponse(
+                              onTap: onDone,
+                              radius: 26,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.paper,
+                                  border: Border.all(
+                                    color: AppColors.stroke,
+                                    width: 2,
+                                  ),
                                 ),
-                              ),
-                              child: Icon(
-                                Icons.check_rounded,
-                                color: AppColors.done,
-                                size: 24,
+                                child: Icon(
+                                  Icons.check_rounded,
+                                  color: AppColors.done,
+                                  size: 24,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      task.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        height: 1.2,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    if (overdue)
-                      _Pill(
-                        text: 'Atrasada',
-                        bg: AppColors.expiredBg,
-                        fg: AppColors.expired,
-                      )
-                    else
+                      const SizedBox(height: AppSpacing.md),
                       Text(
-                        meta.isEmpty ? kind.label : meta,
-                        maxLines: 1,
+                        task.title,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
                       ),
-                    if (points case final p? when p > 0) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      _PointsBadge(points: p),
+                      const SizedBox(height: AppSpacing.xs),
+                      if (overdue)
+                        _Pill(
+                          text: 'Atrasada',
+                          bg: AppColors.expiredBg,
+                          fg: AppColors.expired,
+                        )
+                      else
+                        Text(
+                          meta.isEmpty ? kind.label : meta,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
+                        ),
+                      if (points case final p? when p > 0) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        _PointsBadge(points: p),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

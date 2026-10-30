@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../services/proactive_suggestions_service.dart';
-import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
 import 'miau_character.dart';
 
@@ -12,8 +11,8 @@ import 'miau_character.dart';
 ///
 /// Es presentación pura: recibe las sugerencias ya calculadas por
 /// [buildExpiringSuggestions] (FEAT-002) y dos callbacks (acción y descartar).
-/// Usa tokens de AppColors/AppRadius y la mascota "pensando" asomada por
-/// arriba. Honra reduce-motion desactivando su flotación.
+/// Usa tokens de AppColors/AppRadius y la mascota "pensando", quieta y
+/// dentro de la tarjeta.
 class ProactiveSuggestionsBanner extends StatelessWidget {
   /// Sugerencias de caducidad ya calculadas (no vacías cuando se muestra).
   final List<ExpiringSuggestion> suggestions;
@@ -42,88 +41,73 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Reduce-motion: si el sistema pide menos animaciones, la mascota no flota.
-    final reduceMotion = AppMotion.reduceMotionOf(context);
-
-    // "Tejado": tarjeta táctil compacta (una fila) con la mascota asomando
-    // por el borde de arriba. Toda la tarjeta lleva a Comidas.
+    // Tarjeta táctil compacta (una fila) con la mascota quieta DENTRO de la
+    // tarjeta: asomada por arriba y flotando quedaba descolocada. Toda la
+    // tarjeta lleva a Comidas.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 22, 12, 6),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            decoration: AppTheme.tactileDecoration(
-              radius: AppRadius.md,
-              borderWidth: 2,
-            ),
-            child: Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                onTap: onAction,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(64, 8, 0, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Consejo del día',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                                color: AppColors.terracotta,
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                            Text(
-                              bannerMessage(suggestions),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                height: 1.25,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.inkMuted,
-                      ),
-                      IconButton(
-                        tooltip: 'Descartar',
-                        visualDensity: VisualDensity.compact,
-                        onPressed: onDismiss,
-                        icon: Icon(
-                          Icons.close_rounded,
-                          size: 18,
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                    ],
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Container(
+        decoration: AppTheme.tactileDecoration(
+          radius: AppRadius.md,
+          borderWidth: 2,
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onAction,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 0, 8),
+              child: Row(
+                children: [
+                  const MiauCharacter(
+                    mood: MiauMood.curious,
+                    size: 40,
+                    float: false,
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Consejo del día',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: AppColors.terracotta,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          bannerMessage(suggestions),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.25,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+                  IconButton(
+                    tooltip: 'Descartar',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onDismiss,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          Positioned(
-            left: 8,
-            top: -20,
-            child: IgnorePointer(
-              child: MiauCharacter(
-                mood: MiauMood.curious,
-                size: 50,
-                float: !reduceMotion,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

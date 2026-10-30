@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../login_screen.dart';
 import '../models/onboarding_answers.dart';
 import '../models/supermarket.dart';
+import '../services/home_country.dart';
 import '../services/offline_provider.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
@@ -264,7 +265,7 @@ class _IntroPageState extends State<_IntroPage> {
     (Icons.savings_rounded, 'Gasto de la casa', AppColors.woodDark),
   ];
 
-  final _controller = PageController(viewportFraction: 0.42, initialPage: 1000);
+  final _controller = PageController(viewportFraction: 0.37, initialPage: 1000);
   Timer? _timer;
   int _current = 1000;
 
@@ -331,28 +332,34 @@ class _IntroPageState extends State<_IntroPage> {
                   style: TextStyle(fontSize: 18, color: AppColors.inkMuted),
                 ),
                 const Spacer(),
+                // A todo el ancho y sin recorte: si no, las sombras de las
+                // tarjetas quedan cortadas en línea recta.
                 SizedBox(
                   height: 190,
-                  child: PageView.builder(
-                    controller: _controller,
-                    onPageChanged: (i) => setState(() => _current = i),
-                    itemBuilder: (context, i) {
-                      final f = _features[i % _features.length];
-                      final active = i == _current;
-                      return AnimatedScale(
-                        duration: const Duration(milliseconds: 400),
-                        scale: active ? 1 : 0.82,
-                        child: AnimatedOpacity(
+                  child: OverflowBox(
+                    maxWidth: MediaQuery.sizeOf(context).width,
+                    child: PageView.builder(
+                      controller: _controller,
+                      clipBehavior: Clip.none,
+                      onPageChanged: (i) => setState(() => _current = i),
+                      itemBuilder: (context, i) {
+                        final f = _features[i % _features.length];
+                        final active = i == _current;
+                        return AnimatedScale(
                           duration: const Duration(milliseconds: 400),
-                          opacity: active ? 1 : 0.45,
-                          child: _FeaturePill(
-                            icon: f.$1,
-                            label: f.$2,
-                            color: f.$3,
+                          scale: active ? 1 : 0.82,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 400),
+                            opacity: active ? 1 : 0.45,
+                            child: _FeaturePill(
+                              icon: f.$1,
+                              label: f.$2,
+                              color: f.$3,
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
                 const Spacer(flex: 2),
@@ -393,9 +400,9 @@ class _FeaturePill extends StatelessWidget {
         borderRadius: BorderRadius.circular(80),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: color.withValues(alpha: 0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -543,7 +550,7 @@ class _SupermarketPicker extends StatelessWidget {
       runSpacing: 10,
       alignment: WrapAlignment.center,
       children: [
-        for (final s in Supermarket.all)
+        for (final s in Supermarket.forCountry(HomeCountry.current.value.code))
           _SuperChip(
             label: s.label,
             order: selected.indexOf(s.key),
