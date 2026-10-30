@@ -128,18 +128,18 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
       supportedLocales: const [Locale('es', 'ES')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: const _AuthGate(),
-      // En pantallas anchas (web en ordenador) la app se ve en una columna
-      // de ancho de móvil, centrada, en vez de estirada.
+      // En pantallas muy anchas la app no pasa de 1280 px, centrada. El menú
+      // lateral y el ancho del contenido los decide MainShell.
       builder: (context, child) {
         final mq = MediaQuery.of(context);
-        if (mq.size.width <= 600) return child!;
+        if (mq.size.width <= 1280) return child!;
         return ColoredBox(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Center(
             child: SizedBox(
-              width: 480,
+              width: 1280,
               child: MediaQuery(
-                data: mq.copyWith(size: Size(480, mq.size.height)),
+                data: mq.copyWith(size: Size(1280, mq.size.height)),
                 child: child!,
               ),
             ),

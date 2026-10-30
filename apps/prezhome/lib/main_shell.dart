@@ -378,59 +378,85 @@ class MainShellState extends State<MainShell> {
         _suggestions.isNotEmpty &&
         !_suggestionsDismissed &&
         _index != _indexOf(TabId.inicio);
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      // Avisos ARRIBA (servidor caído / incidencia y Asistente Proactivo) +
-      // IndexedStack abajo. El IndexedStack conserva su index y children
-      // intactos; la barra de navegación no se toca.
-      body: ListenableBuilder(
-        listenable: Listenable.merge([
-          ConnectionStatus.instance.online,
-          ConnectionStatus.instance.notice,
-        ]),
-        builder: (context, _) {
-          final online = ConnectionStatus.instance.online.value;
-          final notice = ConnectionStatus.instance.notice.value;
-          final showStatus = !online || notice != null;
-          final showTop = showStatus || showBanner;
-          return Column(
-            children: [
-              if (showTop)
-                // SafeArea(bottom:false) para que los avisos no se metan bajo
-                // la barra de estado del dispositivo (notch/isla). La parte
-                // inferior la gestiona la bottomNavigationBar.
-                SafeArea(
-                  bottom: false,
-                  child: Column(
-                    children: [
-                      if (showStatus)
-                        OfflineBanner(online: online, notice: notice),
-                      if (showBanner)
-                        ProactiveSuggestionsBanner(
-                          suggestions: _suggestions,
-                          onAction: _onSuggestionsAction,
-                          onDismiss: () =>
-                              setState(() => _suggestionsDismissed = true),
-                        ),
-                    ],
-                  ),
-                ),
-              Expanded(
-                // Con avisos arriba, la barra de estado ya está cubierta: las
-                // pestañas no deben volver a dejar su hueco.
-                child: MediaQuery.removePadding(
-                  context: context,
-                  removeTop: showTop,
-                  child: IndexedStack(
-                    index: _index,
-                    children: [for (final t in _tabs) t.page],
-                  ),
+    // Ordenador (web): menú lateral y contenido centrado en vez de la barra
+    // inferior de móvil.
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    // Avisos ARRIBA (servidor caído / incidencia y Asistente Proactivo) +
+    // IndexedStack abajo. El IndexedStack conserva su index y children
+    // intactos; la barra de navegación no se toca.
+    final body = ListenableBuilder(
+      listenable: Listenable.merge([
+        ConnectionStatus.instance.online,
+        ConnectionStatus.instance.notice,
+      ]),
+      builder: (context, _) {
+        final online = ConnectionStatus.instance.online.value;
+        final notice = ConnectionStatus.instance.notice.value;
+        final showStatus = !online || notice != null;
+        final showTop = showStatus || showBanner;
+        return Column(
+          children: [
+            if (showTop)
+              // SafeArea(bottom:false) para que los avisos no se metan bajo
+              // la barra de estado del dispositivo (notch/isla). La parte
+              // inferior la gestiona la bottomNavigationBar.
+              SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    if (showStatus)
+                      OfflineBanner(online: online, notice: notice),
+                    if (showBanner)
+                      ProactiveSuggestionsBanner(
+                        suggestions: _suggestions,
+                        onAction: _onSuggestionsAction,
+                        onDismiss: () =>
+                            setState(() => _suggestionsDismissed = true),
+                      ),
+                  ],
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            Expanded(
+              // Con avisos arriba, la barra de estado ya está cubierta: las
+              // pestañas no deben volver a dejar su hueco.
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: showTop,
+                child: IndexedStack(
+                  index: _index,
+                  children: [for (final t in _tabs) t.page],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (wide) {
+      return Scaffold(
+        backgroundColor: AppColors.cream,
+        body: Row(
+          children: [
+            _SideNav(
+              items: [for (final t in _tabs) t.destination],
+              selectedIndex: _index,
+              onSelected: _onDestinationSelected,
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 860),
+                  child: body,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      body: body,
       // Barra flotante compartida (packages/prez_ui): píldora con la pestaña
       // activa expandida (icono + texto) y las demás solo con icono.
       bottomNavigationBar: SafeArea(
@@ -450,6 +476,122 @@ class MainShellState extends State<MainShell> {
           shadow: AppElevation.level1,
           duration: AppMotion.slow,
           curve: AppMotion.springCurve(AppMotion.fluidDefault),
+        ),
+      ),
+    );
+  }
+}
+
+/// Menú lateral de la versión de ordenador: logo arriba y las mismas
+/// pestañas que la barra inferior del móvil.
+class _SideNav extends StatelessWidget {
+  const _SideNav({
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<FloatingNavItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 232,
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(right: BorderSide(color: AppColors.stroke, width: 2)),
+      ),
+      child: SafeArea(
+        right: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/brand/app_icon.png',
+                      width: 40,
+                      height: 40,
+                      cacheWidth: 120,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'PrezHome',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              for (var i = 0; i < items.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: _SideNavTile(
+                    item: items[i],
+                    selected: i == selectedIndex,
+                    onTap: () => onSelected(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SideNavTile extends StatelessWidget {
+  const _SideNavTile({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final FloatingNavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.ink : AppColors.inkMuted;
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: selected ? AppColors.wood : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  selected ? item.selectedIcon ?? item.icon : item.icon,
+                  color: color,
+                ),
+                const SizedBox(width: 14),
+                Text(
+                  item.label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

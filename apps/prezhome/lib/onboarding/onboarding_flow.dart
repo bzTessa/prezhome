@@ -309,61 +309,71 @@ class _IntroPageState extends State<_IntroPage> {
           ),
         ),
         SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            child: Column(
-              children: [
-                const Spacer(flex: 3),
-                const MiauCharacter(mood: MiauMood.greeting, size: 120),
-                Text(
-                  'PrezHome',
-                  style: TextStyle(
-                    fontSize: 46,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1,
-                    color: AppColors.ink,
-                  ),
+          child: Center(
+            // En ordenador, columna de ancho de móvil en vez de botones
+            // estirados de lado a lado.
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Column(
+                  children: [
+                    const Spacer(flex: 3),
+                    const MiauCharacter(mood: MiauMood.greeting, size: 120),
+                    Text(
+                      'PrezHome',
+                      style: TextStyle(
+                        fontSize: 46,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'La casa en orden, la cabeza tranquila.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 18, color: AppColors.inkMuted),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      height: 190,
+                      child: PageView.builder(
+                        controller: _controller,
+                        onPageChanged: (i) => setState(() => _current = i),
+                        itemBuilder: (context, i) {
+                          final f = _features[i % _features.length];
+                          final active = i == _current;
+                          return AnimatedScale(
+                            duration: const Duration(milliseconds: 400),
+                            scale: active ? 1 : 0.82,
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 400),
+                              opacity: active ? 1 : 0.45,
+                              child: _FeaturePill(
+                                icon: f.$1,
+                                label: f.$2,
+                                color: f.$3,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const Spacer(flex: 2),
+                    OnboardingButton(
+                      label: 'Comenzar',
+                      onPressed: widget.onStart,
+                    ),
+                    const SizedBox(height: 12),
+                    OnboardingButton(
+                      label: 'Ya tengo cuenta',
+                      outlined: true,
+                      onPressed: widget.onLogin,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'La casa en orden, la cabeza tranquila.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: AppColors.inkMuted),
-                ),
-                const Spacer(),
-                SizedBox(
-                  height: 190,
-                  child: PageView.builder(
-                    controller: _controller,
-                    onPageChanged: (i) => setState(() => _current = i),
-                    itemBuilder: (context, i) {
-                      final f = _features[i % _features.length];
-                      final active = i == _current;
-                      return AnimatedScale(
-                        duration: const Duration(milliseconds: 400),
-                        scale: active ? 1 : 0.82,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 400),
-                          opacity: active ? 1 : 0.45,
-                          child: _FeaturePill(
-                            icon: f.$1,
-                            label: f.$2,
-                            color: f.$3,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const Spacer(flex: 2),
-                OnboardingButton(label: 'Comenzar', onPressed: widget.onStart),
-                const SizedBox(height: 12),
-                OnboardingButton(
-                  label: 'Ya tengo cuenta',
-                  outlined: true,
-                  onPressed: widget.onLogin,
-                ),
-              ],
+              ),
             ),
           ),
         ),

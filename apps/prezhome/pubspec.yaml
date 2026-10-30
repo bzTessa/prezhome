@@ -91,6 +91,8 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/products/
+    # Logo del menú lateral en la versión de ordenador.
+    - assets/brand/app_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
