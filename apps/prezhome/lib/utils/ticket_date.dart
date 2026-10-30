@@ -24,5 +24,7 @@ DateTime plausibleTicketDate(DateTime d, [DateTime? now]) {
   final yearAgo = DateTime(today.year - 1, today.month, today.day);
   if (!d.isAfter(today) && d.isAfter(yearAgo)) return d;
   final fixed = DateTime(today.year, d.month, d.day);
-  return fixed.isAfter(today) ? DateTime(today.year - 1, d.month, d.day) : fixed;
+  return fixed.isAfter(today)
+      ? DateTime(today.year - 1, d.month, d.day)
+      : fixed;
 }
