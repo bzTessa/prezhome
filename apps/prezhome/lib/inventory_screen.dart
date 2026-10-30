@@ -604,7 +604,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           .select()
           .order('title');
       recipes = [for (final r in rows as List) Recipe.fromMap(r)]
-        ..sort((a, b) => (b.freezable ? 1 : 0) - (a.freezable ? 1 : 0));
+        ..sort((a, b) => (b.freezesWell ? 1 : 0) - (a.freezesWell ? 1 : 0));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -643,7 +643,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               for (final r in recipes)
                 ListTile(
                   title: Text(r.title),
-                  trailing: r.freezable
+                  trailing: r.freezesWell
                       ? Icon(Icons.ac_unit, size: 18, color: AppColors.sage)
                       : null,
                   onTap: () => Navigator.of(ctx).pop(r),

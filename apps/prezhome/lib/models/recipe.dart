@@ -126,6 +126,46 @@ class Recipe {
   String? get imageUrl =>
       _imageUrlFrom(imagePath) ?? _nonEmptyString(externalImageUrl);
 
+  /// Platos que aguantan bien congelados (caldos, guisos, legumbres…), para
+  /// las recetas que no lo tienen marcado.
+  static const _freezerWords = [
+    'caldo',
+    'sopa',
+    'crema de',
+    'guiso',
+    'estofado',
+    'potaje',
+    'cocido',
+    'fabada',
+    'lenteja',
+    'garbanzo',
+    'alubia',
+    'albóndiga',
+    'croqueta',
+    'boloñesa',
+    'ragú',
+    'curry',
+    'chili',
+    'salsa de tomate',
+    'tomate frito',
+    'pisto',
+    'lasaña',
+    'canelones',
+    'hamburguesa',
+    'empanadilla',
+    'puré',
+    'bizcocho',
+  ];
+
+  /// Se congela bien: marcada como congelable o es un plato que lo aguanta.
+  // shortcut: una receta desmarcada a mano que encaje con la lista cuenta
+  // igual como congelable; si molesta, guardar "no congelable" aparte.
+  bool get freezesWell {
+    if (freezable) return true;
+    final t = title.toLowerCase();
+    return _freezerWords.any(t.contains);
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'home_id': homeId,

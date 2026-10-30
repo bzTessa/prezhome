@@ -49,7 +49,7 @@ MealPrepPlan prepPlanForWeek({
         r.id: PrepRecipe(
           id: r.id,
           title: r.title,
-          freezable: r.freezable,
+          freezable: r.freezesWell,
           freezerDays: r.freezerDays,
           prepTimeMinutes: r.prepTimeMinutes,
           cookTimeMinutes: r.cookTimeMinutes,
