@@ -928,16 +928,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
               ),
             Container(
+              // El relleno deja el borde por encima de las filas opacas.
+              padding: const EdgeInsets.all(1.5),
               decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  for (var k = 0; k < g.items.length; k++) ...[
-                    if (k > 0)
-                      Divider(height: 1, indent: 76, color: AppColors.line),
-                    _itemRow(g.items[k], showZone: review),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.md - 1.5),
+                child: Column(
+                  children: [
+                    for (var k = 0; k < g.items.length; k++) ...[
+                      if (k > 0)
+                        Divider(height: 1, indent: 76, color: AppColors.line),
+                      _itemRow(g.items[k], showZone: review),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),

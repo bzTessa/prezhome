@@ -1159,6 +1159,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
           final porComprar = pendientes.where((i) => !i.checked).toList();
           final celebrar = _celebrationGate.consume();
+          final est = _estimate(porComprar);
 
           final slivers = <Widget>[
             SliverToBoxAdapter(
@@ -1166,7 +1167,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 listName: _activeListName,
                 pending: pendientes.length,
                 done: comprados.length,
-                estimate: _estimate(porComprar),
+                estimate: est?.total,
+                unpriced: est == null ? 0 : est.totalItems - est.priced,
                 generating: _generating,
                 onTapList: _openListsOverview,
                 onGenerate: _generarDesdePlan,
@@ -1532,15 +1534,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  /// Coste estimado de lo pendiente en euros con los precios aprendidos de
-  /// los tickets, o null si no conocemos ningún precio.
-  double? _estimate(List<ShoppingListItem> pendientes) {
+  /// Coste estimado de lo pendiente (tickets o aproximado), o null si no
+  /// conocemos ningún precio.
+  CostEstimate? _estimate(List<ShoppingListItem> pendientes) {
     if (pendientes.isEmpty) return null;
     final est = PriceMemory.estimateCost([
-      for (final i in pendientes) (name: i.name, quantity: i.quantity),
+      for (final i in pendientes)
+        (name: i.name, quantity: i.quantity, unit: i.unit),
     ], _prices);
-    if (est.priced == 0) return null;
-    return est.total;
+    return est.priced == 0 ? null : est;
   }
 
   /// Barra flotante para terminar la compra (y escanear el ticket). Entra y
