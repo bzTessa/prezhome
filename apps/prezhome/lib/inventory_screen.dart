@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
+import 'models/recipe.dart';
 import 'models/shopping_list_item.dart';
 import 'scan_barcode_screen.dart';
 import 'services/home_supermarkets.dart';
@@ -22,6 +23,7 @@ import 'widgets/skeleton.dart';
 import 'utils/offline_actions.dart';
 import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_image.dart';
+import 'widgets/freeze_dish_sheet.dart';
 import 'widgets/product_photo_menu.dart';
 import 'widgets/shopping/shopping_parts.dart';
 import 'widgets/tactile_button.dart';
@@ -577,12 +579,103 @@ class _InventoryScreenState extends State<InventoryScreen> {
               title: const Text('Escanear código de barras'),
               onTap: () => Navigator.of(ctx).pop('scan'),
             ),
+            ListTile(
+              leading: const Icon(Icons.ac_unit),
+              title: const Text('Plato cocinado al congelador'),
+              subtitle: const Text('Elige la receta y cuántas raciones'),
+              onTap: () => Navigator.of(ctx).pop('dish'),
+            ),
           ],
         ),
       ),
     );
     if (choice == 'manual') await _openAddItem();
     if (choice == 'scan') await _openScanBarcode();
+    if (choice == 'dish') await _addFrozenDish();
+  }
+
+  /// Plato ya cocinado al congelador, enlazado a su receta para que el plan
+  /// de comidas lo use. Las recetas congelables salen primero.
+  Future<void> _addFrozenDish() async {
+    final List<Recipe> recipes;
+    try {
+      final rows = await Supabase.instance.client
+          .from('recipes')
+          .select()
+          .order('title');
+      recipes = [for (final r in rows as List) Recipe.fromMap(r)]
+        ..sort((a, b) => (b.freezable ? 1 : 0) - (a.freezable ? 1 : 0));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (recipes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero guarda alguna receta.')),
+      );
+      return;
+    }
+    final recipe = await showModalBottomSheet<Recipe>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  '¿Qué plato vas a congelar?',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              for (final r in recipes)
+                ListTile(
+                  title: Text(r.title),
+                  trailing: r.freezable
+                      ? Icon(Icons.ac_unit, size: 18, color: AppColors.sage)
+                      : null,
+                  onTap: () => Navigator.of(ctx).pop(r),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (recipe == null || !mounted) return;
+    final servings = await askFreezeServings(
+      context,
+      recipe: recipe,
+      initial: recipe.servings,
+      title: '¿Cuántas raciones congelas?',
+    );
+    if (servings == null || !mounted) return;
+    final String homeId;
+    try {
+      homeId = await _homeId();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
+      }
+      return;
+    }
+    await _applyUpsert(
+      frozenDishItem(recipe, servings, homeId: homeId),
+      editing: false,
+    );
   }
 
   Future<void> _openScanBarcode() async {
