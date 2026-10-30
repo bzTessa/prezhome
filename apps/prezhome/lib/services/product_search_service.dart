@@ -351,18 +351,36 @@ String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
   };
 }
 
-/// Súpers con catálogo propio en supermarket_products (scripts/mercadona_sync.py).
-const catalogStores = {'mercadona'};
+/// Súpers con catálogo propio en supermarket_products (scripts/*_sync.py).
+const catalogStores = {'mercadona', 'rewe'};
+
+/// Catálogo que pone la foto a lo genérico (fruta, verdura…) en cada país.
+const catalogForCountry = {'ES': 'mercadona', 'DE': 'rewe'};
+
+/// Secciones de producto fresco y sin envase de marca: su foto sirve para
+/// lo genérico ("cebolla", "plátano").
+const freshCategories = [
+  'Fruta y verdura',
+  'Carne',
+  'Marisco y pescado',
+  'Obst & Gemüse',
+  'Fleisch, Wurst & Fisch',
+];
 
 typedef CatalogSearch =
-    Future<List<SupermarketProduct>> Function(String query, String store);
+    Future<List<SupermarketProduct>> Function(
+      String query,
+      String store, {
+      bool freshOnly,
+    });
 
 /// Busca [query] en el catálogo de [store]: cada palabra (sin plural) tiene
-/// que estar en el nombre.
+/// que estar en el nombre. Con [freshOnly], solo en [freshCategories].
 Future<List<SupermarketProduct>> searchCatalog(
   String query,
-  String store,
-) async {
+  String store, {
+  bool freshOnly = false,
+}) async {
   final words = [
     for (final w in _words(query))
       w.length > 4 && w.endsWith('es')
@@ -374,8 +392,9 @@ Future<List<SupermarketProduct>> searchCatalog(
   if (words.isEmpty) return const [];
   var q = Supabase.instance.client
       .from('supermarket_products')
-      .select('product_id,name,size,price,image_url')
+      .select('product_id,name,brand,size,price,image_url')
       .eq('store', store);
+  if (freshOnly) q = q.inFilter('category', freshCategories);
   for (final w in words) {
     q = q.ilike('name_normalized', '%$w%');
   }
@@ -385,6 +404,7 @@ Future<List<SupermarketProduct>> searchCatalog(
       SupermarketProduct(
         code: '$store:${r['product_id']}',
         name: r['name'] as String,
+        brand: r['brand'] as String?,
         quantity: r['size'] as String?,
         imageUrl: r['image_url'] as String?,
         price: (r['price'] as num?)?.toDouble(),
@@ -504,13 +524,25 @@ class ProductSearchService {
   }
 
   /// El catálogo nunca tumba la búsqueda: si falla, se sigue con OFF.
-  Future<List<SupermarketProduct>> _catalogSafe(String q, String store) async {
+  Future<List<SupermarketProduct>> _catalogSafe(
+    String q,
+    String store, {
+    bool freshOnly = false,
+  }) async {
     try {
-      return rankProducts(q, await _catalog(q, store));
+      return rankProducts(q, await _catalog(q, store, freshOnly: freshOnly));
     } catch (_) {
       return const [];
     }
   }
+
+  /// Foto oficial del súper para algo genérico ("cebolla"): la de la sección
+  /// de frescos del catálogo de [store], si hay una que es claramente eso.
+  Future<String?> freshPhoto(String name, String store) async =>
+      confidentProductPhoto(
+        name,
+        await _catalogSafe(name, store, freshOnly: true),
+      );
 
   static final Map<String, SupermarketProduct?> _byCode = {};
 

@@ -2,7 +2,7 @@
 -- PrezHome · Catálogo de productos de supermercado (foto oficial y precio)
 -- ============================================================================
 -- Productos tal cual los publica la tienda online de cada cadena (de momento
--- Mercadona): nombre, formato, precio, precio por kg/l/ud y la URL de la foto
+-- Mercadona y REWE): nombre, marca, formato, precio, precio por kg/l/ud y la URL de la foto
 -- oficial (no se copia la imagen). Lo rellena cada semana
 -- scripts/mercadona_sync.py con la service role; las apps solo leen.
 -- Los precios son orientativos: la app lo indica.
@@ -14,6 +14,7 @@ create table if not exists public.supermarket_products (
   name text not null,
   -- minúsculas y sin acentos, para buscar con ilike
   name_normalized text not null,
+  brand text,
   size text,
   price numeric,
   unit_price numeric,

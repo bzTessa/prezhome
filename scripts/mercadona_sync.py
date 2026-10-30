@@ -54,6 +54,7 @@ def to_row(product: dict, category: str, now: str) -> dict | None:
         "product_id": pid,
         "name": name,
         "name_normalized": normalize(name),
+        "brand": None,
         "size": f"{size_n:g} {fmt}" if size_n and fmt else None,
         "price": _num(pi.get("unit_price")),
         "unit_price": _num(pi.get("reference_price") or pi.get("bulk_price")),
@@ -71,7 +72,7 @@ def collect(now: str) -> list[dict]:
             detail = _get(f"categories/{sub['id']}/")
             for group in detail.get("categories", []):
                 for p in group.get("products", []):
-                    row = to_row(p, sub.get("name") or "", now)
+                    row = to_row(p, top.get("name") or "", now)
                     if row:
                         rows[row["product_id"]] = row
             time.sleep(0.5)  # sin prisa: una petición cada medio segundo
@@ -96,13 +97,13 @@ def _rest(method: str, path: str, body: list | None = None) -> None:
         pass
 
 
-def save(rows: list[dict], now: str) -> None:
+def save(rows: list[dict], now: str, store: str = STORE) -> None:
     for i in range(0, len(rows), 500):
         _rest("POST", "supermarket_products?on_conflict=store,product_id",
               rows[i:i + 500])
     # Lo que no se ha visto en esta pasada ya no está a la venta.
     stamp = now.replace("+", "%2B")
-    _rest("DELETE", f"supermarket_products?store=eq.{STORE}&updated_at=lt.{stamp}")
+    _rest("DELETE", f"supermarket_products?store=eq.{store}&updated_at=lt.{stamp}")
 
 
 def _self_check() -> None:
@@ -114,7 +115,7 @@ def _self_check() -> None:
                                "unit_price": "16.75", "bulk_price": "3.35",
                                "reference_price": "3.350",
                                "reference_format": "L"},
-    }, "Aceite de oliva", "t")
+    }, "Aceite, especias y salsas", "t")
     assert row["size"] == "5 l" and row["price"] == 16.75
     assert row["unit_price"] == 3.35 and row["unit"] == "l"
     assert row["name_normalized"].startswith("aceite de oliva")

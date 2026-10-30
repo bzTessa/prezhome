@@ -182,7 +182,7 @@ void main() {
       });
       final r = await ProductSearchService(
         client: client,
-        catalog: (q, store) async => [
+        catalog: (q, store, {freshOnly = false}) async => [
           const SupermarketProduct(
             code: 'mercadona:1',
             name: 'Leche entera Hacendado',
@@ -213,10 +213,34 @@ void main() {
       });
       final r = await ProductSearchService(
         client: client,
-        catalog: (q, store) async => throw Exception('sin red'),
+        catalog: (q, store, {freshOnly = false}) async =>
+            throw Exception('sin red'),
       ).search('kéfir', supermarketKey: 'mercadona');
       expect(calls, greaterThan(0));
       expect(r.products.single.name, 'Kéfir');
+    });
+
+    test('foto de frescos del súper para lo genérico', () async {
+      bool? fresh;
+      final service = ProductSearchService(
+        client: MockClient((_) async => http.Response('', 500)),
+        catalog: (q, store, {freshOnly = false}) async {
+          fresh = freshOnly;
+          return [
+            const SupermarketProduct(
+              code: 'mercadona:1',
+              name: 'Cebolla tierna',
+              imageUrl: 'https://prod-mercadona.imgix.net/a.jpg',
+            ),
+          ];
+        },
+      );
+      expect(
+        await service.freshPhoto('cebolla', 'mercadona'),
+        'https://prod-mercadona.imgix.net/a.jpg',
+      );
+      expect(fresh, isTrue);
+      expect(await service.freshPhoto('patata', 'mercadona'), isNull);
     });
   });
 }
