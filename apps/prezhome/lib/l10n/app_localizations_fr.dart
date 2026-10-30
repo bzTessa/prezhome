@@ -358,6 +358,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'snack': 'Goûter',
       'dinner': 'Dîner',
       'dessert': 'Dessert',
+      'drink': 'Boisson',
       'other': 'Repas',
     });
     return '$_temp0';
@@ -1309,4 +1310,249 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get planNoMatch => 'Aucune recette correspondante.';
+
+  @override
+  String get diaDeleteError => 'Impossible de supprimer le repas.';
+
+  @override
+  String get diaManual => 'À la main';
+
+  @override
+  String get diaManualHint => 'Écris le nom et les calories';
+
+  @override
+  String get diaFromRecipe => 'Depuis une recette';
+
+  @override
+  String get diaFromRecipeHint => 'Enregistre une de tes recettes comme repas';
+
+  @override
+  String get diaWithPhoto => 'Avec une photo';
+
+  @override
+  String get diaWithPhotoHint =>
+      'Prends le plat en photo et on calcule les calories';
+
+  @override
+  String get diaAddManual => 'Ajouter à la main';
+
+  @override
+  String get diaKcalField => 'Calories (kcal)';
+
+  @override
+  String get diaMealTypeOptional => 'Type de repas (facultatif)';
+
+  @override
+  String get diaNoType => 'Sans type';
+
+  @override
+  String get diaProteinG => 'Protéines (g)';
+
+  @override
+  String get diaCarbsG => 'Glucides (g)';
+
+  @override
+  String get diaFatG => 'Lipides (g)';
+
+  @override
+  String get diaNeedNameKcal => 'Indique au moins un nom et les calories.';
+
+  @override
+  String get diaSaveError => 'Impossible d\'enregistrer le repas.';
+
+  @override
+  String get diaRecipesLoadError => 'Impossible de charger les recettes.';
+
+  @override
+  String get diaNoRecipes => 'Tu n\'as pas encore de recettes à enregistrer.';
+
+  @override
+  String diaKcalPerServing(int kcal) {
+    return '$kcal kcal par portion';
+  }
+
+  @override
+  String get diaNoKcal => 'Pas de calories enregistrées';
+
+  @override
+  String get diaServings => 'Portions';
+
+  @override
+  String get diaServingsError => 'Indique un nombre de portions supérieur à 0.';
+
+  @override
+  String get diaLog => 'Enregistrer';
+
+  @override
+  String get diaRecipeLogError => 'Impossible d\'enregistrer la recette.';
+
+  @override
+  String get diaTitle => 'Mon journal';
+
+  @override
+  String get diaAddMeal => 'Ajouter un repas';
+
+  @override
+  String get previous => 'Précédent';
+
+  @override
+  String get next => 'Suivant';
+
+  @override
+  String get diaDayCalories => 'Calories du jour';
+
+  @override
+  String diaOfTarget(int kcal) {
+    return 'sur $kcal kcal';
+  }
+
+  @override
+  String get diaNoTarget =>
+      'Complète ton profil pour fixer un objectif calorique quotidien et voir ce qu\'il te reste chaque jour.';
+
+  @override
+  String get diaCompleteProfile => 'Compléter mon profil';
+
+  @override
+  String get diaOthers => 'Autres';
+
+  @override
+  String get diaMeal => 'Repas';
+
+  @override
+  String get diaLast7 => 'Tes 7 derniers jours';
+
+  @override
+  String diaTargetPerDay(int kcal) {
+    return 'Objectif : $kcal kcal par jour';
+  }
+
+  @override
+  String get diaTarget => 'Objectif';
+
+  @override
+  String get diaTodaySplit => 'Répartition du jour';
+
+  @override
+  String get diaNoMacros => 'Pas encore de macros enregistrés aujourd\'hui.';
+
+  @override
+  String get diaProtein => 'Protéines';
+
+  @override
+  String get diaCarbs => 'Glucides';
+
+  @override
+  String get diaFat => 'Lipides';
+
+  @override
+  String get diaAteThePlan => 'As-tu mangé ce qui était prévu ?';
+
+  @override
+  String diaAskLine(String day, String meal, String name, int kcal) {
+    return '$day, $meal : $name · $kcal kcal';
+  }
+
+  @override
+  String get yes => 'Oui';
+
+  @override
+  String get diaAnswerError => 'Impossible d\'enregistrer la réponse.';
+
+  @override
+  String get diaAskFirst => 'Me demander avant d\'enregistrer le planning';
+
+  @override
+  String get diaAskOn =>
+      'On te demande si tu as mangé chaque repas du planning.';
+
+  @override
+  String get diaAskOff =>
+      'Les repas du planning s\'enregistrent tout seuls une fois l\'heure passée.';
+
+  @override
+  String get diaSettingError => 'Impossible d\'enregistrer le réglage.';
+
+  @override
+  String get diaEmpty =>
+      'Tu n\'as encore rien noté ce jour-là.\nAjoute ton premier repas.';
+
+  @override
+  String get recUnfavorite => 'Retirer des favoris';
+
+  @override
+  String get recFavorite => 'Marquer comme favorite';
+
+  @override
+  String get recDelete => 'Supprimer la recette';
+
+  @override
+  String get recDeleteAsk => 'Supprimer la recette ?';
+
+  @override
+  String recRemoveAsk(String name) {
+    return '\"$name\" et ses ingrédients seront supprimés.';
+  }
+
+  @override
+  String recDeleted(String name) {
+    return '\"$name\" supprimée.';
+  }
+
+  @override
+  String get recTitle => 'Recettes';
+
+  @override
+  String get recNew => 'Nouvelle recette';
+
+  @override
+  String get recLoadError => 'Je n\'ai pas pu charger les recettes';
+
+  @override
+  String get recEmptyTitle => 'Pas encore de recettes';
+
+  @override
+  String get recEmptyHint =>
+      'Crée la première ou demande des idées avec ce que tu as.';
+
+  @override
+  String get recIdeas => 'Des idées avec ce que j\'ai';
+
+  @override
+  String get recNoResults => 'Aucun résultat';
+
+  @override
+  String recCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recettes',
+      one: '1 recette',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recWhatToCook => 'Qu\'est-ce que je cuisine avec ce que j\'ai ?';
+
+  @override
+  String get recPantryIdeas => 'Des idées avec ce qu\'il y a dans tes placards';
+
+  @override
+  String get recAll => 'Toutes';
+
+  @override
+  String get recFavorites => 'Favorites';
+
+  @override
+  String get recNoFilter =>
+      'Aucune recette avec ce filtre.\nEssaie une autre catégorie.';
+
+  @override
+  String get clear => 'Effacer';
+
+  @override
+  String recNoMatch(String query) {
+    return 'Aucune recette ne correspond à\n« $query ».';
+  }
 }

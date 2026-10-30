@@ -183,7 +183,7 @@
       }
     }
   },
-  "mealType": "{type, select, breakfast{Desayuno} lunch{Comida} snack{Merienda} dinner{Cena} dessert{Postre} other{Comida}}",
+  "mealType": "{type, select, breakfast{Desayuno} lunch{Comida} snack{Merienda} dinner{Cena} dessert{Postre} drink{Bebida} other{Comida}}",
   "@mealType": {
     "placeholders": {
       "type": {
@@ -843,5 +843,142 @@
   },
   "close": "Cerrar",
   "planSearchRecipe": "Buscar receta...",
-  "planNoMatch": "Sin recetas que coincidan."
+  "planNoMatch": "Sin recetas que coincidan.",
+  "diaDeleteError": "No se pudo borrar la comida.",
+  "diaManual": "A mano",
+  "diaManualHint": "Escribe el nombre y las calorías",
+  "diaFromRecipe": "Desde una receta",
+  "diaFromRecipeHint": "Registra una receta tuya como comida",
+  "diaWithPhoto": "Con una foto",
+  "diaWithPhotoHint": "Haz una foto al plato y calculamos las calorías",
+  "diaAddManual": "Añadir a mano",
+  "diaKcalField": "Calorías (kcal)",
+  "diaMealTypeOptional": "Tipo de comida (opcional)",
+  "diaNoType": "Sin tipo",
+  "diaProteinG": "Proteína (g)",
+  "diaCarbsG": "Carbos (g)",
+  "diaFatG": "Grasa (g)",
+  "diaNeedNameKcal": "Pon al menos un nombre y las calorías.",
+  "diaSaveError": "No se pudo guardar la comida.",
+  "diaRecipesLoadError": "No se pudieron cargar las recetas.",
+  "diaNoRecipes": "Aún no tienes recetas que registrar.",
+  "diaKcalPerServing": "{kcal} kcal por ración",
+  "@diaKcalPerServing": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "diaNoKcal": "Sin calorías registradas",
+  "diaServings": "Raciones",
+  "diaServingsError": "Pon un número de raciones mayor que 0.",
+  "diaLog": "Registrar",
+  "diaRecipeLogError": "No se pudo registrar la receta.",
+  "diaTitle": "Mi diario",
+  "diaAddMeal": "Añadir comida",
+  "previous": "Anterior",
+  "next": "Siguiente",
+  "diaDayCalories": "Calorías del día",
+  "diaOfTarget": "de {kcal} kcal",
+  "@diaOfTarget": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "diaNoTarget": "Completa tu perfil para fijar un objetivo diario de calorías y ver cuánto te queda cada día.",
+  "diaCompleteProfile": "Completar mi perfil",
+  "diaOthers": "Otras",
+  "diaMeal": "Comida",
+  "diaLast7": "Tus últimos 7 días",
+  "diaTargetPerDay": "Objetivo: {kcal} kcal al día",
+  "@diaTargetPerDay": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "diaTarget": "Objetivo",
+  "diaTodaySplit": "Reparto de hoy",
+  "diaNoMacros": "Aún no hay macros registrados hoy.",
+  "diaProtein": "Proteína",
+  "diaCarbs": "Carbos",
+  "diaFat": "Grasa",
+  "diaAteThePlan": "¿Has comido lo del plan?",
+  "diaAskLine": "{day}, {meal}: {name} · {kcal} kcal",
+  "@diaAskLine": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "meal": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "yes": "Sí",
+  "diaAnswerError": "No se pudo guardar la respuesta.",
+  "diaAskFirst": "Preguntarme antes de apuntar el plan",
+  "diaAskOn": "Te preguntamos si has comido cada comida del plan.",
+  "diaAskOff": "Las comidas del plan se apuntan solas al pasar su hora.",
+  "diaSettingError": "No se pudo guardar el ajuste.",
+  "diaEmpty": "Aún no has apuntado nada este día.\nAñade tu primera comida.",
+  "recUnfavorite": "Quitar de favoritas",
+  "recFavorite": "Marcar como favorita",
+  "recDelete": "Eliminar receta",
+  "recDeleteAsk": "¿Eliminar receta?",
+  "recRemoveAsk": "Se borrará \"{name}\" y sus ingredientes.",
+  "@recRemoveAsk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recDeleted": "\"{name}\" eliminada.",
+  "@recDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recTitle": "Recetas",
+  "recNew": "Nueva receta",
+  "recLoadError": "No he podido cargar las recetas",
+  "recEmptyTitle": "Aún no hay recetas",
+  "recEmptyHint": "Crea la primera o pide ideas con lo que tienes.",
+  "recIdeas": "Ideas con lo que tengo",
+  "recNoResults": "Sin resultados",
+  "recCount": "{count, plural, =1{1 receta} other{{count} recetas}}",
+  "@recCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recWhatToCook": "¿Qué cocino con lo que tengo?",
+  "recPantryIdeas": "Ideas con lo que hay en tu despensa",
+  "recAll": "Todas",
+  "recFavorites": "Favoritas",
+  "recNoFilter": "No hay recetas con este filtro.\nPrueba con otra categoría.",
+  "clear": "Limpiar",
+  "recNoMatch": "No hay recetas que coincidan con\n\"{query}\".",
+  "@recNoMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  }
 }

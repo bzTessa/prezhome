@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
@@ -13,6 +14,7 @@ import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/skeleton.dart';
+import 'l10n/l10n.dart';
 
 /// Diario de consumo personal del día: muestra lo que la persona ha comido
 /// un día concreto, el total de kcal frente a su objetivo del perfil, y
@@ -36,21 +38,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
   // Día que se está viendo (a medianoche).
   late DateTime _viewDay;
-
-  static const _monthNames = [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ];
 
   // Orden de los grupos por tipo de comida; null va al final en 'Otras'.
   static const _mealOrder = [
@@ -179,9 +166,11 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final diff = _viewDay.difference(today).inDays;
-    if (diff == 0) return 'Hoy';
-    if (diff == -1) return 'Ayer';
-    return '${_viewDay.day} de ${_monthNames[_viewDay.month - 1]}';
+    if (diff == 0) return context.l.today;
+    if (diff == -1) return context.l.yesterday;
+    return DateFormat.MMMMd(
+      Localizations.localeOf(context).toString(),
+    ).format(_viewDay);
   }
 
   Future<void> _deleteEntry(String id) async {
@@ -190,9 +179,9 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     } catch (e) {
       debugPrint('FoodDiary._deleteEntry error: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo borrar la comida.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.diaDeleteError)));
       return;
     }
     if (!mounted) return;
@@ -225,14 +214,14 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               const SizedBox(height: 12),
               ListTile(
                 leading: Icon(Icons.edit_outlined, color: AppColors.ink),
-                title: const Text('A mano'),
-                subtitle: const Text('Escribe el nombre y las calorías'),
+                title: Text(context.l.diaManual),
+                subtitle: Text(context.l.diaManualHint),
                 onTap: () => Navigator.of(context).pop('manual'),
               ),
               ListTile(
                 leading: Icon(Icons.menu_book_outlined, color: AppColors.ink),
-                title: const Text('Desde una receta'),
-                subtitle: const Text('Registra una receta tuya como comida'),
+                title: Text(context.l.diaFromRecipe),
+                subtitle: Text(context.l.diaFromRecipeHint),
                 onTap: () => Navigator.of(context).pop('receta'),
               ),
               ListTile(
@@ -240,10 +229,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   Icons.photo_camera_outlined,
                   color: AppColors.ink,
                 ),
-                title: const Text('Con una foto'),
-                subtitle: const Text(
-                  'Haz una foto al plato y calculamos las calorías',
-                ),
+                title: Text(context.l.diaWithPhoto),
+                subtitle: Text(context.l.diaWithPhotoHint),
                 onTap: () => Navigator.of(context).pop('foto'),
               ),
               const SizedBox(height: 8),
@@ -284,16 +271,16 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: AppColors.cream,
-              title: const Text('Añadir a mano'),
+              title: Text(context.l.diaAddManual),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _dialogField(nameController, 'Nombre'),
+                    _dialogField(nameController, context.l.name),
                     const SizedBox(height: 12),
                     _dialogField(
                       kcalController,
-                      'Calorías (kcal)',
+                      context.l.diaKcalField,
                       number: true,
                     ),
                     const SizedBox(height: 12),
@@ -301,17 +288,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       initialValue: mealType,
                       isExpanded: true,
                       decoration: _dialogDecoration(
-                        'Tipo de comida (opcional)',
+                        context.l.diaMealTypeOptional,
                       ),
                       items: [
-                        const DropdownMenuItem<String>(
+                        DropdownMenuItem<String>(
                           value: null,
-                          child: Text('Sin tipo'),
+                          child: Text(context.l.diaNoType),
                         ),
-                        ...FoodLogEntry.mealTypeLabels.entries.map(
-                          (e) => DropdownMenuItem<String>(
-                            value: e.key,
-                            child: Text(e.value),
+                        ...FoodLogEntry.mealTypeLabels.keys.map(
+                          (k) => DropdownMenuItem<String>(
+                            value: k,
+                            child: Text(context.l.mealType(k)),
                           ),
                         ),
                       ],
@@ -323,7 +310,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                         Expanded(
                           child: _dialogField(
                             proteinController,
-                            'Proteína (g)',
+                            context.l.diaProteinG,
                             number: true,
                           ),
                         ),
@@ -331,7 +318,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                         Expanded(
                           child: _dialogField(
                             carbsController,
-                            'Carbos (g)',
+                            context.l.diaCarbsG,
                             number: true,
                           ),
                         ),
@@ -339,7 +326,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                         Expanded(
                           child: _dialogField(
                             fatController,
-                            'Grasa (g)',
+                            context.l.diaFatG,
                             number: true,
                           ),
                         ),
@@ -351,7 +338,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancelar'),
+                  child: Text(context.l.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -361,17 +348,13 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                     );
                     if (name.isEmpty || kcal == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Pon al menos un nombre y las calorías.',
-                          ),
-                        ),
+                        SnackBar(content: Text(context.l.diaNeedNameKcal)),
                       );
                       return;
                     }
                     Navigator.of(context).pop(true);
                   },
-                  child: const Text('Guardar'),
+                  child: Text(context.l.save),
                 ),
               ],
             );
@@ -404,9 +387,9 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     } catch (e) {
       debugPrint('FoodDiary._addManual insert error: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo guardar la comida.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.diaSaveError)));
       return;
     }
     if (!mounted) return;
@@ -425,18 +408,18 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     } catch (e) {
       debugPrint('FoodDiary._addFromRecipe load error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudieron cargar las recetas.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l.diaRecipesLoadError)));
       }
       return;
     }
 
     if (!mounted) return;
     if (recipes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aún no tienes recetas que registrar.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.diaNoRecipes)));
       return;
     }
 
@@ -453,9 +436,12 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 16),
-              const Text(
-                'Elige una receta',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Text(
+                context.l.planPickRecipe,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 8),
               Flexible(
@@ -469,8 +455,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       title: Text(r.title),
                       subtitle: Text(
                         hasKcal
-                            ? '${r.calories} kcal por ración'
-                            : 'Sin calorías registradas',
+                            ? context.l.diaKcalPerServing(r.calories!)
+                            : context.l.diaNoKcal,
                         style: TextStyle(
                           color: hasKcal
                               ? AppColors.inkMuted
@@ -508,17 +494,21 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${recipe.calories} kcal por ración',
+                context.l.diaKcalPerServing(recipe.calories!),
                 style: TextStyle(color: AppColors.inkMuted),
               ),
               const SizedBox(height: 12),
-              _dialogField(servingsController, 'Raciones', number: true),
+              _dialogField(
+                servingsController,
+                context.l.diaServings,
+                number: true,
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar'),
+              child: Text(context.l.cancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -527,15 +517,13 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 );
                 if (servings == null || servings <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pon un número de raciones mayor que 0.'),
-                    ),
+                    SnackBar(content: Text(context.l.diaServingsError)),
                   );
                   return;
                 }
                 Navigator.of(context).pop(true);
               },
-              child: const Text('Registrar'),
+              child: Text(context.l.diaLog),
             ),
           ],
         );
@@ -572,9 +560,9 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     } catch (e) {
       debugPrint('FoodDiary._addFromRecipe insert error: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo registrar la receta.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.diaRecipeLogError)));
       return;
     }
     if (!mounted) return;
@@ -611,16 +599,16 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: widget.embedded ? null : AppBar(title: const Text('Mi diario')),
+      appBar: widget.embedded ? null : AppBar(title: Text(context.l.diaTitle)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-food-diary',
         onPressed: _openAddChooser,
         backgroundColor: AppColors.wood,
         foregroundColor: AppColors.ink,
         icon: const Icon(Icons.add),
-        label: const Text(
-          'Añadir comida',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          context.l.diaAddMeal,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: FutureBuilder<_DiaryData>(
@@ -670,7 +658,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            tooltip: 'Anterior',
+            tooltip: context.l.previous,
             icon: const Icon(Icons.chevron_left),
             onPressed: () => _changeDay(-1),
           ),
@@ -679,7 +667,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           IconButton(
-            tooltip: 'Siguiente',
+            tooltip: context.l.next,
             icon: const Icon(Icons.chevron_right),
             // No dejar avanzar más allá del día de hoy.
             onPressed: _isToday ? null : () => _changeDay(1),
@@ -702,9 +690,9 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Calorías del día',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            context.l.diaDayCalories,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -718,7 +706,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           ),
           if (hasTarget) ...[
             Text(
-              'de $target kcal',
+              context.l.diaOfTarget(target),
               style: TextStyle(color: AppColors.inkMuted, fontSize: 15),
             ),
             const SizedBox(height: 12),
@@ -734,8 +722,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             const SizedBox(height: 6),
             Text(
               over
-                  ? 'Te has pasado ${(total - target).round()} kcal'
-                  : 'Te quedan ${(target - total).round()} kcal',
+                  ? context.l.homeKcalOver((total - target).round())
+                  : context.l.homeKcalLeft((target - total).round()),
               style: TextStyle(
                 color: over ? AppColors.expired : AppColors.inkMuted,
                 fontWeight: FontWeight.w600,
@@ -744,8 +732,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           ] else ...[
             const SizedBox(height: 8),
             Text(
-              'Completa tu perfil para fijar un objetivo diario de calorías '
-              'y ver cuánto te queda cada día.',
+              context.l.diaNoTarget,
               style: TextStyle(color: AppColors.inkMuted),
             ),
             const SizedBox(height: 8),
@@ -768,7 +755,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.person_outline),
-                label: const Text('Completar mi perfil'),
+                label: Text(context.l.diaCompleteProfile),
               ),
             ),
           ],
@@ -786,14 +773,14 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     for (final type in _mealOrder) {
       final group = entries.where((e) => e.mealType == type).toList();
       if (group.isEmpty) continue;
-      widgets.add(_groupHeader(FoodLogEntry.mealTypeLabels[type] ?? type));
+      widgets.add(_groupHeader(context.l.mealType(type)));
       widgets.addAll(group.map(_entryCard));
       widgets.add(const SizedBox(height: 8));
     }
 
     final others = entries.where((e) => e.mealType == null).toList();
     if (others.isNotEmpty) {
-      widgets.add(_groupHeader('Otras'));
+      widgets.add(_groupHeader(context.l.diaOthers));
       widgets.addAll(others.map(_entryCard));
       widgets.add(const SizedBox(height: 8));
     }
@@ -848,7 +835,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  e.name.isNotEmpty ? e.name : 'Comida',
+                  e.name.isNotEmpty ? e.name : context.l.diaMeal,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
@@ -864,7 +851,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Eliminar',
+            tooltip: context.l.delete,
             icon: Icon(Icons.delete_outline, color: AppColors.expired),
             onPressed: e.id != null ? () => _deleteEntry(e.id!) : null,
           ),
@@ -901,14 +888,14 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tus últimos 7 días',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            context.l.diaLast7,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           if (hasTarget) ...[
             const SizedBox(height: 4),
             Text(
-              'Objetivo: $target kcal al día',
+              context.l.diaTargetPerDay(target),
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
           ],
@@ -986,7 +973,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
-                              labelResolver: (_) => 'Objetivo',
+                              labelResolver: (_) => context.l.diaTarget,
                             ),
                           ),
                         ],
@@ -1031,14 +1018,14 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Reparto de hoy',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            context.l.diaTodaySplit,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           if (total <= 0)
             Text(
-              'Aún no hay macros registrados hoy.',
+              context.l.diaNoMacros,
               style: TextStyle(color: AppColors.inkMuted),
             )
           else
@@ -1079,11 +1066,15 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _macroLegend(AppColors.woodDark, 'Proteína', protein),
+                      _macroLegend(
+                        AppColors.woodDark,
+                        context.l.diaProtein,
+                        protein,
+                      ),
                       const SizedBox(height: 8),
-                      _macroLegend(AppColors.wood, 'Carbos', carbs),
+                      _macroLegend(AppColors.wood, context.l.diaCarbs, carbs),
                       const SizedBox(height: 8),
-                      _macroLegend(AppColors.line, 'Grasa', fat),
+                      _macroLegend(AppColors.line, context.l.diaFat, fat),
                     ],
                   ),
                 ),
@@ -1129,32 +1120,40 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '¿Has comido lo del plan?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Text(
+                context.l.diaAteThePlan,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               for (final e in asked)
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        '${e.logDate.day == today.day ? 'Hoy' : 'Ayer'}, '
-                        '${(FoodLogEntry.mealTypeLabels[e.mealType] ?? '').toLowerCase()}: '
-                        '${e.name} · ${e.calories?.round()} kcal',
+                        context.l.diaAskLine(
+                          e.logDate.day == today.day
+                              ? context.l.today
+                              : context.l.yesterday,
+                          context.l.mealType(e.mealType ?? ''),
+                          e.name,
+                          e.calories?.round() ?? 0,
+                        ),
                       ),
                     ),
                     TextButton(
                       onPressed: () => _answer(e, ate: false),
-                      child: const Text('No'),
+                      child: Text(context.l.no),
                     ),
                     TextButton(
                       onPressed: () => _answer(e, ate: true),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.terracotta,
                       ),
-                      child: const Text(
-                        'Sí',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      child: Text(
+                        context.l.yes,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1172,9 +1171,9 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     } catch (err) {
       debugPrint('FoodDiary._answer error: $err');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo guardar la respuesta.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.diaAnswerError)));
       return;
     }
     if (ate && mounted) _reload();
@@ -1183,12 +1182,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   Widget _askSwitch(DashboardPrefs prefs) {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
-      title: const Text('Preguntarme antes de apuntar el plan'),
-      subtitle: Text(
-        prefs.askMeals
-            ? 'Te preguntamos si has comido cada comida del plan.'
-            : 'Las comidas del plan se apuntan solas al pasar su hora.',
-      ),
+      title: Text(context.l.diaAskFirst),
+      subtitle: Text(prefs.askMeals ? context.l.diaAskOn : context.l.diaAskOff),
       value: prefs.askMeals,
       onChanged: (v) async {
         try {
@@ -1199,9 +1194,9 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         } catch (e) {
           debugPrint('FoodDiary._askSwitch error: $e');
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se pudo guardar el ajuste.')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(context.l.diaSettingError)));
           return;
         }
         if (mounted) _reload();
@@ -1217,7 +1212,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           const MiauCharacter(mood: MiauMood.curious, size: 110),
           const SizedBox(height: 12),
           Text(
-            'Aún no has apuntado nada este día.\nAñade tu primera comida.',
+            context.l.diaEmpty,
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.inkMuted),
           ),
