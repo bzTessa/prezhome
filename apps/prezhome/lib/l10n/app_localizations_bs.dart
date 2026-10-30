@@ -26,4 +26,300 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get countryHint => 'Valuta, supermarketi i okvirne cijene';
+
+  @override
+  String get continueLabel => 'Nastavi';
+
+  @override
+  String get back => 'Nazad';
+
+  @override
+  String get oneMoment => 'Trenutak…';
+
+  @override
+  String get retry => 'Pokušaj ponovo';
+
+  @override
+  String get loginAccountCreated => 'Račun je kreiran. Dobro došli u PrezHome';
+
+  @override
+  String get loginAuthError => 'Greška pri prijavi';
+
+  @override
+  String loginProviderError(String provider) {
+    return 'Prijava putem $provider nije uspjela';
+  }
+
+  @override
+  String get loginResetNeedsEmail =>
+      'Prvo upiši svoj e-mail i poslat ću ti link za promjenu lozinke.';
+
+  @override
+  String get loginResetSent => 'Poslala sam ti e-mail za promjenu lozinke.';
+
+  @override
+  String get loginResetError => 'E-mail nije poslan';
+
+  @override
+  String get loginWelcomeBack => 'Dobro došli nazad';
+
+  @override
+  String get loginCreateAccount => 'Kreiraj svoj račun';
+
+  @override
+  String get loginTagline => 'PrezHome, tvoj organizovani dom';
+
+  @override
+  String loginContinueWith(String provider) {
+    return 'Nastavi putem $provider';
+  }
+
+  @override
+  String get loginOrEmail => 'ili putem e-maila';
+
+  @override
+  String get loginEmail => 'E-mail';
+
+  @override
+  String get loginEmailInvalid => 'Unesi ispravan e-mail';
+
+  @override
+  String get loginPassword => 'Lozinka';
+
+  @override
+  String get loginShowPassword => 'Prikaži lozinku';
+
+  @override
+  String get loginHidePassword => 'Sakrij lozinku';
+
+  @override
+  String get loginPasswordShort => 'Najmanje 6 znakova';
+
+  @override
+  String get loginForgot => 'Zaboravila si lozinku?';
+
+  @override
+  String get loginSignIn => 'Prijavi se';
+
+  @override
+  String get loginSignUp => 'Registruj se';
+
+  @override
+  String get loginNoAccount => 'Nemaš račun? Registruj se';
+
+  @override
+  String get loginHaveAccount => 'Već imaš račun? Prijavi se';
+
+  @override
+  String get homeCodeFormat =>
+      'Kod ima 8 slova i brojeva (na primjer ABCD-EFGH).';
+
+  @override
+  String get homeSetupError => 'Dom nije podešen';
+
+  @override
+  String get homeLastStep => 'Zadnji korak: tvoj dom';
+
+  @override
+  String get homeCreateHint =>
+      'Kreiraj ga sada i, kad poželiš, pozovi ukućane iz Danas.';
+
+  @override
+  String get homeCreate => 'Kreiraj moj dom';
+
+  @override
+  String get homeInvited => 'Pozvan/a sam u dom';
+
+  @override
+  String get homeInviteCode => 'Kod pozivnice';
+
+  @override
+  String get homeJoin => 'Pridruži se domu';
+
+  @override
+  String get sessionLoadError => 'Profil se nije mogao učitati.';
+
+  @override
+  String get onbSectionHome => 'Tvoj dom';
+
+  @override
+  String get onbPeopleTitle => 'Koliko vas živi u domu?';
+
+  @override
+  String get onbPeopleHint => 'Za porcije, kupovinu i podjelu zadataka.';
+
+  @override
+  String get onbSectionGoals => 'Šta te zaokuplja';
+
+  @override
+  String get onbGoalsTitle => 'Šta želiš izbaciti iz glave?';
+
+  @override
+  String get onbGoalsHint => 'Izaberi koliko želiš. Ostalo će biti sakriveno.';
+
+  @override
+  String get onbPickOne => 'Izaberi barem jednu';
+
+  @override
+  String onbContinueCount(int count) {
+    return 'Nastavi ($count)';
+  }
+
+  @override
+  String get onbSectionKitchen => 'U kuhinji';
+
+  @override
+  String get onbCookingTitle => 'Kako kuhate?';
+
+  @override
+  String get onbCookingHint =>
+      'Tako znamo trebamo li planirati kuhanje unaprijed i zamrzivač.';
+
+  @override
+  String get onbSectionShopping => 'Kupovina';
+
+  @override
+  String get onbShopTitle => 'Gdje kupuješ?';
+
+  @override
+  String get onbShopHint =>
+      'Prvi će biti tvoj glavni supermarket: recepti će koristiti proizvode koje je tamo lako naći.';
+
+  @override
+  String get onbSkipSeeHome => 'Preskoči i vidi moj dom';
+
+  @override
+  String get onbSeeHome => 'Vidi moj dom';
+
+  @override
+  String get onbSlogan => 'Uredan dom, miran um.';
+
+  @override
+  String get onbStart => 'Započni';
+
+  @override
+  String get onbHaveAccount => 'Već imam račun';
+
+  @override
+  String get onbOneLess => 'Jedna manje';
+
+  @override
+  String get onbOneMore => 'Jedna više';
+
+  @override
+  String onbPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count osoba',
+      one: 'Samo ja',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get onbProfileBadge => 'Profil tvog doma';
+
+  @override
+  String onbProfileName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'solo': 'Solo',
+      'duo': 'Duo',
+      'tribu': 'Pleme',
+      'other': 'Porodica',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String onbProfileDescription(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'solo':
+          'Cijeli dom zavisi od tebe. PrezHome pamti šta imaš, šta ističe i šta treba uraditi, da ti ne moraš.',
+      'duo':
+          'Dvije osobe i jedan dom. PrezHome vidljivo dijeli obaveze, da niko ne mora sve držati u glavi.',
+      'other':
+          'Mnogo usta i mnogo stvari odjednom. PrezHome planira obroke, kupovinu i zadatke za sve i podsjeća svakog na njegov dio.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get onbLoadToday => 'Mentalno opterećenje danas';
+
+  @override
+  String get onbLoadWithApp => 'Uz PrezHome';
+
+  @override
+  String onbLoad(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'high': 'teško',
+      'medium': 'srednje',
+      'other': 'lagano',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get onbCreateAccount => 'Kreiraj moj račun';
+
+  @override
+  String onbFeature(String f) {
+    String _temp0 = intl.Intl.selectLogic(f, {
+      'compra': 'Lista za kupovinu',
+      'comidas': 'Šta jedemo',
+      'despensa': 'Ostava i rokovi trajanja',
+      'tareas': 'Kućni poslovi',
+      'other': 'Troškovi doma',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalLabel(String g) {
+    String _temp0 = intl.Intl.selectLogic(g, {
+      'comidas': 'Šta jedemo',
+      'compra': 'Kupovina',
+      'despensa': 'Šta ima u kući',
+      'tareas': 'Kućni poslovi',
+      'lote': 'Kuhanje unaprijed',
+      'other': 'Troškovi doma',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalHint(String g) {
+    String _temp0 = intl.Intl.selectLogic(g, {
+      'comidas': 'Plan obroka i recepti',
+      'compra': 'Lista koja se sama piše',
+      'despensa': 'Ostava, frižider i rokovi',
+      'tareas': 'Pravedna podjela i podsjetnici',
+      'lote': 'Posude i zamrzivač u redu',
+      'other': 'Budžet i računi',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String cookingLabel(String c) {
+    String _temp0 = intl.Intl.selectLogic(c, {
+      'diario': 'Svaki dan',
+      'lote': 'Unaprijed',
+      'mixto': 'Pomalo od svega',
+      'other': 'Skoro nikad',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String cookingHint(String c) {
+    String _temp0 = intl.Intl.selectLogic(c, {
+      'diario': 'Kuham kad treba',
+      'lote': 'Spremam za više dana odjednom',
+      'mixto': 'Neke dane unaprijed',
+      'other': 'Jedem vani ili nešto brzo',
+    });
+    return '$_temp0';
+  }
 }

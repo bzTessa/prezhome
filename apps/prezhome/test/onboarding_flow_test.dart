@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prezhome/l10n/l10n.dart';
 import 'package:prezhome/onboarding/onboarding_flow.dart';
 import 'package:prezhome/widgets/tactile_button.dart';
 
@@ -51,5 +52,25 @@ void main() {
     expect(find.text('El Dúo'), findsOneWidget);
     expect(find.text('Crear mi cuenta'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sale en el idioma del móvil (inglés)', (tester) async {
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: OnboardingFlow(),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await _tapText(tester, 'Get started');
+    expect(find.text('How many people live with you?'), findsOneWidget);
+    expect(find.text('2 people'), findsOneWidget);
   });
 }

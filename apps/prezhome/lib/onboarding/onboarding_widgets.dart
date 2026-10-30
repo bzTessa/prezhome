@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tactile_button.dart';
+import '../l10n/l10n.dart';
 
 /// Piezas visuales del cuestionario inicial.
 
@@ -87,7 +88,7 @@ class QuestionScaffold extends StatelessWidget {
     required this.onContinue,
     required this.onBack,
     this.subtitle,
-    this.continueLabel = 'Continuar',
+    this.continueLabel,
     this.illustration,
   });
 
@@ -99,7 +100,7 @@ class QuestionScaffold extends StatelessWidget {
   final Widget child;
   final VoidCallback? onContinue;
   final VoidCallback onBack;
-  final String continueLabel;
+  final String? continueLabel;
 
   /// Dibujo opcional encima de la pregunta (assets/images/onb_*.png).
   final String? illustration;
@@ -117,7 +118,7 @@ class QuestionScaffold extends StatelessWidget {
                 IconButton(
                   onPressed: onBack,
                   icon: const Icon(Icons.arrow_back_rounded),
-                  tooltip: 'Atrás',
+                  tooltip: context.l.back,
                 ),
                 Text(
                   section,
@@ -161,7 +162,10 @@ class QuestionScaffold extends StatelessWidget {
             const SizedBox(height: 24),
             Expanded(child: SingleChildScrollView(child: child)),
             const SizedBox(height: 12),
-            OnboardingButton(label: continueLabel, onPressed: onContinue),
+            OnboardingButton(
+              label: continueLabel ?? context.l.continueLabel,
+              onPressed: onContinue,
+            ),
           ],
         ),
       ),
