@@ -322,4 +322,224 @@ class AppLocalizationsBs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String homeGreeting(String part) {
+    String _temp0 = intl.Intl.selectLogic(part, {
+      'morning': 'Dobro jutro',
+      'afternoon': 'Dobar dan',
+      'other': 'Dobro veče',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeCustomize => 'Prilagodi Danas';
+
+  @override
+  String get homeYourData => 'Tvoji podaci';
+
+  @override
+  String get homeYourHome => 'Tvoj dom';
+
+  @override
+  String homeTodayTag(String meal) {
+    return 'Danas · $meal';
+  }
+
+  @override
+  String mealType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Doručak',
+      'lunch': 'Ručak',
+      'snack': 'Užina',
+      'dinner': 'Večera',
+      'dessert': 'Desert',
+      'other': 'Obrok',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeEatingOut => 'Van kuće';
+
+  @override
+  String get homeWhatToEat => 'Šta jedemo danas?';
+
+  @override
+  String get homeNothingPlanned => 'Za danas još ništa nije planirano.';
+
+  @override
+  String get homePlan => 'Planiraj';
+
+  @override
+  String get homeWithWhatIHave => 'Sa onim što imam';
+
+  @override
+  String get homeExpiring => 'Ističe';
+
+  @override
+  String homeTasksToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Zadaci danas',
+      one: 'Zadatak danas',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeInShopping => 'Na listi';
+
+  @override
+  String get homeShortcuts => 'Prečice';
+
+  @override
+  String get homeForToday => 'Za danas';
+
+  @override
+  String get homeSeeAll => 'Vidi sve';
+
+  @override
+  String homePoints(int points) {
+    return '$points bod.';
+  }
+
+  @override
+  String homePointsSnack(int points) {
+    return '+$points bodova';
+  }
+
+  @override
+  String get homeToday => 'Danas';
+
+  @override
+  String get homeTomorrow => 'Sutra';
+
+  @override
+  String get homeCaloriesTitle => 'Izračunaj svoj cilj kalorija';
+
+  @override
+  String get homeCaloriesHint =>
+      'Odgovori na nekoliko brzih pitanja i prilagodit ću PrezHome tebi.';
+
+  @override
+  String homeOf(String total) {
+    return 'od $total';
+  }
+
+  @override
+  String get homeCaloriesToday => 'Današnje kalorije';
+
+  @override
+  String homeKcal(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String homeKcalLeft(int kcal) {
+    return 'Preostalo $kcal kcal';
+  }
+
+  @override
+  String homeKcalOver(int kcal) {
+    return 'Prešla si $kcal kcal';
+  }
+
+  @override
+  String get homeMonthSpend => 'Potrošnja ovog mjeseca';
+
+  @override
+  String homeMoneyLeft(String amount) {
+    return 'Preostalo $amount';
+  }
+
+  @override
+  String homeMoneyOver(String amount) {
+    return '$amount preko budžeta';
+  }
+
+  @override
+  String get save => 'Sačuvaj';
+
+  @override
+  String get homeCardsSection => 'Kartice (prevuci za redoslijed)';
+
+  @override
+  String get homeQuickSection => 'Brze akcije';
+
+  @override
+  String get homeQuickHint => 'Izaberi prečice koje ćeš vidjeti na vrhu Danas.';
+
+  @override
+  String dashCard(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'meals': 'Današnji obroci',
+      'calories': 'Današnje kalorije',
+      'tasks': 'Zadaci',
+      'other': 'Potrošnja ovog mjeseca',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String quickAction(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'add_inventory': 'Dodaj u ostavu',
+      'scan_ticket': 'Skeniraj račun',
+      'shopping': 'Lista za kupovinu',
+      'add_recipe': 'Novi recept',
+      'meal_plan': 'Sedmični plan',
+      'other': 'Dnevnik kalorija',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get shopPickStore => 'Izaberi supermarket';
+
+  @override
+  String get shopAddFromPlan => 'Dodaj sedmični plan';
+
+  @override
+  String get shopListOptions => 'Opcije liste';
+
+  @override
+  String get shopAllInCart => 'Sve je u korpi';
+
+  @override
+  String shopPending(int pending, int done) {
+    return '$pending za kupiti · $done u korpi';
+  }
+
+  @override
+  String shopUnpriced(int count) {
+    return ' · $count bez cijene';
+  }
+
+  @override
+  String get shopAddProduct => 'Dodaj proizvod';
+
+  @override
+  String get shopSearchStore => 'Traži u supermarketu';
+
+  @override
+  String get moreOptions => 'Više opcija';
+
+  @override
+  String get less => 'Manje';
+
+  @override
+  String get more => 'Više';
+
+  @override
+  String shopAdded(String name) {
+    return '$name, dodano';
+  }
+
+  @override
+  String shopAdd(String name) {
+    return 'Dodaj $name';
+  }
 }
