@@ -15,3 +15,14 @@ String ticketRangeFilter(DateTime start, DateTime end) {
   return 'and(purchased_at.gte.$s,purchased_at.lt.$e),'
       'and(purchased_at.is.null,created_at.gte.$s,created_at.lt.$e)';
 }
+
+/// La IA a veces lee mal el año del ticket (06/10/2023 en vez de 2026). Una
+/// fecha futura o de hace más de un año se corrige al año actual o, si así
+/// queda en el futuro, al anterior.
+DateTime plausibleTicketDate(DateTime d, [DateTime? now]) {
+  final today = now ?? DateTime.now();
+  final yearAgo = DateTime(today.year - 1, today.month, today.day);
+  if (!d.isAfter(today) && d.isAfter(yearAgo)) return d;
+  final fixed = DateTime(today.year, d.month, d.day);
+  return fixed.isAfter(today) ? DateTime(today.year - 1, d.month, d.day) : fixed;
+}
