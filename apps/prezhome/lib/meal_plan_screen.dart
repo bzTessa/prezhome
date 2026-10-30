@@ -204,6 +204,31 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final entries = (planRes as List)
         .map((m) => MealPlanEntry.fromMap(m))
         .toList();
+    // En tandas, las semanas siguientes pueden sacar del congelador lo que se
+    // cocina en esta (planes de varias semanas).
+    final later = !isMealPrep
+        ? const <MealPlanEntry>[]
+        : [
+            for (final m
+                in await _client
+                        .from('meal_plan_entries')
+                        .select()
+                        .eq('home_id', homeId)
+                        .gte(
+                          'plan_date',
+                          end.toIso8601String().split('T').first,
+                        )
+                        .lt(
+                          'plan_date',
+                          end
+                              .add(const Duration(days: 63))
+                              .toIso8601String()
+                              .split('T')
+                              .first,
+                        )
+                    as List)
+              MealPlanEntry.fromMap(m),
+          ];
 
     return _PlanData(
       homeId: homeId,
@@ -211,6 +236,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       recipes: recipes,
       recipesById: {for (final r in recipes) r.id: r},
       entries: entries,
+      laterEntries: later,
       members: members,
       isMealPrep: isMealPrep,
       prefs: switch (profile['dashboard_prefs']) {
@@ -378,6 +404,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         frozenByRecipe.putIfAbsent(fm.recipeId, () => []).add(fm);
       }
 
+      // Plan en tandas de varias semanas: lo que se congela bien se cocina la
+      // primera semana que sale y las siguientes veces sale del congelador.
+      final stockFreezer = data.isMealPrep && days > 7;
+      final firstCookWeek = <String, DateTime>{};
+      DateTime monday(DateTime d) =>
+          DateTime(d.year, d.month, d.day - (d.weekday - 1));
+
       final rows = <Map<String, dynamic>>[];
       plan.forEach((date, meals) {
         meals.forEach((type, recipeId) {
@@ -388,6 +421,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           final pool = frozenByRecipe[recipeId];
           if (pool != null && pool.isNotEmpty) {
             frozen = pool.removeAt(0);
+          }
+          var fromFreezer = frozen != null;
+          if (!fromFreezer &&
+              stockFreezer &&
+              (data.recipesById[recipeId]?.freezesWell ?? false)) {
+            final week = firstCookWeek.putIfAbsent(
+              recipeId,
+              () => monday(date),
+            );
+            fromFreezer = monday(date).isAfter(week);
           }
           // Raciones = personas que comen en casa ese día/comida.
           final servings = servingsCountForMeal(
@@ -401,7 +444,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               date: date,
               mealType: type,
               recipeId: recipeId,
-              fromFreezer: frozen != null,
+              fromFreezer: fromFreezer,
               inventoryItemId: frozen?.itemId,
               servings: servings,
             ).toMap(),
@@ -1808,7 +1851,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   MealPrepPlan _buildMealPrepPlan(_PlanData data) => prepPlanForWeek(
-    entries: data.entries,
+    entries: [...data.entries, ...data.laterEntries],
     recipesById: data.recipesById,
     weekStart: _weekStart,
     energyLevel: _energyLevel,
@@ -2120,6 +2163,7 @@ class _PlanData {
   final List<Recipe> recipes;
   final Map<String, Recipe> recipesById;
   final List<MealPlanEntry> entries;
+  final List<MealPlanEntry> laterEntries;
   final List<HouseholdMember> members;
 
   /// true si algún perfil del hogar cocina en modo 'mealprep' (en lote). Solo
@@ -2132,6 +2176,7 @@ class _PlanData {
     this.recipes = const [],
     this.recipesById = const {},
     this.entries = const [],
+    this.laterEntries = const [],
     this.members = const [],
     this.isMealPrep = false,
     DashboardPrefs? prefs,

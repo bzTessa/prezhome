@@ -6,6 +6,10 @@ import 'meal_prep_planner.dart';
 /// día en que se hizo el plan. No cambia al pasar los días: así los tápers
 /// que ya se guardaron cuadran con lo que se ve. Lo comparten el plan semanal,
 /// el calendario del mes y los tápers automáticos para que digan lo mismo.
+///
+/// Si [entries] trae semanas siguientes, sus comidas "del congelador" que aún
+/// no tienen plato congelado (las de un plan de varias semanas) se cocinan en
+/// esta semana cuando es la última en la que se cocina esa receta antes.
 MealPrepPlan prepPlanForWeek({
   required List<MealPlanEntry> entries,
   required Map<String, Recipe> recipesById,
@@ -42,8 +46,34 @@ MealPrepPlan prepPlanForWeek({
           servings: e.servings!,
         ),
   ];
+  bool cooked(MealPlanEntry e) =>
+      !e.skipped && !e.fromFreezer && e.recipeId != null;
+  final later = <PrepMeal>[
+    for (final e in entries)
+      if (!e.skipped &&
+          e.fromFreezer &&
+          e.inventoryItemId == null &&
+          e.recipeId != null &&
+          (e.servings ?? 0) > 0 &&
+          !e.date.isBefore(end) &&
+          // Nadie más la cocina entre esta semana y ese día.
+          !entries.any(
+            (o) =>
+                cooked(o) &&
+                o.recipeId == e.recipeId &&
+                !o.date.isBefore(end) &&
+                o.date.isBefore(e.date),
+          ))
+        PrepMeal(
+          recipeId: e.recipeId!,
+          date: e.date,
+          mealType: e.mealType,
+          servings: e.servings!,
+        ),
+  ];
   return const MealPrepPlanner().buildPlan(
     meals: meals,
+    laterMeals: later,
     recipesById: {
       for (final r in recipesById.values)
         r.id: PrepRecipe(

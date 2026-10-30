@@ -182,14 +182,19 @@ class PlanShoppingService {
     String day(DateTime d) => d.toIso8601String().split('T').first;
     final planRes = await _client
         .from('meal_plan_entries')
-        .select('recipe_id, skipped')
+        .select('recipe_id, skipped, inventory_item_id')
         .eq('home_id', homeId)
         .gte('plan_date', day(from))
         .lt('plan_date', day(to));
     final recipeIds = <String>[];
     for (final row in planRes as List) {
       final id = row['recipe_id'] as String?;
-      if (id != null && row['skipped'] != true) recipeIds.add(id);
+      // Un plato que ya está en el congelador no se compra otra vez.
+      if (id != null &&
+          row['skipped'] != true &&
+          row['inventory_item_id'] == null) {
+        recipeIds.add(id);
+      }
     }
     if (recipeIds.isEmpty) return const [];
 
