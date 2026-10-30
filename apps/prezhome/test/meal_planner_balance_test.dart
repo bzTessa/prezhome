@@ -67,6 +67,26 @@ void main() {
     expect(maxUses, lessThanOrEqualTo(4));
   });
 
+  test('Plan de 4 semanas: la pauta se cumple también la última semana', () {
+    var legumbreUltima = 0;
+    for (var seed = 0; seed < 200; seed++) {
+      final plan = MealPlanner(seed: seed).generate(
+        startDate: DateTime(2026, 10, 12),
+        days: 28,
+        mealTypes: const ['lunch', 'dinner'],
+        recipes: recipes,
+      );
+      expect(plan.length, 28);
+      final ultima = [
+        for (final e in plan.entries)
+          if (!e.key.isBefore(DateTime(2026, 11, 2))) ...e.value.values,
+      ];
+      legumbreUltima += ultima.where((id) => id.startsWith('l')).length;
+    }
+    // Pauta de 3 legumbres por semana; sin contar por semana bajaba de 3.
+    expect(legumbreUltima / 200, greaterThan(3));
+  });
+
   test('Plan sin comidas ocultas', () {
     const prefs = PlanPrefs(hidden: {'snack', 'breakfast'});
     expect(prefs.planned(['breakfast', 'lunch', 'snack', 'dinner']), [

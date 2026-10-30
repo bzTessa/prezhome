@@ -110,3 +110,19 @@ RecipeNutrition computeRecipeNutrition(
     total: total,
   );
 }
+
+/// Raciones que salen de una receta por el peso de sus ingredientes: total en
+/// gramos entre [gramsPerServing] (o ~400 g, un plato principal). Ignora lo que
+/// no se puede pesar (huevos, cucharadas). null si no hay nada pesable.
+int? estimateServings(
+  List<({double? quantity, String? unit})> ingredients, {
+  double? gramsPerServing,
+}) {
+  var grams = 0.0;
+  for (final i in ingredients) {
+    grams += gramsOf(i.quantity, i.unit) ?? 0;
+  }
+  if (grams <= 0) return null;
+  final per = (gramsPerServing ?? 0) > 0 ? gramsPerServing! : 400.0;
+  return (grams / per).round().clamp(1, 50);
+}

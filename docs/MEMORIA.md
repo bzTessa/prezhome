@@ -8,9 +8,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `apps/prezhome` (si no está, descargar el stable de
   `storage.googleapis.com/flutter_infra_release` en `/opt/flutter-sdk`). Tras `flutter analyze`/`test`/`pub get`, deshacer cambios
   en `analysis_options.yaml` (`git checkout analysis_options.yaml`).
-- Antes de push: `dart format .`, `flutter analyze`, `flutter test`, y
-  `dart run tool/architecture/dependency_map.dart` (CI lo comprueba con
-  `--check`; regenera `apps/prezhome/docs/architecture/dependency-map.md`).
+- Antes de push: `dart format .`, `flutter analyze`, `flutter test`.
+  `apps/prezhome/docs/architecture/dependency-map.md` es generado y NO se
+  versiona (está en `.gitignore`); el CI lo genera y lo sube como artefacto.
 - Entrega por PR a `main` desde `claude/life-management-apps-ffjpwf`. Al
   fusionar, `deploy.yml` hace `supabase db push`.
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"

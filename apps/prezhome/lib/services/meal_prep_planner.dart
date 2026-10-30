@@ -211,7 +211,25 @@ class MealPrepPlanner {
       weekStart.month,
       weekStart.day,
     );
-    final cookDates = _chooseCookDates(mealDays, maxCookingDays, weekStartDay);
+    final cookDates = [
+      ..._chooseCookDates(mealDays, maxCookingDays, weekStartDay),
+    ];
+
+    // Lo no congelable no puede pasar más de [kDiasNevera] días en la nevera:
+    // si su día de cocción queda más lejos, se cocina el mismo día que se come
+    // (un día de cocina más, aunque supere lo que pide la energía).
+    for (final m in relevant) {
+      if (recipesById[m.recipeId]!.freezable) continue;
+      final cook = cookDates.lastWhere(
+        (d) => !m._day.isBefore(d),
+        orElse: () => cookDates.first,
+      );
+      if (m._day.difference(cook).inDays > kDiasNevera) {
+        cookDates
+          ..add(m._day)
+          ..sort();
+      }
+    }
 
     // Cada comida va al bloque que arranca en su día de cocción y acaba antes
     // del siguiente. Si la receta ya se cocina en un bloque anterior y aguanta
@@ -644,14 +662,28 @@ List<TaperMove> taperMoves(
 
 /// Adónde va cada táper de [b] cocinado el [cookDay]: "recién hecho · nevera
 /// para el mié y vie · congelador para el sáb".
-String taperPlan(PrepBatch b, DateTime cookDay) {
+String taperPlan(PrepBatch b, DateTime cookDay) => [
+  for (final (spot, days) in taperSpots(b, cookDay))
+    switch (spot) {
+      TaperSpot.reciente => 'recién hecho',
+      TaperSpot.nevera => 'nevera para el $days',
+      TaperSpot.congelador => 'congelador para el $days',
+    },
+].join(' · ');
+
+/// Dónde acaba cada parte de una tanda.
+enum TaperSpot { reciente, nevera, congelador }
+
+/// Lo mismo que [taperPlan] pero por partes, para pintarlo en chips: cada
+/// sitio con sus días ("vie y sáb"; vacío para lo que se come recién hecho).
+List<(TaperSpot, String)> taperSpots(PrepBatch b, DateTime cookDay) {
   final fridge = {...b.fridgeByDay}..remove(cookDay);
   return [
-    if (b.fridgeByDay.containsKey(cookDay)) 'recién hecho',
-    if (fridge.isNotEmpty) 'nevera para el ${_dias(fridge)}',
+    if (b.fridgeByDay.containsKey(cookDay)) (TaperSpot.reciente, ''),
+    if (fridge.isNotEmpty) (TaperSpot.nevera, _dias(fridge)),
     if (b.freezerByDay.isNotEmpty)
-      'congelador para el ${_dias(b.freezerByDay)}',
-  ].join(' · ');
+      (TaperSpot.congelador, _dias(b.freezerByDay)),
+  ];
 }
 
 /// "lun, mar y jue" a partir de los días de un mapa.

@@ -6,6 +6,7 @@ import 'main_shell.dart';
 import 'login_screen.dart';
 import 'services/offline_provider.dart';
 import 'widgets/miau_character.dart';
+import 'l10n/l10n.dart';
 
 /// Resultado de evaluar el estado del usuario para decidir a donde llevarlo:
 /// si pertenece a un hogar. El perfil de calorías NO se pide al entrar: se
@@ -108,12 +109,9 @@ class _ProfileLoadError extends StatelessWidget {
             children: [
               const MiauCharacter(mood: MiauMood.worried, size: 110),
               const SizedBox(height: 16),
-              const Text('No se pudo cargar tu perfil.'),
+              Text(context.l.sessionLoadError),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: onRetry,
-                child: const Text('Reintentar'),
-              ),
+              ElevatedButton(onPressed: onRetry, child: Text(context.l.retry)),
             ],
           ),
         ),

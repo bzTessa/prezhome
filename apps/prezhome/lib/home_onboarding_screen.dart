@@ -3,10 +3,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_shell.dart';
 import 'onboarding/onboarding_widgets.dart';
+import 'services/home_country.dart';
 import 'services/home_invites.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/miau_character.dart';
+import 'l10n/l10n.dart';
 
 class HomeOnboardingScreen extends StatefulWidget {
   const HomeOnboardingScreen({super.key});
@@ -25,13 +27,14 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
   Future<void> _createHome() async {
     await _runHomeAction(() async {
       await _client.rpc('create_home_and_join');
+      await HomeCountry.load(_client);
     });
   }
 
   Future<void> _joinHome() async {
     final code = _homeIdController.text;
     if (!looksLikeInviteCode(code)) {
-      _showError('El código tiene 8 letras y números (por ejemplo ABCD-EFGH).');
+      _showError(context.l.homeCodeFormat);
       return;
     }
 
@@ -59,7 +62,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
       if (mounted) _showError(error.message);
     } catch (error) {
       if (mounted) {
-        _showError(friendlyError(error, 'No se pudo configurar el hogar'));
+        _showError(friendlyError(error, context.l.homeSetupError));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -94,7 +97,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                   const MiauCharacter(mood: MiauMood.greeting, size: 120),
                   const SizedBox(height: 16),
                   Text(
-                    'Último paso: tu hogar',
+                    context.l.homeLastStep,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
@@ -105,8 +108,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Créalo ahora y, cuando quieras, invita a quien viva '
-                    'contigo desde Inicio.',
+                    context.l.homeCreateHint,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -116,7 +118,9 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                   ),
                   const SizedBox(height: 32),
                   OnboardingButton(
-                    label: _isLoading ? 'Un momento…' : 'Crear mi hogar',
+                    label: _isLoading
+                        ? context.l.oneMoment
+                        : context.l.homeCreate,
                     onPressed: _isLoading ? null : _createHome,
                   ),
                   const SizedBox(height: 12),
@@ -126,7 +130,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                           ? null
                           : () => setState(() => _joining = true),
                       child: Text(
-                        'Me han invitado a un hogar',
+                        context.l.homeInvited,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -141,14 +145,14 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                       enabled: !_isLoading,
                       autofocus: true,
                       textCapitalization: TextCapitalization.characters,
-                      decoration: const InputDecoration(
-                        labelText: 'Código de invitación',
+                      decoration: InputDecoration(
+                        labelText: context.l.homeInviteCode,
                         hintText: 'ABCD-EFGH',
                       ),
                     ),
                     const SizedBox(height: 12),
                     OnboardingButton(
-                      label: 'Unirme a un hogar',
+                      label: context.l.homeJoin,
                       outlined: true,
                       onPressed: _isLoading ? null : _joinHome,
                     ),

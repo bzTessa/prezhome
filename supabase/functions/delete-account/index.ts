@@ -8,6 +8,9 @@
 //   3. Borra el usuario de Auth; su perfil y lo personal caen en cascada y lo
 //      compartido (tareas, recetas…) queda con created_by = null.
 //
+// Con {"app":"wallet"} (desde PrezWallet) y la persona en un hogar de
+// PrezHome, solo borra sus datos wallet_* y la cuenta sigue para PrezHome.
+//
 // shortcut: las fotos del hogar en Storage no se borran al quedar vacío; si
 // hace falta, limpiarlas aquí por carpeta del hogar.
 //
@@ -23,6 +26,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+// Las FK entre ellas son cascade o set null, así que el orden da igual.
+const WALLET_TABLES = [
+  "wallet_trades",
+  "wallet_dividends",
+  "wallet_holdings",
+  "wallet_transactions",
+  "wallet_bills",
+  "wallet_budgets",
+  "wallet_goals",
+  "wallet_categories",
+  "wallet_accounts",
+  "wallet_learner",
+];
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -59,6 +76,19 @@ Deno.serve(async (req) => {
       .eq("id", user.id)
       .maybeSingle();
     const homeId = profile?.home_id as string | null | undefined;
+
+    const body = await req.json().catch(() => ({}));
+    if (body?.app === "wallet" && homeId) {
+      for (const table of WALLET_TABLES) {
+        const col = table === "wallet_learner" ? "user_id" : "owner_id";
+        const { error } = await admin.from(table).delete().eq(col, user.id);
+        if (error) {
+          console.error(`borrar ${table}:`, error.message);
+          return json({ error: "No se pudieron borrar tus datos" }, 500);
+        }
+      }
+      return json({ ok: true, scope: "wallet" });
+    }
 
     if (homeId) {
       // Como la persona, para que leave_home() use su auth.uid().

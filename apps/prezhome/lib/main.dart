@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home_session_screen.dart';
+import 'l10n/l10n.dart';
+import 'services/home_country.dart';
 import 'services/connection_status.dart';
 import 'services/offline_provider.dart';
 import 'theme/app_theme.dart';
@@ -59,12 +61,14 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ThemePreference.mode.addListener(_applyTheme);
+    HomeCountry.current.addListener(_rebuildAll);
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((s) {
       _applyTheme();
       if (s.event == AuthChangeEvent.signedOut) {
         unawaited(Reminders.clear());
       } else if (s.event == AuthChangeEvent.initialSession ||
           s.event == AuthChangeEvent.signedIn) {
+        unawaited(HomeCountry.load(Supabase.instance.client));
         unawaited(Reminders.sync(Supabase.instance.client));
       }
     });
@@ -75,6 +79,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     ThemePreference.mode.removeListener(_applyTheme);
+    HomeCountry.current.removeListener(_rebuildAll);
     _authSub.cancel();
     super.dispose();
   }
@@ -98,7 +103,13 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
   void _applyTheme() {
     final before = AppColors.dark;
     _syncBrightness();
-    if (before == AppColors.dark || !mounted) return;
+    if (before != AppColors.dark) _rebuildAll();
+  }
+
+  /// Repinta todo el árbol (también los widgets const): cambia la paleta o la
+  /// moneda del hogar.
+  void _rebuildAll() {
+    if (!mounted) return;
     setState(() {});
     void rebuild(Element e) {
       e.markNeedsBuild();
@@ -122,11 +133,24 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
       title: 'PrezHome',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(context),
-      // App en español de España: selectores de fecha, textos del sistema y
-      // formato (lunes primero, coma decimal).
-      locale: const Locale('es', 'ES'),
-      supportedLocales: const [Locale('es', 'ES')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      // Idioma del móvil si la app lo tiene; si no, español. Intl.defaultLocale
+      // decide el formato de números y moneda (utils/money.dart).
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localeResolutionCallback: (device, supported) {
+        final locale = supported.firstWhere(
+          (l) => l.languageCode == device?.languageCode,
+          orElse: () => const Locale('es'),
+        );
+        Intl.defaultLocale = device?.languageCode == locale.languageCode
+            ? Intl.verifiedLocale(
+                device.toString(),
+                NumberFormat.localeExists,
+                onFailure: (_) => locale.languageCode,
+              )
+            : 'es_ES';
+        return locale;
+      },
       home: const _AuthGate(),
       // En pantallas muy anchas la app no pasa de 1280 px, centrada. El menú
       // lateral y el ancho del contenido los decide MainShell.

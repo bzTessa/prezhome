@@ -7,6 +7,7 @@ import '../animations/animated_counter.dart';
 import '../animations/press_scale.dart';
 import '../animations/spring_value.dart';
 import '../miau_character.dart';
+import '../../utils/money.dart';
 
 /// Piezas visuales de la lista de la compra. Sin acceso a datos: reciben lo
 /// que pintan y callbacks, para poder probarlas y previsualizarlas aparte.
@@ -24,6 +25,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
     required this.onOptions,
     this.generating = false,
     this.estimate,
+    this.unpriced = 0,
     this.storeLabel,
     this.onTapStore,
   });
@@ -38,6 +40,9 @@ class ShoppingSummaryHeader extends StatelessWidget {
 
   /// Coste estimado de lo pendiente en euros, o null si no se conoce.
   final double? estimate;
+
+  /// Productos pendientes que no suman al [estimate] por no tener precio.
+  final int unpriced;
 
   /// Súper principal ("Mercadona") o null si no hay; con [onTapStore] se
   /// muestra un selector debajo del nombre de la lista.
@@ -146,7 +151,8 @@ class ShoppingSummaryHeader extends StatelessWidget {
                     AnimatedCounter(
                       value: estimate!,
                       formatter: (v) =>
-                          '≈ ${v.toStringAsFixed(2).replaceAll('.', ',')} €',
+                          '≈ ${money(v)}'
+                          '${unpriced > 0 ? ' · $unpriced sin precio' : ''}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
@@ -169,8 +175,9 @@ class ShoppingSummaryHeader extends StatelessWidget {
   }
 }
 
-/// Barra del carro: carril con borde de trazo y relleno verde que avanza
-/// con un muelle sin rebote.
+/// Barra del carro: pista crema y relleno verde con extremos redondeados que
+/// avanza con un muelle sin rebote. Con poco progreso el relleno mantiene un
+/// mínimo para leerse como barra y no como un punto.
 class CartProgressBar extends StatelessWidget {
   const CartProgressBar({super.key, required this.progress});
 
@@ -179,23 +186,32 @@ class CartProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(999);
     return Semantics(
       value: '${(progress * 100).round()} %',
       child: Container(
-        height: 12,
+        height: 8,
         decoration: BoxDecoration(
           color: AppColors.iconTile,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.stroke, width: 1.5),
+          borderRadius: radius,
         ),
-        clipBehavior: Clip.antiAlias,
         child: SpringValue(
           value: progress,
           from: 0,
-          builder: (context, v, _) => FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: v.clamp(0.0, 1.0),
-            child: ColoredBox(color: AppColors.done),
+          builder: (context, v, _) => LayoutBuilder(
+            builder: (context, c) {
+              final w = c.maxWidth * v.clamp(0.0, 1.0);
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  width: w <= 0 ? 0 : w.clamp(24.0, c.maxWidth),
+                  decoration: BoxDecoration(
+                    color: AppColors.done,
+                    borderRadius: radius,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),

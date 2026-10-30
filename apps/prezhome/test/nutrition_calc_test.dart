@@ -70,4 +70,29 @@ void main() {
       expect(r.kcal, 200);
     });
   });
+
+  group('estimateServings', () {
+    test('suma el peso y lo reparte en raciones de ~400 g', () {
+      // La receta de Tessa: pollo, queso, arroz y nata ≈ 2400 g → 6.
+      final r = estimateServings([
+        (quantity: 1200, unit: 'g'),
+        (quantity: 200, unit: 'g'),
+        (quantity: 400, unit: 'g'),
+        (quantity: 600, unit: 'ml'),
+        (quantity: 2, unit: 'cucharadas'),
+      ]);
+      expect(r, 6);
+    });
+
+    test('usa los gramos por ración si se conocen', () {
+      expect(
+        estimateServings([(quantity: 1, unit: 'kg')], gramsPerServing: 250),
+        4,
+      );
+    });
+
+    test('sin nada pesable no adivina', () {
+      expect(estimateServings([(quantity: 3, unit: 'huevos')]), isNull);
+    });
+  });
 }

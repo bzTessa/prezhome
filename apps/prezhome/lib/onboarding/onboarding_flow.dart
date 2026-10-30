@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import '../login_screen.dart';
 import '../models/onboarding_answers.dart';
 import '../models/supermarket.dart';
+import '../services/home_country.dart';
 import '../services/offline_provider.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
 import '../widgets/miau_character.dart';
 import 'onboarding_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// Primer arranque: bienvenida + cuestionario + perfil de hogar. Las
 /// respuestas se guardan en el dispositivo y se aplican cuando el usuario ya
@@ -88,12 +90,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         );
       case 1:
         return QuestionScaffold(
-          section: 'Tu hogar',
+          section: context.l.onbSectionHome,
           step: 1,
           total: _questions,
-          title: '¿Cuántas personas vivís?',
+          title: context.l.onbPeopleTitle,
           illustration: 'assets/images/onb_personas.png',
-          subtitle: 'Para calcular raciones, la compra y el reparto de tareas.',
+          subtitle: context.l.onbPeopleHint,
           onBack: _back,
           onContinue: _next,
           child: _PeoplePicker(
@@ -103,25 +105,25 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         );
       case 2:
         return QuestionScaffold(
-          section: 'Lo que te ocupa',
+          section: context.l.onbSectionGoals,
           step: 2,
           total: _questions,
-          title: '¿Qué quieres quitarte de la cabeza?',
+          title: context.l.onbGoalsTitle,
           illustration: 'assets/images/onb_cabeza.png',
-          subtitle: 'Elige todo lo que quieras. Lo demás quedará escondido.',
+          subtitle: context.l.onbGoalsHint,
           onBack: _back,
           onContinue: _a.goals.isEmpty ? null : _next,
           continueLabel: _a.goals.isEmpty
-              ? 'Elige al menos una'
-              : 'Continuar (${_a.goals.length})',
+              ? context.l.onbPickOne
+              : context.l.onbContinueCount(_a.goals.length),
           child: Column(
             children: [
               for (final g in HomeGoal.values)
                 OptionCard(
                   icon: _goalIcon(g),
                   color: _goalColor(g),
-                  title: g.label,
-                  subtitle: g.subtitle,
+                  title: context.l.goalLabel(g.id),
+                  subtitle: context.l.goalHint(g.id),
                   selected: _a.goals.contains(g),
                   onTap: () => setState(() {
                     final next = {..._a.goals};
@@ -134,13 +136,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         );
       case 3:
         return _single<CookingHabit>(
-          section: 'En la cocina',
-          title: '¿Cómo cocináis?',
-          subtitle: 'Así sabemos si organizar tandas y congelador.',
+          section: context.l.onbSectionKitchen,
+          title: context.l.onbCookingTitle,
+          subtitle: context.l.onbCookingHint,
           values: CookingHabit.values,
           selected: _a.cooking,
-          label: (v) => v.label,
-          sub: (v) => v.subtitle,
+          label: (v) => context.l.cookingLabel(v.id),
+          sub: (v) => context.l.cookingHint(v.id),
           icon: (v) => switch (v) {
             CookingHabit.diario => Icons.today_rounded,
             CookingHabit.lote => Icons.inventory_2_rounded,
@@ -157,19 +159,17 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         );
       case 4:
         return QuestionScaffold(
-          section: 'La compra',
+          section: context.l.onbSectionShopping,
           step: 4,
           total: _questions,
-          title: '¿Dónde compras?',
+          title: context.l.onbShopTitle,
           illustration: 'assets/images/onb_compra.png',
-          subtitle:
-              'El primero será tu súper principal: las recetas usarán '
-              'productos fáciles de encontrar allí.',
+          subtitle: context.l.onbShopHint,
           onBack: _back,
           onContinue: _next,
           continueLabel: _a.supermarkets.isEmpty
-              ? 'Saltar y ver mi hogar'
-              : 'Ver mi hogar',
+              ? context.l.onbSkipSeeHome
+              : context.l.onbSeeHome,
           child: _SupermarketPicker(
             selected: _a.supermarkets,
             onChanged: (v) => setState(() => _a = _a.copyWith(supermarkets: v)),
@@ -195,7 +195,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     required IconData Function(T) icon,
     required Color Function(T) color,
     required void Function(T) onSelect,
-    String continueLabel = 'Continuar',
     String? illustration,
   }) {
     return QuestionScaffold(
@@ -207,7 +206,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       subtitle: subtitle,
       onBack: _back,
       onContinue: selected == null ? null : _next,
-      continueLabel: continueLabel,
       child: Column(
         children: [
           for (final v in values)
@@ -257,14 +255,14 @@ class _IntroPage extends StatefulWidget {
 
 class _IntroPageState extends State<_IntroPage> {
   static final _features = [
-    (Icons.shopping_cart_rounded, 'Lista de la compra', AppColors.sage),
-    (Icons.restaurant_menu_rounded, 'Qué comemos', AppColors.terracotta),
-    (Icons.kitchen_rounded, 'Despensa y caducidades', AppColors.peach),
-    (Icons.cleaning_services_rounded, 'Tareas del hogar', AppColors.frost),
-    (Icons.savings_rounded, 'Gasto de la casa', AppColors.woodDark),
+    (Icons.shopping_cart_rounded, 'compra', AppColors.sage),
+    (Icons.restaurant_menu_rounded, 'comidas', AppColors.terracotta),
+    (Icons.kitchen_rounded, 'despensa', AppColors.peach),
+    (Icons.cleaning_services_rounded, 'tareas', AppColors.frost),
+    (Icons.savings_rounded, 'gastos', AppColors.woodDark),
   ];
 
-  final _controller = PageController(viewportFraction: 0.42, initialPage: 1000);
+  final _controller = PageController(viewportFraction: 0.37, initialPage: 1000);
   Timer? _timer;
   int _current = 1000;
 
@@ -331,43 +329,52 @@ class _IntroPageState extends State<_IntroPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'La casa en orden, la cabeza tranquila.',
+                      context.l.onbSlogan,
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 18, color: AppColors.inkMuted),
                     ),
                     const Spacer(),
+                    // A todo el ancho y sin recorte: si no, las sombras de las
+                    // tarjetas quedan cortadas en línea recta.
                     SizedBox(
                       height: 190,
-                      child: PageView.builder(
-                        controller: _controller,
-                        onPageChanged: (i) => setState(() => _current = i),
-                        itemBuilder: (context, i) {
-                          final f = _features[i % _features.length];
-                          final active = i == _current;
-                          return AnimatedScale(
-                            duration: const Duration(milliseconds: 400),
-                            scale: active ? 1 : 0.82,
-                            child: AnimatedOpacity(
+                      child: OverflowBox(
+                        // En ordenador, como mucho 900 px para no salirse del marco.
+                        maxWidth: MediaQuery.sizeOf(
+                          context,
+                        ).width.clamp(0, 900),
+                        child: PageView.builder(
+                          controller: _controller,
+                          clipBehavior: Clip.none,
+                          onPageChanged: (i) => setState(() => _current = i),
+                          itemBuilder: (context, i) {
+                            final f = _features[i % _features.length];
+                            final active = i == _current;
+                            return AnimatedScale(
                               duration: const Duration(milliseconds: 400),
-                              opacity: active ? 1 : 0.45,
-                              child: _FeaturePill(
-                                icon: f.$1,
-                                label: f.$2,
-                                color: f.$3,
+                              scale: active ? 1 : 0.82,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 400),
+                                opacity: active ? 1 : 0.45,
+                                child: _FeaturePill(
+                                  icon: f.$1,
+                                  label: context.l.onbFeature(f.$2),
+                                  color: f.$3,
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
                     const Spacer(flex: 2),
                     OnboardingButton(
-                      label: 'Comenzar',
+                      label: context.l.onbStart,
                       onPressed: widget.onStart,
                     ),
                     const SizedBox(height: 12),
                     OnboardingButton(
-                      label: 'Ya tengo cuenta',
+                      label: context.l.onbHaveAccount,
                       outlined: true,
                       onPressed: widget.onLogin,
                     ),
@@ -403,9 +410,9 @@ class _FeaturePill extends StatelessWidget {
         borderRadius: BorderRadius.circular(80),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: color.withValues(alpha: 0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -469,7 +476,7 @@ class _PeoplePicker extends StatelessWidget {
               round(
                 Icons.remove_rounded,
                 value > 1 ? () => onChanged(value - 1) : null,
-                'Una menos',
+                context.l.onbOneLess,
               ),
               const SizedBox(width: 24),
               AnimatedSwitcher(
@@ -501,7 +508,7 @@ class _PeoplePicker extends StatelessWidget {
               round(
                 Icons.add_rounded,
                 value < 8 ? () => onChanged(value + 1) : null,
-                'Una más',
+                context.l.onbOneMore,
               ),
             ],
           ),
@@ -526,7 +533,7 @@ class _PeoplePicker extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          value == 1 ? 'Solo yo' : '$value personas',
+          context.l.onbPeopleCount(value),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -553,7 +560,7 @@ class _SupermarketPicker extends StatelessWidget {
       runSpacing: 10,
       alignment: WrapAlignment.center,
       children: [
-        for (final s in Supermarket.all)
+        for (final s in Supermarket.forCountry(HomeCountry.current.value.code))
           _SuperChip(
             label: s.label,
             order: selected.indexOf(s.key),
@@ -639,11 +646,11 @@ class _ResultPage extends StatelessWidget {
   final HouseholdProfile profile;
   final VoidCallback onContinue;
 
-  static String _loadWord(int v) => v >= 7
-      ? 'pesada'
+  static String _loadLevel(int v) => v >= 7
+      ? 'high'
       : v >= 4
-      ? 'media'
-      : 'ligera';
+      ? 'medium'
+      : 'low';
 
   @override
   Widget build(BuildContext context) {
@@ -660,7 +667,7 @@ class _ResultPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                'Tu perfil de hogar',
+                context.l.onbProfileBadge,
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   color: AppColors.woodDark,
@@ -669,7 +676,7 @@ class _ResultPage extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              profile.name,
+              context.l.onbProfileName(profile.kind),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 40,
@@ -683,7 +690,7 @@ class _ResultPage extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
               child: Text(
-                profile.description,
+                context.l.onbProfileDescription(profile.kind),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -694,20 +701,23 @@ class _ResultPage extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             LoadMeter(
-              label: 'Carga mental hoy',
+              label: context.l.onbLoadToday,
               value: profile.loadToday,
-              valueLabel: _loadWord(profile.loadToday),
+              valueLabel: context.l.onbLoad(_loadLevel(profile.loadToday)),
               color: AppColors.terracotta,
             ),
             const SizedBox(height: 18),
             LoadMeter(
-              label: 'Con PrezHome',
+              label: context.l.onbLoadWithApp,
               value: profile.loadWithApp,
-              valueLabel: _loadWord(profile.loadWithApp),
+              valueLabel: context.l.onbLoad(_loadLevel(profile.loadWithApp)),
               color: AppColors.sage,
             ),
             const Spacer(flex: 2),
-            OnboardingButton(label: 'Crear mi cuenta', onPressed: onContinue),
+            OnboardingButton(
+              label: context.l.onbCreateAccount,
+              onPressed: onContinue,
+            ),
           ],
         ),
       ),

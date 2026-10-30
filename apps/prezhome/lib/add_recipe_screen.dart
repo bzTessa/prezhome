@@ -9,7 +9,9 @@ import 'models/supermarket.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
+import 'services/link_text.dart';
 import 'utils/friendly_error.dart';
+import 'utils/nutrition_calc.dart';
 import 'theme/app_theme.dart';
 import 'widgets/list_skeleton.dart';
 
@@ -43,7 +45,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instructionsController = TextEditingController();
-  final _servingsController = TextEditingController(text: '1');
+  final _servingsController = TextEditingController();
   final _gramsController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
@@ -58,6 +60,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   bool _isFavorite = false;
   bool _freezable = false;
   bool _isLoading = false;
+
+  // Ingredientes/raciones y kcal tal y como se cargaron (edición o IA): si al
+  // guardar cambian los ingredientes y nadie tocó las kcal, se recalculan.
+  String? _loadedSig;
+  String _loadedKcal = '';
   bool _aiLoading = false;
   bool _loadingInitial = false;
 
@@ -168,6 +175,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     } catch (_) {
       // Si falla, se queda con una fila vacía.
     } finally {
+      _snapshotNutrition();
       if (mounted) setState(() => _loadingInitial = false);
     }
   }
@@ -309,34 +317,41 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   }
 
   /// Importa una receta desde el enlace de un vídeo (TikTok, Instagram,
-  /// YouTube) o una web. Pide la URL (con botón de pegar), llama a la edge
-  /// function import-recipe-link (que lee el texto público del post y lo
-  /// estructura) y rellena el formulario. Además guarda el enlace en el campo
-  /// de vídeo para tenerlo a mano. Devuelve true si la receta quedó rellenada.
-  Future<bool> _importFromLink() async {
-    final url = await showDialog<String>(
+  /// YouTube) o una web, o desde el texto de la receta pegado a mano. Llama a
+  /// la edge function import-recipe-link (que lee el texto público del post y
+  /// lo estructura) y rellena el formulario. Si el enlace no se puede leer
+  /// (Instagram casi nunca deja), vuelve a abrir el diálogo pidiendo pegar la
+  /// descripción del post. Devuelve true si la receta quedó rellenada.
+  Future<bool> _importFromLink({String? link, String? note}) async {
+    final input = await showDialog<String>(
       context: context,
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
           scrollable: true,
           backgroundColor: AppColors.cream,
-          title: const Text('Pegar enlace de vídeo'),
+          title: Text(link == null ? 'Importar receta' : 'Pega la receta'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'De TikTok, Instagram o YouTube. La receta se saca de su '
-                'descripción.',
-                style: TextStyle(fontSize: 13),
+              Text(
+                note ??
+                    'Pega el enlace de TikTok, YouTube o una web, o el texto '
+                        'de la receta. En Instagram copia la descripción del '
+                        'post y pégala aquí.',
+                style: const TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
                 autofocus: true,
-                keyboardType: TextInputType.url,
+                minLines: 1,
+                maxLines: 6,
+                keyboardType: TextInputType.multiline,
                 decoration: InputDecoration(
-                  hintText: 'https://...',
+                  hintText: link == null
+                      ? 'Enlace o texto de la receta'
+                      : 'Texto de la receta',
                   suffixIcon: IconButton(
                     tooltip: 'Pegar',
                     icon: const Icon(Icons.content_paste_rounded),
@@ -378,20 +393,28 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       },
     );
 
-    if (url == null || url.isEmpty) return false;
+    if (input == null || input.isEmpty) return false;
     if (!mounted) return false;
-    if (!_looksLikeUrl(url)) {
+    final isUrl = link == null && _looksLikeUrl(input);
+    final url = link ?? (isUrl ? input : null);
+    if (!isUrl && input.length < 15) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Eso no parece un enlace válido.')),
+        const SnackBar(
+          content: Text('Pega un enlace o el texto completo de la receta.'),
+        ),
       );
       return false;
     }
 
+    String? needText;
     setState(() => _aiLoading = true);
     try {
+      // Primero intentamos leer el post desde el móvil (al servidor lo
+      // bloquean); si no sale nada, el servidor lo intenta por su cuenta.
+      final text = isUrl ? await fetchLinkText(input) : input;
       final res = await _client.functions.invoke(
         'import-recipe-link',
-        body: {'url': url},
+        body: {'url': ?url, 'text': ?text},
       );
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {
@@ -399,7 +422,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           Map<String, dynamic>.from(data['recipe'] as Map),
         );
         // Guardamos el enlace en el campo de vídeo para conservar la fuente.
-        _videoController.text = url;
+        if (url != null) _videoController.text = url;
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -415,7 +438,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         throw msg;
       }
     } catch (e) {
-      if (mounted) {
+      final d = e is FunctionException ? e.details : null;
+      if (isUrl && d is Map && d['need_text'] == true) {
+        needText = d['error']?.toString();
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(friendlyError(e, 'No se pudo importar')),
@@ -425,6 +451,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       }
     } finally {
       if (mounted) setState(() => _aiLoading = false);
+    }
+    // El enlace no se pudo leer: pedimos el texto sin perder el enlace.
+    if (needText != null && mounted) {
+      return _importFromLink(link: url, note: needText);
     }
     return false;
   }
@@ -581,6 +611,61 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             .toList();
       }
     });
+    _snapshotNutrition();
+  }
+
+  String _nutritionSig() => [
+    _servingsController.text.trim(),
+    for (final i in _ingredients)
+      '${i.quantity.text.trim()}|${i.unit.text.trim()}|${i.name.text.trim()}',
+  ].join('\n');
+
+  void _snapshotNutrition() {
+    _loadedSig = _nutritionSig();
+    _loadedKcal = _caloriesController.text.trim();
+  }
+
+  /// Si cambiaron ingredientes o raciones (o no hay kcal) y la persona no
+  /// escribió las kcal a mano, las recalcula sumando los ingredientes con
+  /// Open Food Facts. Best-effort: si no hay datos fiables, deja las que había.
+  Future<bool> _recalcNutritionIfNeeded(int servings) async {
+    final kcalText = _caloriesController.text.trim();
+    final typedByHand = kcalText != _loadedKcal;
+    final changed = _nutritionSig() != _loadedSig || kcalText.isEmpty;
+    if (typedByHand || !changed) return false;
+    try {
+      final facts = FoodFactsService(_client);
+      final supermarket = await _firstHomeSupermarket();
+      final ings = <NutriIngredient>[];
+      for (final i in _ingredients) {
+        final name = i.name.text.trim();
+        if (name.isEmpty) continue;
+        final f = await facts.lookup(name, supermarket: supermarket);
+        ings.add(
+          NutriIngredient(
+            quantity: _parseD(i.quantity),
+            unit: i.unit.text.trim(),
+            per100g: f.found && f.kcal100 != null
+                ? Per100g(
+                    kcal: f.kcal100!,
+                    protein: f.protein100 ?? 0,
+                    carbs: f.carbs100 ?? 0,
+                    fat: f.fat100 ?? 0,
+                  )
+                : null,
+          ),
+        );
+      }
+      final n = computeRecipeNutrition(ings, servings);
+      if (!n.isReliable) return false;
+      _caloriesController.text = '${n.kcal}';
+      _proteinController.text = '${n.protein}';
+      _carbsController.text = '${n.carbs}';
+      _fatController.text = '${n.fat}';
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _pickImage() async {
@@ -700,6 +785,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ).find(title: title, titleEn: _photoQueryEn);
       }
 
+      // Raciones: las que se escriban; si no, se deducen del peso total.
+      final servings =
+          _parseI(_servingsController) ??
+          estimateServings([
+            for (final i in _ingredients)
+              (quantity: _parseD(i.quantity), unit: i.unit.text.trim()),
+          ], gramsPerServing: _parseD(_gramsController)) ??
+          1;
+      _servingsController.text = '$servings';
+      final nutritionUpdated = await _recalcNutritionIfNeeded(servings);
+
       final recipe = Recipe(
         id: widget.recipe?.id ?? '',
         homeId: homeId,
@@ -710,7 +806,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         instructions: _instructionsController.text.trim().isEmpty
             ? null
             : _instructionsController.text.trim(),
-        servings: _parseI(_servingsController) ?? 1,
+        servings: servings,
         gramsPerServing: _parseD(_gramsController),
         prepTimeMinutes: _parseI(_prepController),
         cookTimeMinutes: _parseI(_cookController),
@@ -777,6 +873,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       }
 
       if (mounted) {
+        if (nutritionUpdated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Calorías y macros recalculadas con los ingredientes.',
+              ),
+            ),
+          );
+        }
         if (imageFailed) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -954,7 +1059,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         child: TextFormField(
                           controller: _servingsController,
                           keyboardType: TextInputType.number,
-                          decoration: _dec('Raciones'),
+                          decoration: _dec('Raciones').copyWith(
+                            hintText: 'Auto',
+                            helperText: 'Para cuántas es',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1159,86 +1267,97 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       final ing = _ingredients[i];
       rows.add(
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
+          padding: const EdgeInsets.only(bottom: 16),
+          // Nombre a lo ancho y cantidad + unidad debajo: en una sola fila
+          // los tres campos no caben en un móvil y se cortan.
+          child: Column(
             children: [
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: ing.quantity,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: ing.name,
+                      decoration: _dec('Ingrediente'),
+                    ),
                   ),
-                  decoration: _dec('Cant.'),
-                ),
+                  IconButton(
+                    tooltip: 'Quitar',
+                    icon: Icon(Icons.close, color: AppColors.expired),
+                    onPressed: _ingredients.length == 1
+                        ? null
+                        : () => setState(() {
+                            _ingredients.removeAt(i);
+                            ing.dispose();
+                          }),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 3,
-                child: RawAutocomplete<String>(
-                  textEditingController: ing.unit,
-                  focusNode: ing.unitFocus,
-                  optionsBuilder: (TextEditingValue value) {
-                    final q = value.text.trim().toLowerCase();
-                    if (q.isEmpty) return _householdUnits;
-                    return _householdUnits.where(
-                      (u) => u.toLowerCase().contains(q),
-                    );
-                  },
-                  fieldViewBuilder:
-                      (context, controller, focusNode, onFieldSubmitted) {
-                        return TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          decoration: _dec('Unidad (taza, cda, g...)'),
-                          onSubmitted: (_) => onFieldSubmitted(),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: ing.quantity,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: _dec('Cantidad'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: RawAutocomplete<String>(
+                      textEditingController: ing.unit,
+                      focusNode: ing.unitFocus,
+                      optionsBuilder: (TextEditingValue value) {
+                        final q = value.text.trim().toLowerCase();
+                        if (q.isEmpty) return _householdUnits;
+                        return _householdUnits.where(
+                          (u) => u.toLowerCase().contains(q),
                         );
                       },
-                  optionsViewBuilder: (context, onSelected, options) {
-                    final opts = options.toList();
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(12),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 220),
-                          child: ListView.builder(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            itemCount: opts.length,
-                            itemBuilder: (context, index) {
-                              final opt = opts[index];
-                              return ListTile(
-                                dense: true,
-                                title: Text(opt),
-                                onTap: () => onSelected(opt),
-                              );
-                            },
+                      fieldViewBuilder:
+                          (context, controller, focusNode, onFieldSubmitted) {
+                            return TextField(
+                              controller: controller,
+                              focusNode: focusNode,
+                              decoration: _dec(
+                                'Unidad',
+                              ).copyWith(hintText: 'g, taza, cda...'),
+                              onSubmitted: (_) => onFieldSubmitted(),
+                            );
+                          },
+                      optionsViewBuilder: (context, onSelected, options) {
+                        final opts = options.toList();
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4,
+                            borderRadius: BorderRadius.circular(12),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 220),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                itemCount: opts.length,
+                                itemBuilder: (context, index) {
+                                  final opt = opts[index];
+                                  return ListTile(
+                                    dense: true,
+                                    title: Text(opt),
+                                    onTap: () => onSelected(opt),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 4,
-                child: TextField(
-                  controller: ing.name,
-                  decoration: _dec('Ingrediente'),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Quitar',
-                icon: Icon(Icons.close, color: AppColors.expired),
-                onPressed: _ingredients.length == 1
-                    ? null
-                    : () => setState(() {
-                        _ingredients.removeAt(i);
-                        ing.dispose();
-                      }),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

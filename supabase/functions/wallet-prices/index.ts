@@ -11,6 +11,10 @@
 // BTC/EUR). Si el valor cotiza en otra divisa se convierte con el cambio
 // diario <divisa>/EUR.
 //
+// También guarda el índice de referencia (BENCHMARK, MSCI World) para que la
+// app compare la cartera con él; wallet_prices es común, así que se pide una
+// vez al día para todos.
+//
 // Secreto: TWELVE_DATA_API_KEY. Sin él responde { ok: false, reason:
 // "no_key" } y la app sigue con los precios a mano. Nunca 500 por un ticker
 // que no exista: va en "missing".
@@ -41,6 +45,9 @@ export function priceKey(ticker: string, kind: string): string {
   const t = ticker.trim().toUpperCase();
   return kind === "crypto" && !t.includes("/") ? `${t}/EUR` : t;
 }
+
+/** ETF iShares MSCI World (en USD, se pasa a euros como el resto). */
+export const BENCHMARK = "URTH";
 
 type Series = { currency: string; closes: Map<string, number> };
 
@@ -132,6 +139,7 @@ Deno.serve(async (req: Request) => {
       const k = priceKey(h.ticker, h.kind);
       keys.set(k, [...(keys.get(k) ?? []), h.id]);
     }
+    if (keys.size > 0 && !keys.has(BENCHMARK)) keys.set(BENCHMARK, []);
 
     const today = new Date();
     const yesterday = isoDay(new Date(today.getTime() - 864e5));
@@ -180,7 +188,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      if (latest !== undefined) {
+      if (latest !== undefined && ids.length > 0) {
         const { error } = await db
           .from("wallet_holdings")
           .update({ price: latest })
