@@ -114,6 +114,11 @@ jobs:
       - name: Desplegar analyze-meal
         run: supabase functions deploy analyze-meal --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
+      # Excepción: el banco vuelve aquí desde el navegador, sin JWT. La función
+      # identifica al usuario por el state de un solo uso.
+      - name: Desplegar bank-callback
+        run: supabase functions deploy bank-callback --no-verify-jwt --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
       - name: Desplegar delete-account
         run: supabase functions deploy delete-account --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
@@ -148,6 +153,9 @@ jobs:
 
       - name: Desplegar wallet-prices
         run: supabase functions deploy wallet-prices --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Desplegar wallet-bank
+        run: supabase functions deploy wallet-bank --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
 
       - name: Desplegar wallet-analysis
         run: supabase functions deploy wallet-analysis --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
