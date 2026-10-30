@@ -152,6 +152,24 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
         return locale;
       },
       home: const _AuthGate(),
+      // En pantallas muy anchas la app no pasa de 1280 px, centrada. El menú
+      // lateral y el ancho del contenido los decide MainShell.
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        if (mq.size.width <= 1280) return child!;
+        return ColoredBox(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: Center(
+            child: SizedBox(
+              width: 1280,
+              child: MediaQuery(
+                data: mq.copyWith(size: Size(1280, mq.size.height)),
+                child: child!,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,0 +1,49 @@
+# Versión web de PrezHome: compila la app Flutter para web y la publica en
+# Cloudflare Pages (proyecto "prezhome") en cada push a main que toque la app.
+# El dominio propio se conecta una vez en el panel de Cloudflare
+# (Pages -> prezhome -> Custom domains).
+#
+# Secrets (Settings -> Secrets and variables -> Actions):
+# CLOUDFLARE_API_TOKEN (permiso "Cloudflare Pages: Edit") y CLOUDFLARE_ACCOUNT_ID.
+# Sin ellos el workflow solo compila, para comprobar que la web sigue
+# compilando.
+name: Publicar web
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/prezhome/**'
+      - 'packages/**'
+      - '.github/workflows/web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: publicar-web
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/prezhome
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+
+      - name: Compilar web
+        run: flutter build web --release
+
+      - name: Publicar en Cloudflare Pages
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npx --yes wrangler@3 pages deploy build/web --project-name=prezhome --branch=main

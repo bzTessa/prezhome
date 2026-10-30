@@ -90,8 +90,11 @@ class _LoginScreenState extends State<LoginScreen> {
       // Requiere tener el proveedor configurado en Supabase.
       await Supabase.instance.client.auth.signInWithOAuth(
         provider,
-        // En móvil vuelve a la app por deep link; en web, a la URL del sitio.
-        redirectTo: kIsWeb ? null : 'com.prezhome.app://login-callback',
+        // En móvil vuelve a la app por deep link; en web, a la página actual
+        // (la Site URL de Supabase es el esquema de la app, no sirve en web).
+        redirectTo: kIsWeb
+            ? Uri.base.origin
+            : 'com.prezhome.app://login-callback',
         // Chrome normal no devuelve el control a la app tras la redirección
         // (se queda cargando); la pestaña integrada sí.
         authScreenLaunchMode: LaunchMode.inAppBrowserView,

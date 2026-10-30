@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,7 +16,9 @@ class ProPurchases {
   /// Permiso de RevenueCat que da Pro (el mismo que mira el servidor).
   static const entitlement = 'pro';
 
-  static String get _key => Platform.isIOS || Platform.isMacOS
+  static String get _key => kIsWeb
+      ? ''
+      : Platform.isIOS || Platform.isMacOS
       ? _iosKey
       : Platform.isAndroid
       ? _androidKey
