@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:device_calendar_plus/device_calendar_plus.dart' show Calendar;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -742,36 +743,38 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           style: TextStyle(color: AppColors.inkMuted),
                         ),
                       ),
-                    title('Calendario'),
-                    ListTile(
-                      leading: const Icon(Icons.event_rounded),
-                      title: Text(
-                        calendarId == null
-                            ? 'Pasar al calendario'
-                            : (calendarName ?? 'Calendario conectado'),
+                    // En web no hay calendario del dispositivo al que escribir.
+                    if (!kIsWeb) title('Calendario'),
+                    if (!kIsWeb)
+                      ListTile(
+                        leading: const Icon(Icons.event_rounded),
+                        title: Text(
+                          calendarId == null
+                              ? 'Pasar al calendario'
+                              : (calendarName ?? 'Calendario conectado'),
+                        ),
+                        subtitle: Text(
+                          calendarId == null
+                              ? 'Comidas y tareas con hora, en Google Calendar'
+                              : 'Se actualiza al abrir el plan',
+                        ),
+                        trailing: calendarId == null
+                            ? null
+                            : TextButton(
+                                onPressed: () =>
+                                    setSheet(() => calendarId = null),
+                                child: const Text('Quitar'),
+                              ),
+                        onTap: () async {
+                          final cal = await _pickCalendar(ctx);
+                          if (cal != null) {
+                            setSheet(() {
+                              calendarId = cal.id;
+                              calendarName = cal.name;
+                            });
+                          }
+                        },
                       ),
-                      subtitle: Text(
-                        calendarId == null
-                            ? 'Comidas y tareas con hora, en Google Calendar'
-                            : 'Se actualiza al abrir el plan',
-                      ),
-                      trailing: calendarId == null
-                          ? null
-                          : TextButton(
-                              onPressed: () =>
-                                  setSheet(() => calendarId = null),
-                              child: const Text('Quitar'),
-                            ),
-                      onTap: () async {
-                        final cal = await _pickCalendar(ctx);
-                        if (cal != null) {
-                          setSheet(() {
-                            calendarId = cal.id;
-                            calendarName = cal.name;
-                          });
-                        }
-                      },
-                    ),
                     const SizedBox(height: 8),
                   ],
                 ),

@@ -18,7 +18,9 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'local_store.dart';
 
@@ -29,6 +31,11 @@ class FileLocalStore implements LocalStore {
   final String folderName;
 
   FileLocalStore({this.folderName = 'offline_cache'});
+
+  /// En web no hay sistema de ficheros: se guarda en el almacenamiento del
+  /// navegador con la carpeta como prefijo de la clave.
+  static final _web = SharedPreferencesAsync();
+  String _webKey(String key) => '$folderName/$key';
 
   /// Directorio resuelto (perezoso). `null` si todavía no se ha resuelto.
   Directory? _dir;
@@ -66,6 +73,7 @@ class FileLocalStore implements LocalStore {
   @override
   Future<String?> read(String key) async {
     try {
+      if (kIsWeb) return await _web.getString(_webKey(key));
       final dir = await _resolveDir();
       if (dir == null) return null;
       final file = _fileFor(dir, key)!;
@@ -79,6 +87,7 @@ class FileLocalStore implements LocalStore {
   @override
   Future<void> write(String key, String value) async {
     try {
+      if (kIsWeb) return await _web.setString(_webKey(key), value);
       final dir = await _resolveDir();
       if (dir == null) return;
       final file = _fileFor(dir, key)!;
@@ -91,6 +100,7 @@ class FileLocalStore implements LocalStore {
   @override
   Future<void> remove(String key) async {
     try {
+      if (kIsWeb) return await _web.remove(_webKey(key));
       final dir = await _resolveDir();
       if (dir == null) return;
       final file = _fileFor(dir, key)!;
@@ -105,6 +115,13 @@ class FileLocalStore implements LocalStore {
   @override
   Future<void> clearAll() async {
     try {
+      if (kIsWeb) {
+        final keys = await _web.getKeys();
+        await _web.clear(
+          allowList: keys.where((k) => k.startsWith('$folderName/')).toSet(),
+        );
+        return;
+      }
       final dir = await _resolveDir();
       if (dir == null) return;
       if (await dir.exists()) {

@@ -47,6 +47,8 @@ dependencies:
   # FileLocalStore (caché offline del Paso 7). Aislado en esa implementación.
   path_provider: ^2.1.4
   http: ^1.2.2
+  # Ajustes y caché offline en la versión web (en móvil van a ficheros).
+  shared_preferences: ^2.5.3
   # Escáner de código de barras (cámara) para añadir productos al inventario
   # escaneando el EAN/UPC. Línea 5.x estable, resoluble en este toolchain.
   mobile_scanner: ^5.2.3

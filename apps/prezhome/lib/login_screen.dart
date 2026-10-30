@@ -86,8 +86,11 @@ class _LoginScreenState extends State<LoginScreen> {
       // Requiere tener el proveedor configurado en Supabase.
       await Supabase.instance.client.auth.signInWithOAuth(
         provider,
-        // En móvil vuelve a la app por deep link; en web, a la URL del sitio.
-        redirectTo: kIsWeb ? null : 'com.prezhome.app://login-callback',
+        // En móvil vuelve a la app por deep link; en web, a la página actual
+        // (la Site URL de Supabase es el esquema de la app, no sirve en web).
+        redirectTo: kIsWeb
+            ? Uri.base.origin
+            : 'com.prezhome.app://login-callback',
       );
       // El flujo continúa vía redirección; el AuthGate detecta la sesión.
     } catch (e) {

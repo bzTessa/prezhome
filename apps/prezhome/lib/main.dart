@@ -128,6 +128,24 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
       supportedLocales: const [Locale('es', 'ES')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: const _AuthGate(),
+      // En pantallas anchas (web en ordenador) la app se ve en una columna
+      // de ancho de móvil, centrada, en vez de estirada.
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        if (mq.size.width <= 600) return child!;
+        return ColoredBox(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: Center(
+            child: SizedBox(
+              width: 480,
+              child: MediaQuery(
+                data: mq.copyWith(size: Size(480, mq.size.height)),
+                child: child!,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
