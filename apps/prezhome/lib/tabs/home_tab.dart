@@ -22,6 +22,7 @@ import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
+import '../services/plan_repeats.dart';
 import '../services/taper_sync.dart';
 import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
@@ -388,6 +389,17 @@ class HomeTabState extends State<HomeTab> {
       unawaited(TaperSync.sync(_client));
 
       final profileRow = await _profile();
+      // Las comidas que se repiten, puestas en el plan de las 2 próximas semanas.
+      if (profileRow?['home_id'] case final String homeId) {
+        final now = DateTime.now();
+        unawaited(
+          PlanRepeats.fill(
+            _client,
+            homeId,
+            DateTime(now.year, now.month, now.day + 15),
+          ),
+        );
+      }
       final profile = profileRow != null
           ? NutritionProfile.fromMap(profileRow)
           : null;
