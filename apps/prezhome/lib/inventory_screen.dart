@@ -18,6 +18,7 @@ import 'services/taper_sync.dart';
 import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/list_skeleton.dart';
+import 'widgets/skeleton.dart';
 import 'utils/offline_actions.dart';
 import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_image.dart';
@@ -672,7 +673,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         builder: (context, snapshot) {
           if (!snapshot.hasData &&
               snapshot.connectionState == ConnectionState.waiting) {
-            return const ListSkeleton();
+            return const PantrySkeleton();
           }
           if (snapshot.hasError) {
             return Center(

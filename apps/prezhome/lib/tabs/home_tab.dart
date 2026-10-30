@@ -29,7 +29,7 @@ import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/fasting_card.dart';
-import '../widgets/list_skeleton.dart';
+import '../widgets/skeleton.dart';
 import '../widgets/miau_character.dart';
 import '../widgets/plan/plan_parts.dart';
 import '../widgets/recipe_image.dart';
@@ -558,11 +558,7 @@ class HomeTabState extends State<HomeTab> {
               const SizedBox(height: AppSpacing.xl),
 
               if (!_loaded)
-                const ListSkeleton(
-                  rows: 4,
-                  leading: false,
-                  padding: EdgeInsets.zero,
-                )
+                const HomeSkeleton()
               else ...[
                 ValueListenableBuilder(
                   valueListenable: PlanPrefs.current,
