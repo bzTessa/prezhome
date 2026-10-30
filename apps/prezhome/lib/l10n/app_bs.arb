@@ -149,6 +149,7 @@
   "shopGroupByAisle": "Grupiši po odjeljku",
   "shopGroupHint": "Povrće, meso, čišćenje…",
   "shopShowPhotos": "Prikaži fotografije proizvoda",
+  "shopShowIcons": "Prikaži crteže kada nema fotografije",
   "shopMyLists": "Moje liste",
   "categories": "Kategorije",
   "shopFinish": "Završi kupovinu",

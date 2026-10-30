@@ -183,17 +183,69 @@ void main() {
       final r = await ProductSearchService(
         client: client,
         catalog: (q, store, {freshOnly = false}) async => [
-          const SupermarketProduct(
-            code: 'mercadona:1',
-            name: 'Leche entera Hacendado',
-            quantity: '1 l',
-            price: 1.15,
-          ),
+          if (store == 'mercadona')
+            const SupermarketProduct(
+              code: 'mercadona:1',
+              name: 'Leche entera Hacendado',
+              quantity: '1 l',
+              price: 1.15,
+            ),
         ],
       ).search('leche', supermarketKey: 'mercadona');
       expect(calls, 0);
       expect(r.filteredByStore, isTrue);
       expect(r.products.single.price, 1.15);
+      expect(r.products.single.store, 'mercadona');
+    });
+
+    test('súper sin catálogo: busca en los catálogos oficiales, el suyo '
+        'primero, sin llamar a OFF', () async {
+      var calls = 0;
+      final asked = <String>[];
+      final r = await ProductSearchService(
+        client: MockClient((_) async {
+          calls++;
+          return http.Response(jsonEncode(_off([])), 200);
+        }),
+        catalog: (q, store, {freshOnly = false}) async {
+          asked.add(store);
+          return [
+            if (store != 'mercadona')
+              SupermarketProduct(code: '$store:1', name: 'Queso azul'),
+          ];
+        },
+      ).search('queso azul', supermarketKey: 'dia');
+      expect(calls, 0);
+      expect(asked.first, 'dia');
+      expect(asked, containsAll(['mercadona', 'consum']));
+      expect(r.products.map((p) => p.store), ['dia', 'consum']);
+      expect(r.filteredByStore, isTrue);
+    });
+
+    test('Open Food Facts va siempre detrás de los catálogos', () async {
+      final r = await ProductSearchService(
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            utf8.encode(
+              jsonEncode(
+                _off([
+                  {'code': '9', 'product_name': 'Espinacas frescas'},
+                ]),
+              ),
+            ),
+            200,
+          ),
+        ),
+        catalog: (q, store, {freshOnly = false}) async => [
+          if (store == 'mercadona')
+            const SupermarketProduct(
+              code: 'mercadona:1',
+              name: 'Crema de espinacas',
+            ),
+        ],
+      ).search('espinacas frescas', supermarketKey: 'bonarea');
+      expect(r.products.map((p) => p.code), ['mercadona:1', '9']);
+      expect(r.filteredByStore, isFalse);
     });
 
     test('si el catálogo falla o no lo tiene, sigue con OFF', () async {

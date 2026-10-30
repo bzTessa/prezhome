@@ -1509,6 +1509,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   value: _view.showPhotos,
                   onChanged: (v) => update(_view.copyWith(showPhotos: v)),
                 ),
+                SwitchListTile(
+                  title: Text(context.l.shopShowIcons),
+                  value: _view.showIcons,
+                  onChanged: (v) => update(_view.copyWith(showIcons: v)),
+                ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.list_alt_rounded),
@@ -1859,6 +1864,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ? null
           : item.imageUrl,
       forceIllustration: !_view.showPhotos,
+      // Sin dibujos: solo la foto, o el hueco si no hay.
+      photoOnly: _view.showPhotos && !_view.showIcons,
       size: 42,
       radius: 10,
     );
@@ -1883,7 +1890,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         onToggle: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
         // Tocar la foto permite cambiarla (cámara, galería o súper).
-        leading: _view.showPhotos
+        leading: !_view.showPhotos && !_view.showIcons
+            ? null
+            : _view.showPhotos
             ? Semantics(
                 button: true,
                 label: context.l.changePhoto,

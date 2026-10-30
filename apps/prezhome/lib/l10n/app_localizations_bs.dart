@@ -634,6 +634,9 @@ class AppLocalizationsBs extends AppLocalizations {
   String get shopShowPhotos => 'Prikaži fotografije proizvoda';
 
   @override
+  String get shopShowIcons => 'Prikaži crteže kada nema fotografije';
+
+  @override
   String get shopMyLists => 'Moje liste';
 
   @override

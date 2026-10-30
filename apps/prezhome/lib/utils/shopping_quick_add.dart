@@ -97,10 +97,17 @@ QuickAddEntry? parseQuickAdd(String raw) {
 
 /// Preferencias de vista de la lista de la compra (por dispositivo).
 class ShoppingViewPrefs {
-  const ShoppingViewPrefs({this.showPhotos = true, this.groupByAisle = true});
+  const ShoppingViewPrefs({
+    this.showPhotos = true,
+    this.showIcons = true,
+    this.groupByAisle = true,
+  });
 
   /// Mostrar la foto de cada producto. Por defecto sí.
   final bool showPhotos;
+
+  /// Mostrar el dibujo del producto cuando no hay foto. Por defecto sí.
+  final bool showIcons;
 
   /// Agrupar por pasillo (verduras, carne...). Si no, una sola lista en el
   /// orden en que se añadieron.
@@ -109,14 +116,21 @@ class ShoppingViewPrefs {
   /// Clave en el almacenamiento local.
   static const String storageKey = 'shopping_view_prefs';
 
-  ShoppingViewPrefs copyWith({bool? showPhotos, bool? groupByAisle}) =>
-      ShoppingViewPrefs(
-        showPhotos: showPhotos ?? this.showPhotos,
-        groupByAisle: groupByAisle ?? this.groupByAisle,
-      );
+  ShoppingViewPrefs copyWith({
+    bool? showPhotos,
+    bool? showIcons,
+    bool? groupByAisle,
+  }) => ShoppingViewPrefs(
+    showPhotos: showPhotos ?? this.showPhotos,
+    showIcons: showIcons ?? this.showIcons,
+    groupByAisle: groupByAisle ?? this.groupByAisle,
+  );
 
-  String encode() =>
-      jsonEncode({'show_photos': showPhotos, 'group_by_aisle': groupByAisle});
+  String encode() => jsonEncode({
+    'show_photos': showPhotos,
+    'show_icons': showIcons,
+    'group_by_aisle': groupByAisle,
+  });
 
   /// Tolerante: cualquier valor ausente o corrupto cae al defecto.
   static ShoppingViewPrefs decode(String? raw) {
@@ -126,6 +140,7 @@ class ShoppingViewPrefs {
       if (m is! Map) return const ShoppingViewPrefs();
       return ShoppingViewPrefs(
         showPhotos: m['show_photos'] != false,
+        showIcons: m['show_icons'] != false,
         groupByAisle: m['group_by_aisle'] != false,
       );
     } catch (_) {

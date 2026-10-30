@@ -205,23 +205,33 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text(
-              'Sin resultados en ${Supermarket.labelFor(widget.supermarketKey!)}. '
-              'Estos son de otros súper.',
+              _searchable(widget.supermarketKey!)
+                  ? 'Sin resultados en '
+                        '${Supermarket.labelFor(widget.supermarketKey!)}. '
+                        'Estos son de otros súper.'
+                  : 'Aún no tenemos los productos de '
+                        '${Supermarket.labelFor(widget.supermarketKey!)}. '
+                        'Estos son de otros súper.',
               style: AppTextStyles.bodyMuted,
             ),
           ),
         for (final p in r.products) _ProductTile(product: p),
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.md),
-          child: Text(
-            'Datos de Open Food Facts.',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
+        if (r.products.any((p) => p.store == null))
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: Text(
+              'Datos de Open Food Facts.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
+            ),
           ),
-        ),
       ],
     );
   }
+
+  /// Si hay forma de buscar en ese súper (catálogo propio u OFF).
+  bool _searchable(String key) =>
+      catalogStores.contains(key) || offStoreTag(key) != null;
 
   Widget _message(IconData icon, String text) {
     return Center(
@@ -299,12 +309,15 @@ class _ProductTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   clipBehavior: Clip.antiAlias,
+                  // Solo fotos reales: los dibujos genéricos no dicen qué
+                  // producto es.
                   child: FoodImage(
                     name: p.name,
                     imageUrl: p.imageUrl,
                     size: 64,
                     radius: 14,
                     fit: BoxFit.contain,
+                    photoOnly: true,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -324,6 +337,7 @@ class _ProductTile extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         [
+                          if (p.store != null) Supermarket.labelFor(p.store!),
                           ?p.brand,
                           ?p.quantity,
                           if (p.price != null) '${money(p.price!)} aprox.',
