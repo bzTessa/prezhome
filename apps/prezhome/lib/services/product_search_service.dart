@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home_country.dart';
 
-/// Producto real de supermercado encontrado en Open Food Facts.
+/// Producto real de supermercado: del catálogo de la tienda online (con foto
+/// oficial y precio) o de Open Food Facts.
 class SupermarketProduct {
   const SupermarketProduct({
     required this.code,
@@ -12,6 +14,7 @@ class SupermarketProduct {
     this.brand,
     this.quantity,
     this.imageUrl,
+    this.price,
   });
 
   final String code;
@@ -21,6 +24,9 @@ class SupermarketProduct {
   /// Formato de venta tal cual lo da OFF ("1 l", "500 g"…).
   final String? quantity;
   final String? imageUrl;
+
+  /// Precio orientativo en la tienda online (solo productos de catálogo).
+  final double? price;
 
   /// Nombre con la marca, para la lista ("Leche semidesnatada · Hacendado").
   String get displayName {
@@ -345,18 +351,65 @@ String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
   };
 }
 
-/// Busca productos de súper en Open Food Facts (gratis, sin clave).
+/// Súpers con catálogo propio en supermarket_products (scripts/mercadona_sync.py).
+const catalogStores = {'mercadona'};
+
+typedef CatalogSearch =
+    Future<List<SupermarketProduct>> Function(String query, String store);
+
+/// Busca [query] en el catálogo de [store]: cada palabra (sin plural) tiene
+/// que estar en el nombre.
+Future<List<SupermarketProduct>> searchCatalog(
+  String query,
+  String store,
+) async {
+  final words = [
+    for (final w in _words(query))
+      w.length > 4 && w.endsWith('es')
+          ? w.substring(0, w.length - 2)
+          : w.length > 3 && w.endsWith('s')
+          ? w.substring(0, w.length - 1)
+          : w,
+  ];
+  if (words.isEmpty) return const [];
+  var q = Supabase.instance.client
+      .from('supermarket_products')
+      .select('product_id,name,size,price,image_url')
+      .eq('store', store);
+  for (final w in words) {
+    q = q.ilike('name_normalized', '%$w%');
+  }
+  final rows = await q.limit(40);
+  return [
+    for (final r in rows)
+      SupermarketProduct(
+        code: '$store:${r['product_id']}',
+        name: r['name'] as String,
+        quantity: r['size'] as String?,
+        imageUrl: r['image_url'] as String?,
+        price: (r['price'] as num?)?.toDouble(),
+      ),
+  ];
+}
+
+/// Busca productos de súper: primero en el catálogo del súper (si lo hay) y
+/// luego en Open Food Facts (gratis, sin clave).
 ///
 /// Se llama directamente desde el móvil para que el límite de OFF (10
 /// búsquedas/minuto por IP) cuente por persona y no para toda la app. Por eso
 /// solo se busca cuando la persona lo pide (no al teclear) y además se frena
 /// aquí por si acaso. Nunca lanza.
 class ProductSearchService {
-  ProductSearchService({http.Client? client, DateTime Function()? now})
-    : _client = client ?? http.Client(),
-      _now = now ?? DateTime.now;
+  ProductSearchService({
+    http.Client? client,
+    DateTime Function()? now,
+    CatalogSearch? catalog,
+  }) : _client = client ?? http.Client(),
+       _now = now ?? DateTime.now,
+       _catalog = catalog ?? searchCatalog;
 
   final http.Client _client;
+  final CatalogSearch _catalog;
   final DateTime Function() _now;
 
   static const _userAgent = 'PrezHome/1.0 (app de hogar; openfoodfacts)';
@@ -405,6 +458,12 @@ class ProductSearchService {
     final key = '${q.toLowerCase()}|$store';
     final cached = _cache[key];
     if (cached != null) return cached;
+    if (catalogStores.contains(supermarketKey)) {
+      final mine = await _catalogSafe(q, supermarketKey!);
+      if (mine.any((p) => isProductFor(q, p))) {
+        return _cache[key] = ProductSearchResult(mine, filteredByStore: true);
+      }
+    }
     try {
       var inStore = <SupermarketProduct>[];
       if (store != null) {
@@ -441,6 +500,15 @@ class ProductSearchService {
       return const ProductSearchResult([], failed: true, offline: true);
     } catch (_) {
       return const ProductSearchResult([], failed: true);
+    }
+  }
+
+  /// El catálogo nunca tumba la búsqueda: si falla, se sigue con OFF.
+  Future<List<SupermarketProduct>> _catalogSafe(String q, String store) async {
+    try {
+      return rankProducts(q, await _catalog(q, store));
+    } catch (_) {
+      return const [];
     }
   }
 

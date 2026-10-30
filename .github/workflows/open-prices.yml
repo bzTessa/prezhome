@@ -1,5 +1,6 @@
 # Importa cada semana los precios de referencia de Open Prices (Open Food
-# Facts) a la tabla market_prices de Supabase. Ver scripts/open_prices_sync.py.
+# Facts) a la tabla market_prices de Supabase (scripts/open_prices_sync.py) y
+# el catálogo de Mercadona a supermarket_products (scripts/mercadona_sync.py).
 #
 # Secrets (Settings -> Secrets and variables -> Actions):
 #   SUPABASE_PROJECT_REF       (ya existe, lo usa deploy.yml)
@@ -28,3 +29,8 @@ jobs:
           SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/open_prices_sync.py
+      - name: Importar catálogo de Mercadona
+        env:
+          SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/mercadona_sync.py

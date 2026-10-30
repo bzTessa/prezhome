@@ -173,5 +173,50 @@ void main() {
       expect(r.failed, isTrue);
       expect(r.offline, isFalse);
     });
+
+    test('Mercadona: usa su catálogo sin llamar a OFF', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response(jsonEncode(_off([])), 200);
+      });
+      final r = await ProductSearchService(
+        client: client,
+        catalog: (q, store) async => [
+          const SupermarketProduct(
+            code: 'mercadona:1',
+            name: 'Leche entera Hacendado',
+            quantity: '1 l',
+            price: 1.15,
+          ),
+        ],
+      ).search('leche', supermarketKey: 'mercadona');
+      expect(calls, 0);
+      expect(r.filteredByStore, isTrue);
+      expect(r.products.single.price, 1.15);
+    });
+
+    test('si el catálogo falla o no lo tiene, sigue con OFF', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode(
+              _off([
+                {'code': '9', 'product_name': 'Kéfir'},
+              ]),
+            ),
+          ),
+          200,
+        );
+      });
+      final r = await ProductSearchService(
+        client: client,
+        catalog: (q, store) async => throw Exception('sin red'),
+      ).search('kéfir', supermarketKey: 'mercadona');
+      expect(calls, greaterThan(0));
+      expect(r.products.single.name, 'Kéfir');
+    });
   });
 }
