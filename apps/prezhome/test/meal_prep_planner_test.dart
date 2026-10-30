@@ -103,10 +103,59 @@ void main() {
         energyLevel: 0,
       );
 
+      // Seis días en la nevera es demasiado: se cocina el mismo día.
+      expect(plan.cookingDays.single.date, day(6));
       final batch = plan.cookingDays.first.batches.first;
       expect(batch.freezerServings, 0);
       expect(batch.fridgeServings, 3);
       expect(batch.takeOutDate, isNull);
+    });
+
+    test('lo no congelable que no aguanta en la nevera se cocina otro día', () {
+      final meals = [
+        PrepMeal(
+          recipeId: 'lentejas',
+          date: day(0),
+          mealType: 'lunch',
+          servings: 2,
+        ),
+        PrepMeal(
+          recipeId: 'ensalada',
+          date: day(1),
+          mealType: 'dinner',
+          servings: 2,
+        ),
+        PrepMeal(
+          recipeId: 'lentejas',
+          date: day(5),
+          mealType: 'lunch',
+          servings: 2,
+        ),
+        PrepMeal(
+          recipeId: 'ensalada',
+          date: day(5),
+          mealType: 'dinner',
+          servings: 2,
+        ),
+      ];
+      final plan = const MealPrepPlanner().buildPlan(
+        meals: meals,
+        recipesById: recipes,
+        weekStart: weekStart,
+        energyLevel: 0,
+      );
+
+      expect([for (final d in plan.cookingDays) d.date], [day(0), day(5)]);
+      for (final d in plan.cookingDays) {
+        for (final b in d.batches) {
+          for (final eat in b.fridgeByDay.keys) {
+            expect(
+              eat.difference(d.date).inDays,
+              lessThanOrEqualTo(kDiasNevera),
+            );
+          }
+        }
+      }
     });
   });
 

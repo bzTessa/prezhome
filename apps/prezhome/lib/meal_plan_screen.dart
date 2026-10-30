@@ -1116,9 +1116,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final byType = {for (final e in dayEntries) e.mealType: e};
     final prefs = PlanPrefs.current.value;
     final types = _slotTypes(byType);
-    final agenda = data.isMealPrep
-        ? prepAgenda(_buildMealPrepPlan(data), earliest: _today)
-        : const <PrepEvent>[];
+    final prepPlan = data.isMealPrep ? _buildMealPrepPlan(data) : null;
+    final agenda = prepPlan == null
+        ? const <PrepEvent>[]
+        : prepAgenda(prepPlan, earliest: _today);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -1257,7 +1258,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           ),
           const SizedBox(height: 12),
           for (final ev in agenda)
-            if (_isSameDay(ev.date, date)) PrepEventTile(event: ev),
+            if (_isSameDay(ev.date, date))
+              PrepEventTile(event: ev, batches: _batchesFor(prepPlan, ev)),
           if (data.entries.isEmpty && !loading)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -1310,7 +1312,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         _energyCard(),
         const SizedBox(height: 12),
         if (data.isMealPrep) ...[
-          _mealPrepCard(data, agenda),
+          _mealPrepCard(data, prepPlan!, agenda),
           const SizedBox(height: 12),
         ],
         if (_plannedRecipes(data).isNotEmpty) _cookModeCard(data),
@@ -1574,8 +1576,17 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// Tarjeta "Cocina en lote": la agenda de la semana (compra, día de cocina
   /// con nevera/congelador por táper y qué pasar a la nevera cada víspera).
   /// Solo en modo tanda (ver [_buildPlan]).
-  Widget _mealPrepCard(_PlanData data, List<PrepEvent> agenda) {
-    final plan = _buildMealPrepPlan(data);
+  Widget _mealPrepCard(
+    _PlanData data,
+    MealPrepPlan plan,
+    List<PrepEvent> agenda,
+  ) {
+    final cookDays = agenda.where((e) => e.kind == PrepEventKind.cocina);
+    final recipes = {
+      for (final d in plan.cookingDays)
+        if (cookDays.any((e) => _isSameDay(e.date, d.date)))
+          for (final b in d.batches) b.recipeId,
+    }.length;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: AppTheme.cardDecoration(radius: 20),
@@ -1586,15 +1597,33 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             children: [
               const MiauCharacter(mood: MiauMood.cooking, size: 44),
               const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Cocina en lote',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Cocina en lote',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (recipes > 0)
+                      Text(
+                        '${cookDays.length} '
+                        '${cookDays.length == 1 ? 'día' : 'días'} de cocina · '
+                        '$recipes ${recipes == 1 ? 'receta' : 'recetas'}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.inkMuted,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           if (agenda.isEmpty)
             Text(
               'Con el plan hecho te digo cuándo comprar, cuándo cocinar y qué '
@@ -1603,7 +1632,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             )
           else
             for (final ev in agenda) ...[
-              PrepEventTile(event: ev, showDate: true),
+              PrepEventTile(
+                event: ev,
+                showDate: true,
+                batches: _batchesFor(plan, ev),
+              ),
               if (ev.kind == PrepEventKind.cocina)
                 () {
                   final toFreeze = [
@@ -1613,7 +1646,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   ];
                   if (toFreeze.isEmpty) return const SizedBox.shrink();
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.only(left: 48, bottom: 12),
                     child: OutlinedButton.icon(
                       onPressed: () => _freezeBatches(data, toFreeze),
                       style: OutlinedButton.styleFrom(
@@ -1639,6 +1672,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       ),
     );
   }
+
+  /// Tandas del día de cocina de [ev] (vacío si no es un día de cocina).
+  List<PrepBatch> _batchesFor(MealPrepPlan? plan, PrepEvent ev) => [
+    if (plan != null && ev.kind == PrepEventKind.cocina)
+      for (final d in plan.cookingDays)
+        if (_isSameDay(d.date, ev.date)) ...d.batches,
+  ];
 
   /// Pasa a 'Congelados' las tandas indicadas: por cada receta congelable
   /// inserta un plato listo en el congelador con su FOTO y nombre de receta,
