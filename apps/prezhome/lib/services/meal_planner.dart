@@ -107,6 +107,9 @@ class MealPlanner {
           frozenBoost: frozenBoost,
           extra: (r) {
             var w = _repeatFactor(uses[r.id] ?? 0, batch);
+            // Cocinar en tandas para semanas: mejor lo que aguanta congelado,
+            // para ir llenando el congelador de cara al mes.
+            if (batch && days > 7 && r.freezesWell) w *= 1.6;
             if (isMain) {
               final g = proteinGroupOf(r);
               final target = weeklyTargets[g];

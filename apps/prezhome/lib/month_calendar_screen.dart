@@ -125,7 +125,8 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
     final mealsRes = await _client
         .from('meal_plan_entries')
         .select(
-          'plan_date, meal_type, skipped, recipe_id, servings, recipes(title)',
+          'plan_date, meal_type, skipped, recipe_id, servings, from_freezer, '
+          'inventory_item_id, recipes(title)',
         )
         .eq('home_id', homeId)
         .gte('plan_date', _day(_gridStart))

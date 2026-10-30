@@ -459,7 +459,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   /// el congelador como plato listo (con su foto), para tirar de él en el plan.
   Future<void> _offerFreeze() async {
     final r = _recipe;
-    if (!r.freezable) return;
+    if (!r.freezesWell) return;
     final servings = await askFreezeServings(
       context,
       recipe: r,
@@ -823,7 +823,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             icon: Icons.kitchen_rounded,
             style: RecipeChipStyle.type,
           ),
-        if (r.freezable)
+        if (r.freezesWell)
           const RecipeChip(
             text: 'Congelable',
             icon: Icons.ac_unit,

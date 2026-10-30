@@ -87,6 +87,37 @@ void main() {
     expect(legumbreUltima / 200, greaterThan(3));
   });
 
+  test('Tandas para un mes: tira más de lo que se congela bien', () {
+    final mix = [
+      _r('a', 'Caldo de pollo'),
+      _r('b', 'Lentejas estofadas'),
+      _r('c', 'Ensalada de pasta'),
+      _r('d', 'Tortilla francesa'),
+      _r('e', 'Merluza al horno'),
+      _r('f', 'Pollo a la plancha'),
+      _r('g', 'Wok de verduras'),
+      _r('h', 'Salmón con patatas'),
+    ];
+    double congelables({required int days}) {
+      var n = 0;
+      for (var seed = 0; seed < 100; seed++) {
+        final plan = MealPlanner(seed: seed).generate(
+          startDate: DateTime(2026, 11, 2),
+          days: days,
+          mealTypes: const ['lunch', 'dinner'],
+          recipes: mix,
+          batch: true,
+        );
+        n += flat(plan).values.where((id) => id == 'a' || id == 'b').length;
+      }
+      return n / days;
+    }
+
+    expect(mix.where((r) => r.freezesWell).map((r) => r.id), ['a', 'b']);
+    // Por día, un mes en tandas lleva más platos congelables que una semana.
+    expect(congelables(days: 28), greaterThan(congelables(days: 7) * 1.1));
+  });
+
   test('Plan sin comidas ocultas', () {
     const prefs = PlanPrefs(hidden: {'snack', 'breakfast'});
     expect(prefs.planned(['breakfast', 'lunch', 'snack', 'dinner']), [

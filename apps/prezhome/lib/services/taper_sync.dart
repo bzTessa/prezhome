@@ -54,10 +54,12 @@ class TaperSync {
         // Semanas (lunes) desde la víspera de [since] hasta hoy: un táper se
         // da por comido a las 00:00 del día siguiente, que puede ser lunes.
         final from = since.subtract(const Duration(days: 1));
+        // Desde 9 semanas antes: un táper congelado en un plan largo se saca
+        // semanas después de cocinarlo. Lo anterior a [since] no se repite.
         final firstWeek = DateTime(
           from.year,
           from.month,
-          from.day - (from.weekday - 1),
+          from.day - (from.weekday - 1) - 63,
         );
         final lastWeek = DateTime(
           today.year,
@@ -69,7 +71,8 @@ class TaperSync {
             .select()
             .eq('home_id', homeId)
             .gte('plan_date', day(firstWeek))
-            .lt('plan_date', day(lastWeek.add(const Duration(days: 7))));
+            // Y 9 semanas más: lo que sacarán del congelador se cocina antes.
+            .lt('plan_date', day(lastWeek.add(const Duration(days: 70))));
         final entries = [
           for (final m in planRes as List) MealPlanEntry.fromMap(m),
         ];

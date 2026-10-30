@@ -176,8 +176,12 @@ class MealPrepPlanner {
   ///    el PRIMER día del bloque que tenga comidas en casa. Así, con energía
   ///    baja todo se cocina un día (y lo lejano tira del congelador) y con
   ///    energía alta se cocina en más días (más fresco, menos congelador).
+  ///
+  /// [laterMeals] son comidas de semanas siguientes que salen de esta cocción:
+  /// se suman a la tanda de su receta (si se cocina) y van al congelador.
   MealPrepPlan buildPlan({
     required List<PrepMeal> meals,
+    List<PrepMeal> laterMeals = const [],
     required Map<String, PrepRecipe> recipesById,
     required DateTime weekStart,
     int energyLevel = 1,
@@ -250,11 +254,18 @@ class MealPrepPlanner {
       blockOf[m] = b;
     }
 
+    for (final m in laterMeals) {
+      final b = firstBlockOf[m.recipeId];
+      if (b != null && recipesById[m.recipeId]!.freezable && m.servings > 0) {
+        blockOf[m] = b;
+      }
+    }
+
     final cookingDays = <CookingDay>[];
     for (var i = 0; i < cookDates.length; i++) {
       final cookDate = cookDates[i];
       final mealsOfBlock = [
-        for (final m in relevant)
+        for (final m in [...relevant, ...laterMeals])
           if (blockOf[m] == i) m,
       ];
 
