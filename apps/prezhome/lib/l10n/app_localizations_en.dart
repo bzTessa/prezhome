@@ -996,4 +996,314 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get panWhenCooking => 'When cooking';
+
+  @override
+  String get planHowLong => 'For how long?';
+
+  @override
+  String get thisWeek => 'This week';
+
+  @override
+  String planWeeks(int count) {
+    return '$count weeks';
+  }
+
+  @override
+  String get planMonth4 => 'A month (4 weeks)';
+
+  @override
+  String get planPickDates => 'Pick dates';
+
+  @override
+  String get planDates => 'Plan dates';
+
+  @override
+  String get planMaxTwoMonths => 'Two months at most at a time.';
+
+  @override
+  String get planReadyAllHome =>
+      'Plan ready. You already have everything you need at home';
+
+  @override
+  String planListReady(int count) {
+    return 'Plan ready. Shopping list with $count products';
+  }
+
+  @override
+  String get planBackInPlan => 'It\'s back in the plan';
+
+  @override
+  String planEntryTitle(String meal, String recipe) {
+    return '$meal · $recipe';
+  }
+
+  @override
+  String get planNoRecipe => 'No recipe';
+
+  @override
+  String get planChangeRecipe => 'Change recipe';
+
+  @override
+  String get planWhoEats => 'Who\'s eating';
+
+  @override
+  String get planMarkHome => 'Mark as at home';
+
+  @override
+  String get planMarkOut => 'Mark as eating out';
+
+  @override
+  String get planStopRepeat => 'Stop repeating';
+
+  @override
+  String get planStopRepeatHint => 'Removes the next times';
+
+  @override
+  String get planRepeat => 'Repeat';
+
+  @override
+  String get planRepeatHint => 'Every day, every week… or forever';
+
+  @override
+  String get planRemove => 'Remove from plan';
+
+  @override
+  String planRepeatTitle(String meal) {
+    return 'Repeat $meal';
+  }
+
+  @override
+  String get planHowOften => 'How often?';
+
+  @override
+  String planEveryDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Every $days days',
+      one: 'Every day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planEveryWeeks(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other: 'Every $weeks weeks',
+      one: 'Every week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planUntilWhen => 'Until when?';
+
+  @override
+  String get planForever => 'Forever';
+
+  @override
+  String planMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planRepeatDone =>
+      'Done. You\'ll see it in the plan in the coming weeks; if a day already has something else, that stays.';
+
+  @override
+  String get planWhoAtHome => 'Who\'s eating at home?';
+
+  @override
+  String get planCalendarPermission =>
+      'Allow calendar access in your phone settings';
+
+  @override
+  String get planInFast => 'Falls during the fast';
+
+  @override
+  String get planSettings => 'Plan settings';
+
+  @override
+  String get planBatchCook => 'I batch cook';
+
+  @override
+  String get planBatchCookHint => 'Shopping day, cooking day and containers';
+
+  @override
+  String get planTimes => 'Times';
+
+  @override
+  String get planFasting => 'Intermittent fasting';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String planEatWindow(String from, String to) {
+    return 'You eat from $from to $to. It moves with dinner time.';
+  }
+
+  @override
+  String get planCalendar => 'Calendar';
+
+  @override
+  String get planToCalendar => 'Send to calendar';
+
+  @override
+  String get planCalendarLinked => 'Calendar connected';
+
+  @override
+  String get planCalendarHint => 'Meals and timed tasks, in Google Calendar';
+
+  @override
+  String get planCalendarUpdates => 'Updates when you open the plan';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get planPickRecipe => 'Pick a recipe';
+
+  @override
+  String get planDayFull => 'That day already has all its meals.';
+
+  @override
+  String get planWhichMeal => 'Which meal are you adding?';
+
+  @override
+  String get planTitle => 'Weekly plan';
+
+  @override
+  String get planNoHome => 'You\'re not part of any household.';
+
+  @override
+  String get planMake => 'Make plan';
+
+  @override
+  String get planRemake => 'Redo plan';
+
+  @override
+  String get planNeedRecipes => 'Add some recipes first';
+
+  @override
+  String get planNeedRecipesHint =>
+      'The planner spreads your recipes across the week. Save a few in the Meals tab.';
+
+  @override
+  String get planPrevWeek => 'Previous week';
+
+  @override
+  String get planNextWeekLabel => 'Next week';
+
+  @override
+  String get planLastWeek => 'Last week';
+
+  @override
+  String get planWeek => 'Week';
+
+  @override
+  String get planBackToToday => 'Back to today';
+
+  @override
+  String get planNextWeek => 'Next week';
+
+  @override
+  String get planDay => 'Day';
+
+  @override
+  String get planMonthCalendar => 'Month calendar';
+
+  @override
+  String get planNoPlanYet => 'No plan for this week yet.';
+
+  @override
+  String get recipe => 'Recipe';
+
+  @override
+  String get planCookMode => 'Cooking mode';
+
+  @override
+  String get planCookWeek => 'Cook the whole week in one go';
+
+  @override
+  String get planBatch => 'Batch cooking';
+
+  @override
+  String planCookDays(int days, int recipes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days cooking days',
+      one: '1 cooking day',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      recipes,
+      locale: localeName,
+      other: '$recipes recipes',
+      one: '1 recipe',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
+  String get planBatchEmpty =>
+      'Once the plan is made I\'ll tell you when to shop, when to cook and what goes in the fridge or freezer.';
+
+  @override
+  String get planCookedToFreezer => 'Cooked · to the freezer';
+
+  @override
+  String planFrozen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dishes saved in the freezer.',
+      one: 'Saved in the freezer with its photo.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planEnergyLow => 'Little';
+
+  @override
+  String get planEnergyNormal => 'Normal';
+
+  @override
+  String get planEnergyHigh => 'A lot';
+
+  @override
+  String get planEnergyHint =>
+      'With \"little\" the plan relies more on the freezer.';
+
+  @override
+  String get planHowMuchCook => 'How much to cook';
+
+  @override
+  String planServings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count servings',
+      one: '1 serving',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get planSearchRecipe => 'Search recipe...';
+
+  @override
+  String get planNoMatch => 'No matching recipes.';
 }

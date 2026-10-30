@@ -677,5 +677,171 @@
   },
   "couldNotLoad": "No se pudo cargar",
   "panNothingYet": "Aún no hay nada.",
-  "panWhenCooking": "Al cocinar"
+  "panWhenCooking": "Al cocinar",
+  "planHowLong": "¿Para cuánto tiempo?",
+  "thisWeek": "Esta semana",
+  "planWeeks": "{count} semanas",
+  "@planWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planMonth4": "Un mes (4 semanas)",
+  "planPickDates": "Elegir fechas",
+  "planDates": "Fechas del plan",
+  "planMaxTwoMonths": "Como mucho dos meses de una vez.",
+  "planReadyAllHome": "Plan listo. Ya tienes en casa todo lo que necesitas",
+  "planListReady": "Plan listo. Lista de la compra con {count} productos",
+  "@planListReady": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planBackInPlan": "Vuelve a estar en el plan",
+  "planEntryTitle": "{meal} · {recipe}",
+  "@planEntryTitle": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      },
+      "recipe": {
+        "type": "String"
+      }
+    }
+  },
+  "planNoRecipe": "Sin receta",
+  "planChangeRecipe": "Cambiar receta",
+  "planWhoEats": "Quién come",
+  "planMarkHome": "Marcar en casa",
+  "planMarkOut": "Marcar como fuera",
+  "planStopRepeat": "Dejar de repetir",
+  "planStopRepeatHint": "Quita las siguientes veces",
+  "planRepeat": "Repetir",
+  "planRepeatHint": "Cada día, cada semana… o para siempre",
+  "planRemove": "Quitar del plan",
+  "planRepeatTitle": "Repetir {meal}",
+  "@planRepeatTitle": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "planHowOften": "¿Cada cuánto?",
+  "planEveryDays": "{days, plural, =1{Cada día} other{Cada {days} días}}",
+  "@planEveryDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planEveryWeeks": "{weeks, plural, =1{Cada semana} other{Cada {weeks} semanas}}",
+  "@planEveryWeeks": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "planUntilWhen": "¿Hasta cuándo?",
+  "planForever": "Para siempre",
+  "planMonths": "{count, plural, =1{1 mes} other{{count} meses}}",
+  "@planMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planRepeatDone": "Hecho. Lo verás en el plan las próximas semanas; si un día ya tiene otra cosa, se respeta.",
+  "planWhoAtHome": "¿Quién come en casa?",
+  "planCalendarPermission": "Da permiso al calendario en los ajustes del móvil",
+  "planInFast": "Cae en el ayuno",
+  "planSettings": "Ajustes del plan",
+  "planBatchCook": "Cocino en tanda",
+  "planBatchCookHint": "Día de compra, de cocina y tápers",
+  "planTimes": "Horas",
+  "planFasting": "Ayuno intermitente",
+  "no": "No",
+  "planEatWindow": "Comes de {from} a {to}. Se mueve con la hora de la cena.",
+  "@planEatWindow": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "planCalendar": "Calendario",
+  "planToCalendar": "Pasar al calendario",
+  "planCalendarLinked": "Calendario conectado",
+  "planCalendarHint": "Comidas y tareas con hora, en Google Calendar",
+  "planCalendarUpdates": "Se actualiza al abrir el plan",
+  "remove": "Quitar",
+  "planPickRecipe": "Elige una receta",
+  "planDayFull": "Ese día ya tiene todas las comidas.",
+  "planWhichMeal": "¿Qué comida añades?",
+  "planTitle": "Plan semanal",
+  "planNoHome": "No perteneces a ningún hogar.",
+  "planMake": "Hacer plan",
+  "planRemake": "Rehacer plan",
+  "planNeedRecipes": "Añade algunas recetas primero",
+  "planNeedRecipesHint": "El planificador reparte tus recetas por la semana. Guarda unas cuantas en la pestaña Comidas.",
+  "planPrevWeek": "Semana anterior",
+  "planNextWeekLabel": "La próxima semana",
+  "planLastWeek": "La semana pasada",
+  "planWeek": "Semana",
+  "planBackToToday": "Volver a hoy",
+  "planNextWeek": "Semana siguiente",
+  "planDay": "Día",
+  "planMonthCalendar": "Calendario del mes",
+  "planNoPlanYet": "Aún no hay plan para esta semana.",
+  "recipe": "Receta",
+  "planCookMode": "Modo cocina",
+  "planCookWeek": "Cocina la semana de una vez",
+  "planBatch": "Cocina en lote",
+  "planCookDays": "{days, plural, =1{1 día de cocina} other{{days} días de cocina}} · {recipes, plural, =1{1 receta} other{{recipes} recetas}}",
+  "@planCookDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "recipes": {
+        "type": "int"
+      }
+    }
+  },
+  "planBatchEmpty": "Con el plan hecho te digo cuándo comprar, cuándo cocinar y qué va a la nevera o al congelador.",
+  "planCookedToFreezer": "Ya cocinado · al congelador",
+  "planFrozen": "{count, plural, =1{Guardado en el congelador con su foto.} other{{count} platos guardados en el congelador.}}",
+  "@planFrozen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planEnergyLow": "Poco",
+  "planEnergyNormal": "Normal",
+  "planEnergyHigh": "Mucho",
+  "planEnergyHint": "Con \"poco\" el plan tira más del congelador.",
+  "planHowMuchCook": "Cuánto cocinar",
+  "planServings": "{count, plural, =1{1 ración} other{{count} raciones}}",
+  "@planServings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "close": "Cerrar",
+  "planSearchRecipe": "Buscar receta...",
+  "planNoMatch": "Sin recetas que coincidan."
 }

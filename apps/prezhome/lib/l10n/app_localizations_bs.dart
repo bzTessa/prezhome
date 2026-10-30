@@ -990,4 +990,314 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get panWhenCooking => 'Pri kuhanju';
+
+  @override
+  String get planHowLong => 'Za koliko vremena?';
+
+  @override
+  String get thisWeek => 'Ove sedmice';
+
+  @override
+  String planWeeks(int count) {
+    return '$count sedmice';
+  }
+
+  @override
+  String get planMonth4 => 'Mjesec (4 sedmice)';
+
+  @override
+  String get planPickDates => 'Izaberi datume';
+
+  @override
+  String get planDates => 'Datumi plana';
+
+  @override
+  String get planMaxTwoMonths => 'Najviše dva mjeseca odjednom.';
+
+  @override
+  String get planReadyAllHome =>
+      'Plan je spreman. Već imaš kod kuće sve što ti treba';
+
+  @override
+  String planListReady(int count) {
+    return 'Plan je spreman. Lista za kupovinu sa $count proizvoda';
+  }
+
+  @override
+  String get planBackInPlan => 'Ponovo je u planu';
+
+  @override
+  String planEntryTitle(String meal, String recipe) {
+    return '$meal · $recipe';
+  }
+
+  @override
+  String get planNoRecipe => 'Bez recepta';
+
+  @override
+  String get planChangeRecipe => 'Promijeni recept';
+
+  @override
+  String get planWhoEats => 'Ko jede';
+
+  @override
+  String get planMarkHome => 'Označi kod kuće';
+
+  @override
+  String get planMarkOut => 'Označi kao vani';
+
+  @override
+  String get planStopRepeat => 'Prestani ponavljati';
+
+  @override
+  String get planStopRepeatHint => 'Uklanja sljedeće puta';
+
+  @override
+  String get planRepeat => 'Ponovi';
+
+  @override
+  String get planRepeatHint => 'Svaki dan, svake sedmice… ili zauvijek';
+
+  @override
+  String get planRemove => 'Ukloni iz plana';
+
+  @override
+  String planRepeatTitle(String meal) {
+    return 'Ponovi $meal';
+  }
+
+  @override
+  String get planHowOften => 'Koliko često?';
+
+  @override
+  String planEveryDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Svaka $days dana',
+      one: 'Svaki dan',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planEveryWeeks(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other: 'Svake $weeks sedmice',
+      one: 'Svake sedmice',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planUntilWhen => 'Do kada?';
+
+  @override
+  String get planForever => 'Zauvijek';
+
+  @override
+  String planMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mjeseca',
+      one: '1 mjesec',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planRepeatDone =>
+      'Gotovo. Vidjet ćeš ga u planu narednih sedmica; ako dan već ima nešto drugo, to ostaje.';
+
+  @override
+  String get planWhoAtHome => 'Ko jede kod kuće?';
+
+  @override
+  String get planCalendarPermission =>
+      'Dozvoli pristup kalendaru u postavkama telefona';
+
+  @override
+  String get planInFast => 'Pada u vrijeme posta';
+
+  @override
+  String get planSettings => 'Postavke plana';
+
+  @override
+  String get planBatchCook => 'Kuham unaprijed';
+
+  @override
+  String get planBatchCookHint => 'Dan kupovine, kuhanja i posude';
+
+  @override
+  String get planTimes => 'Vremena';
+
+  @override
+  String get planFasting => 'Povremeni post';
+
+  @override
+  String get no => 'Ne';
+
+  @override
+  String planEatWindow(String from, String to) {
+    return 'Jedeš od $from do $to. Pomjera se s vremenom večere.';
+  }
+
+  @override
+  String get planCalendar => 'Kalendar';
+
+  @override
+  String get planToCalendar => 'Prebaci u kalendar';
+
+  @override
+  String get planCalendarLinked => 'Kalendar povezan';
+
+  @override
+  String get planCalendarHint =>
+      'Obroci i zadaci s vremenom, u Google kalendaru';
+
+  @override
+  String get planCalendarUpdates => 'Ažurira se kad otvoriš plan';
+
+  @override
+  String get remove => 'Ukloni';
+
+  @override
+  String get planPickRecipe => 'Izaberi recept';
+
+  @override
+  String get planDayFull => 'Taj dan već ima sve obroke.';
+
+  @override
+  String get planWhichMeal => 'Koji obrok dodaješ?';
+
+  @override
+  String get planTitle => 'Sedmični plan';
+
+  @override
+  String get planNoHome => 'Ne pripadaš nijednom domaćinstvu.';
+
+  @override
+  String get planMake => 'Napravi plan';
+
+  @override
+  String get planRemake => 'Ponovo napravi plan';
+
+  @override
+  String get planNeedRecipes => 'Prvo dodaj nekoliko recepata';
+
+  @override
+  String get planNeedRecipesHint =>
+      'Planer raspoređuje tvoje recepte kroz sedmicu. Sačuvaj nekoliko u kartici Obroci.';
+
+  @override
+  String get planPrevWeek => 'Prethodna sedmica';
+
+  @override
+  String get planNextWeekLabel => 'Sljedeće sedmice';
+
+  @override
+  String get planLastWeek => 'Prošle sedmice';
+
+  @override
+  String get planWeek => 'Sedmica';
+
+  @override
+  String get planBackToToday => 'Nazad na danas';
+
+  @override
+  String get planNextWeek => 'Sljedeća sedmica';
+
+  @override
+  String get planDay => 'Dan';
+
+  @override
+  String get planMonthCalendar => 'Kalendar mjeseca';
+
+  @override
+  String get planNoPlanYet => 'Još nema plana za ovu sedmicu.';
+
+  @override
+  String get recipe => 'Recept';
+
+  @override
+  String get planCookMode => 'Način kuhanja';
+
+  @override
+  String get planCookWeek => 'Skuhaj cijelu sedmicu odjednom';
+
+  @override
+  String get planBatch => 'Kuhanje unaprijed';
+
+  @override
+  String planCookDays(int days, int recipes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days dana kuhanja',
+      one: '1 dan kuhanja',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      recipes,
+      locale: localeName,
+      other: '$recipes recepata',
+      one: '1 recept',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
+  String get planBatchEmpty =>
+      'Kad plan bude gotov, reći ću ti kada kupovati, kada kuhati i šta ide u frižider ili zamrzivač.';
+
+  @override
+  String get planCookedToFreezer => 'Skuhano · u zamrzivač';
+
+  @override
+  String planFrozen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jela sačuvano u zamrzivaču.',
+      one: 'Sačuvano u zamrzivaču s fotografijom.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planEnergyLow => 'Malo';
+
+  @override
+  String get planEnergyNormal => 'Normalno';
+
+  @override
+  String get planEnergyHigh => 'Puno';
+
+  @override
+  String get planEnergyHint => 'Sa \"malo\" plan više koristi zamrzivač.';
+
+  @override
+  String get planHowMuchCook => 'Koliko kuhati';
+
+  @override
+  String planServings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count porcija',
+      one: '1 porcija',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get close => 'Zatvori';
+
+  @override
+  String get planSearchRecipe => 'Traži recept...';
+
+  @override
+  String get planNoMatch => 'Nema odgovarajućih recepata.';
 }
