@@ -1,0 +1,10 @@
+{
+  "@@locale": "es",
+  "tabLabel": "{tab, select, inicio{Hoy} comidas{Comida} compra{Compra} despensa{Despensa} tareas{Tareas} other{}}",
+  "@tabLabel": {
+    "description": "Pestaña de la barra inferior",
+    "placeholders": { "tab": { "type": "String" } }
+  },
+  "country": "País",
+  "countryHint": "Moneda, supermercados y precios de referencia"
+}

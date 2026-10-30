@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'utils/money.dart';
 
 import 'models/inventory_item.dart';
 import 'services/price_memory.dart';
@@ -732,7 +733,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: _dec('€'),
+                  decoration: _dec(currencySymbol()),
                 ),
               ),
             ],
@@ -758,7 +759,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
               children: [
                 Text('Total', style: TextStyle(color: AppColors.inkMuted)),
                 Text(
-                  '${_total.toStringAsFixed(2)} €',
+                  money(_total),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

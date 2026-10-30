@@ -1,0 +1,6 @@
+{
+  "@@locale": "it",
+  "tabLabel": "{tab, select, inicio{Oggi} comidas{Pasti} compra{Spesa} despensa{Dispensa} tareas{Faccende} other{}}",
+  "country": "Paese",
+  "countryHint": "Valuta, supermercati e prezzi di riferimento"
+}

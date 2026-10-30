@@ -26,7 +26,6 @@ Comprobaciones que ejecuta el CI (desde `apps/prezhome`):
 dart format --output=none --set-exit-if-changed .
 flutter analyze
 flutter test
-dart run tool/architecture/dependency_map.dart --check
 ```
 
 ## Automatizacion CI/CD y secrets
@@ -59,11 +58,10 @@ Para apoyar el rediseño de la app hay una base de arquitectura en:
 
 - [apps/prezhome/docs/architecture/review.md](apps/prezhome/docs/architecture/review.md)
 - [apps/prezhome/docs/architecture/refactor-plan.md](apps/prezhome/docs/architecture/refactor-plan.md)
-- [apps/prezhome/docs/architecture/dependency-map.md](apps/prezhome/docs/architecture/dependency-map.md)
+- `apps/prezhome/docs/architecture/dependency-map.md` (generado, no versionado;
+  el CI lo publica como artefacto `dependency-map`)
 
 Comandos útiles (desde `apps/prezhome`):
 
-- Generar mapa de dependencias:
+- Generar mapa de dependencias (no se commitea, está en `.gitignore`):
   `dart run tool/architecture/dependency_map.dart`
-- Verificar en local que el mapa está actualizado:
-  `dart run tool/architecture/dependency_map.dart --check`

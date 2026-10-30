@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'utils/money.dart';
 
 import 'theme/app_theme.dart';
 import 'widgets/food_category_icon.dart';
@@ -109,15 +110,14 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
                 Icons.euro_rounded,
                 masGasto.take(6).toList(),
                 (s) => s.totalSpent,
-                (s) => '${s.totalSpent.toStringAsFixed(0)} €',
+                (s) => money(s.totalSpent, decimals: 0),
               ),
               const SizedBox(height: 16),
               _listCard(
                 'Los más caros (por unidad)',
                 Icons.trending_up_rounded,
                 masCaros.take(6).toList(),
-                (s) =>
-                    '${s.avgUnitPrice!.toStringAsFixed(2).replaceAll('.', ',')} €',
+                (s) => money(s.avgUnitPrice!),
               ),
             ],
           );
@@ -145,7 +145,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
                 const SizedBox(height: 6),
                 Text(
                   '$distintos productos distintos · $lineas compras\n'
-                  'Gasto total registrado: ${gasto.toStringAsFixed(0)} €',
+                  'Gasto total registrado: ${money(gasto, decimals: 0)}',
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
               ],

@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generado por tool/architecture/dependency_map.dart; no se versiona para
+# que los PRs en paralelo no choquen en este fichero.
+/docs/architecture/dependency-map.md

@@ -15,6 +15,7 @@ import 'widgets/skeleton.dart';
 import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
 import 'models/supermarket.dart';
+import 'services/home_country.dart';
 import 'services/home_supermarkets.dart';
 import 'services/plan_shopping.dart';
 import 'services/product_photo_resolver.dart';
@@ -1428,7 +1429,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   style: TextStyle(color: AppColors.inkMuted),
                 ),
               ),
-              for (final s in Supermarket.all)
+              for (final s in Supermarket.forCountry(
+                HomeCountry.current.value.code,
+              ))
                 ListTile(
                   title: Text(s.label),
                   trailing: s.key == current

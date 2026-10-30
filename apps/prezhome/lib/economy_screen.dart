@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'utils/money.dart';
 
 import 'product_stats_screen.dart';
 import 'scan_ticket_screen.dart';
@@ -248,7 +249,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: 'Importe (€)',
+            labelText: 'Importe (${currencySymbol()})',
             filled: true,
             fillColor: AppColors.card,
             border: OutlineInputBorder(
@@ -916,7 +917,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 Text(
-                  '${data.historicalTotal.toStringAsFixed(2)} €',
+                  money(data.historicalTotal),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -958,7 +959,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 icon: const Icon(Icons.edit, size: 18),
                 label: Text(
                   budget > 0
-                      ? 'Presupuesto: ${budget.toStringAsFixed(0)} €'
+                      ? 'Presupuesto: ${money(budget, decimals: 0)}'
                       : 'Fijar presupuesto',
                 ),
                 style: TextButton.styleFrom(
@@ -969,7 +970,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${spent.toStringAsFixed(2)} €',
+            money(spent),
             style: TextStyle(
               fontSize: 32,
               letterSpacing: -0.6,
@@ -1002,8 +1003,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
             const SizedBox(height: 6),
             Text(
               over
-                  ? 'Te has pasado ${(spent - budget).toStringAsFixed(2)} € del presupuesto'
-                  : 'Te quedan ${(budget - spent).toStringAsFixed(2)} €',
+                  ? 'Te has pasado ${money(spent - budget)} del presupuesto'
+                  : 'Te quedan ${money(budget - spent)}',
               style: TextStyle(
                 color: over ? AppColors.expired : AppColors.inkMuted,
                 fontWeight: FontWeight.w600,
@@ -1046,7 +1047,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           if (hasBudget) ...[
             const SizedBox(height: 4),
             Text(
-              'Presupuesto: ${budget.toStringAsFixed(0)} € al mes',
+              'Presupuesto: ${money(budget, decimals: 0)} al mes',
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
           ],
@@ -1064,7 +1065,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
-                        '${rod.toY.toStringAsFixed(2)} €',
+                        money(rod.toY),
                         TextStyle(
                           color: AppColors.ink,
                           fontWeight: FontWeight.bold,
@@ -1220,7 +1221,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               ),
             ),
             Text(
-              '${amount.toStringAsFixed(2)} €',
+              money(amount),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             IconButton(

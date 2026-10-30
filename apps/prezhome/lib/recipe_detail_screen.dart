@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'utils/money.dart';
 
 import 'add_recipe_screen.dart';
 import 'cook_mode_screen.dart';
@@ -51,8 +52,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   List<NutritionProfile> _profiles =
       []; // miembros del hogar con perfil visible
 
-  // Multiplicador: nº de "comidas de hogar" a preparar (1 = para hoy todos).
-  double _multiplier = 1;
+  // Raciones a preparar elegidas en el conversor (null = las de la receta).
+  int? _servings;
   bool _changed = false; // para avisar a la lista si hubo cambios al volver
 
   // Sección visible: 0 ingredientes, 1 pasos, 2 nutrición.
@@ -64,16 +65,19 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   List<String> _pantry = [];
   bool _addingMissing = false;
 
-  /// Cuántas raciones-base de la receta equivale el total a preparar.
-  /// Base = gramos de una comida de hogar / gramos por ración. Si no hay datos
-  /// de perfil o peso, cae a "multiplicador = raciones" (comportamiento simple).
-  double get _servingsFactor {
-    final mealGrams = _householdMealGrams(_recipe);
-    final perServing = _recipe.gramsPerServing;
-    if (mealGrams != null && perServing != null && perServing > 0) {
-      return (mealGrams / perServing) * _multiplier;
-    }
-    return _multiplier; // fallback: 1 = 1 ración
+  int get _recipeServings => _recipe.servings < 1 ? 1 : _recipe.servings;
+  int get _servingsNow => _servings ?? _recipeServings;
+
+  /// Los ingredientes se guardan para las raciones de la receta: se escalan
+  /// por raciones elegidas / raciones guardadas (×1 = tal cual se guardó).
+  double get _servingsFactor => _servingsNow / _recipeServings;
+
+  /// Raciones que come el hogar en una comida (por perfiles y peso), o null.
+  double? _householdServings(Recipe r) {
+    final mealGrams = _householdMealGrams(r);
+    final perServing = r.gramsPerServing;
+    if (mealGrams == null || perServing == null || perServing <= 0) return null;
+    return mealGrams / perServing;
   }
 
   @override
@@ -160,6 +164,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (r != null && mounted) {
         setState(() {
           _recipe = Recipe.fromMap(r);
+          _servings = null;
           _ingredientsFuture = _fetchIngredients();
         });
       }
@@ -450,23 +455,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return counted > 0 ? total : null;
   }
 
-  /// Registra la receta como cocinada: guarda en el congelador las raciones
-  /// preparadas como "plato listo" (para meal prep). El nº de raciones = nº de
-  /// comidas de hogar (el multiplicador) × personas que comen en casa.
   /// Al terminar de cocinar una receta congelable, ofrece guardar raciones en
   /// el congelador como plato listo (con su foto), para tirar de él en el plan.
   Future<void> _offerFreeze() async {
     final r = _recipe;
     if (!r.freezable) return;
-    final mealGrams = _householdMealGrams(r);
-    final cooked =
-        mealGrams != null && r.gramsPerServing != null && r.gramsPerServing! > 0
-        ? (mealGrams / r.gramsPerServing!) * _multiplier
-        : r.servings * _multiplier;
     final servings = await askFreezeServings(
       context,
       recipe: r,
-      initial: cooked.round(),
+      initial: _servingsNow,
     );
     if (servings == null) return;
     try {
@@ -750,8 +747,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (_cost != null)
         _stat(
           Icons.euro_rounded,
-          _cost!.perServing.toStringAsFixed(2).replaceAll('.', ','),
-          '€/ración',
+          money(_cost!.perServing),
+          'por ración',
           AppColors.sage,
           AppColors.sageBg,
         )
@@ -892,22 +889,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  String _multLabel() => _multiplier % 1 == 0
-      ? _multiplier.toStringAsFixed(0)
-      : _multiplier.toString();
-
-  /// Texto de la cantidad que se prepara con el multiplicador actual.
-  String _amountText(Recipe r) {
-    final mealGrams = _householdMealGrams(r);
-    if (mealGrams != null) {
-      return _multiplier == 1
-          ? 'Una comida para el hogar'
-          : '${_multLabel()} comidas para el hogar';
-    }
-    final servings = r.servings * _multiplier;
-    return '${servings.toStringAsFixed(0)} '
-        '${servings == 1 ? 'ración' : 'raciones'}';
-  }
+  String _servingsText(int n) => '$n ${n == 1 ? 'ración' : 'raciones'}';
 
   /// Cantidad + nombre listos para leer ("200 g arroz", "Sal (al gusto)").
   ({String prefix, String name}) _ingredientParts(Ingredient ing) {
@@ -1000,7 +982,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Cantidad a preparar',
+                      'Raciones',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -1008,7 +990,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ),
                     ),
                     Text(
-                      _amountText(r),
+                      _servingsText(_servingsNow),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -1021,16 +1003,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               IconButton(
                 tooltip: 'Menos',
                 icon: const Icon(Icons.remove_circle_outline_rounded),
-                onPressed: _multiplier > 1
-                    ? () => setState(
-                        () => _multiplier = (_multiplier - 1)
-                            .clamp(1, 50)
-                            .toDouble(),
-                      )
+                onPressed: _servingsNow > 1
+                    ? () => setState(() => _servings = _servingsNow - 1)
                     : null,
               ),
               Text(
-                '×${_multLabel()}',
+                '$_servingsNow',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -1039,14 +1017,36 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               IconButton(
                 tooltip: 'Más',
                 icon: const Icon(Icons.add_circle_outline_rounded),
-                onPressed: () => setState(
-                  () => _multiplier = (_multiplier + 1).clamp(1, 50).toDouble(),
-                ),
+                onPressed: _servingsNow < 99
+                    ? () => setState(() => _servings = _servingsNow + 1)
+                    : null,
               ),
             ],
           ),
+          _servingsHints(r),
         ],
       ),
+    );
+  }
+
+  /// Atajos del conversor: volver a lo guardado o ajustar a lo que come hoy
+  /// el hogar (según perfiles y peso por ración).
+  Widget _servingsHints(Recipe r) {
+    final perMeal = _householdServings(r)?.round();
+    return Wrap(
+      spacing: 8,
+      children: [
+        if (_servingsNow != _recipeServings)
+          ActionChip(
+            label: Text('Receta original: ${_servingsText(_recipeServings)}'),
+            onPressed: () => setState(() => _servings = null),
+          ),
+        if (perMeal != null && perMeal >= 1 && perMeal != _servingsNow)
+          ActionChip(
+            label: Text('Para tu hogar hoy: ${_servingsText(perMeal)}'),
+            onPressed: () => setState(() => _servings = perMeal),
+          ),
+      ],
     );
   }
 
@@ -1306,7 +1306,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     Icon(Icons.euro_rounded, size: 18, color: AppColors.sage),
                     const SizedBox(width: 8),
                     Text(
-                      '${_cost!.perServing.toStringAsFixed(2).replaceAll('.', ',')} € por ración',
+                      '${money(_cost!.perServing)} por ración',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -1314,7 +1314,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      '≈ ${_cost!.total.toStringAsFixed(2).replaceAll('.', ',')} € total',
+                      '≈ ${money(_cost!.total)} total',
                       style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                   ],

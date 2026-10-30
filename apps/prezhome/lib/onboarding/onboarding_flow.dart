@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../login_screen.dart';
 import '../models/onboarding_answers.dart';
 import '../models/supermarket.dart';
+import '../services/home_country.dart';
 import '../services/offline_provider.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
@@ -549,7 +550,7 @@ class _SupermarketPicker extends StatelessWidget {
       runSpacing: 10,
       alignment: WrapAlignment.center,
       children: [
-        for (final s in Supermarket.all)
+        for (final s in Supermarket.forCountry(HomeCountry.current.value.code))
           _SuperChip(
             label: s.label,
             order: selected.indexOf(s.key),

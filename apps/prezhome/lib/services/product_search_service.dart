@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'home_country.dart';
+
 /// Producto real de supermercado encontrado en Open Food Facts.
 class SupermarketProduct {
   const SupermarketProduct({
@@ -65,16 +67,17 @@ String? offStoreTag(String? supermarketKey) => switch (supermarketKey) {
 };
 
 /// URL de búsqueda de OFF (search-a-licious; la antigua cgi/search.pl ya no
-/// responde a apps sin cuenta): productos vendidos en España y, si se indica,
-/// en la tienda [storeTag].
+/// responde a apps sin cuenta): productos vendidos en el país del hogar y, si
+/// se indica, en la tienda [storeTag].
 Uri buildProductSearchUri(String query, {String? storeTag}) {
+  final country = HomeCountry.current.value;
   // Fuera la sintaxis de búsqueda (comillas, dos puntos…): solo palabras.
   final words = query.replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ');
-  final q = StringBuffer('${words.trim()} countries_tags:"en:spain"');
+  final q = StringBuffer('${words.trim()} countries_tags:"en:${country.off}"');
   if (storeTag != null) q.write(' stores:"$storeTag"');
   return Uri.https('search.openfoodfacts.org', '/search', {
     'q': q.toString(),
-    'langs': 'es',
+    'langs': country.lang,
     'page_size': '24',
     'fields':
         'code,product_name_es,product_name,brands,quantity,'

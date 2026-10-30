@@ -7,6 +7,7 @@ import 'home_session_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/tactile_button.dart';
+import 'services/native_google_sign_in.dart';
 import 'utils/friendly_error.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -83,6 +84,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWith(OAuthProvider provider, String name) async {
     setState(() => _oauthLoading = true);
     try {
+      if (provider == OAuthProvider.google && nativeGoogleAvailable) {
+        await signInWithNativeGoogle();
+        return;
+      }
       // Requiere tener el proveedor configurado en Supabase.
       await Supabase.instance.client.auth.signInWithOAuth(
         provider,
