@@ -60,10 +60,16 @@ jobs:
       - name: Ejecutar tests
         run: flutter test
 
-      # Verifica que el mapa de dependencias internas de lib/ esté al día
-      # (apps/prezhome/docs/architecture/dependency-map.md).
-      - name: Verificar mapa de dependencias de arquitectura
-        run: dart run tool/architecture/dependency_map.dart --check
+      # Genera el mapa de dependencias internas de lib/. No se versiona
+      # (cada PR lo cambiaba y chocaban entre sí): se publica como artefacto.
+      - name: Generar mapa de dependencias de arquitectura
+        run: dart run tool/architecture/dependency_map.dart
+
+      - name: Subir mapa de dependencias
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-map
+          path: apps/prezhome/docs/architecture/dependency-map.md
 
   # Paquetes compartidos del monorepo (packages/). Hoy: prez_ui.
   paquetes:
