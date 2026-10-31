@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:prezhome/models/country.dart';
+import 'package:prezhome/services/home_country.dart';
 import 'package:prezhome/services/product_search_service.dart';
 
 Map<String, dynamic> _off(List<Map<String, dynamic>> products) => {
@@ -91,6 +93,16 @@ void main() {
     expect(parsePackageQuantity('pack de 6'), isNull);
     expect(parsePackageQuantity('6 x 125 g'), isNull);
     expect(parsePackageQuantity(null), isNull);
+  });
+
+  test('los catálogos son los del país del hogar', () {
+    addTearDown(() => HomeCountry.current.value = Country.of('ES'));
+    expect(catalogSearchOrder('bonarea').first, 'bonarea');
+    HomeCountry.current.value = Country.of('PT');
+    expect(catalogSearchOrder('auchan'), ['auchan', 'pingodoce']);
+    // "auchan" de Francia no busca en el catálogo de Portugal.
+    HomeCountry.current.value = Country.of('FR');
+    expect(catalogSearchOrder('auchan'), isEmpty);
   });
 
   group('ProductSearchService.search', () {
@@ -223,6 +235,7 @@ void main() {
         'consum',
         'bonarea',
         'lidl',
+        'ahorramas',
       ]);
       expect(r.filteredByStore, isTrue);
     });

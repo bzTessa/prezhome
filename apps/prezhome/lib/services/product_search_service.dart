@@ -358,22 +358,36 @@ String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
 }
 
 /// Súpers con catálogo propio en supermarket_products (scripts/*_sync.py).
-const catalogStores = {'mercadona', 'dia', 'consum', 'bonarea', 'lidl', 'rewe'};
+const catalogStores = {
+  'mercadona',
+  'dia',
+  'consum',
+  'bonarea',
+  'lidl',
+  'ahorramas',
+  'rewe',
+  'pingodoce',
+  'auchan',
+};
 
 /// Catálogos oficiales de cada país, en el orden en que se buscan.
 const catalogStoresByCountry = {
-  'ES': ['mercadona', 'dia', 'consum', 'bonarea', 'lidl'],
+  'ES': ['mercadona', 'dia', 'consum', 'bonarea', 'lidl', 'ahorramas'],
   'DE': ['rewe'],
+  'PT': ['pingodoce', 'auchan'],
 };
 
 /// Catálogos donde buscar: primero el del súper del hogar y luego los demás
-/// del país.
-List<String> catalogSearchOrder(String? supermarketKey) => [
-  if (catalogStores.contains(supermarketKey)) supermarketKey!,
-  ...?catalogStoresByCountry[HomeCountry.current.value.code]?.where(
-    (s) => s != supermarketKey,
-  ),
-];
+/// del país. Solo los del país: "auchan" es el catálogo de Portugal, no el
+/// de Francia.
+List<String> catalogSearchOrder(String? supermarketKey) {
+  final stores =
+      catalogStoresByCountry[HomeCountry.current.value.code] ?? const [];
+  return [
+    if (stores.contains(supermarketKey)) supermarketKey!,
+    ...stores.where((s) => s != supermarketKey),
+  ];
+}
 
 /// Catálogo que pone la foto a lo genérico (fruta, verdura…) en cada país.
 const catalogForCountry = {'ES': 'mercadona', 'DE': 'rewe'};
