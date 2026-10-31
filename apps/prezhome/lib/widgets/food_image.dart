@@ -50,6 +50,10 @@ class FoodImage extends StatelessWidget {
   /// y la ilustración por categoría queda más limpia y coherente.
   final bool forceIllustration;
 
+  /// Solo la foto real: se enseña aunque el producto sea genérico y, si no
+  /// hay, queda el hueco liso en vez del dibujo (buscador, iconos apagados).
+  final bool photoOnly;
+
   /// Ajuste de la foto. Las fotos de envase del súper se ven mejor enteras
   /// (contain); las de alimentos, recortadas (cover).
   final BoxFit fit;
@@ -64,6 +68,7 @@ class FoodImage extends StatelessWidget {
     this.height,
     this.radius = 14,
     this.forceIllustration = false,
+    this.photoOnly = false,
     this.fit = BoxFit.cover,
   });
 
@@ -73,8 +78,9 @@ class FoodImage extends StatelessWidget {
       !forceIllustration &&
       imageUrl != null &&
       imageUrl!.trim().isNotEmpty &&
-      !(ProductIcons.isGeneric(name) &&
-          (isSharablePhoto(imageUrl!) || isStockPhoto(imageUrl)));
+      (photoOnly ||
+          !(ProductIcons.isGeneric(name) &&
+              (isSharablePhoto(imageUrl!) || isStockPhoto(imageUrl))));
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +154,7 @@ class FoodImage extends StatelessWidget {
   /// spinner sobre el fondo de la categoría.
   Widget _cozyIllustration({bool loading = false}) {
     if (loading) return _categoryIcon(loading: true);
+    if (photoOnly) return const SizedBox.expand();
     final asset = ProductIcons.assetFor(name);
     if (asset != null) {
       return _iconBox(Image.asset(asset, fit: BoxFit.contain));

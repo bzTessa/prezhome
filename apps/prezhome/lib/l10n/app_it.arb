@@ -149,6 +149,7 @@
   "shopGroupByAisle": "Raggruppa per corsia",
   "shopGroupHint": "Verdure, carne, pulizia…",
   "shopShowPhotos": "Mostra foto dei prodotti",
+  "shopShowIcons": "Mostra disegni quando non c'è la foto",
   "shopMyLists": "Le mie liste",
   "categories": "Categorie",
   "shopFinish": "Termina la spesa",

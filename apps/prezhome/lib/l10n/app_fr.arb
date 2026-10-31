@@ -149,6 +149,7 @@
   "shopGroupByAisle": "Grouper par rayon",
   "shopGroupHint": "Légumes, viande, ménage…",
   "shopShowPhotos": "Afficher les photos des produits",
+  "shopShowIcons": "Afficher des dessins quand il n'y a pas de photo",
   "shopMyLists": "Mes listes",
   "categories": "Catégories",
   "shopFinish": "Terminer les courses",

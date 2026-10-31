@@ -149,6 +149,7 @@
   "shopGroupByAisle": "Nach Gang gruppieren",
   "shopGroupHint": "Gemüse, Fleisch, Reinigung…",
   "shopShowPhotos": "Produktfotos anzeigen",
+  "shopShowIcons": "Zeichnungen zeigen, wenn es kein Foto gibt",
   "shopMyLists": "Meine Listen",
   "categories": "Kategorien",
   "shopFinish": "Einkauf beenden",

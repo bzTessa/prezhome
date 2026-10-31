@@ -1002,6 +1002,12 @@ abstract class AppLocalizations {
   /// **'Mostrar fotos de los productos'**
   String get shopShowPhotos;
 
+  /// No description provided for @shopShowIcons.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar dibujos cuando no hay foto'**
+  String get shopShowIcons;
+
   /// No description provided for @shopMyLists.
   ///
   /// In es, this message translates to:
