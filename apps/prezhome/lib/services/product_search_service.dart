@@ -358,11 +358,11 @@ String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
 }
 
 /// Súpers con catálogo propio en supermarket_products (scripts/*_sync.py).
-const catalogStores = {'mercadona', 'dia', 'consum', 'rewe'};
+const catalogStores = {'mercadona', 'dia', 'consum', 'bonarea', 'rewe'};
 
 /// Catálogos oficiales de cada país, en el orden en que se buscan.
 const catalogStoresByCountry = {
-  'ES': ['mercadona', 'dia', 'consum'],
+  'ES': ['mercadona', 'dia', 'consum', 'bonarea'],
   'DE': ['rewe'],
 };
 

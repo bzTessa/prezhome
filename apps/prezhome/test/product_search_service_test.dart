@@ -218,7 +218,7 @@ void main() {
       expect(calls, 0);
       expect(asked.first, 'dia');
       expect(asked, containsAll(['mercadona', 'consum']));
-      expect(r.products.map((p) => p.store), ['dia', 'consum']);
+      expect(r.products.map((p) => p.store), ['dia', 'consum', 'bonarea']);
       expect(r.filteredByStore, isTrue);
     });
 
