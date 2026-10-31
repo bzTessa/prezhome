@@ -48,4 +48,44 @@ void main() {
       isNull,
     );
   });
+
+  test('Instagram: enlace para incrustar y descripción del post', () {
+    expect(
+      instagramEmbedUrl('https://www.instagram.com/reel/DAbc_12-x/?igsh=xyz'),
+      'https://www.instagram.com/p/DAbc_12-x/embed/captioned/',
+    );
+    expect(
+      instagramEmbedUrl('https://instagram.com/cocina.ana/p/C0iU0Zg/'),
+      'https://www.instagram.com/p/C0iU0Zg/embed/captioned/',
+    );
+    expect(instagramEmbedUrl('https://www.instagram.com/cocina.ana/'), isNull);
+    const html =
+        '<div class="Caption"><a class="CaptionUsername" href="/ana">ana</a>'
+        '<br /><br />Bizcocho &amp; yogur<br />3 huevos<br />200 g harina '
+        '<a href="/explore/tags/receta/">#receta</a>'
+        '<div class="CaptionComments"><div>muy rico</div></div></div>';
+    expect(
+      instagramCaption(html),
+      'Bizcocho & yogur\n3 huevos\n200 g harina #receta',
+    );
+    expect(instagramCaption('<div class="EmbedOther">x</div>'), isNull);
+  });
+
+  test('TikTok: subtítulos automáticos del vídeo', () {
+    const html =
+        '{"desc":"Tarta","video":{"subtitleInfos":[{"LanguageCodeName":"spa-ES",'
+        r'"Url":"https:\/\/v16m.tiktokcdn.com\/sub?a=1&b=2","Format":"webvtt"}]}}';
+    expect(
+      tiktokSubtitlesUrl(html, 'www.tiktok.com'),
+      'https://v16m.tiktokcdn.com/sub?a=1&b=2',
+    );
+    expect(tiktokSubtitlesUrl(html, 'example.com'), isNull);
+    expect(
+      vttText(
+        'WEBVTT\n\n\n00:00:00.183 --> 00:00:00.960\nAl loro porque\n\n'
+        '00:00:05.023 --> 00:00:07.280\npon 900 g de queso crema\n',
+      ),
+      'Al loro porque pon 900 g de queso crema',
+    );
+  });
 }

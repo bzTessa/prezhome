@@ -18,6 +18,27 @@ export function tiktokDescription(html: string): string | null {
   return jsonString(html, "desc");
 }
 
+// Subtítulos automáticos (WebVTT) del vídeo de TikTok: lo que se DICE en él.
+export function tiktokSubtitlesUrl(html: string): string | null {
+  const i = html.indexOf('"subtitleInfos"');
+  if (i < 0) return null;
+  const m = html.slice(i).match(/"Url":("(?:[^"\\]|\\.)*")/);
+  if (!m) return null;
+  try {
+    const u = JSON.parse(m[1]) as string;
+    return u.startsWith("https://") ? u : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
+// Solo el texto de un WebVTT (sin cabecera ni tiempos).
+export function vttText(vtt: string): string {
+  return vtt.split("\n").map((l) => l.trim())
+    .filter((l) => l && l !== "WEBVTT" && !l.includes("-->"))
+    .join(" ");
+}
+
 // Descripción completa de un vídeo de YouTube (ytInitialPlayerResponse).
 export function youtubeDescription(html: string): string | null {
   return jsonString(html, "shortDescription");

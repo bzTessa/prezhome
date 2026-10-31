@@ -43,7 +43,13 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
 import { isPublicUrl } from "./url_guard.ts";
-import { tiktokDescription, youtubeDescription, youtubeId } from "./extract.ts";
+import {
+  tiktokDescription,
+  tiktokSubtitlesUrl,
+  vttText,
+  youtubeDescription,
+  youtubeId,
+} from "./extract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -189,6 +195,17 @@ async function fetchYoutubeApi(id: string): Promise<string | null> {
   } catch (_e) {
     return null;
   }
+}
+
+// TikTok: lo que se dice en el vídeo (subtítulos automáticos), por si los
+// ingredientes no están escritos en la descripción.
+async function tiktokSpoken(html: string, url: string): Promise<string | null> {
+  if (!/(^|\.)tiktok\.com$/i.test(new URL(url).hostname)) return null;
+  const subs = tiktokSubtitlesUrl(html);
+  if (!subs) return null;
+  const page = await fetchPage(subs);
+  const text = page.html ? vttText(page.html) : "";
+  return text ? `\n\nLo que se dice en el vídeo: ${text}` : null;
 }
 
 // Texto útil de la página: la descripción completa incrustada (TikTok/YouTube)
@@ -434,10 +451,11 @@ serveAi("import_link", async (req, useCredit) => {
       ytId = youtubeId(page.url);
       const fromApi = ytId ? await fetchYoutubeApi(ytId) : null;
       const fromPage = page.html ? pageText(page.html, page.url) : null;
+      const said = page.html ? await tiktokSpoken(page.html, page.url) : null;
       // La API y la descripción completa ya traen el título: oEmbed solo suma
       // cuando no hay nada mejor.
       const oembed = fromApi || fromPage ? null : await fetchOEmbed(page.url);
-      sourceText = [fromApi ?? fromPage, oembed]
+      sourceText = [fromApi ?? fromPage, oembed, said]
         .filter((s): s is string => !!s && s.length > 0)
         .join(". ")
         .trim()
