@@ -14,6 +14,7 @@ import 'utils/friendly_error.dart';
 import 'utils/nutrition_calc.dart';
 import 'theme/app_theme.dart';
 import 'widgets/list_skeleton.dart';
+import 'l10n/l10n.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -946,63 +947,68 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 padding: const EdgeInsets.all(24),
                 children: [
                   // Selector de imagen de la receta
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      height: 160,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: AppColors.card,
-                        image: _newImageBytes != null
-                            ? DecorationImage(
-                                image: MemoryImage(_newImageBytes!),
-                                fit: BoxFit.cover,
+                  Semantics(
+                    button: true,
+                    label: context.l.changePhoto,
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        height: 160,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          color: AppColors.card,
+                          image: _newImageBytes != null
+                              ? DecorationImage(
+                                  image: MemoryImage(_newImageBytes!),
+                                  fit: BoxFit.cover,
+                                )
+                              : (_existingImageUrl != null
+                                    ? DecorationImage(
+                                        image: NetworkImage(_existingImageUrl!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null),
+                        ),
+                        child:
+                            (_newImageBytes == null &&
+                                _existingImageUrl == null)
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo_outlined,
+                                    size: 36,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Añadir foto (opcional)',
+                                    style: TextStyle(color: AppColors.inkMuted),
+                                  ),
+                                ],
                               )
-                            : (_existingImageUrl != null
-                                  ? DecorationImage(
-                                      image: NetworkImage(_existingImageUrl!),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null),
-                      ),
-                      child:
-                          (_newImageBytes == null && _existingImageUrl == null)
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_a_photo_outlined,
-                                  size: 36,
-                                  color: AppColors.inkMuted,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Añadir foto (opcional)',
-                                  style: TextStyle(color: AppColors.inkMuted),
-                                ),
-                              ],
-                            )
-                          : Align(
-                              alignment: Alignment.topRight,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: CircleAvatar(
-                                  backgroundColor: AppColors.inkMuted,
-                                  radius: 16,
-                                  child: IconButton(
-                                    tooltip: 'Editar',
-                                    padding: EdgeInsets.zero,
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      size: 16,
-                                      color: Colors.white,
+                            : Align(
+                                alignment: Alignment.topRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: CircleAvatar(
+                                    backgroundColor: AppColors.inkMuted,
+                                    radius: 16,
+                                    child: IconButton(
+                                      tooltip: 'Editar',
+                                      padding: EdgeInsets.zero,
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: _pickImage,
                                     ),
-                                    onPressed: _pickImage,
                                   ),
                                 ),
                               ),
-                            ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),

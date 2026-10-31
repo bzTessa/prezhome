@@ -26,7 +26,9 @@ class AppColors {
       : const Color(0xFFE2C792); // madera clara (acento)
   static Color get woodDark => dark
       ? const Color(0xFFE2C792)
-      : const Color(0xFFB58A3C); // acento oscuro para texto/números
+      : const Color(
+          0xFF8C6420,
+        ); // acento oscuro para texto/números (≥4,5:1 sobre crema)
   static Color get ink => dark
       ? const Color(0xFFF2EBD9)
       : const Color(0xFF1E1E1E); // gris muy oscuro (texto)
@@ -73,6 +75,10 @@ class AppColors {
       dark ? const Color(0xFF3A2A22) : const Color(0xFFF6E0D4);
   static Color get terracotta =>
       dark ? const Color(0xFFE56B43) : const Color(0xFFD85A32);
+
+  /// Terracota para texto pequeño: el de marca no llega a 4,5:1 sobre crema.
+  static Color get terracottaText =>
+      dark ? const Color(0xFFE56B43) : const Color(0xFFA84826);
 
   /// Terracota al pulsar.
   static Color get terracottaPressed => const Color(0xFF9E3B1C);
