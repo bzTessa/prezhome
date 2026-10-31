@@ -155,8 +155,16 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
       // En pantallas muy anchas la app no pasa de 1280 px, centrada. El menú
       // lateral y el ancho del contenido los decide MainShell.
       builder: (context, child) {
-        final mq = MediaQuery.of(context);
-        if (mq.size.width <= 1280) return child!;
+        // Respeta la letra grande del sistema hasta 1,5x; más allá las
+        // pantallas de altura fija se desbordan.
+        // shortcut: tope 1,5x, subirlo cuando todas las pantallas desplacen.
+        final mq = MediaQuery.of(context).copyWith(
+          textScaler: MediaQuery.textScalerOf(
+            context,
+          ).clamp(maxScaleFactor: 1.5),
+        );
+        child = MediaQuery(data: mq, child: child!);
+        if (mq.size.width <= 1280) return child;
         return ColoredBox(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Center(
@@ -164,7 +172,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
               width: 1280,
               child: MediaQuery(
                 data: mq.copyWith(size: Size(1280, mq.size.height)),
-                child: child!,
+                child: child,
               ),
             ),
           ),

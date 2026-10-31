@@ -1438,7 +1438,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.terracotta,
+                          color: AppColors.terracottaText,
                         ),
                       ),
                   ],
