@@ -2423,4 +2423,105 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ecoNoTickets => 'No receipts this month yet.\nScan the first one.';
+
+  @override
+  String get stOthers => 'Others';
+
+  @override
+  String get stNoCategory => 'No category';
+
+  @override
+  String get stThisWeek => 'This';
+
+  @override
+  String get stTitle => 'Your data';
+
+  @override
+  String get stSpendByMonth => 'Spending by month';
+
+  @override
+  String get stForecastFooter => 'Lighter: what\'s left to reach the forecast';
+
+  @override
+  String get stNoSpend => 'Scan a receipt to see your spending month by month.';
+
+  @override
+  String get stWhereSpend => 'Where your money goes this month';
+
+  @override
+  String get stNoTicketsMonth => 'No receipts this month yet.';
+
+  @override
+  String get stTopProducts => 'What you buy most';
+
+  @override
+  String get stTopProductsFooter =>
+      'Times on your receipts in the last 3 months';
+
+  @override
+  String get stTopProductsEmpty => 'Shows up once you scan receipts.';
+
+  @override
+  String get stPantry => 'Your pantry';
+
+  @override
+  String get stMealsHome => 'Meals at home';
+
+  @override
+  String get stPerWeek => 'Per week';
+
+  @override
+  String stMealsOut(int count) {
+    return 'Per week · $count eaten out';
+  }
+
+  @override
+  String get stMealsEmpty => 'Plan meals to see how many you eat at home.';
+
+  @override
+  String get stTasksDone => 'Tasks done';
+
+  @override
+  String get stTasksFooter => 'Per week, and who did the most this month';
+
+  @override
+  String get stTasksEmpty => 'Tasks you complete will show up here.';
+
+  @override
+  String get stSoFar => 'Spent so far this month';
+
+  @override
+  String get stForecast => 'Forecast: ';
+
+  @override
+  String stMoreThanAvg(int pct) {
+    return ', $pct% above your average';
+  }
+
+  @override
+  String stLessThanAvg(int pct) {
+    return ', $pct% below your average';
+  }
+
+  @override
+  String get stTickets => 'Receipts';
+
+  @override
+  String get stExpired => 'Expired';
+
+  @override
+  String get stExpiringSoon => 'Expiring soon';
+
+  @override
+  String get stFresh => 'Fine';
+
+  @override
+  String stOverForecast(String amount) {
+    return 'At this rate you\'ll be $amount over budget';
+  }
+
+  @override
+  String stForecastTip(String amount) {
+    return 'Forecast $amount';
+  }
 }

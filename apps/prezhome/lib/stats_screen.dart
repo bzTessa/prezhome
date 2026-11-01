@@ -1,4 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,6 +18,7 @@ import 'widgets/animations/animated_counter.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/list_skeleton.dart';
+import 'l10n/l10n.dart';
 
 /// "Tus datos": gráficas de gasto (con previsión), compra, despensa, comidas
 /// y tareas del hogar en una sola pantalla.
@@ -26,21 +28,6 @@ class StatsScreen extends StatefulWidget {
   @override
   State<StatsScreen> createState() => _StatsScreenState();
 }
-
-const _monthShort = [
-  'Ene',
-  'Feb',
-  'Mar',
-  'Abr',
-  'May',
-  'Jun',
-  'Jul',
-  'Ago',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dic',
-];
 
 class _StatsData {
   final double budget;
@@ -87,12 +74,12 @@ String _cap(String s) =>
     s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
 
 /// Mayores primero, y el resto junto en "Otros" para no pasar de [max] filas.
-List<(String, double)> _top(Map<String, double> m, int max) {
+List<(String, double)> _top(Map<String, double> m, int max, String others) {
   final list = m.entries.map((e) => (e.key, e.value)).toList()
     ..sort((a, b) => b.$2.compareTo(a.$2));
   if (list.length <= max) return list;
   final rest = list.skip(max - 1).fold<double>(0, (a, e) => a + e.$2);
-  return [...list.take(max - 1), ('Otros', rest)];
+  return [...list.take(max - 1), (others, rest)];
 }
 
 class _StatsScreenState extends State<StatsScreen> {
@@ -102,6 +89,7 @@ class _StatsScreenState extends State<StatsScreen> {
   void _reload() => setState(() => _future = _load());
 
   Future<_StatsData?> _load() async {
+    final l = context.l;
     final user = _client.auth.currentUser;
     if (user == null) return null;
     final profile = await _client
@@ -175,7 +163,7 @@ class _StatsScreenState extends State<StatsScreen> {
     for (int i = 5; i >= 0; i--) {
       final m = DateTime(now.year, now.month - i);
       months.add((
-        _monthShort[m.month - 1],
+        DateFormat.MMM().format(m),
         byMonth['${m.year}-${m.month}'] ?? 0.0,
       ));
     }
@@ -197,7 +185,7 @@ class _StatsScreenState extends State<StatsScreen> {
       final raw = (it['category'] as String?)?.trim() ?? '';
       // Los tickets antiguos guardaban la clave ("lacteos"); los nuevos, el nombre.
       final cat = raw.isEmpty
-          ? 'Sin categoría'
+          ? l.stNoCategory
           : FoodCategory.values
                     .where((c) => c.name == raw)
                     .firstOrNull
@@ -225,7 +213,7 @@ class _StatsScreenState extends State<StatsScreen> {
     }
 
     String weekLabel(int w) =>
-        w == 3 ? 'Esta' : '${weeks[w].day}/${weeks[w].month}';
+        w == 3 ? l.stThisWeek : DateFormat.Md().format(weeks[w]);
 
     // Comidas en casa por semana y comidas fuera.
     final mealsPerWeek = List<double>.filled(4, 0);
@@ -265,9 +253,9 @@ class _StatsScreenState extends State<StatsScreen> {
       budget: budget,
       months: months,
       forecast: forecast,
-      byCategory: _top(byCategory, 6),
-      topProducts: _top(productCount, 7).take(6).toList(),
-      pantryByZone: _top(byZone, 7),
+      byCategory: _top(byCategory, 6, l.stOthers),
+      topProducts: _top(productCount, 7, l.stOthers).take(6).toList(),
+      pantryByZone: _top(byZone, 7, l.stOthers),
       expired: expired,
       expiringSoon: soon,
       fresh: fresh,
@@ -275,7 +263,7 @@ class _StatsScreenState extends State<StatsScreen> {
         for (int w = 0; w < 4; w++) (weekLabel(w), mealsPerWeek[w]),
       ],
       mealsOut: mealsOut,
-      tasksByPerson: _top(byPerson, 6),
+      tasksByPerson: _top(byPerson, 6, l.stOthers),
       tasksByWeek: [
         for (int w = 0; w < 4; w++) (weekLabel(w), tasksPerWeek[w]),
       ],
@@ -301,7 +289,7 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Tus datos')),
+      appBar: AppBar(title: Text(context.l.stTitle)),
       body: FutureBuilder<_StatsData?>(
         future: _future,
         builder: (context, snap) {
@@ -313,7 +301,7 @@ class _StatsScreenState extends State<StatsScreen> {
           }
           final d = snap.data;
           if (d == null) {
-            return const Center(child: Text('No perteneces a ningún hogar.'));
+            return Center(child: Text(context.l.planNoHome));
           }
           final sections = _sections(d);
           return RefreshIndicator(
@@ -340,12 +328,12 @@ class _StatsScreenState extends State<StatsScreen> {
   List<Widget> _sections(_StatsData d) => [
     _spendHero(d),
     _card(
-      title: 'Gasto por mes',
+      title: context.l.stSpendByMonth,
       icon: Icons.bar_chart_rounded,
       accent: (AppColors.peachBg, AppColors.woodDark),
-      footer: d.spent > 0 ? 'En claro, lo que falta para la previsión' : null,
+      footer: d.spent > 0 ? context.l.stForecastFooter : null,
       child: d.months.every((m) => m.$2 == 0)
-          ? _noData('Escanea un ticket y verás tu gasto mes a mes.')
+          ? _noData(context.l.stNoSpend)
           : _ColumnChart(
               values: d.months,
               color: AppColors.wood,
@@ -355,27 +343,27 @@ class _StatsScreenState extends State<StatsScreen> {
             ),
     ),
     _card(
-      title: 'En qué gastas este mes',
+      title: context.l.stWhereSpend,
       icon: Icons.donut_small_outlined,
       accent: (AppColors.peachBg, AppColors.woodDark),
       child: d.byCategory.isEmpty
-          ? _noData('Aún no hay tickets este mes.')
+          ? _noData(context.l.stNoTicketsMonth)
           : _BarList(items: d.byCategory, color: AppColors.wood, euros: true),
     ),
     _card(
-      title: 'Lo que más compras',
+      title: context.l.stTopProducts,
       icon: Icons.shopping_basket_outlined,
       accent: (AppColors.sageBg, AppColors.sage),
-      footer: 'Veces en tus tickets de los últimos 3 meses',
+      footer: context.l.stTopProductsFooter,
       onTap: () => Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const ProductStatsScreen())),
       child: d.topProducts.isEmpty
-          ? _noData('Saldrá cuando escanees tickets.')
+          ? _noData(context.l.stTopProductsEmpty)
           : _BarList(items: d.topProducts, color: AppColors.sage),
     ),
     _card(
-      title: 'Tu despensa',
+      title: context.l.stPantry,
       icon: Icons.kitchen_outlined,
       accent: (AppColors.frostBg, AppColors.frost),
       child: Column(
@@ -389,25 +377,25 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
     ),
     _card(
-      title: 'Comidas en casa',
+      title: context.l.stMealsHome,
       icon: Icons.restaurant_menu_rounded,
       accent: (AppColors.terracottaBg, AppColors.terracotta),
       footer: d.mealsOut > 0
-          ? 'Por semana · ${d.mealsOut} fuera de casa'
-          : 'Por semana',
+          ? context.l.stMealsOut(d.mealsOut)
+          : context.l.stPerWeek,
       child: d.mealsByWeek.every((w) => w.$2 == 0)
-          ? _noData('Planifica comidas y verás cuántas hacéis en casa.')
+          ? _noData(context.l.stMealsEmpty)
           : _ColumnChart(values: d.mealsByWeek, color: AppColors.terracotta),
     ),
     _card(
-      title: 'Tareas hechas',
+      title: context.l.stTasksDone,
       icon: Icons.check_circle_outline_rounded,
       accent: (AppColors.lilacBg, AppColors.lilac),
       footer: d.tasksByPerson.isEmpty
-          ? 'Por semana'
-          : 'Por semana y quién ha hecho más este mes',
+          ? context.l.stPerWeek
+          : context.l.stTasksFooter,
       child: d.tasksByWeek.every((w) => w.$2 == 0)
-          ? _noData('Cuando completéis tareas aparecerán aquí.')
+          ? _noData(context.l.stTasksEmpty)
           : Column(
               children: [
                 _ColumnChart(values: d.tasksByWeek, color: AppColors.lilac),
@@ -433,7 +421,7 @@ class _StatsScreenState extends State<StatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Llevas este mes', style: AppTextStyles.labelMuted),
+          Text(context.l.stSoFar, style: AppTextStyles.labelMuted),
           const SizedBox(height: AppSpacing.xs),
           AnimatedCounter(
             value: d.spent,
@@ -454,7 +442,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   child: Text.rich(
                     TextSpan(
                       children: [
-                        const TextSpan(text: 'Previsión: '),
+                        TextSpan(text: context.l.stForecast),
                         TextSpan(
                           text: money(d.forecast, decimals: 0),
                           style: const TextStyle(fontWeight: FontWeight.w800),
@@ -462,8 +450,8 @@ class _StatsScreenState extends State<StatsScreen> {
                         if (diff != null && diff.abs() >= 5)
                           TextSpan(
                             text: diff > 0
-                                ? ', un ${diff.round()} % más que tu media'
-                                : ', un ${(-diff).round()} % menos que tu media',
+                                ? context.l.stMoreThanAvg(diff.round())
+                                : context.l.stLessThanAvg((-diff).round()),
                           ),
                       ],
                     ),
@@ -488,14 +476,14 @@ class _StatsScreenState extends State<StatsScreen> {
                     foregroundColor: AppColors.ink,
                   ),
                   icon: const Icon(Icons.document_scanner_outlined),
-                  label: const Text('Escanear ticket'),
+                  label: Text(context.l.ecoScan),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               OutlinedButton(
                 onPressed: _openTickets,
                 style: OutlinedButton.styleFrom(foregroundColor: AppColors.ink),
-                child: const Text('Tickets'),
+                child: Text(context.l.stTickets),
               ),
             ],
           ),
@@ -528,7 +516,7 @@ class _StatsScreenState extends State<StatsScreen> {
     return Row(
       children: [
         tile(
-          'Caducado',
+          context.l.stExpired,
           d.expired,
           Icons.error_outline_rounded,
           AppColors.expiredBg,
@@ -536,7 +524,7 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         const SizedBox(width: AppSpacing.sm),
         tile(
-          'Caduca pronto',
+          context.l.stExpiringSoon,
           d.expiringSoon,
           Icons.schedule_rounded,
           AppColors.soonBg,
@@ -544,7 +532,7 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         const SizedBox(width: AppSpacing.sm),
         tile(
-          'Bien',
+          context.l.stFresh,
           d.fresh,
           Icons.check_rounded,
           AppColors.freshBg,
@@ -651,8 +639,8 @@ class _BudgetBar extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           over
-              ? 'A este ritmo te pasarás ${money(forecast - budget, decimals: 0)} del presupuesto'
-              : 'Presupuesto: ${money(budget, decimals: 0)}',
+              ? context.l.stOverForecast(money(forecast - budget, decimals: 0))
+              : context.l.ecoBudget(money(budget, decimals: 0)),
           style: AppTextStyles.labelMuted.copyWith(
             color: over ? AppColors.expired : null,
           ),
@@ -709,7 +697,7 @@ class _ColumnChart extends StatelessWidget {
               getTooltipColor: (_) => AppColors.ink,
               getTooltipItem: (group, _, rod, _) => BarTooltipItem(
                 group.x == last && lastGhost != null
-                    ? '${_fmt(rod.toY)}\nPrevisión ${_fmt(lastGhost!)}'
+                    ? '${_fmt(rod.toY)}\n${context.l.stForecastTip(_fmt(lastGhost!))}'
                     : _fmt(rod.toY),
                 TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700),
               ),
@@ -765,7 +753,7 @@ class _ColumnChart extends StatelessWidget {
                         show: true,
                         alignment: Alignment.topRight,
                         style: AppTextStyles.labelMuted.copyWith(fontSize: 11),
-                        labelResolver: (_) => 'Presupuesto',
+                        labelResolver: (_) => context.l.ecoBudgetShort,
                       ),
                     ),
                   ],
