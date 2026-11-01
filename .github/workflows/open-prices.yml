@@ -19,7 +19,7 @@ permissions:
 jobs:
   importar:
     runs-on: ubuntu-latest
-    timeout-minutes: 50 # bonÀrea (~20 min) y Lidl (~5 min) leen fichas una a una
+    timeout-minutes: 60 # bonÀrea (~20 min) y Lidl (~12 min, 5 países) leen fichas una a una
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,12 +61,16 @@ jobs:
           SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/bonarea_sync.py
-      - name: Importar productos de Lidl
+      - name: Importar productos de Lidl (España, Francia, Italia, Alemania, Portugal)
         if: ${{ !cancelled() }}
         env:
           SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: python scripts/lidl_sync.py
+        # Un país caído no frena a los demás, pero el paso acaba en rojo.
+        run: |
+          fail=0
+          for c in es fr it de pt; do python scripts/lidl_sync.py $c || fail=1; done
+          exit $fail
 
   # Fichas de producto una a una (JSON-LD): cada súper en su propio trabajo,
   # en paralelo, porque los grandes tardan más de una hora.

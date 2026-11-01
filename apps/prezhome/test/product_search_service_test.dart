@@ -99,10 +99,15 @@ void main() {
     addTearDown(() => HomeCountry.current.value = Country.of('ES'));
     expect(catalogSearchOrder('bonarea').first, 'bonarea');
     HomeCountry.current.value = Country.of('PT');
-    expect(catalogSearchOrder('auchan'), ['auchan', 'pingodoce']);
+    expect(catalogSearchOrder('auchan'), ['auchan', 'pingodoce', 'lidl_pt']);
     // "auchan" de Francia no busca en el catálogo de Portugal.
     HomeCountry.current.value = Country.of('FR');
-    expect(catalogSearchOrder('auchan'), isEmpty);
+    expect(catalogSearchOrder('auchan'), ['lidl_fr']);
+    // Lidl de Francia busca en su propio catálogo.
+    expect(catalogSearchOrder('lidl'), ['lidl_fr']);
+    expect(catalogKeyFor('lidl'), 'lidl_fr');
+    HomeCountry.current.value = Country.of('IT');
+    expect(catalogSearchOrder('conad'), ['lidl_it']);
   });
 
   group('ProductSearchService.search', () {

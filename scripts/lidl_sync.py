@@ -1,5 +1,8 @@
 """Importa los productos de alimentación de la web de Lidl a Supabase.
 
+Por defecto Lidl España (tienda "lidl"); con un país (fr, it, de, pt) lee
+la web de Lidl de ese país y guarda la tienda "lidl_<país>".
+
 Lidl no vende comida online, pero su web tiene ficha pública (con precio de
 tienda) de buena parte de lo que hay en tienda. robots.txt prohíbe su
 buscador, no las fichas: se leen las del sitemap de productos cuyo código
@@ -8,6 +11,7 @@ marca, precio, foto) y el formato ("Aprox.220 g"). Igual que
 mercadona_sync.py, lo lanza cada semana .github/workflows/open-prices.yml.
 Uso local sin escribir:
   python scripts/lidl_sync.py --dry-run
+  python scripts/lidl_sync.py fr --dry-run
 """
 
 import gzip
@@ -22,10 +26,10 @@ from datetime import datetime, timezone
 from mercadona_sync import save
 from open_prices_sync import normalize
 
-SITEMAP = "https://www.lidl.es/p/export/ES/es/product_sitemap.xml.gz"
+# país -> idioma de su web
+COUNTRIES = {"es": "es", "fr": "fr", "it": "it", "de": "de", "pt": "pt"}
 HEADERS = {"User-Agent": "Mozilla/5.0 (PrezHome; prezhomeapp@gmail.com)"}
-STORE = "lidl"
-MIN_PRODUCTS = 300
+MIN_PRODUCTS = 100
 WORKERS = 4
 
 
@@ -35,13 +39,24 @@ def _get(url: str) -> bytes:
         return resp.read()
 
 
+def sitemap_url(country: str) -> str:
+    return (
+        f"https://www.lidl.{country}/p/export/"
+        f"{country.upper()}/{COUNTRIES[country]}/product_sitemap.xml.gz"
+    )
+
+
+def store_key(country: str) -> str:
+    return "lidl" if country == "es" else f"lidl_{country}"
+
+
 def product_urls(sitemap: str) -> list[str]:
     """Fichas de alimentación (código p11…), sin repetir."""
-    urls = re.findall(r"<loc>(https://www\.lidl\.es/p/[^<]+/p11\d+)</loc>", sitemap)
+    urls = re.findall(r"<loc>(https://www\.lidl\.[a-z]+/p/[^<]+/p11\d+)</loc>", sitemap)
     return list(dict.fromkeys(urls))
 
 
-def to_row(url: str, page: str, now: str) -> dict | None:
+def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
     """Fila de supermarket_products para una ficha de producto, o None."""
     product = None
     for block in re.findall(
@@ -57,14 +72,14 @@ def to_row(url: str, page: str, now: str) -> dict | None:
     if not product or not (product.get("name") or "").strip():
         return None
     name = html.unescape(product["name"]).strip()
-    brand = ((product.get("brand") or {}).get("name") or "").strip().title() or None
+    brand = ((product.get("brand") or {}).get("name") or "").strip(" -").title() or None
     offers = product.get("offers") or [{}]
     images = product.get("image") or [None]
     size = re.search(r'ods-price__footer.*?class="block-text"[^>]*>([^<]+)</span>', page, re.S)
     size = html.unescape(size.group(1)).replace("Aprox.", "").strip(" -") or None if size else None
-    full = " ".join(p for p in (name, brand, size) if p)
+    full = " ".join(p for p in (name.strip(" -"), brand, size) if p)
     return {
-        "store": STORE,
+        "store": store,
         "product_id": str(product.get("sku") or url.rsplit("/p", 1)[-1]),
         "name": full,
         "name_normalized": normalize(full),
@@ -79,17 +94,18 @@ def to_row(url: str, page: str, now: str) -> dict | None:
     }
 
 
-def _row_or_none(url: str, now: str) -> dict | None:
+def _row_or_none(url: str, now: str, store: str) -> dict | None:
     try:
-        return to_row(url, _get(url).decode("utf-8", "replace"), now)
+        return to_row(url, _get(url).decode("utf-8", "replace"), now, store)
     except Exception:  # una ficha caída no tumba el catálogo
         return None
 
 
-def collect(now: str) -> list[dict]:
-    urls = product_urls(gzip.decompress(_get(SITEMAP)).decode("utf-8"))
+def collect(now: str, country: str) -> list[dict]:
+    store = store_key(country)
+    urls = product_urls(gzip.decompress(_get(sitemap_url(country))).decode("utf-8"))
     with ThreadPoolExecutor(WORKERS) as pool:
-        rows = pool.map(lambda u: _row_or_none(u, now), urls)
+        rows = pool.map(lambda u: _row_or_none(u, now, store), urls)
     return list({r["product_id"]: r for r in rows if r}.values())
 
 
@@ -108,6 +124,9 @@ def _self_check() -> None:
     assert row["brand"] == "Realvalle" and row["size"] == "220 g"
     assert row["image_url"] == "https://www.lidl.es/assets/a.png"
     assert to_row(url, "<html></html>", "t") is None
+    assert to_row(url, page.replace("REALVALLE", "-"), "t", "lidl_fr")["brand"] is None
+    assert store_key("fr") == "lidl_fr" and store_key("es") == "lidl"
+    assert sitemap_url("it").endswith("lidl.it/p/export/IT/it/product_sitemap.xml.gz")
     assert product_urls(
         f"<loc>{url}</loc><loc>{url}</loc>"
         "<loc>https://www.lidl.es/p/silvercrest-espumador/p100401586</loc>"
@@ -116,15 +135,17 @@ def _self_check() -> None:
 
 def main() -> None:
     _self_check()
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    country = args[0] if args else "es"
     now = datetime.now(timezone.utc).isoformat()
-    rows = collect(now)
-    print(f"Lidl: {len(rows)} productos")
+    rows = collect(now, country)
+    print(f"Lidl {country}: {len(rows)} productos")
     if len(rows) < MIN_PRODUCTS:
         sys.exit("Muy pocos productos: la web ha cambiado, no se toca la tabla.")
     if "--dry-run" in sys.argv:
         print(rows[:3])
     else:
-        save(rows, now, STORE)
+        save(rows, now, store_key(country))
         print("Catálogo guardado.")
 
 

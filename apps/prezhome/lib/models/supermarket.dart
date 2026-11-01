@@ -201,6 +201,9 @@ class Supermarket {
     for (final s in [...all, ..._abroad.values.expand((l) => l)]) {
       if (s.key == key) return s.label;
     }
+    // Catálogo de una cadena en otro país: "lidl_fr" es Lidl.
+    final chain = RegExp(r'^(.+)_[a-z]{2}$').firstMatch(key)?.group(1);
+    if (chain != null) return labelFor(chain);
     if (key.isEmpty) return key;
     return key[0].toUpperCase() + key.substring(1);
   }
