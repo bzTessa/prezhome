@@ -267,7 +267,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         ],
       ),
     );
-    ctrl.dispose();
+    // Sin dispose(): el diálogo aún usa el controlador mientras se cierra.
     if (name == null || name.trim().isEmpty) return;
     try {
       await HomePeople(_client).add(homeId, name);

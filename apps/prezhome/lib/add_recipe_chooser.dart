@@ -148,7 +148,7 @@ class AddRecipeChooser extends StatelessWidget {
         ],
       ),
     );
-    controller.dispose();
+    // Sin dispose(): el diálogo aún usa el controlador mientras se cierra.
     if (code == null || code.trim().isEmpty || !context.mounted) return false;
 
     final client = Supabase.instance.client;
