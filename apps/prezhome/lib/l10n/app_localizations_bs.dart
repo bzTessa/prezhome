@@ -2077,4 +2077,205 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get tskAdd => 'Dodaj zadatak';
+
+  @override
+  String get arcTitle => 'Dodaj recept';
+
+  @override
+  String get arcLinkTitle => 'Zalijepi link videa';
+
+  @override
+  String get arcLinkSub => 'Sa TikToka ili YouTubea, ili tekst s Instagrama';
+
+  @override
+  String get arcNameTitle => 'Upiši naziv';
+
+  @override
+  String get arcNameSub => 'Dopunjava se sastojcima, koracima i makroima';
+
+  @override
+  String get arcIdeasTitle => 'Ideje za tebe';
+
+  @override
+  String get arcIdeasSub => 'Prema tvom marketu, cilju i budžetu';
+
+  @override
+  String get arcManualTitle => 'Ručno';
+
+  @override
+  String get arcManualSub => 'Sam popuni svako polje';
+
+  @override
+  String get arcCodeTitle => 'Sa kodom';
+
+  @override
+  String get arcCodeSub => 'Sačuvaj recept koji su ti podijelili';
+
+  @override
+  String get arcCodeDialog => 'Kod recepta';
+
+  @override
+  String get search => 'Traži';
+
+  @override
+  String get arcNoCode => 'Nema recepta s tim kodom';
+
+  @override
+  String arcIngredientsAsk(int count) {
+    return '$count sastojaka. Sačuvati u tvoje recepte?';
+  }
+
+  @override
+  String get arcSaved => 'Recept sačuvan';
+
+  @override
+  String get nutLoadError => 'Greška pri učitavanju profila';
+
+  @override
+  String get nutSaved => 'Profil sačuvan';
+
+  @override
+  String get nutSaveError => 'Greška pri spremanju';
+
+  @override
+  String get nutBirthDate => 'Datum rođenja';
+
+  @override
+  String get nutTitle => 'Moj nutritivni profil';
+
+  @override
+  String get nutDiary => 'Dnevnik kalorija';
+
+  @override
+  String get nutWizard => 'Podesi korak po korak';
+
+  @override
+  String get nutWizardSub =>
+      'Asistent ti postavi nekoliko pitanja i izračuna tvoj cilj.';
+
+  @override
+  String get nutHowCook => 'Kako kuhaš?';
+
+  @override
+  String get nutDaily => 'Svaki dan';
+
+  @override
+  String get nutDailySub => 'Kuham svaki dan';
+
+  @override
+  String get nutBatch => 'Kuhanje unaprijed';
+
+  @override
+  String get nutBatchSub => 'Kuham jednom za više dana';
+
+  @override
+  String get nutAmounts => 'Količine';
+
+  @override
+  String get nutPractical => 'Praktične';
+
+  @override
+  String get nutPracticalSub => 'Pakovanja iz marketa';
+
+  @override
+  String get nutExact => 'Tačne';
+
+  @override
+  String get nutExactSub => 'Na gram';
+
+  @override
+  String get nutSex => 'Spol';
+
+  @override
+  String get nutFemale => 'Žensko';
+
+  @override
+  String get nutMale => 'Muško';
+
+  @override
+  String get nutSelect => 'Odaberi…';
+
+  @override
+  String nutAge(int age) {
+    return '($age god.)';
+  }
+
+  @override
+  String get nutHeight => 'Visina (cm)';
+
+  @override
+  String get nutWeight => 'Težina (kg)';
+
+  @override
+  String get nutActivityLevel => 'Nivo aktivnosti';
+
+  @override
+  String get nutGoalLabel => 'Cilj';
+
+  @override
+  String nutActivity(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'sedentary': 'Sjedilački (malo ili nimalo vježbe)',
+      'light': 'Lagano (1-3 dana/sedmično)',
+      'moderate': 'Umjereno (3-5 dana/sedmično)',
+      'active': 'Aktivno (6-7 dana/sedmično)',
+      'other': 'Vrlo aktivno (intenzivna vježba ili fizički posao)',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String nutGoal(String goal) {
+    String _temp0 = intl.Intl.selectLogic(goal, {
+      'lose': 'Smršati',
+      'gain': 'Udebljati se',
+      'other': 'Održati težinu',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get nutSplit => 'Raspodjela kalorija po obroku';
+
+  @override
+  String nutTotal(int pct) {
+    return 'Ukupno: $pct%';
+  }
+
+  @override
+  String get nutSplitHint =>
+      'Stavi 0% za obroke koje preskačeš. Zbir treba biti 100%.';
+
+  @override
+  String get nutAtHome => 'Obroci kod kuće';
+
+  @override
+  String get nutAtHomeHint =>
+      'Označi dane kad jedeš svaki obrok kod kuće. Ako jedeš vani (npr. na poslu), odznači taj dan i neće se računati.';
+
+  @override
+  String get nutShare => 'Podijeli moj profil s domaćinstvom';
+
+  @override
+  String get nutShareSub => 'Ako je isključeno, tvoj profil je privatan.';
+
+  @override
+  String get nutSave => 'Sačuvaj profil';
+
+  @override
+  String get nutIncomplete =>
+      'Unesi spol, datum rođenja, visinu i težinu da izračunaš dnevne kalorije i makroe.';
+
+  @override
+  String get nutDailyTarget => 'Tvoj dnevni cilj (otprilike)';
+
+  @override
+  String nutKcalDay(int kcal) {
+    return '$kcal kcal / dan';
+  }
+
+  @override
+  String nutPerMeal(int kcal, int meals) {
+    return '≈ $kcal kcal po obroku ($meals obroka)';
+  }
 }

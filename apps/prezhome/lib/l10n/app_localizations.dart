@@ -3383,6 +3383,348 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Añadir tarea'**
   String get tskAdd;
+
+  /// No description provided for @arcTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir receta'**
+  String get arcTitle;
+
+  /// No description provided for @arcLinkTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pegar enlace de vídeo'**
+  String get arcLinkTitle;
+
+  /// No description provided for @arcLinkSub.
+  ///
+  /// In es, this message translates to:
+  /// **'De TikTok o YouTube, o el texto de Instagram'**
+  String get arcLinkSub;
+
+  /// No description provided for @arcNameTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el nombre'**
+  String get arcNameTitle;
+
+  /// No description provided for @arcNameSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Se completa con ingredientes, pasos y macros'**
+  String get arcNameSub;
+
+  /// No description provided for @arcIdeasTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ideas para ti'**
+  String get arcIdeasTitle;
+
+  /// No description provided for @arcIdeasSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Según tu súper, objetivo y presupuesto'**
+  String get arcIdeasSub;
+
+  /// No description provided for @arcManualTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'A mano'**
+  String get arcManualTitle;
+
+  /// No description provided for @arcManualSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Rellena tú cada campo'**
+  String get arcManualSub;
+
+  /// No description provided for @arcCodeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Con un código'**
+  String get arcCodeTitle;
+
+  /// No description provided for @arcCodeSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Guarda una receta que te han compartido'**
+  String get arcCodeSub;
+
+  /// No description provided for @arcCodeDialog.
+  ///
+  /// In es, this message translates to:
+  /// **'Código de la receta'**
+  String get arcCodeDialog;
+
+  /// No description provided for @search.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar'**
+  String get search;
+
+  /// No description provided for @arcNoCode.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay ninguna receta con ese código'**
+  String get arcNoCode;
+
+  /// No description provided for @arcIngredientsAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} ingredientes. ¿La guardas en tus recetas?'**
+  String arcIngredientsAsk(int count);
+
+  /// No description provided for @arcSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta guardada'**
+  String get arcSaved;
+
+  /// No description provided for @nutLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar el perfil'**
+  String get nutLoadError;
+
+  /// No description provided for @nutSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Perfil guardado'**
+  String get nutSaved;
+
+  /// No description provided for @nutSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar'**
+  String get nutSaveError;
+
+  /// No description provided for @nutBirthDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha de nacimiento'**
+  String get nutBirthDate;
+
+  /// No description provided for @nutTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi perfil nutricional'**
+  String get nutTitle;
+
+  /// No description provided for @nutDiary.
+  ///
+  /// In es, this message translates to:
+  /// **'Diario de calorías'**
+  String get nutDiary;
+
+  /// No description provided for @nutWizard.
+  ///
+  /// In es, this message translates to:
+  /// **'Configurar paso a paso'**
+  String get nutWizard;
+
+  /// No description provided for @nutWizardSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Un asistente te hace unas preguntas y calcula tu objetivo.'**
+  String get nutWizardSub;
+
+  /// No description provided for @nutHowCook.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo cocinas?'**
+  String get nutHowCook;
+
+  /// No description provided for @nutDaily.
+  ///
+  /// In es, this message translates to:
+  /// **'Del día'**
+  String get nutDaily;
+
+  /// No description provided for @nutDailySub.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocino cada día'**
+  String get nutDailySub;
+
+  /// No description provided for @nutBatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocinar en lote'**
+  String get nutBatch;
+
+  /// No description provided for @nutBatchSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocino de una vez para varios días'**
+  String get nutBatchSub;
+
+  /// No description provided for @nutAmounts.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantidades'**
+  String get nutAmounts;
+
+  /// No description provided for @nutPractical.
+  ///
+  /// In es, this message translates to:
+  /// **'Prácticas'**
+  String get nutPractical;
+
+  /// No description provided for @nutPracticalSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Formatos de súper'**
+  String get nutPracticalSub;
+
+  /// No description provided for @nutExact.
+  ///
+  /// In es, this message translates to:
+  /// **'Exactas'**
+  String get nutExact;
+
+  /// No description provided for @nutExactSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Al gramo'**
+  String get nutExactSub;
+
+  /// No description provided for @nutSex.
+  ///
+  /// In es, this message translates to:
+  /// **'Sexo'**
+  String get nutSex;
+
+  /// No description provided for @nutFemale.
+  ///
+  /// In es, this message translates to:
+  /// **'Mujer'**
+  String get nutFemale;
+
+  /// No description provided for @nutMale.
+  ///
+  /// In es, this message translates to:
+  /// **'Hombre'**
+  String get nutMale;
+
+  /// No description provided for @nutSelect.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar…'**
+  String get nutSelect;
+
+  /// No description provided for @nutAge.
+  ///
+  /// In es, this message translates to:
+  /// **'({age} años)'**
+  String nutAge(int age);
+
+  /// No description provided for @nutHeight.
+  ///
+  /// In es, this message translates to:
+  /// **'Altura (cm)'**
+  String get nutHeight;
+
+  /// No description provided for @nutWeight.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso (kg)'**
+  String get nutWeight;
+
+  /// No description provided for @nutActivityLevel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nivel de actividad'**
+  String get nutActivityLevel;
+
+  /// No description provided for @nutGoalLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Objetivo'**
+  String get nutGoalLabel;
+
+  /// No description provided for @nutActivity.
+  ///
+  /// In es, this message translates to:
+  /// **'{level, select, sedentary{Sedentario (poco o nada de ejercicio)} light{Ligero (1-3 días/semana)} moderate{Moderado (3-5 días/semana)} active{Activo (6-7 días/semana)} other{Muy activo (ejercicio intenso o trabajo físico)}}'**
+  String nutActivity(String level);
+
+  /// No description provided for @nutGoal.
+  ///
+  /// In es, this message translates to:
+  /// **'{goal, select, lose{Perder peso} gain{Ganar peso} other{Mantener peso}}'**
+  String nutGoal(String goal);
+
+  /// No description provided for @nutSplit.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparto de calorías por comida'**
+  String get nutSplit;
+
+  /// No description provided for @nutTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total: {pct}%'**
+  String nutTotal(int pct);
+
+  /// No description provided for @nutSplitHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Pon 0% en las comidas que no haces. La suma debería ser 100%.'**
+  String get nutSplitHint;
+
+  /// No description provided for @nutAtHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Comidas en casa'**
+  String get nutAtHome;
+
+  /// No description provided for @nutAtHomeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca los días que haces cada comida en casa. Si comes fuera (p. ej. en el trabajo), desmarca ese día y no se contará.'**
+  String get nutAtHomeHint;
+
+  /// No description provided for @nutShare.
+  ///
+  /// In es, this message translates to:
+  /// **'Compartir mi perfil con el hogar'**
+  String get nutShare;
+
+  /// No description provided for @nutShareSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Si está desactivado, tu perfil es privado.'**
+  String get nutShareSub;
+
+  /// No description provided for @nutSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar perfil'**
+  String get nutSave;
+
+  /// No description provided for @nutIncomplete.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa sexo, fecha de nacimiento, altura y peso para calcular tus calorías y macros diarios.'**
+  String get nutIncomplete;
+
+  /// No description provided for @nutDailyTarget.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu objetivo diario (aprox.)'**
+  String get nutDailyTarget;
+
+  /// No description provided for @nutKcalDay.
+  ///
+  /// In es, this message translates to:
+  /// **'{kcal} kcal / día'**
+  String nutKcalDay(int kcal);
+
+  /// No description provided for @nutPerMeal.
+  ///
+  /// In es, this message translates to:
+  /// **'≈ {kcal} kcal por comida ({meals} comidas)'**
+  String nutPerMeal(int kcal, int meals);
 }
 
 class _AppLocalizationsDelegate

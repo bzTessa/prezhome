@@ -2091,4 +2091,205 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tskAdd => 'Aufgabe hinzufügen';
+
+  @override
+  String get arcTitle => 'Rezept hinzufügen';
+
+  @override
+  String get arcLinkTitle => 'Videolink einfügen';
+
+  @override
+  String get arcLinkSub => 'Von TikTok oder YouTube, oder den Instagram-Text';
+
+  @override
+  String get arcNameTitle => 'Namen eingeben';
+
+  @override
+  String get arcNameSub => 'Wird mit Zutaten, Schritten und Makros ergänzt';
+
+  @override
+  String get arcIdeasTitle => 'Ideen für dich';
+
+  @override
+  String get arcIdeasSub => 'Passend zu Supermarkt, Ziel und Budget';
+
+  @override
+  String get arcManualTitle => 'Von Hand';
+
+  @override
+  String get arcManualSub => 'Jedes Feld selbst ausfüllen';
+
+  @override
+  String get arcCodeTitle => 'Mit einem Code';
+
+  @override
+  String get arcCodeSub => 'Speichere ein geteiltes Rezept';
+
+  @override
+  String get arcCodeDialog => 'Rezeptcode';
+
+  @override
+  String get search => 'Suchen';
+
+  @override
+  String get arcNoCode => 'Kein Rezept mit diesem Code';
+
+  @override
+  String arcIngredientsAsk(int count) {
+    return '$count Zutaten. In deinen Rezepten speichern?';
+  }
+
+  @override
+  String get arcSaved => 'Rezept gespeichert';
+
+  @override
+  String get nutLoadError => 'Profil konnte nicht geladen werden';
+
+  @override
+  String get nutSaved => 'Profil gespeichert';
+
+  @override
+  String get nutSaveError => 'Speichern fehlgeschlagen';
+
+  @override
+  String get nutBirthDate => 'Geburtsdatum';
+
+  @override
+  String get nutTitle => 'Mein Ernährungsprofil';
+
+  @override
+  String get nutDiary => 'Kalorientagebuch';
+
+  @override
+  String get nutWizard => 'Schritt für Schritt einrichten';
+
+  @override
+  String get nutWizardSub =>
+      'Ein Assistent stellt dir ein paar Fragen und berechnet dein Ziel.';
+
+  @override
+  String get nutHowCook => 'Wie kochst du?';
+
+  @override
+  String get nutDaily => 'Täglich';
+
+  @override
+  String get nutDailySub => 'Ich koche jeden Tag';
+
+  @override
+  String get nutBatch => 'Vorkochen';
+
+  @override
+  String get nutBatchSub => 'Ich koche einmal für mehrere Tage';
+
+  @override
+  String get nutAmounts => 'Mengen';
+
+  @override
+  String get nutPractical => 'Praktisch';
+
+  @override
+  String get nutPracticalSub => 'Supermarkt-Packungen';
+
+  @override
+  String get nutExact => 'Exakt';
+
+  @override
+  String get nutExactSub => 'Aufs Gramm';
+
+  @override
+  String get nutSex => 'Geschlecht';
+
+  @override
+  String get nutFemale => 'Weiblich';
+
+  @override
+  String get nutMale => 'Männlich';
+
+  @override
+  String get nutSelect => 'Auswählen…';
+
+  @override
+  String nutAge(int age) {
+    return '($age Jahre)';
+  }
+
+  @override
+  String get nutHeight => 'Größe (cm)';
+
+  @override
+  String get nutWeight => 'Gewicht (kg)';
+
+  @override
+  String get nutActivityLevel => 'Aktivitätslevel';
+
+  @override
+  String get nutGoalLabel => 'Ziel';
+
+  @override
+  String nutActivity(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'sedentary': 'Sitzend (wenig oder kein Sport)',
+      'light': 'Leicht (1-3 Tage/Woche)',
+      'moderate': 'Mäßig (3-5 Tage/Woche)',
+      'active': 'Aktiv (6-7 Tage/Woche)',
+      'other': 'Sehr aktiv (intensiver Sport oder körperliche Arbeit)',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String nutGoal(String goal) {
+    String _temp0 = intl.Intl.selectLogic(goal, {
+      'lose': 'Abnehmen',
+      'gain': 'Zunehmen',
+      'other': 'Gewicht halten',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get nutSplit => 'Kalorien pro Mahlzeit';
+
+  @override
+  String nutTotal(int pct) {
+    return 'Gesamt: $pct%';
+  }
+
+  @override
+  String get nutSplitHint =>
+      'Setze 0% für Mahlzeiten, die du auslässt. Die Summe sollte 100% sein.';
+
+  @override
+  String get nutAtHome => 'Mahlzeiten zu Hause';
+
+  @override
+  String get nutAtHomeHint =>
+      'Markiere die Tage, an denen du jede Mahlzeit zu Hause isst. Wenn du auswärts isst (z. B. bei der Arbeit), entferne den Tag und er zählt nicht.';
+
+  @override
+  String get nutShare => 'Mein Profil mit dem Haushalt teilen';
+
+  @override
+  String get nutShareSub => 'Wenn aus, ist dein Profil privat.';
+
+  @override
+  String get nutSave => 'Profil speichern';
+
+  @override
+  String get nutIncomplete =>
+      'Gib Geschlecht, Geburtsdatum, Größe und Gewicht an, um deine täglichen Kalorien und Makros zu berechnen.';
+
+  @override
+  String get nutDailyTarget => 'Dein Tagesziel (ca.)';
+
+  @override
+  String nutKcalDay(int kcal) {
+    return '$kcal kcal / Tag';
+  }
+
+  @override
+  String nutPerMeal(int kcal, int meals) {
+    return '≈ $kcal kcal pro Mahlzeit ($meals Mahlzeiten)';
+  }
 }

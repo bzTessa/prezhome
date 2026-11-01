@@ -1323,5 +1323,114 @@
   },
   "tskNotes": "Notas",
   "tskPoints": "Puntos",
-  "tskAdd": "Añadir tarea"
+  "tskAdd": "Añadir tarea",
+  "arcTitle": "Añadir receta",
+  "arcLinkTitle": "Pegar enlace de vídeo",
+  "arcLinkSub": "De TikTok o YouTube, o el texto de Instagram",
+  "arcNameTitle": "Escribe el nombre",
+  "arcNameSub": "Se completa con ingredientes, pasos y macros",
+  "arcIdeasTitle": "Ideas para ti",
+  "arcIdeasSub": "Según tu súper, objetivo y presupuesto",
+  "arcManualTitle": "A mano",
+  "arcManualSub": "Rellena tú cada campo",
+  "arcCodeTitle": "Con un código",
+  "arcCodeSub": "Guarda una receta que te han compartido",
+  "arcCodeDialog": "Código de la receta",
+  "search": "Buscar",
+  "arcNoCode": "No hay ninguna receta con ese código",
+  "arcIngredientsAsk": "{count} ingredientes. ¿La guardas en tus recetas?",
+  "@arcIngredientsAsk": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "arcSaved": "Receta guardada",
+  "nutLoadError": "Error al cargar el perfil",
+  "nutSaved": "Perfil guardado",
+  "nutSaveError": "Error al guardar",
+  "nutBirthDate": "Fecha de nacimiento",
+  "nutTitle": "Mi perfil nutricional",
+  "nutDiary": "Diario de calorías",
+  "nutWizard": "Configurar paso a paso",
+  "nutWizardSub": "Un asistente te hace unas preguntas y calcula tu objetivo.",
+  "nutHowCook": "¿Cómo cocinas?",
+  "nutDaily": "Del día",
+  "nutDailySub": "Cocino cada día",
+  "nutBatch": "Cocinar en lote",
+  "nutBatchSub": "Cocino de una vez para varios días",
+  "nutAmounts": "Cantidades",
+  "nutPractical": "Prácticas",
+  "nutPracticalSub": "Formatos de súper",
+  "nutExact": "Exactas",
+  "nutExactSub": "Al gramo",
+  "nutSex": "Sexo",
+  "nutFemale": "Mujer",
+  "nutMale": "Hombre",
+  "nutSelect": "Seleccionar…",
+  "nutAge": "({age} años)",
+  "@nutAge": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "nutHeight": "Altura (cm)",
+  "nutWeight": "Peso (kg)",
+  "nutActivityLevel": "Nivel de actividad",
+  "nutGoalLabel": "Objetivo",
+  "nutActivity": "{level, select, sedentary{Sedentario (poco o nada de ejercicio)} light{Ligero (1-3 días/semana)} moderate{Moderado (3-5 días/semana)} active{Activo (6-7 días/semana)} other{Muy activo (ejercicio intenso o trabajo físico)}}",
+  "@nutActivity": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "nutGoal": "{goal, select, lose{Perder peso} gain{Ganar peso} other{Mantener peso}}",
+  "@nutGoal": {
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "nutSplit": "Reparto de calorías por comida",
+  "nutTotal": "Total: {pct}%",
+  "@nutTotal": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "nutSplitHint": "Pon 0% en las comidas que no haces. La suma debería ser 100%.",
+  "nutAtHome": "Comidas en casa",
+  "nutAtHomeHint": "Marca los días que haces cada comida en casa. Si comes fuera (p. ej. en el trabajo), desmarca ese día y no se contará.",
+  "nutShare": "Compartir mi perfil con el hogar",
+  "nutShareSub": "Si está desactivado, tu perfil es privado.",
+  "nutSave": "Guardar perfil",
+  "nutIncomplete": "Completa sexo, fecha de nacimiento, altura y peso para calcular tus calorías y macros diarios.",
+  "nutDailyTarget": "Tu objetivo diario (aprox.)",
+  "nutKcalDay": "{kcal} kcal / día",
+  "@nutKcalDay": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "nutPerMeal": "≈ {kcal} kcal por comida ({meals} comidas)",
+  "@nutPerMeal": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      },
+      "meals": {
+        "type": "int"
+      }
+    }
+  }
 }
