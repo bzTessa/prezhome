@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'food_diary_screen.dart';
@@ -8,6 +9,7 @@ import 'profile_wizard_screen.dart';
 import 'utils/friendly_error.dart';
 import 'theme/app_theme.dart';
 import 'widgets/list_skeleton.dart';
+import 'l10n/l10n.dart';
 
 class NutritionProfileScreen extends StatefulWidget {
   const NutritionProfileScreen({super.key});
@@ -91,7 +93,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al cargar el perfil')),
+            content: Text(friendlyError(e, context.l.nutLoadError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -133,13 +135,13 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Perfil guardado')));
+        ).showSnackBar(SnackBar(content: Text(context.l.nutSaved)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, context.l.nutSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -156,17 +158,15 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
       initialDate: _birthDate ?? DateTime(now.year - 30),
       firstDate: DateTime(now.year - 100),
       lastDate: now,
-      helpText: 'Fecha de nacimiento',
+      helpText: context.l.nutBirthDate,
     );
     if (picked != null) setState(() => _birthDate = picked);
   }
 
   InputDecoration _dec(String label) => InputDecoration(labelText: label);
 
-  static const _weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
   Widget _buildMealDaysRow(String mealKey) {
-    final label = NutritionProfile.mealLabels[mealKey] ?? mealKey;
+    final label = context.l.mealType(mealKey);
     // Lista actual; vacía = todos los días.
     final current = _mealsAtHome[mealKey] ?? [];
     final allDays = current.isEmpty; // vacío = todos
@@ -184,7 +184,13 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
               final day = i + 1;
               final selected = allDays || current.contains(day);
               return FilterChip(
-                label: Text(_weekdayShort[i]),
+                label: Text(
+                  // 2024-01-01 fue lunes: letra del día en el idioma del móvil.
+                  DateFormat(
+                    'EEEEE',
+                    Localizations.localeOf(context).toString(),
+                  ).format(DateTime(2024, 1, day)),
+                ),
                 selected: selected,
                 backgroundColor: AppColors.card,
                 visualDensity: VisualDensity.compact,
@@ -212,15 +218,15 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text(
-          'Mi Perfil Nutricional',
+        title: Text(
+          context.l.nutTitle,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.cream,
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: 'Diario de calorías',
+            tooltip: context.l.nutDiary,
             icon: const Icon(Icons.local_fire_department_outlined),
             onPressed: () => Navigator.of(
               context,
@@ -279,7 +285,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Configurar paso a paso',
+                                context.l.nutWizard,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
@@ -287,8 +293,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                               ),
                               SizedBox(height: 2),
                               Text(
-                                'Un asistente te hace unas preguntas y calcula '
-                                'tu objetivo.',
+                                context.l.nutWizardSub,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.inkMuted,
@@ -308,22 +313,25 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 const SizedBox(height: 20),
 
                 // --- Modo de cocina ---
-                const Text(
-                  '¿Cómo cocinas?',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  context.l.nutHowCook,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 _ModeCard(
-                  title: 'Del día',
-                  subtitle: 'Cocino cada día',
+                  title: context.l.nutDaily,
+                  subtitle: context.l.nutDailySub,
                   icon: Icons.wb_sunny_outlined,
                   selected: _cookingMode == 'daily',
                   onTap: () => setState(() => _cookingMode = 'daily'),
                 ),
                 const SizedBox(height: 8),
                 _ModeCard(
-                  title: 'Cocinar en lote',
-                  subtitle: 'Cocino de una vez para varios días',
+                  title: context.l.nutBatch,
+                  subtitle: context.l.nutBatchSub,
                   icon: Icons.ac_unit,
                   selected: _cookingMode == 'mealprep',
                   onTap: () => setState(() => _cookingMode = 'mealprep'),
@@ -331,9 +339,12 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 const SizedBox(height: 16),
 
                 // --- Modo de porciones ---
-                const Text(
-                  'Cantidades',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  context.l.nutAmounts,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -341,8 +352,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     Expanded(
                       child: RadioListTile<String>(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Prácticas'),
-                        subtitle: const Text('Formatos de súper'),
+                        title: Text(context.l.nutPractical),
+                        subtitle: Text(context.l.nutPracticalSub),
                         value: 'practical',
                         groupValue: _portionMode,
                         activeColor: AppColors.woodDark,
@@ -352,8 +363,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     Expanded(
                       child: RadioListTile<String>(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Exactas'),
-                        subtitle: const Text('Al gramo'),
+                        title: Text(context.l.nutExact),
+                        subtitle: Text(context.l.nutExactSub),
                         value: 'strict',
                         groupValue: _portionMode,
                         activeColor: AppColors.woodDark,
@@ -366,15 +377,21 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
 
                 TextField(
                   controller: _nameController,
-                  decoration: _dec('Nombre'),
+                  decoration: _dec(context.l.name),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: _sex,
-                  decoration: _dec('Sexo'),
-                  items: const [
-                    DropdownMenuItem(value: 'female', child: Text('Mujer')),
-                    DropdownMenuItem(value: 'male', child: Text('Hombre')),
+                  decoration: _dec(context.l.nutSex),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'female',
+                      child: Text(context.l.nutFemale),
+                    ),
+                    DropdownMenuItem(
+                      value: 'male',
+                      child: Text(context.l.nutMale),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _sex = v),
                 ),
@@ -383,14 +400,14 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                   onTap: _pickBirthDate,
                   borderRadius: BorderRadius.circular(16),
                   child: InputDecorator(
-                    decoration: _dec('Fecha de nacimiento'),
+                    decoration: _dec(context.l.nutBirthDate),
                     child: Text(
                       _birthDate == null
-                          ? 'Seleccionar…'
+                          ? context.l.nutSelect
                           : '${_birthDate!.day.toString().padLeft(2, '0')}/'
                                 '${_birthDate!.month.toString().padLeft(2, '0')}/'
                                 '${_birthDate!.year}'
-                                '${_current.age != null ? '  (${_current.age} años)' : ''}',
+                                '${_current.age != null ? '  ${context.l.nutAge(_current.age!)}' : ''}',
                     ),
                   ),
                 ),
@@ -401,7 +418,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                       child: TextField(
                         controller: _heightController,
                         keyboardType: TextInputType.number,
-                        decoration: _dec('Altura (cm)'),
+                        decoration: _dec(context.l.nutHeight),
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
@@ -412,7 +429,7 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        decoration: _dec('Peso (kg)'),
+                        decoration: _dec(context.l.nutWeight),
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
@@ -422,12 +439,15 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _activity,
                   isExpanded: true,
-                  decoration: _dec('Nivel de actividad'),
+                  decoration: _dec(context.l.nutActivityLevel),
                   items: NutritionProfile.activityLabels.entries
                       .map(
                         (e) => DropdownMenuItem(
                           value: e.key,
-                          child: Text(e.value, overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            context.l.nutActivity(e.key),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       )
                       .toList(),
@@ -436,12 +456,12 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: _goal,
-                  decoration: _dec('Objetivo'),
+                  decoration: _dec(context.l.nutGoalLabel),
                   items: NutritionProfile.goalLabels.entries
                       .map(
                         (e) => DropdownMenuItem(
                           value: e.key,
-                          child: Text(e.value),
+                          child: Text(context.l.nutGoal(e.key)),
                         ),
                       )
                       .toList(),
@@ -452,8 +472,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 // --- Reparto de calorías por comida ---
                 Row(
                   children: [
-                    const Text(
-                      'Reparto de calorías por comida',
+                    Text(
+                      context.l.nutSplit,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -461,7 +481,9 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      'Total: ${_mealSplit.values.fold(0, (a, b) => a + b)}%',
+                      context.l.nutTotal(
+                        _mealSplit.values.fold(0, (a, b) => a + b),
+                      ),
                       style: TextStyle(
                         color: _mealSplit.values.fold(0, (a, b) => a + b) == 100
                             ? Colors.green[700]
@@ -473,12 +495,12 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Pon 0% en las comidas que no haces. La suma debería ser 100%.',
+                  context.l.nutSplitHint,
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 ...NutritionProfile.splitOrder.map((key) {
-                  final label = NutritionProfile.mealLabels[key] ?? key;
+                  final label = context.l.mealType(key);
                   final value = _mealSplit[key] ?? 0;
                   return Row(
                     children: [
@@ -509,14 +531,13 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 const SizedBox(height: 24),
 
                 // --- Comidas en casa por día (comer fuera) ---
-                const Text(
-                  'Comidas en casa',
+                Text(
+                  context.l.nutAtHome,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Marca los días que haces cada comida en casa. Si comes fuera '
-                  '(p. ej. en el trabajo), desmarca ese día y no se contará.',
+                  context.l.nutAtHomeHint,
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
@@ -525,10 +546,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                     .map(_buildMealDaysRow),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Compartir mi perfil con el hogar'),
-                  subtitle: const Text(
-                    'Si está desactivado, tu perfil es privado.',
-                  ),
+                  title: Text(context.l.nutShare),
+                  subtitle: Text(context.l.nutShareSub),
                   value: _isPublic,
                   activeThumbColor: AppColors.wood,
                   contentPadding: EdgeInsets.zero,
@@ -552,8 +571,8 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                   onPressed: _saving ? null : _save,
                   child: _saving
                       ? const CircularProgressIndicator()
-                      : const Text(
-                          'Guardar Perfil',
+                      : Text(
+                          context.l.nutSave,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -643,15 +662,14 @@ class _ResultCard extends StatelessWidget {
       decoration: AppTheme.surfaceDecoration(),
       child: kcal == null
           ? Text(
-              'Completa sexo, fecha de nacimiento, altura y peso para calcular '
-              'tus calorías y macros diarios.',
+              context.l.nutIncomplete,
               style: TextStyle(color: AppColors.ink),
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tu objetivo diario (aprox.)',
+                  context.l.nutDailyTarget,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -660,7 +678,7 @@ class _ResultCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '$kcal kcal / día',
+                  context.l.nutKcalDay(kcal),
                   style: TextStyle(
                     fontSize: 28,
                     letterSpacing: -0.6,
@@ -670,7 +688,7 @@ class _ResultCard extends StatelessWidget {
                 ),
                 if (perMeal != null)
                   Text(
-                    '≈ $perMeal kcal por comida (${profile.mealsPerDay} comidas)',
+                    context.l.nutPerMeal(perMeal, profile.mealsPerDay),
                     style: TextStyle(color: AppColors.inkMuted),
                   ),
                 const SizedBox(height: 12),
@@ -678,9 +696,15 @@ class _ResultCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _Macro(label: 'Proteína', value: '${macros.protein} g'),
-                      _Macro(label: 'Carbos', value: '${macros.carbs} g'),
-                      _Macro(label: 'Grasa', value: '${macros.fat} g'),
+                      _Macro(
+                        label: context.l.diaProtein,
+                        value: '${macros.protein} g',
+                      ),
+                      _Macro(
+                        label: context.l.diaCarbs,
+                        value: '${macros.carbs} g',
+                      ),
+                      _Macro(label: context.l.diaFat, value: '${macros.fat} g'),
                     ],
                   ),
               ],

@@ -2106,4 +2106,205 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tskAdd => 'Ajouter la tâche';
+
+  @override
+  String get arcTitle => 'Ajouter une recette';
+
+  @override
+  String get arcLinkTitle => 'Coller un lien vidéo';
+
+  @override
+  String get arcLinkSub => 'De TikTok ou YouTube, ou le texte d\'Instagram';
+
+  @override
+  String get arcNameTitle => 'Écris le nom';
+
+  @override
+  String get arcNameSub => 'Complétée avec ingrédients, étapes et macros';
+
+  @override
+  String get arcIdeasTitle => 'Idées pour toi';
+
+  @override
+  String get arcIdeasSub => 'Selon ton supermarché, ton objectif et ton budget';
+
+  @override
+  String get arcManualTitle => 'À la main';
+
+  @override
+  String get arcManualSub => 'Remplis chaque champ toi-même';
+
+  @override
+  String get arcCodeTitle => 'Avec un code';
+
+  @override
+  String get arcCodeSub => 'Enregistre une recette partagée avec toi';
+
+  @override
+  String get arcCodeDialog => 'Code de la recette';
+
+  @override
+  String get search => 'Rechercher';
+
+  @override
+  String get arcNoCode => 'Aucune recette avec ce code';
+
+  @override
+  String arcIngredientsAsk(int count) {
+    return '$count ingrédients. L\'enregistrer dans tes recettes ?';
+  }
+
+  @override
+  String get arcSaved => 'Recette enregistrée';
+
+  @override
+  String get nutLoadError => 'Impossible de charger le profil';
+
+  @override
+  String get nutSaved => 'Profil enregistré';
+
+  @override
+  String get nutSaveError => 'Erreur d\'enregistrement';
+
+  @override
+  String get nutBirthDate => 'Date de naissance';
+
+  @override
+  String get nutTitle => 'Mon profil nutritionnel';
+
+  @override
+  String get nutDiary => 'Journal des calories';
+
+  @override
+  String get nutWizard => 'Configurer pas à pas';
+
+  @override
+  String get nutWizardSub =>
+      'Un assistant te pose quelques questions et calcule ton objectif.';
+
+  @override
+  String get nutHowCook => 'Comment cuisines-tu ?';
+
+  @override
+  String get nutDaily => 'Au jour le jour';
+
+  @override
+  String get nutDailySub => 'Je cuisine chaque jour';
+
+  @override
+  String get nutBatch => 'Cuisine en lot';
+
+  @override
+  String get nutBatchSub => 'Je cuisine une fois pour plusieurs jours';
+
+  @override
+  String get nutAmounts => 'Quantités';
+
+  @override
+  String get nutPractical => 'Pratiques';
+
+  @override
+  String get nutPracticalSub => 'Formats du supermarché';
+
+  @override
+  String get nutExact => 'Exactes';
+
+  @override
+  String get nutExactSub => 'Au gramme près';
+
+  @override
+  String get nutSex => 'Sexe';
+
+  @override
+  String get nutFemale => 'Femme';
+
+  @override
+  String get nutMale => 'Homme';
+
+  @override
+  String get nutSelect => 'Choisir…';
+
+  @override
+  String nutAge(int age) {
+    return '($age ans)';
+  }
+
+  @override
+  String get nutHeight => 'Taille (cm)';
+
+  @override
+  String get nutWeight => 'Poids (kg)';
+
+  @override
+  String get nutActivityLevel => 'Niveau d\'activité';
+
+  @override
+  String get nutGoalLabel => 'Objectif';
+
+  @override
+  String nutActivity(String level) {
+    String _temp0 = intl.Intl.selectLogic(level, {
+      'sedentary': 'Sédentaire (peu ou pas d\'exercice)',
+      'light': 'Léger (1-3 jours/semaine)',
+      'moderate': 'Modéré (3-5 jours/semaine)',
+      'active': 'Actif (6-7 jours/semaine)',
+      'other': 'Très actif (sport intense ou travail physique)',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String nutGoal(String goal) {
+    String _temp0 = intl.Intl.selectLogic(goal, {
+      'lose': 'Perdre du poids',
+      'gain': 'Prendre du poids',
+      'other': 'Maintenir son poids',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get nutSplit => 'Répartition des calories par repas';
+
+  @override
+  String nutTotal(int pct) {
+    return 'Total : $pct %';
+  }
+
+  @override
+  String get nutSplitHint =>
+      'Mets 0 % aux repas que tu ne prends pas. Le total doit faire 100 %.';
+
+  @override
+  String get nutAtHome => 'Repas à la maison';
+
+  @override
+  String get nutAtHomeHint =>
+      'Coche les jours où tu prends chaque repas à la maison. Si tu manges dehors (au travail, par ex.), décoche ce jour et il ne comptera pas.';
+
+  @override
+  String get nutShare => 'Partager mon profil avec le foyer';
+
+  @override
+  String get nutShareSub => 'Si désactivé, ton profil est privé.';
+
+  @override
+  String get nutSave => 'Enregistrer le profil';
+
+  @override
+  String get nutIncomplete =>
+      'Renseigne sexe, date de naissance, taille et poids pour calculer tes calories et macros du jour.';
+
+  @override
+  String get nutDailyTarget => 'Ton objectif quotidien (env.)';
+
+  @override
+  String nutKcalDay(int kcal) {
+    return '$kcal kcal / jour';
+  }
+
+  @override
+  String nutPerMeal(int kcal, int meals) {
+    return '≈ $kcal kcal par repas ($meals repas)';
+  }
 }

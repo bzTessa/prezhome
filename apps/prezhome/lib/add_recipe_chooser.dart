@@ -6,6 +6,7 @@ import 'discover_recipes_screen.dart';
 import 'services/recipe_share.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
+import 'l10n/l10n.dart';
 
 /// Hoja para elegir cómo añadir una receta: pegar el enlace de un vídeo,
 /// escribir el nombre (se completa sola), ideas, a mano o con un código.
@@ -46,16 +47,16 @@ class AddRecipeChooser extends StatelessWidget {
                 ),
               ),
             ),
-            const Text(
-              'Añadir receta',
+            Text(
+              context.l.arcTitle,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _option(
               context,
               icon: Icons.link_rounded,
-              title: 'Pegar enlace de vídeo',
-              subtitle: 'De TikTok o YouTube, o el texto de Instagram',
+              title: context.l.arcLinkTitle,
+              subtitle: context.l.arcLinkSub,
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -68,8 +69,8 @@ class AddRecipeChooser extends StatelessWidget {
             _option(
               context,
               icon: Icons.edit_rounded,
-              title: 'Escribe el nombre',
-              subtitle: 'Se completa con ingredientes, pasos y macros',
+              title: context.l.arcNameTitle,
+              subtitle: context.l.arcNameSub,
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -82,8 +83,8 @@ class AddRecipeChooser extends StatelessWidget {
             _option(
               context,
               icon: Icons.storefront_outlined,
-              title: 'Ideas para ti',
-              subtitle: 'Según tu súper, objetivo y presupuesto',
+              title: context.l.arcIdeasTitle,
+              subtitle: context.l.arcIdeasSub,
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -96,8 +97,8 @@ class AddRecipeChooser extends StatelessWidget {
             _option(
               context,
               icon: Icons.edit_note,
-              title: 'A mano',
-              subtitle: 'Rellena tú cada campo',
+              title: context.l.arcManualTitle,
+              subtitle: context.l.arcManualSub,
               onTap: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(builder: (_) => const AddRecipeScreen()),
@@ -108,8 +109,8 @@ class AddRecipeChooser extends StatelessWidget {
             _option(
               context,
               icon: Icons.qr_code_2_rounded,
-              title: 'Con un código',
-              subtitle: 'Guarda una receta que te han compartido',
+              title: context.l.arcCodeTitle,
+              subtitle: context.l.arcCodeSub,
               onTap: () async {
                 final r = await _importWithCode(context);
                 if (context.mounted && r) Navigator.of(context).pop(true);
@@ -123,12 +124,13 @@ class AddRecipeChooser extends StatelessWidget {
 
   /// Pide el código, enseña la receta y la guarda en tu hogar.
   Future<bool> _importWithCode(BuildContext context) async {
+    final l = context.l;
     final controller = TextEditingController();
     final code = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         scrollable: true,
-        title: const Text('Código de la receta'),
+        title: Text(l.arcCodeDialog),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -139,11 +141,11 @@ class AddRecipeChooser extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Buscar'),
+            child: Text(l.search),
           ),
         ],
       ),
@@ -157,28 +159,25 @@ class AddRecipeChooser extends StatelessWidget {
       final share = RecipeShare(client);
       final shared = await share.fetch(code);
       if (shared == null) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('No hay ninguna receta con ese código')),
-        );
+        messenger.showSnackBar(SnackBar(content: Text(l.arcNoCode)));
         return false;
       }
       if (!context.mounted) return false;
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text(shared['title'] as String? ?? 'Receta'),
+          title: Text(shared['title'] as String? ?? l.recipe),
           content: Text(
-            '${(shared['ingredients'] as List?)?.length ?? 0} ingredientes. '
-            '¿La guardas en tus recetas?',
+            l.arcIngredientsAsk((shared['ingredients'] as List?)?.length ?? 0),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancelar'),
+              child: Text(l.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Guardar'),
+              child: Text(l.save),
             ),
           ],
         ),
@@ -190,7 +189,7 @@ class AddRecipeChooser extends StatelessWidget {
           .eq('id', client.auth.currentUser!.id)
           .single();
       await share.import(shared, profile['home_id'] as String);
-      messenger.showSnackBar(const SnackBar(content: Text('Receta guardada')));
+      messenger.showSnackBar(SnackBar(content: Text(l.arcSaved)));
       return true;
     } catch (e) {
       messenger.showSnackBar(
