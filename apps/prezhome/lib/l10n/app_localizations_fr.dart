@@ -2307,4 +2307,142 @@ class AppLocalizationsFr extends AppLocalizations {
   String nutPerMeal(int kcal, int meals) {
     return '≈ $kcal kcal par repas ($meals repas)';
   }
+
+  @override
+  String get ecoBudgetTitle => 'Budget mensuel';
+
+  @override
+  String ecoAmount(String symbol) {
+    return 'Montant ($symbol)';
+  }
+
+  @override
+  String get ecoDeleteTicket => 'Supprimer le ticket ?';
+
+  @override
+  String get ecoDeleteTicketSub => 'Il ne comptera plus dans tes dépenses.';
+
+  @override
+  String ecoRedeemed(String title) {
+    return 'Tu as échangé \"$title\"';
+  }
+
+  @override
+  String get ecoRedeemFail =>
+      'Échange impossible. Il te manque peut-être des points.';
+
+  @override
+  String get ecoNewReward => 'Nouvelle récompense';
+
+  @override
+  String get ecoRewardTitle => 'Titre';
+
+  @override
+  String get ecoRewardDesc => 'Description (facultatif)';
+
+  @override
+  String get ecoRewardCost => 'Coût en points';
+
+  @override
+  String get ecoTitle => 'Dépenses et tickets';
+
+  @override
+  String get ecoStats => 'Statistiques des courses';
+
+  @override
+  String get ecoScan => 'Scanner un ticket';
+
+  @override
+  String ecoTicketsOf(String month) {
+    return 'Tickets de $month';
+  }
+
+  @override
+  String get ecoPointsBalance => 'Balance des points';
+
+  @override
+  String get ecoPointsBalanceSub =>
+      'Solde de chaque membre pour échanger des récompenses.';
+
+  @override
+  String get ecoNoPoints => 'Pas encore de points à répartir';
+
+  @override
+  String get ecoNoPointsSub =>
+      'Faites des tâches du foyer pour remplir la balance.';
+
+  @override
+  String get ecoRewards => 'Récompenses';
+
+  @override
+  String ecoBalance(int points) {
+    return 'Ton solde : $points pts';
+  }
+
+  @override
+  String get ecoRedeem => 'Échanger';
+
+  @override
+  String get ecoNoRewards => 'Pas encore de récompenses';
+
+  @override
+  String get ecoNoRewardsSub =>
+      'Crée la première avec le bouton \"Nouvelle récompense\".';
+
+  @override
+  String get ecoTotalSpent => 'Dépense totale enregistrée';
+
+  @override
+  String ecoTicketCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tickets au total',
+      one: '1 ticket au total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ecoThisMonth => 'Ce mois-ci';
+
+  @override
+  String ecoBudget(String amount) {
+    return 'Budget : $amount';
+  }
+
+  @override
+  String get ecoSetBudget => 'Fixer un budget';
+
+  @override
+  String ecoOver(String amount) {
+    return 'Tu as dépassé le budget de $amount';
+  }
+
+  @override
+  String ecoLeft(String amount) {
+    return 'Il te reste $amount';
+  }
+
+  @override
+  String get ecoLastMonths => 'Dépenses des derniers mois';
+
+  @override
+  String ecoBudgetPerMonth(String amount) {
+    return 'Budget : $amount par mois';
+  }
+
+  @override
+  String get ecoBudgetShort => 'Budget';
+
+  @override
+  String get ecoNoTrend =>
+      'Aucune dépense enregistrée ces derniers mois.\nScanne des tickets pour voir ta tendance ici.';
+
+  @override
+  String get ecoTicket => 'Ticket';
+
+  @override
+  String get ecoNoTickets =>
+      'Pas encore de tickets ce mois-ci.\nScanne le premier.';
 }

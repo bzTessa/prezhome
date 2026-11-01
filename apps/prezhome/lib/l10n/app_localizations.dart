@@ -3725,6 +3725,222 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'≈ {kcal} kcal por comida ({meals} comidas)'**
   String nutPerMeal(int kcal, int meals);
+
+  /// No description provided for @ecoBudgetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Presupuesto mensual'**
+  String get ecoBudgetTitle;
+
+  /// No description provided for @ecoAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Importe ({symbol})'**
+  String ecoAmount(String symbol);
+
+  /// No description provided for @ecoDeleteTicket.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar ticket?'**
+  String get ecoDeleteTicket;
+
+  /// No description provided for @ecoDeleteTicketSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejará de contar en tus gastos.'**
+  String get ecoDeleteTicketSub;
+
+  /// No description provided for @ecoRedeemed.
+  ///
+  /// In es, this message translates to:
+  /// **'Has canjeado \"{title}\"'**
+  String ecoRedeemed(String title);
+
+  /// No description provided for @ecoRedeemFail.
+  ///
+  /// In es, this message translates to:
+  /// **'No se ha podido canjear. Puede que te falte saldo.'**
+  String get ecoRedeemFail;
+
+  /// No description provided for @ecoNewReward.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva recompensa'**
+  String get ecoNewReward;
+
+  /// No description provided for @ecoRewardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Título'**
+  String get ecoRewardTitle;
+
+  /// No description provided for @ecoRewardDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
+  String get ecoRewardDesc;
+
+  /// No description provided for @ecoRewardCost.
+  ///
+  /// In es, this message translates to:
+  /// **'Coste en puntos'**
+  String get ecoRewardCost;
+
+  /// No description provided for @ecoTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos y tickets'**
+  String get ecoTitle;
+
+  /// No description provided for @ecoStats.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas de la compra'**
+  String get ecoStats;
+
+  /// No description provided for @ecoScan.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanear ticket'**
+  String get ecoScan;
+
+  /// No description provided for @ecoTicketsOf.
+  ///
+  /// In es, this message translates to:
+  /// **'Tickets de {month}'**
+  String ecoTicketsOf(String month);
+
+  /// No description provided for @ecoPointsBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Balanza de puntos'**
+  String get ecoPointsBalance;
+
+  /// No description provided for @ecoPointsBalanceSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldo de cada miembro para canjear recompensas.'**
+  String get ecoPointsBalanceSub;
+
+  /// No description provided for @ecoNoPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay puntos que repartir'**
+  String get ecoNoPoints;
+
+  /// No description provided for @ecoNoPointsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Completad tareas del hogar para llenar la balanza.'**
+  String get ecoNoPointsSub;
+
+  /// No description provided for @ecoRewards.
+  ///
+  /// In es, this message translates to:
+  /// **'Recompensas'**
+  String get ecoRewards;
+
+  /// No description provided for @ecoBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu saldo: {points} pts'**
+  String ecoBalance(int points);
+
+  /// No description provided for @ecoRedeem.
+  ///
+  /// In es, this message translates to:
+  /// **'Canjear'**
+  String get ecoRedeem;
+
+  /// No description provided for @ecoNoRewards.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no hay recompensas'**
+  String get ecoNoRewards;
+
+  /// No description provided for @ecoNoRewardsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea la primera con el botón \"Nueva recompensa\".'**
+  String get ecoNoRewardsSub;
+
+  /// No description provided for @ecoTotalSpent.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto total registrado'**
+  String get ecoTotalSpent;
+
+  /// No description provided for @ecoTicketCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ticket en total} other{{count} tickets en total}}'**
+  String ecoTicketCount(int count);
+
+  /// No description provided for @ecoThisMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Este mes'**
+  String get ecoThisMonth;
+
+  /// No description provided for @ecoBudget.
+  ///
+  /// In es, this message translates to:
+  /// **'Presupuesto: {amount}'**
+  String ecoBudget(String amount);
+
+  /// No description provided for @ecoSetBudget.
+  ///
+  /// In es, this message translates to:
+  /// **'Fijar presupuesto'**
+  String get ecoSetBudget;
+
+  /// No description provided for @ecoOver.
+  ///
+  /// In es, this message translates to:
+  /// **'Te has pasado {amount} del presupuesto'**
+  String ecoOver(String amount);
+
+  /// No description provided for @ecoLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'Te quedan {amount}'**
+  String ecoLeft(String amount);
+
+  /// No description provided for @ecoLastMonths.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto de los últimos meses'**
+  String get ecoLastMonths;
+
+  /// No description provided for @ecoBudgetPerMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Presupuesto: {amount} al mes'**
+  String ecoBudgetPerMonth(String amount);
+
+  /// No description provided for @ecoBudgetShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Presupuesto'**
+  String get ecoBudgetShort;
+
+  /// No description provided for @ecoNoTrend.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay gasto registrado en los últimos meses.\nCuando escanees tickets verás aquí tu tendencia.'**
+  String get ecoNoTrend;
+
+  /// No description provided for @ecoTicket.
+  ///
+  /// In es, this message translates to:
+  /// **'Ticket'**
+  String get ecoTicket;
+
+  /// No description provided for @ecoNoTickets.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay tickets este mes.\nEscanea el primero.'**
+  String get ecoNoTickets;
 }
 
 class _AppLocalizationsDelegate

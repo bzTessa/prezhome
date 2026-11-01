@@ -2301,4 +2301,142 @@ class AppLocalizationsIt extends AppLocalizations {
   String nutPerMeal(int kcal, int meals) {
     return '≈ $kcal kcal per pasto ($meals pasti)';
   }
+
+  @override
+  String get ecoBudgetTitle => 'Budget mensile';
+
+  @override
+  String ecoAmount(String symbol) {
+    return 'Importo ($symbol)';
+  }
+
+  @override
+  String get ecoDeleteTicket => 'Eliminare lo scontrino?';
+
+  @override
+  String get ecoDeleteTicketSub => 'Non conterà più nelle tue spese.';
+
+  @override
+  String ecoRedeemed(String title) {
+    return 'Hai riscattato \"$title\"';
+  }
+
+  @override
+  String get ecoRedeemFail =>
+      'Impossibile riscattare. Forse non hai abbastanza punti.';
+
+  @override
+  String get ecoNewReward => 'Nuova ricompensa';
+
+  @override
+  String get ecoRewardTitle => 'Titolo';
+
+  @override
+  String get ecoRewardDesc => 'Descrizione (facoltativa)';
+
+  @override
+  String get ecoRewardCost => 'Costo in punti';
+
+  @override
+  String get ecoTitle => 'Spese e scontrini';
+
+  @override
+  String get ecoStats => 'Statistiche della spesa';
+
+  @override
+  String get ecoScan => 'Scansiona scontrino';
+
+  @override
+  String ecoTicketsOf(String month) {
+    return 'Scontrini di $month';
+  }
+
+  @override
+  String get ecoPointsBalance => 'Bilancia dei punti';
+
+  @override
+  String get ecoPointsBalanceSub =>
+      'Saldo di ogni membro per riscattare ricompense.';
+
+  @override
+  String get ecoNoPoints => 'Ancora nessun punto da distribuire';
+
+  @override
+  String get ecoNoPointsSub =>
+      'Completate i compiti di casa per riempire la bilancia.';
+
+  @override
+  String get ecoRewards => 'Ricompense';
+
+  @override
+  String ecoBalance(int points) {
+    return 'Il tuo saldo: $points pt';
+  }
+
+  @override
+  String get ecoRedeem => 'Riscatta';
+
+  @override
+  String get ecoNoRewards => 'Ancora nessuna ricompensa';
+
+  @override
+  String get ecoNoRewardsSub =>
+      'Crea la prima con il pulsante \"Nuova ricompensa\".';
+
+  @override
+  String get ecoTotalSpent => 'Spesa totale registrata';
+
+  @override
+  String ecoTicketCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count scontrini in totale',
+      one: '1 scontrino in totale',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ecoThisMonth => 'Questo mese';
+
+  @override
+  String ecoBudget(String amount) {
+    return 'Budget: $amount';
+  }
+
+  @override
+  String get ecoSetBudget => 'Imposta budget';
+
+  @override
+  String ecoOver(String amount) {
+    return 'Hai superato il budget di $amount';
+  }
+
+  @override
+  String ecoLeft(String amount) {
+    return 'Ti restano $amount';
+  }
+
+  @override
+  String get ecoLastMonths => 'Spesa degli ultimi mesi';
+
+  @override
+  String ecoBudgetPerMonth(String amount) {
+    return 'Budget: $amount al mese';
+  }
+
+  @override
+  String get ecoBudgetShort => 'Budget';
+
+  @override
+  String get ecoNoTrend =>
+      'Ancora nessuna spesa negli ultimi mesi.\nScansiona scontrini per vedere qui il tuo andamento.';
+
+  @override
+  String get ecoTicket => 'Scontrino';
+
+  @override
+  String get ecoNoTickets =>
+      'Ancora nessuno scontrino questo mese.\nScansiona il primo.';
 }

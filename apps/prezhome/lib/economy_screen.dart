@@ -1,4 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'utils/money.dart';
@@ -17,6 +18,7 @@ import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'utils/ticket_date.dart';
 import 'widgets/list_skeleton.dart';
+import 'l10n/l10n.dart';
 
 class EconomyScreen extends StatefulWidget {
   const EconomyScreen({super.key, this.showPoints = true});
@@ -35,21 +37,6 @@ class _EconomyScreenState extends State<EconomyScreen> {
 
   // Mes que se está viendo (1 = primer día de ese mes).
   late DateTime _viewMonth;
-
-  static const _monthNames = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
 
   @override
   void initState() {
@@ -156,7 +143,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
       final key = '${m.year}-${m.month}';
       last6Months.add(
         _MonthSpend(
-          label: _monthNames[m.month - 1].substring(0, 3),
+          label: DateFormat.MMM().format(m),
           total: byMonth[key] ?? 0.0,
         ),
       );
@@ -243,13 +230,13 @@ class _EconomyScreenState extends State<EconomyScreen> {
       builder: (context) => AlertDialog(
         scrollable: true,
         backgroundColor: AppColors.cream,
-        title: const Text('Presupuesto mensual'),
+        title: Text(context.l.ecoBudgetTitle),
         content: TextField(
           controller: controller,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: 'Importe (${currencySymbol()})',
+            labelText: context.l.ecoAmount(currencySymbol()),
             filled: true,
             fillColor: AppColors.card,
             border: OutlineInputBorder(
@@ -261,7 +248,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -270,7 +257,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               );
               Navigator.of(context).pop(n);
             },
-            child: const Text('Guardar'),
+            child: Text(context.l.save),
           ),
         ],
       ),
@@ -310,17 +297,17 @@ class _EconomyScreenState extends State<EconomyScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Eliminar ticket?'),
-        content: const Text('Dejará de contar en tus gastos.'),
+        title: Text(context.l.ecoDeleteTicket),
+        content: Text(context.l.ecoDeleteTicketSub),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(context.l.delete),
           ),
         ],
       ),
@@ -339,7 +326,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
       if (mounted) {
         Celebrate.show(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Has canjeado "${reward['title']}"')),
+          SnackBar(content: Text(context.l.ecoRedeemed('${reward['title']}'))),
         );
       }
       _reload();
@@ -347,7 +334,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se ha podido canjear. Puede que te falte saldo.'),
+            content: Text(context.l.ecoRedeemFail),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -368,36 +355,36 @@ class _EconomyScreenState extends State<EconomyScreen> {
       builder: (context) => AlertDialog(
         scrollable: true,
         backgroundColor: AppColors.cream,
-        title: const Text('Nueva recompensa'),
+        title: Text(context.l.ecoNewReward),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
               autofocus: true,
-              decoration: _rewardFieldDecoration('Título'),
+              decoration: _rewardFieldDecoration(context.l.ecoRewardTitle),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: descController,
-              decoration: _rewardFieldDecoration('Descripción (opcional)'),
+              decoration: _rewardFieldDecoration(context.l.ecoRewardDesc),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: costController,
               keyboardType: TextInputType.number,
-              decoration: _rewardFieldDecoration('Coste en puntos'),
+              decoration: _rewardFieldDecoration(context.l.ecoRewardCost),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Guardar'),
+            child: Text(context.l.save),
           ),
         ],
       ),
@@ -448,11 +435,11 @@ class _EconomyScreenState extends State<EconomyScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text('Gastos y tickets'),
+        title: Text(context.l.ecoTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.insights_rounded),
-            tooltip: 'Estadísticas de la compra',
+            tooltip: context.l.ecoStats,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProductStatsScreen()),
             ),
@@ -474,9 +461,9 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   backgroundColor: AppColors.card,
                   foregroundColor: AppColors.ink,
                   icon: const Icon(Icons.card_giftcard_outlined),
-                  label: const Text(
-                    'Nueva recompensa',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  label: Text(
+                    context.l.ecoNewReward,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               const SizedBox(height: 12),
@@ -486,9 +473,9 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 backgroundColor: AppColors.wood,
                 foregroundColor: AppColors.ink,
                 icon: const Icon(Icons.document_scanner_outlined),
-                label: const Text(
-                  'Escanear ticket',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.l.ecoScan,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -506,7 +493,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           }
           final data = snapshot.data!;
           if (data.homeId == null) {
-            return const Center(child: Text('No perteneces a ningún hogar.'));
+            return Center(child: Text(context.l.planNoHome));
           }
 
           final children = <Widget>[
@@ -523,7 +510,9 @@ class _EconomyScreenState extends State<EconomyScreen> {
             _historicalCard(data),
             const SizedBox(height: 16),
             _sectionLabel(
-              'TICKETS DE ${_monthNames[_viewMonth.month - 1].toUpperCase()}',
+              context.l
+                  .ecoTicketsOf(DateFormat.MMMM().format(_viewMonth))
+                  .toUpperCase(),
             ),
             const SizedBox(height: 8),
             if (data.tickets.isEmpty)
@@ -596,16 +585,16 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Balanza de puntos',
-                      style: TextStyle(
+                    Text(
+                      context.l.ecoPointsBalance,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Saldo de cada miembro para canjear recompensas.',
+                      context.l.ecoPointsBalanceSub,
                       style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                   ],
@@ -684,7 +673,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           const SizedBox(width: 12),
           AnimatedCounter(
             value: balance.toDouble(),
-            formatter: (v) => '${v.round()} pts',
+            formatter: (v) => context.l.tskPts(v.round()),
             style: TextStyle(
               fontWeight: FontWeight.w800,
               color: AppColors.ink,
@@ -706,7 +695,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Aún no hay puntos que repartir',
+                context.l.ecoNoPoints,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -715,7 +704,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Completad tareas del hogar para llenar la balanza.',
+                context.l.ecoNoPointsSub,
                 style: TextStyle(color: AppColors.inkMuted),
               ),
             ],
@@ -737,13 +726,13 @@ class _EconomyScreenState extends State<EconomyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recompensas',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            context.l.ecoRewards,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
-            'Tu saldo: $myBalance pts',
+            context.l.ecoBalance(myBalance),
             style: TextStyle(
               color: AppColors.woodDark,
               fontWeight: FontWeight.w600,
@@ -796,7 +785,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 ],
                 const SizedBox(height: 4),
                 Text(
-                  '$cost pts',
+                  context.l.tskPts(cost),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.woodDark,
@@ -820,9 +809,9 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   color: AppColors.gold,
                   shadow: 2,
                 ),
-                child: const Text(
-                  'Canjear',
-                  style: TextStyle(
+                child: Text(
+                  context.l.ecoRedeem,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     color: AppColors.onBrand,
                   ),
@@ -845,7 +834,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Todavía no hay recompensas',
+                context.l.ecoNoRewards,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -854,7 +843,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Crea la primera con el botón "Nueva recompensa".',
+                context.l.ecoNoRewardsSub,
                 style: TextStyle(color: AppColors.inkMuted),
               ),
             ],
@@ -872,16 +861,16 @@ class _EconomyScreenState extends State<EconomyScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            tooltip: 'Anterior',
+            tooltip: context.l.previous,
             icon: const Icon(Icons.chevron_left),
             onPressed: () => _changeMonth(-1),
           ),
           Text(
-            '${_monthNames[_viewMonth.month - 1]} ${_viewMonth.year}',
+            DateFormat.yMMMM().format(_viewMonth),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           IconButton(
-            tooltip: 'Siguiente',
+            tooltip: context.l.next,
             icon: const Icon(Icons.chevron_right),
             // No dejar avanzar más allá del mes actual.
             onPressed: _isCurrentMonth ? null : () => _changeMonth(1),
@@ -913,7 +902,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Gasto total registrado',
+                  context.l.ecoTotalSpent,
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 Text(
@@ -924,7 +913,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   ),
                 ),
                 Text(
-                  '${data.historicalTicketCount} tickets en total',
+                  context.l.ecoTicketCount(data.historicalTicketCount),
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
                 ),
               ],
@@ -949,9 +938,12 @@ class _EconomyScreenState extends State<EconomyScreen> {
         children: [
           Row(
             children: [
-              const Text(
-                'Este mes',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Text(
+                context.l.ecoThisMonth,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const Spacer(),
               TextButton.icon(
@@ -959,8 +951,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 icon: const Icon(Icons.edit, size: 18),
                 label: Text(
                   budget > 0
-                      ? 'Presupuesto: ${money(budget, decimals: 0)}'
-                      : 'Fijar presupuesto',
+                      ? context.l.ecoBudget(money(budget, decimals: 0))
+                      : context.l.ecoSetBudget,
                 ),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.woodDark,
@@ -1003,8 +995,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
             const SizedBox(height: 6),
             Text(
               over
-                  ? 'Te has pasado ${money(spent - budget)} del presupuesto'
-                  : 'Te quedan ${money(budget - spent)}',
+                  ? context.l.ecoOver(money(spent - budget))
+                  : context.l.ecoLeft(money(budget - spent)),
               style: TextStyle(
                 color: over ? AppColors.expired : AppColors.inkMuted,
                 fontWeight: FontWeight.w600,
@@ -1040,14 +1032,14 @@ class _EconomyScreenState extends State<EconomyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Gasto de los últimos meses',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            context.l.ecoLastMonths,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           if (hasBudget) ...[
             const SizedBox(height: 4),
             Text(
-              'Presupuesto: ${money(budget, decimals: 0)} al mes',
+              context.l.ecoBudgetPerMonth(money(budget, decimals: 0)),
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
           ],
@@ -1124,7 +1116,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
-                              labelResolver: (_) => 'Presupuesto',
+                              labelResolver: (_) => context.l.ecoBudgetShort,
                             ),
                           ),
                         ],
@@ -1163,14 +1155,13 @@ class _EconomyScreenState extends State<EconomyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Gasto de los últimos meses',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            context.l.ecoLastMonths,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            'Aún no hay gasto registrado en los últimos meses.\n'
-            'Cuando escanees tickets verás aquí tu tendencia.',
+            context.l.ecoNoTrend,
             style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
         ],
@@ -1208,13 +1199,14 @@ class _EconomyScreenState extends State<EconomyScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    merchant?.isNotEmpty == true ? merchant! : 'Ticket',
+                    merchant?.isNotEmpty == true
+                        ? merchant!
+                        : context.l.ecoTicket,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   if (date != null)
                     Text(
-                      '${date.day.toString().padLeft(2, '0')}/'
-                      '${date.month.toString().padLeft(2, '0')}/${date.year}',
+                      DateFormat.yMd().format(date),
                       style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                 ],
@@ -1225,7 +1217,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             IconButton(
-              tooltip: 'Eliminar',
+              tooltip: context.l.delete,
               icon: Icon(Icons.delete_outline, color: AppColors.expired),
               onPressed: () => _deleteTicket(t['id'] as String),
             ),
@@ -1243,7 +1235,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
           const MiauCharacter(mood: MiauMood.curious, size: 110),
           const SizedBox(height: 12),
           Text(
-            'Aún no hay tickets este mes.\nEscanea el primero.',
+            context.l.ecoNoTickets,
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.inkMuted),
           ),
