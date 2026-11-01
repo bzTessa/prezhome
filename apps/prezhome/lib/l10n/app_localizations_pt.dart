@@ -2301,4 +2301,141 @@ class AppLocalizationsPt extends AppLocalizations {
   String nutPerMeal(int kcal, int meals) {
     return '≈ $kcal kcal por refeição ($meals refeições)';
   }
+
+  @override
+  String get ecoBudgetTitle => 'Orçamento mensal';
+
+  @override
+  String ecoAmount(String symbol) {
+    return 'Valor ($symbol)';
+  }
+
+  @override
+  String get ecoDeleteTicket => 'Eliminar talão?';
+
+  @override
+  String get ecoDeleteTicketSub => 'Deixará de contar nos teus gastos.';
+
+  @override
+  String ecoRedeemed(String title) {
+    return 'Trocaste \"$title\"';
+  }
+
+  @override
+  String get ecoRedeemFail => 'Não foi possível trocar. Talvez te falte saldo.';
+
+  @override
+  String get ecoNewReward => 'Nova recompensa';
+
+  @override
+  String get ecoRewardTitle => 'Título';
+
+  @override
+  String get ecoRewardDesc => 'Descrição (opcional)';
+
+  @override
+  String get ecoRewardCost => 'Custo em pontos';
+
+  @override
+  String get ecoTitle => 'Gastos e talões';
+
+  @override
+  String get ecoStats => 'Estatísticas das compras';
+
+  @override
+  String get ecoScan => 'Digitalizar talão';
+
+  @override
+  String ecoTicketsOf(String month) {
+    return 'Talões de $month';
+  }
+
+  @override
+  String get ecoPointsBalance => 'Balança de pontos';
+
+  @override
+  String get ecoPointsBalanceSub =>
+      'Saldo de cada membro para trocar recompensas.';
+
+  @override
+  String get ecoNoPoints => 'Ainda não há pontos para repartir';
+
+  @override
+  String get ecoNoPointsSub =>
+      'Completem tarefas do lar para encher a balança.';
+
+  @override
+  String get ecoRewards => 'Recompensas';
+
+  @override
+  String ecoBalance(int points) {
+    return 'O teu saldo: $points pts';
+  }
+
+  @override
+  String get ecoRedeem => 'Trocar';
+
+  @override
+  String get ecoNoRewards => 'Ainda não há recompensas';
+
+  @override
+  String get ecoNoRewardsSub =>
+      'Cria a primeira com o botão \"Nova recompensa\".';
+
+  @override
+  String get ecoTotalSpent => 'Gasto total registado';
+
+  @override
+  String ecoTicketCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count talões no total',
+      one: '1 talão no total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ecoThisMonth => 'Este mês';
+
+  @override
+  String ecoBudget(String amount) {
+    return 'Orçamento: $amount';
+  }
+
+  @override
+  String get ecoSetBudget => 'Definir orçamento';
+
+  @override
+  String ecoOver(String amount) {
+    return 'Passaste $amount do orçamento';
+  }
+
+  @override
+  String ecoLeft(String amount) {
+    return 'Restam-te $amount';
+  }
+
+  @override
+  String get ecoLastMonths => 'Gasto dos últimos meses';
+
+  @override
+  String ecoBudgetPerMonth(String amount) {
+    return 'Orçamento: $amount por mês';
+  }
+
+  @override
+  String get ecoBudgetShort => 'Orçamento';
+
+  @override
+  String get ecoNoTrend =>
+      'Ainda não há gasto registado nos últimos meses.\nQuando digitalizares talões verás aqui a tua tendência.';
+
+  @override
+  String get ecoTicket => 'Talão';
+
+  @override
+  String get ecoNoTickets =>
+      'Ainda não há talões este mês.\nDigitaliza o primeiro.';
 }

@@ -2278,4 +2278,132 @@ class AppLocalizationsBs extends AppLocalizations {
   String nutPerMeal(int kcal, int meals) {
     return '≈ $kcal kcal po obroku ($meals obroka)';
   }
+
+  @override
+  String get ecoBudgetTitle => 'Mjesečni budžet';
+
+  @override
+  String ecoAmount(String symbol) {
+    return 'Iznos ($symbol)';
+  }
+
+  @override
+  String get ecoDeleteTicket => 'Obrisati račun?';
+
+  @override
+  String get ecoDeleteTicketSub => 'Više se neće računati u tvoje troškove.';
+
+  @override
+  String ecoRedeemed(String title) {
+    return 'Iskoristio/la si \"$title\"';
+  }
+
+  @override
+  String get ecoRedeemFail =>
+      'Nije moguće iskoristiti. Možda nemaš dovoljno bodova.';
+
+  @override
+  String get ecoNewReward => 'Nova nagrada';
+
+  @override
+  String get ecoRewardTitle => 'Naslov';
+
+  @override
+  String get ecoRewardDesc => 'Opis (neobavezno)';
+
+  @override
+  String get ecoRewardCost => 'Cijena u bodovima';
+
+  @override
+  String get ecoTitle => 'Troškovi i računi';
+
+  @override
+  String get ecoStats => 'Statistika kupovine';
+
+  @override
+  String get ecoScan => 'Skeniraj račun';
+
+  @override
+  String ecoTicketsOf(String month) {
+    return 'Računi za $month';
+  }
+
+  @override
+  String get ecoPointsBalance => 'Stanje bodova';
+
+  @override
+  String get ecoPointsBalanceSub => 'Stanje svakog člana za nagrade.';
+
+  @override
+  String get ecoNoPoints => 'Još nema bodova za podjelu';
+
+  @override
+  String get ecoNoPointsSub => 'Završavajte kućne zadatke da skupite bodove.';
+
+  @override
+  String get ecoRewards => 'Nagrade';
+
+  @override
+  String ecoBalance(int points) {
+    return 'Tvoje stanje: $points b.';
+  }
+
+  @override
+  String get ecoRedeem => 'Iskoristi';
+
+  @override
+  String get ecoNoRewards => 'Još nema nagrada';
+
+  @override
+  String get ecoNoRewardsSub => 'Napravi prvu dugmetom \"Nova nagrada\".';
+
+  @override
+  String get ecoTotalSpent => 'Ukupno zabilježeni trošak';
+
+  @override
+  String ecoTicketCount(int count) {
+    return 'Ukupno računa: $count';
+  }
+
+  @override
+  String get ecoThisMonth => 'Ovaj mjesec';
+
+  @override
+  String ecoBudget(String amount) {
+    return 'Budžet: $amount';
+  }
+
+  @override
+  String get ecoSetBudget => 'Postavi budžet';
+
+  @override
+  String ecoOver(String amount) {
+    return 'Prekoračio/la si budžet za $amount';
+  }
+
+  @override
+  String ecoLeft(String amount) {
+    return 'Preostalo ti je $amount';
+  }
+
+  @override
+  String get ecoLastMonths => 'Troškovi zadnjih mjeseci';
+
+  @override
+  String ecoBudgetPerMonth(String amount) {
+    return 'Budžet: $amount mjesečno';
+  }
+
+  @override
+  String get ecoBudgetShort => 'Budžet';
+
+  @override
+  String get ecoNoTrend =>
+      'Još nema troškova u zadnjim mjesecima.\nSkeniraj račune da ovdje vidiš trend.';
+
+  @override
+  String get ecoTicket => 'Račun';
+
+  @override
+  String get ecoNoTickets => 'Još nema računa ovaj mjesec.\nSkeniraj prvi.';
 }

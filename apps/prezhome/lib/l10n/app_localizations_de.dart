@@ -2292,4 +2292,140 @@ class AppLocalizationsDe extends AppLocalizations {
   String nutPerMeal(int kcal, int meals) {
     return '≈ $kcal kcal pro Mahlzeit ($meals Mahlzeiten)';
   }
+
+  @override
+  String get ecoBudgetTitle => 'Monatsbudget';
+
+  @override
+  String ecoAmount(String symbol) {
+    return 'Betrag ($symbol)';
+  }
+
+  @override
+  String get ecoDeleteTicket => 'Kassenbon löschen?';
+
+  @override
+  String get ecoDeleteTicketSub =>
+      'Er zählt dann nicht mehr zu deinen Ausgaben.';
+
+  @override
+  String ecoRedeemed(String title) {
+    return 'Du hast \"$title\" eingelöst';
+  }
+
+  @override
+  String get ecoRedeemFail =>
+      'Einlösen fehlgeschlagen. Vielleicht reicht dein Guthaben nicht.';
+
+  @override
+  String get ecoNewReward => 'Neue Belohnung';
+
+  @override
+  String get ecoRewardTitle => 'Titel';
+
+  @override
+  String get ecoRewardDesc => 'Beschreibung (optional)';
+
+  @override
+  String get ecoRewardCost => 'Kosten in Punkten';
+
+  @override
+  String get ecoTitle => 'Ausgaben und Kassenbons';
+
+  @override
+  String get ecoStats => 'Einkaufsstatistik';
+
+  @override
+  String get ecoScan => 'Kassenbon scannen';
+
+  @override
+  String ecoTicketsOf(String month) {
+    return 'Kassenbons im $month';
+  }
+
+  @override
+  String get ecoPointsBalance => 'Punktestand';
+
+  @override
+  String get ecoPointsBalanceSub => 'Guthaben jedes Mitglieds für Belohnungen.';
+
+  @override
+  String get ecoNoPoints => 'Noch keine Punkte zu verteilen';
+
+  @override
+  String get ecoNoPointsSub => 'Erledigt Hausaufgaben, um Punkte zu sammeln.';
+
+  @override
+  String get ecoRewards => 'Belohnungen';
+
+  @override
+  String ecoBalance(int points) {
+    return 'Dein Guthaben: $points P.';
+  }
+
+  @override
+  String get ecoRedeem => 'Einlösen';
+
+  @override
+  String get ecoNoRewards => 'Noch keine Belohnungen';
+
+  @override
+  String get ecoNoRewardsSub => 'Erstelle die erste mit \"Neue Belohnung\".';
+
+  @override
+  String get ecoTotalSpent => 'Erfasste Gesamtausgaben';
+
+  @override
+  String ecoTicketCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Kassenbons insgesamt',
+      one: '1 Kassenbon insgesamt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ecoThisMonth => 'Dieser Monat';
+
+  @override
+  String ecoBudget(String amount) {
+    return 'Budget: $amount';
+  }
+
+  @override
+  String get ecoSetBudget => 'Budget festlegen';
+
+  @override
+  String ecoOver(String amount) {
+    return 'Du liegst $amount über dem Budget';
+  }
+
+  @override
+  String ecoLeft(String amount) {
+    return 'Noch $amount übrig';
+  }
+
+  @override
+  String get ecoLastMonths => 'Ausgaben der letzten Monate';
+
+  @override
+  String ecoBudgetPerMonth(String amount) {
+    return 'Budget: $amount pro Monat';
+  }
+
+  @override
+  String get ecoBudgetShort => 'Budget';
+
+  @override
+  String get ecoNoTrend =>
+      'Noch keine Ausgaben in den letzten Monaten.\nScanne Kassenbons, um hier deinen Verlauf zu sehen.';
+
+  @override
+  String get ecoTicket => 'Kassenbon';
+
+  @override
+  String get ecoNoTickets =>
+      'Diesen Monat noch keine Kassenbons.\nScanne den ersten.';
 }

@@ -1432,5 +1432,104 @@
         "type": "int"
       }
     }
-  }
+  },
+  "ecoBudgetTitle": "Presupuesto mensual",
+  "ecoAmount": "Importe ({symbol})",
+  "@ecoAmount": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "ecoDeleteTicket": "¿Eliminar ticket?",
+  "ecoDeleteTicketSub": "Dejará de contar en tus gastos.",
+  "ecoRedeemed": "Has canjeado \"{title}\"",
+  "@ecoRedeemed": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "ecoRedeemFail": "No se ha podido canjear. Puede que te falte saldo.",
+  "ecoNewReward": "Nueva recompensa",
+  "ecoRewardTitle": "Título",
+  "ecoRewardDesc": "Descripción (opcional)",
+  "ecoRewardCost": "Coste en puntos",
+  "ecoTitle": "Gastos y tickets",
+  "ecoStats": "Estadísticas de la compra",
+  "ecoScan": "Escanear ticket",
+  "ecoTicketsOf": "Tickets de {month}",
+  "@ecoTicketsOf": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "ecoPointsBalance": "Balanza de puntos",
+  "ecoPointsBalanceSub": "Saldo de cada miembro para canjear recompensas.",
+  "ecoNoPoints": "Aún no hay puntos que repartir",
+  "ecoNoPointsSub": "Completad tareas del hogar para llenar la balanza.",
+  "ecoRewards": "Recompensas",
+  "ecoBalance": "Tu saldo: {points} pts",
+  "@ecoBalance": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "ecoRedeem": "Canjear",
+  "ecoNoRewards": "Todavía no hay recompensas",
+  "ecoNoRewardsSub": "Crea la primera con el botón \"Nueva recompensa\".",
+  "ecoTotalSpent": "Gasto total registrado",
+  "ecoTicketCount": "{count, plural, =1{1 ticket en total} other{{count} tickets en total}}",
+  "@ecoTicketCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ecoThisMonth": "Este mes",
+  "ecoBudget": "Presupuesto: {amount}",
+  "@ecoBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "ecoSetBudget": "Fijar presupuesto",
+  "ecoOver": "Te has pasado {amount} del presupuesto",
+  "@ecoOver": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "ecoLeft": "Te quedan {amount}",
+  "@ecoLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "ecoLastMonths": "Gasto de los últimos meses",
+  "ecoBudgetPerMonth": "Presupuesto: {amount} al mes",
+  "@ecoBudgetPerMonth": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "ecoBudgetShort": "Presupuesto",
+  "ecoNoTrend": "Aún no hay gasto registrado en los últimos meses.\nCuando escanees tickets verás aquí tu tendencia.",
+  "ecoTicket": "Ticket",
+  "ecoNoTickets": "Aún no hay tickets este mes.\nEscanea el primero."
 }

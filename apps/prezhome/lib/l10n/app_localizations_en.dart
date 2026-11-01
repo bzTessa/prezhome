@@ -2288,4 +2288,139 @@ class AppLocalizationsEn extends AppLocalizations {
   String nutPerMeal(int kcal, int meals) {
     return '≈ $kcal kcal per meal ($meals meals)';
   }
+
+  @override
+  String get ecoBudgetTitle => 'Monthly budget';
+
+  @override
+  String ecoAmount(String symbol) {
+    return 'Amount ($symbol)';
+  }
+
+  @override
+  String get ecoDeleteTicket => 'Delete receipt?';
+
+  @override
+  String get ecoDeleteTicketSub => 'It will no longer count in your spending.';
+
+  @override
+  String ecoRedeemed(String title) {
+    return 'You redeemed \"$title\"';
+  }
+
+  @override
+  String get ecoRedeemFail =>
+      'Couldn\'t redeem. You may not have enough points.';
+
+  @override
+  String get ecoNewReward => 'New reward';
+
+  @override
+  String get ecoRewardTitle => 'Title';
+
+  @override
+  String get ecoRewardDesc => 'Description (optional)';
+
+  @override
+  String get ecoRewardCost => 'Cost in points';
+
+  @override
+  String get ecoTitle => 'Spending and receipts';
+
+  @override
+  String get ecoStats => 'Shopping stats';
+
+  @override
+  String get ecoScan => 'Scan receipt';
+
+  @override
+  String ecoTicketsOf(String month) {
+    return 'Receipts for $month';
+  }
+
+  @override
+  String get ecoPointsBalance => 'Points balance';
+
+  @override
+  String get ecoPointsBalanceSub => 'Each member\'s balance to redeem rewards.';
+
+  @override
+  String get ecoNoPoints => 'No points to share yet';
+
+  @override
+  String get ecoNoPointsSub => 'Complete household tasks to fill the balance.';
+
+  @override
+  String get ecoRewards => 'Rewards';
+
+  @override
+  String ecoBalance(int points) {
+    return 'Your balance: $points pts';
+  }
+
+  @override
+  String get ecoRedeem => 'Redeem';
+
+  @override
+  String get ecoNoRewards => 'No rewards yet';
+
+  @override
+  String get ecoNoRewardsSub =>
+      'Create the first one with the \"New reward\" button.';
+
+  @override
+  String get ecoTotalSpent => 'Total spending recorded';
+
+  @override
+  String ecoTicketCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count receipts in total',
+      one: '1 receipt in total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ecoThisMonth => 'This month';
+
+  @override
+  String ecoBudget(String amount) {
+    return 'Budget: $amount';
+  }
+
+  @override
+  String get ecoSetBudget => 'Set budget';
+
+  @override
+  String ecoOver(String amount) {
+    return 'You\'re $amount over budget';
+  }
+
+  @override
+  String ecoLeft(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String get ecoLastMonths => 'Spending in recent months';
+
+  @override
+  String ecoBudgetPerMonth(String amount) {
+    return 'Budget: $amount a month';
+  }
+
+  @override
+  String get ecoBudgetShort => 'Budget';
+
+  @override
+  String get ecoNoTrend =>
+      'No spending recorded in recent months yet.\nScan receipts to see your trend here.';
+
+  @override
+  String get ecoTicket => 'Receipt';
+
+  @override
+  String get ecoNoTickets => 'No receipts this month yet.\nScan the first one.';
 }
