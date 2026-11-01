@@ -654,71 +654,89 @@ class _ResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Con letra grande del sistema no cabe en pantalla: se desplaza en vez de
+    // desbordarse, y los Spacer siguen centrando cuando sí cabe.
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-        child: Column(
-          children: [
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.woodDark.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight - 40),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.woodDark.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      context.l.onbProfileBadge,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.woodDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    context.l.onbProfileName(profile.kind),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 40,
+                      letterSpacing: -0.6,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: AppTheme.surfaceDecoration(
+                      radius: AppRadius.lg,
+                    ),
+                    child: Text(
+                      context.l.onbProfileDescription(profile.kind),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.45,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  LoadMeter(
+                    label: context.l.onbLoadToday,
+                    value: profile.loadToday,
+                    valueLabel: context.l.onbLoad(
+                      _loadLevel(profile.loadToday),
+                    ),
+                    color: AppColors.terracotta,
+                  ),
+                  const SizedBox(height: 18),
+                  LoadMeter(
+                    label: context.l.onbLoadWithApp,
+                    value: profile.loadWithApp,
+                    valueLabel: context.l.onbLoad(
+                      _loadLevel(profile.loadWithApp),
+                    ),
+                    color: AppColors.sage,
+                  ),
+                  const Spacer(flex: 2),
+                  OnboardingButton(
+                    label: context.l.onbCreateAccount,
+                    onPressed: onContinue,
+                  ),
+                ],
               ),
-              child: Text(
-                context.l.onbProfileBadge,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.woodDark,
-                ),
-              ),
             ),
-            const SizedBox(height: 14),
-            Text(
-              context.l.onbProfileName(profile.kind),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 40,
-                letterSpacing: -0.6,
-                fontWeight: FontWeight.w900,
-                color: AppColors.ink,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-              child: Text(
-                context.l.onbProfileDescription(profile.kind),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  height: 1.45,
-                  color: AppColors.ink,
-                ),
-              ),
-            ),
-            const SizedBox(height: 28),
-            LoadMeter(
-              label: context.l.onbLoadToday,
-              value: profile.loadToday,
-              valueLabel: context.l.onbLoad(_loadLevel(profile.loadToday)),
-              color: AppColors.terracotta,
-            ),
-            const SizedBox(height: 18),
-            LoadMeter(
-              label: context.l.onbLoadWithApp,
-              value: profile.loadWithApp,
-              valueLabel: context.l.onbLoad(_loadLevel(profile.loadWithApp)),
-              color: AppColors.sage,
-            ),
-            const Spacer(flex: 2),
-            OnboardingButton(
-              label: context.l.onbCreateAccount,
-              onPressed: onContinue,
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -75,7 +75,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
-                            color: AppColors.terracotta,
+                            color: AppColors.terracottaText,
                           ),
                         ),
                         const SizedBox(height: 1),

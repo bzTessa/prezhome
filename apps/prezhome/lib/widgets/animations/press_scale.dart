@@ -55,31 +55,35 @@ class _PressScaleState extends State<PressScale> {
     final double target = (!reduceMotion && _pressed) ? 1 : 0;
     final VoidCallback? onTap = widget.onTap;
 
-    return Listener(
-      behavior: widget.behavior,
-      onPointerDown: (_) => _setPressed(true),
-      onPointerUp: (_) => _setPressed(false),
-      onPointerCancel: (_) => _setPressed(false),
-      child: GestureDetector(
+    // Los lectores de pantalla lo anuncian como botón, no como texto suelto.
+    return Semantics(
+      button: onTap != null,
+      child: Listener(
         behavior: widget.behavior,
-        onTap: onTap == null
-            ? null
-            : () {
-                HapticFeedback.selectionClick();
-                onTap();
-              },
-        onLongPress: widget.onLongPress,
-        child: SpringValue(
-          value: target,
-          spring: AppMotion.fluidBouncy,
-          builder: (context, p, child) => Transform.translate(
-            offset: Offset(0, 2.5 * p),
-            child: Transform.scale(
-              scale: 1 - (1 - widget.pressedScale) * p,
-              child: child,
+        onPointerDown: (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: GestureDetector(
+          behavior: widget.behavior,
+          onTap: onTap == null
+              ? null
+              : () {
+                  HapticFeedback.selectionClick();
+                  onTap();
+                },
+          onLongPress: widget.onLongPress,
+          child: SpringValue(
+            value: target,
+            spring: AppMotion.fluidBouncy,
+            builder: (context, p, child) => Transform.translate(
+              offset: Offset(0, 2.5 * p),
+              child: Transform.scale(
+                scale: 1 - (1 - widget.pressedScale) * p,
+                child: child,
+              ),
             ),
+            child: widget.child,
           ),
-          child: widget.child,
         ),
       ),
     );
