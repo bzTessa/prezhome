@@ -4487,6 +4487,282 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Es una estimación para empezar. Las comidas del plan se apuntarán solas en tu diario cuando pasen.'**
   String get pwEstimate;
+
+  /// No description provided for @phCantAnalyze.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo analizar la comida'**
+  String get phCantAnalyze;
+
+  /// No description provided for @phAnalyzeError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al analizar la foto: {error}'**
+  String phAnalyzeError(String error);
+
+  /// No description provided for @phAnalyzeFail.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al analizar la foto'**
+  String get phAnalyzeFail;
+
+  /// No description provided for @phAddOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade al menos un alimento con nombre.'**
+  String get phAddOne;
+
+  /// No description provided for @phTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar con foto'**
+  String get phTitle;
+
+  /// No description provided for @phLooking.
+  ///
+  /// In es, this message translates to:
+  /// **'Mirando el plato…'**
+  String get phLooking;
+
+  /// No description provided for @phStartTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Haz una foto a tu plato'**
+  String get phStartTitle;
+
+  /// No description provided for @phStartSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Calculamos los alimentos y sus calorías. Podrás corregirlo antes de guardar.'**
+  String get phStartSub;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer foto'**
+  String get takePhoto;
+
+  /// No description provided for @phReview.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa y corrige lo detectado'**
+  String get phReview;
+
+  /// No description provided for @phApprox.
+  ///
+  /// In es, this message translates to:
+  /// **'Las calorías son aproximadas.'**
+  String get phApprox;
+
+  /// No description provided for @phMealType.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de comida (opcional)'**
+  String get phMealType;
+
+  /// No description provided for @phNoType.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin tipo'**
+  String get phNoType;
+
+  /// No description provided for @day.
+  ///
+  /// In es, this message translates to:
+  /// **'Día'**
+  String get day;
+
+  /// No description provided for @phNothing.
+  ///
+  /// In es, this message translates to:
+  /// **'No se ha reconocido ningún alimento. Añádelos a mano.'**
+  String get phNothing;
+
+  /// No description provided for @phFoods.
+  ///
+  /// In es, this message translates to:
+  /// **'ALIMENTOS ({count})'**
+  String phFoods(int count);
+
+  /// No description provided for @phAddFood.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir alimento'**
+  String get phAddFood;
+
+  /// No description provided for @phFood.
+  ///
+  /// In es, this message translates to:
+  /// **'Alimento'**
+  String get phFood;
+
+  /// No description provided for @phGrams.
+  ///
+  /// In es, this message translates to:
+  /// **'g (aprox)'**
+  String get phGrams;
+
+  /// No description provided for @phP.
+  ///
+  /// In es, this message translates to:
+  /// **'P (g)'**
+  String get phP;
+
+  /// No description provided for @phC.
+  ///
+  /// In es, this message translates to:
+  /// **'C (g)'**
+  String get phC;
+
+  /// No description provided for @phF.
+  ///
+  /// In es, this message translates to:
+  /// **'G (g)'**
+  String get phF;
+
+  /// No description provided for @total.
+  ///
+  /// In es, this message translates to:
+  /// **'Total'**
+  String get total;
+
+  /// No description provided for @kcalAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'{kcal} kcal'**
+  String kcalAmount(int kcal);
+
+  /// No description provided for @phSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en el diario'**
+  String get phSave;
+
+  /// No description provided for @stkOpenError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir el ticket'**
+  String get stkOpenError;
+
+  /// No description provided for @stkReadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo leer el ticket'**
+  String get stkReadError;
+
+  /// No description provided for @stkScanError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al escanear'**
+  String get stkScanError;
+
+  /// No description provided for @stkPantryError.
+  ///
+  /// In es, this message translates to:
+  /// **'El ticket se guardó, pero no se pudo actualizar la despensa'**
+  String get stkPantryError;
+
+  /// No description provided for @stkCrossed.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 producto tachado de la lista} other{{count} productos tachados de la lista}}'**
+  String stkCrossed(int count);
+
+  /// No description provided for @stkEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar ticket'**
+  String get stkEdit;
+
+  /// No description provided for @stkReading.
+  ///
+  /// In es, this message translates to:
+  /// **'Leyendo el ticket…'**
+  String get stkReading;
+
+  /// No description provided for @stkStartTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanea el ticket de la compra'**
+  String get stkStartTitle;
+
+  /// No description provided for @stkStartSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Sacamos los productos y precios. Podrás revisarlo después.'**
+  String get stkStartSub;
+
+  /// No description provided for @stkReview.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa y corrige lo que haga falta'**
+  String get stkReview;
+
+  /// No description provided for @stkRemember.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus correcciones se recordarán para la próxima vez.'**
+  String get stkRemember;
+
+  /// No description provided for @stkStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienda'**
+  String get stkStore;
+
+  /// No description provided for @date.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get date;
+
+  /// No description provided for @stkAddPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir a la despensa'**
+  String get stkAddPantry;
+
+  /// No description provided for @stkAddPantrySub.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada producto va a su zona'**
+  String get stkAddPantrySub;
+
+  /// No description provided for @stkProducts.
+  ///
+  /// In es, this message translates to:
+  /// **'PRODUCTOS ({count})'**
+  String stkProducts(int count);
+
+  /// No description provided for @stkRaw.
+  ///
+  /// In es, this message translates to:
+  /// **'Ticket: \"{name}\"'**
+  String stkRaw(String name);
+
+  /// No description provided for @category.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get category;
+
+  /// No description provided for @stkQty.
+  ///
+  /// In es, this message translates to:
+  /// **'Cant.'**
+  String get stkQty;
+
+  /// No description provided for @stkSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar ticket'**
+  String get stkSave;
+
+  /// No description provided for @foodCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'{cat, select, verdura{Verduras} fruta{Frutas} carne{Carne} pescado{Pescado} lacteos{Lácteos} preparados{Platos preparados} panaderia{Panadería} cereales{Pasta, arroz y legumbres} conservas{Conservas} congelados{Congelados} dulces{Dulces y snacks} bebidas{Bebidas} especias{Especias y condimentos} higiene{Higiene} limpieza{Limpieza} hogar{Hogar} other{Otros}}'**
+  String foodCategory(String cat);
 }
 
 class _AppLocalizationsDelegate

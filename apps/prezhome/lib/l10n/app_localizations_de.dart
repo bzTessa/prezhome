@@ -2817,4 +2817,185 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get pwEstimate =>
       'Das ist eine erste Schätzung. Geplante Mahlzeiten werden danach automatisch ins Tagebuch eingetragen.';
+
+  @override
+  String get phCantAnalyze => 'Die Mahlzeit konnte nicht analysiert werden';
+
+  @override
+  String phAnalyzeError(String error) {
+    return 'Foto konnte nicht analysiert werden: $error';
+  }
+
+  @override
+  String get phAnalyzeFail => 'Foto konnte nicht analysiert werden';
+
+  @override
+  String get phAddOne => 'Füge mindestens ein Lebensmittel mit Namen hinzu.';
+
+  @override
+  String get phTitle => 'Mit Foto erfassen';
+
+  @override
+  String get phLooking => 'Schaue mir den Teller an…';
+
+  @override
+  String get phStartTitle => 'Fotografiere deinen Teller';
+
+  @override
+  String get phStartSub =>
+      'Wir erkennen Lebensmittel und Kalorien. Du kannst vor dem Speichern korrigieren.';
+
+  @override
+  String get takePhoto => 'Foto aufnehmen';
+
+  @override
+  String get phReview => 'Prüfe und korrigiere das Erkannte';
+
+  @override
+  String get phApprox => 'Die Kalorien sind ungefähr.';
+
+  @override
+  String get phMealType => 'Mahlzeit (optional)';
+
+  @override
+  String get phNoType => 'Keine';
+
+  @override
+  String get day => 'Tag';
+
+  @override
+  String get phNothing => 'Kein Lebensmittel erkannt. Füge sie von Hand hinzu.';
+
+  @override
+  String phFoods(int count) {
+    return 'LEBENSMITTEL ($count)';
+  }
+
+  @override
+  String get phAddFood => 'Lebensmittel hinzufügen';
+
+  @override
+  String get phFood => 'Lebensmittel';
+
+  @override
+  String get phGrams => 'g (ca.)';
+
+  @override
+  String get phP => 'E (g)';
+
+  @override
+  String get phC => 'KH (g)';
+
+  @override
+  String get phF => 'F (g)';
+
+  @override
+  String get total => 'Gesamt';
+
+  @override
+  String kcalAmount(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String get phSave => 'Im Tagebuch speichern';
+
+  @override
+  String get stkOpenError => 'Kassenbon konnte nicht geöffnet werden';
+
+  @override
+  String get stkReadError => 'Kassenbon konnte nicht gelesen werden';
+
+  @override
+  String get stkScanError => 'Scannen fehlgeschlagen';
+
+  @override
+  String get stkPantryError =>
+      'Kassenbon gespeichert, aber der Vorrat konnte nicht aktualisiert werden';
+
+  @override
+  String stkCrossed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Produkte von der Liste abgehakt',
+      one: '1 Produkt von der Liste abgehakt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stkEdit => 'Kassenbon bearbeiten';
+
+  @override
+  String get stkReading => 'Lese den Kassenbon…';
+
+  @override
+  String get stkStartTitle => 'Scanne deinen Kassenbon';
+
+  @override
+  String get stkStartSub =>
+      'Wir lesen Produkte und Preise aus. Du kannst es danach prüfen.';
+
+  @override
+  String get stkReview => 'Prüfe und korrigiere, was nötig ist';
+
+  @override
+  String get stkRemember =>
+      'Deine Korrekturen werden fürs nächste Mal gemerkt.';
+
+  @override
+  String get stkStore => 'Geschäft';
+
+  @override
+  String get date => 'Datum';
+
+  @override
+  String get stkAddPantry => 'Zum Vorrat hinzufügen';
+
+  @override
+  String get stkAddPantrySub => 'Jedes Produkt an seinen Platz';
+
+  @override
+  String stkProducts(int count) {
+    return 'PRODUKTE ($count)';
+  }
+
+  @override
+  String stkRaw(String name) {
+    return 'Bon: \"$name\"';
+  }
+
+  @override
+  String get category => 'Kategorie';
+
+  @override
+  String get stkQty => 'Menge';
+
+  @override
+  String get stkSave => 'Kassenbon speichern';
+
+  @override
+  String foodCategory(String cat) {
+    String _temp0 = intl.Intl.selectLogic(cat, {
+      'verdura': 'Gemüse',
+      'fruta': 'Obst',
+      'carne': 'Fleisch',
+      'pescado': 'Fisch',
+      'lacteos': 'Milchprodukte',
+      'preparados': 'Fertiggerichte',
+      'panaderia': 'Backwaren',
+      'cereales': 'Nudeln, Reis und Hülsenfrüchte',
+      'conservas': 'Konserven',
+      'congelados': 'Tiefkühlkost',
+      'dulces': 'Süßes und Snacks',
+      'bebidas': 'Getränke',
+      'especias': 'Gewürze und Würzmittel',
+      'higiene': 'Körperpflege',
+      'limpieza': 'Reinigung',
+      'hogar': 'Haushalt',
+      'other': 'Sonstiges',
+    });
+    return '$_temp0';
+  }
 }

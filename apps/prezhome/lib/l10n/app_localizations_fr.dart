@@ -2837,4 +2837,185 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get pwEstimate =>
       'C\'est une estimation pour commencer. Les repas du plan s\'enregistreront seuls dans ton journal une fois passés.';
+
+  @override
+  String get phCantAnalyze => 'Impossible d\'analyser le repas';
+
+  @override
+  String phAnalyzeError(String error) {
+    return 'Erreur d\'analyse de la photo : $error';
+  }
+
+  @override
+  String get phAnalyzeFail => 'Erreur d\'analyse de la photo';
+
+  @override
+  String get phAddOne => 'Ajoute au moins un aliment avec un nom.';
+
+  @override
+  String get phTitle => 'Enregistrer avec une photo';
+
+  @override
+  String get phLooking => 'J\'examine l\'assiette…';
+
+  @override
+  String get phStartTitle => 'Prends ton assiette en photo';
+
+  @override
+  String get phStartSub =>
+      'On calcule les aliments et leurs calories. Tu pourras corriger avant d\'enregistrer.';
+
+  @override
+  String get takePhoto => 'Prendre une photo';
+
+  @override
+  String get phReview => 'Vérifie et corrige ce qui a été détecté';
+
+  @override
+  String get phApprox => 'Les calories sont approximatives.';
+
+  @override
+  String get phMealType => 'Repas (facultatif)';
+
+  @override
+  String get phNoType => 'Aucun';
+
+  @override
+  String get day => 'Jour';
+
+  @override
+  String get phNothing => 'Aucun aliment reconnu. Ajoute-les à la main.';
+
+  @override
+  String phFoods(int count) {
+    return 'ALIMENTS ($count)';
+  }
+
+  @override
+  String get phAddFood => 'Ajouter un aliment';
+
+  @override
+  String get phFood => 'Aliment';
+
+  @override
+  String get phGrams => 'g (env.)';
+
+  @override
+  String get phP => 'P (g)';
+
+  @override
+  String get phC => 'G (g)';
+
+  @override
+  String get phF => 'L (g)';
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String kcalAmount(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String get phSave => 'Enregistrer dans le journal';
+
+  @override
+  String get stkOpenError => 'Impossible d\'ouvrir le ticket';
+
+  @override
+  String get stkReadError => 'Impossible de lire le ticket';
+
+  @override
+  String get stkScanError => 'Erreur de scan';
+
+  @override
+  String get stkPantryError =>
+      'Ticket enregistré, mais impossible de mettre à jour les placards';
+
+  @override
+  String stkCrossed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count produits cochés sur la liste',
+      one: '1 produit coché sur la liste',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stkEdit => 'Modifier le ticket';
+
+  @override
+  String get stkReading => 'Lecture du ticket…';
+
+  @override
+  String get stkStartTitle => 'Scanne le ticket de courses';
+
+  @override
+  String get stkStartSub =>
+      'On récupère produits et prix. Tu pourras vérifier ensuite.';
+
+  @override
+  String get stkReview => 'Vérifie et corrige si besoin';
+
+  @override
+  String get stkRemember =>
+      'Tes corrections seront mémorisées pour la prochaine fois.';
+
+  @override
+  String get stkStore => 'Magasin';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get stkAddPantry => 'Ajouter aux placards';
+
+  @override
+  String get stkAddPantrySub => 'Chaque produit va à sa place';
+
+  @override
+  String stkProducts(int count) {
+    return 'PRODUITS ($count)';
+  }
+
+  @override
+  String stkRaw(String name) {
+    return 'Ticket : \"$name\"';
+  }
+
+  @override
+  String get category => 'Catégorie';
+
+  @override
+  String get stkQty => 'Qté';
+
+  @override
+  String get stkSave => 'Enregistrer le ticket';
+
+  @override
+  String foodCategory(String cat) {
+    String _temp0 = intl.Intl.selectLogic(cat, {
+      'verdura': 'Légumes',
+      'fruta': 'Fruits',
+      'carne': 'Viande',
+      'pescado': 'Poisson',
+      'lacteos': 'Produits laitiers',
+      'preparados': 'Plats préparés',
+      'panaderia': 'Boulangerie',
+      'cereales': 'Pâtes, riz et légumineuses',
+      'conservas': 'Conserves',
+      'congelados': 'Surgelés',
+      'dulces': 'Sucreries et snacks',
+      'bebidas': 'Boissons',
+      'especias': 'Épices et condiments',
+      'higiene': 'Hygiène',
+      'limpieza': 'Ménage',
+      'hogar': 'Maison',
+      'other': 'Autres',
+    });
+    return '$_temp0';
+  }
 }

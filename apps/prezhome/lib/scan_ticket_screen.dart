@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +14,7 @@ import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'utils/ticket_date.dart';
 import 'widgets/food_category_icon.dart';
+import 'l10n/l10n.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
 /// pantalla de revisión editable antes de guardar. Aprende las correcciones.
@@ -90,7 +92,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo abrir el ticket'))),
+        SnackBar(content: Text(friendlyError(e, context.l.stkOpenError))),
       );
       Navigator.of(context).pop();
     } finally {
@@ -130,7 +132,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, context.l.nutSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -170,6 +172,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   }
 
   Future<void> _pickAndScan(ImageSource source) async {
+    final l = context.l;
     try {
       final XFile? file = await _picker.pickImage(
         source: source,
@@ -194,14 +197,14 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       } else {
         final msg = (data is Map && data['error'] != null)
             ? data['error'].toString()
-            : 'No se pudo leer el ticket';
+            : l.stkReadError;
         throw msg;
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al escanear')),
+            content: Text(friendlyError(e, context.l.stkScanError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -248,6 +251,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       _items.fold(0.0, (a, it) => a + _num(it.totalPrice.text));
 
   Future<void> _save() async {
+    final l = context.l;
     setState(() => _saving = true);
     try {
       final user = _client.auth.currentUser;
@@ -258,7 +262,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           .eq('id', user.id)
           .single();
       final homeId = profile['home_id'];
-      if (homeId == null) throw 'No perteneces a ningún hogar.';
+      if (homeId == null) throw l.planNoHome;
 
       // 1. Crear el ticket
       final ticket = await _client
@@ -329,13 +333,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  friendlyError(
-                    e,
-                    'El ticket se guardó, pero no se pudo actualizar la '
-                    'despensa',
-                  ),
-                ),
+                content: Text(friendlyError(e, context.l.stkPantryError)),
                 backgroundColor: Colors.orange,
               ),
             );
@@ -356,22 +354,16 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
 
       if (!mounted) return;
       if (crossed > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              crossed == 1
-                  ? '1 producto tachado de la lista'
-                  : '$crossed productos tachados de la lista',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l.stkCrossed(crossed))));
       }
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, context.l.nutSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -493,17 +485,17 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: Text(
-          widget.ticketId == null ? 'Escanear ticket' : 'Editar ticket',
+          widget.ticketId == null ? context.l.ecoScan : context.l.stkEdit,
         ),
       ),
       body: _processing
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Leyendo el ticket…'),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(context.l.stkReading),
                 ],
               ),
             )
@@ -522,14 +514,14 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           children: [
             Icon(Icons.receipt_long_outlined, size: 72, color: AppColors.wood),
             const SizedBox(height: 16),
-            const Text(
-              'Escanea el ticket de la compra',
+            Text(
+              context.l.stkStartTitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Sacamos los productos y precios. Podrás revisarlo después.',
+              context.l.stkStartSub,
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.inkMuted),
             ),
@@ -537,7 +529,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             ElevatedButton.icon(
               onPressed: () => _pickAndScan(ImageSource.camera),
               icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text('Hacer foto'),
+              label: Text(context.l.takePhoto),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -551,7 +543,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                 ),
               ),
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Elegir de la galería'),
+              label: Text(context.l.rdGallery),
             ),
           ],
         ),
@@ -572,19 +564,19 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Revisa y corrige lo que haga falta',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    Text(
+                      context.l.stkReview,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Tus correcciones se recordarán para la próxima vez.',
+                      context.l.stkRemember,
                       style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _merchantController,
-                      decoration: _dec('Tienda'),
+                      decoration: _dec(context.l.stkStore),
                     ),
                     const SizedBox(height: 12),
                     InkWell(
@@ -602,20 +594,16 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                       },
                       borderRadius: BorderRadius.circular(16),
                       child: InputDecorator(
-                        decoration: _dec('Fecha'),
-                        child: Text(
-                          '${_purchasedAt.day.toString().padLeft(2, '0')}/'
-                          '${_purchasedAt.month.toString().padLeft(2, '0')}/'
-                          '${_purchasedAt.year}',
-                        ),
+                        decoration: _dec(context.l.date),
+                        child: Text(DateFormat.yMd().format(_purchasedAt)),
                       ),
                     ),
                     const SizedBox(height: 4),
                     if (widget.ticketId == null)
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Añadir a la despensa'),
-                        subtitle: const Text('Cada producto va a su zona'),
+                        title: Text(context.l.stkAddPantry),
+                        subtitle: Text(context.l.stkAddPantrySub),
                         value: _addToPantry,
                         activeThumbColor: AppColors.wood,
                         onChanged: (val) {
@@ -631,7 +619,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
               Row(
                 children: [
                   Text(
-                    'PRODUCTOS (${_items.length})',
+                    context.l.stkProducts(_items.length),
                     style: TextStyle(
                       fontSize: 12,
                       letterSpacing: 1,
@@ -643,7 +631,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                   TextButton.icon(
                     onPressed: () => setState(() => _items.add(_ItemRow())),
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Añadir'),
+                    label: Text(context.l.add),
                   ),
                 ],
               ),
@@ -669,11 +657,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
               Expanded(
                 child: TextField(
                   controller: it.name,
-                  decoration: _dec('Producto'),
+                  decoration: _dec(context.l.product),
                 ),
               ),
               IconButton(
-                tooltip: 'Quitar',
+                tooltip: context.l.remove,
                 icon: Icon(Icons.close, color: AppColors.expired),
                 onPressed: () => setState(() {
                   _items.removeAt(index);
@@ -688,7 +676,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 2, left: 4),
                 child: Text(
-                  'Ticket: "${it.rawName}"',
+                  context.l.stkRaw(it.rawName),
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
                 ),
               ),
@@ -700,13 +688,13 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                 child: DropdownButtonFormField<FoodCategory>(
                   initialValue: it.category,
                   isExpanded: true,
-                  decoration: _dec('Categoría'),
+                  decoration: _dec(context.l.category),
                   items: [
                     for (final c in FoodCategory.values)
                       DropdownMenuItem(
                         value: c,
                         child: Text(
-                          '${c.emoji} ${c.label}',
+                          '${c.emoji} ${context.l.foodCategory(c.name)}',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -722,7 +710,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: _dec('Cant.'),
+                  decoration: _dec(context.l.stkQty),
                 ),
               ),
               const SizedBox(width: 8),
@@ -757,7 +745,10 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Total', style: TextStyle(color: AppColors.inkMuted)),
+                Text(
+                  context.l.total,
+                  style: TextStyle(color: AppColors.inkMuted),
+                ),
                 Text(
                   money(_total),
                   style: const TextStyle(
@@ -777,7 +768,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                     : () => _saveEdit(widget.ticketId!),
                 child: _saving
                     ? const CircularProgressIndicator()
-                    : const Text('Guardar ticket'),
+                    : Text(context.l.stkSave),
               ),
             ),
           ],
