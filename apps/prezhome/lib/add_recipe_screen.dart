@@ -15,6 +15,7 @@ import 'utils/nutrition_calc.dart';
 import 'theme/app_theme.dart';
 import 'widgets/list_skeleton.dart';
 import 'l10n/l10n.dart';
+import 'services/share_inbox.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -26,11 +27,15 @@ class AddRecipeScreen extends StatefulWidget {
   /// Al abrir pide el enlace de un vídeo y lee la receta.
   final bool startWithLink;
 
+  /// Enlace o texto compartido desde otra app: se importa sin preguntar.
+  final String? shared;
+
   const AddRecipeScreen({
     super.key,
     this.recipe,
     this.startWithAI = false,
     this.startWithLink = false,
+    this.shared,
   });
 
   bool get isEditing => recipe != null;
@@ -42,6 +47,8 @@ class AddRecipeScreen extends StatefulWidget {
 class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final SupabaseClient _client = Supabase.instance.client;
+
+  bool get _fromLink => widget.startWithLink || widget.shared != null;
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -99,10 +106,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       _prefillFromRecipe(widget.recipe!);
     } else {
       _mealTypes.add('lunch');
-      if (widget.startWithAI || widget.startWithLink) {
+      if (widget.startWithAI || _fromLink) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
-          final started = widget.startWithLink
-              ? await _importFromLink()
+          final started = _fromLink
+              ? await _importFromLink(shared: widget.shared)
               : await _fillWithAI();
           // Si se cancela o no sale, se vuelve a elegir cómo añadirla en vez
           // de quedarse en el formulario vacío.
@@ -231,14 +238,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         return AlertDialog(
           scrollable: true,
           backgroundColor: AppColors.cream,
-          title: const Text('Escribe el nombre'),
+          title: Text(context.l.arWriteName),
           content: TextField(
             controller: controller,
             autofocus: true,
             maxLines: 6,
             minLines: 1,
             decoration: InputDecoration(
-              hintText: 'Escribe el nombre o pega una receta entera…',
+              hintText: context.l.arWriteNameHint,
               filled: true,
               fillColor: AppColors.card,
               border: OutlineInputBorder(
@@ -250,7 +257,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
+              child: Text(context.l.cancel),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -260,7 +267,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               ),
               onPressed: () =>
                   Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Generar'),
+              child: Text(context.l.arGenerate),
             ),
           ],
         );
@@ -289,11 +296,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           Map<String, dynamic>.from(data['recipe'] as Map),
         );
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta rellenada. Revísala antes de guardar.'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(context.l.arFilled)));
         }
         return true;
       } else {
@@ -306,7 +311,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo completar la receta')),
+            content: Text(friendlyError(e, context.l.arFillError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -323,87 +328,90 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   /// lo estructura) y rellena el formulario. Si el enlace no se puede leer
   /// (Instagram casi nunca deja), vuelve a abrir el diálogo pidiendo pegar la
   /// descripción del post. Devuelve true si la receta quedó rellenada.
-  Future<bool> _importFromLink({String? link, String? note}) async {
-    final input = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          scrollable: true,
-          backgroundColor: AppColors.cream,
-          title: Text(link == null ? 'Importar receta' : 'Pega la receta'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                note ??
-                    'Pega el enlace de TikTok, YouTube o una web, o el texto '
-                        'de la receta. En Instagram copia la descripción del '
-                        'post y pégala aquí.',
-                style: const TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                minLines: 1,
-                maxLines: 6,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  hintText: link == null
-                      ? 'Enlace o texto de la receta'
-                      : 'Texto de la receta',
-                  suffixIcon: IconButton(
-                    tooltip: 'Pegar',
-                    icon: const Icon(Icons.content_paste_rounded),
-                    onPressed: () async {
-                      final clip = await Clipboard.getData(
-                        Clipboard.kTextPlain,
-                      );
-                      final text = clip?.text?.trim() ?? '';
-                      if (text.isNotEmpty) controller.text = text;
-                    },
-                  ),
-                  filled: true,
-                  fillColor: AppColors.card,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
+  Future<bool> _importFromLink({
+    String? link,
+    String? note,
+    String? shared,
+  }) async {
+    final input = shared != null
+        ? (firstUrl(shared) ?? shared).trim()
+        : await showDialog<String>(
+            context: context,
+            builder: (context) {
+              final controller = TextEditingController();
+              return AlertDialog(
+                scrollable: true,
+                backgroundColor: AppColors.cream,
+                title: Text(
+                  link == null ? context.l.arImport : context.l.arPasteRecipe,
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.wood,
-                foregroundColor: AppColors.ink,
-                elevation: 0,
-              ),
-              onPressed: () =>
-                  Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Importar'),
-            ),
-          ],
-        );
-      },
-    );
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      note ?? context.l.arImportHint,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      minLines: 1,
+                      maxLines: 6,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(
+                        hintText: link == null
+                            ? context.l.arLinkOrText
+                            : context.l.arRecipeText,
+                        suffixIcon: IconButton(
+                          tooltip: context.l.paste,
+                          icon: const Icon(Icons.content_paste_rounded),
+                          onPressed: () async {
+                            final clip = await Clipboard.getData(
+                              Clipboard.kTextPlain,
+                            );
+                            final text = clip?.text?.trim() ?? '';
+                            if (text.isNotEmpty) controller.text = text;
+                          },
+                        ),
+                        filled: true,
+                        fillColor: AppColors.card,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(context.l.cancel),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.wood,
+                      foregroundColor: AppColors.ink,
+                      elevation: 0,
+                    ),
+                    onPressed: () =>
+                        Navigator.of(context).pop(controller.text.trim()),
+                    child: Text(context.l.arImportBtn),
+                  ),
+                ],
+              );
+            },
+          );
 
     if (input == null || input.isEmpty) return false;
     if (!mounted) return false;
     final isUrl = link == null && _looksLikeUrl(input);
     final url = link ?? (isUrl ? input : null);
     if (!isUrl && input.length < 15) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pega un enlace o el texto completo de la receta.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.arNeedLink)));
       return false;
     }
 
@@ -425,11 +433,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         // Guardamos el enlace en el campo de vídeo para conservar la fuente.
         if (url != null) _videoController.text = url;
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta importada. Revísala antes de guardar.'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(context.l.arImported)));
         }
         return true;
       } else {
@@ -445,7 +451,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo importar')),
+            content: Text(friendlyError(e, context.l.arImportError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -722,22 +728,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_mealTypes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Elige al menos un tipo de comida.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.arPickMealType)));
       return;
     }
     // Aviso suave si el enlace de video no parece una URL. No bloquea: la
     // receta se guarda igual con el texto tal cual lo escribió la persona.
     final videoText = _videoController.text.trim();
     if (videoText.isNotEmpty && !_looksLikeUrl(videoText)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'El enlace de video no parece una URL, pero lo guardamos igual.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.arVideoNotUrl)));
     }
     setState(() => _isLoading = true);
     try {
@@ -875,22 +877,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
       if (mounted) {
         if (nutritionUpdated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Calorías y macros recalculadas con los ingredientes.',
-              ),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(context.l.arRecalculated)));
         }
         if (imageFailed) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Receta guardada, pero la foto no se pudo subir: '
-                '${imageError ?? ''}',
-              ),
-            ),
+            SnackBar(content: Text(context.l.arPhotoFailed(imageError ?? ''))),
           );
         }
         Navigator.of(context).pop(true);
@@ -899,7 +892,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, context.l.arSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -917,7 +910,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: Text(
-          widget.isEditing ? 'Editar receta' : 'Nueva receta',
+          widget.isEditing ? context.l.rdEdit : context.l.recNew,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.cream,
@@ -933,9 +926,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
                   Text(
-                    widget.startWithLink
-                        ? 'Leyendo la receta del vídeo…'
-                        : 'Completando la receta…',
+                    _fromLink
+                        ? context.l.arReadingVideo
+                        : context.l.arCompleting,
                     style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ],
@@ -983,7 +976,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Añadir foto (opcional)',
+                                    context.l.arAddPhoto,
                                     style: TextStyle(color: AppColors.inkMuted),
                                   ),
                                 ],
@@ -996,7 +989,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                                     backgroundColor: AppColors.inkMuted,
                                     radius: 16,
                                     child: IconButton(
-                                      tooltip: 'Editar',
+                                      tooltip: context.l.edit,
                                       padding: EdgeInsets.zero,
                                       icon: const Icon(
                                         Icons.edit,
@@ -1014,15 +1007,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _titleController,
-                    decoration: _dec('Título'),
+                    decoration: _dec(context.l.arTitleField),
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Ponle un título'
+                        ? context.l.arTitleRequired
                         : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _descriptionController,
-                    decoration: _dec('Descripción (opcional)'),
+                    decoration: _dec(context.l.arDescription),
                     maxLines: 2,
                   ),
                   const SizedBox(height: 16),
@@ -1032,19 +1025,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   TextFormField(
                     controller: _videoController,
                     keyboardType: TextInputType.url,
-                    decoration: _dec('Enlace de video (opcional)'),
+                    decoration: _dec(context.l.arVideoLink),
                   ),
                   const SizedBox(height: 20),
 
                   // --- Tipos de comida (selección múltiple) ---
-                  const _SectionTitle('Tipo de comida (puedes elegir varios)'),
+                  _SectionTitle(context.l.arMealTypes),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     children: Recipe.mealTypeLabels.entries.map((e) {
                       final selected = _mealTypes.contains(e.key);
                       return FilterChip(
-                        label: Text(e.value),
+                        label: Text(context.l.mealType(e.key)),
                         selected: selected,
                         checkmarkColor: AppColors.ink,
                         backgroundColor: AppColors.card,
@@ -1065,9 +1058,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         child: TextFormField(
                           controller: _servingsController,
                           keyboardType: TextInputType.number,
-                          decoration: _dec('Raciones').copyWith(
-                            hintText: 'Auto',
-                            helperText: 'Para cuántas es',
+                          decoration: _dec(context.l.diaServings).copyWith(
+                            hintText: context.l.arAuto,
+                            helperText: context.l.arServingsHelper,
                           ),
                         ),
                       ),
@@ -1078,7 +1071,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: _dec('Gramos / ración'),
+                          decoration: _dec(context.l.arGramsServing),
                         ),
                       ),
                     ],
@@ -1086,12 +1079,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const SizedBox(height: 24),
 
                   // --- Macros ---
-                  const _SectionTitle('Valores nutricionales (por ración)'),
+                  _SectionTitle(context.l.arNutritionTitle),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _caloriesController,
                     keyboardType: TextInputType.number,
-                    decoration: _dec('Calorías (kcal)'),
+                    decoration: _dec(context.l.diaKcalField),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -1102,7 +1095,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: _dec('Proteína (g)'),
+                          decoration: _dec(context.l.diaProteinG),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1112,7 +1105,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: _dec('Carbos (g)'),
+                          decoration: _dec(context.l.diaCarbsG),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1122,7 +1115,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: _dec('Grasa (g)'),
+                          decoration: _dec(context.l.diaFatG),
                         ),
                       ),
                     ],
@@ -1130,7 +1123,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const SizedBox(height: 24),
 
                   // --- Tiempos y aparato ---
-                  const _SectionTitle('Cocina'),
+                  _SectionTitle(context.l.arCooking),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -1138,7 +1131,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         child: TextFormField(
                           controller: _prepController,
                           keyboardType: TextInputType.number,
-                          decoration: _dec('Preparación (min)'),
+                          decoration: _dec(context.l.arPrepMin),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1146,7 +1139,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         child: TextFormField(
                           controller: _cookController,
                           keyboardType: TextInputType.number,
-                          decoration: _dec('Cocción (min)'),
+                          decoration: _dec(context.l.arCookMin),
                         ),
                       ),
                     ],
@@ -1154,7 +1147,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _appliance,
-                    decoration: _dec('Aparato principal'),
+                    decoration: _dec(context.l.arAppliance),
                     items: Recipe.applianceLabels.entries
                         .map(
                           (e) => DropdownMenuItem(
@@ -1167,14 +1160,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   const SizedBox(height: 8),
                   SwitchListTile(
-                    title: const Text('Es congelable'),
+                    title: Text(context.l.arFreezable),
                     value: _freezable,
                     activeThumbColor: AppColors.wood,
                     contentPadding: EdgeInsets.zero,
                     onChanged: (v) => setState(() => _freezable = v),
                   ),
                   SwitchListTile(
-                    title: const Text('Marcar como favorita'),
+                    title: Text(context.l.recFavorite),
                     value: _isFavorite,
                     activeThumbColor: AppColors.wood,
                     contentPadding: EdgeInsets.zero,
@@ -1183,7 +1176,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const SizedBox(height: 16),
 
                   // --- Ingredientes ---
-                  const _SectionTitle('Ingredientes'),
+                  _SectionTitle(context.l.rdIngredients),
                   const SizedBox(height: 12),
                   ..._buildIngredientRows(),
                   const SizedBox(height: 8),
@@ -1195,7 +1188,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       ),
                       icon: Icon(Icons.add, color: AppColors.ink),
                       label: Text(
-                        'Añadir ingrediente',
+                        context.l.arAddIngredient,
                         style: TextStyle(
                           color: AppColors.ink,
                           fontWeight: FontWeight.w600,
@@ -1206,11 +1199,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const SizedBox(height: 24),
 
                   // --- Pasos / instrucciones ---
-                  const _SectionTitle('Pasos de preparación'),
+                  _SectionTitle(context.l.arStepsTitle),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _instructionsController,
-                    decoration: _dec('Escribe los pasos, uno por línea…'),
+                    decoration: _dec(context.l.arStepsHint),
                     maxLines: 8,
                     minLines: 4,
                   ),
@@ -1231,8 +1224,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         ? const CircularProgressIndicator()
                         : Text(
                             widget.isEditing
-                                ? 'Guardar cambios'
-                                : 'Guardar Receta',
+                                ? context.l.arSaveChanges
+                                : context.l.arSaveRecipe,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -1283,11 +1276,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   Expanded(
                     child: TextField(
                       controller: ing.name,
-                      decoration: _dec('Ingrediente'),
+                      decoration: _dec(context.l.arIngredient),
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Quitar',
+                    tooltip: context.l.remove,
                     icon: Icon(Icons.close, color: AppColors.expired),
                     onPressed: _ingredients.length == 1
                         ? null
@@ -1308,7 +1301,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: _dec('Cantidad'),
+                      decoration: _dec(context.l.quantity),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1330,7 +1323,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                               controller: controller,
                               focusNode: focusNode,
                               decoration: _dec(
-                                'Unidad',
+                                context.l.unit,
                               ).copyWith(hintText: 'g, taza, cda...'),
                               onSubmitted: (_) => onFieldSubmitted(),
                             );

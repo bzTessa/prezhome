@@ -1,7 +1,7 @@
 # Importa cada semana los precios de referencia de Open Prices (Open Food
 # Facts) a la tabla market_prices de Supabase (scripts/open_prices_sync.py) y
-# los catálogos de Mercadona, Dia, Consum y REWE a supermarket_products
-# (scripts/*_sync.py).
+# los catálogos de Mercadona, Dia, Consum, bonÀrea, Lidl, REWE, Ahorramás,
+# Pingo Doce y Auchan Portugal a supermarket_products (scripts/*_sync.py).
 #
 # Secrets (Settings -> Secrets and variables -> Actions):
 #   SUPABASE_PROJECT_REF       (ya existe, lo usa deploy.yml)
@@ -19,7 +19,7 @@ permissions:
 jobs:
   importar:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50 # bonÀrea (~20 min) y Lidl (~5 min) leen fichas una a una
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -55,3 +55,35 @@ jobs:
           SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/consum_sync.py
+      - name: Importar catálogo de bonÀrea
+        if: ${{ !cancelled() }}
+        env:
+          SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/bonarea_sync.py
+      - name: Importar productos de Lidl
+        if: ${{ !cancelled() }}
+        env:
+          SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/lidl_sync.py
+
+  # Fichas de producto una a una (JSON-LD): cada súper en su propio trabajo,
+  # en paralelo, porque los grandes tardan más de una hora.
+  fichas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        store: [ahorramas, pingodoce, auchan]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Importar ${{ matrix.store }}
+        env:
+          SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/jsonld_sync.py ${{ matrix.store }}

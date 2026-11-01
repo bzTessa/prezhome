@@ -29,6 +29,7 @@ import 'utils/pantry_ideas.dart';
 import 'utils/recipe_steps.dart';
 import 'utils/shopping_categories.dart';
 import 'widgets/list_skeleton.dart';
+import 'l10n/l10n.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -189,7 +190,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, 'No se pudo actualizar')),
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
           backgroundColor: AppColors.expired,
         ),
       );
@@ -211,7 +212,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             Padding(
               padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Text(
-                'Foto de la receta',
+                context.l.rdPhoto,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -221,8 +222,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             ListTile(
               leading: Icon(Icons.image_search, color: AppColors.woodDark),
-              title: const Text('Buscar otra foto automática'),
-              subtitle: const Text('Busca una imagen nueva por el nombre'),
+              title: Text(context.l.rdAutoPhoto),
+              subtitle: Text(context.l.rdAutoPhotoHint),
               onTap: () => Navigator.of(ctx).pop('regenerate'),
             ),
             ListTile(
@@ -230,7 +231,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 Icons.photo_library_outlined,
                 color: AppColors.woodDark,
               ),
-              title: const Text('Elegir de la galería'),
+              title: Text(context.l.rdGallery),
               onTap: () => Navigator.of(ctx).pop('gallery'),
             ),
             const SizedBox(height: 8),
@@ -261,11 +262,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (url != null) _seenPhotoUrls.add(url);
       if (!mounted) return;
       if (url == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No he encontrado otra foto mejor por ahora'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l.rdNoBetterPhoto)));
         return;
       }
       // Guardamos como foto externa. Al poner una externa nueva, quitamos la
@@ -280,7 +279,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
+            content: Text(friendlyError(e, context.l.couldNotChangePhoto)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -325,7 +324,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo subir la foto')),
+            content: Text(friendlyError(e, context.l.rdUploadError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -364,13 +363,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   /// Comparte un código con el que otra persona guarda la receta en su app.
   Future<void> _share() async {
     final box = context.findRenderObject() as RenderBox?;
+    final l = context.l;
     try {
       final code = await RecipeShare(_client).share(_recipe.id);
       await SharePlus.instance.share(
         ShareParams(
-          text:
-              'Te paso mi receta de ${_recipe.title} en PrezHome. En la app, '
-              've a Recetas, toca Añadir receta y luego Con un código: $code',
+          text: l.rdShareText(_recipe.title, code),
           sharePositionOrigin: box == null
               ? null
               : box.localToGlobal(Offset.zero) & box.size,
@@ -392,12 +390,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.cream,
-        title: const Text('¿Eliminar receta?'),
-        content: Text('Se borrará "${_recipe.title}" y sus ingredientes.'),
+        title: Text(context.l.recDeleteAsk),
+        content: Text(context.l.recRemoveAsk(_recipe.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -406,7 +404,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               elevation: 0,
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(context.l.delete),
           ),
         ],
       ),
@@ -427,7 +425,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo eliminar')),
+            content: Text(friendlyError(e, context.l.couldNotDelete)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -471,15 +469,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           .from('inventory_items')
           .insert(frozenDishItem(r, servings).toMap());
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Guardado en el congelador.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l.rdSavedFreezer)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'No se pudo guardar')),
+            content: Text(friendlyError(e, context.l.couldNotSave)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -499,7 +497,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo abrir el enlace del video'),
+            content: Text(context.l.rdVideoError),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -508,7 +506,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se pudo abrir el enlace del video'),
+            content: Text(context.l.rdVideoError),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -543,7 +541,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 padding: const EdgeInsets.all(6),
                 child: _roundAction(
                   icon: Icons.arrow_back_rounded,
-                  tooltip: 'Volver',
+                  tooltip: context.l.back,
                   onTap: () => Navigator.of(context).pop(_changed),
                 ),
               ),
@@ -554,8 +552,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       : Icons.favorite_border_rounded,
                   color: r.isFavorite ? AppColors.favorite : AppColors.ink,
                   tooltip: r.isFavorite
-                      ? 'Quitar de favoritas'
-                      : 'Marcar favorita',
+                      ? context.l.recUnfavorite
+                      : context.l.recFavorite,
                   onTap: _toggleFavorite,
                 ),
                 const SizedBox(width: 6),
@@ -620,7 +618,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           side: BorderSide(color: AppColors.wood),
                         ),
                         icon: const Icon(Icons.play_circle_outline),
-                        label: const Text('Ver vídeo'),
+                        label: Text(context.l.rdWatchVideo),
                       ),
                     ],
                     const SizedBox(height: 22),
@@ -673,7 +671,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         width: 42,
         height: 42,
         child: PopupMenuButton<String>(
-          tooltip: 'Más opciones',
+          tooltip: context.l.moreOptions,
           icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
           padding: EdgeInsets.zero,
           onSelected: (v) {
@@ -693,7 +691,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               value: 'photo',
               child: ListTile(
                 leading: Icon(Icons.photo_camera_outlined),
-                title: Text('Cambiar foto'),
+                title: Text(context.l.changePhoto),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -701,7 +699,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               value: 'share',
               child: ListTile(
                 leading: Icon(Icons.ios_share_rounded),
-                title: Text('Compartir'),
+                title: Text(context.l.share),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -709,7 +707,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               value: 'edit',
               child: ListTile(
                 leading: Icon(Icons.edit_outlined),
-                title: Text('Editar receta'),
+                title: Text(context.l.rdEdit),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -717,7 +715,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               value: 'delete',
               child: ListTile(
                 leading: Icon(Icons.delete_outline, color: AppColors.expired),
-                title: Text('Eliminar'),
+                title: Text(context.l.delete),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -733,14 +731,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       _stat(
         Icons.schedule_rounded,
         r.totalTimeMinutes == null ? '—' : '${r.totalTimeMinutes}',
-        'Minutos',
+        context.l.rdMinutes,
         AppColors.frost,
         AppColors.frostBg,
       ),
       _stat(
         Icons.local_fire_department_rounded,
         r.calories == null ? '—' : '${r.calories}',
-        'Kcal/ración',
+        context.l.rdKcalServing,
         AppColors.terracotta,
         AppColors.terracottaBg,
       ),
@@ -748,7 +746,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         _stat(
           Icons.euro_rounded,
           money(_cost!.perServing),
-          'por ración',
+          context.l.rdPerServingShort,
           AppColors.sage,
           AppColors.sageBg,
         )
@@ -756,7 +754,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         _stat(
           Icons.restaurant_rounded,
           '${r.servings}',
-          r.servings == 1 ? 'Ración' : 'Raciones',
+          context.l.rdServingWord(r.servings),
           AppColors.peach,
           AppColors.peachBg,
         ),
@@ -824,8 +822,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             style: RecipeChipStyle.type,
           ),
         if (r.freezesWell)
-          const RecipeChip(
-            text: 'Congelable',
+          RecipeChip(
+            text: context.l.rdFreezable,
             icon: Icons.ac_unit,
             style: RecipeChipStyle.freezer,
           ),
@@ -843,9 +841,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   /// cada cosa en su sitio, como en las apps de recetas más usadas.
   Widget _sectionTabs(int stepCount) {
     final labels = [
-      'Ingredientes',
-      stepCount == 0 ? 'Pasos' : 'Pasos ($stepCount)',
-      'Nutrición',
+      context.l.rdIngredients,
+      stepCount == 0 ? context.l.rdStepsWord : context.l.rdSteps(stepCount),
+      context.l.rdNutrition,
     ];
     return Container(
       padding: const EdgeInsets.all(4),
@@ -889,7 +887,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  String _servingsText(int n) => '$n ${n == 1 ? 'ración' : 'raciones'}';
+  String _servingsText(int n) => context.l.planServings(n);
 
   /// Cantidad + nombre listos para leer ("200 g arroz", "Sal (al gusto)").
   ({String prefix, String name}) _ingredientParts(Ingredient ing) {
@@ -933,10 +931,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             _amountCard(r),
             const SizedBox(height: 12),
             if (ings.isEmpty)
-              Text(
-                'Sin ingredientes registrados.',
-                style: AppTextStyles.bodyMuted,
-              )
+              Text(context.l.rdNoIngredients, style: AppTextStyles.bodyMuted)
             else ...[
               if (_pantry.isNotEmpty) ...[
                 _pantrySummary(have.length, split.missing),
@@ -982,7 +977,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Raciones',
+                      context.l.diaServings,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -1001,7 +996,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ),
               IconButton(
-                tooltip: 'Menos',
+                tooltip: context.l.less,
                 icon: const Icon(Icons.remove_circle_outline_rounded),
                 onPressed: _servingsNow > 1
                     ? () => setState(() => _servings = _servingsNow - 1)
@@ -1015,7 +1010,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ),
               IconButton(
-                tooltip: 'Más',
+                tooltip: context.l.more,
                 icon: const Icon(Icons.add_circle_outline_rounded),
                 onPressed: _servingsNow < 99
                     ? () => setState(() => _servings = _servingsNow + 1)
@@ -1038,12 +1033,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       children: [
         if (_servingsNow != _recipeServings)
           ActionChip(
-            label: Text('Receta original: ${_servingsText(_recipeServings)}'),
+            label: Text(context.l.rdOriginal(_servingsText(_recipeServings))),
             onPressed: () => setState(() => _servings = null),
           ),
         if (perMeal != null && perMeal >= 1 && perMeal != _servingsNow)
           ActionChip(
-            label: Text('Para tu hogar hoy: ${_servingsText(perMeal)}'),
+            label: Text(context.l.rdForHome(_servingsText(perMeal))),
             onPressed: () => setState(() => _servings = perMeal),
           ),
       ],
@@ -1066,8 +1061,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Expanded(
             child: Text(
               missing.isEmpty
-                  ? 'Tienes todo en casa'
-                  : 'Tienes $haveCount de $total en casa',
+                  ? context.l.rdHaveAll
+                  : context.l.rdHaveSome(haveCount, total),
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,
@@ -1078,7 +1073,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             TextButton.icon(
               onPressed: _addingMissing ? null : () => _addMissing(missing),
               icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-              label: Text('Faltan ${missing.length}'),
+              label: Text(context.l.rdMissing(missing.length)),
               style: TextButton.styleFrom(foregroundColor: AppColors.sage),
             ),
         ],
@@ -1146,7 +1141,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  inPantry ? 'En casa' : 'Falta',
+                  inPantry ? context.l.rdAtHome : context.l.rdLacking,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -1162,10 +1157,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   Widget _stepsTab(List<String> steps) {
     if (steps.isEmpty) {
-      return Text(
-        'Esta receta no tiene pasos. Puedes añadirlos editándola.',
-        style: AppTextStyles.bodyMuted,
-      );
+      return Text(context.l.rdNoSteps, style: AppTextStyles.bodyMuted);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1269,9 +1261,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Por ración',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Text(
+                context.l.rdPerServingTitle,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 12),
               if (r.calories != null || r.protein != null)
@@ -1280,15 +1275,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   children: [
                     if (r.calories != null) _macro('${r.calories}', 'kcal'),
                     if (r.protein != null)
-                      _macro('${r.protein!.toStringAsFixed(0)}g', 'Proteína'),
+                      _macro(
+                        '${r.protein!.toStringAsFixed(0)}g',
+                        context.l.diaProtein,
+                      ),
                     if (r.carbs != null)
-                      _macro('${r.carbs!.toStringAsFixed(0)}g', 'Carbos'),
+                      _macro(
+                        '${r.carbs!.toStringAsFixed(0)}g',
+                        context.l.diaCarbs,
+                      ),
                     if (r.fat != null)
-                      _macro('${r.fat!.toStringAsFixed(0)}g', 'Grasa'),
+                      _macro('${r.fat!.toStringAsFixed(0)}g', context.l.diaFat),
                   ],
                 )
               else
-                Text('Sin datos de nutrición.', style: AppTextStyles.bodyMuted),
+                Text(context.l.rdNoNutrition, style: AppTextStyles.bodyMuted),
               if (r.kcalPer100g != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
@@ -1306,7 +1307,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     Icon(Icons.euro_rounded, size: 18, color: AppColors.sage),
                     const SizedBox(width: 8),
                     Text(
-                      '${money(_cost!.perServing)} por ración',
+                      context.l.rdPerServing(money(_cost!.perServing)),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -1314,7 +1315,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      '≈ ${money(_cost!.total)} total',
+                      context.l.rdTotal(money(_cost!.total)),
                       style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                   ],
@@ -1323,8 +1324,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Coste aproximado. Escanea tickets para afinarlo con '
-                      'tus precios reales.',
+                      context.l.rdApproxCost,
                       style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
                     ),
                   ),
@@ -1375,7 +1375,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               ),
             ),
             icon: const Icon(Icons.soup_kitchen_rounded),
-            label: const Text('Empezar a cocinar'),
+            label: Text(context.l.rdStartCooking),
           ),
         ),
       ),
@@ -1413,18 +1413,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ]);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            missing.length == 1
-                ? 'Añadido a la lista de la compra'
-                : 'Añadidos ${missing.length} productos a la compra',
-          ),
-        ),
+        SnackBar(content: Text(context.l.rdAddedMissing(missing.length))),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyError(e, 'No se pudo añadir'))),
+        SnackBar(content: Text(friendlyError(e, context.l.couldNotAdd))),
       );
     } finally {
       if (mounted) setState(() => _addingMissing = false);
@@ -1438,8 +1432,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     if (_profiles.isEmpty) {
       return _card(
         child: Text(
-          'Completa un Perfil Nutricional para ver cuántos gramos y calorías '
-          'corresponden a cada persona.',
+          context.l.rdNeedProfile,
           style: TextStyle(color: AppColors.inkMuted),
         ),
       );
@@ -1458,7 +1451,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       if (grams == null) continue;
       final name = (p.fullName?.trim().isNotEmpty == true)
           ? p.fullName!.trim()
-          : 'Miembro';
+          : context.l.rdMember;
 
       rows.add(
         Padding(
@@ -1505,8 +1498,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     if (rows.isEmpty) {
       return _card(
         child: Text(
-          'Ajusta el reparto de calorías por comida en el perfil para este tipo '
-          'de receta.',
+          context.l.rdAdjustSplit,
           style: TextStyle(color: AppColors.inkMuted),
         ),
       );
@@ -1516,13 +1508,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Según el perfil de cada uno',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          Text(
+            context.l.rdByProfile,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 4),
           Text(
-            'Cantidad y calorías por persona para esta comida.',
+            context.l.rdByProfileHint,
             style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
           const Divider(height: 20),
