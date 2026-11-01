@@ -8,6 +8,7 @@
   "oneMoment": "One moment…",
   "retry": "Try again",
   "loginAccountCreated": "Account created. Welcome to PrezHome",
+  "loginConfirmEmailSent": "We've sent you an email to confirm your account. Open it on this phone and you'll be signed in.",
   "loginAuthError": "Sign-in error",
   "loginProviderError": "Couldn't sign in with {provider}",
   "loginResetNeedsEmail": "Enter your email first and I'll send you a link to reset your password.",

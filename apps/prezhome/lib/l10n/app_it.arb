@@ -8,6 +8,7 @@
   "oneMoment": "Un momento…",
   "retry": "Riprova",
   "loginAccountCreated": "Account creato. Benvenuto su PrezHome",
+  "loginConfirmEmailSent": "Ti abbiamo inviato un'email per confermare l'account. Aprila da questo telefono e accederai.",
   "loginAuthError": "Errore di accesso",
   "loginProviderError": "Impossibile accedere con {provider}",
   "loginResetNeedsEmail": "Scrivi prima la tua email e ti invierò il link per reimpostare la password.",

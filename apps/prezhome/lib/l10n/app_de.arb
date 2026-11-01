@@ -8,6 +8,7 @@
   "oneMoment": "Einen Moment…",
   "retry": "Erneut versuchen",
   "loginAccountCreated": "Konto erstellt. Willkommen bei PrezHome",
+  "loginConfirmEmailSent": "Wir haben dir eine E-Mail zur Bestätigung deines Kontos geschickt. Öffne sie auf diesem Handy, dann bist du angemeldet.",
   "loginAuthError": "Anmeldefehler",
   "loginProviderError": "Anmeldung mit {provider} fehlgeschlagen",
   "loginResetNeedsEmail": "Gib zuerst deine E-Mail ein, dann schicke ich dir einen Link zum Zurücksetzen des Passworts.",

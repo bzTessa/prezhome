@@ -156,6 +156,12 @@ abstract class AppLocalizations {
   /// **'Cuenta creada. Te damos la bienvenida a PrezHome'**
   String get loginAccountCreated;
 
+  /// No description provided for @loginConfirmEmailSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Te hemos enviado un correo para confirmar tu cuenta. Ábrelo desde este móvil y entrarás solo.'**
+  String get loginConfirmEmailSent;
+
   /// No description provided for @loginAuthError.
   ///
   /// In es, this message translates to:

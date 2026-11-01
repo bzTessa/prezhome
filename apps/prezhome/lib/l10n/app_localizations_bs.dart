@@ -43,6 +43,10 @@ class AppLocalizationsBs extends AppLocalizations {
   String get loginAccountCreated => 'Račun je kreiran. Dobro došli u PrezHome';
 
   @override
+  String get loginConfirmEmailSent =>
+      'Poslali smo vam e-mail za potvrdu računa. Otvorite ga na ovom telefonu i bit ćete prijavljeni.';
+
+  @override
   String get loginAuthError => 'Greška pri prijavi';
 
   @override
