@@ -1596,5 +1596,150 @@
         "type": "String"
       }
     }
-  }
+  },
+  "pwPickOption": "Elige una opción para continuar.",
+  "pwPickBirth": "Selecciona tu fecha de nacimiento.",
+  "pwBadHeight": "Escribe una altura válida en centímetros.",
+  "pwBadWeight": "Escribe un peso válido en kilos.",
+  "pwCompleteStep": "Completa este paso para continuar.",
+  "pwStart": "Empezar a usar PrezHome",
+  "pwSeeGoal": "Ver mi objetivo",
+  "pwFinish": "Terminar",
+  "pwIntroTitle": "Vamos a conocerte",
+  "pwIntroSub": "Unas preguntas rápidas para adaptar PrezHome a ti. Puedes cambiarlo cuando quieras.",
+  "pwTrackKcal": "Quiero llevar la cuenta de calorías",
+  "pwTrackKcalSub": "Las comidas del plan se apuntan solas al pasar.",
+  "pwOnlyHome": "Solo organizar la casa",
+  "pwOnlyHomeSub": "Sin peso ni medidas.",
+  "pwSex": "Tu sexo",
+  "pwSexSub": "Lo usamos para calcular tu metabolismo con más precisión.",
+  "pwPickDate": "Seleccionar fecha",
+  "pwBirthTitle": "¿Cuándo naciste?",
+  "pwBirthSub": "La edad nos ayuda a afinar el cálculo de calorías.",
+  "pwAgeYears": "{age} años",
+  "@pwAgeYears": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "pwHeightTitle": "¿Cuánto mides?",
+  "pwHeightSub": "Indica tu altura en centímetros.",
+  "pwWeightTitle": "¿Cuánto pesas?",
+  "pwWeightSub": "Indica tu peso actual en kilos.",
+  "pwActivityTitle": "Tu nivel de actividad",
+  "pwActivitySub": "Elige la opción que mejor describa tu semana.",
+  "pwGoalTitle": "¿Cuál es tu objetivo?",
+  "pwGoalSub": "Ajustaremos tus calorías según lo que quieras conseguir.",
+  "pwGoalDesc": "{goal, select, lose{Déficit suave para bajar de peso poco a poco.} gain{Superávit suave para ganar masa de forma sana.} other{Mantener tu peso actual y sentirte bien.}}",
+  "@pwGoalDesc": {
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "pwDietTitle": "¿Cómo te alimentas?",
+  "pwDietSub": "Las recetas se adaptarán a tu dieta.",
+  "pwDiet": "{diet, select, vegetariana{Vegetariana} vegana{Vegana} pescetariana{Pescetariana} baja_carbo{Baja en carbohidratos} sin_gluten{Sin gluten} other{De todo}}",
+  "@pwDiet": {
+    "placeholders": {
+      "diet": {
+        "type": "String"
+      }
+    }
+  },
+  "pwAllergiesTitle": "Alergias o intolerancias",
+  "pwOptional": "Opcional.",
+  "pwAllergy": "{allergy, select, frutossecos{frutos secos} lactosa{lactosa} gluten{gluten (celiaquía)} huevo{huevo} marisco{marisco} soja{soja} other{pescado}}",
+  "@pwAllergy": {
+    "placeholders": {
+      "allergy": {
+        "type": "String"
+      }
+    }
+  },
+  "pwCuisinesTitle": "¿Qué te gusta comer?",
+  "pwCuisinesSub": "Elige las que quieras.",
+  "pwCuisine": "{cuisine, select, casera{Casera de siempre} mediterranea{Mediterránea} ligera{Ligera} rapida{Rápida y sencilla} italiana{Italiana} asiatica{Asiática} mexicana{Mexicana} other{De todo el mundo}}",
+  "@pwCuisine": {
+    "placeholders": {
+      "cuisine": {
+        "type": "String"
+      }
+    }
+  },
+  "pwAppliancesTitle": "¿Qué tienes en la cocina?",
+  "pwAppliancesSub": "El plan solo usará recetas que puedas hacer.",
+  "appliance": "{appliance, select, oven{Horno} stovetop{Sartén} pot{Olla} airfryer{Airfryer} microwave{Microondas} blender{Batidora} other{Ninguno}}",
+  "@appliance": {
+    "placeholders": {
+      "appliance": {
+        "type": "String"
+      }
+    }
+  },
+  "pwDislikedTitle": "Ingredientes que no te gustan",
+  "pwDislikedSub": "Separados por comas. Opcional.",
+  "pwDislikedHint": "cebolla, cilantro...",
+  "pwCookTimeTitle": "¿Cuánto tiempo quieres cocinar?",
+  "pwCookTimeSub": "Así ajusto las recetas a tu ritmo. Puedes dejarlo sin elegir.",
+  "pwCookTime": "{time, select, rapido{Rápido (menos de 20 min)} elaborado{Elaborado (me gusta cocinar)} other{Normal}}",
+  "@pwCookTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "pwCookTimeDesc": "{time, select, rapido{Platos resueltos en poco tiempo.} elaborado{Disfruto cocinando con calma.} other{Un equilibrio entre rápido y elaborado.}}",
+  "@pwCookTimeDesc": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "pwCookStyleTitle": "¿Cómo prefieres cocinar?",
+  "pwChangeAnytime": "Puedes cambiarlo cuando quieras.",
+  "cookStyle": "{style, select, batch{En lote} mixed{Mixto} other{Diario}}",
+  "@cookStyle": {
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "cookStyleSub": "{style, select, batch{Cocino en tandas para varios días} mixed{Combino tandas y cocina del día} other{Cocino cada día lo del momento}}",
+  "@cookStyleSub": {
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "pwModulesTitle": "¿Qué quieres activar?",
+  "pwModulesSub": "Lo que apagues no se mostrará.",
+  "homeModule": "{module, select, points{Modo Puntos} tasks{Tareas} other{Cocina en lote}}",
+  "@homeModule": {
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "homeModuleDesc": "{module, select, points{Gana puntos y recompensas por tus tareas.} tasks{Organiza las tareas del hogar.} other{Cocina en tandas y planifica preparaciones.}}",
+  "@homeModuleDesc": {
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "pwAllSet": "Todo listo",
+  "pwAllSetSub": "Recetas, plan y compra se adaptan a lo que has contado.",
+  "pwDailyGoal": "Tu objetivo diario",
+  "pwKcalDay": "kcal / día",
+  "pwEstimate": "Es una estimación para empezar. Las comidas del plan se apuntarán solas en tu diario cuando pasen."
 }

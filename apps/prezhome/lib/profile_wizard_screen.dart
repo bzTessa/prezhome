@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
@@ -8,6 +9,7 @@ import 'theme/app_theme.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
+import 'l10n/l10n.dart';
 
 /// Cuestionario guiado paso a paso para crear el perfil nutricional la primera
 /// vez. Recoge sexo, fecha de nacimiento, altura, peso, nivel de actividad y
@@ -229,15 +231,15 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   String get _missingDataMessage {
     switch (_page) {
       case 1:
-        return 'Elige una opcion para continuar.';
+        return context.l.pwPickOption;
       case 2:
-        return 'Selecciona tu fecha de nacimiento.';
+        return context.l.pwPickBirth;
       case 3:
-        return 'Escribe una altura valida en centimetros.';
+        return context.l.pwBadHeight;
       case 4:
-        return 'Escribe un peso valido en kilos.';
+        return context.l.pwBadWeight;
       default:
-        return 'Completa este paso para continuar.';
+        return context.l.pwCompleteStep;
     }
   }
 
@@ -248,7 +250,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       initialDate: _birthDate ?? DateTime(now.year - 30),
       firstDate: DateTime(now.year - 100),
       lastDate: now,
-      helpText: 'Fecha de nacimiento',
+      helpText: context.l.nutBirthDate,
     );
     if (picked != null) {
       setState(() {
@@ -342,7 +344,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, context.l.nutSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -362,10 +364,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
     final isLastDataStep = _page == _resultPage - 1;
 
     final String primaryLabel = isResult
-        ? 'Empezar a usar PrezHome'
+        ? context.l.pwStart
         : (isLastDataStep
-              ? (_trackCalories ? 'Ver mi objetivo' : 'Terminar')
-              : 'Siguiente');
+              ? (_trackCalories ? context.l.pwSeeGoal : context.l.pwFinish)
+              : context.l.next);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -429,7 +431,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text('Atrás'),
+                        child: Text(context.l.back),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -509,7 +511,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             const MiauCharacter(mood: MiauMood.greeting, size: 150),
             const SizedBox(height: 32),
             Text(
-              'Vamos a conocerte',
+              context.l.pwIntroTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 26,
@@ -520,8 +522,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Unas preguntas rápidas para adaptar PrezHome a ti. Puedes '
-              'cambiarlo cuando quieras.',
+              context.l.pwIntroSub,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -531,16 +532,16 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             ),
             const SizedBox(height: 28),
             _OptionCard(
-              title: 'Quiero llevar la cuenta de calorías',
-              subtitle: 'Las comidas del plan se apuntan solas al pasar.',
+              title: context.l.pwTrackKcal,
+              subtitle: context.l.pwTrackKcalSub,
               icon: Icons.local_fire_department_outlined,
               selected: _trackCalories,
               onTap: () => setState(() => _trackCalories = true),
             ),
             const SizedBox(height: 12),
             _OptionCard(
-              title: 'Solo organizar la casa',
-              subtitle: 'Sin peso ni medidas.',
+              title: context.l.pwOnlyHome,
+              subtitle: context.l.pwOnlyHomeSub,
               icon: Icons.home_outlined,
               selected: !_trackCalories,
               onTap: () => setState(() => _trackCalories = false),
@@ -554,12 +555,9 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildSexStep() {
     return _stepScroll(
       children: [
-        _stepHeader(
-          'Tu sexo',
-          'Lo usamos para calcular tu metabolismo con más precisión.',
-        ),
+        _stepHeader(context.l.pwSex, context.l.pwSexSub),
         _OptionCard(
-          title: 'Mujer',
+          title: context.l.nutFemale,
           icon: Icons.female,
           selected: _sex == 'female',
           onTap: () => setState(() {
@@ -568,7 +566,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         ),
         const SizedBox(height: 12),
         _OptionCard(
-          title: 'Hombre',
+          title: context.l.nutMale,
           icon: Icons.male,
           selected: _sex == 'male',
           onTap: () => setState(() {
@@ -582,16 +580,11 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildBirthDateStep() {
     final hasDate = _birthDate != null;
     final dateText = hasDate
-        ? '${_birthDate!.day.toString().padLeft(2, '0')}/'
-              '${_birthDate!.month.toString().padLeft(2, '0')}/'
-              '${_birthDate!.year}'
-        : 'Seleccionar fecha';
+        ? DateFormat.yMd().format(_birthDate!)
+        : context.l.pwPickDate;
     return _stepScroll(
       children: [
-        _stepHeader(
-          '¿Cuando naciste?',
-          'La edad nos ayuda a afinar el calculo de calorias.',
-        ),
+        _stepHeader(context.l.pwBirthTitle, context.l.pwBirthSub),
         InkWell(
           onTap: _pickBirthDate,
           borderRadius: BorderRadius.circular(24),
@@ -621,7 +614,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
           const SizedBox(height: 16),
           Center(
             child: Text(
-              '$_age años',
+              context.l.pwAgeYears(_age!),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -637,7 +630,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildHeightStep() {
     return _stepScroll(
       children: [
-        _stepHeader('¿Cuanto mides?', 'Indica tu altura en centimetros.'),
+        _stepHeader(context.l.pwHeightTitle, context.l.pwHeightSub),
         TextField(
           controller: _heightController,
           keyboardType: TextInputType.number,
@@ -658,7 +651,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildWeightStep() {
     return _stepScroll(
       children: [
-        _stepHeader('¿Cuanto pesas?', 'Indica tu peso actual en kilos.'),
+        _stepHeader(context.l.pwWeightTitle, context.l.pwWeightSub),
         TextField(
           controller: _weightController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -679,15 +672,12 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildActivityStep() {
     return _stepScroll(
       children: [
-        _stepHeader(
-          'Tu nivel de actividad',
-          'Elige la opcion que mejor describa tu semana.',
-        ),
+        _stepHeader(context.l.pwActivityTitle, context.l.pwActivitySub),
         ...NutritionProfile.activityLabels.entries.map(
           (e) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _OptionCard(
-              title: e.value,
+              title: context.l.nutActivity(e.key),
               selected: _activity == e.key,
               onTap: () => setState(() {
                 _activity = e.key;
@@ -700,23 +690,15 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   }
 
   Widget _buildGoalStep() {
-    const descriptions = {
-      'lose': 'Deficit suave para bajar de peso poco a poco.',
-      'maintain': 'Mantener tu peso actual y sentirte bien.',
-      'gain': 'Superavit suave para ganar masa de forma sana.',
-    };
     return _stepScroll(
       children: [
-        _stepHeader(
-          '¿Cual es tu objetivo?',
-          'Ajustaremos tus calorias segun lo que quieras conseguir.',
-        ),
+        _stepHeader(context.l.pwGoalTitle, context.l.pwGoalSub),
         ...NutritionProfile.goalLabels.entries.map(
           (e) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _OptionCard(
-              title: e.value,
-              subtitle: descriptions[e.key],
+              title: context.l.nutGoal(e.key),
+              subtitle: context.l.pwGoalDesc(e.key),
               selected: _goal == e.key,
               onTap: () => setState(() {
                 _goal = e.key;
@@ -741,15 +723,12 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildDietStep() {
     return _stepScroll(
       children: [
-        _stepHeader(
-          '¿Cómo te alimentas?',
-          'Las recetas se adaptarán a tu dieta.',
-        ),
+        _stepHeader(context.l.pwDietTitle, context.l.pwDietSub),
         ...NutritionProfile.dietLabels.entries.map(
           (e) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _OptionCard(
-              title: e.value,
+              title: context.l.pwDiet(e.key),
               icon: _dietIcons[e.key],
               selected: _diet == e.key,
               onTap: () => setState(() {
@@ -765,10 +744,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildAllergiesStep() {
     return _stepScroll(
       children: [
-        _stepHeader('Alergias o intolerancias', 'Opcional.'),
+        _stepHeader(context.l.pwAllergiesTitle, context.l.pwOptional),
         _chips({
           for (final a in _commonAllergies)
-            a: a == 'gluten' ? 'gluten (celiaquía)' : a,
+            a: context.l.pwAllergy(a.replaceAll(' ', '')),
         }, _allergies),
       ],
     );
@@ -811,8 +790,11 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildCuisinesStep() {
     return _stepScroll(
       children: [
-        _stepHeader('¿Qué te gusta comer?', 'Elige las que quieras.'),
-        _chips(DashboardPrefs.cuisineLabels, _cuisines),
+        _stepHeader(context.l.pwCuisinesTitle, context.l.pwCuisinesSub),
+        _chips({
+          for (final k in DashboardPrefs.cuisineLabels.keys)
+            k: context.l.pwCuisine(k),
+        }, _cuisines),
       ],
     );
   }
@@ -820,11 +802,10 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildAppliancesStep() {
     return _stepScroll(
       children: [
-        _stepHeader(
-          '¿Qué tienes en la cocina?',
-          'El plan solo usará recetas que puedas hacer.',
-        ),
-        _chips(_optionalAppliances, _appliances),
+        _stepHeader(context.l.pwAppliancesTitle, context.l.pwAppliancesSub),
+        _chips({
+          for (final k in _optionalAppliances.keys) k: context.l.appliance(k),
+        }, _appliances),
       ],
     );
   }
@@ -832,40 +813,29 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildDislikedStep() {
     return _stepScroll(
       children: [
-        _stepHeader(
-          'Ingredientes que no te gustan',
-          'Separados por comas. Opcional.',
-        ),
+        _stepHeader(context.l.pwDislikedTitle, context.l.pwDislikedSub),
         TextField(
           controller: _dislikedController,
           textCapitalization: TextCapitalization.sentences,
           minLines: 2,
           maxLines: 4,
           style: TextStyle(fontSize: 16, color: AppColors.ink),
-          decoration: _textDecoration('cebolla, cilantro...'),
+          decoration: _textDecoration(context.l.pwDislikedHint),
         ),
       ],
     );
   }
 
   Widget _buildCookTimeStep() {
-    const descriptions = {
-      'rapido': 'Platos resueltos en poco tiempo.',
-      'normal': 'Un equilibrio entre rapido y elaborado.',
-      'elaborado': 'Disfruto cocinando con calma.',
-    };
     return _stepScroll(
       children: [
-        _stepHeader(
-          '¿Cuanto tiempo quieres cocinar?',
-          'Asi ajusto las recetas a tu ritmo. Puedes dejarlo sin elegir.',
-        ),
+        _stepHeader(context.l.pwCookTimeTitle, context.l.pwCookTimeSub),
         ...NutritionProfile.cookTimeLabels.entries.map(
           (e) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _OptionCard(
-              title: e.value,
-              subtitle: descriptions[e.key],
+              title: context.l.pwCookTime(e.key),
+              subtitle: context.l.pwCookTimeDesc(e.key),
               selected: _cookTimePref == e.key,
               onTap: () => setState(() {
                 _cookTimePref = e.key;
@@ -882,10 +852,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   Widget _buildCookingStyleStep() {
     return _stepScroll(
       children: [
-        _stepHeader(
-          '¿Cómo prefieres cocinar?',
-          'Puedes cambiarlo cuando quieras.',
-        ),
+        _stepHeader(context.l.pwCookStyleTitle, context.l.pwChangeAnytime),
         ...CookingStyle.values.map(
           (style) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -894,8 +861,8 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                 _cookingStyle = style;
               }),
               child: _SelectCard(
-                title: style.label,
-                subtitle: style.subtitle,
+                title: context.l.cookStyle(style.id),
+                subtitle: context.l.cookStyleSub(style.id),
                 icon: style.icon,
                 selected: _cookingStyle == style,
               ),
@@ -909,20 +876,15 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
   /// Paso de módulos del hogar: controles on/off para activar o desactivar
   /// Modo Puntos, Tareas y Batch Cooking.
   Widget _buildModulesStep() {
-    const descriptions = {
-      HomeModule.points: 'Gana puntos y recompensas por tus tareas.',
-      HomeModule.tasks: 'Organiza las tareas del hogar.',
-      HomeModule.batchCooking: 'Cocina en tandas y planifica preparaciones.',
-    };
     return _stepScroll(
       children: [
-        _stepHeader('¿Qué quieres activar?', 'Lo que apagues no se mostrará.'),
+        _stepHeader(context.l.pwModulesTitle, context.l.pwModulesSub),
         ...HomeModule.values.map(
           (module) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _ModuleToggleCard(
-              title: module.label,
-              subtitle: descriptions[module] ?? '',
+              title: context.l.homeModule(module.name),
+              subtitle: context.l.homeModuleDesc(module.name),
               icon: module.icon,
               value: _enabledModules.contains(module),
               onChanged: (on) => setState(() {
@@ -949,7 +911,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             const MiauCharacter(mood: MiauMood.celebrating, size: 150),
             const SizedBox(height: 24),
             Text(
-              'Todo listo',
+              context.l.pwAllSet,
               style: TextStyle(
                 fontSize: 24,
                 letterSpacing: -0.4,
@@ -959,7 +921,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Recetas, plan y compra se adaptan a lo que has contado.',
+              context.l.pwAllSetSub,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -983,7 +945,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         const SizedBox(height: 20),
         Center(
           child: Text(
-            'Tu objetivo diario',
+            context.l.pwDailyGoal,
             style: TextStyle(
               fontSize: 24,
               letterSpacing: -0.4,
@@ -1008,7 +970,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                 ),
               ),
               Text(
-                'kcal / día',
+                context.l.pwKcalDay,
                 style: TextStyle(fontSize: 16, color: AppColors.woodDark),
               ),
               if (macros != null) ...[
@@ -1018,9 +980,18 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _MacroStat(label: 'Proteina', value: '${macros.protein} g'),
-                    _MacroStat(label: 'Carbos', value: '${macros.carbs} g'),
-                    _MacroStat(label: 'Grasa', value: '${macros.fat} g'),
+                    _MacroStat(
+                      label: context.l.diaProtein,
+                      value: '${macros.protein} g',
+                    ),
+                    _MacroStat(
+                      label: context.l.diaCarbs,
+                      value: '${macros.carbs} g',
+                    ),
+                    _MacroStat(
+                      label: context.l.diaFat,
+                      value: '${macros.fat} g',
+                    ),
                   ],
                 ),
               ],
@@ -1029,8 +1000,7 @@ class _ProfileWizardScreenState extends State<ProfileWizardScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Es una estimación para empezar. Las comidas del plan se apuntarán '
-          'solas en tu diario cuando pasen.',
+          context.l.pwEstimate,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,

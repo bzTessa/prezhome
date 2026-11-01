@@ -2538,4 +2538,289 @@ class AppLocalizationsPt extends AppLocalizations {
   String stForecastTip(String amount) {
     return 'Previsão $amount';
   }
+
+  @override
+  String get pwPickOption => 'Escolhe uma opção para continuar.';
+
+  @override
+  String get pwPickBirth => 'Seleciona a tua data de nascimento.';
+
+  @override
+  String get pwBadHeight => 'Escreve uma altura válida em centímetros.';
+
+  @override
+  String get pwBadWeight => 'Escreve um peso válido em quilos.';
+
+  @override
+  String get pwCompleteStep => 'Completa este passo para continuar.';
+
+  @override
+  String get pwStart => 'Começar a usar o PrezHome';
+
+  @override
+  String get pwSeeGoal => 'Ver o meu objetivo';
+
+  @override
+  String get pwFinish => 'Terminar';
+
+  @override
+  String get pwIntroTitle => 'Vamos conhecer-te';
+
+  @override
+  String get pwIntroSub =>
+      'Umas perguntas rápidas para adaptar o PrezHome a ti. Podes mudar quando quiseres.';
+
+  @override
+  String get pwTrackKcal => 'Quero contar as calorias';
+
+  @override
+  String get pwTrackKcalSub =>
+      'As refeições do plano registam-se sozinhas quando passam.';
+
+  @override
+  String get pwOnlyHome => 'Só organizar a casa';
+
+  @override
+  String get pwOnlyHomeSub => 'Sem peso nem medidas.';
+
+  @override
+  String get pwSex => 'O teu sexo';
+
+  @override
+  String get pwSexSub =>
+      'Usamo-lo para calcular o teu metabolismo com mais precisão.';
+
+  @override
+  String get pwPickDate => 'Selecionar data';
+
+  @override
+  String get pwBirthTitle => 'Quando nasceste?';
+
+  @override
+  String get pwBirthSub => 'A idade ajuda-nos a afinar o cálculo de calorias.';
+
+  @override
+  String pwAgeYears(int age) {
+    return '$age anos';
+  }
+
+  @override
+  String get pwHeightTitle => 'Quanto medes?';
+
+  @override
+  String get pwHeightSub => 'Indica a tua altura em centímetros.';
+
+  @override
+  String get pwWeightTitle => 'Quanto pesas?';
+
+  @override
+  String get pwWeightSub => 'Indica o teu peso atual em quilos.';
+
+  @override
+  String get pwActivityTitle => 'O teu nível de atividade';
+
+  @override
+  String get pwActivitySub =>
+      'Escolhe a opção que melhor descreve a tua semana.';
+
+  @override
+  String get pwGoalTitle => 'Qual é o teu objetivo?';
+
+  @override
+  String get pwGoalSub => 'Ajustamos as tuas calorias ao que queres conseguir.';
+
+  @override
+  String pwGoalDesc(String goal) {
+    String _temp0 = intl.Intl.selectLogic(goal, {
+      'lose': 'Défice suave para perder peso aos poucos.',
+      'gain': 'Excedente suave para ganhar massa de forma saudável.',
+      'other': 'Manter o teu peso atual e sentir-te bem.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwDietTitle => 'Como te alimentas?';
+
+  @override
+  String get pwDietSub => 'As receitas adaptam-se à tua dieta.';
+
+  @override
+  String pwDiet(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'vegetariana': 'Vegetariana',
+      'vegana': 'Vegana',
+      'pescetariana': 'Pescetariana',
+      'baja_carbo': 'Baixa em hidratos',
+      'sin_gluten': 'Sem glúten',
+      'other': 'De tudo',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwAllergiesTitle => 'Alergias ou intolerâncias';
+
+  @override
+  String get pwOptional => 'Opcional.';
+
+  @override
+  String pwAllergy(String allergy) {
+    String _temp0 = intl.Intl.selectLogic(allergy, {
+      'frutossecos': 'frutos secos',
+      'lactosa': 'lactose',
+      'gluten': 'glúten (doença celíaca)',
+      'huevo': 'ovo',
+      'marisco': 'marisco',
+      'soja': 'soja',
+      'other': 'peixe',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwCuisinesTitle => 'O que gostas de comer?';
+
+  @override
+  String get pwCuisinesSub => 'Escolhe as que quiseres.';
+
+  @override
+  String pwCuisine(String cuisine) {
+    String _temp0 = intl.Intl.selectLogic(cuisine, {
+      'casera': 'Caseira de sempre',
+      'mediterranea': 'Mediterrânica',
+      'ligera': 'Leve',
+      'rapida': 'Rápida e simples',
+      'italiana': 'Italiana',
+      'asiatica': 'Asiática',
+      'mexicana': 'Mexicana',
+      'other': 'De todo o mundo',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwAppliancesTitle => 'O que tens na cozinha?';
+
+  @override
+  String get pwAppliancesSub => 'O plano só usa receitas que consegues fazer.';
+
+  @override
+  String appliance(String appliance) {
+    String _temp0 = intl.Intl.selectLogic(appliance, {
+      'oven': 'Forno',
+      'stovetop': 'Frigideira',
+      'pot': 'Panela',
+      'airfryer': 'Airfryer',
+      'microwave': 'Micro-ondas',
+      'blender': 'Varinha',
+      'other': 'Nenhum',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwDislikedTitle => 'Ingredientes de que não gostas';
+
+  @override
+  String get pwDislikedSub => 'Separados por vírgulas. Opcional.';
+
+  @override
+  String get pwDislikedHint => 'cebola, coentros...';
+
+  @override
+  String get pwCookTimeTitle => 'Quanto tempo queres cozinhar?';
+
+  @override
+  String get pwCookTimeSub =>
+      'Assim ajusto as receitas ao teu ritmo. Podes deixar sem escolher.';
+
+  @override
+  String pwCookTime(String time) {
+    String _temp0 = intl.Intl.selectLogic(time, {
+      'rapido': 'Rápido (menos de 20 min)',
+      'elaborado': 'Elaborado (gosto de cozinhar)',
+      'other': 'Normal',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String pwCookTimeDesc(String time) {
+    String _temp0 = intl.Intl.selectLogic(time, {
+      'rapido': 'Pratos feitos em pouco tempo.',
+      'elaborado': 'Gosto de cozinhar com calma.',
+      'other': 'Um equilíbrio entre rápido e elaborado.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwCookStyleTitle => 'Como preferes cozinhar?';
+
+  @override
+  String get pwChangeAnytime => 'Podes mudar quando quiseres.';
+
+  @override
+  String cookStyle(String style) {
+    String _temp0 = intl.Intl.selectLogic(style, {
+      'batch': 'Em lote',
+      'mixed': 'Misto',
+      'other': 'Diário',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String cookStyleSub(String style) {
+    String _temp0 = intl.Intl.selectLogic(style, {
+      'batch': 'Cozinho em lotes para vários dias',
+      'mixed': 'Combino lotes e cozinha do dia',
+      'other': 'Cozinho todos os dias na hora',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwModulesTitle => 'O que queres ativar?';
+
+  @override
+  String get pwModulesSub => 'O que desligares não aparece.';
+
+  @override
+  String homeModule(String module) {
+    String _temp0 = intl.Intl.selectLogic(module, {
+      'points': 'Modo pontos',
+      'tasks': 'Tarefas',
+      'other': 'Cozinha em lote',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String homeModuleDesc(String module) {
+    String _temp0 = intl.Intl.selectLogic(module, {
+      'points': 'Ganha pontos e recompensas pelas tuas tarefas.',
+      'tasks': 'Organiza as tarefas do lar.',
+      'other': 'Cozinha em lotes e planeia preparações.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwAllSet => 'Tudo pronto';
+
+  @override
+  String get pwAllSetSub =>
+      'Receitas, plano e compras adaptam-se ao que contaste.';
+
+  @override
+  String get pwDailyGoal => 'O teu objetivo diário';
+
+  @override
+  String get pwKcalDay => 'kcal / dia';
+
+  @override
+  String get pwEstimate =>
+      'É uma estimativa para começar. As refeições do plano registam-se sozinhas no diário quando passarem.';
 }
