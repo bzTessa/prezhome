@@ -2445,4 +2445,109 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get ecoNoTickets =>
       'Pas encore de tickets ce mois-ci.\nScanne le premier.';
+
+  @override
+  String get stOthers => 'Autres';
+
+  @override
+  String get stNoCategory => 'Sans catégorie';
+
+  @override
+  String get stThisWeek => 'Cette';
+
+  @override
+  String get stTitle => 'Tes données';
+
+  @override
+  String get stSpendByMonth => 'Dépenses par mois';
+
+  @override
+  String get stForecastFooter =>
+      'En clair : ce qu\'il reste jusqu\'à la prévision';
+
+  @override
+  String get stNoSpend =>
+      'Scanne un ticket pour voir tes dépenses mois par mois.';
+
+  @override
+  String get stWhereSpend => 'Où vont tes dépenses ce mois-ci';
+
+  @override
+  String get stNoTicketsMonth => 'Pas encore de tickets ce mois-ci.';
+
+  @override
+  String get stTopProducts => 'Ce que tu achètes le plus';
+
+  @override
+  String get stTopProductsFooter =>
+      'Nombre de fois sur tes tickets des 3 derniers mois';
+
+  @override
+  String get stTopProductsEmpty => 'Apparaîtra quand tu scanneras des tickets.';
+
+  @override
+  String get stPantry => 'Tes placards';
+
+  @override
+  String get stMealsHome => 'Repas à la maison';
+
+  @override
+  String get stPerWeek => 'Par semaine';
+
+  @override
+  String stMealsOut(int count) {
+    return 'Par semaine · $count hors de la maison';
+  }
+
+  @override
+  String get stMealsEmpty =>
+      'Planifie des repas pour voir combien vous en prenez à la maison.';
+
+  @override
+  String get stTasksDone => 'Tâches faites';
+
+  @override
+  String get stTasksFooter =>
+      'Par semaine, et qui en a fait le plus ce mois-ci';
+
+  @override
+  String get stTasksEmpty => 'Les tâches terminées apparaîtront ici.';
+
+  @override
+  String get stSoFar => 'Dépensé ce mois-ci';
+
+  @override
+  String get stForecast => 'Prévision : ';
+
+  @override
+  String stMoreThanAvg(int pct) {
+    return ', $pct % de plus que ta moyenne';
+  }
+
+  @override
+  String stLessThanAvg(int pct) {
+    return ', $pct % de moins que ta moyenne';
+  }
+
+  @override
+  String get stTickets => 'Tickets';
+
+  @override
+  String get stExpired => 'Périmé';
+
+  @override
+  String get stExpiringSoon => 'Périme bientôt';
+
+  @override
+  String get stFresh => 'Ok';
+
+  @override
+  String stOverForecast(String amount) {
+    return 'À ce rythme tu dépasseras le budget de $amount';
+  }
+
+  @override
+  String stForecastTip(String amount) {
+    return 'Prévision $amount';
+  }
 }

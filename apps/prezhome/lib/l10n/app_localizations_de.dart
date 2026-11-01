@@ -2428,4 +2428,108 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get ecoNoTickets =>
       'Diesen Monat noch keine Kassenbons.\nScanne den ersten.';
+
+  @override
+  String get stOthers => 'Sonstige';
+
+  @override
+  String get stNoCategory => 'Ohne Kategorie';
+
+  @override
+  String get stThisWeek => 'Diese';
+
+  @override
+  String get stTitle => 'Deine Daten';
+
+  @override
+  String get stSpendByMonth => 'Ausgaben pro Monat';
+
+  @override
+  String get stForecastFooter => 'Hell: was bis zur Prognose fehlt';
+
+  @override
+  String get stNoSpend =>
+      'Scanne einen Kassenbon, um deine Ausgaben pro Monat zu sehen.';
+
+  @override
+  String get stWhereSpend => 'Wofür du diesen Monat ausgibst';
+
+  @override
+  String get stNoTicketsMonth => 'Diesen Monat noch keine Kassenbons.';
+
+  @override
+  String get stTopProducts => 'Was du am meisten kaufst';
+
+  @override
+  String get stTopProductsFooter =>
+      'Anzahl auf deinen Kassenbons der letzten 3 Monate';
+
+  @override
+  String get stTopProductsEmpty => 'Erscheint, sobald du Kassenbons scannst.';
+
+  @override
+  String get stPantry => 'Dein Vorrat';
+
+  @override
+  String get stMealsHome => 'Mahlzeiten zu Hause';
+
+  @override
+  String get stPerWeek => 'Pro Woche';
+
+  @override
+  String stMealsOut(int count) {
+    return 'Pro Woche · $count auswärts';
+  }
+
+  @override
+  String get stMealsEmpty =>
+      'Plane Mahlzeiten, um zu sehen, wie viele ihr zu Hause esst.';
+
+  @override
+  String get stTasksDone => 'Erledigte Aufgaben';
+
+  @override
+  String get stTasksFooter =>
+      'Pro Woche und wer diesen Monat am meisten gemacht hat';
+
+  @override
+  String get stTasksEmpty => 'Erledigte Aufgaben erscheinen hier.';
+
+  @override
+  String get stSoFar => 'Bisher diesen Monat';
+
+  @override
+  String get stForecast => 'Prognose: ';
+
+  @override
+  String stMoreThanAvg(int pct) {
+    return ', $pct % über deinem Schnitt';
+  }
+
+  @override
+  String stLessThanAvg(int pct) {
+    return ', $pct % unter deinem Schnitt';
+  }
+
+  @override
+  String get stTickets => 'Kassenbons';
+
+  @override
+  String get stExpired => 'Abgelaufen';
+
+  @override
+  String get stExpiringSoon => 'Läuft bald ab';
+
+  @override
+  String get stFresh => 'Gut';
+
+  @override
+  String stOverForecast(String amount) {
+    return 'So liegst du $amount über dem Budget';
+  }
+
+  @override
+  String stForecastTip(String amount) {
+    return 'Prognose $amount';
+  }
 }

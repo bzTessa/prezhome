@@ -3941,6 +3941,186 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Aún no hay tickets este mes.\nEscanea el primero.'**
   String get ecoNoTickets;
+
+  /// No description provided for @stOthers.
+  ///
+  /// In es, this message translates to:
+  /// **'Otros'**
+  String get stOthers;
+
+  /// No description provided for @stNoCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin categoría'**
+  String get stNoCategory;
+
+  /// No description provided for @stThisWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta'**
+  String get stThisWeek;
+
+  /// No description provided for @stTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos'**
+  String get stTitle;
+
+  /// No description provided for @stSpendByMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto por mes'**
+  String get stSpendByMonth;
+
+  /// No description provided for @stForecastFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'En claro, lo que falta para la previsión'**
+  String get stForecastFooter;
+
+  /// No description provided for @stNoSpend.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanea un ticket y verás tu gasto mes a mes.'**
+  String get stNoSpend;
+
+  /// No description provided for @stWhereSpend.
+  ///
+  /// In es, this message translates to:
+  /// **'En qué gastas este mes'**
+  String get stWhereSpend;
+
+  /// No description provided for @stNoTicketsMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay tickets este mes.'**
+  String get stNoTicketsMonth;
+
+  /// No description provided for @stTopProducts.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que más compras'**
+  String get stTopProducts;
+
+  /// No description provided for @stTopProductsFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Veces en tus tickets de los últimos 3 meses'**
+  String get stTopProductsFooter;
+
+  /// No description provided for @stTopProductsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldrá cuando escanees tickets.'**
+  String get stTopProductsEmpty;
+
+  /// No description provided for @stPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu despensa'**
+  String get stPantry;
+
+  /// No description provided for @stMealsHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Comidas en casa'**
+  String get stMealsHome;
+
+  /// No description provided for @stPerWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Por semana'**
+  String get stPerWeek;
+
+  /// No description provided for @stMealsOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Por semana · {count} fuera de casa'**
+  String stMealsOut(int count);
+
+  /// No description provided for @stMealsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Planifica comidas y verás cuántas hacéis en casa.'**
+  String get stMealsEmpty;
+
+  /// No description provided for @stTasksDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Tareas hechas'**
+  String get stTasksDone;
+
+  /// No description provided for @stTasksFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Por semana y quién ha hecho más este mes'**
+  String get stTasksFooter;
+
+  /// No description provided for @stTasksEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando completéis tareas aparecerán aquí.'**
+  String get stTasksEmpty;
+
+  /// No description provided for @stSoFar.
+  ///
+  /// In es, this message translates to:
+  /// **'Llevas este mes'**
+  String get stSoFar;
+
+  /// No description provided for @stForecast.
+  ///
+  /// In es, this message translates to:
+  /// **'Previsión: '**
+  String get stForecast;
+
+  /// No description provided for @stMoreThanAvg.
+  ///
+  /// In es, this message translates to:
+  /// **', un {pct} % más que tu media'**
+  String stMoreThanAvg(int pct);
+
+  /// No description provided for @stLessThanAvg.
+  ///
+  /// In es, this message translates to:
+  /// **', un {pct} % menos que tu media'**
+  String stLessThanAvg(int pct);
+
+  /// No description provided for @stTickets.
+  ///
+  /// In es, this message translates to:
+  /// **'Tickets'**
+  String get stTickets;
+
+  /// No description provided for @stExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'Caducado'**
+  String get stExpired;
+
+  /// No description provided for @stExpiringSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Caduca pronto'**
+  String get stExpiringSoon;
+
+  /// No description provided for @stFresh.
+  ///
+  /// In es, this message translates to:
+  /// **'Bien'**
+  String get stFresh;
+
+  /// No description provided for @stOverForecast.
+  ///
+  /// In es, this message translates to:
+  /// **'A este ritmo te pasarás {amount} del presupuesto'**
+  String stOverForecast(String amount);
+
+  /// No description provided for @stForecastTip.
+  ///
+  /// In es, this message translates to:
+  /// **'Previsión {amount}'**
+  String stForecastTip(String amount);
 }
 
 class _AppLocalizationsDelegate

@@ -2436,4 +2436,106 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ecoNoTickets =>
       'Aún no hay tickets este mes.\nEscanea el primero.';
+
+  @override
+  String get stOthers => 'Otros';
+
+  @override
+  String get stNoCategory => 'Sin categoría';
+
+  @override
+  String get stThisWeek => 'Esta';
+
+  @override
+  String get stTitle => 'Tus datos';
+
+  @override
+  String get stSpendByMonth => 'Gasto por mes';
+
+  @override
+  String get stForecastFooter => 'En claro, lo que falta para la previsión';
+
+  @override
+  String get stNoSpend => 'Escanea un ticket y verás tu gasto mes a mes.';
+
+  @override
+  String get stWhereSpend => 'En qué gastas este mes';
+
+  @override
+  String get stNoTicketsMonth => 'Aún no hay tickets este mes.';
+
+  @override
+  String get stTopProducts => 'Lo que más compras';
+
+  @override
+  String get stTopProductsFooter =>
+      'Veces en tus tickets de los últimos 3 meses';
+
+  @override
+  String get stTopProductsEmpty => 'Saldrá cuando escanees tickets.';
+
+  @override
+  String get stPantry => 'Tu despensa';
+
+  @override
+  String get stMealsHome => 'Comidas en casa';
+
+  @override
+  String get stPerWeek => 'Por semana';
+
+  @override
+  String stMealsOut(int count) {
+    return 'Por semana · $count fuera de casa';
+  }
+
+  @override
+  String get stMealsEmpty =>
+      'Planifica comidas y verás cuántas hacéis en casa.';
+
+  @override
+  String get stTasksDone => 'Tareas hechas';
+
+  @override
+  String get stTasksFooter => 'Por semana y quién ha hecho más este mes';
+
+  @override
+  String get stTasksEmpty => 'Cuando completéis tareas aparecerán aquí.';
+
+  @override
+  String get stSoFar => 'Llevas este mes';
+
+  @override
+  String get stForecast => 'Previsión: ';
+
+  @override
+  String stMoreThanAvg(int pct) {
+    return ', un $pct % más que tu media';
+  }
+
+  @override
+  String stLessThanAvg(int pct) {
+    return ', un $pct % menos que tu media';
+  }
+
+  @override
+  String get stTickets => 'Tickets';
+
+  @override
+  String get stExpired => 'Caducado';
+
+  @override
+  String get stExpiringSoon => 'Caduca pronto';
+
+  @override
+  String get stFresh => 'Bien';
+
+  @override
+  String stOverForecast(String amount) {
+    return 'A este ritmo te pasarás $amount del presupuesto';
+  }
+
+  @override
+  String stForecastTip(String amount) {
+    return 'Previsión $amount';
+  }
 }

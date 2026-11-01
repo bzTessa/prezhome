@@ -2406,4 +2406,105 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get ecoNoTickets => 'Još nema računa ovaj mjesec.\nSkeniraj prvi.';
+
+  @override
+  String get stOthers => 'Ostalo';
+
+  @override
+  String get stNoCategory => 'Bez kategorije';
+
+  @override
+  String get stThisWeek => 'Ova';
+
+  @override
+  String get stTitle => 'Tvoji podaci';
+
+  @override
+  String get stSpendByMonth => 'Troškovi po mjesecu';
+
+  @override
+  String get stForecastFooter => 'Svijetlo: koliko fali do prognoze';
+
+  @override
+  String get stNoSpend => 'Skeniraj račun da vidiš troškove po mjesecima.';
+
+  @override
+  String get stWhereSpend => 'Na šta trošiš ovaj mjesec';
+
+  @override
+  String get stNoTicketsMonth => 'Još nema računa ovaj mjesec.';
+
+  @override
+  String get stTopProducts => 'Šta najviše kupuješ';
+
+  @override
+  String get stTopProductsFooter => 'Broj puta na računima u zadnja 3 mjeseca';
+
+  @override
+  String get stTopProductsEmpty => 'Pojavit će se kad skeniraš račune.';
+
+  @override
+  String get stPantry => 'Tvoja ostava';
+
+  @override
+  String get stMealsHome => 'Obroci kod kuće';
+
+  @override
+  String get stPerWeek => 'Po sedmici';
+
+  @override
+  String stMealsOut(int count) {
+    return 'Po sedmici · $count van kuće';
+  }
+
+  @override
+  String get stMealsEmpty =>
+      'Planiraj obroke da vidiš koliko ih jedete kod kuće.';
+
+  @override
+  String get stTasksDone => 'Urađeni zadaci';
+
+  @override
+  String get stTasksFooter => 'Po sedmici i ko je najviše uradio ovaj mjesec';
+
+  @override
+  String get stTasksEmpty => 'Završeni zadaci pojavit će se ovdje.';
+
+  @override
+  String get stSoFar => 'Potrošeno ovaj mjesec';
+
+  @override
+  String get stForecast => 'Prognoza: ';
+
+  @override
+  String stMoreThanAvg(int pct) {
+    return ', $pct% više od tvog prosjeka';
+  }
+
+  @override
+  String stLessThanAvg(int pct) {
+    return ', $pct% manje od tvog prosjeka';
+  }
+
+  @override
+  String get stTickets => 'Računi';
+
+  @override
+  String get stExpired => 'Isteklo';
+
+  @override
+  String get stExpiringSoon => 'Uskoro ističe';
+
+  @override
+  String get stFresh => 'Dobro';
+
+  @override
+  String stOverForecast(String amount) {
+    return 'Ovim tempom prekoračit ćeš budžet za $amount';
+  }
+
+  @override
+  String stForecastTip(String amount) {
+    return 'Prognoza $amount';
+  }
 }

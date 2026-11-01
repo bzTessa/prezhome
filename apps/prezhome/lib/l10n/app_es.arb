@@ -1531,5 +1531,70 @@
   "ecoBudgetShort": "Presupuesto",
   "ecoNoTrend": "Aún no hay gasto registrado en los últimos meses.\nCuando escanees tickets verás aquí tu tendencia.",
   "ecoTicket": "Ticket",
-  "ecoNoTickets": "Aún no hay tickets este mes.\nEscanea el primero."
+  "ecoNoTickets": "Aún no hay tickets este mes.\nEscanea el primero.",
+  "stOthers": "Otros",
+  "stNoCategory": "Sin categoría",
+  "stThisWeek": "Esta",
+  "stTitle": "Tus datos",
+  "stSpendByMonth": "Gasto por mes",
+  "stForecastFooter": "En claro, lo que falta para la previsión",
+  "stNoSpend": "Escanea un ticket y verás tu gasto mes a mes.",
+  "stWhereSpend": "En qué gastas este mes",
+  "stNoTicketsMonth": "Aún no hay tickets este mes.",
+  "stTopProducts": "Lo que más compras",
+  "stTopProductsFooter": "Veces en tus tickets de los últimos 3 meses",
+  "stTopProductsEmpty": "Saldrá cuando escanees tickets.",
+  "stPantry": "Tu despensa",
+  "stMealsHome": "Comidas en casa",
+  "stPerWeek": "Por semana",
+  "stMealsOut": "Por semana · {count} fuera de casa",
+  "@stMealsOut": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stMealsEmpty": "Planifica comidas y verás cuántas hacéis en casa.",
+  "stTasksDone": "Tareas hechas",
+  "stTasksFooter": "Por semana y quién ha hecho más este mes",
+  "stTasksEmpty": "Cuando completéis tareas aparecerán aquí.",
+  "stSoFar": "Llevas este mes",
+  "stForecast": "Previsión: ",
+  "stMoreThanAvg": ", un {pct} % más que tu media",
+  "@stMoreThanAvg": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "stLessThanAvg": ", un {pct} % menos que tu media",
+  "@stLessThanAvg": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "stTickets": "Tickets",
+  "stExpired": "Caducado",
+  "stExpiringSoon": "Caduca pronto",
+  "stFresh": "Bien",
+  "stOverForecast": "A este ritmo te pasarás {amount} del presupuesto",
+  "@stOverForecast": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "stForecastTip": "Previsión {amount}",
+  "@stForecastTip": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  }
 }
