@@ -98,6 +98,8 @@ class MainShellState extends State<MainShell> {
   late List<_TabDescriptor> _tabs = _buildTabs();
 
   int _index = 0; // se fija al índice de Inicio en initState
+  // Pestañas ya abiertas (ver el IndexedStack en build).
+  final Set<TabId> _opened = {};
 
   // Clave para refrescar la pestaña Inicio al volver a ella sin reconstruir
   // las demás pestañas del IndexedStack.
@@ -361,6 +363,7 @@ class MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    _opened.add(_tabs[_index].id);
     // En Inicio no: la ficha "Por caducar" ya lo cuenta.
     final showBanner =
         _suggestions.isNotEmpty &&
@@ -420,7 +423,18 @@ class MainShellState extends State<MainShell> {
                 removeTop: showTop,
                 child: IndexedStack(
                   index: _index,
-                  children: [for (final t in _tabs) t.page],
+                  children: [
+                    for (var i = 0; i < _tabs.length; i++)
+                      // Cada pestaña se construye la primera vez que se abre
+                      // (no todas a la vez al arrancar) y, ya abierta, se
+                      // conserva viva; las ocultas no animan (TickerMode).
+                      TickerMode(
+                        enabled: i == _index,
+                        child: _opened.contains(_tabs[i].id)
+                            ? _tabs[i].page
+                            : const SizedBox.shrink(),
+                      ),
+                  ],
                 ),
               ),
             ),

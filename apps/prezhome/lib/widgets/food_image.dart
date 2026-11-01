@@ -170,10 +170,15 @@ class FoodImage extends StatelessWidget {
         final url = snap.data;
         if (url == null) return _categoryIcon();
         return _iconBox(
-          Image.network(
-            url,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stack) => _categoryIcon(),
+          LayoutBuilder(
+            builder: (context, constraints) => Image.network(
+              url,
+              fit: BoxFit.contain,
+              // Los dibujos miden 512 px: sin esto cada icono de la lista se
+              // decodifica entero y la lista da tirones.
+              cacheWidth: _cacheWidthFor(context, constraints, size),
+              errorBuilder: (context, error, stack) => _categoryIcon(),
+            ),
           ),
         );
       },
