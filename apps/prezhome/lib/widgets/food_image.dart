@@ -78,9 +78,11 @@ class FoodImage extends StatelessWidget {
       !forceIllustration &&
       imageUrl != null &&
       imageUrl!.trim().isNotEmpty &&
-      (photoOnly ||
-          !(ProductIcons.isGeneric(name) &&
-              (isSharablePhoto(imageUrl!) || isStockPhoto(imageUrl))));
+      // Con photoOnly tampoco valen los dibujos guardados como foto.
+      (photoOnly
+          ? !DrawnIcons.isDrawn(imageUrl)
+          : !(ProductIcons.isGeneric(name) &&
+                (isSharablePhoto(imageUrl!) || isStockPhoto(imageUrl))));
 
   @override
   Widget build(BuildContext context) {

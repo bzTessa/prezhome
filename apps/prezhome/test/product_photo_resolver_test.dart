@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/services/product_photo_resolver.dart';
 import 'package:prezhome/services/product_search_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
   test('solo se comparten fotos de Open Food Facts', () {
@@ -34,5 +35,16 @@ void main() {
     );
     expect(offBarcodeFromUrl('https://abc.supabase.co/mia.jpg'), isNull);
     expect(sharedPhotoKey('patata'), 'v2|patata');
+  });
+
+  test('un dibujo guardado nunca vale: se busca la foto del súper', () async {
+    final resolver = ProductPhotoResolver(SupabaseClient('http://x', 'k'));
+    expect(
+      await resolver.photoMatches(
+        'Pimentón',
+        'https://x.supabase.co/storage/v1/object/public/recipe-images/icons/pimenton.png',
+      ),
+      isFalse,
+    );
   });
 }

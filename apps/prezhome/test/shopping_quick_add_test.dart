@@ -38,19 +38,13 @@ void main() {
     test('por defecto: con fotos y agrupado por pasillo', () {
       const p = ShoppingViewPrefs();
       expect(p.showPhotos, isTrue);
-      expect(p.showIcons, isTrue);
       expect(p.groupByAisle, isTrue);
     });
 
     test('ida y vuelta por JSON', () {
-      const p = ShoppingViewPrefs(
-        showPhotos: true,
-        showIcons: false,
-        groupByAisle: false,
-      );
+      const p = ShoppingViewPrefs(showPhotos: true, groupByAisle: false);
       final back = ShoppingViewPrefs.decode(p.encode());
       expect(back.showPhotos, isTrue);
-      expect(back.showIcons, isFalse);
       expect(back.groupByAisle, isFalse);
     });
 
