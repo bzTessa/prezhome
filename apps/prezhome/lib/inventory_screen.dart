@@ -1022,7 +1022,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     imageUrl: item.imageUrl,
                     size: 52,
                     radius: 14,
-                    forceIllustration: item.category == 'Especias',
+                    photoOnly: true,
                   ),
                 ),
               ),

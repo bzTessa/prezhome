@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../widgets/drawn_icons.dart';
 import '../widgets/product_icons.dart';
 import 'food_photo_service.dart';
 import 'home_country.dart';
@@ -44,7 +45,9 @@ class ProductPhotoResolver {
   /// siempre; las de OFF se comprueban leyendo el producto por su código de
   /// barras (no gasta búsquedas). Null si no se pudo comprobar (sin red).
   Future<bool?> photoMatches(String name, String url) async {
-    // Lo genérico lleva su foto genérica: una de OFF guardada sobra.
+    // Los dibujos ya no se usan: se cambian por la foto del súper.
+    if (DrawnIcons.isDrawn(url)) return false;
+    // Lo genérico lleva la foto de frescos del súper: una de OFF sobra.
     if (ProductIcons.isGeneric(name) && isSharablePhoto(url)) return false;
     final code = offBarcodeFromUrl(url);
     if (code == null) return !isSharablePhoto(url) && !isStockPhoto(url);
@@ -68,11 +71,17 @@ class ProductPhotoResolver {
     try {
       final cached = await _client
           .from('food_photo_cache')
-          .select('url')
+          .select('url,manual')
           .eq('home_id', homeId)
           .eq('name_normalized', key)
           .maybeSingle();
       final url = cached?['url']?.toString() ?? '';
+      // La elegida a mano manda siempre, hasta que la persona la cambie.
+      if (cached?['manual'] == true &&
+          url.isNotEmpty &&
+          !DrawnIcons.isDrawn(url)) {
+        return url;
+      }
       if (url.isNotEmpty &&
           !isStockPhoto(url) &&
           await photoMatches(name, url) != false) {
@@ -80,20 +89,19 @@ class ProductPhotoResolver {
       }
     } catch (_) {}
     // Lo genérico (cebolla, leche...) lleva la foto de la sección de frescos
-    // del súper o, si no hay, su foto genérica compartida; nunca un envase.
-    if (ProductIcons.isGeneric(name)) {
+    // del súper; si no la hay, se busca en el catálogo como lo demás.
+    final generic = ProductIcons.isGeneric(name);
+    if (generic) {
       final store = catalogStores.contains(supermarketKey)
           ? supermarketKey!
           : catalogForCountry[HomeCountry.current.value.code];
-      final url =
-          (store == null ? null : await _search.freshPhoto(name, store)) ??
-          await genericPhoto(name);
+      final url = store == null ? null : await _search.freshPhoto(name, store);
       if (url != null) {
         await FoodPhotoService(
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: url);
+        return url;
       }
-      return url;
     }
 
     // Otro hogar ya encontró este producto: se reutiliza sin buscar.
@@ -130,7 +138,9 @@ class ProductPhotoResolver {
     }
 
     final result = await searchIn(supermarketKey);
-    final found = confidentProductPhoto(name, result.products);
+    var found = confidentProductPhoto(name, result.products);
+    // Un envase de OFF no sirve para lo genérico.
+    if (generic && found != null && isSharablePhoto(found)) found = null;
     if (found != null) {
       await FoodPhotoService(
         _client,
@@ -145,24 +155,5 @@ class ProductPhotoResolver {
       }
     }
     return found;
-  }
-
-  /// Foto genérica realista de [name] (función `product-image`, Nano
-  /// Banana), compartida por todos los hogares. Con [again] crea otra
-  /// versión, gasta una foto del cupo y lanza si falla (para avisar).
-  Future<String?> genericPhoto(String name, {bool again = false}) async {
-    final key = ProductIcons.photoKeyFor(name);
-    if (key == null) return null;
-    try {
-      final res = await _client.functions.invoke(
-        'product-image',
-        body: {'key': key, 'again': again},
-      );
-      final url = (res.data is Map ? res.data['url'] : null)?.toString();
-      return url == null || url.isEmpty ? null : url;
-    } catch (_) {
-      if (again) rethrow;
-      return null;
-    }
   }
 }

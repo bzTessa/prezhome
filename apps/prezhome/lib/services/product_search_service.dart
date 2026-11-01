@@ -368,14 +368,35 @@ const catalogStores = {
   'rewe',
   'pingodoce',
   'auchan',
+  'lidl_fr',
+  'lidl_it',
+  'lidl_de',
+  'lidl_pt',
 };
 
 /// Catálogos oficiales de cada país, en el orden en que se buscan.
 const catalogStoresByCountry = {
   'ES': ['mercadona', 'dia', 'consum', 'bonarea', 'lidl', 'ahorramas'],
-  'DE': ['rewe'],
-  'PT': ['pingodoce', 'auchan'],
+  'DE': ['rewe', 'lidl_de'],
+  'PT': ['pingodoce', 'auchan', 'lidl_pt'],
+  'FR': ['lidl_fr'],
+  'IT': ['lidl_it'],
 };
+
+/// Catálogo del súper [supermarketKey] en el país del hogar, o null. Las
+/// cadenas de varios países llevan el país detrás ("lidl" en Francia es
+/// "lidl_fr").
+String? catalogKeyFor(String? supermarketKey) {
+  final country = HomeCountry.current.value.code;
+  final stores = catalogStoresByCountry[country] ?? const [];
+  for (final k in [
+    supermarketKey,
+    '${supermarketKey}_${country.toLowerCase()}',
+  ]) {
+    if (supermarketKey != null && stores.contains(k)) return k;
+  }
+  return null;
+}
 
 /// Catálogos donde buscar: primero el del súper del hogar y luego los demás
 /// del país. Solo los del país: "auchan" es el catálogo de Portugal, no el
@@ -383,10 +404,8 @@ const catalogStoresByCountry = {
 List<String> catalogSearchOrder(String? supermarketKey) {
   final stores =
       catalogStoresByCountry[HomeCountry.current.value.code] ?? const [];
-  return [
-    if (stores.contains(supermarketKey)) supermarketKey!,
-    ...stores.where((s) => s != supermarketKey),
-  ];
+  final own = catalogKeyFor(supermarketKey);
+  return [?own, ...stores.where((s) => s != own)];
 }
 
 /// Catálogo que pone la foto a lo genérico (fruta, verdura…) en cada país.
@@ -533,7 +552,9 @@ class ProductSearchService {
     if (official.isNotEmpty && isProductFor(q, official.first)) {
       return _cache[key] = ProductSearchResult(
         official,
-        filteredByStore: official.any((p) => p.store == supermarketKey),
+        filteredByStore: official.any(
+          (p) => p.store == catalogKeyFor(supermarketKey),
+        ),
       );
     }
     try {

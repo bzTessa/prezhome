@@ -1002,9 +1002,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       String? imageUrl = productPhoto;
       if (imageUrl != null) {
         // Se recuerda para la próxima vez que se escriba este producto.
-        await FoodPhotoService(
-          _client,
-        ).rememberPhoto(homeId: homeId, name: name, url: imageUrl);
+        await FoodPhotoService(_client).rememberPhoto(
+          homeId: homeId,
+          name: name,
+          url: imageUrl,
+          manual: true,
+        );
       } else {
         // Foto del envase en Open Food Facts (o la ya guardada). Si tarda,
         // el producto entra sin foto y se le pone después.
@@ -1509,11 +1512,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   value: _view.showPhotos,
                   onChanged: (v) => update(_view.copyWith(showPhotos: v)),
                 ),
-                SwitchListTile(
-                  title: Text(context.l.shopShowIcons),
-                  value: _view.showIcons,
-                  onChanged: (v) => update(_view.copyWith(showIcons: v)),
-                ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.list_alt_rounded),
@@ -1858,14 +1856,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final photo = FoodImage(
       name: item.name,
       itemType: item.itemType,
-      // Sin fotos, el icono del producto. Las fotos de banco salen al azar:
-      // mejor el icono hasta que llegue la del envase.
-      imageUrl: !_view.showPhotos || isStockPhoto(item.imageUrl)
-          ? null
-          : item.imageUrl,
-      forceIllustration: !_view.showPhotos,
-      // Sin dibujos: solo la foto, o el hueco si no hay.
-      photoOnly: _view.showPhotos && !_view.showIcons,
+      // Las fotos de banco salen al azar: hueco hasta que llegue la del súper.
+      imageUrl: isStockPhoto(item.imageUrl) ? null : item.imageUrl,
+      // Solo fotos, nunca dibujos: si no hay, el hueco liso.
+      photoOnly: true,
       size: 42,
       radius: 10,
     );
@@ -1890,18 +1884,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         onToggle: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
         // Tocar la foto permite cambiarla (cámara, galería o súper).
-        leading: !_view.showPhotos && !_view.showIcons
+        leading: !_view.showPhotos
             ? null
-            : _view.showPhotos
-            ? Semantics(
+            : Semantics(
                 button: true,
                 label: context.l.changePhoto,
                 child: GestureDetector(
                   onTap: () => _openItemActions(item),
                   child: photo,
                 ),
-              )
-            : photo,
+              ),
       ),
     );
   }

@@ -50,6 +50,7 @@ class FoodPhotoService {
     required String homeId,
     required String name,
     required String url,
+    bool manual = false,
   }) async {
     final key = cacheKey(name);
     if (key.isEmpty || homeId.isEmpty || url.isEmpty) return;
@@ -58,6 +59,7 @@ class FoodPhotoService {
         'home_id': homeId,
         'name_normalized': key,
         'url': url,
+        'manual': manual,
         'fetched_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'home_id,name_normalized');
     } catch (_) {

@@ -43,5 +43,6 @@ void main() {
     expect(de, isNot(contains('mercadona')));
     expect(Supermarket.forCountry('ES'), Supermarket.all);
     expect(Supermarket.labelFor('bingo'), 'Bingo');
+    expect(Supermarket.labelFor('lidl_fr'), 'Lidl');
   });
 }

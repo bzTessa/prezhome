@@ -262,9 +262,12 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
           picked.displayName == name) {
         imageUrl = picked.imageUrl;
         if (homeId != null) {
-          await FoodPhotoService(
-            Supabase.instance.client,
-          ).rememberPhoto(homeId: homeId, name: name, url: imageUrl!);
+          await FoodPhotoService(Supabase.instance.client).rememberPhoto(
+            homeId: homeId,
+            name: name,
+            url: imageUrl!,
+            manual: true,
+          );
         }
       } else if (isFood &&
           name.isNotEmpty &&
@@ -486,9 +489,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                       imageUrl: _photoUrl ?? widget.item!.imageUrl,
                       size: 120,
                       radius: AppRadius.md,
-                      forceIllustration:
-                          _photoUrl == null &&
-                          widget.item!.category == 'Especias',
+                      photoOnly: true,
                     ),
                   ),
                 ),
