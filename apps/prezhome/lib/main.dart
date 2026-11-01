@@ -58,6 +58,7 @@ class PrezHomeApp extends StatefulWidget {
 class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
   late final StreamSubscription<AuthState> _authSub;
   final _navigator = GlobalKey<NavigatorState>();
+  bool _hadSession = Supabase.instance.client.auth.currentSession != null;
 
   @override
   void initState() {
@@ -66,6 +67,17 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
     ThemePreference.mode.addListener(_applyTheme);
     HomeCountry.current.addListener(_rebuildAll);
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((s) {
+      // Al entrar (correo, Google o enlace de confirmación) el login suele
+      // estar encima del AuthGate o haberlo sustituido: volvemos a él para
+      // que lleve a la app, sin depender de que cada pantalla navegue.
+      final hasSession = s.session != null;
+      if (hasSession && !_hadSession) {
+        _navigator.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const _AuthGate()),
+          (_) => false,
+        );
+      }
+      _hadSession = hasSession;
       _applyTheme();
       if (s.event == AuthChangeEvent.signedOut) {
         unawaited(Reminders.clear());

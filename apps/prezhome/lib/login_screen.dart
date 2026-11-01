@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'home_session_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/tactile_button.dart';
@@ -50,22 +49,30 @@ class _LoginScreenState extends State<LoginScreen> {
           password: password,
         );
       } else {
-        await Supabase.instance.client.auth.signUp(
+        final res = await Supabase.instance.client.auth.signUp(
           email: email,
           password: password,
+          // El enlace del correo de confirmación abre la app con la sesión.
+          emailRedirectTo: kIsWeb
+              ? Uri.base.origin
+              : 'com.prezhome.app://login-callback',
         );
         if (mounted) {
+          final confirm = res.session == null;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.l.loginAccountCreated)),
+            SnackBar(
+              content: Text(
+                confirm
+                    ? context.l.loginConfirmEmailSent
+                    : context.l.loginAccountCreated,
+              ),
+              duration: Duration(seconds: confirm ? 8 : 4),
+            ),
           );
+          if (confirm) setState(() => _isLoginMode = true);
         }
       }
-
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeSessionScreen()),
-        );
-      }
+      // Con sesión, PrezHomeApp lleva a la app al recibir el signedIn.
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

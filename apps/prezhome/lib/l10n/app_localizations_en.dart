@@ -43,6 +43,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginAccountCreated => 'Account created. Welcome to PrezHome';
 
   @override
+  String get loginConfirmEmailSent =>
+      'We\'ve sent you an email to confirm your account. Open it on this phone and you\'ll be signed in.';
+
+  @override
   String get loginAuthError => 'Sign-in error';
 
   @override

@@ -8,6 +8,7 @@
   "oneMoment": "Um momento…",
   "retry": "Tentar novamente",
   "loginAccountCreated": "Conta criada. Bem-vindo ao PrezHome",
+  "loginConfirmEmailSent": "Enviámos-te um e-mail para confirmar a conta. Abre-o neste telemóvel e entras automaticamente.",
   "loginAuthError": "Erro de autenticação",
   "loginProviderError": "Não foi possível entrar com {provider}",
   "loginResetNeedsEmail": "Escreve primeiro o teu e-mail e envio-te o link para redefinir a palavra-passe.",

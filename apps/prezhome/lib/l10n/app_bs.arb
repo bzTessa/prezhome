@@ -8,6 +8,7 @@
   "oneMoment": "Trenutak…",
   "retry": "Pokušaj ponovo",
   "loginAccountCreated": "Račun je kreiran. Dobro došli u PrezHome",
+  "loginConfirmEmailSent": "Poslali smo vam e-mail za potvrdu računa. Otvorite ga na ovom telefonu i bit ćete prijavljeni.",
   "loginAuthError": "Greška pri prijavi",
   "loginProviderError": "Prijava putem {provider} nije uspjela",
   "loginResetNeedsEmail": "Prvo upiši svoj e-mail i poslat ću ti link za promjenu lozinke.",
