@@ -392,6 +392,8 @@
   "recPantryIdeas": "Ideje s onim što je u tvojoj ostavi",
   "recAll": "Svi",
   "recFavorites": "Omiljeni",
+  "recOther": "Ostali",
+  "recSeeAll": "Prikaži svih {count}",
   "recNoFilter": "Nema recepata s ovim filterom.\nProbaj drugu kategoriju.",
   "clear": "Očisti",
   "recNoMatch": "Nema recepata koji odgovaraju\n\"{query}\".",

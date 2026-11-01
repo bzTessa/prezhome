@@ -973,6 +973,15 @@
   "recPantryIdeas": "Ideas con lo que hay en tu despensa",
   "recAll": "Todas",
   "recFavorites": "Favoritas",
+  "recOther": "Otras",
+  "recSeeAll": "Ver las {count}",
+  "@recSeeAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "recNoFilter": "No hay recetas con este filtro.\nPrueba con otra categoría.",
   "clear": "Limpiar",
   "recNoMatch": "No hay recetas que coincidan con\n\"{query}\".",

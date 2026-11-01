@@ -38,6 +38,7 @@
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { keywordsFor, pickRelevant, unsplashText } from "./relevance.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -146,9 +147,10 @@ async function searchUnsplash(
   searches: PhotoSearch[],
   key: string,
   exclude: Set<string>,
+  keywords: string[],
 ): Promise<{ url: string | null; [k: string]: unknown }> {
   for (const s of searches) {
-    const result = await searchUnsplashOnce(s, key, exclude);
+    const result = await searchUnsplashOnce(s, key, exclude, keywords);
     if (result.url) return result;
   }
   return { url: null };
@@ -160,6 +162,7 @@ async function searchUnsplashOnce(
   search: PhotoSearch,
   key: string,
   exclude: Set<string>,
+  keywords: string[],
 ): Promise<{ url: string | null; [k: string]: unknown }> {
   try {
     const url =
@@ -174,10 +177,15 @@ async function searchUnsplashOnce(
     }
     const data = await res.json();
     const results = Array.isArray(data?.results) ? data.results : [];
-    const first = results.find((r: Record<string, any>) => {
-      const u = r?.urls?.regular ?? r?.urls?.small;
-      return typeof u === "string" && !exclude.has(u);
-    });
+    // No la primera sin más: la que su descripción dice que es el plato.
+    const first = pickRelevant(
+      results.filter((r: Record<string, any>) => {
+        const u = r?.urls?.regular ?? r?.urls?.small;
+        return typeof u === "string" && !exclude.has(u);
+      }),
+      unsplashText,
+      keywords,
+    ) as Record<string, any> | null;
     if (!first) return { url: null };
     const photoUrl: string = first.urls.regular ?? first.urls.small;
 
@@ -239,6 +247,7 @@ async function searchPexels(
   searches: PhotoSearch[],
   key: string,
   exclude: Set<string>,
+  keywords: string[],
 ): Promise<string | null> {
   for (const s of searches) {
     try {
@@ -253,10 +262,17 @@ async function searchPexels(
       }
       const data = await res.json();
       const photos = Array.isArray(data?.photos) ? data.photos : [];
-      for (const p of photos) {
-        const u = p?.src?.large || p?.src?.medium || p?.src?.original;
-        if (typeof u === "string" && !exclude.has(u)) return u;
-      }
+      const srcOf = (p: Record<string, any>) =>
+        p?.src?.large || p?.src?.medium || p?.src?.original;
+      const best = pickRelevant(
+        photos.filter((p: Record<string, any>) => {
+          const u = srcOf(p);
+          return typeof u === "string" && !exclude.has(u);
+        }),
+        (p: Record<string, any>) => `${p?.alt ?? ""}`,
+        keywords,
+      );
+      if (best) return srcOf(best);
     } catch (e) {
       console.error("Pexels fetch exception:", e);
     }
@@ -385,6 +401,9 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Falta el nombre del plato" }, 400);
     }
     const searches = buildFoodSearches(query, queryEn, mode);
+    // Palabras que la descripción de la foto debe mencionar; si ninguna foto
+    // las menciona, mejor sin foto (ilustración) que una al azar.
+    const keywords = keywordsFor(query, queryEn);
 
     // 4. Selección de proveedor. Unsplash es el PRINCIPAL; Pexels el RESPALDO.
     //    Si no hay ninguna clave, degradar: { url: null } (NUNCA 500).
@@ -392,11 +411,11 @@ Deno.serve(async (req: Request) => {
     const pexelsKey = Deno.env.get("PEXELS_API_KEY");
 
     if (unsplashKey) {
-      const result = await searchUnsplash(searches, unsplashKey, exclude);
+      const result = await searchUnsplash(searches, unsplashKey, exclude, keywords);
       if (result.url) return json(result);
     }
     if (pexelsKey) {
-      const url = await searchPexels(searches, pexelsKey, exclude);
+      const url = await searchPexels(searches, pexelsKey, exclude, keywords);
       if (url) return json({ url, provider: "pexels" });
     }
 
