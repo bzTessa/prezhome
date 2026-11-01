@@ -913,19 +913,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       },
     );
 
-    if (confirmed != true) {
-      nameCtrl.dispose();
-      qtyCtrl.dispose();
-      unitCtrl.dispose();
-      return;
-    }
+    // Sin dispose(): showDialog vuelve antes de que acabe la animación de
+    // cierre y los campos aún usan los controladores (pantalla roja
+    // '_dependents.isEmpty'). Son locales y se liberan solos.
+    if (confirmed != true) return;
 
     final name = nameCtrl.text.trim();
     final qty = double.tryParse(qtyCtrl.text.trim().replaceAll(',', '.'));
     final unit = unitCtrl.text.trim();
-    nameCtrl.dispose();
-    qtyCtrl.dispose();
-    unitCtrl.dispose();
 
     if (name.isEmpty) {
       if (!mounted) return;
