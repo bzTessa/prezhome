@@ -2999,6 +2999,390 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ingrediente'**
   String get arIngredient;
+
+  /// No description provided for @tskWhoDid.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quién hizo la tarea?'**
+  String get tskWhoDid;
+
+  /// No description provided for @tskTheHome.
+  ///
+  /// In es, this message translates to:
+  /// **'el hogar'**
+  String get tskTheHome;
+
+  /// No description provided for @tskPointsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'+{points} puntos para {who}'**
+  String tskPointsFor(int points, String who);
+
+  /// No description provided for @tskPointsForPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'+{points} puntos para {who}. {count} productos a la despensa'**
+  String tskPointsForPantry(int points, String who, int count);
+
+  /// No description provided for @tskYou.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} (tú)'**
+  String tskYou(String name);
+
+  /// No description provided for @tskThisMember.
+  ///
+  /// In es, this message translates to:
+  /// **'este miembro'**
+  String get tskThisMember;
+
+  /// No description provided for @tskResetPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'Reiniciar puntos'**
+  String get tskResetPoints;
+
+  /// No description provided for @tskResetAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'Se pondrán a 0 los puntos de {name}. Esto no se puede deshacer. ¿Seguro?'**
+  String tskResetAsk(String name);
+
+  /// No description provided for @tskReset.
+  ///
+  /// In es, this message translates to:
+  /// **'Reiniciar'**
+  String get tskReset;
+
+  /// No description provided for @tskResetDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos de {name} reiniciados.'**
+  String tskResetDone(String name);
+
+  /// No description provided for @tskDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar tarea?'**
+  String get tskDeleteTitle;
+
+  /// No description provided for @tskDeleteAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borrará \"{title}\".'**
+  String tskDeleteAsk(String title);
+
+  /// No description provided for @tskClaimed.
+  ///
+  /// In es, this message translates to:
+  /// **'\"{title}\" es tuya'**
+  String tskClaimed(String title);
+
+  /// No description provided for @tskDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecha'**
+  String get tskDone;
+
+  /// No description provided for @tskToTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasar a mañana'**
+  String get tskToTomorrow;
+
+  /// No description provided for @tskToNextWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasar a la próxima semana'**
+  String get tskToNextWeek;
+
+  /// No description provided for @tskTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tareas'**
+  String get tskTitle;
+
+  /// No description provided for @tskEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay tareas todavía'**
+  String get tskEmptyTitle;
+
+  /// No description provided for @tskEmptyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade la primera.'**
+  String get tskEmptyHint;
+
+  /// No description provided for @tskNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva tarea'**
+  String get tskNew;
+
+  /// No description provided for @tskAnyone.
+  ///
+  /// In es, this message translates to:
+  /// **'Cualquiera'**
+  String get tskAnyone;
+
+  /// No description provided for @tskForToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Para hoy'**
+  String get tskForToday;
+
+  /// No description provided for @tskUpcoming.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximos días'**
+  String get tskUpcoming;
+
+  /// No description provided for @tskPoolEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada en la bolsa. Todo tiene dueño.'**
+  String get tskPoolEmpty;
+
+  /// No description provided for @tskSwipeToClaim.
+  ///
+  /// In es, this message translates to:
+  /// **'Desliza a la izquierda para pedírtela.'**
+  String get tskSwipeToClaim;
+
+  /// No description provided for @tskNothingDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy aún no hay nada hecho.'**
+  String get tskNothingDone;
+
+  /// No description provided for @tskAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get tskAll;
+
+  /// No description provided for @tskMine.
+  ///
+  /// In es, this message translates to:
+  /// **'Mías'**
+  String get tskMine;
+
+  /// No description provided for @tskAllDoneToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy está todo hecho'**
+  String get tskAllDoneToday;
+
+  /// No description provided for @tskNextBelow.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo siguiente, abajo.'**
+  String get tskNextBelow;
+
+  /// No description provided for @tskNothingLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'No queda nada pendiente.'**
+  String get tskNothingLeft;
+
+  /// No description provided for @tskScoreboard.
+  ///
+  /// In es, this message translates to:
+  /// **'MARCADOR'**
+  String get tskScoreboard;
+
+  /// No description provided for @tskPointsPerPerson.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS POR PERSONA'**
+  String get tskPointsPerPerson;
+
+  /// No description provided for @tskNoPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay puntos'**
+  String get tskNoPoints;
+
+  /// No description provided for @tskNoPointsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa tareas para ir sumando.'**
+  String get tskNoPointsHint;
+
+  /// No description provided for @tskSomeDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Algunos días'**
+  String get tskSomeDays;
+
+  /// No description provided for @tskOnce.
+  ///
+  /// In es, this message translates to:
+  /// **'Una vez'**
+  String get tskOnce;
+
+  /// No description provided for @tskNothingToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada para hoy'**
+  String get tskNothingToday;
+
+  /// No description provided for @tskAllDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo hecho'**
+  String get tskAllDone;
+
+  /// No description provided for @tskLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Queda 1} other{Quedan {count}}}'**
+  String tskLeft(int count);
+
+  /// No description provided for @tskOverdueCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 atrasada} other{{count} atrasadas}}'**
+  String tskOverdueCount(int count);
+
+  /// No description provided for @tskMarkDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar {title} como hecha'**
+  String tskMarkDone(String title);
+
+  /// No description provided for @tskClaim.
+  ///
+  /// In es, this message translates to:
+  /// **'Pedirme {title}'**
+  String tskClaim(String title);
+
+  /// No description provided for @tskOverdue.
+  ///
+  /// In es, this message translates to:
+  /// **'Atrasada'**
+  String get tskOverdue;
+
+  /// No description provided for @tskPts.
+  ///
+  /// In es, this message translates to:
+  /// **'{points} pts'**
+  String tskPts(int points);
+
+  /// No description provided for @tskView.
+  ///
+  /// In es, this message translates to:
+  /// **'{view, select, pending{Pendientes} pool{Bolsa} other{Hechas}}'**
+  String tskView(String view);
+
+  /// No description provided for @tskOtherDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro día'**
+  String get tskOtherDay;
+
+  /// No description provided for @tskEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar tarea'**
+  String get tskEdit;
+
+  /// No description provided for @tskNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de la tarea'**
+  String get tskNameHint;
+
+  /// No description provided for @tskOrTypeAnother.
+  ///
+  /// In es, this message translates to:
+  /// **'O escribe otra'**
+  String get tskOrTypeAnother;
+
+  /// No description provided for @tskWhen.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuándo'**
+  String get tskWhen;
+
+  /// No description provided for @tomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get tomorrow;
+
+  /// No description provided for @tskNoDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin fecha'**
+  String get tskNoDate;
+
+  /// No description provided for @tskRepeats.
+  ///
+  /// In es, this message translates to:
+  /// **'Se repite'**
+  String get tskRepeats;
+
+  /// No description provided for @tskWho.
+  ///
+  /// In es, this message translates to:
+  /// **'Quién'**
+  String get tskWho;
+
+  /// No description provided for @tskMe.
+  ///
+  /// In es, this message translates to:
+  /// **'Yo'**
+  String get tskMe;
+
+  /// No description provided for @tskAddPersonHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Para asignarla a alguien, añade a esa persona en Hogar (aunque no tenga cuenta).'**
+  String get tskAddPersonHint;
+
+  /// No description provided for @tskDetails.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalles'**
+  String get tskDetails;
+
+  /// No description provided for @tskNoTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin hora'**
+  String get tskNoTime;
+
+  /// No description provided for @tskRemoveTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar hora'**
+  String get tskRemoveTime;
+
+  /// No description provided for @tskFreeAt.
+  ///
+  /// In es, this message translates to:
+  /// **'Libre a las {time}'**
+  String tskFreeAt(String time);
+
+  /// No description provided for @tskNotes.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas'**
+  String get tskNotes;
+
+  /// No description provided for @tskPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos'**
+  String get tskPoints;
+
+  /// No description provided for @tskAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir tarea'**
+  String get tskAdd;
 }
 
 class _AppLocalizationsDelegate

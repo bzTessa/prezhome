@@ -1861,4 +1861,230 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get arIngredient => 'Ingredient';
+
+  @override
+  String get tskWhoDid => 'Who did the task?';
+
+  @override
+  String get tskTheHome => 'the household';
+
+  @override
+  String tskPointsFor(int points, String who) {
+    return '+$points points for $who';
+  }
+
+  @override
+  String tskPointsForPantry(int points, String who, int count) {
+    return '+$points points for $who. $count products to the pantry';
+  }
+
+  @override
+  String tskYou(String name) {
+    return '$name (you)';
+  }
+
+  @override
+  String get tskThisMember => 'this member';
+
+  @override
+  String get tskResetPoints => 'Reset points';
+
+  @override
+  String tskResetAsk(String name) {
+    return '$name\'s points will be set to 0. This can\'t be undone. Are you sure?';
+  }
+
+  @override
+  String get tskReset => 'Reset';
+
+  @override
+  String tskResetDone(String name) {
+    return '$name\'s points reset.';
+  }
+
+  @override
+  String get tskDeleteTitle => 'Delete task?';
+
+  @override
+  String tskDeleteAsk(String title) {
+    return '\"$title\" will be deleted.';
+  }
+
+  @override
+  String tskClaimed(String title) {
+    return '\"$title\" is yours';
+  }
+
+  @override
+  String get tskDone => 'Done';
+
+  @override
+  String get tskToTomorrow => 'Move to tomorrow';
+
+  @override
+  String get tskToNextWeek => 'Move to next week';
+
+  @override
+  String get tskTitle => 'Tasks';
+
+  @override
+  String get tskEmptyTitle => 'No tasks yet';
+
+  @override
+  String get tskEmptyHint => 'Add the first one.';
+
+  @override
+  String get tskNew => 'New task';
+
+  @override
+  String get tskAnyone => 'Anyone';
+
+  @override
+  String get tskForToday => 'For today';
+
+  @override
+  String get tskUpcoming => 'Coming days';
+
+  @override
+  String get tskPoolEmpty => 'Nothing in the pool. Everything has an owner.';
+
+  @override
+  String get tskSwipeToClaim => 'Swipe left to claim it.';
+
+  @override
+  String get tskNothingDone => 'Nothing done yet today.';
+
+  @override
+  String get tskAll => 'All';
+
+  @override
+  String get tskMine => 'Mine';
+
+  @override
+  String get tskAllDoneToday => 'Everything\'s done today';
+
+  @override
+  String get tskNextBelow => 'Next up, below.';
+
+  @override
+  String get tskNothingLeft => 'Nothing left to do.';
+
+  @override
+  String get tskScoreboard => 'SCOREBOARD';
+
+  @override
+  String get tskPointsPerPerson => 'POINTS PER PERSON';
+
+  @override
+  String get tskNoPoints => 'No points yet';
+
+  @override
+  String get tskNoPointsHint => 'Complete tasks to start adding up.';
+
+  @override
+  String get tskSomeDays => 'Some days';
+
+  @override
+  String get tskOnce => 'Once';
+
+  @override
+  String get tskNothingToday => 'Nothing for today';
+
+  @override
+  String get tskAllDone => 'All done';
+
+  @override
+  String tskLeft(int count) {
+    return '$count left';
+  }
+
+  @override
+  String tskOverdueCount(int count) {
+    return '$count overdue';
+  }
+
+  @override
+  String tskMarkDone(String title) {
+    return 'Mark $title as done';
+  }
+
+  @override
+  String tskClaim(String title) {
+    return 'Claim $title';
+  }
+
+  @override
+  String get tskOverdue => 'Overdue';
+
+  @override
+  String tskPts(int points) {
+    return '$points pts';
+  }
+
+  @override
+  String tskView(String view) {
+    String _temp0 = intl.Intl.selectLogic(view, {
+      'pending': 'To do',
+      'pool': 'Pool',
+      'other': 'Done',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tskOtherDay => 'Another day';
+
+  @override
+  String get tskEdit => 'Edit task';
+
+  @override
+  String get tskNameHint => 'Task name';
+
+  @override
+  String get tskOrTypeAnother => 'Or type another';
+
+  @override
+  String get tskWhen => 'When';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String get tskNoDate => 'No date';
+
+  @override
+  String get tskRepeats => 'Repeats';
+
+  @override
+  String get tskWho => 'Who';
+
+  @override
+  String get tskMe => 'Me';
+
+  @override
+  String get tskAddPersonHint =>
+      'To assign it to someone, add that person in Home (even without an account).';
+
+  @override
+  String get tskDetails => 'Details';
+
+  @override
+  String get tskNoTime => 'No time';
+
+  @override
+  String get tskRemoveTime => 'Remove time';
+
+  @override
+  String tskFreeAt(String time) {
+    return 'Free at $time';
+  }
+
+  @override
+  String get tskNotes => 'Notes';
+
+  @override
+  String get tskPoints => 'Points';
+
+  @override
+  String get tskAdd => 'Add task';
 }

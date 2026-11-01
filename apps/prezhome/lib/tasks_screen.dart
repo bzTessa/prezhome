@@ -25,6 +25,7 @@ import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'utils/task_kinds.dart';
+import 'l10n/l10n.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -142,9 +143,7 @@ class _TasksScreenState extends State<TasksScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        content: const Text(
-          'Sin conexión en vivo ahora mismo; se actualizará al recargar.',
-        ),
+        content: Text(context.l.shopLiveOffline),
       ),
     );
   }
@@ -253,7 +252,7 @@ class _TasksScreenState extends State<TasksScreen> {
         : await _pickMember(
             members: data.members,
             currentUserId: data.currentUserId ?? user.id,
-            title: '¿Quién hizo la tarea?',
+            title: context.l.tskWhoDid,
           );
     if (doneBy == null) return; // Cancelado.
 
@@ -272,14 +271,13 @@ class _TasksScreenState extends State<TasksScreen> {
           : 0;
 
       if (!mounted) return;
-      final who = data.members[doneBy] ?? 'el hogar';
+      final who = data.members[doneBy] ?? context.l.tskTheHome;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             bought > 0
-                ? '+${task.points} puntos para $who. $bought productos a la '
-                      'despensa'
-                : '+${task.points} puntos para $who',
+                ? context.l.tskPointsForPantry(task.points, who, bought)
+                : context.l.tskPointsFor(task.points, who),
           ),
         ),
       );
@@ -335,7 +333,9 @@ class _TasksScreenState extends State<TasksScreen> {
                       child: Icon(Icons.person, size: 20, color: AppColors.ink),
                     ),
                     title: Text(
-                      e.key == currentUserId ? '${e.value} (tú)' : e.value,
+                      e.key == currentUserId
+                          ? context.l.tskYou(e.value)
+                          : e.value,
                       style: AppTextStyles.bodyStrong,
                     ),
                     onTap: () => Navigator.of(sheetContext).pop(e.key),
@@ -352,23 +352,20 @@ class _TasksScreenState extends State<TasksScreen> {
   /// apoya en la politica task_points_delete (0044). Metodo con cuerpo de
   /// bloque y guardas mounted tras los awaits.
   Future<void> _resetPoints(_TasksData data, String userId) async {
-    final name = data.members[userId] ?? 'este miembro';
+    final name = data.members[userId] ?? context.l.tskThisMember;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Reiniciar puntos'),
-        content: Text(
-          'Se pondrán a 0 los puntos de $name. Esto no se puede deshacer. '
-          '¿Seguro?',
-        ),
+        title: Text(context.l.tskResetPoints),
+        content: Text(context.l.tskResetAsk(name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Reiniciar'),
+            child: Text(context.l.tskReset),
           ),
         ],
       ),
@@ -385,7 +382,7 @@ class _TasksScreenState extends State<TasksScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Puntos de $name reiniciados.')));
+      ).showSnackBar(SnackBar(content: Text(context.l.tskResetDone(name))));
       _reload();
     } catch (e) {
       if (!mounted) return;
@@ -402,16 +399,16 @@ class _TasksScreenState extends State<TasksScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('¿Eliminar tarea?'),
-        content: Text('Se borrará "${task.title}".'),
+        title: Text(context.l.tskDeleteTitle),
+        content: Text(context.l.tskDeleteAsk(task.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(context.l.delete),
           ),
         ],
       ),
@@ -441,7 +438,7 @@ class _TasksScreenState extends State<TasksScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('"${task.title}" es tuya')));
+      ).showSnackBar(SnackBar(content: Text(context.l.tskClaimed(task.title))));
       _reload();
     } catch (e) {
       if (!mounted) return;
@@ -535,22 +532,26 @@ class _TasksScreenState extends State<TasksScreen> {
                   item(
                     'done',
                     Icons.check_circle_rounded,
-                    'Hecha',
+                    context.l.tskDone,
                     color: AppColors.sage,
                   ),
                 if (!t.isDone) ...[
-                  item('tomorrow', Icons.wb_twilight_rounded, 'Pasar a mañana'),
+                  item(
+                    'tomorrow',
+                    Icons.wb_twilight_rounded,
+                    context.l.tskToTomorrow,
+                  ),
                   item(
                     'week',
                     Icons.next_week_rounded,
-                    'Pasar a la próxima semana',
+                    context.l.tskToNextWeek,
                   ),
                 ],
-                item('edit', Icons.edit_rounded, 'Editar'),
+                item('edit', Icons.edit_rounded, context.l.edit),
                 item(
                   'delete',
                   Icons.delete_outline_rounded,
-                  'Eliminar',
+                  context.l.delete,
                   color: AppColors.expired,
                 ),
               ],
@@ -580,7 +581,7 @@ class _TasksScreenState extends State<TasksScreen> {
       backgroundColor: AppColors.cream,
       // El teclado lo gestiona la hoja de nueva tarea; así el botón no sube.
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(title: const Text('Tareas')),
+      appBar: AppBar(title: Text(context.l.tskTitle)),
       body: FutureBuilder<_TasksData>(
         future: _future,
         builder: (context, snapshot) {
@@ -593,14 +594,14 @@ class _TasksScreenState extends State<TasksScreen> {
           }
           final data = snapshot.data!;
           if (data.homeId == null) {
-            return const Center(child: Text('No perteneces a ningún hogar.'));
+            return Center(child: Text(context.l.planNoHome));
           }
           if (data.tasks.isEmpty) {
             return EmptyState(
-              title: 'No hay tareas todavía',
-              message: 'Añade la primera.',
+              title: context.l.tskEmptyTitle,
+              message: context.l.tskEmptyHint,
               image: 'assets/images/vacio_tareas.png',
-              actionLabel: 'Nueva tarea',
+              actionLabel: context.l.tskNew,
               onAction: () => _openNew(data),
             );
           }
@@ -623,8 +624,8 @@ class _TasksScreenState extends State<TasksScreen> {
           String? who(HomeTask t) => !showWho
               ? null
               : t.assignedTo == null
-              ? 'Cualquiera'
-              : (data.members[t.assignedTo] ?? 'Miembro');
+              ? context.l.tskAnyone
+              : (data.members[t.assignedTo] ?? context.l.rdMember);
 
           final pool = pending.where((t) => t.isInPool).toList();
           final views = [
@@ -675,7 +676,7 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               SegmentedPill(
-                labels: [for (final v in views) v.label],
+                labels: [for (final v in views) context.l.tskView(v.name)],
                 selected: views.indexOf(view),
                 onChanged: (i) => setState(() => _view = views[i]),
               ),
@@ -694,12 +695,12 @@ class _TasksScreenState extends State<TasksScreen> {
                     nothingToday: upcoming.isNotEmpty,
                   )
                 else ...[
-                  const _SectionTitle('Para hoy'),
+                  _SectionTitle(context.l.tskForToday),
                   grid(today),
                 ],
                 if (upcoming.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xl),
-                  const _SectionTitle('Próximos días'),
+                  _SectionTitle(context.l.tskUpcoming),
                   Container(
                     decoration: AppTheme.tactileDecoration(
                       radius: AppRadius.lg,
@@ -726,7 +727,7 @@ class _TasksScreenState extends State<TasksScreen> {
               if (view == _TaskView.pool) ...[
                 const SizedBox(height: AppSpacing.lg),
                 if (pool.isEmpty)
-                  _ViewEmpty('Nada en la bolsa. Todo tiene dueño.')
+                  _ViewEmpty(context.l.tskPoolEmpty)
                 else ...[
                   Padding(
                     padding: const EdgeInsets.only(
@@ -734,7 +735,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       bottom: AppSpacing.md,
                     ),
                     child: Text(
-                      'Desliza a la izquierda para pedírtela.',
+                      context.l.tskSwipeToClaim,
                       style: AppTextStyles.bodyMuted,
                     ),
                   ),
@@ -744,7 +745,7 @@ class _TasksScreenState extends State<TasksScreen> {
               if (view == _TaskView.done) ...[
                 const SizedBox(height: AppSpacing.lg),
                 if (doneToday.isEmpty)
-                  _ViewEmpty('Hoy aún no hay nada hecho.')
+                  _ViewEmpty(context.l.tskNothingDone)
                 else
                   Wrap(
                     spacing: AppSpacing.sm,
@@ -777,9 +778,9 @@ class _TasksScreenState extends State<TasksScreen> {
             backgroundColor: AppColors.ink,
             foregroundColor: AppColors.cream,
             icon: const Icon(Icons.add_rounded),
-            label: const Text(
-              'Nueva tarea',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            label: Text(
+              context.l.tskNew,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           );
         },
@@ -852,8 +853,8 @@ class _FilterRow extends StatelessWidget {
         spacing: AppSpacing.sm,
         runSpacing: AppSpacing.xs,
         children: [
-          chip('Todas', null),
-          if (currentUserId != null) chip('Mías', currentUserId),
+          chip(context.l.tskAll, null),
+          if (currentUserId != null) chip(context.l.tskMine, currentUserId),
           for (final e in others) chip(e.value, e.key),
         ],
       ),
@@ -892,14 +893,14 @@ class _TareasCelebracion extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hoy está todo hecho',
+                            context.l.tskAllDoneToday,
                             style: AppTextStyles.title,
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
                             nothingToday
-                                ? 'Lo siguiente, abajo.'
-                                : 'No queda nada pendiente.',
+                                ? context.l.tskNextBelow
+                                : context.l.tskNothingLeft,
                             style: AppTextStyles.bodyMuted,
                           ),
                         ],
@@ -963,7 +964,7 @@ class _Scoreboard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'MARCADOR',
+            context.l.tskScoreboard,
             style: TextStyle(
               fontSize: 12,
               letterSpacing: 1,
@@ -992,7 +993,7 @@ class _Scoreboard extends StatelessWidget {
                   ),
                   AnimatedCounter(
                     value: pts.toDouble(),
-                    formatter: (v) => '${v.round()} pts',
+                    formatter: (v) => context.l.tskPts(v.round()),
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: AppColors.ink,
@@ -1005,7 +1006,7 @@ class _Scoreboard extends StatelessWidget {
                       size: 20,
                       color: AppColors.inkMuted,
                     ),
-                    tooltip: 'Reiniciar puntos',
+                    tooltip: context.l.tskResetPoints,
                     onPressed: () => onResetPoints(e.key),
                   ),
                 ],
@@ -1042,7 +1043,7 @@ class _PointsChart extends StatelessWidget {
     ];
 
     final totalPoints = data.fold<int>(0, (a, p) => a + p.points);
-    if (totalPoints == 0) return _empty();
+    if (totalPoints == 0) return _empty(context);
 
     final maxPoints = data.fold<int>(0, (a, p) => p.points > a ? p.points : a);
     // Un poco de aire por encima para que la barra no toque el borde superior.
@@ -1056,7 +1057,7 @@ class _PointsChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'PUNTOS POR PERSONA',
+            context.l.tskPointsPerPerson,
             style: TextStyle(
               fontSize: 12,
               letterSpacing: 1,
@@ -1078,7 +1079,7 @@ class _PointsChart extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
-                        '${rod.toY.toInt()} pts',
+                        context.l.tskPts(rod.toY.toInt()),
                         TextStyle(
                           color: AppColors.ink,
                           fontWeight: FontWeight.bold,
@@ -1156,7 +1157,7 @@ class _PointsChart extends StatelessWidget {
 
   /// Estado vacío amable cuando nadie ha sumado puntos todavía, para no mostrar
   /// una gráfica plana de barras a cero.
-  Widget _empty() {
+  Widget _empty(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
       padding: const EdgeInsets.all(18),
@@ -1165,7 +1166,7 @@ class _PointsChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'PUNTOS POR PERSONA',
+            context.l.tskPointsPerPerson,
             style: TextStyle(
               fontSize: 12,
               letterSpacing: 1,
@@ -1183,7 +1184,7 @@ class _PointsChart extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Aún no hay puntos',
+                      context.l.tskNoPoints,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -1192,7 +1193,7 @@ class _PointsChart extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Completa tareas para ir sumando.',
+                      context.l.tskNoPointsHint,
                       style: TextStyle(color: AppColors.inkMuted),
                     ),
                   ],
@@ -1213,13 +1214,15 @@ class _PersonPoints {
   const _PersonPoints({required this.name, required this.points});
 }
 
-String _repeatLabel(HomeTask t) => switch (t.recurrence) {
-  'daily' => 'Cada día',
-  'weekly' => 'Cada semana',
+String _repeatLabel(BuildContext context, HomeTask t) => switch (t.recurrence) {
+  'daily' => context.l.planEveryDays(1),
+  'weekly' => context.l.planEveryWeeks(1),
   'custom_interval' =>
-    'Cada ${t.intervalCount ?? 1} ${t.intervalUnit == 'week' ? 'semanas' : 'días'}',
-  'custom_weekdays' => 'Algunos días',
-  _ => 'Una vez',
+    t.intervalUnit == 'week'
+        ? context.l.planEveryWeeks(t.intervalCount ?? 1)
+        : context.l.planEveryDays(t.intervalCount ?? 1),
+  'custom_weekdays' => context.l.tskSomeDays,
+  _ => context.l.tskOnce,
 };
 
 /// Icono de la tarea en su color: así se reconoce sin leer.
@@ -1327,7 +1330,7 @@ class _TodayHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hoy',
+                  context.l.today,
                   style: TextStyle(
                     fontSize: 22,
                     letterSpacing: -0.4,
@@ -1338,14 +1341,16 @@ class _TodayHero extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   left == 0
-                      ? (total == 0 ? 'Nada para hoy' : 'Todo hecho')
-                      : 'Queda${left == 1 ? '' : 'n'} $left',
+                      ? (total == 0
+                            ? context.l.tskNothingToday
+                            : context.l.tskAllDone)
+                      : context.l.tskLeft(left),
                   style: AppTextStyles.bodyMuted,
                 ),
                 if (overdue > 0) ...[
                   const SizedBox(height: AppSpacing.xs),
                   _Pill(
-                    text: '$overdue atrasada${overdue == 1 ? '' : 's'}',
+                    text: context.l.tskOverdueCount(overdue),
                     bg: AppColors.expiredBg,
                     fg: AppColors.expired,
                   ),
@@ -1407,7 +1412,7 @@ class _TaskTile extends StatelessWidget {
     final kind = taskKindFor(task.title);
     final (_, fg) = kind.colors;
     final meta = [
-      if (task.recurrence != 'once') _repeatLabel(task),
+      if (task.recurrence != 'once') _repeatLabel(context, task),
       ?who,
     ].join(' · ');
     return SwipeAction(
@@ -1415,7 +1420,7 @@ class _TaskTile extends StatelessWidget {
       toRight: SwipeSide(
         icon: Icons.check_rounded,
         color: AppColors.done,
-        label: 'Marcar ${task.title} como hecha',
+        label: context.l.tskMarkDone(task.title),
         onTrigger: onDone,
       ),
       toLeft: onClaim == null
@@ -1423,7 +1428,7 @@ class _TaskTile extends StatelessWidget {
           : SwipeSide(
               icon: Icons.back_hand_rounded,
               color: AppColors.terracotta,
-              label: 'Pedirme ${task.title}',
+              label: context.l.tskClaim(task.title),
               onTrigger: onClaim!,
             ),
       child: PressScale(
@@ -1460,7 +1465,7 @@ class _TaskTile extends StatelessWidget {
                           const Spacer(),
                           Semantics(
                             button: true,
-                            label: 'Marcar ${task.title} como hecha',
+                            label: context.l.tskMarkDone(task.title),
                             child: InkResponse(
                               onTap: onDone,
                               radius: 26,
@@ -1500,7 +1505,7 @@ class _TaskTile extends StatelessWidget {
                       const SizedBox(height: AppSpacing.xs),
                       if (overdue)
                         _Pill(
-                          text: 'Atrasada',
+                          text: context.l.tskOverdue,
                           bg: AppColors.expiredBg,
                           fg: AppColors.expired,
                         )
@@ -1546,7 +1551,7 @@ class _PointsBadge extends StatelessWidget {
         Icon(Icons.star_rounded, size: 16, color: AppColors.gold),
         const SizedBox(width: 3),
         Text(
-          '$points pts',
+          context.l.tskPts(points),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w800,
@@ -1575,14 +1580,7 @@ class _ViewEmpty extends StatelessWidget {
 }
 
 /// Vistas de la píldora de arriba.
-enum _TaskView {
-  pending('Pendientes'),
-  pool('Bolsa'),
-  done('Hechas');
-
-  const _TaskView(this.label);
-  final String label;
-}
+enum _TaskView { pending, pool, done }
 
 /// Fila de una tarea de otro día.
 class _UpcomingRow extends StatelessWidget {
@@ -1601,7 +1599,7 @@ class _UpcomingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final kind = taskKindFor(task.title);
     final meta = [
-      if (task.recurrence != 'once') _repeatLabel(task),
+      if (task.recurrence != 'once') _repeatLabel(context, task),
       ?who,
     ].join(' · ');
     return InkWell(
@@ -1892,12 +1890,12 @@ class _TaskSheetState extends State<_TaskSheet> {
   Widget build(BuildContext context) {
     final dateLabel = _when == 2 && _date != null
         ? '${_date!.day}/${_date!.month}'
-        : 'Otro día';
+        : context.l.tskOtherDay;
     final repeats = [
-      ('once', 'No'),
-      ('daily', 'Cada día'),
-      ('weekly', 'Cada semana'),
-      ('custom_weekdays', 'Algunos días'),
+      ('once', context.l.no),
+      ('daily', context.l.planEveryDays(1)),
+      ('weekly', context.l.planEveryWeeks(1)),
+      ('custom_weekdays', context.l.tskSomeDays),
       // Las de "cada N días" se crearon antes; se conservan al editarlas.
       if (widget.task?.recurrence == 'custom_interval')
         ('custom_interval', widget.task!.recurrenceLabel),
@@ -1911,7 +1909,7 @@ class _TaskSheetState extends State<_TaskSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _editing ? 'Editar tarea' : 'Nueva tarea',
+              _editing ? context.l.tskEdit : context.l.tskNew,
               style: AppTextStyles.headline,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -1952,17 +1950,27 @@ class _TaskSheetState extends State<_TaskSheet> {
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _save(),
               decoration: InputDecoration(
-                hintText: _editing ? 'Nombre de la tarea' : 'O escribe otra',
+                hintText: _editing
+                    ? context.l.tskNameHint
+                    : context.l.tskOrTypeAnother,
                 prefixIcon: Icon(taskKindFor(_title.text).icon),
               ),
             ),
-            _label('Cuándo'),
+            _label(context.l.tskWhen),
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
               children: [
-                _chip('Hoy', _when == 0, () => setState(() => _when = 0)),
-                _chip('Mañana', _when == 1, () => setState(() => _when = 1)),
+                _chip(
+                  context.l.today,
+                  _when == 0,
+                  () => setState(() => _when = 0),
+                ),
+                _chip(
+                  context.l.tomorrow,
+                  _when == 1,
+                  () => setState(() => _when = 1),
+                ),
                 _chip(
                   dateLabel,
                   _when == 2,
@@ -1970,13 +1978,13 @@ class _TaskSheetState extends State<_TaskSheet> {
                   icon: Icons.event_rounded,
                 ),
                 _chip(
-                  'Sin fecha',
+                  context.l.tskNoDate,
                   _when == -1,
                   () => setState(() => _when = -1),
                 ),
               ],
             ),
-            _label('Se repite'),
+            _label(context.l.tskRepeats),
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
@@ -2009,31 +2017,27 @@ class _TaskSheetState extends State<_TaskSheet> {
               ),
             ],
             if (widget.members.length > 1) ...[
-              _label('Quién'),
+              _label(context.l.tskWho),
               Wrap(
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.xs,
                 children: [
                   _chip(
-                    'Cualquiera',
+                    context.l.tskAnyone,
                     _assigned == null,
                     () => setState(() => _assigned = null),
                   ),
                   for (final e in widget.members.entries)
                     _chip(
-                      e.key == widget.currentUserId ? 'Yo' : e.value,
+                      e.key == widget.currentUserId ? context.l.tskMe : e.value,
                       _assigned == e.key,
                       () => setState(() => _assigned = e.key),
                     ),
                 ],
               ),
             ] else ...[
-              _label('Quién'),
-              Text(
-                'Para asignarla a alguien, añade a esa persona en Hogar '
-                '(aunque no tenga cuenta).',
-                style: AppTextStyles.bodyMuted,
-              ),
+              _label(context.l.tskWho),
+              Text(context.l.tskAddPersonHint, style: AppTextStyles.bodyMuted),
             ],
             const SizedBox(height: AppSpacing.md),
             // Lo menos habitual, un nivel más abajo y en la misma hoja.
@@ -2044,7 +2048,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 child: Row(
                   children: [
-                    Text('Detalles', style: AppTextStyles.label),
+                    Text(context.l.tskDetails, style: AppTextStyles.label),
                     const Spacer(),
                     AnimatedRotation(
                       turns: _details ? 0.5 : 0,
@@ -2071,7 +2075,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                           children: [
                             _chip(
                               _time == null
-                                  ? 'Sin hora'
+                                  ? context.l.tskNoTime
                                   : _time!.format(context),
                               _time != null,
                               _pickTime,
@@ -2079,7 +2083,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                             ),
                             if (_time != null)
                               IconButton(
-                                tooltip: 'Quitar hora',
+                                tooltip: context.l.tskRemoveTime,
                                 onPressed: () => setState(() => _time = null),
                                 icon: const Icon(Icons.close_rounded, size: 20),
                               ),
@@ -2092,7 +2096,9 @@ class _TaskSheetState extends State<_TaskSheet> {
                                   final m = snap.data;
                                   if (m == null) return const SizedBox.shrink();
                                   return _chip(
-                                    'Libre a las ${PlanPrefs.formatMinutes(m)}',
+                                    context.l.tskFreeAt(
+                                      PlanPrefs.formatMinutes(m),
+                                    ),
                                     false,
                                     () => setState(
                                       () => _time = TimeOfDay(
@@ -2112,15 +2118,20 @@ class _TaskSheetState extends State<_TaskSheet> {
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 2,
                           minLines: 1,
-                          decoration: const InputDecoration(hintText: 'Notas'),
+                          decoration: InputDecoration(
+                            hintText: context.l.tskNotes,
+                          ),
                         ),
                         if (widget.pointsEnabled)
                           Row(
                             children: [
-                              Text('Puntos', style: AppTextStyles.body),
+                              Text(
+                                context.l.tskPoints,
+                                style: AppTextStyles.body,
+                              ),
                               const Spacer(),
                               IconButton(
-                                tooltip: 'Menos',
+                                tooltip: context.l.less,
                                 icon: const Icon(Icons.remove_circle_outline),
                                 onPressed: _points > 5
                                     ? () => setState(() => _points -= 5)
@@ -2128,7 +2139,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                               ),
                               Text('$_points', style: AppTextStyles.title),
                               IconButton(
-                                tooltip: 'Más',
+                                tooltip: context.l.more,
                                 icon: const Icon(Icons.add_circle_outline),
                                 onPressed: _points < 100
                                     ? () => setState(() => _points += 5)
@@ -2148,7 +2159,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                 foregroundColor: AppColors.cream,
               ),
               child: Text(
-                _editing ? 'Guardar' : 'Añadir tarea',
+                _editing ? context.l.save : context.l.tskAdd,
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
