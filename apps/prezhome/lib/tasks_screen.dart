@@ -50,6 +50,7 @@ class _TasksScreenState extends State<TasksScreen> {
   // TasksScreen es hijo directo del IndexedStack siempre vivo: abrir una vez,
   // cerrar en dispose, nunca dejar canales colgando.
   RealtimeChannel? _channel;
+  Timer? _realtimeDebounce;
 
   // Guarda PURA que decide avisar de "sin conexión en vivo" una sola vez.
   final RealtimeNoticeGate _noticeGate = RealtimeNoticeGate();
@@ -92,7 +93,12 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
             callback: (_) {
               if (!mounted) return;
-              _reload();
+              // Un cambio de varias tareas llega como varios avisos seguidos:
+              // una sola recarga para todos (como la lista de la compra).
+              _realtimeDebounce?.cancel();
+              _realtimeDebounce = Timer(const Duration(milliseconds: 600), () {
+                if (mounted) _reload();
+              });
             },
           )
           .subscribe((status, [error]) {
@@ -150,6 +156,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   void dispose() {
+    _realtimeDebounce?.cancel();
     final channel = _channel;
     if (channel != null) {
       _client.removeChannel(channel);
