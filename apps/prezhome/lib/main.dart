@@ -14,6 +14,8 @@ import 'theme/theme_preference.dart';
 import 'widgets/drawn_icons.dart';
 import 'services/plan_prefs.dart';
 import 'services/reminders.dart';
+import 'services/share_inbox.dart';
+import 'add_recipe_screen.dart';
 import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
@@ -86,6 +88,17 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
       }
     });
     _syncBrightness();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => listenSharedText(_importShared),
+    );
+  }
+
+  /// Receta compartida desde Instagram/TikTok/YouTube: se importa al momento.
+  void _importShared(String text) {
+    if (Supabase.instance.client.auth.currentSession == null) return;
+    _navigator.currentState?.push(
+      MaterialPageRoute(builder: (_) => AddRecipeScreen(shared: text)),
+    );
   }
 
   @override
@@ -144,6 +157,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PrezHome',
+      navigatorKey: _navigator,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(context),
       // Idioma del móvil si la app lo tiene; si no, español. Intl.defaultLocale
@@ -164,7 +178,6 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
             : 'es_ES';
         return locale;
       },
-      navigatorKey: _navigator,
       home: const _AuthGate(),
       // En pantallas muy anchas la app no pasa de 1280 px, centrada. El menú
       // lateral y el ancho del contenido los decide MainShell.

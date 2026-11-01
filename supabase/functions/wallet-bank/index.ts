@@ -151,6 +151,8 @@ Deno.serve(async (req: Request) => {
               const q = new URLSearchParams({ date_from: isoDay(from) });
               if (key) q.set("continuation_key", key);
               const page = await eb(app, `/accounts/${acc.bank_uid}/transactions?${q}`);
+              // TEMPORAL: ver qué campos manda cada banco.
+              console.log("wallet-bank raw", JSON.stringify((page.transactions ?? []).slice(0, 40)));
               for (const t of page.transactions ?? []) {
                 const r = toRow(t);
                 if (r) rows.push(r);

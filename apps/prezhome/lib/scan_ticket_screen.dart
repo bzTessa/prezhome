@@ -236,7 +236,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       _merchantController.text = s(t['merchant']);
       final dateStr = s(t['purchased_at']);
       final parsed = DateTime.tryParse(dateStr);
-      if (parsed != null) _purchasedAt = parsed;
+      if (parsed != null) _purchasedAt = plausibleTicketDate(parsed);
       _items = items;
       _hasResult = true;
     });

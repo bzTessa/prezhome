@@ -100,7 +100,9 @@ export function toRow(t: any): BankRow | null {
   const debit = t.credit_debit_indicator === "DBIT";
   const party = debit ? t.creditor?.name : t.debtor?.name;
   const info = (t.remittance_information ?? []).join(" ").trim();
-  const concept = (party || info || "").trim();
+  // Trade Republic no manda contraparte: el texto viene en note o en el código.
+  const concept = (party || info || t.note || t.bank_transaction_code?.description ||
+    "").trim();
   const amount = debit ? -abs : abs;
   return {
     date,
