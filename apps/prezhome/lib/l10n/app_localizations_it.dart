@@ -1858,4 +1858,242 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get arIngredient => 'Ingrediente';
+
+  @override
+  String get tskWhoDid => 'Chi ha fatto il compito?';
+
+  @override
+  String get tskTheHome => 'la casa';
+
+  @override
+  String tskPointsFor(int points, String who) {
+    return '+$points punti per $who';
+  }
+
+  @override
+  String tskPointsForPantry(int points, String who, int count) {
+    return '+$points punti per $who. $count prodotti in dispensa';
+  }
+
+  @override
+  String tskYou(String name) {
+    return '$name (tu)';
+  }
+
+  @override
+  String get tskThisMember => 'questo membro';
+
+  @override
+  String get tskResetPoints => 'Azzera punti';
+
+  @override
+  String tskResetAsk(String name) {
+    return 'I punti di $name verranno azzerati. Non si può annullare. Sicuro?';
+  }
+
+  @override
+  String get tskReset => 'Azzera';
+
+  @override
+  String tskResetDone(String name) {
+    return 'Punti di $name azzerati.';
+  }
+
+  @override
+  String get tskDeleteTitle => 'Eliminare il compito?';
+
+  @override
+  String tskDeleteAsk(String title) {
+    return '\"$title\" verrà eliminato.';
+  }
+
+  @override
+  String tskClaimed(String title) {
+    return '\"$title\" è tuo';
+  }
+
+  @override
+  String get tskDone => 'Fatto';
+
+  @override
+  String get tskToTomorrow => 'Sposta a domani';
+
+  @override
+  String get tskToNextWeek => 'Sposta alla prossima settimana';
+
+  @override
+  String get tskTitle => 'Compiti';
+
+  @override
+  String get tskEmptyTitle => 'Ancora nessun compito';
+
+  @override
+  String get tskEmptyHint => 'Aggiungi il primo.';
+
+  @override
+  String get tskNew => 'Nuovo compito';
+
+  @override
+  String get tskAnyone => 'Chiunque';
+
+  @override
+  String get tskForToday => 'Per oggi';
+
+  @override
+  String get tskUpcoming => 'Prossimi giorni';
+
+  @override
+  String get tskPoolEmpty => 'Niente nel mucchio. Tutto ha un responsabile.';
+
+  @override
+  String get tskSwipeToClaim => 'Scorri a sinistra per prenderlo.';
+
+  @override
+  String get tskNothingDone => 'Oggi ancora niente di fatto.';
+
+  @override
+  String get tskAll => 'Tutti';
+
+  @override
+  String get tskMine => 'Miei';
+
+  @override
+  String get tskAllDoneToday => 'Oggi è tutto fatto';
+
+  @override
+  String get tskNextBelow => 'Il prossimo, qui sotto.';
+
+  @override
+  String get tskNothingLeft => 'Non resta niente da fare.';
+
+  @override
+  String get tskScoreboard => 'CLASSIFICA';
+
+  @override
+  String get tskPointsPerPerson => 'PUNTI PER PERSONA';
+
+  @override
+  String get tskNoPoints => 'Ancora nessun punto';
+
+  @override
+  String get tskNoPointsHint => 'Completa i compiti per accumulare punti.';
+
+  @override
+  String get tskSomeDays => 'Alcuni giorni';
+
+  @override
+  String get tskOnce => 'Una volta';
+
+  @override
+  String get tskNothingToday => 'Niente per oggi';
+
+  @override
+  String get tskAllDone => 'Tutto fatto';
+
+  @override
+  String tskLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ne restano $count',
+      one: 'Ne resta 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tskOverdueCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count in ritardo',
+      one: '1 in ritardo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tskMarkDone(String title) {
+    return 'Segna $title come fatto';
+  }
+
+  @override
+  String tskClaim(String title) {
+    return 'Prendo $title';
+  }
+
+  @override
+  String get tskOverdue => 'In ritardo';
+
+  @override
+  String tskPts(int points) {
+    return '$points pt';
+  }
+
+  @override
+  String tskView(String view) {
+    String _temp0 = intl.Intl.selectLogic(view, {
+      'pending': 'Da fare',
+      'pool': 'Mucchio',
+      'other': 'Fatti',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tskOtherDay => 'Un altro giorno';
+
+  @override
+  String get tskEdit => 'Modifica compito';
+
+  @override
+  String get tskNameHint => 'Nome del compito';
+
+  @override
+  String get tskOrTypeAnother => 'O scrivine un altro';
+
+  @override
+  String get tskWhen => 'Quando';
+
+  @override
+  String get tomorrow => 'Domani';
+
+  @override
+  String get tskNoDate => 'Senza data';
+
+  @override
+  String get tskRepeats => 'Si ripete';
+
+  @override
+  String get tskWho => 'Chi';
+
+  @override
+  String get tskMe => 'Io';
+
+  @override
+  String get tskAddPersonHint =>
+      'Per assegnarlo a qualcuno, aggiungi quella persona in Casa (anche senza account).';
+
+  @override
+  String get tskDetails => 'Dettagli';
+
+  @override
+  String get tskNoTime => 'Senza ora';
+
+  @override
+  String get tskRemoveTime => 'Togli ora';
+
+  @override
+  String tskFreeAt(String time) {
+    return 'Libero alle $time';
+  }
+
+  @override
+  String get tskNotes => 'Note';
+
+  @override
+  String get tskPoints => 'Punti';
+
+  @override
+  String get tskAdd => 'Aggiungi compito';
 }

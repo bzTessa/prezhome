@@ -1151,5 +1151,176 @@
   "arStepsHint": "Escribe los pasos, uno por línea…",
   "arSaveChanges": "Guardar cambios",
   "arSaveRecipe": "Guardar Receta",
-  "arIngredient": "Ingrediente"
+  "arIngredient": "Ingrediente",
+  "tskWhoDid": "¿Quién hizo la tarea?",
+  "tskTheHome": "el hogar",
+  "tskPointsFor": "+{points} puntos para {who}",
+  "@tskPointsFor": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "tskPointsForPantry": "+{points} puntos para {who}. {count} productos a la despensa",
+  "@tskPointsForPantry": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      },
+      "who": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tskYou": "{name} (tú)",
+  "@tskYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tskThisMember": "este miembro",
+  "tskResetPoints": "Reiniciar puntos",
+  "tskResetAsk": "Se pondrán a 0 los puntos de {name}. Esto no se puede deshacer. ¿Seguro?",
+  "@tskResetAsk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tskReset": "Reiniciar",
+  "tskResetDone": "Puntos de {name} reiniciados.",
+  "@tskResetDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tskDeleteTitle": "¿Eliminar tarea?",
+  "tskDeleteAsk": "Se borrará \"{title}\".",
+  "@tskDeleteAsk": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "tskClaimed": "\"{title}\" es tuya",
+  "@tskClaimed": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "tskDone": "Hecha",
+  "tskToTomorrow": "Pasar a mañana",
+  "tskToNextWeek": "Pasar a la próxima semana",
+  "tskTitle": "Tareas",
+  "tskEmptyTitle": "No hay tareas todavía",
+  "tskEmptyHint": "Añade la primera.",
+  "tskNew": "Nueva tarea",
+  "tskAnyone": "Cualquiera",
+  "tskForToday": "Para hoy",
+  "tskUpcoming": "Próximos días",
+  "tskPoolEmpty": "Nada en la bolsa. Todo tiene dueño.",
+  "tskSwipeToClaim": "Desliza a la izquierda para pedírtela.",
+  "tskNothingDone": "Hoy aún no hay nada hecho.",
+  "tskAll": "Todas",
+  "tskMine": "Mías",
+  "tskAllDoneToday": "Hoy está todo hecho",
+  "tskNextBelow": "Lo siguiente, abajo.",
+  "tskNothingLeft": "No queda nada pendiente.",
+  "tskScoreboard": "MARCADOR",
+  "tskPointsPerPerson": "PUNTOS POR PERSONA",
+  "tskNoPoints": "Aún no hay puntos",
+  "tskNoPointsHint": "Completa tareas para ir sumando.",
+  "tskSomeDays": "Algunos días",
+  "tskOnce": "Una vez",
+  "tskNothingToday": "Nada para hoy",
+  "tskAllDone": "Todo hecho",
+  "tskLeft": "{count, plural, =1{Queda 1} other{Quedan {count}}}",
+  "@tskLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tskOverdueCount": "{count, plural, =1{1 atrasada} other{{count} atrasadas}}",
+  "@tskOverdueCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tskMarkDone": "Marcar {title} como hecha",
+  "@tskMarkDone": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "tskClaim": "Pedirme {title}",
+  "@tskClaim": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "tskOverdue": "Atrasada",
+  "tskPts": "{points} pts",
+  "@tskPts": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "tskView": "{view, select, pending{Pendientes} pool{Bolsa} other{Hechas}}",
+  "@tskView": {
+    "placeholders": {
+      "view": {
+        "type": "String"
+      }
+    }
+  },
+  "tskOtherDay": "Otro día",
+  "tskEdit": "Editar tarea",
+  "tskNameHint": "Nombre de la tarea",
+  "tskOrTypeAnother": "O escribe otra",
+  "tskWhen": "Cuándo",
+  "tomorrow": "Mañana",
+  "tskNoDate": "Sin fecha",
+  "tskRepeats": "Se repite",
+  "tskWho": "Quién",
+  "tskMe": "Yo",
+  "tskAddPersonHint": "Para asignarla a alguien, añade a esa persona en Hogar (aunque no tenga cuenta).",
+  "tskDetails": "Detalles",
+  "tskNoTime": "Sin hora",
+  "tskRemoveTime": "Quitar hora",
+  "tskFreeAt": "Libre a las {time}",
+  "@tskFreeAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tskNotes": "Notas",
+  "tskPoints": "Puntos",
+  "tskAdd": "Añadir tarea"
 }

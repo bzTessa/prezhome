@@ -1847,4 +1847,230 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get arIngredient => 'Sastojak';
+
+  @override
+  String get tskWhoDid => 'Ko je uradio zadatak?';
+
+  @override
+  String get tskTheHome => 'domaćinstvo';
+
+  @override
+  String tskPointsFor(int points, String who) {
+    return '+$points bodova za $who';
+  }
+
+  @override
+  String tskPointsForPantry(int points, String who, int count) {
+    return '+$points bodova za $who. $count proizvoda u ostavu';
+  }
+
+  @override
+  String tskYou(String name) {
+    return '$name (ti)';
+  }
+
+  @override
+  String get tskThisMember => 'ovog člana';
+
+  @override
+  String get tskResetPoints => 'Resetuj bodove';
+
+  @override
+  String tskResetAsk(String name) {
+    return 'Bodovi za $name bit će postavljeni na 0. Ovo se ne može poništiti. Sigurno?';
+  }
+
+  @override
+  String get tskReset => 'Resetuj';
+
+  @override
+  String tskResetDone(String name) {
+    return 'Bodovi za $name resetovani.';
+  }
+
+  @override
+  String get tskDeleteTitle => 'Obrisati zadatak?';
+
+  @override
+  String tskDeleteAsk(String title) {
+    return '\"$title\" će biti obrisan.';
+  }
+
+  @override
+  String tskClaimed(String title) {
+    return '\"$title\" je tvoj';
+  }
+
+  @override
+  String get tskDone => 'Urađeno';
+
+  @override
+  String get tskToTomorrow => 'Prebaci na sutra';
+
+  @override
+  String get tskToNextWeek => 'Prebaci na sljedeću sedmicu';
+
+  @override
+  String get tskTitle => 'Zadaci';
+
+  @override
+  String get tskEmptyTitle => 'Još nema zadataka';
+
+  @override
+  String get tskEmptyHint => 'Dodaj prvi.';
+
+  @override
+  String get tskNew => 'Novi zadatak';
+
+  @override
+  String get tskAnyone => 'Bilo ko';
+
+  @override
+  String get tskForToday => 'Za danas';
+
+  @override
+  String get tskUpcoming => 'Narednih dana';
+
+  @override
+  String get tskPoolEmpty => 'Ništa u zajedničkom. Sve ima vlasnika.';
+
+  @override
+  String get tskSwipeToClaim => 'Prevuci ulijevo da ga preuzmeš.';
+
+  @override
+  String get tskNothingDone => 'Danas još ništa nije urađeno.';
+
+  @override
+  String get tskAll => 'Sve';
+
+  @override
+  String get tskMine => 'Moji';
+
+  @override
+  String get tskAllDoneToday => 'Danas je sve urađeno';
+
+  @override
+  String get tskNextBelow => 'Sljedeće je ispod.';
+
+  @override
+  String get tskNothingLeft => 'Ništa nije ostalo.';
+
+  @override
+  String get tskScoreboard => 'REZULTAT';
+
+  @override
+  String get tskPointsPerPerson => 'BODOVI PO OSOBI';
+
+  @override
+  String get tskNoPoints => 'Još nema bodova';
+
+  @override
+  String get tskNoPointsHint => 'Završavaj zadatke da skupljaš bodove.';
+
+  @override
+  String get tskSomeDays => 'Neki dani';
+
+  @override
+  String get tskOnce => 'Jednom';
+
+  @override
+  String get tskNothingToday => 'Ništa za danas';
+
+  @override
+  String get tskAllDone => 'Sve urađeno';
+
+  @override
+  String tskLeft(int count) {
+    return 'Preostalo: $count';
+  }
+
+  @override
+  String tskOverdueCount(int count) {
+    return 'Kasni: $count';
+  }
+
+  @override
+  String tskMarkDone(String title) {
+    return 'Označi $title kao urađeno';
+  }
+
+  @override
+  String tskClaim(String title) {
+    return 'Preuzmi $title';
+  }
+
+  @override
+  String get tskOverdue => 'Kasni';
+
+  @override
+  String tskPts(int points) {
+    return '$points b.';
+  }
+
+  @override
+  String tskView(String view) {
+    String _temp0 = intl.Intl.selectLogic(view, {
+      'pending': 'Na čekanju',
+      'pool': 'Zajedničko',
+      'other': 'Urađeno',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tskOtherDay => 'Drugi dan';
+
+  @override
+  String get tskEdit => 'Uredi zadatak';
+
+  @override
+  String get tskNameHint => 'Naziv zadatka';
+
+  @override
+  String get tskOrTypeAnother => 'Ili upiši drugi';
+
+  @override
+  String get tskWhen => 'Kada';
+
+  @override
+  String get tomorrow => 'Sutra';
+
+  @override
+  String get tskNoDate => 'Bez datuma';
+
+  @override
+  String get tskRepeats => 'Ponavlja se';
+
+  @override
+  String get tskWho => 'Ko';
+
+  @override
+  String get tskMe => 'Ja';
+
+  @override
+  String get tskAddPersonHint =>
+      'Da ga dodijeliš nekome, dodaj tu osobu u Dom (čak i bez računa).';
+
+  @override
+  String get tskDetails => 'Detalji';
+
+  @override
+  String get tskNoTime => 'Bez vremena';
+
+  @override
+  String get tskRemoveTime => 'Ukloni vrijeme';
+
+  @override
+  String tskFreeAt(String time) {
+    return 'Slobodno u $time';
+  }
+
+  @override
+  String get tskNotes => 'Bilješke';
+
+  @override
+  String get tskPoints => 'Bodovi';
+
+  @override
+  String get tskAdd => 'Dodaj zadatak';
 }
