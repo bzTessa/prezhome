@@ -2809,4 +2809,184 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pwEstimate =>
       'This is a starting estimate. Planned meals will log themselves in your diary once they\'re past.';
+
+  @override
+  String get phCantAnalyze => 'Couldn\'t analyse the meal';
+
+  @override
+  String phAnalyzeError(String error) {
+    return 'Couldn\'t analyse the photo: $error';
+  }
+
+  @override
+  String get phAnalyzeFail => 'Couldn\'t analyse the photo';
+
+  @override
+  String get phAddOne => 'Add at least one food with a name.';
+
+  @override
+  String get phTitle => 'Log with a photo';
+
+  @override
+  String get phLooking => 'Looking at your plate…';
+
+  @override
+  String get phStartTitle => 'Take a photo of your plate';
+
+  @override
+  String get phStartSub =>
+      'We work out the foods and their calories. You can correct it before saving.';
+
+  @override
+  String get takePhoto => 'Take photo';
+
+  @override
+  String get phReview => 'Check and fix what was detected';
+
+  @override
+  String get phApprox => 'Calories are approximate.';
+
+  @override
+  String get phMealType => 'Meal (optional)';
+
+  @override
+  String get phNoType => 'None';
+
+  @override
+  String get day => 'Day';
+
+  @override
+  String get phNothing => 'No food was recognised. Add them by hand.';
+
+  @override
+  String phFoods(int count) {
+    return 'FOODS ($count)';
+  }
+
+  @override
+  String get phAddFood => 'Add food';
+
+  @override
+  String get phFood => 'Food';
+
+  @override
+  String get phGrams => 'g (approx.)';
+
+  @override
+  String get phP => 'P (g)';
+
+  @override
+  String get phC => 'C (g)';
+
+  @override
+  String get phF => 'F (g)';
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String kcalAmount(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String get phSave => 'Save to diary';
+
+  @override
+  String get stkOpenError => 'Couldn\'t open the receipt';
+
+  @override
+  String get stkReadError => 'Couldn\'t read the receipt';
+
+  @override
+  String get stkScanError => 'Scan failed';
+
+  @override
+  String get stkPantryError =>
+      'The receipt was saved, but the pantry couldn\'t be updated';
+
+  @override
+  String stkCrossed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items ticked off the list',
+      one: '1 item ticked off the list',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stkEdit => 'Edit receipt';
+
+  @override
+  String get stkReading => 'Reading the receipt…';
+
+  @override
+  String get stkStartTitle => 'Scan your shopping receipt';
+
+  @override
+  String get stkStartSub =>
+      'We pull out products and prices. You can review it afterwards.';
+
+  @override
+  String get stkReview => 'Check and fix anything needed';
+
+  @override
+  String get stkRemember => 'Your corrections will be remembered next time.';
+
+  @override
+  String get stkStore => 'Store';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get stkAddPantry => 'Add to pantry';
+
+  @override
+  String get stkAddPantrySub => 'Each product goes to its spot';
+
+  @override
+  String stkProducts(int count) {
+    return 'PRODUCTS ($count)';
+  }
+
+  @override
+  String stkRaw(String name) {
+    return 'Receipt: \"$name\"';
+  }
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get stkQty => 'Qty';
+
+  @override
+  String get stkSave => 'Save receipt';
+
+  @override
+  String foodCategory(String cat) {
+    String _temp0 = intl.Intl.selectLogic(cat, {
+      'verdura': 'Vegetables',
+      'fruta': 'Fruit',
+      'carne': 'Meat',
+      'pescado': 'Fish',
+      'lacteos': 'Dairy',
+      'preparados': 'Ready meals',
+      'panaderia': 'Bakery',
+      'cereales': 'Pasta, rice and pulses',
+      'conservas': 'Tinned food',
+      'congelados': 'Frozen',
+      'dulces': 'Sweets and snacks',
+      'bebidas': 'Drinks',
+      'especias': 'Spices and condiments',
+      'higiene': 'Personal care',
+      'limpieza': 'Cleaning',
+      'hogar': 'Household',
+      'other': 'Other',
+    });
+    return '$_temp0';
+  }
 }

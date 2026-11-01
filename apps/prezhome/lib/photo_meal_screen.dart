@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/food_log_entry.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
+import 'l10n/l10n.dart';
 
 /// Registra comida a partir de una foto del plato: la IA estima los alimentos
 /// y sus calorías/macros, y luego la persona REVISA y CORRIGE lo detectado
@@ -59,6 +61,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
   }
 
   Future<void> _pickAndAnalyze(ImageSource source) async {
+    final l = context.l;
     try {
       final XFile? file = await _picker.pickImage(
         source: source,
@@ -85,18 +88,18 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       } else {
         // Camino en el que invoke devuelve el cuerpo en res.data (2xx con
         // forma inesperada, o versiones que no lanzan en no-2xx).
-        throw _errorFrom(data) ?? 'No se pudo analizar la comida';
+        throw _errorFrom(data) ?? l.phCantAnalyze;
       }
     } on FunctionException catch (e) {
       // Según la versión de supabase_flutter, invoke lanza FunctionException en
       // respuestas no-2xx (p. ej. el 429 'Has alcanzado tu límite mensual de
       // IA'). El cuerpo real de la función llega en e.details, así que lo
       // extraemos para mostrar el mensaje en español en vez de uno genérico.
-      final msg = _errorFrom(e.details) ?? 'No se pudo analizar la comida';
+      final msg = _errorFrom(e.details) ?? l.phCantAnalyze;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al analizar la foto: $msg'),
+            content: Text(context.l.phAnalyzeError(msg)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -105,7 +108,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al analizar la foto')),
+            content: Text(friendlyError(e, context.l.phAnalyzeFail)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -221,7 +224,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       }
 
       if (rows.isEmpty) {
-        throw 'Añade al menos un alimento con nombre.';
+        throw context.l.phAddOne;
       }
 
       await _client.from('food_log_entries').insert(rows);
@@ -232,7 +235,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, context.l.nutSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -250,15 +253,15 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Registrar con foto')),
+      appBar: AppBar(title: Text(context.l.phTitle)),
       body: _processing
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Mirando el plato…'),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(context.l.phLooking),
                 ],
               ),
             )
@@ -277,15 +280,14 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
           children: [
             Icon(Icons.photo_camera_outlined, size: 72, color: AppColors.wood),
             const SizedBox(height: 16),
-            const Text(
-              'Haz una foto a tu plato',
+            Text(
+              context.l.phStartTitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Calculamos los alimentos y sus calorías. Podrás corregirlo antes '
-              'de guardar.',
+              context.l.phStartSub,
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.inkMuted),
             ),
@@ -293,7 +295,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
             ElevatedButton.icon(
               onPressed: () => _pickAndAnalyze(ImageSource.camera),
               icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text('Hacer foto'),
+              label: Text(context.l.takePhoto),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -307,7 +309,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 ),
               ),
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Elegir de la galería'),
+              label: Text(context.l.rdGallery),
             ),
           ],
         ),
@@ -328,13 +330,13 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Revisa y corrige lo detectado',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    Text(
+                      context.l.phReview,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Las calorías son aproximadas.',
+                      context.l.phApprox,
                       style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                     if (_note.isNotEmpty) ...[
@@ -371,16 +373,16 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _mealType,
                       isExpanded: true,
-                      decoration: _dec('Tipo de comida (opcional)'),
+                      decoration: _dec(context.l.phMealType),
                       items: [
-                        const DropdownMenuItem<String>(
+                        DropdownMenuItem<String>(
                           value: null,
-                          child: Text('Sin tipo'),
+                          child: Text(context.l.phNoType),
                         ),
                         ...FoodLogEntry.mealTypeLabels.entries.map(
                           (e) => DropdownMenuItem<String>(
                             value: e.key,
-                            child: Text(e.value),
+                            child: Text(context.l.mealType(e.key)),
                           ),
                         ),
                       ],
@@ -411,12 +413,8 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                       },
                       borderRadius: BorderRadius.circular(16),
                       child: InputDecorator(
-                        decoration: _dec('Día'),
-                        child: Text(
-                          '${_logDate.day.toString().padLeft(2, '0')}/'
-                          '${_logDate.month.toString().padLeft(2, '0')}/'
-                          '${_logDate.year}',
-                        ),
+                        decoration: _dec(context.l.day),
+                        child: Text(DateFormat.yMd().format(_logDate)),
                       ),
                     ),
                   ],
@@ -427,14 +425,14 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    'No se ha reconocido ningún alimento. Añádelos a mano.',
+                    context.l.phNothing,
                     style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ),
               Row(
                 children: [
                   Text(
-                    'ALIMENTOS (${_items.length})',
+                    context.l.phFoods(_items.length),
                     style: TextStyle(
                       fontSize: 12,
                       letterSpacing: 1,
@@ -448,7 +446,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                       _items.add(_MealItemRow());
                     }),
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Añadir alimento'),
+                    label: Text(context.l.phAddFood),
                   ),
                 ],
               ),
@@ -474,11 +472,11 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
               Expanded(
                 child: TextField(
                   controller: it.name,
-                  decoration: _dec('Alimento'),
+                  decoration: _dec(context.l.phFood),
                 ),
               ),
               IconButton(
-                tooltip: 'Quitar',
+                tooltip: context.l.remove,
                 icon: Icon(Icons.close, color: AppColors.expired),
                 onPressed: () => setState(() {
                   _items.removeAt(index);
@@ -499,7 +497,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: _dec('g (aprox)'),
+                  decoration: _dec(context.l.phGrams),
                 ),
               ),
               const SizedBox(width: 8),
@@ -523,7 +521,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: _dec('P (g)'),
+                  decoration: _dec(context.l.phP),
                 ),
               ),
               const SizedBox(width: 8),
@@ -533,7 +531,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: _dec('C (g)'),
+                  decoration: _dec(context.l.phC),
                 ),
               ),
               const SizedBox(width: 8),
@@ -543,7 +541,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: _dec('G (g)'),
+                  decoration: _dec(context.l.phF),
                 ),
               ),
             ],
@@ -567,9 +565,12 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Total', style: TextStyle(color: AppColors.inkMuted)),
                 Text(
-                  '${_totalCalories.round()} kcal',
+                  context.l.total,
+                  style: TextStyle(color: AppColors.inkMuted),
+                ),
+                Text(
+                  context.l.kcalAmount(_totalCalories.round()),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -583,7 +584,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
                 onPressed: _saving ? null : _save,
                 child: _saving
                     ? const CircularProgressIndicator()
-                    : const Text('Guardar en el diario'),
+                    : Text(context.l.phSave),
               ),
             ),
           ],

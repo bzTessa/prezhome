@@ -2823,4 +2823,186 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get pwEstimate =>
       'Es una estimación para empezar. Las comidas del plan se apuntarán solas en tu diario cuando pasen.';
+
+  @override
+  String get phCantAnalyze => 'No se pudo analizar la comida';
+
+  @override
+  String phAnalyzeError(String error) {
+    return 'Error al analizar la foto: $error';
+  }
+
+  @override
+  String get phAnalyzeFail => 'Error al analizar la foto';
+
+  @override
+  String get phAddOne => 'Añade al menos un alimento con nombre.';
+
+  @override
+  String get phTitle => 'Registrar con foto';
+
+  @override
+  String get phLooking => 'Mirando el plato…';
+
+  @override
+  String get phStartTitle => 'Haz una foto a tu plato';
+
+  @override
+  String get phStartSub =>
+      'Calculamos los alimentos y sus calorías. Podrás corregirlo antes de guardar.';
+
+  @override
+  String get takePhoto => 'Hacer foto';
+
+  @override
+  String get phReview => 'Revisa y corrige lo detectado';
+
+  @override
+  String get phApprox => 'Las calorías son aproximadas.';
+
+  @override
+  String get phMealType => 'Tipo de comida (opcional)';
+
+  @override
+  String get phNoType => 'Sin tipo';
+
+  @override
+  String get day => 'Día';
+
+  @override
+  String get phNothing =>
+      'No se ha reconocido ningún alimento. Añádelos a mano.';
+
+  @override
+  String phFoods(int count) {
+    return 'ALIMENTOS ($count)';
+  }
+
+  @override
+  String get phAddFood => 'Añadir alimento';
+
+  @override
+  String get phFood => 'Alimento';
+
+  @override
+  String get phGrams => 'g (aprox)';
+
+  @override
+  String get phP => 'P (g)';
+
+  @override
+  String get phC => 'C (g)';
+
+  @override
+  String get phF => 'G (g)';
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String kcalAmount(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String get phSave => 'Guardar en el diario';
+
+  @override
+  String get stkOpenError => 'No se pudo abrir el ticket';
+
+  @override
+  String get stkReadError => 'No se pudo leer el ticket';
+
+  @override
+  String get stkScanError => 'Error al escanear';
+
+  @override
+  String get stkPantryError =>
+      'El ticket se guardó, pero no se pudo actualizar la despensa';
+
+  @override
+  String stkCrossed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos tachados de la lista',
+      one: '1 producto tachado de la lista',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stkEdit => 'Editar ticket';
+
+  @override
+  String get stkReading => 'Leyendo el ticket…';
+
+  @override
+  String get stkStartTitle => 'Escanea el ticket de la compra';
+
+  @override
+  String get stkStartSub =>
+      'Sacamos los productos y precios. Podrás revisarlo después.';
+
+  @override
+  String get stkReview => 'Revisa y corrige lo que haga falta';
+
+  @override
+  String get stkRemember =>
+      'Tus correcciones se recordarán para la próxima vez.';
+
+  @override
+  String get stkStore => 'Tienda';
+
+  @override
+  String get date => 'Fecha';
+
+  @override
+  String get stkAddPantry => 'Añadir a la despensa';
+
+  @override
+  String get stkAddPantrySub => 'Cada producto va a su zona';
+
+  @override
+  String stkProducts(int count) {
+    return 'PRODUCTOS ($count)';
+  }
+
+  @override
+  String stkRaw(String name) {
+    return 'Ticket: \"$name\"';
+  }
+
+  @override
+  String get category => 'Categoría';
+
+  @override
+  String get stkQty => 'Cant.';
+
+  @override
+  String get stkSave => 'Guardar ticket';
+
+  @override
+  String foodCategory(String cat) {
+    String _temp0 = intl.Intl.selectLogic(cat, {
+      'verdura': 'Verduras',
+      'fruta': 'Frutas',
+      'carne': 'Carne',
+      'pescado': 'Pescado',
+      'lacteos': 'Lácteos',
+      'preparados': 'Platos preparados',
+      'panaderia': 'Panadería',
+      'cereales': 'Pasta, arroz y legumbres',
+      'conservas': 'Conservas',
+      'congelados': 'Congelados',
+      'dulces': 'Dulces y snacks',
+      'bebidas': 'Bebidas',
+      'especias': 'Especias y condimentos',
+      'higiene': 'Higiene',
+      'limpieza': 'Limpieza',
+      'hogar': 'Hogar',
+      'other': 'Otros',
+    });
+    return '$_temp0';
+  }
 }

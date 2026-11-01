@@ -1741,5 +1741,100 @@
   "pwAllSetSub": "Recetas, plan y compra se adaptan a lo que has contado.",
   "pwDailyGoal": "Tu objetivo diario",
   "pwKcalDay": "kcal / día",
-  "pwEstimate": "Es una estimación para empezar. Las comidas del plan se apuntarán solas en tu diario cuando pasen."
+  "pwEstimate": "Es una estimación para empezar. Las comidas del plan se apuntarán solas en tu diario cuando pasen.",
+  "phCantAnalyze": "No se pudo analizar la comida",
+  "phAnalyzeError": "Error al analizar la foto: {error}",
+  "@phAnalyzeError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "phAnalyzeFail": "Error al analizar la foto",
+  "phAddOne": "Añade al menos un alimento con nombre.",
+  "phTitle": "Registrar con foto",
+  "phLooking": "Mirando el plato…",
+  "phStartTitle": "Haz una foto a tu plato",
+  "phStartSub": "Calculamos los alimentos y sus calorías. Podrás corregirlo antes de guardar.",
+  "takePhoto": "Hacer foto",
+  "phReview": "Revisa y corrige lo detectado",
+  "phApprox": "Las calorías son aproximadas.",
+  "phMealType": "Tipo de comida (opcional)",
+  "phNoType": "Sin tipo",
+  "day": "Día",
+  "phNothing": "No se ha reconocido ningún alimento. Añádelos a mano.",
+  "phFoods": "ALIMENTOS ({count})",
+  "@phFoods": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "phAddFood": "Añadir alimento",
+  "phFood": "Alimento",
+  "phGrams": "g (aprox)",
+  "phP": "P (g)",
+  "phC": "C (g)",
+  "phF": "G (g)",
+  "total": "Total",
+  "kcalAmount": "{kcal} kcal",
+  "@kcalAmount": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "phSave": "Guardar en el diario",
+  "stkOpenError": "No se pudo abrir el ticket",
+  "stkReadError": "No se pudo leer el ticket",
+  "stkScanError": "Error al escanear",
+  "stkPantryError": "El ticket se guardó, pero no se pudo actualizar la despensa",
+  "stkCrossed": "{count, plural, =1{1 producto tachado de la lista} other{{count} productos tachados de la lista}}",
+  "@stkCrossed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stkEdit": "Editar ticket",
+  "stkReading": "Leyendo el ticket…",
+  "stkStartTitle": "Escanea el ticket de la compra",
+  "stkStartSub": "Sacamos los productos y precios. Podrás revisarlo después.",
+  "stkReview": "Revisa y corrige lo que haga falta",
+  "stkRemember": "Tus correcciones se recordarán para la próxima vez.",
+  "stkStore": "Tienda",
+  "date": "Fecha",
+  "stkAddPantry": "Añadir a la despensa",
+  "stkAddPantrySub": "Cada producto va a su zona",
+  "stkProducts": "PRODUCTOS ({count})",
+  "@stkProducts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stkRaw": "Ticket: \"{name}\"",
+  "@stkRaw": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "category": "Categoría",
+  "stkQty": "Cant.",
+  "stkSave": "Guardar ticket",
+  "foodCategory": "{cat, select, verdura{Verduras} fruta{Frutas} carne{Carne} pescado{Pescado} lacteos{Lácteos} preparados{Platos preparados} panaderia{Panadería} cereales{Pasta, arroz y legumbres} conservas{Conservas} congelados{Congelados} dulces{Dulces y snacks} bebidas{Bebidas} especias{Especias y condimentos} higiene{Higiene} limpieza{Limpieza} hogar{Hogar} other{Otros}}",
+  "@foodCategory": {
+    "placeholders": {
+      "cat": {
+        "type": "String"
+      }
+    }
+  }
 }

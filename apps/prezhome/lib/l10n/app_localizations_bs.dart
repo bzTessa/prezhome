@@ -2791,4 +2791,177 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get pwEstimate =>
       'Ovo je početna procjena. Planirani obroci će se sami upisati u dnevnik kad prođu.';
+
+  @override
+  String get phCantAnalyze => 'Nije moguće analizirati obrok';
+
+  @override
+  String phAnalyzeError(String error) {
+    return 'Greška pri analizi fotografije: $error';
+  }
+
+  @override
+  String get phAnalyzeFail => 'Greška pri analizi fotografije';
+
+  @override
+  String get phAddOne => 'Dodaj barem jednu namirnicu s nazivom.';
+
+  @override
+  String get phTitle => 'Upiši fotografijom';
+
+  @override
+  String get phLooking => 'Gledam tanjir…';
+
+  @override
+  String get phStartTitle => 'Fotografiši svoj tanjir';
+
+  @override
+  String get phStartSub =>
+      'Prepoznajemo namirnice i kalorije. Možeš ispraviti prije spremanja.';
+
+  @override
+  String get takePhoto => 'Uslikaj';
+
+  @override
+  String get phReview => 'Provjeri i ispravi prepoznato';
+
+  @override
+  String get phApprox => 'Kalorije su približne.';
+
+  @override
+  String get phMealType => 'Obrok (neobavezno)';
+
+  @override
+  String get phNoType => 'Bez vrste';
+
+  @override
+  String get day => 'Dan';
+
+  @override
+  String get phNothing => 'Nijedna namirnica nije prepoznata. Dodaj ručno.';
+
+  @override
+  String phFoods(int count) {
+    return 'NAMIRNICE ($count)';
+  }
+
+  @override
+  String get phAddFood => 'Dodaj namirnicu';
+
+  @override
+  String get phFood => 'Namirnica';
+
+  @override
+  String get phGrams => 'g (otpr.)';
+
+  @override
+  String get phP => 'P (g)';
+
+  @override
+  String get phC => 'UH (g)';
+
+  @override
+  String get phF => 'M (g)';
+
+  @override
+  String get total => 'Ukupno';
+
+  @override
+  String kcalAmount(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String get phSave => 'Spremi u dnevnik';
+
+  @override
+  String get stkOpenError => 'Nije moguće otvoriti račun';
+
+  @override
+  String get stkReadError => 'Nije moguće pročitati račun';
+
+  @override
+  String get stkScanError => 'Greška pri skeniranju';
+
+  @override
+  String get stkPantryError => 'Račun je spremljen, ali ostava nije ažurirana';
+
+  @override
+  String stkCrossed(int count) {
+    return 'Precrtano s liste: $count';
+  }
+
+  @override
+  String get stkEdit => 'Uredi račun';
+
+  @override
+  String get stkReading => 'Čitam račun…';
+
+  @override
+  String get stkStartTitle => 'Skeniraj račun iz kupovine';
+
+  @override
+  String get stkStartSub =>
+      'Izvlačimo proizvode i cijene. Možeš provjeriti poslije.';
+
+  @override
+  String get stkReview => 'Provjeri i ispravi šta treba';
+
+  @override
+  String get stkRemember => 'Tvoje ispravke će se zapamtiti za sljedeći put.';
+
+  @override
+  String get stkStore => 'Prodavnica';
+
+  @override
+  String get date => 'Datum';
+
+  @override
+  String get stkAddPantry => 'Dodaj u ostavu';
+
+  @override
+  String get stkAddPantrySub => 'Svaki proizvod ide na svoje mjesto';
+
+  @override
+  String stkProducts(int count) {
+    return 'PROIZVODI ($count)';
+  }
+
+  @override
+  String stkRaw(String name) {
+    return 'Račun: \"$name\"';
+  }
+
+  @override
+  String get category => 'Kategorija';
+
+  @override
+  String get stkQty => 'Kol.';
+
+  @override
+  String get stkSave => 'Spremi račun';
+
+  @override
+  String foodCategory(String cat) {
+    String _temp0 = intl.Intl.selectLogic(cat, {
+      'verdura': 'Povrće',
+      'fruta': 'Voće',
+      'carne': 'Meso',
+      'pescado': 'Riba',
+      'lacteos': 'Mliječni proizvodi',
+      'preparados': 'Gotova jela',
+      'panaderia': 'Pekara',
+      'cereales': 'Tjestenina, riža i mahunarke',
+      'conservas': 'Konzerve',
+      'congelados': 'Smrznuto',
+      'dulces': 'Slatkiši i grickalice',
+      'bebidas': 'Pića',
+      'especias': 'Začini i dodaci',
+      'higiene': 'Higijena',
+      'limpieza': 'Čišćenje',
+      'hogar': 'Domaćinstvo',
+      'other': 'Ostalo',
+    });
+    return '$_temp0';
+  }
 }

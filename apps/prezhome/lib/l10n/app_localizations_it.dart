@@ -2827,4 +2827,185 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get pwEstimate =>
       'È una stima per iniziare. I pasti del piano si registreranno da soli nel diario dopo.';
+
+  @override
+  String get phCantAnalyze => 'Impossibile analizzare il pasto';
+
+  @override
+  String phAnalyzeError(String error) {
+    return 'Errore nell\'analisi della foto: $error';
+  }
+
+  @override
+  String get phAnalyzeFail => 'Errore nell\'analisi della foto';
+
+  @override
+  String get phAddOne => 'Aggiungi almeno un alimento con nome.';
+
+  @override
+  String get phTitle => 'Registra con foto';
+
+  @override
+  String get phLooking => 'Guardo il piatto…';
+
+  @override
+  String get phStartTitle => 'Fai una foto al tuo piatto';
+
+  @override
+  String get phStartSub =>
+      'Calcoliamo alimenti e calorie. Potrai correggere prima di salvare.';
+
+  @override
+  String get takePhoto => 'Scatta foto';
+
+  @override
+  String get phReview => 'Controlla e correggi ciò che è stato rilevato';
+
+  @override
+  String get phApprox => 'Le calorie sono approssimative.';
+
+  @override
+  String get phMealType => 'Pasto (facoltativo)';
+
+  @override
+  String get phNoType => 'Nessuno';
+
+  @override
+  String get day => 'Giorno';
+
+  @override
+  String get phNothing => 'Nessun alimento riconosciuto. Aggiungili a mano.';
+
+  @override
+  String phFoods(int count) {
+    return 'ALIMENTI ($count)';
+  }
+
+  @override
+  String get phAddFood => 'Aggiungi alimento';
+
+  @override
+  String get phFood => 'Alimento';
+
+  @override
+  String get phGrams => 'g (circa)';
+
+  @override
+  String get phP => 'P (g)';
+
+  @override
+  String get phC => 'C (g)';
+
+  @override
+  String get phF => 'G (g)';
+
+  @override
+  String get total => 'Totale';
+
+  @override
+  String kcalAmount(int kcal) {
+    return '$kcal kcal';
+  }
+
+  @override
+  String get phSave => 'Salva nel diario';
+
+  @override
+  String get stkOpenError => 'Impossibile aprire lo scontrino';
+
+  @override
+  String get stkReadError => 'Impossibile leggere lo scontrino';
+
+  @override
+  String get stkScanError => 'Errore di scansione';
+
+  @override
+  String get stkPantryError =>
+      'Scontrino salvato, ma non è stato possibile aggiornare la dispensa';
+
+  @override
+  String stkCrossed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count prodotti spuntati dalla lista',
+      one: '1 prodotto spuntato dalla lista',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stkEdit => 'Modifica scontrino';
+
+  @override
+  String get stkReading => 'Leggo lo scontrino…';
+
+  @override
+  String get stkStartTitle => 'Scansiona lo scontrino della spesa';
+
+  @override
+  String get stkStartSub =>
+      'Estraiamo prodotti e prezzi. Potrai controllare dopo.';
+
+  @override
+  String get stkReview => 'Controlla e correggi se serve';
+
+  @override
+  String get stkRemember =>
+      'Le tue correzioni verranno ricordate la prossima volta.';
+
+  @override
+  String get stkStore => 'Negozio';
+
+  @override
+  String get date => 'Data';
+
+  @override
+  String get stkAddPantry => 'Aggiungi alla dispensa';
+
+  @override
+  String get stkAddPantrySub => 'Ogni prodotto va al suo posto';
+
+  @override
+  String stkProducts(int count) {
+    return 'PRODOTTI ($count)';
+  }
+
+  @override
+  String stkRaw(String name) {
+    return 'Scontrino: \"$name\"';
+  }
+
+  @override
+  String get category => 'Categoria';
+
+  @override
+  String get stkQty => 'Q.tà';
+
+  @override
+  String get stkSave => 'Salva scontrino';
+
+  @override
+  String foodCategory(String cat) {
+    String _temp0 = intl.Intl.selectLogic(cat, {
+      'verdura': 'Verdure',
+      'fruta': 'Frutta',
+      'carne': 'Carne',
+      'pescado': 'Pesce',
+      'lacteos': 'Latticini',
+      'preparados': 'Piatti pronti',
+      'panaderia': 'Panetteria',
+      'cereales': 'Pasta, riso e legumi',
+      'conservas': 'Conserve',
+      'congelados': 'Surgelati',
+      'dulces': 'Dolci e snack',
+      'bebidas': 'Bevande',
+      'especias': 'Spezie e condimenti',
+      'higiene': 'Igiene',
+      'limpieza': 'Pulizia',
+      'hogar': 'Casa',
+      'other': 'Altro',
+    });
+    return '$_temp0';
+  }
 }
