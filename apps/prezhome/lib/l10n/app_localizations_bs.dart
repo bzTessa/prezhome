@@ -2507,4 +2507,288 @@ class AppLocalizationsBs extends AppLocalizations {
   String stForecastTip(String amount) {
     return 'Prognoza $amount';
   }
+
+  @override
+  String get pwPickOption => 'Odaberi opciju za nastavak.';
+
+  @override
+  String get pwPickBirth => 'Odaberi datum rođenja.';
+
+  @override
+  String get pwBadHeight => 'Unesi ispravnu visinu u centimetrima.';
+
+  @override
+  String get pwBadWeight => 'Unesi ispravnu težinu u kilogramima.';
+
+  @override
+  String get pwCompleteStep => 'Završi ovaj korak za nastavak.';
+
+  @override
+  String get pwStart => 'Počni koristiti PrezHome';
+
+  @override
+  String get pwSeeGoal => 'Vidi moj cilj';
+
+  @override
+  String get pwFinish => 'Završi';
+
+  @override
+  String get pwIntroTitle => 'Upoznajmo se';
+
+  @override
+  String get pwIntroSub =>
+      'Nekoliko brzih pitanja da prilagodimo PrezHome tebi. Možeš promijeniti kad hoćeš.';
+
+  @override
+  String get pwTrackKcal => 'Želim pratiti kalorije';
+
+  @override
+  String get pwTrackKcalSub => 'Planirani obroci se sami upisuju kad prođu.';
+
+  @override
+  String get pwOnlyHome => 'Samo organizirati dom';
+
+  @override
+  String get pwOnlyHomeSub => 'Bez težine i mjera.';
+
+  @override
+  String get pwSex => 'Tvoj spol';
+
+  @override
+  String get pwSexSub => 'Koristimo ga za precizniji izračun metabolizma.';
+
+  @override
+  String get pwPickDate => 'Odaberi datum';
+
+  @override
+  String get pwBirthTitle => 'Kada si rođen/a?';
+
+  @override
+  String get pwBirthSub =>
+      'Godine nam pomažu da preciznije izračunamo kalorije.';
+
+  @override
+  String pwAgeYears(int age) {
+    return '$age godina';
+  }
+
+  @override
+  String get pwHeightTitle => 'Koliko si visok/a?';
+
+  @override
+  String get pwHeightSub => 'Unesi visinu u centimetrima.';
+
+  @override
+  String get pwWeightTitle => 'Koliko težiš?';
+
+  @override
+  String get pwWeightSub => 'Unesi trenutnu težinu u kilogramima.';
+
+  @override
+  String get pwActivityTitle => 'Tvoj nivo aktivnosti';
+
+  @override
+  String get pwActivitySub => 'Odaberi šta najbolje opisuje tvoju sedmicu.';
+
+  @override
+  String get pwGoalTitle => 'Koji je tvoj cilj?';
+
+  @override
+  String get pwGoalSub => 'Prilagodit ćemo kalorije onome što želiš postići.';
+
+  @override
+  String pwGoalDesc(String goal) {
+    String _temp0 = intl.Intl.selectLogic(goal, {
+      'lose': 'Blagi deficit za postepeno mršavljenje.',
+      'gain': 'Blagi suficit za zdravo dobijanje mase.',
+      'other': 'Zadržati trenutnu težinu i osjećati se dobro.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwDietTitle => 'Kako se hraniš?';
+
+  @override
+  String get pwDietSub => 'Recepti će se prilagoditi tvojoj ishrani.';
+
+  @override
+  String pwDiet(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'vegetariana': 'Vegetarijanska',
+      'vegana': 'Veganska',
+      'pescetariana': 'Peskaterijanska',
+      'baja_carbo': 'Malo ugljikohidrata',
+      'sin_gluten': 'Bez glutena',
+      'other': 'Sve',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwAllergiesTitle => 'Alergije ili netolerancije';
+
+  @override
+  String get pwOptional => 'Neobavezno.';
+
+  @override
+  String pwAllergy(String allergy) {
+    String _temp0 = intl.Intl.selectLogic(allergy, {
+      'frutossecos': 'orašasti plodovi',
+      'lactosa': 'laktoza',
+      'gluten': 'gluten (celijakija)',
+      'huevo': 'jaja',
+      'marisco': 'plodovi mora',
+      'soja': 'soja',
+      'other': 'riba',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwCuisinesTitle => 'Šta voliš jesti?';
+
+  @override
+  String get pwCuisinesSub => 'Odaberi koliko želiš.';
+
+  @override
+  String pwCuisine(String cuisine) {
+    String _temp0 = intl.Intl.selectLogic(cuisine, {
+      'casera': 'Domaća kuhinja',
+      'mediterranea': 'Mediteranska',
+      'ligera': 'Lagana',
+      'rapida': 'Brzo i jednostavno',
+      'italiana': 'Italijanska',
+      'asiatica': 'Azijska',
+      'mexicana': 'Meksička',
+      'other': 'Iz cijelog svijeta',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwAppliancesTitle => 'Šta imaš u kuhinji?';
+
+  @override
+  String get pwAppliancesSub =>
+      'Plan će koristiti samo recepte koje možeš napraviti.';
+
+  @override
+  String appliance(String appliance) {
+    String _temp0 = intl.Intl.selectLogic(appliance, {
+      'oven': 'Rerna',
+      'stovetop': 'Tava',
+      'pot': 'Lonac',
+      'airfryer': 'Air fryer',
+      'microwave': 'Mikrovalna',
+      'blender': 'Blender',
+      'other': 'Ništa',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwDislikedTitle => 'Sastojci koje ne voliš';
+
+  @override
+  String get pwDislikedSub => 'Odvojeni zarezima. Neobavezno.';
+
+  @override
+  String get pwDislikedHint => 'luk, korijander...';
+
+  @override
+  String get pwCookTimeTitle => 'Koliko vremena želiš kuhati?';
+
+  @override
+  String get pwCookTimeSub =>
+      'Tako prilagođavam recepte tvom ritmu. Možeš ostaviti prazno.';
+
+  @override
+  String pwCookTime(String time) {
+    String _temp0 = intl.Intl.selectLogic(time, {
+      'rapido': 'Brzo (manje od 20 min)',
+      'elaborado': 'Složeno (volim kuhati)',
+      'other': 'Normalno',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String pwCookTimeDesc(String time) {
+    String _temp0 = intl.Intl.selectLogic(time, {
+      'rapido': 'Jela gotova za kratko vrijeme.',
+      'elaborado': 'Uživam kuhati polako.',
+      'other': 'Balans između brzog i složenog.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwCookStyleTitle => 'Kako najradije kuhaš?';
+
+  @override
+  String get pwChangeAnytime => 'Možeš promijeniti kad hoćeš.';
+
+  @override
+  String cookStyle(String style) {
+    String _temp0 = intl.Intl.selectLogic(style, {
+      'batch': 'Unaprijed',
+      'mixed': 'Kombinovano',
+      'other': 'Svaki dan',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String cookStyleSub(String style) {
+    String _temp0 = intl.Intl.selectLogic(style, {
+      'batch': 'Kuham unaprijed za više dana',
+      'mixed': 'Kombinujem kuhanje unaprijed i svakodnevno',
+      'other': 'Kuham svaki dan svježe',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwModulesTitle => 'Šta želiš uključiti?';
+
+  @override
+  String get pwModulesSub => 'Ono što isključiš neće se prikazivati.';
+
+  @override
+  String homeModule(String module) {
+    String _temp0 = intl.Intl.selectLogic(module, {
+      'points': 'Način bodova',
+      'tasks': 'Zadaci',
+      'other': 'Kuhanje unaprijed',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String homeModuleDesc(String module) {
+    String _temp0 = intl.Intl.selectLogic(module, {
+      'points': 'Osvajaj bodove i nagrade za zadatke.',
+      'tasks': 'Organizuj kućne zadatke.',
+      'other': 'Kuhaj unaprijed i planiraj pripremu.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get pwAllSet => 'Sve je spremno';
+
+  @override
+  String get pwAllSetSub =>
+      'Recepti, plan i kupovina se prilagođavaju onome što si rekao/la.';
+
+  @override
+  String get pwDailyGoal => 'Tvoj dnevni cilj';
+
+  @override
+  String get pwKcalDay => 'kcal / dan';
+
+  @override
+  String get pwEstimate =>
+      'Ovo je početna procjena. Planirani obroci će se sami upisati u dnevnik kad prođu.';
 }

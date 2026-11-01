@@ -4121,6 +4121,372 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Previsión {amount}'**
   String stForecastTip(String amount);
+
+  /// No description provided for @pwPickOption.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige una opción para continuar.'**
+  String get pwPickOption;
+
+  /// No description provided for @pwPickBirth.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona tu fecha de nacimiento.'**
+  String get pwPickBirth;
+
+  /// No description provided for @pwBadHeight.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe una altura válida en centímetros.'**
+  String get pwBadHeight;
+
+  /// No description provided for @pwBadWeight.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un peso válido en kilos.'**
+  String get pwBadWeight;
+
+  /// No description provided for @pwCompleteStep.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa este paso para continuar.'**
+  String get pwCompleteStep;
+
+  /// No description provided for @pwStart.
+  ///
+  /// In es, this message translates to:
+  /// **'Empezar a usar PrezHome'**
+  String get pwStart;
+
+  /// No description provided for @pwSeeGoal.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver mi objetivo'**
+  String get pwSeeGoal;
+
+  /// No description provided for @pwFinish.
+  ///
+  /// In es, this message translates to:
+  /// **'Terminar'**
+  String get pwFinish;
+
+  /// No description provided for @pwIntroTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Vamos a conocerte'**
+  String get pwIntroTitle;
+
+  /// No description provided for @pwIntroSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Unas preguntas rápidas para adaptar PrezHome a ti. Puedes cambiarlo cuando quieras.'**
+  String get pwIntroSub;
+
+  /// No description provided for @pwTrackKcal.
+  ///
+  /// In es, this message translates to:
+  /// **'Quiero llevar la cuenta de calorías'**
+  String get pwTrackKcal;
+
+  /// No description provided for @pwTrackKcalSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Las comidas del plan se apuntan solas al pasar.'**
+  String get pwTrackKcalSub;
+
+  /// No description provided for @pwOnlyHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo organizar la casa'**
+  String get pwOnlyHome;
+
+  /// No description provided for @pwOnlyHomeSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin peso ni medidas.'**
+  String get pwOnlyHomeSub;
+
+  /// No description provided for @pwSex.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu sexo'**
+  String get pwSex;
+
+  /// No description provided for @pwSexSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo usamos para calcular tu metabolismo con más precisión.'**
+  String get pwSexSub;
+
+  /// No description provided for @pwPickDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar fecha'**
+  String get pwPickDate;
+
+  /// No description provided for @pwBirthTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuándo naciste?'**
+  String get pwBirthTitle;
+
+  /// No description provided for @pwBirthSub.
+  ///
+  /// In es, this message translates to:
+  /// **'La edad nos ayuda a afinar el cálculo de calorías.'**
+  String get pwBirthSub;
+
+  /// No description provided for @pwAgeYears.
+  ///
+  /// In es, this message translates to:
+  /// **'{age} años'**
+  String pwAgeYears(int age);
+
+  /// No description provided for @pwHeightTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto mides?'**
+  String get pwHeightTitle;
+
+  /// No description provided for @pwHeightSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Indica tu altura en centímetros.'**
+  String get pwHeightSub;
+
+  /// No description provided for @pwWeightTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto pesas?'**
+  String get pwWeightTitle;
+
+  /// No description provided for @pwWeightSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Indica tu peso actual en kilos.'**
+  String get pwWeightSub;
+
+  /// No description provided for @pwActivityTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu nivel de actividad'**
+  String get pwActivityTitle;
+
+  /// No description provided for @pwActivitySub.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige la opción que mejor describa tu semana.'**
+  String get pwActivitySub;
+
+  /// No description provided for @pwGoalTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuál es tu objetivo?'**
+  String get pwGoalTitle;
+
+  /// No description provided for @pwGoalSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustaremos tus calorías según lo que quieras conseguir.'**
+  String get pwGoalSub;
+
+  /// No description provided for @pwGoalDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'{goal, select, lose{Déficit suave para bajar de peso poco a poco.} gain{Superávit suave para ganar masa de forma sana.} other{Mantener tu peso actual y sentirte bien.}}'**
+  String pwGoalDesc(String goal);
+
+  /// No description provided for @pwDietTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo te alimentas?'**
+  String get pwDietTitle;
+
+  /// No description provided for @pwDietSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Las recetas se adaptarán a tu dieta.'**
+  String get pwDietSub;
+
+  /// No description provided for @pwDiet.
+  ///
+  /// In es, this message translates to:
+  /// **'{diet, select, vegetariana{Vegetariana} vegana{Vegana} pescetariana{Pescetariana} baja_carbo{Baja en carbohidratos} sin_gluten{Sin gluten} other{De todo}}'**
+  String pwDiet(String diet);
+
+  /// No description provided for @pwAllergiesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Alergias o intolerancias'**
+  String get pwAllergiesTitle;
+
+  /// No description provided for @pwOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional.'**
+  String get pwOptional;
+
+  /// No description provided for @pwAllergy.
+  ///
+  /// In es, this message translates to:
+  /// **'{allergy, select, frutossecos{frutos secos} lactosa{lactosa} gluten{gluten (celiaquía)} huevo{huevo} marisco{marisco} soja{soja} other{pescado}}'**
+  String pwAllergy(String allergy);
+
+  /// No description provided for @pwCuisinesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué te gusta comer?'**
+  String get pwCuisinesTitle;
+
+  /// No description provided for @pwCuisinesSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige las que quieras.'**
+  String get pwCuisinesSub;
+
+  /// No description provided for @pwCuisine.
+  ///
+  /// In es, this message translates to:
+  /// **'{cuisine, select, casera{Casera de siempre} mediterranea{Mediterránea} ligera{Ligera} rapida{Rápida y sencilla} italiana{Italiana} asiatica{Asiática} mexicana{Mexicana} other{De todo el mundo}}'**
+  String pwCuisine(String cuisine);
+
+  /// No description provided for @pwAppliancesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué tienes en la cocina?'**
+  String get pwAppliancesTitle;
+
+  /// No description provided for @pwAppliancesSub.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan solo usará recetas que puedas hacer.'**
+  String get pwAppliancesSub;
+
+  /// No description provided for @appliance.
+  ///
+  /// In es, this message translates to:
+  /// **'{appliance, select, oven{Horno} stovetop{Sartén} pot{Olla} airfryer{Airfryer} microwave{Microondas} blender{Batidora} other{Ninguno}}'**
+  String appliance(String appliance);
+
+  /// No description provided for @pwDislikedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingredientes que no te gustan'**
+  String get pwDislikedTitle;
+
+  /// No description provided for @pwDislikedSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Separados por comas. Opcional.'**
+  String get pwDislikedSub;
+
+  /// No description provided for @pwDislikedHint.
+  ///
+  /// In es, this message translates to:
+  /// **'cebolla, cilantro...'**
+  String get pwDislikedHint;
+
+  /// No description provided for @pwCookTimeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto tiempo quieres cocinar?'**
+  String get pwCookTimeTitle;
+
+  /// No description provided for @pwCookTimeSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Así ajusto las recetas a tu ritmo. Puedes dejarlo sin elegir.'**
+  String get pwCookTimeSub;
+
+  /// No description provided for @pwCookTime.
+  ///
+  /// In es, this message translates to:
+  /// **'{time, select, rapido{Rápido (menos de 20 min)} elaborado{Elaborado (me gusta cocinar)} other{Normal}}'**
+  String pwCookTime(String time);
+
+  /// No description provided for @pwCookTimeDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'{time, select, rapido{Platos resueltos en poco tiempo.} elaborado{Disfruto cocinando con calma.} other{Un equilibrio entre rápido y elaborado.}}'**
+  String pwCookTimeDesc(String time);
+
+  /// No description provided for @pwCookStyleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo prefieres cocinar?'**
+  String get pwCookStyleTitle;
+
+  /// No description provided for @pwChangeAnytime.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes cambiarlo cuando quieras.'**
+  String get pwChangeAnytime;
+
+  /// No description provided for @cookStyle.
+  ///
+  /// In es, this message translates to:
+  /// **'{style, select, batch{En lote} mixed{Mixto} other{Diario}}'**
+  String cookStyle(String style);
+
+  /// No description provided for @cookStyleSub.
+  ///
+  /// In es, this message translates to:
+  /// **'{style, select, batch{Cocino en tandas para varios días} mixed{Combino tandas y cocina del día} other{Cocino cada día lo del momento}}'**
+  String cookStyleSub(String style);
+
+  /// No description provided for @pwModulesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué quieres activar?'**
+  String get pwModulesTitle;
+
+  /// No description provided for @pwModulesSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que apagues no se mostrará.'**
+  String get pwModulesSub;
+
+  /// No description provided for @homeModule.
+  ///
+  /// In es, this message translates to:
+  /// **'{module, select, points{Modo Puntos} tasks{Tareas} other{Cocina en lote}}'**
+  String homeModule(String module);
+
+  /// No description provided for @homeModuleDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'{module, select, points{Gana puntos y recompensas por tus tareas.} tasks{Organiza las tareas del hogar.} other{Cocina en tandas y planifica preparaciones.}}'**
+  String homeModuleDesc(String module);
+
+  /// No description provided for @pwAllSet.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo listo'**
+  String get pwAllSet;
+
+  /// No description provided for @pwAllSetSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Recetas, plan y compra se adaptan a lo que has contado.'**
+  String get pwAllSetSub;
+
+  /// No description provided for @pwDailyGoal.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu objetivo diario'**
+  String get pwDailyGoal;
+
+  /// No description provided for @pwKcalDay.
+  ///
+  /// In es, this message translates to:
+  /// **'kcal / día'**
+  String get pwKcalDay;
+
+  /// No description provided for @pwEstimate.
+  ///
+  /// In es, this message translates to:
+  /// **'Es una estimación para empezar. Las comidas del plan se apuntarán solas en tu diario cuando pasen.'**
+  String get pwEstimate;
 }
 
 class _AppLocalizationsDelegate
