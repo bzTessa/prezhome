@@ -638,6 +638,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shopShowPhotos => 'Mostrar fotos de los productos';
 
   @override
+  String get shopShowIcons => 'Mostrar dibujos cuando no hay foto';
+
+  @override
   String get shopMyLists => 'Mis listas';
 
   @override

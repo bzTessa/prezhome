@@ -391,6 +391,7 @@
   "shopGroupByAisle": "Agrupar por pasillo",
   "shopGroupHint": "Verduras, carne, limpieza…",
   "shopShowPhotos": "Mostrar fotos de los productos",
+  "shopShowIcons": "Mostrar dibujos cuando no hay foto",
   "shopMyLists": "Mis listas",
   "categories": "Categorías",
   "shopFinish": "Terminar compra",

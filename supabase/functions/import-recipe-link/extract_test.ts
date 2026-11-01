@@ -1,5 +1,11 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { tiktokDescription, youtubeDescription, youtubeId } from "./extract.ts";
+import {
+  tiktokDescription,
+  tiktokSubtitlesUrl,
+  vttText,
+  youtubeDescription,
+  youtubeId,
+} from "./extract.ts";
 
 Deno.test("lee la descripción completa de TikTok", () => {
   const html = `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">{"itemStruct":` +
@@ -27,4 +33,16 @@ Deno.test("saca el id de cualquier enlace de YouTube", () => {
   ]) assertEquals(youtubeId(url), "dQw4w9WgXcQ", url);
   assertEquals(youtubeId("https://www.tiktok.com/@a/video/1"), null);
   assertEquals(youtubeId("https://www.youtube.com/@canal"), null);
+});
+
+Deno.test("lee los subtítulos automáticos de TikTok", () => {
+  const html = `{"video":{"subtitleInfos":[{"LanguageCodeName":"spa-ES",` +
+    `"Url":"https:\\/\\/v16m.tiktokcdn.com\\/sub?a=1\\u0026b=2"}]}}`;
+  assertEquals(tiktokSubtitlesUrl(html), "https://v16m.tiktokcdn.com/sub?a=1&b=2");
+  assertEquals(tiktokSubtitlesUrl("<html></html>"), null);
+  assertEquals(
+    vttText("WEBVTT\n\n00:00:00.183 --> 00:00:00.960\nAl loro\n\n" +
+      "00:00:05.023 --> 00:00:07.280\npon 900 g de queso crema\n"),
+    "Al loro pon 900 g de queso crema",
+  );
 });

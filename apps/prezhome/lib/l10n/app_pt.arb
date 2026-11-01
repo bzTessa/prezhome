@@ -149,6 +149,7 @@
   "shopGroupByAisle": "Agrupar por corredor",
   "shopGroupHint": "Legumes, carne, limpeza…",
   "shopShowPhotos": "Mostrar fotos dos produtos",
+  "shopShowIcons": "Mostrar desenhos quando não há foto",
   "shopMyLists": "As minhas listas",
   "categories": "Categorias",
   "shopFinish": "Terminar compras",

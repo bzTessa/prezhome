@@ -41,6 +41,7 @@ import '../widgets/animations/press_scale.dart';
 import '../widgets/animations/staggered_entrance.dart';
 import '../utils/friendly_error.dart';
 import '../utils/pantry_ideas.dart' show formatEuros;
+import '../utils/ticket_date.dart';
 import '../l10n/l10n.dart';
 
 /// Pestaña de Inicio: dashboard con el resumen del día del hogar (comidas de
@@ -343,8 +344,6 @@ class HomeTabState extends State<HomeTab> {
       final now = DateTime.now();
       final monthStart = DateTime(now.year, now.month, 1);
       final monthEnd = DateTime(now.year, now.month + 1, 1);
-      final startStr = monthStart.toIso8601String().split('T').first;
-      final endStr = monthEnd.toIso8601String().split('T').first;
 
       final (budgetRow, ticketsRes) = await (
         _client
@@ -356,8 +355,7 @@ class HomeTabState extends State<HomeTab> {
             .from('tickets')
             .select('total_amount')
             .eq('home_id', homeId)
-            .gte('created_at', startStr)
-            .lt('created_at', endStr),
+            .or(ticketRangeFilter(monthStart, monthEnd)),
       ).wait;
       final budget = (budgetRow?['monthly_amount'] as num?)?.toDouble() ?? 0;
       final spent = (ticketsRes as List).fold<double>(

@@ -15,6 +15,7 @@ import 'utils/nutrition_calc.dart';
 import 'theme/app_theme.dart';
 import 'widgets/list_skeleton.dart';
 import 'l10n/l10n.dart';
+import 'services/share_inbox.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   /// Si se pasa una receta, la pantalla funciona en modo EDICIÓN.
@@ -26,11 +27,15 @@ class AddRecipeScreen extends StatefulWidget {
   /// Al abrir pide el enlace de un vídeo y lee la receta.
   final bool startWithLink;
 
+  /// Enlace o texto compartido desde otra app: se importa sin preguntar.
+  final String? shared;
+
   const AddRecipeScreen({
     super.key,
     this.recipe,
     this.startWithAI = false,
     this.startWithLink = false,
+    this.shared,
   });
 
   bool get isEditing => recipe != null;
@@ -42,6 +47,8 @@ class AddRecipeScreen extends StatefulWidget {
 class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final SupabaseClient _client = Supabase.instance.client;
+
+  bool get _fromLink => widget.startWithLink || widget.shared != null;
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -99,10 +106,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       _prefillFromRecipe(widget.recipe!);
     } else {
       _mealTypes.add('lunch');
-      if (widget.startWithAI || widget.startWithLink) {
+      if (widget.startWithAI || _fromLink) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
-          final started = widget.startWithLink
-              ? await _importFromLink()
+          final started = _fromLink
+              ? await _importFromLink(shared: widget.shared)
               : await _fillWithAI();
           // Si se cancela o no sale, se vuelve a elegir cómo añadirla en vez
           // de quedarse en el formulario vacío.
@@ -321,75 +328,81 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   /// lo estructura) y rellena el formulario. Si el enlace no se puede leer
   /// (Instagram casi nunca deja), vuelve a abrir el diálogo pidiendo pegar la
   /// descripción del post. Devuelve true si la receta quedó rellenada.
-  Future<bool> _importFromLink({String? link, String? note}) async {
-    final input = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          scrollable: true,
-          backgroundColor: AppColors.cream,
-          title: Text(
-            link == null ? context.l.arImport : context.l.arPasteRecipe,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                note ?? context.l.arImportHint,
-                style: const TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                minLines: 1,
-                maxLines: 6,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  hintText: link == null
-                      ? context.l.arLinkOrText
-                      : context.l.arRecipeText,
-                  suffixIcon: IconButton(
-                    tooltip: context.l.paste,
-                    icon: const Icon(Icons.content_paste_rounded),
-                    onPressed: () async {
-                      final clip = await Clipboard.getData(
-                        Clipboard.kTextPlain,
-                      );
-                      final text = clip?.text?.trim() ?? '';
-                      if (text.isNotEmpty) controller.text = text;
-                    },
-                  ),
-                  filled: true,
-                  fillColor: AppColors.card,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
+  Future<bool> _importFromLink({
+    String? link,
+    String? note,
+    String? shared,
+  }) async {
+    final input = shared != null
+        ? (firstUrl(shared) ?? shared).trim()
+        : await showDialog<String>(
+            context: context,
+            builder: (context) {
+              final controller = TextEditingController();
+              return AlertDialog(
+                scrollable: true,
+                backgroundColor: AppColors.cream,
+                title: Text(
+                  link == null ? context.l.arImport : context.l.arPasteRecipe,
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(context.l.cancel),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.wood,
-                foregroundColor: AppColors.ink,
-                elevation: 0,
-              ),
-              onPressed: () =>
-                  Navigator.of(context).pop(controller.text.trim()),
-              child: Text(context.l.arImportBtn),
-            ),
-          ],
-        );
-      },
-    );
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      note ?? context.l.arImportHint,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      minLines: 1,
+                      maxLines: 6,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(
+                        hintText: link == null
+                            ? context.l.arLinkOrText
+                            : context.l.arRecipeText,
+                        suffixIcon: IconButton(
+                          tooltip: context.l.paste,
+                          icon: const Icon(Icons.content_paste_rounded),
+                          onPressed: () async {
+                            final clip = await Clipboard.getData(
+                              Clipboard.kTextPlain,
+                            );
+                            final text = clip?.text?.trim() ?? '';
+                            if (text.isNotEmpty) controller.text = text;
+                          },
+                        ),
+                        filled: true,
+                        fillColor: AppColors.card,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(context.l.cancel),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.wood,
+                      foregroundColor: AppColors.ink,
+                      elevation: 0,
+                    ),
+                    onPressed: () =>
+                        Navigator.of(context).pop(controller.text.trim()),
+                    child: Text(context.l.arImportBtn),
+                  ),
+                ],
+              );
+            },
+          );
 
     if (input == null || input.isEmpty) return false;
     if (!mounted) return false;
@@ -913,7 +926,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
                   Text(
-                    widget.startWithLink
+                    _fromLink
                         ? context.l.arReadingVideo
                         : context.l.arCompleting,
                     style: TextStyle(color: AppColors.inkMuted),

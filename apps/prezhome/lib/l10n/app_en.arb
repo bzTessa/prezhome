@@ -149,6 +149,7 @@
   "shopGroupByAisle": "Group by aisle",
   "shopGroupHint": "Vegetables, meat, cleaning…",
   "shopShowPhotos": "Show product photos",
+  "shopShowIcons": "Show drawings when there is no photo",
   "shopMyLists": "My lists",
   "categories": "Categories",
   "shopFinish": "Finish shopping",

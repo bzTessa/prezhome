@@ -34,6 +34,12 @@ class SupermarketProduct {
     if (b == null || name.toLowerCase().contains(b.toLowerCase())) return name;
     return '$name · $b';
   }
+
+  /// Súper del catálogo oficial ("mercadona"…); null si viene de OFF.
+  String? get store {
+    final i = code.indexOf(':');
+    return i > 0 ? code.substring(0, i) : null;
+  }
 }
 
 /// Resultado de una búsqueda. [throttled] indica que se ha pedido demasiado
@@ -354,6 +360,21 @@ String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
 /// Súpers con catálogo propio en supermarket_products (scripts/*_sync.py).
 const catalogStores = {'mercadona', 'dia', 'consum', 'rewe'};
 
+/// Catálogos oficiales de cada país, en el orden en que se buscan.
+const catalogStoresByCountry = {
+  'ES': ['mercadona', 'dia', 'consum'],
+  'DE': ['rewe'],
+};
+
+/// Catálogos donde buscar: primero el del súper del hogar y luego los demás
+/// del país.
+List<String> catalogSearchOrder(String? supermarketKey) => [
+  if (catalogStores.contains(supermarketKey)) supermarketKey!,
+  ...?catalogStoresByCountry[HomeCountry.current.value.code]?.where(
+    (s) => s != supermarketKey,
+  ),
+];
+
 /// Catálogo que pone la foto a lo genérico (fruta, verdura…) en cada país.
 const catalogForCountry = {'ES': 'mercadona', 'DE': 'rewe'};
 
@@ -416,8 +437,8 @@ Future<List<SupermarketProduct>> searchCatalog(
   ];
 }
 
-/// Busca productos de súper: primero en el catálogo del súper (si lo hay) y
-/// luego en Open Food Facts (gratis, sin clave).
+/// Busca productos de súper: primero en los catálogos oficiales y luego en
+/// Open Food Facts (gratis, sin clave).
 ///
 /// Se llama directamente desde el móvil para que el límite de OFF (10
 /// búsquedas/minuto por IP) cuente por persona y no para toda la app. Por eso
@@ -468,8 +489,9 @@ class ProductSearchService {
     return body is Map<String, dynamic> ? parseProductSearch(body) : const [];
   }
 
-  /// Busca [query]. Con [supermarketKey] prueba primero solo ese súper y, si
-  /// no hay nada, en todos los de España. [background] marca las búsquedas
+  /// Busca [query]: primero en los catálogos oficiales (el de
+  /// [supermarketKey] delante) y, si no lo tienen, en Open Food Facts (ese
+  /// súper y luego todos los del país), que va siempre detrás. [background] marca las búsquedas
   /// que nadie ha pedido (fotos de la lista), que no pueden agotar el límite.
   Future<ProductSearchResult> search(
     String query, {
@@ -482,11 +504,23 @@ class ProductSearchService {
     final key = '${q.toLowerCase()}|$store';
     final cached = _cache[key];
     if (cached != null) return cached;
-    if (catalogStores.contains(supermarketKey)) {
-      final mine = await _catalogSafe(q, supermarketKey!);
-      if (mine.any((p) => isProductFor(q, p))) {
-        return _cache[key] = ProductSearchResult(mine, filteredByStore: true);
-      }
+    // Primero los catálogos oficiales (foto y precio de la tienda), que
+    // salen mucho mejor que OFF: si alguno tiene justo lo buscado, OFF ni se
+    // consulta. Van antes los que son eso, cada uno en el orden de súper.
+    final stores = catalogSearchOrder(supermarketKey);
+    final lists = await Future.wait([
+      for (final s in stores) _catalogSafe(q, s),
+    ]);
+    final all = [for (final l in lists) ...l];
+    final official = [
+      ...all.where((p) => isProductFor(q, p)),
+      ...all.where((p) => !isProductFor(q, p)),
+    ];
+    if (official.isNotEmpty && isProductFor(q, official.first)) {
+      return _cache[key] = ProductSearchResult(
+        official,
+        filteredByStore: official.any((p) => p.store == supermarketKey),
+      );
     }
     try {
       var inStore = <SupermarketProduct>[];
@@ -499,31 +533,43 @@ class ProductSearchService {
         inStore = rankProducts(q, r);
         // Solo se queda en el súper si allí está justo lo buscado.
         if (inStore.any((p) => isProductFor(q, p))) {
-          return _cache[key] = ProductSearchResult(
-            inStore,
-            filteredByStore: true,
-          );
+          return _cache[key] = ProductSearchResult([
+            ...official,
+            ...inStore,
+          ], filteredByStore: true);
         }
       }
-      final all = await _fetch(
+      final offAll = await _fetch(
         buildProductSearchUri(q),
         background: background,
       );
-      if (all == null) {
+      if (offAll == null) {
         // Sin más búsquedas libres: lo que haya del súper.
-        return inStore.isEmpty
+        return inStore.isEmpty && official.isEmpty
             ? const ProductSearchResult([], throttled: true)
-            : ProductSearchResult(inStore, filteredByStore: true);
+            : ProductSearchResult([
+                ...official,
+                ...inStore,
+              ], filteredByStore: inStore.isNotEmpty);
       }
       final seen = {for (final p in inStore) p.code};
-      return _cache[key] = ProductSearchResult(
-        rankProducts(q, [...inStore, ...all.where((p) => seen.add(p.code))]),
-      );
+      // Open Food Facts siempre al final, detrás de los catálogos.
+      return _cache[key] = ProductSearchResult([
+        ...official,
+        ...rankProducts(q, [
+          ...inStore,
+          ...offAll.where((p) => seen.add(p.code)),
+        ]),
+      ]);
     } on http.ClientException {
       // El móvil no llega a ningún servidor (sin datos, modo avión…).
-      return const ProductSearchResult([], failed: true, offline: true);
+      return official.isNotEmpty
+          ? ProductSearchResult(official)
+          : const ProductSearchResult([], failed: true, offline: true);
     } catch (_) {
-      return const ProductSearchResult([], failed: true);
+      return official.isNotEmpty
+          ? ProductSearchResult(official)
+          : const ProductSearchResult([], failed: true);
     }
   }
 
