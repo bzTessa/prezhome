@@ -24,26 +24,47 @@ class RecipesScreen extends StatefulWidget {
   State<RecipesScreen> createState() => _RecipesScreenState();
 }
 
-/// Filtros disponibles en la barra superior. 'all' muestra todo; los tipos
-/// usan las claves de [Recipe.mealTypeLabels]; 'favorites' y 'quick' son
-/// filtros transversales en cliente.
-enum _RecipeFilter {
-  all,
-  breakfast,
-  lunch,
-  dinner,
-  snack,
-  dessert,
-  drink,
-  favorites,
-  quick,
+/// Orden de las secciones del recetario. Cada receta sale UNA sola vez: en
+/// "favorites" si es favorita y, si no, en el primer tipo de esta lista que
+/// tenga (una receta de comida y cena va a "Comida"). Sin tipo -> "other".
+const recipeSectionOrder = [
+  'favorites',
+  'breakfast',
+  'lunch',
+  'dinner',
+  'dessert',
+  'snack',
+  'drink',
+  'other',
+];
+
+/// Agrupa las recetas en secciones (ver [recipeSectionOrder]) respetando el
+/// orden de entrada dentro de cada una. Solo devuelve secciones con recetas.
+List<MapEntry<String, List<Recipe>>> groupRecipesBySection(
+  List<Recipe> recipes,
+) {
+  final groups = {for (final k in recipeSectionOrder) k: <Recipe>[]};
+  for (final r in recipes) {
+    final key = r.isFavorite
+        ? 'favorites'
+        : recipeSectionOrder.firstWhere(
+            r.mealTypes.contains,
+            orElse: () => 'other',
+          );
+    groups[key]!.add(r);
+  }
+  return [
+    for (final e in groups.entries)
+      if (e.value.isNotEmpty) e,
+  ];
 }
 
 class _RecipesScreenState extends State<RecipesScreen> {
   final SupabaseClient supabase = Supabase.instance.client;
   late Future<_RecipesData> _future;
 
-  _RecipeFilter _filter = _RecipeFilter.all;
+  // Secciones desplegadas con "Ver todas"; el resto enseña solo 4 recetas.
+  final Set<String> _expanded = {};
 
   // Texto del buscador (en cliente, sobre nombre e ingredientes).
   final TextEditingController _searchCtrl = TextEditingController();
@@ -221,49 +242,97 @@ class _RecipesScreenState extends State<RecipesScreen> {
     }
   }
 
-  void _setFilter(_RecipeFilter f) {
-    setState(() {
-      _filter = f;
-    });
-  }
-
-  /// Aplica el filtro de categoría activo + el texto del buscador, manteniendo
-  /// el orden original (favoritas primero, luego recientes).
-  List<Recipe> _applyFilter(List<Recipe> recipes) {
-    final byCategory = _applyCategoryFilter(recipes);
+  /// Buscador en cliente sobre nombre y descripción, manteniendo el orden
+  /// original (favoritas primero, luego recientes).
+  List<Recipe> _search(List<Recipe> recipes) {
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return byCategory;
-    return byCategory.where((r) {
+    return recipes.where((r) {
       final title = r.title.toLowerCase();
       final desc = (r.description ?? '').toLowerCase();
       return title.contains(q) || desc.contains(q);
     }).toList();
   }
 
-  List<Recipe> _applyCategoryFilter(List<Recipe> recipes) {
-    switch (_filter) {
-      case _RecipeFilter.all:
-        return recipes;
-      case _RecipeFilter.favorites:
-        return recipes.where((r) => r.isFavorite).toList();
-      case _RecipeFilter.quick:
-        return recipes
-            .where((r) => (r.totalTimeMinutes ?? 1 << 30) <= 30)
-            .toList();
-      case _RecipeFilter.breakfast:
-        return recipes.where((r) => r.mealTypes.contains('breakfast')).toList();
-      case _RecipeFilter.lunch:
-        return recipes.where((r) => r.mealTypes.contains('lunch')).toList();
-      case _RecipeFilter.dinner:
-        return recipes.where((r) => r.mealTypes.contains('dinner')).toList();
-      case _RecipeFilter.snack:
-        return recipes.where((r) => r.mealTypes.contains('snack')).toList();
-      case _RecipeFilter.dessert:
-        return recipes.where((r) => r.mealTypes.contains('dessert')).toList();
-      case _RecipeFilter.drink:
-        return recipes.where((r) => r.mealTypes.contains('drink')).toList();
+  Widget _card(Recipe recipe, int? perMeal) => _RecipeCard(
+    recipe: recipe,
+    caloriesPerMeal: perMeal,
+    onToggleFavorite: () => _toggleFavorite(recipe),
+    onLongPress: () => _openQuickActions(recipe),
+    onTap: () async {
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipe: recipe)),
+      );
+      if (changed == true) _reload();
+    },
+  );
+
+  SliverPadding _grid(
+    List<Recipe> recipes,
+    int? perMeal, {
+    double bottom = 0,
+  }) => SliverPadding(
+    padding: EdgeInsets.fromLTRB(16, 0, 16, bottom),
+    sliver: SliverGrid.builder(
+      gridDelegate: recipeGridDelegate,
+      itemCount: recipes.length,
+      itemBuilder: (context, index) => _card(recipes[index], perMeal),
+    ),
+  );
+
+  /// Recetario ordenado por secciones (favoritas, desayunos, comidas...),
+  /// cada una con su título y como mucho 4 recetas hasta pulsar "Ver todas".
+  List<Widget> _sections(List<Recipe> recipes, int? perMeal) {
+    const preview = 4;
+    final slivers = <Widget>[];
+    for (final section in groupRecipesBySection(recipes)) {
+      final key = section.key;
+      final items = section.value;
+      final open = _expanded.contains(key) || items.length <= preview;
+      slivers
+        ..add(
+          SliverToBoxAdapter(
+            child: _SectionHeader(
+              icon: _sectionIcon(key),
+              title: _sectionTitle(context, key),
+              count: items.length,
+            ),
+          ),
+        )
+        ..add(_grid(open ? items : items.take(preview).toList(), perMeal));
+      if (!open) {
+        slivers.add(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: TextButton(
+                onPressed: () => setState(() => _expanded.add(key)),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.woodDark,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                child: Text(context.l.recSeeAll(items.length)),
+              ),
+            ),
+          ),
+        );
+      }
     }
+    slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 120)));
+    return slivers;
   }
+
+  static String _sectionTitle(BuildContext context, String key) =>
+      switch (key) {
+        'favorites' => context.l.recFavorites,
+        'other' => context.l.recOther,
+        _ => context.l.mealType(key),
+      };
+
+  static IconData _sectionIcon(String key) => switch (key) {
+    'favorites' => Icons.favorite_rounded,
+    'other' => Icons.restaurant_rounded,
+    _ => mealTypeIcon(key),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -323,8 +392,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
             );
           }
 
-          final visible = _applyFilter(allRecipes);
           final searching = _query.trim().isNotEmpty;
+          final found = searching ? _search(allRecipes) : const <Recipe>[];
 
           return CustomScrollView(
             slivers: [
@@ -338,14 +407,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   }),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: _FilterBar(
-                  active: _filter,
-                  onSelected: _setFilter,
-                  recipes: allRecipes,
-                ),
-              ),
-              if (!searching && _filter == _RecipeFilter.all)
+              if (!searching) ...[
                 SliverToBoxAdapter(
                   child: _PantryBanner(
                     onTap: () => Navigator.of(context).push(
@@ -356,58 +418,75 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     ),
                   ),
                 ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                  child: Text(
-                    visible.isEmpty
-                        ? context.l.recNoResults
-                        : context.l.recCount(visible.length),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink.withValues(alpha: 0.6),
+                ..._sections(allRecipes, perMeal),
+              ] else if (found.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _NoSearchResults(query: _query.trim()),
+                )
+              else ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: Text(
+                      context.l.recCount(found.length),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink.withValues(alpha: 0.6),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              if (visible.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: searching
-                      ? _NoSearchResults(query: _query.trim())
-                      : const _NoMatchesState(),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  sliver: SliverGrid.builder(
-                    gridDelegate: recipeGridDelegate,
-                    itemCount: visible.length,
-                    itemBuilder: (context, index) {
-                      final recipe = visible[index];
-                      return _RecipeCard(
-                        recipe: recipe,
-                        caloriesPerMeal: perMeal,
-                        onToggleFavorite: () => _toggleFavorite(recipe),
-                        onLongPress: () => _openQuickActions(recipe),
-                        onTap: () async {
-                          final changed = await Navigator.of(context)
-                              .push<bool>(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      RecipeDetailScreen(recipe: recipe),
-                                ),
-                              );
-                          if (changed == true) _reload();
-                        },
-                      );
-                    },
-                  ),
-                ),
+                _grid(found, perMeal, bottom: 120),
+              ],
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Título de una sección del recetario: icono, nombre y cuántas recetas hay.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+    required this.count,
+  });
+
+  final IconData icon;
+  final String title;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: AppColors.woodDark),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+          Text(
+            '$count',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: AppColors.inkMuted,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -479,164 +558,6 @@ class _RecipesData {
 }
 
 /// Barra horizontal de chips de filtro sobre la rejilla.
-class _FilterBar extends StatelessWidget {
-  final _RecipeFilter active;
-  final ValueChanged<_RecipeFilter> onSelected;
-  final List<Recipe> recipes;
-
-  const _FilterBar({
-    required this.active,
-    required this.onSelected,
-    required this.recipes,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasFavorites = recipes.any((r) => r.isFavorite);
-    final hasQuick = recipes.any((r) => (r.totalTimeMinutes ?? 1 << 30) <= 30);
-
-    // Solo mostramos chips de tipo que existan en la colección, para no dejar
-    // filtros que nunca devuelven resultados.
-    final presentTypes = <String>{for (final r in recipes) ...r.mealTypes};
-
-    final chips = <Widget>[
-      _FilterChip(
-        label: context.l.recAll,
-        icon: Icons.grid_view_rounded,
-        selected: active == _RecipeFilter.all,
-        onTap: () => onSelected(_RecipeFilter.all),
-      ),
-      if (hasFavorites)
-        _FilterChip(
-          label: context.l.recFavorites,
-          icon: Icons.star_rounded,
-          selected: active == _RecipeFilter.favorites,
-          onTap: () => onSelected(_RecipeFilter.favorites),
-        ),
-      for (final entry in _typeOrder)
-        if (presentTypes.contains(entry.key))
-          _FilterChip(
-            label: context.l.mealType(entry.key),
-            icon: entry.value,
-            selected: active == _filterForType(entry.key),
-            onTap: () => onSelected(_filterForType(entry.key)),
-          ),
-      if (hasQuick)
-        _FilterChip(
-          label: '< 30 min',
-          icon: Icons.bolt_rounded,
-          selected: active == _RecipeFilter.quick,
-          onTap: () => onSelected(_RecipeFilter.quick),
-        ),
-    ];
-
-    return SizedBox(
-      height: 52,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        itemCount: chips.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (_, i) => chips[i],
-      ),
-    );
-  }
-
-  static const List<MapEntry<String, IconData>> _typeOrder = [
-    MapEntry('breakfast', Icons.free_breakfast),
-    MapEntry('lunch', Icons.lunch_dining),
-    MapEntry('dinner', Icons.dinner_dining),
-    MapEntry('snack', Icons.fastfood),
-    MapEntry('dessert', Icons.cake),
-    MapEntry('drink', Icons.local_drink),
-  ];
-
-  static _RecipeFilter _filterForType(String type) {
-    switch (type) {
-      case 'breakfast':
-        return _RecipeFilter.breakfast;
-      case 'lunch':
-        return _RecipeFilter.lunch;
-      case 'dinner':
-        return _RecipeFilter.dinner;
-      case 'snack':
-        return _RecipeFilter.snack;
-      case 'dessert':
-        return _RecipeFilter.dessert;
-      case 'drink':
-        return _RecipeFilter.drink;
-      default:
-        return _RecipeFilter.all;
-    }
-  }
-}
-
-/// Chip de filtro seleccionable: resaltado con madera cuando está activo.
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.ink : AppColors.card,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: selected ? AppColors.ink : AppColors.card,
-              width: 1.4,
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: AppColors.softShadow,
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: selected ? AppColors.cream : AppColors.woodDark,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : AppColors.ink,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Tarjeta de receta para la rejilla: foto arriba, título y chips clave abajo.
 class _RecipeCard extends StatelessWidget {
   final Recipe recipe;
@@ -655,9 +576,6 @@ class _RecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryType = recipe.mealTypes.isNotEmpty
-        ? recipe.mealTypes.first
-        : null;
     final meta = [
       if (recipe.totalTimeMinutes != null) '${recipe.totalTimeMinutes} min',
       if (recipe.calories != null) '${recipe.calories} kcal',
@@ -694,40 +612,6 @@ class _RecipeCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (primaryType != null)
-                Positioned(
-                  left: 10,
-                  top: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.card.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          mealTypeIcon(primaryType),
-                          size: 13,
-                          color: AppColors.woodDark,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          Recipe.mealTypeLabels[primaryType] ?? primaryType,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               Positioned(
                 top: 6,
                 right: 6,
@@ -786,36 +670,6 @@ class _RecipeCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Estado cuando el filtro activo no devuelve resultados.
-class _NoMatchesState extends StatelessWidget {
-  const _NoMatchesState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const MiauCharacter(mood: MiauMood.curious, size: 96),
-            const SizedBox(height: 16),
-            Text(
-              context.l.recNoFilter,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
         ),
       ),
     );

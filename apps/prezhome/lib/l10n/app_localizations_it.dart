@@ -1549,6 +1549,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recFavorites => 'Preferite';
 
   @override
+  String get recOther => 'Altre';
+
+  @override
+  String recSeeAll(int count) {
+    return 'Vedi tutte e $count';
+  }
+
+  @override
   String get recNoFilter =>
       'Nessuna ricetta con questo filtro.\nProva un\'altra categoria.';
 

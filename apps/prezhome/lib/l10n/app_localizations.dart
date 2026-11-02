@@ -2460,6 +2460,18 @@ abstract class AppLocalizations {
   /// **'Favoritas'**
   String get recFavorites;
 
+  /// No description provided for @recOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Otras'**
+  String get recOther;
+
+  /// No description provided for @recSeeAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver las {count}'**
+  String recSeeAll(int count);
+
   /// No description provided for @recNoFilter.
   ///
   /// In es, this message translates to:

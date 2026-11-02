@@ -1540,6 +1540,14 @@ class AppLocalizationsBs extends AppLocalizations {
   String get recFavorites => 'Omiljeni';
 
   @override
+  String get recOther => 'Ostali';
+
+  @override
+  String recSeeAll(int count) {
+    return 'Prikaži svih $count';
+  }
+
+  @override
   String get recNoFilter =>
       'Nema recepata s ovim filterom.\nProbaj drugu kategoriju.';
 

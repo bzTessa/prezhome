@@ -392,6 +392,8 @@
   "recPantryIdeas": "Des idées avec ce qu'il y a dans tes placards",
   "recAll": "Toutes",
   "recFavorites": "Favorites",
+  "recOther": "Autres",
+  "recSeeAll": "Voir les {count}",
   "recNoFilter": "Aucune recette avec ce filtre.\nEssaie une autre catégorie.",
   "clear": "Effacer",
   "recNoMatch": "Aucune recette ne correspond à\n« {query} ».",
