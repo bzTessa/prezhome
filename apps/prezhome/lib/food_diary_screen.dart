@@ -14,6 +14,7 @@ import 'theme/app_theme.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/skeleton.dart';
+import 'widgets/animations/app_transitions.dart';
 import 'l10n/l10n.dart';
 
 /// Diario de consumo personal del día: muestra lo que la persona ha comido
@@ -611,7 +612,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: FutureBuilder<_DiaryData>(
+      body: FadeFutureBuilder<_DiaryData>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {

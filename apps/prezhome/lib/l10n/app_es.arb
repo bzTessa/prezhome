@@ -81,7 +81,7 @@
   "onbCookingHint": "Así sabemos si organizar tandas y congelador.",
   "onbSectionShopping": "La compra",
   "onbShopTitle": "¿Dónde compras?",
-  "onbShopHint": "El primero será tu súper principal: las recetas usarán productos fáciles de encontrar allí.",
+  "onbShopHint": "El primero será tu súper principal: buscaremos ahí los productos de tu lista de la compra.",
   "onbSkipSeeHome": "Saltar y ver mi hogar",
   "onbSeeHome": "Ver mi hogar",
   "onbSlogan": "La casa en orden, la cabeza tranquila.",
@@ -387,7 +387,7 @@
   "shopListTitle": "Lista de la compra",
   "shopMainList": "Lista principal",
   "couldNotCreateList": "No se pudo crear la lista",
-  "shopRecipesUseStore": "Las recetas usarán productos de este súper.",
+  "shopRecipesUseStore": "Los productos de tu lista se buscarán en este súper. Las recetas sirven para cualquiera.",
   "shopStoreSaveError": "No se pudo guardar el supermercado. Inténtalo de nuevo.",
   "shopGroupByAisle": "Agrupar por pasillo",
   "shopGroupHint": "Verduras, carne, limpieza…",
@@ -973,6 +973,15 @@
   "recPantryIdeas": "Ideas con lo que hay en tu despensa",
   "recAll": "Todas",
   "recFavorites": "Favoritas",
+  "recOther": "Otras",
+  "recSeeAll": "Ver las {count}",
+  "@recSeeAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "recNoFilter": "No hay recetas con este filtro.\nPrueba con otra categoría.",
   "clear": "Limpiar",
   "recNoMatch": "No hay recetas que coincidan con\n\"{query}\".",
@@ -1837,6 +1846,95 @@
       }
     }
   },
+  "cookMode": "Modo cocina",
+  "bpMeanwhile": "Mientras tanto",
+  "bpTapers": "Tápers · {title}",
+  "@bpTapers": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "bpBatchCook": "Cocina en tanda",
+  "bpStart": "Empezar paso a paso",
+  "bpEmpty": "No hay nada que cocinar ahora mismo",
+  "bpEmptySub": "Cuando tengas recetas planificadas, aquí te prepararé un plan de cocina para hacerlo todo de una vez.",
+  "bpNeed": "Lo que necesitas",
+  "bpSplit": "Reparte en tápers",
+  "bpSplitSub": "Se apuntan solos en Mi cocina",
+  "bpYourPlan": "Tu plan de cocina",
+  "bpTotalMinutes": "{count, plural, =1{Unos 1 minuto en total} other{Unos {count} minutos en total}}",
+  "@bpTotalMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "minutesShort": "{count} min",
+  "@minutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bpParallel": "En paralelo",
+  "bpFor": "Para {recipes}",
+  "@bpFor": {
+    "placeholders": {
+      "recipes": {
+        "type": "String"
+      }
+    }
+  },
+  "ready": "Listo",
+  "pause": "Pausar",
+  "start": "Iniciar",
+  "reset": "Reiniciar",
+  "bpDone": "Hecho",
+  "bpMarkDone": "Marcar como hecho",
+  "cmStep": "Paso {n}",
+  "@cmStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cmTime": "Tiempo",
+  "cmSeeStep": "Ver paso",
+  "ok": "Vale",
+  "cmMicPermission": "Para usar la voz, permite el micrófono en Ajustes.",
+  "ingredients": "Ingredientes",
+  "cmExit": "Salir del modo cocina",
+  "cmHandsFreeOff": "Quitar manos libres",
+  "cmHandsFree": "Manos libres",
+  "cmVoiceHint": "Di «siguiente», «anterior», «repite» o «temporizador»",
+  "cmStop": "Parar",
+  "cmStepOf": "PASO {n} DE {total}",
+  "@cmStepOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "cmTimerRunning": "Temporizador en marcha",
+  "cmTimerMin": "Temporizador {count} min",
+  "@cmTimerMin": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cmThen": "Luego",
+  "cmNextStep": "Siguiente paso",
   "shopSugDue": "Te toca",
   "shopSugOut": "Te falta en casa",
   "shopOutAtHome": "Agotado en casa",

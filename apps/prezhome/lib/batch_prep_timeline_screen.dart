@@ -15,6 +15,7 @@ import 'widgets/animations/celebrate.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/miau_character.dart';
+import 'l10n/l10n.dart';
 
 /// "Modo cocina": pantalla del orquestador de BATCH COOKING.
 ///
@@ -242,7 +243,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Modo cocina')),
+      appBar: AppBar(title: Text(context.l.cookMode)),
       body: SafeArea(
         child: _plan.isEmpty ? _buildEmptyState() : _buildTimeline(),
       ),
@@ -259,10 +260,9 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
       CookStep(
         step.title,
         note: [
-          if (!step.isPrep)
-            Recipe.applianceLabels[step.appliance] ?? step.appliance,
+          if (!step.isPrep) context.l.appliance(step.appliance),
           step.recipeTitles.join(', '),
-          if (step.canRunInParallel) 'Mientras tanto',
+          if (step.canRunInParallel) context.l.bpMeanwhile,
         ].join(' · '),
         // La cocción dura lo que dice la receta; en la preparación solo hay
         // temporizador si el propio paso menciona un tiempo.
@@ -272,7 +272,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
       ),
     for (final b in widget.batches)
       if (_taperText(b) != null)
-        CookStep(_taperText(b)!, note: 'Tápers · ${b.title}'),
+        CookStep(_taperText(b)!, note: context.l.bpTapers(b.title)),
   ];
 
   /// "Nevera para el mié y vie · congelador para el sáb", o null si no hay
@@ -303,7 +303,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => CookModeScreen(
-                    title: 'Cocina en tanda',
+                    title: context.l.bpBatchCook,
                     steps: _cookSteps(),
                     ingredients: _ingredients,
                   ),
@@ -311,7 +311,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
               );
             },
             icon: const Icon(Icons.play_arrow_rounded),
-            label: const Text('Empezar paso a paso'),
+            label: Text(context.l.bpStart),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.ink,
               foregroundColor: AppColors.cream,
@@ -341,14 +341,13 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
             const MiauCharacter(mood: MiauMood.sleeping, size: 140),
             const SizedBox(height: AppSpacing.xl),
             Text(
-              'No hay nada que cocinar ahora mismo',
+              context.l.bpEmpty,
               style: AppTextStyles.title,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Cuando tengas recetas planificadas, aquí te prepararé un plan '
-              'de cocina para hacerlo todo de una vez.',
+              context.l.bpEmptySub,
               style: AppTextStyles.bodyMuted,
               textAlign: TextAlign.center,
             ),
@@ -394,7 +393,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
               children: [
                 Icon(Icons.shopping_basket_outlined, color: AppColors.sage),
                 const SizedBox(width: AppSpacing.sm),
-                Text('Lo que necesitas', style: AppTextStyles.title),
+                Text(context.l.bpNeed, style: AppTextStyles.title),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -426,11 +425,11 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
             children: [
               Icon(Icons.kitchen_outlined, color: AppColors.frost),
               const SizedBox(width: AppSpacing.sm),
-              Text('Reparte en tápers', style: AppTextStyles.title),
+              Text(context.l.bpSplit, style: AppTextStyles.title),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text('Se apuntan solos en Mi cocina', style: AppTextStyles.bodyMuted),
+          Text(context.l.bpSplitSub, style: AppTextStyles.bodyMuted),
           for (final (title, text) in rows) ...[
             const SizedBox(height: AppSpacing.md),
             Text(title, style: AppTextStyles.bodyStrong),
@@ -457,7 +456,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tu plan de cocina', style: AppTextStyles.title),
+                  Text(context.l.bpYourPlan, style: AppTextStyles.title),
                   const SizedBox(height: AppSpacing.xs),
                   Text(resumenTimeline(_plan), style: AppTextStyles.bodyMuted),
                   const SizedBox(height: AppSpacing.md),
@@ -466,7 +465,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
                       Icon(Icons.schedule, size: 18, color: AppColors.sage),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        'Unos $total ${total == 1 ? 'minuto' : 'minutos'} en total',
+                        context.l.bpTotalMinutes(total),
                         style: AppTextStyles.bodyStrong,
                       ),
                     ],
@@ -578,7 +577,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
       chips.add(
         _chip(
           icon: Icons.schedule,
-          label: '${step.durationMinutes} min',
+          label: context.l.minutesShort(step.durationMinutes),
           bg: AppColors.sageBg,
           fg: AppColors.sage,
         ),
@@ -590,7 +589,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
       chips.add(
         _chip(
           icon: Icons.sync,
-          label: 'En paralelo',
+          label: context.l.bpParallel,
           bg: AppColors.frostBg,
           fg: AppColors.frost,
         ),
@@ -626,10 +625,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
   }
 
   String _recipesLabel(TimelineStep step) {
-    if (step.recipeTitles.length == 1) {
-      return 'Para ${step.recipeTitles.first}';
-    }
-    return 'Para ${step.recipeTitles.join(', ')}';
+    return context.l.bpFor(step.recipeTitles.join(', '));
   }
 
   // --- Temporizador por paso --------------------------------------------------
@@ -658,7 +654,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
                 const SizedBox(width: AppSpacing.sm),
               ],
               Text(
-                finished ? 'Listo' : _formatTime(remaining),
+                finished ? context.l.ready : _formatTime(remaining),
                 style: AppTextStyles.display.copyWith(
                   fontSize: 44,
                   color: timeColor,
@@ -673,7 +669,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
               if (!finished)
                 _timerButton(
                   icon: running ? Icons.pause : Icons.play_arrow,
-                  label: running ? 'Pausar' : 'Iniciar',
+                  label: running ? context.l.pause : context.l.start,
                   bg: AppColors.wood,
                   fg: AppColors.ink,
                   onTap: () =>
@@ -682,7 +678,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
               if (!finished) const SizedBox(width: AppSpacing.md),
               _timerButton(
                 icon: Icons.replay,
-                label: 'Reiniciar',
+                label: context.l.reset,
                 bg: AppColors.frostBg,
                 fg: AppColors.frost,
                 onTap: () => _resetTimer(index),
@@ -741,7 +737,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
             ),
             const SizedBox(width: AppSpacing.sm),
             Text(
-              done ? 'Hecho' : 'Marcar como hecho',
+              done ? context.l.bpDone : context.l.bpMarkDone,
               style: AppTextStyles.bodyStrong.copyWith(
                 color: done ? AppColors.sage : AppColors.ink,
               ),

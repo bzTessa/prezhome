@@ -227,8 +227,8 @@ const recipeGridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
   childAspectRatio: 0.74,
 );
 
-/// Comidas > Recetas: buscador, filtros, aviso de despensa y la rejilla de
-/// recetas (foto a sangre, chip arriba a la izquierda, corazón y título).
+/// Comidas > Recetas: buscador, aviso de despensa, título de sección y la
+/// rejilla de recetas (foto a sangre, corazón y título).
 class RecipesSkeleton extends StatelessWidget {
   const RecipesSkeleton({super.key});
 
@@ -242,23 +242,6 @@ class RecipesSkeleton extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
             sliver: SliverToBoxAdapter(
               child: BoneCard(height: 48, radius: 16, child: SizedBox()),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 52,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                children: [
-                  for (final w in const [72.0, 96.0, 84.0, 90.0, 80.0])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Bone(width: w, height: 36, radius: 24),
-                    ),
-                ],
-              ),
             ),
           ),
           SliverPadding(
@@ -278,11 +261,11 @@ class RecipesSkeleton extends StatelessWidget {
             ),
           ),
           const SliverPadding(
-            padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
+            padding: EdgeInsets.fromLTRB(20, 18, 20, 10),
             sliver: SliverToBoxAdapter(
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Bone(width: 70, height: 12),
+                child: Bone(width: 120, height: 20),
               ),
             ),
           ),
@@ -315,11 +298,6 @@ class _RecipeCardBone extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned(
-            left: 10,
-            top: 10,
-            child: Bone(width: 78, height: 24, radius: 999, color: on),
-          ),
           Positioned(top: 6, right: 6, child: Bone.circle(32, color: on)),
           Positioned(
             left: 12,
@@ -644,4 +622,98 @@ class HomeSkeleton extends StatelessWidget {
       ),
     ]);
   }
+}
+
+/// Tareas: resumen de hoy (anillo + texto), píldora de vistas, rejilla de
+/// dos tarjetas por fila y el bloque de "Próximos días".
+class TasksSkeleton extends StatelessWidget {
+  const TasksSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile() => BoneCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Bone(height: 6, radius: 0, color: AppColors.cream),
+          const Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Bone(width: 48, height: 48, radius: 15),
+                    Spacer(),
+                    Bone.circle(40),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.md),
+                Bone(width: 110, height: 14),
+                SizedBox(height: AppSpacing.sm),
+                Bone(width: 70, height: 10),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return _list(const EdgeInsets.fromLTRB(16, 8, 16, 32), [
+      const BoneCard(
+        child: Row(
+          children: [
+            Bone.circle(72),
+            SizedBox(width: AppSpacing.lg),
+            Expanded(child: _HeroLines()),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      const Bone(height: 44, radius: 999),
+      const SizedBox(height: AppSpacing.lg),
+      const Bone(width: 120, height: 18),
+      const SizedBox(height: AppSpacing.md),
+      Row(
+        children: [
+          Expanded(child: tile()),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: tile()),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.xl),
+      const Bone(width: 140, height: 18),
+      const SizedBox(height: AppSpacing.md),
+      BoneCard(
+        child: Column(
+          children: [
+            for (var i = 0; i < 3; i++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    const Bone(width: 40, height: 40, radius: 13),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _lines(i.isEven ? 140 : 110, 80, gap: 6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    ]);
+  }
+}
+
+class _HeroLines extends StatelessWidget {
+  const _HeroLines();
+
+  @override
+  Widget build(BuildContext context) =>
+      Align(alignment: Alignment.centerLeft, child: _lines(70, 130, gap: 10));
 }

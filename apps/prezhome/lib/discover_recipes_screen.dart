@@ -87,9 +87,8 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   String _diet = 'sin restricción';
   final Set<String> _appliances = {};
 
-  // Supermercados elegidos para esta generación. Se precargan con los del
-  // hogar (homes.supermarkets) pero se pueden ajustar aquí sin cambiar los del
-  // hogar. Opcional: si está vacío, la IA no se ciñe a ningún súper.
+  // Supermercados elegidos para esta generación. Empieza vacío: las recetas
+  // sirven para cualquier súper salvo que aquí se elija uno a propósito.
   final Set<String> _supermarkets = {};
   // Los del hogar, tal como se cargaron: van primero en el selector. No se usa
   // la selección viva para no reordenar las tarjetas al tocarlas.
@@ -178,8 +177,8 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     _loadHomeSupermarkets();
   }
 
-  /// Precarga los supermercados del hogar como selección inicial (sin bloquear
-  /// la UI; si falla, simplemente arranca vacío).
+  /// Carga los supermercados del hogar para ponerlos primero en el selector
+  /// (sin elegirlos: las recetas no se atan a un súper si no se pide).
   Future<void> _loadHomeSupermarkets() async {
     try {
       final user = _client.auth.currentUser;
@@ -235,9 +234,6 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       if (raw is List && mounted) {
         setState(() {
           _homeSupermarkets = raw.map((e) => e.toString()).toList();
-          _supermarkets
-            ..clear()
-            ..addAll(_homeSupermarkets);
         });
       }
     } catch (_) {
@@ -796,7 +792,8 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
               Icons.storefront_rounded,
               'Supermercados',
               _supermarketPicker(),
-              hint: 'Opcional. Usaremos productos fáciles de encontrar ahí.',
+              hint:
+                  'Opcional. Si no eliges ninguno, las recetas valen para cualquier súper.',
             ),
             _section(
               Icons.flag_outlined,

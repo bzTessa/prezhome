@@ -19,7 +19,6 @@ import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'models/shopping_list_item.dart';
-import 'models/supermarket.dart';
 import 'theme/app_theme.dart';
 import 'widgets/freeze_dish_sheet.dart';
 import 'widgets/recipe_chip.dart';
@@ -48,7 +47,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final Set<String> _seenPhotoUrls = {};
   late Future<List<Ingredient>> _ingredientsFuture;
   bool _changingPhoto = false; // true mientras se regenera/sube una foto
-  String? _homeSupermarketLabel; // etiqueta del súper del hogar (chip)
   RecipeCost? _cost; // coste estimado de la receta (precio real o aproximado)
   List<NutritionProfile> _profiles =
       []; // miembros del hogar con perfil visible
@@ -87,7 +85,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _recipe = widget.recipe;
     _ingredientsFuture = _fetchIngredients();
     _loadProfile();
-    _loadHomeSupermarketLabel();
     _loadCost();
     _loadPantry();
   }
@@ -112,14 +109,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     } catch (_) {
       // Sin coste si falla; no es crítico.
     }
-  }
-
-  /// Carga la etiqueta del primer súper del hogar para mostrarla como chip
-  /// junto al resto (Comida/Cena/kcal). Best-effort.
-  Future<void> _loadHomeSupermarketLabel() async {
-    final key = await _firstHomeSupermarket();
-    if (key.isEmpty || !mounted) return;
-    setState(() => _homeSupermarketLabel = Supermarket.labelFor(key));
   }
 
   Future<void> _loadProfile() async {
@@ -332,20 +321,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     } finally {
       if (mounted) setState(() => _changingPhoto = false);
     }
-  }
-
-  /// Primer supermercado del hogar (clave), o '' si no hay. Best-effort.
-  Future<String> _firstHomeSupermarket() async {
-    try {
-      final home = await _client
-          .from('homes')
-          .select('supermarkets')
-          .eq('id', _recipe.homeId)
-          .maybeSingle();
-      final raw = home?['supermarkets'];
-      if (raw is List && raw.isNotEmpty) return raw.first.toString();
-    } catch (_) {}
-    return '';
   }
 
   /// Relee la receta de la BD y refresca la UI (tras cambiar la foto).
@@ -826,12 +801,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             text: context.l.rdFreezable,
             icon: Icons.ac_unit,
             style: RecipeChipStyle.freezer,
-          ),
-        if (_homeSupermarketLabel != null)
-          RecipeChip(
-            text: _homeSupermarketLabel!,
-            icon: Icons.storefront_rounded,
-            style: RecipeChipStyle.type,
           ),
       ],
     );

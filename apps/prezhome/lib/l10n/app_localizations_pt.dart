@@ -190,7 +190,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onbShopHint =>
-      'O primeiro será o teu supermercado principal: as receitas usarão produtos fáceis de encontrar lá.';
+      'O primeiro será o teu supermercado principal: vamos procurar lá os produtos da tua lista de compras.';
 
   @override
   String get onbSkipSeeHome => 'Saltar e ver a minha casa';
@@ -626,7 +626,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get shopRecipesUseStore =>
-      'As receitas vão usar produtos deste supermercado.';
+      'Os produtos da tua lista serão procurados neste supermercado. As receitas servem para qualquer um.';
 
   @override
   String get shopStoreSaveError =>
@@ -1546,6 +1546,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get recFavorites => 'Favoritas';
+
+  @override
+  String get recOther => 'Outras';
+
+  @override
+  String recSeeAll(int count) {
+    return 'Ver as $count';
+  }
 
   @override
   String get recNoFilter =>
@@ -3004,6 +3012,140 @@ class AppLocalizationsPt extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get cookMode => 'Modo cozinha';
+
+  @override
+  String get bpMeanwhile => 'Entretanto';
+
+  @override
+  String bpTapers(String title) {
+    return 'Marmitas · $title';
+  }
+
+  @override
+  String get bpBatchCook => 'Cozinha em lote';
+
+  @override
+  String get bpStart => 'Começar passo a passo';
+
+  @override
+  String get bpEmpty => 'Não há nada para cozinhar agora';
+
+  @override
+  String get bpEmptySub =>
+      'Quando tiveres receitas planeadas, preparo aqui um plano para fazeres tudo de uma vez.';
+
+  @override
+  String get bpNeed => 'O que precisas';
+
+  @override
+  String get bpSplit => 'Divide em marmitas';
+
+  @override
+  String get bpSplitSub => 'Ficam registadas sozinhas em A minha cozinha';
+
+  @override
+  String get bpYourPlan => 'O teu plano de cozinha';
+
+  @override
+  String bpTotalMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Cerca de $count minutos no total',
+      one: 'Cerca de 1 minuto no total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String minutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String get bpParallel => 'Em paralelo';
+
+  @override
+  String bpFor(String recipes) {
+    return 'Para $recipes';
+  }
+
+  @override
+  String get ready => 'Pronto';
+
+  @override
+  String get pause => 'Pausar';
+
+  @override
+  String get start => 'Iniciar';
+
+  @override
+  String get reset => 'Repor';
+
+  @override
+  String get bpDone => 'Feito';
+
+  @override
+  String get bpMarkDone => 'Marcar como feito';
+
+  @override
+  String cmStep(int n) {
+    return 'Passo $n';
+  }
+
+  @override
+  String get cmTime => 'Tempo';
+
+  @override
+  String get cmSeeStep => 'Ver passo';
+
+  @override
+  String get ok => 'Ok';
+
+  @override
+  String get cmMicPermission =>
+      'Para usar a voz, permite o microfone nas Definições.';
+
+  @override
+  String get ingredients => 'Ingredientes';
+
+  @override
+  String get cmExit => 'Sair do modo cozinha';
+
+  @override
+  String get cmHandsFreeOff => 'Desligar mãos livres';
+
+  @override
+  String get cmHandsFree => 'Mãos livres';
+
+  @override
+  String get cmVoiceHint =>
+      'Diz «siguiente», «anterior», «repite» ou «temporizador» (a voz funciona em espanhol por agora)';
+
+  @override
+  String get cmStop => 'Parar';
+
+  @override
+  String cmStepOf(int n, int total) {
+    return 'PASSO $n DE $total';
+  }
+
+  @override
+  String get cmTimerRunning => 'Temporizador a correr';
+
+  @override
+  String cmTimerMin(int count) {
+    return 'Temporizador $count min';
+  }
+
+  @override
+  String get cmThen => 'Depois';
+
+  @override
+  String get cmNextStep => 'Próximo passo';
 
   @override
   String get shopSugDue => 'Está na hora';

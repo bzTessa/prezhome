@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../widgets/animations/app_transitions.dart';
 
 import 'app_elevation.dart';
 import 'app_radius.dart';
@@ -203,6 +206,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          foregroundBuilder: pressFeedbackBuilder,
           backgroundColor: AppColors.ink,
           foregroundColor: AppColors.cream,
           elevation: 0,
@@ -266,6 +270,7 @@ class AppTheme {
       // Botón principal: píldora en tinta. Secundario: contorno suave.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          foregroundBuilder: pressFeedbackBuilder,
           backgroundColor: AppColors.ink,
           foregroundColor: AppColors.cream,
           minimumSize: const Size(64, 52),
@@ -278,6 +283,7 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          foregroundBuilder: pressFeedbackBuilder,
           foregroundColor: AppColors.ink,
           minimumSize: const Size(64, 48),
           side: BorderSide(color: AppColors.wood, width: 1.5),
@@ -287,9 +293,25 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          foregroundBuilder: pressFeedbackBuilder,
           foregroundColor: AppColors.woodDark,
           textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
+      ),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(foregroundBuilder: pressFeedbackBuilder),
+      ),
+      // Transiciones entre pantallas: fundido + leve subida (iOS conserva
+      // la suya para poder deslizar hacia atrás).
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: AppPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: AppPageTransitionsBuilder(),
+          TargetPlatform.windows: AppPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: AppPageTransitionsBuilder(),
+        },
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.terracotta,

@@ -32,6 +32,7 @@ import 'widgets/recipe_image.dart';
 import 'widgets/segmented_pill.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/skeleton.dart';
+import 'widgets/animations/app_transitions.dart';
 import 'l10n/l10n.dart';
 
 /// Planificador semanal de comidas (v1).
@@ -1267,7 +1268,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: widget.embedded ? null : AppBar(title: Text(context.l.planTitle)),
-      body: FutureBuilder<_PlanData>(
+      body: FadeFutureBuilder<_PlanData>(
         future: _future,
         builder: (context, snapshot) {
           final loading = snapshot.connectionState == ConnectionState.waiting;
