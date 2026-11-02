@@ -187,7 +187,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get onbShopHint =>
-      'Prvi će biti tvoj glavni supermarket: recepti će koristiti proizvode koje je tamo lako naći.';
+      'Prvi će biti tvoj glavni supermarket: tamo ćemo tražiti proizvode s tvoje liste za kupovinu.';
 
   @override
   String get onbSkipSeeHome => 'Preskoči i vidi moj dom';
@@ -623,7 +623,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get shopRecipesUseStore =>
-      'Recepti će koristiti proizvode iz ovog supermarketa.';
+      'Proizvodi s tvoje liste tražit će se u ovom supermarketu. Recepti vrijede za svaki.';
 
   @override
   String get shopStoreSaveError => 'Supermarket nije sačuvan. Pokušaj ponovo.';

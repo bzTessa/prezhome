@@ -151,7 +151,9 @@ function buildPrompt(p: Record<string, unknown>): string {
      el nombre GENÉRICO del alimento (p. ej. "garbanzos cocidos", "queso de
      cabra", "aceite de oliva"); NO escribas marcas comerciales ni de
      distribuidor (nada de "Hacendado", "Hacendado...", etc.) en los nombres.`
-    : `- Supermercado: cualquiera (usa ingredientes comunes de súper español).`;
+    : `- Supermercado: cualquiera. Usa ingredientes comunes que se encuentren en
+     cualquier súper, con nombres genéricos (sin marcas), y no nombres ningún
+     supermercado en el título, la descripción ni los pasos.`;
 
   return `Eres un chef que propone ideas de comidas prácticas. Genera ${count}
 ideas de recetas distintas y variadas con estos criterios:

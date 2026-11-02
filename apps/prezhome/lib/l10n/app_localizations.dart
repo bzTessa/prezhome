@@ -423,7 +423,7 @@ abstract class AppLocalizations {
   /// No description provided for @onbShopHint.
   ///
   /// In es, this message translates to:
-  /// **'El primero será tu súper principal: las recetas usarán productos fáciles de encontrar allí.'**
+  /// **'El primero será tu súper principal: buscaremos ahí los productos de tu lista de la compra.'**
   String get onbShopHint;
 
   /// No description provided for @onbSkipSeeHome.
@@ -981,7 +981,7 @@ abstract class AppLocalizations {
   /// No description provided for @shopRecipesUseStore.
   ///
   /// In es, this message translates to:
-  /// **'Las recetas usarán productos de este súper.'**
+  /// **'Los productos de tu lista se buscarán en este súper. Las recetas sirven para cualquiera.'**
   String get shopRecipesUseStore;
 
   /// No description provided for @shopStoreSaveError.
