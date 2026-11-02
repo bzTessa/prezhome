@@ -3160,4 +3160,40 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get cmNextStep => 'Étape suivante';
+
+  @override
+  String get shopSugDue => 'À racheter';
+
+  @override
+  String get shopSugOut => 'Manque à la maison';
+
+  @override
+  String get shopOutAtHome => 'Épuisé à la maison';
+
+  @override
+  String get shopGridView => 'Vue en grille';
+
+  @override
+  String get shopGridHint => 'Grandes photos, deux par ligne';
+
+  @override
+  String get shopShowSuggestions => 'Afficher les suggestions';
+
+  @override
+  String get shopSuggestionsHint =>
+      'Ce qu\'il faut racheter et ce qui manque à la maison';
+
+  @override
+  String get shopShowPrices => 'Afficher les prix';
+
+  @override
+  String shopEveryDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Tous les $n jours',
+      one: 'Chaque jour',
+    );
+    return '$_temp0';
+  }
 }

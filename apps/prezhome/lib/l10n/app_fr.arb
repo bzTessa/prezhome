@@ -814,5 +814,14 @@
   "cmTimerRunning": "Minuteur en cours",
   "cmTimerMin": "Minuteur {count} min",
   "cmThen": "Ensuite",
-  "cmNextStep": "Étape suivante"
+  "cmNextStep": "Étape suivante",
+  "shopSugDue": "À racheter",
+  "shopSugOut": "Manque à la maison",
+  "shopOutAtHome": "Épuisé à la maison",
+  "shopGridView": "Vue en grille",
+  "shopGridHint": "Grandes photos, deux par ligne",
+  "shopShowSuggestions": "Afficher les suggestions",
+  "shopSuggestionsHint": "Ce qu'il faut racheter et ce qui manque à la maison",
+  "shopShowPrices": "Afficher les prix",
+  "shopEveryDays": "{n, plural, =1{Chaque jour} other{Tous les {n} jours}}"
 }

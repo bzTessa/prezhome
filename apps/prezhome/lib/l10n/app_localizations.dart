@@ -4997,6 +4997,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Siguiente paso'**
   String get cmNextStep;
+
+  /// No description provided for @shopSugDue.
+  ///
+  /// In es, this message translates to:
+  /// **'Te toca'**
+  String get shopSugDue;
+
+  /// No description provided for @shopSugOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Te falta en casa'**
+  String get shopSugOut;
+
+  /// No description provided for @shopOutAtHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Agotado en casa'**
+  String get shopOutAtHome;
+
+  /// No description provided for @shopGridView.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver en cuadrícula'**
+  String get shopGridView;
+
+  /// No description provided for @shopGridHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Fotos grandes, dos por fila'**
+  String get shopGridHint;
+
+  /// No description provided for @shopShowSuggestions.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar sugerencias'**
+  String get shopShowSuggestions;
+
+  /// No description provided for @shopSuggestionsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que te toca reponer y lo que se acabó en casa'**
+  String get shopSuggestionsHint;
+
+  /// No description provided for @shopShowPrices.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar precios'**
+  String get shopShowPrices;
+
+  /// No description provided for @shopEveryDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{Cada día} other{Cada {n} días}}'**
+  String shopEveryDays(int n);
 }
 
 class _AppLocalizationsDelegate

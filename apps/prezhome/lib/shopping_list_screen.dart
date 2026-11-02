@@ -43,6 +43,7 @@ import 'widgets/shopping/shopping_parts.dart';
 import 'widgets/tactile_button.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'utils/friendly_error.dart';
+import 'utils/money.dart';
 import 'l10n/l10n.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
@@ -133,6 +134,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   // Precios conocidos del hogar (para estimar el coste de la compra).
   Map<String, ProductPrice> _prices = {};
+
+  /// Compras de los tickets (nombre y día) para saber qué "te toca".
+  List<({String name, DateTime date})> _purchases = const [];
+
+  /// Lo que en la despensa está a 0.
+  List<String> _outAtHome = const [];
+
+  /// Fotos guardadas del hogar por nombre normalizado (para las sugerencias).
+  Map<String, String> _photoByName = const {};
+
+  /// Pestaña de sugerencias elegida: 0 = te toca, 1 = te falta en casa.
+  int _sugTab = 0;
 
   // Guarda para disparar la celebración (Miau + confeti) SOLO en la transición
   // a 0 pendientes (de >0 a 0), no en cada rebuild ni al cambiar de tab en el
@@ -293,6 +306,52 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       _prices = await PriceMemory(_client).loadAll(homeId);
     } catch (_) {
       _prices = {};
+    }
+    await _loadSuggestions();
+  }
+
+  /// Datos de las sugerencias: fechas de compra de los tickets (6 meses),
+  /// lo agotado en la despensa y las fotos guardadas. Best-effort.
+  Future<void> _loadSuggestions() async {
+    try {
+      final homeId = await _homeId();
+      final since = DateTime.now().subtract(const Duration(days: 180));
+      final results = await Future.wait([
+        _client
+            .from('ticket_items')
+            .select('name, created_at, tickets(purchased_at)')
+            .eq('home_id', homeId)
+            .gte('created_at', since.toUtc().toIso8601String())
+            .limit(3000),
+        _client
+            .from('inventory_items')
+            .select('name')
+            .eq('home_id', homeId)
+            .lte('quantity', 0),
+        _client
+            .from('food_photo_cache')
+            .select('name_normalized, url')
+            .eq('home_id', homeId)
+            .not('url', 'is', null),
+      ]);
+      _purchases = [
+        for (final r in results[0])
+          if (DateTime.tryParse(
+                (r['tickets'] as Map?)?['purchased_at']?.toString() ??
+                    r['created_at']?.toString() ??
+                    '',
+              )
+              case final date?)
+            (name: r['name'].toString(), date: date),
+      ];
+      _outAtHome = [for (final r in results[1]) r['name'].toString()];
+      _photoByName = {
+        for (final r in results[2])
+          if (!isStockPhoto(r['url']?.toString()))
+            r['name_normalized'].toString(): r['url'].toString(),
+      };
+    } catch (_) {
+      // Sin red o sin permisos: se queda lo que hubiera.
     }
   }
 
@@ -1188,17 +1247,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 onSearch: _searchProduct,
               ),
             ),
-            if (usualProducts(
-                  [
-                    for (final p in _prices.values)
-                      (name: p.displayName, times: p.samples),
-                  ],
-                  porComprar
-                      .map((i) => i.name)
-                      .where((n) => !_justAdded.contains(n)),
-                )
-                case final usual when usual.isNotEmpty)
-              SliverToBoxAdapter(child: _usualChips(usual)),
+            if (_view.showSuggestions)
+              SliverToBoxAdapter(child: _suggestions(porComprar)),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             if (shouldShowPendingIndicator(_pendingCount))
               SliverToBoxAdapter(
@@ -1508,6 +1558,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   value: _view.showPhotos,
                   onChanged: (v) => update(_view.copyWith(showPhotos: v)),
                 ),
+                SwitchListTile(
+                  title: Text(context.l.shopGridView),
+                  subtitle: Text(context.l.shopGridHint),
+                  value: _view.grid,
+                  onChanged: (v) => update(_view.copyWith(grid: v)),
+                ),
+                SwitchListTile(
+                  title: Text(context.l.shopShowSuggestions),
+                  subtitle: Text(context.l.shopSuggestionsHint),
+                  value: _view.showSuggestions,
+                  onChanged: (v) => update(_view.copyWith(showSuggestions: v)),
+                ),
+                SwitchListTile(
+                  title: Text(context.l.shopShowPrices),
+                  value: _view.showPrices,
+                  onChanged: (v) => update(_view.copyWith(showPrices: v)),
+                ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.list_alt_rounded),
@@ -1635,7 +1702,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             complete: pendientes.every((i) => i.checked),
             expanded: expanded,
             onToggle: () => setState(() => _catCollapsed[key] = expanded),
-            children: [for (final i in pendientes) _buildRow(i)],
+            children: _itemWidgets(pendientes),
           ),
         ),
       ];
@@ -1682,32 +1749,86 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     ];
   }
 
-  /// "Lo habitual": lo que más compras, para añadirlo de un toque.
-  Widget _usualChips(List<String> usual) {
+  /// Sugerencias para añadir de un toque, en dos pestañas: lo que te toca
+  /// reponer según tus tickets (o, sin fechas, lo que más compras) y lo que
+  /// se acabó en la despensa. Sin nada que sugerir no ocupa sitio.
+  Widget _suggestions(List<ShoppingListItem> porComprar) {
+    final l = context.l;
+    final inList = porComprar
+        .map((i) => i.name)
+        .where((n) => !_justAdded.contains(n));
+    List<({String name, String? reason})> due = [
+      for (final d in dueProducts(_purchases, inList, now: DateTime.now()))
+        (name: d.name, reason: l.shopEveryDays(d.everyDays)),
+    ];
+    final dueLabel = due.isEmpty ? l.shopUsual : l.shopSugDue;
+    if (due.isEmpty) {
+      due = [
+        for (final n in usualProducts([
+          for (final p in _prices.values)
+            (name: p.displayName, times: p.samples),
+        ], inList))
+          (name: n, reason: null),
+      ];
+    }
+    final pending = inList.map(normalizeCategoryText).toSet();
+    final out = [
+      for (final n in _outAtHome.toSet())
+        if (!pending.contains(normalizeCategoryText(n)))
+          (name: n, reason: l.shopOutAtHome),
+    ];
+    final tabs = [
+      if (due.isNotEmpty) (label: dueLabel, items: due),
+      if (out.isNotEmpty) (label: l.shopSugOut, items: out),
+    ];
+    if (tabs.isEmpty) return const SizedBox.shrink();
+    final tab = _sugTab.clamp(0, tabs.length - 1);
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            context.l.shopUsual,
-            style: TextStyle(
-              color: AppColors.inkMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
           Wrap(
             spacing: 8,
-            runSpacing: 8,
             children: [
-              for (final name in usual)
-                QuickAddChip(
-                  label: name,
-                  added: _justAdded.contains(name),
-                  onAdd: () => _addUsual(name),
+              for (var i = 0; i < tabs.length; i++)
+                ChoiceChip(
+                  label: Text(tabs[i].label),
+                  selected: i == tab,
+                  showCheckmark: false,
+                  onSelected: (_) => setState(() => _sugTab = i),
                 ),
             ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 190,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              itemCount: tabs[tab].items.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final s = tabs[tab].items[i];
+                final price = _view.showPrices
+                    ? _prices[PriceMemory.keyFor(s.name)]?.bestPrice
+                    : null;
+                return SuggestionCard(
+                  name: s.name,
+                  reason: s.reason,
+                  price: price == null ? null : money(price),
+                  added: _justAdded.contains(s.name),
+                  onAdd: () => _addUsual(s.name),
+                  photo: FoodImage(
+                    name: s.name,
+                    imageUrl: _photoByName[FoodPhotoService.cacheKey(s.name)],
+                    width: double.infinity,
+                    height: double.infinity,
+                    radius: 10,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -1741,7 +1862,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       iconBackground: style.background,
       expanded: expanded,
       onToggle: () => setState(() => _catCollapsed[title] = expanded),
-      children: [for (final i in items) _buildRow(i)],
+      children: _itemWidgets(items),
     );
   }
 
@@ -1756,7 +1877,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       iconBackground: AppColors.sageBg,
       expanded: _cartExpanded,
       onToggle: () => setState(() => _cartExpanded = !_cartExpanded),
-      children: [for (final i in comprados) _buildRow(i)],
+      children: _itemWidgets(comprados),
     );
   }
 
@@ -1847,18 +1968,67 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Fila de producto: tocar marca/desmarca, deslizar a la izquierda marca
   /// como comprado, − / + cambia la cantidad y mantener pulsado abre las
   /// acciones (cambiar foto, borrar).
+  /// Productos de una sección: filas o, en la vista de cuadrícula, dos por
+  /// fila con la foto grande.
+  List<Widget> _itemWidgets(List<ShoppingListItem> items) {
+    if (!_view.grid) return [for (final i in items) _buildRow(i)];
+    return [
+      GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.78,
+        children: [
+          for (final item in items)
+            ShoppingGridTile(
+              key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
+              name: shoppingCleanName(item.name),
+              checked: item.checked,
+              quantityLabel: shoppingQtyLabel(item.quantity, item.unit),
+              price: _linePrice(item),
+              photo: _view.showPhotos
+                  ? _photo(item, width: double.infinity)
+                  : null,
+              onToggle: () => _toggleChecked(item, !item.checked),
+              onLongPress: () => _openItemActions(item),
+            ),
+        ],
+      ),
+    ];
+  }
+
+  /// Precio estimado de la línea (tickets o aproximado), si se conoce.
+  String? _linePrice(ShoppingListItem item) {
+    if (!_view.showPrices) return null;
+    final est = PriceMemory.estimateCost([
+      (name: item.name, quantity: item.quantity, unit: item.unit),
+    ], _prices);
+    return est.priced == 0 ? null : '≈ ${money(est.total)}';
+  }
+
+  Widget _photo(ShoppingListItem item, {double width = 42}) => FoodImage(
+    name: item.name,
+    itemType: item.itemType,
+    // Las fotos de banco salen al azar: hueco hasta que llegue la del súper.
+    imageUrl: isStockPhoto(item.imageUrl) ? null : item.imageUrl,
+    // Solo fotos, nunca dibujos: si no hay, el hueco liso.
+    photoOnly: true,
+    size: 42,
+    width: width,
+    height: width,
+    radius: 10,
+  );
+
   Widget _buildRow(ShoppingListItem item) {
     final done = item.checked;
-    final photo = FoodImage(
-      name: item.name,
-      itemType: item.itemType,
-      // Las fotos de banco salen al azar: hueco hasta que llegue la del súper.
-      imageUrl: isStockPhoto(item.imageUrl) ? null : item.imageUrl,
-      // Solo fotos, nunca dibujos: si no hay, el hueco liso.
-      photoOnly: true,
-      size: 42,
-      radius: 10,
-    );
+    final photo = _photo(item);
+    final subtitle = [
+      if (item.source == 'auto') context.l.shopFromPlan,
+      ?_linePrice(item),
+    ].join(' · ');
     return SwipeAction(
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
       toLeft: done
@@ -1876,7 +2046,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         quantity: item.quantity,
         unit: item.unit,
         onQuantityChanged: (q) => _setQuantity(item, q),
-        subtitle: item.source == 'auto' ? context.l.shopFromPlan : null,
+        subtitle: subtitle.isEmpty ? null : subtitle,
         onToggle: () => _toggleChecked(item, !done),
         onLongPress: () => _openItemActions(item),
         // Tocar la foto permite cambiarla (cámara, galería o súper).

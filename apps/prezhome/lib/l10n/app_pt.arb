@@ -814,5 +814,14 @@
   "cmTimerRunning": "Temporizador a correr",
   "cmTimerMin": "Temporizador {count} min",
   "cmThen": "Depois",
-  "cmNextStep": "Próximo passo"
+  "cmNextStep": "Próximo passo",
+  "shopSugDue": "Está na hora",
+  "shopSugOut": "Falta em casa",
+  "shopOutAtHome": "Esgotado em casa",
+  "shopGridView": "Ver em grelha",
+  "shopGridHint": "Fotos grandes, duas por linha",
+  "shopShowSuggestions": "Mostrar sugestões",
+  "shopSuggestionsHint": "O que está na hora de repor e o que acabou em casa",
+  "shopShowPrices": "Mostrar preços",
+  "shopEveryDays": "{n, plural, =1{Todos os dias} other{A cada {n} dias}}"
 }
