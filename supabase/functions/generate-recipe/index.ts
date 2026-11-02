@@ -38,7 +38,8 @@ function buildPrompt(query: string, supermarket = ""): string {
     ? `\nEl usuario compra en ${supermarket}: si generas la receta, elige
 ingredientes fáciles de encontrar ahí y formatos de venta reales, pero escribe
 los nombres de forma GENÉRICA (sin marcas).\n`
-    : "";
+    : `\nLa receta debe servir para CUALQUIER supermercado: ingredientes genéricos
+(sin marcas) y sin nombrar ningún súper, salvo que el texto pegado indique uno.\n`;
   return `Eres un asistente de cocina experto. El usuario te da el NOMBRE de una
 receta o bien PEGA una receta completa (con ingredientes, cantidades, pasos...).
 En ambos casos, extrae/deduce y estructura los datos.

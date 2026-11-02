@@ -190,7 +190,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onbShopHint =>
-      'Der erste wird dein Hauptsupermarkt: Rezepte nutzen Produkte, die es dort leicht gibt.';
+      'Der erste wird dein Hauptsupermarkt: Dort suchen wir die Produkte deiner Einkaufsliste.';
 
   @override
   String get onbSkipSeeHome => 'Überspringen und mein Zuhause ansehen';
@@ -626,7 +626,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shopRecipesUseStore =>
-      'Rezepte verwenden Produkte aus diesem Supermarkt.';
+      'Die Produkte deiner Liste werden in diesem Supermarkt gesucht. Rezepte passen zu jedem.';
 
   @override
   String get shopStoreSaveError =>

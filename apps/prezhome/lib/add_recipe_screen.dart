@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
 import 'models/recipe.dart';
-import 'models/supermarket.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
@@ -278,16 +277,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     setState(() => _aiLoading = true);
     try {
-      // Súper principal del hogar: la IA elige ingredientes fáciles de
-      // encontrar allí. Vacío si no hay ninguno.
-      final superKey = await _firstHomeSupermarket();
+      // Sin súper: la receta sirve para cualquiera (si el texto pegado nombra
+      // uno, la IA lo respeta).
       final res = await _client.functions.invoke(
         'generate-recipe',
-        body: {
-          'query': query,
-          if (superKey.isNotEmpty)
-            'supermarket': Supermarket.labelFor(superKey),
-        },
+        body: {'query': query},
       );
 
       final data = res.data;
@@ -481,12 +475,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 .toList()
           : <Map<String, dynamic>>[];
       if (rawIngredients.isNotEmpty) {
-        final supermarket = await _firstHomeSupermarket();
-        final refined = await RecipeRefiner(FoodFactsService(_client)).refine(
-          raw: rawIngredients,
-          servings: servings,
-          supermarket: supermarket,
-        );
+        final refined = await RecipeRefiner(
+          FoodFactsService(_client),
+        ).refine(raw: rawIngredients, servings: servings);
         // Sustituimos los ingredientes por los prácticos.
         r['ingredients'] = refined.ingredients
             .map(
@@ -510,29 +501,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       // Si algo falla, seguimos con la receta original.
     }
     if (mounted) _applyAIRecipe(r);
-  }
-
-  /// Primer supermercado del hogar (clave) o '' si no hay. Best-effort.
-  Future<String> _firstHomeSupermarket() async {
-    try {
-      final user = _client.auth.currentUser;
-      if (user == null) return '';
-      final profile = await _client
-          .from('profiles')
-          .select('home_id')
-          .eq('id', user.id)
-          .maybeSingle();
-      final homeId = profile?['home_id'] as String?;
-      if (homeId == null) return '';
-      final home = await _client
-          .from('homes')
-          .select('supermarkets')
-          .eq('id', homeId)
-          .maybeSingle();
-      final raw = home?['supermarkets'];
-      if (raw is List && raw.isNotEmpty) return raw.first.toString();
-    } catch (_) {}
-    return '';
   }
 
   void _applyAIRecipe(Map<String, dynamic> r) {
@@ -642,12 +610,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     if (typedByHand || !changed) return false;
     try {
       final facts = FoodFactsService(_client);
-      final supermarket = await _firstHomeSupermarket();
       final ings = <NutriIngredient>[];
       for (final i in _ingredients) {
         final name = i.name.text.trim();
         if (name.isEmpty) continue;
-        final f = await facts.lookup(name, supermarket: supermarket);
+        final f = await facts.lookup(name);
         ings.add(
           NutriIngredient(
             quantity: _parseD(i.quantity),
