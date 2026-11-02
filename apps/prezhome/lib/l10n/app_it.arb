@@ -775,5 +775,14 @@
   "category": "Categoria",
   "stkQty": "Q.tà",
   "stkSave": "Salva scontrino",
-  "foodCategory": "{cat, select, verdura{Verdure} fruta{Frutta} carne{Carne} pescado{Pesce} lacteos{Latticini} preparados{Piatti pronti} panaderia{Panetteria} cereales{Pasta, riso e legumi} conservas{Conserve} congelados{Surgelati} dulces{Dolci e snack} bebidas{Bevande} especias{Spezie e condimenti} higiene{Igiene} limpieza{Pulizia} hogar{Casa} other{Altro}}"
+  "foodCategory": "{cat, select, verdura{Verdure} fruta{Frutta} carne{Carne} pescado{Pesce} lacteos{Latticini} preparados{Piatti pronti} panaderia{Panetteria} cereales{Pasta, riso e legumi} conservas{Conserve} congelados{Surgelati} dulces{Dolci e snack} bebidas{Bevande} especias{Spezie e condimenti} higiene{Igiene} limpieza{Pulizia} hogar{Casa} other{Altro}}",
+  "shopSugDue": "Da ricomprare",
+  "shopSugOut": "Manca in casa",
+  "shopOutAtHome": "Finito in casa",
+  "shopGridView": "Vista a griglia",
+  "shopGridHint": "Foto grandi, due per riga",
+  "shopShowSuggestions": "Mostra suggerimenti",
+  "shopSuggestionsHint": "Cosa ricomprare e cosa è finito in casa",
+  "shopShowPrices": "Mostra prezzi",
+  "shopEveryDays": "{n, plural, =1{Ogni giorno} other{Ogni {n} giorni}}"
 }

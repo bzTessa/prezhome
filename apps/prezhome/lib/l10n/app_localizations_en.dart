@@ -2989,4 +2989,40 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopSugDue => 'Due to buy';
+
+  @override
+  String get shopSugOut => 'Out at home';
+
+  @override
+  String get shopOutAtHome => 'Out at home';
+
+  @override
+  String get shopGridView => 'Grid view';
+
+  @override
+  String get shopGridHint => 'Big photos, two per row';
+
+  @override
+  String get shopShowSuggestions => 'Show suggestions';
+
+  @override
+  String get shopSuggestionsHint =>
+      'What\'s due to restock and what ran out at home';
+
+  @override
+  String get shopShowPrices => 'Show prices';
+
+  @override
+  String shopEveryDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Every $n days',
+      one: 'Every day',
+    );
+    return '$_temp0';
+  }
 }

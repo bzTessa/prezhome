@@ -97,7 +97,13 @@ QuickAddEntry? parseQuickAdd(String raw) {
 
 /// Preferencias de vista de la lista de la compra (por dispositivo).
 class ShoppingViewPrefs {
-  const ShoppingViewPrefs({this.showPhotos = true, this.groupByAisle = true});
+  const ShoppingViewPrefs({
+    this.showPhotos = true,
+    this.groupByAisle = true,
+    this.grid = false,
+    this.showSuggestions = true,
+    this.showPrices = true,
+  });
 
   /// Mostrar la foto de cada producto. Por defecto sí.
   final bool showPhotos;
@@ -106,17 +112,39 @@ class ShoppingViewPrefs {
   /// orden en que se añadieron.
   final bool groupByAisle;
 
+  /// Cuadrícula de dos columnas con fotos grandes en vez de filas.
+  final bool grid;
+
+  /// Fila de sugerencias ("Te toca", "Te falta en casa").
+  final bool showSuggestions;
+
+  /// Precio estimado en cada producto.
+  final bool showPrices;
+
   /// Clave en el almacenamiento local.
   static const String storageKey = 'shopping_view_prefs';
 
-  ShoppingViewPrefs copyWith({bool? showPhotos, bool? groupByAisle}) =>
-      ShoppingViewPrefs(
-        showPhotos: showPhotos ?? this.showPhotos,
-        groupByAisle: groupByAisle ?? this.groupByAisle,
-      );
+  ShoppingViewPrefs copyWith({
+    bool? showPhotos,
+    bool? groupByAisle,
+    bool? grid,
+    bool? showSuggestions,
+    bool? showPrices,
+  }) => ShoppingViewPrefs(
+    showPhotos: showPhotos ?? this.showPhotos,
+    groupByAisle: groupByAisle ?? this.groupByAisle,
+    grid: grid ?? this.grid,
+    showSuggestions: showSuggestions ?? this.showSuggestions,
+    showPrices: showPrices ?? this.showPrices,
+  );
 
-  String encode() =>
-      jsonEncode({'show_photos': showPhotos, 'group_by_aisle': groupByAisle});
+  String encode() => jsonEncode({
+    'show_photos': showPhotos,
+    'group_by_aisle': groupByAisle,
+    'grid': grid,
+    'show_suggestions': showSuggestions,
+    'show_prices': showPrices,
+  });
 
   /// Tolerante: cualquier valor ausente o corrupto cae al defecto.
   static ShoppingViewPrefs decode(String? raw) {
@@ -127,6 +155,9 @@ class ShoppingViewPrefs {
       return ShoppingViewPrefs(
         showPhotos: m['show_photos'] != false,
         groupByAisle: m['group_by_aisle'] != false,
+        grid: m['grid'] == true,
+        showSuggestions: m['show_suggestions'] != false,
+        showPrices: m['show_prices'] != false,
       );
     } catch (_) {
       return const ShoppingViewPrefs();

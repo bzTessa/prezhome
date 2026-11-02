@@ -3005,4 +3005,40 @@ class AppLocalizationsEs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopSugDue => 'Te toca';
+
+  @override
+  String get shopSugOut => 'Te falta en casa';
+
+  @override
+  String get shopOutAtHome => 'Agotado en casa';
+
+  @override
+  String get shopGridView => 'Ver en cuadrícula';
+
+  @override
+  String get shopGridHint => 'Fotos grandes, dos por fila';
+
+  @override
+  String get shopShowSuggestions => 'Mostrar sugerencias';
+
+  @override
+  String get shopSuggestionsHint =>
+      'Lo que te toca reponer y lo que se acabó en casa';
+
+  @override
+  String get shopShowPrices => 'Mostrar precios';
+
+  @override
+  String shopEveryDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Cada $n días',
+      one: 'Cada día',
+    );
+    return '$_temp0';
+  }
 }

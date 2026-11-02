@@ -775,5 +775,14 @@
   "category": "Categoria",
   "stkQty": "Qtd.",
   "stkSave": "Guardar talão",
-  "foodCategory": "{cat, select, verdura{Legumes} fruta{Fruta} carne{Carne} pescado{Peixe} lacteos{Laticínios} preparados{Pratos preparados} panaderia{Padaria} cereales{Massa, arroz e leguminosas} conservas{Conservas} congelados{Congelados} dulces{Doces e snacks} bebidas{Bebidas} especias{Especiarias e condimentos} higiene{Higiene} limpieza{Limpeza} hogar{Casa} other{Outros}}"
+  "foodCategory": "{cat, select, verdura{Legumes} fruta{Fruta} carne{Carne} pescado{Peixe} lacteos{Laticínios} preparados{Pratos preparados} panaderia{Padaria} cereales{Massa, arroz e leguminosas} conservas{Conservas} congelados{Congelados} dulces{Doces e snacks} bebidas{Bebidas} especias{Especiarias e condimentos} higiene{Higiene} limpieza{Limpeza} hogar{Casa} other{Outros}}",
+  "shopSugDue": "Está na hora",
+  "shopSugOut": "Falta em casa",
+  "shopOutAtHome": "Esgotado em casa",
+  "shopGridView": "Ver em grelha",
+  "shopGridHint": "Fotos grandes, duas por linha",
+  "shopShowSuggestions": "Mostrar sugestões",
+  "shopSuggestionsHint": "O que está na hora de repor e o que acabou em casa",
+  "shopShowPrices": "Mostrar preços",
+  "shopEveryDays": "{n, plural, =1{Todos os dias} other{A cada {n} dias}}"
 }

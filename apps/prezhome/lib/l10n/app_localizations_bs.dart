@@ -2964,4 +2964,40 @@ class AppLocalizationsBs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopSugDue => 'Vrijeme je';
+
+  @override
+  String get shopSugOut => 'Nedostaje kod kuće';
+
+  @override
+  String get shopOutAtHome => 'Potrošeno kod kuće';
+
+  @override
+  String get shopGridView => 'Prikaz u mreži';
+
+  @override
+  String get shopGridHint => 'Velike fotografije, dvije u redu';
+
+  @override
+  String get shopShowSuggestions => 'Prikaži prijedloge';
+
+  @override
+  String get shopSuggestionsHint =>
+      'Šta treba dokupiti i šta je potrošeno kod kuće';
+
+  @override
+  String get shopShowPrices => 'Prikaži cijene';
+
+  @override
+  String shopEveryDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Svakih $n dana',
+      one: 'Svaki dan',
+    );
+    return '$_temp0';
+  }
 }

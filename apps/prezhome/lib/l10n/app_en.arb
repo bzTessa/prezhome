@@ -775,5 +775,14 @@
   "category": "Category",
   "stkQty": "Qty",
   "stkSave": "Save receipt",
-  "foodCategory": "{cat, select, verdura{Vegetables} fruta{Fruit} carne{Meat} pescado{Fish} lacteos{Dairy} preparados{Ready meals} panaderia{Bakery} cereales{Pasta, rice and pulses} conservas{Tinned food} congelados{Frozen} dulces{Sweets and snacks} bebidas{Drinks} especias{Spices and condiments} higiene{Personal care} limpieza{Cleaning} hogar{Household} other{Other}}"
+  "foodCategory": "{cat, select, verdura{Vegetables} fruta{Fruit} carne{Meat} pescado{Fish} lacteos{Dairy} preparados{Ready meals} panaderia{Bakery} cereales{Pasta, rice and pulses} conservas{Tinned food} congelados{Frozen} dulces{Sweets and snacks} bebidas{Drinks} especias{Spices and condiments} higiene{Personal care} limpieza{Cleaning} hogar{Household} other{Other}}",
+  "shopSugDue": "Due to buy",
+  "shopSugOut": "Out at home",
+  "shopOutAtHome": "Out at home",
+  "shopGridView": "Grid view",
+  "shopGridHint": "Big photos, two per row",
+  "shopShowSuggestions": "Show suggestions",
+  "shopSuggestionsHint": "What's due to restock and what ran out at home",
+  "shopShowPrices": "Show prices",
+  "shopEveryDays": "{n, plural, =1{Every day} other{Every {n} days}}"
 }

@@ -775,5 +775,14 @@
   "category": "Kategorie",
   "stkQty": "Menge",
   "stkSave": "Kassenbon speichern",
-  "foodCategory": "{cat, select, verdura{Gemüse} fruta{Obst} carne{Fleisch} pescado{Fisch} lacteos{Milchprodukte} preparados{Fertiggerichte} panaderia{Backwaren} cereales{Nudeln, Reis und Hülsenfrüchte} conservas{Konserven} congelados{Tiefkühlkost} dulces{Süßes und Snacks} bebidas{Getränke} especias{Gewürze und Würzmittel} higiene{Körperpflege} limpieza{Reinigung} hogar{Haushalt} other{Sonstiges}}"
+  "foodCategory": "{cat, select, verdura{Gemüse} fruta{Obst} carne{Fleisch} pescado{Fisch} lacteos{Milchprodukte} preparados{Fertiggerichte} panaderia{Backwaren} cereales{Nudeln, Reis und Hülsenfrüchte} conservas{Konserven} congelados{Tiefkühlkost} dulces{Süßes und Snacks} bebidas{Getränke} especias{Gewürze und Würzmittel} higiene{Körperpflege} limpieza{Reinigung} hogar{Haushalt} other{Sonstiges}}",
+  "shopSugDue": "Ist fällig",
+  "shopSugOut": "Fehlt zu Hause",
+  "shopOutAtHome": "Zu Hause leer",
+  "shopGridView": "Rasteransicht",
+  "shopGridHint": "Große Fotos, zwei pro Reihe",
+  "shopShowSuggestions": "Vorschläge anzeigen",
+  "shopSuggestionsHint": "Was nachgekauft werden muss und was zu Hause fehlt",
+  "shopShowPrices": "Preise anzeigen",
+  "shopEveryDays": "{n, plural, =1{Jeden Tag} other{Alle {n} Tage}}"
 }

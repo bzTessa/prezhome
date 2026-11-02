@@ -45,4 +45,35 @@ void main() {
     );
     expect(usual, ['Huevos', 'Pan']);
   });
+
+  test('te toca: lo que se compra con ritmo y ya hay que reponer', () {
+    final now = DateTime(2026, 11, 2);
+    DateTime ago(int d) => now.subtract(Duration(days: d));
+    final due = dueProducts(
+      [
+        // Cada 5 días, última hace 6: toca.
+        (name: 'Leche', date: ago(16)),
+        (name: 'leche', date: ago(11)),
+        (name: 'Leche', date: ago(6)),
+        // Cada 2 días, última hace 4: muy atrasado, va primero.
+        (name: 'Pan', date: ago(8)),
+        (name: 'Pan', date: ago(6)),
+        (name: 'Pan', date: ago(4)),
+        // Cada 10 días, última ayer: aún no.
+        (name: 'Arroz', date: ago(11)),
+        (name: 'Arroz', date: ago(1)),
+        // Una sola compra: sin ritmo.
+        (name: 'Atún', date: ago(30)),
+        // Ya en la lista.
+        (name: 'Huevos', date: ago(20)),
+        (name: 'Huevos', date: ago(10)),
+        // Cada 2 días pero hace 40: abandonado.
+        (name: 'Kéfir', date: ago(42)),
+        (name: 'Kéfir', date: ago(40)),
+      ],
+      ['huevos'],
+      now: now,
+    );
+    expect(due, [(name: 'Pan', everyDays: 2), (name: 'Leche', everyDays: 5)]);
+  });
 }

@@ -775,5 +775,14 @@
   "category": "Catégorie",
   "stkQty": "Qté",
   "stkSave": "Enregistrer le ticket",
-  "foodCategory": "{cat, select, verdura{Légumes} fruta{Fruits} carne{Viande} pescado{Poisson} lacteos{Produits laitiers} preparados{Plats préparés} panaderia{Boulangerie} cereales{Pâtes, riz et légumineuses} conservas{Conserves} congelados{Surgelés} dulces{Sucreries et snacks} bebidas{Boissons} especias{Épices et condiments} higiene{Hygiène} limpieza{Ménage} hogar{Maison} other{Autres}}"
+  "foodCategory": "{cat, select, verdura{Légumes} fruta{Fruits} carne{Viande} pescado{Poisson} lacteos{Produits laitiers} preparados{Plats préparés} panaderia{Boulangerie} cereales{Pâtes, riz et légumineuses} conservas{Conserves} congelados{Surgelés} dulces{Sucreries et snacks} bebidas{Boissons} especias{Épices et condiments} higiene{Hygiène} limpieza{Ménage} hogar{Maison} other{Autres}}",
+  "shopSugDue": "À racheter",
+  "shopSugOut": "Manque à la maison",
+  "shopOutAtHome": "Épuisé à la maison",
+  "shopGridView": "Vue en grille",
+  "shopGridHint": "Grandes photos, deux par ligne",
+  "shopShowSuggestions": "Afficher les suggestions",
+  "shopSuggestionsHint": "Ce qu'il faut racheter et ce qui manque à la maison",
+  "shopShowPrices": "Afficher les prix",
+  "shopEveryDays": "{n, plural, =1{Chaque jour} other{Tous les {n} jours}}"
 }

@@ -775,5 +775,14 @@
   "category": "Kategorija",
   "stkQty": "Kol.",
   "stkSave": "Spremi račun",
-  "foodCategory": "{cat, select, verdura{Povrće} fruta{Voće} carne{Meso} pescado{Riba} lacteos{Mliječni proizvodi} preparados{Gotova jela} panaderia{Pekara} cereales{Tjestenina, riža i mahunarke} conservas{Konzerve} congelados{Smrznuto} dulces{Slatkiši i grickalice} bebidas{Pića} especias{Začini i dodaci} higiene{Higijena} limpieza{Čišćenje} hogar{Domaćinstvo} other{Ostalo}}"
+  "foodCategory": "{cat, select, verdura{Povrće} fruta{Voće} carne{Meso} pescado{Riba} lacteos{Mliječni proizvodi} preparados{Gotova jela} panaderia{Pekara} cereales{Tjestenina, riža i mahunarke} conservas{Konzerve} congelados{Smrznuto} dulces{Slatkiši i grickalice} bebidas{Pića} especias{Začini i dodaci} higiene{Higijena} limpieza{Čišćenje} hogar{Domaćinstvo} other{Ostalo}}",
+  "shopSugDue": "Vrijeme je",
+  "shopSugOut": "Nedostaje kod kuće",
+  "shopOutAtHome": "Potrošeno kod kuće",
+  "shopGridView": "Prikaz u mreži",
+  "shopGridHint": "Velike fotografije, dvije u redu",
+  "shopShowSuggestions": "Prikaži prijedloge",
+  "shopSuggestionsHint": "Šta treba dokupiti i šta je potrošeno kod kuće",
+  "shopShowPrices": "Prikaži cijene",
+  "shopEveryDays": "{n, plural, =1{Svaki dan} other{Svakih {n} dana}}"
 }
