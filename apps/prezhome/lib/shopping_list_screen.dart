@@ -41,6 +41,7 @@ import 'widgets/product_photo_menu.dart';
 import 'widgets/product_search_sheet.dart';
 import 'widgets/shopping/shopping_parts.dart';
 import 'widgets/tactile_button.dart';
+import 'widgets/animations/app_transitions.dart';
 import 'utils/friendly_error.dart';
 import 'l10n/l10n.dart';
 
@@ -1129,7 +1130,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       appBar: widget.embedded
           ? null
           : AppBar(title: Text(context.l.shopListTitle)),
-      body: FutureBuilder<List<ShoppingListItem>>(
+      body: FadeFutureBuilder<List<ShoppingListItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
           // Al refrescar se sigue viendo la lista anterior (sin parpadeo).

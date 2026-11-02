@@ -32,6 +32,7 @@ import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
+import 'widgets/animations/app_transitions.dart';
 import 'discover_recipes_screen.dart';
 import 'l10n/l10n.dart';
 
@@ -758,7 +759,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         tooltip: context.l.panAddTooltip,
         child: const Icon(Icons.add_rounded, size: 30),
       ),
-      body: FutureBuilder<List<InventoryItem>>(
+      body: FadeFutureBuilder<List<InventoryItem>>(
         future: _itemsFuture,
         builder: (context, snapshot) {
           if (!snapshot.hasData &&

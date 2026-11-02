@@ -12,6 +12,7 @@ import 'widgets/miau_character.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
 import 'widgets/skeleton.dart';
+import 'widgets/animations/app_transitions.dart';
 import 'utils/friendly_error.dart';
 import 'l10n/l10n.dart';
 
@@ -359,7 +360,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: FutureBuilder<_RecipesData>(
+      body: FadeFutureBuilder<_RecipesData>(
         future: _future,
         builder: (context, snapshot) {
           if (!snapshot.hasData &&

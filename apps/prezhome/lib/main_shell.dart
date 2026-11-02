@@ -17,6 +17,7 @@ import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'widgets/offline_banner.dart';
 import 'widgets/proactive_suggestions_banner.dart';
+import 'widgets/animations/app_transitions.dart';
 import 'services/onboarding_applier.dart';
 
 /// Identidad semántica de cada pestaña del shell. Se usa para calcular los
@@ -431,7 +432,10 @@ class MainShellState extends State<MainShell> {
                       TickerMode(
                         enabled: i == _index,
                         child: _opened.contains(_tabs[i].id)
-                            ? _tabs[i].page
+                            ? FadeInOnActivate(
+                                active: i == _index,
+                                child: _tabs[i].page,
+                              )
                             : const SizedBox.shrink(),
                       ),
                   ],
