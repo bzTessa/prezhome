@@ -2998,4 +2998,138 @@ class AppLocalizationsDe extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get cookMode => 'Kochmodus';
+
+  @override
+  String get bpMeanwhile => 'Währenddessen';
+
+  @override
+  String bpTapers(String title) {
+    return 'Dosen · $title';
+  }
+
+  @override
+  String get bpBatchCook => 'Vorkochen';
+
+  @override
+  String get bpStart => 'Schritt für Schritt starten';
+
+  @override
+  String get bpEmpty => 'Gerade gibt es nichts zu kochen';
+
+  @override
+  String get bpEmptySub =>
+      'Sobald du Rezepte geplant hast, erstelle ich hier einen Kochplan, um alles auf einmal zu machen.';
+
+  @override
+  String get bpNeed => 'Was du brauchst';
+
+  @override
+  String get bpSplit => 'In Dosen aufteilen';
+
+  @override
+  String get bpSplitSub => 'Sie landen automatisch in Meine Küche';
+
+  @override
+  String get bpYourPlan => 'Dein Kochplan';
+
+  @override
+  String bpTotalMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Etwa $count Minuten insgesamt',
+      one: 'Etwa 1 Minute insgesamt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String minutesShort(int count) {
+    return '$count Min.';
+  }
+
+  @override
+  String get bpParallel => 'Parallel';
+
+  @override
+  String bpFor(String recipes) {
+    return 'Für $recipes';
+  }
+
+  @override
+  String get ready => 'Fertig';
+
+  @override
+  String get pause => 'Pause';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get reset => 'Zurücksetzen';
+
+  @override
+  String get bpDone => 'Erledigt';
+
+  @override
+  String get bpMarkDone => 'Als erledigt markieren';
+
+  @override
+  String cmStep(int n) {
+    return 'Schritt $n';
+  }
+
+  @override
+  String get cmTime => 'Zeit ist um';
+
+  @override
+  String get cmSeeStep => 'Schritt ansehen';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get cmMicPermission =>
+      'Um die Sprachsteuerung zu nutzen, erlaube das Mikrofon in den Einstellungen.';
+
+  @override
+  String get ingredients => 'Zutaten';
+
+  @override
+  String get cmExit => 'Kochmodus beenden';
+
+  @override
+  String get cmHandsFreeOff => 'Freihändig aus';
+
+  @override
+  String get cmHandsFree => 'Freihändig';
+
+  @override
+  String get cmVoiceHint =>
+      'Sag «siguiente», «anterior», «repite» oder «temporizador» (Sprache vorerst nur Spanisch)';
+
+  @override
+  String get cmStop => 'Stopp';
+
+  @override
+  String cmStepOf(int n, int total) {
+    return 'SCHRITT $n VON $total';
+  }
+
+  @override
+  String get cmTimerRunning => 'Timer läuft';
+
+  @override
+  String cmTimerMin(int count) {
+    return 'Timer $count Min.';
+  }
+
+  @override
+  String get cmThen => 'Danach';
+
+  @override
+  String get cmNextStep => 'Nächster Schritt';
 }

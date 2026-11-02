@@ -1836,5 +1836,94 @@
         "type": "String"
       }
     }
-  }
+  },
+  "cookMode": "Modo cocina",
+  "bpMeanwhile": "Mientras tanto",
+  "bpTapers": "Tápers · {title}",
+  "@bpTapers": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "bpBatchCook": "Cocina en tanda",
+  "bpStart": "Empezar paso a paso",
+  "bpEmpty": "No hay nada que cocinar ahora mismo",
+  "bpEmptySub": "Cuando tengas recetas planificadas, aquí te prepararé un plan de cocina para hacerlo todo de una vez.",
+  "bpNeed": "Lo que necesitas",
+  "bpSplit": "Reparte en tápers",
+  "bpSplitSub": "Se apuntan solos en Mi cocina",
+  "bpYourPlan": "Tu plan de cocina",
+  "bpTotalMinutes": "{count, plural, =1{Unos 1 minuto en total} other{Unos {count} minutos en total}}",
+  "@bpTotalMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "minutesShort": "{count} min",
+  "@minutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bpParallel": "En paralelo",
+  "bpFor": "Para {recipes}",
+  "@bpFor": {
+    "placeholders": {
+      "recipes": {
+        "type": "String"
+      }
+    }
+  },
+  "ready": "Listo",
+  "pause": "Pausar",
+  "start": "Iniciar",
+  "reset": "Reiniciar",
+  "bpDone": "Hecho",
+  "bpMarkDone": "Marcar como hecho",
+  "cmStep": "Paso {n}",
+  "@cmStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cmTime": "Tiempo",
+  "cmSeeStep": "Ver paso",
+  "ok": "Vale",
+  "cmMicPermission": "Para usar la voz, permite el micrófono en Ajustes.",
+  "ingredients": "Ingredientes",
+  "cmExit": "Salir del modo cocina",
+  "cmHandsFreeOff": "Quitar manos libres",
+  "cmHandsFree": "Manos libres",
+  "cmVoiceHint": "Di «siguiente», «anterior», «repite» o «temporizador»",
+  "cmStop": "Parar",
+  "cmStepOf": "PASO {n} DE {total}",
+  "@cmStepOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "cmTimerRunning": "Temporizador en marcha",
+  "cmTimerMin": "Temporizador {count} min",
+  "@cmTimerMin": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cmThen": "Luego",
+  "cmNextStep": "Siguiente paso"
 }
