@@ -3148,6 +3148,42 @@ class AppLocalizationsPt extends AppLocalizations {
   String get cmNextStep => 'Próximo passo';
 
   @override
+  String get shopSugDue => 'Está na hora';
+
+  @override
+  String get shopSugOut => 'Falta em casa';
+
+  @override
+  String get shopOutAtHome => 'Esgotado em casa';
+
+  @override
+  String get shopGridView => 'Ver em grelha';
+
+  @override
+  String get shopGridHint => 'Fotos grandes, duas por linha';
+
+  @override
+  String get shopShowSuggestions => 'Mostrar sugestões';
+
+  @override
+  String get shopSuggestionsHint =>
+      'O que está na hora de repor e o que acabou em casa';
+
+  @override
+  String get shopShowPrices => 'Mostrar preços';
+
+  @override
+  String shopEveryDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'A cada $n dias',
+      one: 'Todos os dias',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get slNewList => 'Nova lista';
 
   @override

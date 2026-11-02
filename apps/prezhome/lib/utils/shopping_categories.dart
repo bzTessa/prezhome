@@ -145,3 +145,40 @@ List<String> usualProducts(
       if (!pending.contains(normalizeCategoryText(h.name!))) h.name!,
   ].take(limit).toList();
 }
+
+/// "Te toca": lo que compras con regularidad y ya toca reponer, según las
+/// fechas de los tickets. Primero lo más atrasado respecto a su ritmo; lo que
+/// lleva más de 4 veces su ritmo sin comprarse se da por abandonado.
+List<({String name, int everyDays})> dueProducts(
+  Iterable<({String name, DateTime date})> purchases,
+  Iterable<String> inList, {
+  required DateTime now,
+  int limit = 10,
+}) {
+  final pending = inList.map(normalizeCategoryText).toSet();
+  final byKey = <String, ({String name, Set<DateTime> days})>{};
+  for (final p in purchases) {
+    final key = normalizeCategoryText(p.name);
+    if (key.isEmpty || pending.contains(key)) continue;
+    byKey
+        .putIfAbsent(key, () => (name: p.name, days: <DateTime>{}))
+        .days
+        .add(DateTime(p.date.year, p.date.month, p.date.day));
+  }
+  final today = DateTime(now.year, now.month, now.day);
+  final due = <({String name, double every, double late})>[];
+  for (final e in byKey.values) {
+    if (e.days.length < 2) continue;
+    final days = e.days.toList()..sort();
+    final every = days.last.difference(days.first).inDays / (days.length - 1);
+    final late = today.difference(days.last).inDays / every;
+    // Un poco antes de que se acabe, para que no falte.
+    if (late >= 0.8 && late <= 4) {
+      due.add((name: e.name, every: every, late: late));
+    }
+  }
+  due.sort((a, b) => b.late.compareTo(a.late));
+  return [
+    for (final d in due.take(limit)) (name: d.name, everyDays: d.every.round()),
+  ];
+}

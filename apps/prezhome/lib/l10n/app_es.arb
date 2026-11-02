@@ -1935,6 +1935,22 @@
   },
   "cmThen": "Luego",
   "cmNextStep": "Siguiente paso",
+  "shopSugDue": "Te toca",
+  "shopSugOut": "Te falta en casa",
+  "shopOutAtHome": "Agotado en casa",
+  "shopGridView": "Ver en cuadrícula",
+  "shopGridHint": "Fotos grandes, dos por fila",
+  "shopShowSuggestions": "Mostrar sugerencias",
+  "shopSuggestionsHint": "Lo que te toca reponer y lo que se acabó en casa",
+  "shopShowPrices": "Mostrar precios",
+  "shopEveryDays": "{n, plural, =1{Cada día} other{Cada {n} días}}",
+  "@shopEveryDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "slNewList": "Nueva lista",
   "slMyLists": "Mis listas",
   "slActive": "Activa",

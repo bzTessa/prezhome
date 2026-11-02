@@ -811,3 +811,231 @@ class QuickAddChip extends StatelessWidget {
     );
   }
 }
+
+/// Tarjeta de sugerencia: foto, nombre, precio y por qué se sugiere. Tocarla
+/// la añade; enseña un check mientras [added] siga a true.
+class SuggestionCard extends StatelessWidget {
+  const SuggestionCard({
+    super.key,
+    required this.name,
+    required this.photo,
+    required this.added,
+    required this.onAdd,
+    this.price,
+    this.reason,
+  });
+
+  final String name;
+  final Widget photo;
+  final bool added;
+  final VoidCallback onAdd;
+  final String? price;
+  final String? reason;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: added ? context.l.shopAdded(name) : context.l.shopAdd(name),
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onAdd,
+        child: SpringValue(
+          value: added ? 1 : 0,
+          spring: AppMotion.fluidBouncy,
+          builder: (context, t, child) => Transform.scale(
+            scale: added ? popScale(t.clamp(0.0, 1.0), peak: 1.08) : 1,
+            child: child,
+          ),
+          child: Container(
+            width: 108,
+            padding: const EdgeInsets.all(6),
+            decoration: AppTheme.tactileDecoration(
+              shadow: 2,
+              radius: 14,
+              color: added ? AppColors.sageBg : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.iconTile,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        alignment: Alignment.center,
+                        child: photo,
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: added ? AppColors.done : AppColors.terracotta,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.stroke,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          added ? Icons.check_rounded : Icons.add_rounded,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.2,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+                for (final (text, color) in [
+                  (price, AppColors.ink),
+                  (reason, AppColors.done),
+                ])
+                  if (text != null)
+                    Text(
+                      text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Producto en la vista de cuadrícula: foto grande, nombre, cantidad y
+/// precio. Tocar lo pasa al carro (o lo devuelve); mantener abre acciones.
+class ShoppingGridTile extends StatelessWidget {
+  const ShoppingGridTile({
+    super.key,
+    required this.name,
+    required this.checked,
+    required this.onToggle,
+    this.onLongPress,
+    this.photo,
+    this.quantityLabel,
+    this.price,
+  });
+
+  final String name;
+  final bool checked;
+  final VoidCallback onToggle;
+  final VoidCallback? onLongPress;
+  final Widget? photo;
+  final String? quantityLabel;
+  final String? price;
+
+  @override
+  Widget build(BuildContext context) {
+    final qty = quantityLabel?.trim() ?? '';
+    return Semantics(
+      checked: checked,
+      label: name,
+      child: PressScale(
+        onTap: onToggle,
+        onLongPress: onLongPress,
+        child: Container(
+          padding: const EdgeInsets.all(7),
+          decoration: AppTheme.tactileDecoration(shadow: 2),
+          child: Opacity(
+            opacity: checked ? 0.5 : 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.iconTile,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        alignment: Alignment.center,
+                        child: photo,
+                      ),
+                      Positioned(
+                        top: 6,
+                        left: 6,
+                        child: _CheckCircle(t: checked ? 1 : 0),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.2,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                    decoration: checked ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        qty,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.woodDark,
+                        ),
+                      ),
+                    ),
+                    if (price != null)
+                      Text(
+                        price!,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
