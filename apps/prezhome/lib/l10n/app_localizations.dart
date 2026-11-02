@@ -4997,6 +4997,120 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Siguiente paso'**
   String get cmNextStep;
+
+  /// No description provided for @slNewList.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva lista'**
+  String get slNewList;
+
+  /// No description provided for @slMyLists.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis listas'**
+  String get slMyLists;
+
+  /// No description provided for @slActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa'**
+  String get slActive;
+
+  /// No description provided for @slNewCat.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva categoría'**
+  String get slNewCat;
+
+  /// No description provided for @slRenameCat.
+  ///
+  /// In es, this message translates to:
+  /// **'Renombrar categoría'**
+  String get slRenameCat;
+
+  /// No description provided for @slCategories.
+  ///
+  /// In es, this message translates to:
+  /// **'Categorías'**
+  String get slCategories;
+
+  /// No description provided for @slAddCat.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir categoría'**
+  String get slAddCat;
+
+  /// No description provided for @slNoCats.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay categorías. Añade la primera con el botón de abajo.'**
+  String get slNoCats;
+
+  /// No description provided for @rename.
+  ///
+  /// In es, this message translates to:
+  /// **'Renombrar'**
+  String get rename;
+
+  /// No description provided for @ppDayMeals.
+  ///
+  /// In es, this message translates to:
+  /// **'{day}, {count, plural, =1{1 comida} other{{count} comidas}}'**
+  String ppDayMeals(String day, int count);
+
+  /// No description provided for @ppFastTime.
+  ///
+  /// In es, this message translates to:
+  /// **'{time} · Ayuno'**
+  String ppFastTime(String time);
+
+  /// No description provided for @ppEatOut.
+  ///
+  /// In es, this message translates to:
+  /// **'· Fuera'**
+  String get ppEatOut;
+
+  /// No description provided for @mealAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, breakfast{Añadir desayuno} lunch{Añadir comida} snack{Añadir merienda} dinner{Añadir cena} dessert{Añadir postre} other{Añadir comida}}'**
+  String mealAdd(String type);
+
+  /// No description provided for @ppFromFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'Del congelador'**
+  String get ppFromFreezer;
+
+  /// No description provided for @ppServings.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ración} other{{count} rac.}}'**
+  String ppServings(int count);
+
+  /// No description provided for @ppFresh.
+  ///
+  /// In es, this message translates to:
+  /// **'Recién hecho'**
+  String get ppFresh;
+
+  /// No description provided for @ppFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'Nevera · {days}'**
+  String ppFridge(String days);
+
+  /// No description provided for @ppFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'Congelador · {days}'**
+  String ppFreezer(String days);
+
+  /// No description provided for @ppTapersAuto.
+  ///
+  /// In es, this message translates to:
+  /// **'Los tápers se apuntan solos en Mi cocina'**
+  String get ppTapersAuto;
 }
 
 class _AppLocalizationsDelegate

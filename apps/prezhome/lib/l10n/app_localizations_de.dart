@@ -3140,4 +3140,94 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get cmNextStep => 'Nächster Schritt';
+
+  @override
+  String get slNewList => 'Neue Liste';
+
+  @override
+  String get slMyLists => 'Meine Listen';
+
+  @override
+  String get slActive => 'Aktiv';
+
+  @override
+  String get slNewCat => 'Neue Kategorie';
+
+  @override
+  String get slRenameCat => 'Kategorie umbenennen';
+
+  @override
+  String get slCategories => 'Kategorien';
+
+  @override
+  String get slAddCat => 'Kategorie hinzufügen';
+
+  @override
+  String get slNoCats =>
+      'Noch keine Kategorien. Füge die erste mit dem Button unten hinzu.';
+
+  @override
+  String get rename => 'Umbenennen';
+
+  @override
+  String ppDayMeals(String day, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Mahlzeiten',
+      one: '1 Mahlzeit',
+    );
+    return '$day, $_temp0';
+  }
+
+  @override
+  String ppFastTime(String time) {
+    return '$time · Fasten';
+  }
+
+  @override
+  String get ppEatOut => '· Auswärts';
+
+  @override
+  String mealAdd(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Frühstück hinzufügen',
+      'lunch': 'Mittagessen hinzufügen',
+      'snack': 'Snack hinzufügen',
+      'dinner': 'Abendessen hinzufügen',
+      'dessert': 'Dessert hinzufügen',
+      'other': 'Mahlzeit hinzufügen',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFromFreezer => 'Aus dem Gefrierfach';
+
+  @override
+  String ppServings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Port.',
+      one: '1 Portion',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFresh => 'Frisch gekocht';
+
+  @override
+  String ppFridge(String days) {
+    return 'Kühlschrank · $days';
+  }
+
+  @override
+  String ppFreezer(String days) {
+    return 'Gefrierfach · $days';
+  }
+
+  @override
+  String get ppTapersAuto => 'Die Boxen landen automatisch in Meine Küche';
 }

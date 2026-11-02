@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../../l10n/l10n.dart';
 
 import '../../services/meal_prep_planner.dart';
 import '../../theme/app_motion.dart';
@@ -67,19 +70,18 @@ class WeekDayStrip extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final DateTime today;
 
-  static const _abbr = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
-
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        for (var i = 0; i < days.length; i++) Expanded(child: _day(i)),
+        for (var i = 0; i < days.length; i++) Expanded(child: _day(context, i)),
       ],
     );
   }
 
-  Widget _day(int i) {
+  Widget _day(BuildContext context, int i) {
     final d = days[i];
+    final abbr = _weekdayAbbr(context, d);
     final isSelected = i == selected;
     final isToday =
         d.year == today.year && d.month == today.month && d.day == today.day;
@@ -87,7 +89,7 @@ class WeekDayStrip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: isSelected,
-      label: '${_abbr[d.weekday - 1]} ${d.day}, $meals comidas',
+      label: context.l.ppDayMeals('$abbr ${d.day}', meals),
       child: InkWell(
         onTap: () => onSelect(i),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -96,7 +98,7 @@ class WeekDayStrip extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                _abbr[d.weekday - 1],
+                abbr,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -240,7 +242,7 @@ class MealSlotCard extends StatelessWidget {
                             Icon(s.icon, size: 14, color: s.fg),
                             const SizedBox(width: 4),
                             Text(
-                              s.label.toUpperCase(),
+                              context.l.mealType(mealType).toUpperCase(),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -251,7 +253,7 @@ class MealSlotCard extends StatelessWidget {
                             if (time != null) ...[
                               const SizedBox(width: 6),
                               Text(
-                                inFast ? '$time · Ayuno' : time!,
+                                inFast ? context.l.ppFastTime(time!) : time!,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -262,7 +264,7 @@ class MealSlotCard extends StatelessWidget {
                             if (skipped) ...[
                               const SizedBox(width: 6),
                               Text(
-                                '· Fuera',
+                                context.l.ppEatOut,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -274,7 +276,7 @@ class MealSlotCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          empty ? 'Añadir ${s.label.toLowerCase()}' : title!,
+                          empty ? context.l.mealAdd(mealType) : title!,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -299,7 +301,7 @@ class MealSlotCard extends StatelessWidget {
                                 ),
                                 SizedBox(width: 4),
                                 Text(
-                                  'Del congelador',
+                                  context.l.ppFromFreezer,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.frost,
@@ -367,8 +369,6 @@ class PrepEventTile extends StatelessWidget {
   /// con chips de adónde va (en lugar de las líneas de texto del aviso).
   final List<PrepBatch> batches;
 
-  static const _abbr = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
-
   @override
   Widget build(BuildContext context) {
     final s = prepEventStyle(event.kind);
@@ -392,7 +392,7 @@ class PrepEventTile extends StatelessWidget {
               children: [
                 if (showDate)
                   Text(
-                    '${_abbr[d.weekday - 1]} ${d.day}',
+                    '${_weekdayAbbr(context, d)} ${d.day}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -413,7 +413,7 @@ class PrepEventTile extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Los tápers se apuntan solos en Mi cocina',
+                      context.l.ppTapersAuto,
                       style: TextStyle(
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
@@ -481,7 +481,7 @@ class _BatchRow extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '$n ${n == 1 ? 'ración' : 'rac.'}',
+                context.l.ppServings(n),
                 style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
             ],
@@ -492,7 +492,7 @@ class _BatchRow extends StatelessWidget {
             runSpacing: 6,
             children: [
               for (final (spot, days) in taperSpots(batch, cookDay))
-                _spotChip(spot, days),
+                _spotChip(context, spot, days),
             ],
           ),
         ],
@@ -500,23 +500,23 @@ class _BatchRow extends StatelessWidget {
     );
   }
 
-  Widget _spotChip(TaperSpot spot, String days) {
+  Widget _spotChip(BuildContext context, TaperSpot spot, String days) {
     final (icon, label, fg, bg) = switch (spot) {
       TaperSpot.reciente => (
         Icons.restaurant_rounded,
-        'Recién hecho',
+        context.l.ppFresh,
         AppColors.woodDark,
         AppColors.goldBg,
       ),
       TaperSpot.nevera => (
         Icons.kitchen_outlined,
-        'Nevera · $days',
+        context.l.ppFridge(days),
         AppColors.sage,
         AppColors.sageBg,
       ),
       TaperSpot.congelador => (
         Icons.ac_unit_rounded,
-        'Congelador · $days',
+        context.l.ppFreezer(days),
         AppColors.frost,
         AppColors.frostBg,
       ),
@@ -545,3 +545,8 @@ class _BatchRow extends StatelessWidget {
     );
   }
 }
+
+/// Día de la semana abreviado en el idioma del dispositivo ("LUN", "MON").
+String _weekdayAbbr(BuildContext context, DateTime d) => DateFormat.E(
+  Localizations.localeOf(context).toString(),
+).format(d).replaceAll('.', '').toUpperCase();

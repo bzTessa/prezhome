@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'l10n/l10n.dart';
 import 'models/meal_plan_entry.dart';
 import 'models/recipe.dart';
 import 'models/task.dart';
@@ -542,7 +543,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                           SizedBox(
                             width: 76,
                             child: Text(
-                              mealStyle(m.mealType).label,
+                              context.l.mealType(m.mealType),
                               style: TextStyle(
                                 color: mealStyle(m.mealType).fg,
                                 fontWeight: FontWeight.w700,

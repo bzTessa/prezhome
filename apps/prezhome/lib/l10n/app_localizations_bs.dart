@@ -3099,4 +3099,81 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get cmNextStep => 'Sljedeći korak';
+
+  @override
+  String get slNewList => 'Nova lista';
+
+  @override
+  String get slMyLists => 'Moje liste';
+
+  @override
+  String get slActive => 'Aktivna';
+
+  @override
+  String get slNewCat => 'Nova kategorija';
+
+  @override
+  String get slRenameCat => 'Preimenuj kategoriju';
+
+  @override
+  String get slCategories => 'Kategorije';
+
+  @override
+  String get slAddCat => 'Dodaj kategoriju';
+
+  @override
+  String get slNoCats => 'Još nema kategorija. Dodaj prvu dugmetom ispod.';
+
+  @override
+  String get rename => 'Preimenuj';
+
+  @override
+  String ppDayMeals(String day, int count) {
+    return '$day, obroka: $count';
+  }
+
+  @override
+  String ppFastTime(String time) {
+    return '$time · Post';
+  }
+
+  @override
+  String get ppEatOut => '· Vani';
+
+  @override
+  String mealAdd(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Dodaj doručak',
+      'lunch': 'Dodaj ručak',
+      'snack': 'Dodaj užinu',
+      'dinner': 'Dodaj večeru',
+      'dessert': 'Dodaj desert',
+      'other': 'Dodaj obrok',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFromFreezer => 'Iz zamrzivača';
+
+  @override
+  String ppServings(int count) {
+    return 'Porcija: $count';
+  }
+
+  @override
+  String get ppFresh => 'Tek napravljeno';
+
+  @override
+  String ppFridge(String days) {
+    return 'Frižider · $days';
+  }
+
+  @override
+  String ppFreezer(String days) {
+    return 'Zamrzivač · $days';
+  }
+
+  @override
+  String get ppTapersAuto => 'Posude se same dodaju u Moja kuhinja';
 }
