@@ -32,6 +32,7 @@ void main() {
       DiarySkeleton(),
       ShoppingSkeleton(),
       PantrySkeleton(),
+      TasksSkeleton(),
       SingleChildScrollView(child: HomeSkeleton()),
     ]) {
       await tester.pumpWidget(_app(s));

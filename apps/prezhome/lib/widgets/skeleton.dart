@@ -645,3 +645,97 @@ class HomeSkeleton extends StatelessWidget {
     ]);
   }
 }
+
+/// Tareas: resumen de hoy (anillo + texto), píldora de vistas, rejilla de
+/// dos tarjetas por fila y el bloque de "Próximos días".
+class TasksSkeleton extends StatelessWidget {
+  const TasksSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile() => BoneCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Bone(height: 6, radius: 0, color: AppColors.cream),
+          const Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Bone(width: 48, height: 48, radius: 15),
+                    Spacer(),
+                    Bone.circle(40),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.md),
+                Bone(width: 110, height: 14),
+                SizedBox(height: AppSpacing.sm),
+                Bone(width: 70, height: 10),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return _list(const EdgeInsets.fromLTRB(16, 8, 16, 32), [
+      const BoneCard(
+        child: Row(
+          children: [
+            Bone.circle(72),
+            SizedBox(width: AppSpacing.lg),
+            Expanded(child: _HeroLines()),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      const Bone(height: 44, radius: 999),
+      const SizedBox(height: AppSpacing.lg),
+      const Bone(width: 120, height: 18),
+      const SizedBox(height: AppSpacing.md),
+      Row(
+        children: [
+          Expanded(child: tile()),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: tile()),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.xl),
+      const Bone(width: 140, height: 18),
+      const SizedBox(height: AppSpacing.md),
+      BoneCard(
+        child: Column(
+          children: [
+            for (var i = 0; i < 3; i++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    const Bone(width: 40, height: 40, radius: 13),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _lines(i.isEven ? 140 : 110, 80, gap: 6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    ]);
+  }
+}
+
+class _HeroLines extends StatelessWidget {
+  const _HeroLines();
+
+  @override
+  Widget build(BuildContext context) =>
+      Align(alignment: Alignment.centerLeft, child: _lines(70, 130, gap: 10));
+}
