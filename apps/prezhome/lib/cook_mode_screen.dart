@@ -9,6 +9,7 @@ import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/cook_voice.dart';
 import 'utils/recipe_steps.dart';
+import 'l10n/l10n.dart';
 
 /// Un paso del modo cocina. [note] dice para qué receta es o si va mientras
 /// otra cosa se hace (en tandas); [minutes] ofrece un temporizador.
@@ -144,14 +145,14 @@ class _CookModeScreenState extends State<CookModeScreen> {
   }
 
   void _timerDone(int step) {
-    final what = widget.steps[step].note ?? 'Paso ${step + 1}';
+    final what = widget.steps[step].note ?? context.l.cmStep(step + 1);
     HapticFeedback.heavyImpact();
     SystemSound.play(SystemSoundType.alert);
     if (_voiceOn) _voice.say('Tiempo. $what.');
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tiempo'),
+        title: Text(context.l.cmTime),
         content: Text(what),
         actions: [
           TextButton(
@@ -159,11 +160,11 @@ class _CookModeScreenState extends State<CookModeScreen> {
               Navigator.of(ctx).pop();
               _go(step);
             },
-            child: const Text('Ver paso'),
+            child: Text(context.l.cmSeeStep),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Vale'),
+            child: Text(context.l.ok),
           ),
         ],
       ),
@@ -191,10 +192,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
     if (!mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Para usar la voz, permite el micrófono en Ajustes.'),
-          persist: false,
-        ),
+        SnackBar(content: Text(context.l.cmMicPermission), persist: false),
       );
       return;
     }
@@ -255,7 +253,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
               padding: const EdgeInsets.all(AppSpacing.xl),
               children: [
                 Text(
-                  'Ingredientes',
+                  context.l.ingredients,
                   style: TextStyle(
                     fontSize: 22,
                     letterSpacing: -0.4,
@@ -308,7 +306,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
-          tooltip: 'Salir del modo cocina',
+          tooltip: context.l.cmExit,
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -322,12 +320,14 @@ class _CookModeScreenState extends State<CookModeScreen> {
             IconButton(
               onPressed: _showIngredients,
               icon: const Icon(Icons.format_list_bulleted_rounded),
-              tooltip: 'Ingredientes',
+              tooltip: context.l.ingredients,
               color: AppColors.ink,
             ),
           IconButton(
             onPressed: _toggleVoice,
-            tooltip: _voiceOn ? 'Quitar manos libres' : 'Manos libres',
+            tooltip: _voiceOn
+                ? context.l.cmHandsFreeOff
+                : context.l.cmHandsFree,
             icon: Icon(_voiceOn ? Icons.mic_rounded : Icons.mic_none_rounded),
             style: IconButton.styleFrom(
               backgroundColor: _voiceOn ? AppColors.ink : null,
@@ -368,7 +368,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                 0,
               ),
               child: Text(
-                'Di «siguiente», «anterior», «repite» o «temporizador»',
+                context.l.cmVoiceHint,
                 style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
             ),
@@ -429,7 +429,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            widget.steps[s].note ?? 'Paso ${s + 1}',
+                            widget.steps[s].note ?? context.l.cmStep(s + 1),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -442,7 +442,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.cream,
                           ),
-                          child: const Text('Parar'),
+                          child: Text(context.l.cmStop),
                         ),
                       ],
                     ),
@@ -465,7 +465,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'PASO ${i + 1} DE $_total',
+            context.l.cmStepOf(i + 1, _total),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w900,
@@ -502,8 +502,8 @@ class _CookModeScreenState extends State<CookModeScreen> {
               icon: const Icon(Icons.timer_outlined),
               label: Text(
                 running
-                    ? 'Temporizador en marcha'
-                    : 'Temporizador $minutes min',
+                    ? context.l.cmTimerRunning
+                    : context.l.cmTimerMin(minutes),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.ink,
@@ -522,7 +522,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
           if (i < _total - 1) ...[
             const SizedBox(height: AppSpacing.xxl),
             Text(
-              'Luego',
+              context.l.cmThen,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
@@ -588,7 +588,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  child: Text(_isLast ? 'Listo' : 'Siguiente paso'),
+                  child: Text(_isLast ? context.l.ready : context.l.cmNextStep),
                 ),
               ),
             ),

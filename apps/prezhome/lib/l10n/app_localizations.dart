@@ -4775,6 +4775,228 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{cat, select, verdura{Verduras} fruta{Frutas} carne{Carne} pescado{Pescado} lacteos{Lácteos} preparados{Platos preparados} panaderia{Panadería} cereales{Pasta, arroz y legumbres} conservas{Conservas} congelados{Congelados} dulces{Dulces y snacks} bebidas{Bebidas} especias{Especias y condimentos} higiene{Higiene} limpieza{Limpieza} hogar{Hogar} other{Otros}}'**
   String foodCategory(String cat);
+
+  /// No description provided for @cookMode.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo cocina'**
+  String get cookMode;
+
+  /// No description provided for @bpMeanwhile.
+  ///
+  /// In es, this message translates to:
+  /// **'Mientras tanto'**
+  String get bpMeanwhile;
+
+  /// No description provided for @bpTapers.
+  ///
+  /// In es, this message translates to:
+  /// **'Tápers · {title}'**
+  String bpTapers(String title);
+
+  /// No description provided for @bpBatchCook.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocina en tanda'**
+  String get bpBatchCook;
+
+  /// No description provided for @bpStart.
+  ///
+  /// In es, this message translates to:
+  /// **'Empezar paso a paso'**
+  String get bpStart;
+
+  /// No description provided for @bpEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay nada que cocinar ahora mismo'**
+  String get bpEmpty;
+
+  /// No description provided for @bpEmptySub.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando tengas recetas planificadas, aquí te prepararé un plan de cocina para hacerlo todo de una vez.'**
+  String get bpEmptySub;
+
+  /// No description provided for @bpNeed.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que necesitas'**
+  String get bpNeed;
+
+  /// No description provided for @bpSplit.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparte en tápers'**
+  String get bpSplit;
+
+  /// No description provided for @bpSplitSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Se apuntan solos en Mi cocina'**
+  String get bpSplitSub;
+
+  /// No description provided for @bpYourPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu plan de cocina'**
+  String get bpYourPlan;
+
+  /// No description provided for @bpTotalMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Unos 1 minuto en total} other{Unos {count} minutos en total}}'**
+  String bpTotalMinutes(int count);
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} min'**
+  String minutesShort(int count);
+
+  /// No description provided for @bpParallel.
+  ///
+  /// In es, this message translates to:
+  /// **'En paralelo'**
+  String get bpParallel;
+
+  /// No description provided for @bpFor.
+  ///
+  /// In es, this message translates to:
+  /// **'Para {recipes}'**
+  String bpFor(String recipes);
+
+  /// No description provided for @ready.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo'**
+  String get ready;
+
+  /// No description provided for @pause.
+  ///
+  /// In es, this message translates to:
+  /// **'Pausar'**
+  String get pause;
+
+  /// No description provided for @start.
+  ///
+  /// In es, this message translates to:
+  /// **'Iniciar'**
+  String get start;
+
+  /// No description provided for @reset.
+  ///
+  /// In es, this message translates to:
+  /// **'Reiniciar'**
+  String get reset;
+
+  /// No description provided for @bpDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho'**
+  String get bpDone;
+
+  /// No description provided for @bpMarkDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como hecho'**
+  String get bpMarkDone;
+
+  /// No description provided for @cmStep.
+  ///
+  /// In es, this message translates to:
+  /// **'Paso {n}'**
+  String cmStep(int n);
+
+  /// No description provided for @cmTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiempo'**
+  String get cmTime;
+
+  /// No description provided for @cmSeeStep.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver paso'**
+  String get cmSeeStep;
+
+  /// No description provided for @ok.
+  ///
+  /// In es, this message translates to:
+  /// **'Vale'**
+  String get ok;
+
+  /// No description provided for @cmMicPermission.
+  ///
+  /// In es, this message translates to:
+  /// **'Para usar la voz, permite el micrófono en Ajustes.'**
+  String get cmMicPermission;
+
+  /// No description provided for @ingredients.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingredientes'**
+  String get ingredients;
+
+  /// No description provided for @cmExit.
+  ///
+  /// In es, this message translates to:
+  /// **'Salir del modo cocina'**
+  String get cmExit;
+
+  /// No description provided for @cmHandsFreeOff.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar manos libres'**
+  String get cmHandsFreeOff;
+
+  /// No description provided for @cmHandsFree.
+  ///
+  /// In es, this message translates to:
+  /// **'Manos libres'**
+  String get cmHandsFree;
+
+  /// No description provided for @cmVoiceHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Di «siguiente», «anterior», «repite» o «temporizador»'**
+  String get cmVoiceHint;
+
+  /// No description provided for @cmStop.
+  ///
+  /// In es, this message translates to:
+  /// **'Parar'**
+  String get cmStop;
+
+  /// No description provided for @cmStepOf.
+  ///
+  /// In es, this message translates to:
+  /// **'PASO {n} DE {total}'**
+  String cmStepOf(int n, int total);
+
+  /// No description provided for @cmTimerRunning.
+  ///
+  /// In es, this message translates to:
+  /// **'Temporizador en marcha'**
+  String get cmTimerRunning;
+
+  /// No description provided for @cmTimerMin.
+  ///
+  /// In es, this message translates to:
+  /// **'Temporizador {count} min'**
+  String cmTimerMin(int count);
+
+  /// No description provided for @cmThen.
+  ///
+  /// In es, this message translates to:
+  /// **'Luego'**
+  String get cmThen;
+
+  /// No description provided for @cmNextStep.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente paso'**
+  String get cmNextStep;
 }
 
 class _AppLocalizationsDelegate

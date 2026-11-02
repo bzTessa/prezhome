@@ -3016,4 +3016,138 @@ class AppLocalizationsIt extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get cookMode => 'Modalità cucina';
+
+  @override
+  String get bpMeanwhile => 'Nel frattempo';
+
+  @override
+  String bpTapers(String title) {
+    return 'Contenitori · $title';
+  }
+
+  @override
+  String get bpBatchCook => 'Cucina in blocco';
+
+  @override
+  String get bpStart => 'Inizia passo dopo passo';
+
+  @override
+  String get bpEmpty => 'Niente da cucinare adesso';
+
+  @override
+  String get bpEmptySub =>
+      'Quando avrai ricette pianificate, qui ti preparerò un piano per fare tutto in una volta.';
+
+  @override
+  String get bpNeed => 'Cosa ti serve';
+
+  @override
+  String get bpSplit => 'Dividi nei contenitori';
+
+  @override
+  String get bpSplitSub => 'Si aggiungono da soli in La mia cucina';
+
+  @override
+  String get bpYourPlan => 'Il tuo piano di cucina';
+
+  @override
+  String bpTotalMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Circa $count minuti in totale',
+      one: 'Circa 1 minuto in totale',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String minutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String get bpParallel => 'In parallelo';
+
+  @override
+  String bpFor(String recipes) {
+    return 'Per $recipes';
+  }
+
+  @override
+  String get ready => 'Pronto';
+
+  @override
+  String get pause => 'Pausa';
+
+  @override
+  String get start => 'Avvia';
+
+  @override
+  String get reset => 'Azzera';
+
+  @override
+  String get bpDone => 'Fatto';
+
+  @override
+  String get bpMarkDone => 'Segna come fatto';
+
+  @override
+  String cmStep(int n) {
+    return 'Passo $n';
+  }
+
+  @override
+  String get cmTime => 'Tempo scaduto';
+
+  @override
+  String get cmSeeStep => 'Vedi passo';
+
+  @override
+  String get ok => 'Ok';
+
+  @override
+  String get cmMicPermission =>
+      'Per usare la voce, consenti il microfono nelle Impostazioni.';
+
+  @override
+  String get ingredients => 'Ingredienti';
+
+  @override
+  String get cmExit => 'Esci dalla modalità cucina';
+
+  @override
+  String get cmHandsFreeOff => 'Disattiva vivavoce';
+
+  @override
+  String get cmHandsFree => 'Vivavoce';
+
+  @override
+  String get cmVoiceHint =>
+      'Di\' «siguiente», «anterior», «repite» o «temporizador» (per ora la voce è in spagnolo)';
+
+  @override
+  String get cmStop => 'Ferma';
+
+  @override
+  String cmStepOf(int n, int total) {
+    return 'PASSO $n DI $total';
+  }
+
+  @override
+  String get cmTimerRunning => 'Timer in corso';
+
+  @override
+  String cmTimerMin(int count) {
+    return 'Timer $count min';
+  }
+
+  @override
+  String get cmThen => 'Poi';
+
+  @override
+  String get cmNextStep => 'Passo successivo';
 }

@@ -2972,4 +2972,131 @@ class AppLocalizationsBs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get cookMode => 'Način kuhanja';
+
+  @override
+  String get bpMeanwhile => 'U međuvremenu';
+
+  @override
+  String bpTapers(String title) {
+    return 'Posude · $title';
+  }
+
+  @override
+  String get bpBatchCook => 'Kuhanje unaprijed';
+
+  @override
+  String get bpStart => 'Počni korak po korak';
+
+  @override
+  String get bpEmpty => 'Trenutno nema ništa za kuhati';
+
+  @override
+  String get bpEmptySub =>
+      'Kad budeš imao/la planirane recepte, ovdje ću pripremiti plan da sve skuhaš odjednom.';
+
+  @override
+  String get bpNeed => 'Šta ti treba';
+
+  @override
+  String get bpSplit => 'Podijeli u posude';
+
+  @override
+  String get bpSplitSub => 'Sami se upisuju u Moja kuhinja';
+
+  @override
+  String get bpYourPlan => 'Tvoj plan kuhanja';
+
+  @override
+  String bpTotalMinutes(int count) {
+    return 'Ukupno oko $count min';
+  }
+
+  @override
+  String minutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String get bpParallel => 'Paralelno';
+
+  @override
+  String bpFor(String recipes) {
+    return 'Za $recipes';
+  }
+
+  @override
+  String get ready => 'Gotovo';
+
+  @override
+  String get pause => 'Pauza';
+
+  @override
+  String get start => 'Pokreni';
+
+  @override
+  String get reset => 'Resetuj';
+
+  @override
+  String get bpDone => 'Urađeno';
+
+  @override
+  String get bpMarkDone => 'Označi kao urađeno';
+
+  @override
+  String cmStep(int n) {
+    return 'Korak $n';
+  }
+
+  @override
+  String get cmTime => 'Vrijeme je';
+
+  @override
+  String get cmSeeStep => 'Vidi korak';
+
+  @override
+  String get ok => 'U redu';
+
+  @override
+  String get cmMicPermission => 'Za glas dozvoli mikrofon u Postavkama.';
+
+  @override
+  String get ingredients => 'Sastojci';
+
+  @override
+  String get cmExit => 'Izađi iz načina kuhanja';
+
+  @override
+  String get cmHandsFreeOff => 'Isključi bez ruku';
+
+  @override
+  String get cmHandsFree => 'Bez ruku';
+
+  @override
+  String get cmVoiceHint =>
+      'Reci «siguiente», «anterior», «repite» ili «temporizador» (glas za sada radi na španskom)';
+
+  @override
+  String get cmStop => 'Zaustavi';
+
+  @override
+  String cmStepOf(int n, int total) {
+    return 'KORAK $n OD $total';
+  }
+
+  @override
+  String get cmTimerRunning => 'Tajmer radi';
+
+  @override
+  String cmTimerMin(int count) {
+    return 'Tajmer $count min';
+  }
+
+  @override
+  String get cmThen => 'Zatim';
+
+  @override
+  String get cmNextStep => 'Sljedeći korak';
 }
