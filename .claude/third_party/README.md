@@ -11,9 +11,20 @@ Claude Code en la nube (allí no se cargan los plugins instalados en local).
 | taste-skill | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | 12af471 (sin `evals/`) | MIT (`taste-skill-LICENSE`) |
 | redesign-skill | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | d237dd3 (ya no está en el repo de origen) | MIT (`taste-skill-LICENSE`) |
 | supabase, supabase-postgres-best-practices | [supabase/agent-skills](https://github.com/supabase/agent-skills) | c9be0e9 | MIT (`supabase-agent-skills-LICENSE`) |
+| antislop, antislop-code, antislop-copywriting, antislop-human, antislop-layoutmobile, antislop-ui | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) | 941b153 (v3.2.25, sin `contrast-mcp.py`) | MIT (`antislop-LICENSE`) |
+| karpathy-guidelines | [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) | 2c60614 | MIT (declarada en su README y `plugin.json`; el repo no trae fichero LICENSE) |
 
 Son guías de referencia: si chocan con las reglas del proyecto (`AGENTS.md`,
 p. ej. la arquitectura actual sin BLoC/Riverpod ni Dio), mandan las del
 proyecto. Las skills de taste están pensadas para web; de ellas se aplican los
 principios de diseño (evitar lo genérico, jerarquía, espaciado), no las
 librerías web. Los `scripts/*.mjs` de taste-skill necesitan Node y Chrome y no se han ejecutado al vendorizarla.
+
+Las skills de antislop también están escritas para web (CSS, Core Web
+Vitals, WCAG en HTML). En PrezHome se aplican sus reglas de fondo (nada de
+relleno genérico, contraste, áreas táctiles de 48 dp, textos claros, comentarios
+útiles) traducidas a widgets de Flutter. Si una regla de color o de estilo choca
+con la paleta Warm Tactile o con el diseño ya aprobado, manda el proyecto. En
+ningún texto de la interfaz puede aparecer el nombre del gato. El comprobador
+de contraste (`antislop-human/contrast-check.py`) funciona tal cual con
+`python3`; el servidor MCP de contraste del plugin no se ha copiado.
