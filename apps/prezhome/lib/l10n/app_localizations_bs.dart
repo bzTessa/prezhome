@@ -3212,4 +3212,196 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get ppTapersAuto => 'Posude se same dodaju u Moja kuhinja';
+
+  @override
+  String drGoal(String goal) {
+    String _temp0 = intl.Intl.selectLogic(goal, {
+      'lose': 'Gubitak masti',
+      'gain': 'Izgradnja mišića',
+      'protein': 'Visokoproteinski',
+      'other': 'Održavanje',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String drDiet(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'veg': 'Vegetarijanska',
+      'vegan': 'Veganska',
+      'quick': 'Brza',
+      'lowcarb': 'Malo ugljikohidrata',
+      'other': 'Bez ograničenja',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String drFreeOf(String allergen) {
+    String _temp0 = intl.Intl.selectLogic(allergen, {
+      'gluten': 'Bez glutena (celijakija)',
+      'lactosa': 'Bez laktoze',
+      'huevo': 'Bez jaja',
+      'marisco': 'Bez morskih plodova',
+      'soja': 'Bez soje',
+      'other': 'Bez orašastih plodova',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get drAnyType => 'Bilo šta';
+
+  @override
+  String get drNoIdeas => 'Nisu stigle ideje';
+
+  @override
+  String get drSaved => 'Sačuvano u tvojim receptima';
+
+  @override
+  String get drSearchSuper => 'Traži supermarket...';
+
+  @override
+  String get drNoSuper => 'Nismo pronašli taj supermarket.';
+
+  @override
+  String get drTitlePantry => 'Šta da skuham s ovim?';
+
+  @override
+  String get drTitle => 'Personalizovane ideje';
+
+  @override
+  String get drNewIdeas => 'Nove ideje';
+
+  @override
+  String get drWithPantry => 'Sa onim što imam';
+
+  @override
+  String get drPantryLoading => 'Gledamo tvoju ostavu…';
+
+  @override
+  String get drPantryEmpty =>
+      'Tvoja ostava je prazna: dodaj šta imaš kod kuće da dobiješ ideje.';
+
+  @override
+  String drPantryUse(int count) {
+    return 'Koristićemo $count namirnica iz ostave, počevši od onih kojima prvo ističe rok.';
+  }
+
+  @override
+  String get drCraving => 'Šta ti se jede?';
+
+  @override
+  String get drSupers => 'Supermarketi';
+
+  @override
+  String get drSupersHint =>
+      'Opcionalno. Ako ne izabereš nijedan, recepti važe za svaki supermarket.';
+
+  @override
+  String get drGoalTitle => 'Cilj';
+
+  @override
+  String get drDietTitle => 'Ishrana';
+
+  @override
+  String drDietLocked(String diet) {
+    return 'Koristimo ishranu iz tvog profila: $diet';
+  }
+
+  @override
+  String get drAllergyTitle => 'Intolerancije i alergije';
+
+  @override
+  String get drAllergyHint => 'Nikad se neće pojaviti u receptima.';
+
+  @override
+  String get drAppliances => 'Kuhinjski aparati';
+
+  @override
+  String get drMaxCost => 'Najveća cijena po porciji';
+
+  @override
+  String get drMaxCostHint => 'Opcionalno, npr. 2,50';
+
+  @override
+  String get drSearching => 'Tražimo ideje…';
+
+  @override
+  String get drSeeIdeas => 'Pogledaj ideje';
+
+  @override
+  String drAddedToShop(int count) {
+    return 'Dodano na listu za kupovinu: $count';
+  }
+
+  @override
+  String get drAddFail =>
+      'Nije moguće dodati na listu. Provjeri vezu i pokušaj ponovo.';
+
+  @override
+  String drProteinShort(String grams) {
+    return 'P: ${grams}g';
+  }
+
+  @override
+  String get drCostTip =>
+      'Okvirno: cijene s tvojih računa ili prosječne cijene u supermarketu.';
+
+  @override
+  String drPerServing(String price) {
+    return '≈ $price/porcija';
+  }
+
+  @override
+  String get drHave => 'Imaš:';
+
+  @override
+  String get drMissing => 'Nedostaje ti:';
+
+  @override
+  String get drAddedShort => 'Dodano u kupovinu';
+
+  @override
+  String get drAddMissing => 'Dodaj ono što nedostaje';
+
+  @override
+  String get drSavedShort => 'Sačuvano';
+
+  @override
+  String get drSaveToRecipes => 'Sačuvaj u moje recepte';
+
+  @override
+  String taskKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'bano': 'Kupatilo',
+      'ropa': 'Veš',
+      'compra': 'Kupovina',
+      'basura': 'Smeće',
+      'platos': 'Suđe',
+      'limpieza': 'Čišćenje',
+      'plantas': 'Biljke',
+      'cama': 'Krevet',
+      'mascota': 'Ljubimac',
+      'cocinar': 'Kuhanje',
+      'pagos': 'Plaćanja',
+      'other': 'Zadatak',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String taskPreset(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'dishes': 'Oprati suđe',
+      'vacuum': 'Usisati',
+      'bathroom': 'Očistiti kupatilo',
+      'laundry': 'Oprati veš',
+      'trash': 'Iznijeti smeće',
+      'shopping': 'Kupovina namirnica',
+      'plants': 'Zaliti biljke',
+      'other': 'Promijeniti posteljinu',
+    });
+    return '$_temp0';
+  }
 }

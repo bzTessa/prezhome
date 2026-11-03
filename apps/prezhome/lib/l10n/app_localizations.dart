@@ -5165,6 +5165,252 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Los tápers se apuntan solos en Mi cocina'**
   String get ppTapersAuto;
+
+  /// No description provided for @drGoal.
+  ///
+  /// In es, this message translates to:
+  /// **'{goal, select, lose{Perder grasa} gain{Ganar músculo} protein{Alta proteína} other{Mantener}}'**
+  String drGoal(String goal);
+
+  /// No description provided for @drDiet.
+  ///
+  /// In es, this message translates to:
+  /// **'{diet, select, veg{Vegetariana} vegan{Vegana} quick{Rápida} lowcarb{Baja en carbohidratos} other{Sin restricción}}'**
+  String drDiet(String diet);
+
+  /// No description provided for @drFreeOf.
+  ///
+  /// In es, this message translates to:
+  /// **'{allergen, select, gluten{Sin gluten (celiaquía)} lactosa{Sin lactosa} huevo{Sin huevo} marisco{Sin marisco} soja{Sin soja} other{Sin frutos secos}}'**
+  String drFreeOf(String allergen);
+
+  /// No description provided for @drAnyType.
+  ///
+  /// In es, this message translates to:
+  /// **'Cualquiera'**
+  String get drAnyType;
+
+  /// No description provided for @drNoIdeas.
+  ///
+  /// In es, this message translates to:
+  /// **'No se recibieron ideas'**
+  String get drNoIdeas;
+
+  /// No description provided for @drSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardada en tus recetas'**
+  String get drSaved;
+
+  /// No description provided for @drSearchSuper.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar supermercado...'**
+  String get drSearchSuper;
+
+  /// No description provided for @drNoSuper.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos ese súper.'**
+  String get drNoSuper;
+
+  /// No description provided for @drTitlePantry.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué cocino con esto?'**
+  String get drTitlePantry;
+
+  /// No description provided for @drTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ideas personalizadas'**
+  String get drTitle;
+
+  /// No description provided for @drNewIdeas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ideas nuevas'**
+  String get drNewIdeas;
+
+  /// No description provided for @drWithPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Con lo que tengo'**
+  String get drWithPantry;
+
+  /// No description provided for @drPantryLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Mirando tu despensa…'**
+  String get drPantryLoading;
+
+  /// No description provided for @drPantryEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu despensa está vacía: añade lo que tienes en casa para recibir ideas con ello.'**
+  String get drPantryEmpty;
+
+  /// No description provided for @drPantryUse.
+  ///
+  /// In es, this message translates to:
+  /// **'Usaremos {count} alimentos de tu despensa, empezando por lo que caduca antes.'**
+  String drPantryUse(int count);
+
+  /// No description provided for @drCraving.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué te apetece?'**
+  String get drCraving;
+
+  /// No description provided for @drSupers.
+  ///
+  /// In es, this message translates to:
+  /// **'Supermercados'**
+  String get drSupers;
+
+  /// No description provided for @drSupersHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional. Si no eliges ninguno, las recetas valen para cualquier súper.'**
+  String get drSupersHint;
+
+  /// No description provided for @drGoalTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Objetivo'**
+  String get drGoalTitle;
+
+  /// No description provided for @drDietTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Dieta'**
+  String get drDietTitle;
+
+  /// No description provided for @drDietLocked.
+  ///
+  /// In es, this message translates to:
+  /// **'Usamos la dieta de tu perfil: {diet}'**
+  String drDietLocked(String diet);
+
+  /// No description provided for @drAllergyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Intolerancias y alergias'**
+  String get drAllergyTitle;
+
+  /// No description provided for @drAllergyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Nunca saldrán en las recetas.'**
+  String get drAllergyHint;
+
+  /// No description provided for @drAppliances.
+  ///
+  /// In es, this message translates to:
+  /// **'Electrodomésticos'**
+  String get drAppliances;
+
+  /// No description provided for @drMaxCost.
+  ///
+  /// In es, this message translates to:
+  /// **'Coste máximo por ración'**
+  String get drMaxCost;
+
+  /// No description provided for @drMaxCostHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional, p. ej. 2,50'**
+  String get drMaxCostHint;
+
+  /// No description provided for @drSearching.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscando ideas…'**
+  String get drSearching;
+
+  /// No description provided for @drSeeIdeas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver ideas'**
+  String get drSeeIdeas;
+
+  /// No description provided for @drAddedToShop.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Añadido a la lista de la compra} other{Añadidos {count} productos a la compra}}'**
+  String drAddedToShop(int count);
+
+  /// No description provided for @drAddFail.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo añadir a la compra. Revisa la conexión e inténtalo de nuevo.'**
+  String get drAddFail;
+
+  /// No description provided for @drProteinShort.
+  ///
+  /// In es, this message translates to:
+  /// **'P: {grams}g'**
+  String drProteinShort(String grams);
+
+  /// No description provided for @drCostTip.
+  ///
+  /// In es, this message translates to:
+  /// **'Orientativo: precios de tus tickets o, si no, precios medios de supermercado.'**
+  String get drCostTip;
+
+  /// No description provided for @drPerServing.
+  ///
+  /// In es, this message translates to:
+  /// **'≈ {price}/ración'**
+  String drPerServing(String price);
+
+  /// No description provided for @drHave.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes:'**
+  String get drHave;
+
+  /// No description provided for @drMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Te falta:'**
+  String get drMissing;
+
+  /// No description provided for @drAddedShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadido a la compra'**
+  String get drAddedShort;
+
+  /// No description provided for @drAddMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir lo que falta'**
+  String get drAddMissing;
+
+  /// No description provided for @drSavedShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardada'**
+  String get drSavedShort;
+
+  /// No description provided for @drSaveToRecipes.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en mis recetas'**
+  String get drSaveToRecipes;
+
+  /// No description provided for @taskKind.
+  ///
+  /// In es, this message translates to:
+  /// **'{kind, select, bano{Baño} ropa{Ropa} compra{Compra} basura{Basura} platos{Platos} limpieza{Limpieza} plantas{Plantas} cama{Cama} mascota{Mascota} cocinar{Cocinar} pagos{Pagos} other{Tarea}}'**
+  String taskKind(String kind);
+
+  /// No description provided for @taskPreset.
+  ///
+  /// In es, this message translates to:
+  /// **'{preset, select, dishes{Fregar los platos} vacuum{Aspirar} bathroom{Limpiar el baño} laundry{Poner lavadora} trash{Sacar la basura} shopping{Hacer la compra} plants{Regar las plantas} other{Cambiar sábanas}}'**
+  String taskPreset(String preset);
 }
 
 class _AppLocalizationsDelegate
