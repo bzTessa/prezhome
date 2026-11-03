@@ -121,4 +121,47 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('3 to buy · 1 in the cart'), findsOneWidget);
   });
+
+  testWidgets('sin foto, las tarjetas son solo texto y más bajas', (
+    tester,
+  ) async {
+    Future<double> tileHeight(Widget? photo) async {
+      await tester.pumpWidget(
+        _host(
+          SizedBox(
+            width: 170,
+            height: photo == null ? null : 220,
+            child: ShoppingGridTile(
+              name: 'Sal',
+              quantityLabel: '1 ud',
+              price: '≈ 0,50 €',
+              checked: false,
+              onToggle: () {},
+              photo: photo,
+            ),
+          ),
+        ),
+      );
+      return tester.getSize(find.byType(ShoppingGridTile)).height;
+    }
+
+    final withPhoto = await tileHeight(const ColoredBox(color: Colors.red));
+    final compact = await tileHeight(null);
+    expect(find.text('Sal'), findsOneWidget);
+    expect(find.text('≈ 0,50 €'), findsOneWidget);
+    expect(compact, lessThan(withPhoto / 2));
+
+    await tester.pumpWidget(
+      _host(
+        SuggestionCard(
+          name: 'Leche',
+          price: '1,05 €',
+          added: false,
+          onAdd: () {},
+        ),
+      ),
+    );
+    expect(find.text('Leche'), findsOneWidget);
+    expect(tester.getSize(find.byType(SuggestionCard)).height, lessThan(90));
+  });
 }

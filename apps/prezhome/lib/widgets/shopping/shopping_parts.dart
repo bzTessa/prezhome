@@ -818,15 +818,17 @@ class SuggestionCard extends StatelessWidget {
   const SuggestionCard({
     super.key,
     required this.name,
-    required this.photo,
     required this.added,
+    this.photo,
     required this.onAdd,
     this.price,
     this.reason,
   });
 
   final String name;
-  final Widget photo;
+
+  /// Sin foto (la persona las quitó) la tarjeta es solo texto.
+  final Widget? photo;
   final bool added;
   final VoidCallback onAdd;
   final String? price;
@@ -834,6 +836,31 @@ class SuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final addButton = Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: added ? AppColors.done : AppColors.terracotta,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.stroke, width: 1.5),
+      ),
+      child: Icon(
+        added ? Icons.check_rounded : Icons.add_rounded,
+        size: 18,
+        color: Colors.white,
+      ),
+    );
+    final title = Text(
+      name,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 12.5,
+        height: 1.2,
+        fontWeight: FontWeight.w700,
+        color: AppColors.ink,
+      ),
+    );
     return Semantics(
       button: true,
       label: added ? context.l.shopAdded(name) : context.l.shopAdd(name),
@@ -848,7 +875,8 @@ class SuggestionCard extends StatelessWidget {
             child: child,
           ),
           child: Container(
-            width: 108,
+            // Sin foto, algo más ancha para que el nombre no se parta.
+            width: photo == null ? 128 : 108,
             padding: const EdgeInsets.all(6),
             decoration: AppTheme.tactileDecoration(
               shadow: 2,
@@ -858,55 +886,35 @@ class SuggestionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.iconTile,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        alignment: Alignment.center,
-                        child: photo,
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          color: added ? AppColors.done : AppColors.terracotta,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.stroke,
-                            width: 1.5,
+                if (photo != null) ...[
+                  Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.iconTile,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ),
-                        child: Icon(
-                          added ? Icons.check_rounded : Icons.add_rounded,
-                          size: 18,
-                          color: Colors.white,
+                          clipBehavior: Clip.antiAlias,
+                          alignment: Alignment.center,
+                          child: photo,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.2,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
+                      Positioned(top: 4, right: 4, child: addButton),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 5),
+                  title,
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: title),
+                      const SizedBox(width: 4),
+                      addButton,
+                    ],
+                  ),
                 for (final (text, color) in [
                   (price, AppColors.ink),
                   (reason, AppColors.done),
@@ -957,6 +965,46 @@ class ShoppingGridTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qty = quantityLabel?.trim() ?? '';
+    final details = [
+      Text(
+        name,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 13.5,
+          height: 1.2,
+          fontWeight: FontWeight.w700,
+          color: AppColors.ink,
+          decoration: checked ? TextDecoration.lineThrough : null,
+        ),
+      ),
+      const SizedBox(height: 2),
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              qty,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.woodDark,
+              ),
+            ),
+          ),
+          if (price != null)
+            Text(
+              price!,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+        ],
+      ),
+    ];
     return Semantics(
       checked: checked,
       label: name,
@@ -968,71 +1016,49 @@ class ShoppingGridTile extends StatelessWidget {
           decoration: AppTheme.tactileDecoration(shadow: 2),
           child: Opacity(
             opacity: checked ? 0.5 : 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Stack(
-                    fit: StackFit.expand,
+            child: photo == null
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.iconTile,
-                          borderRadius: BorderRadius.circular(10),
+                      _CheckCircle(t: checked ? 1 : 0),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: details,
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        alignment: Alignment.center,
-                        child: photo,
-                      ),
-                      Positioned(
-                        top: 6,
-                        left: 6,
-                        child: _CheckCircle(t: checked ? 1 : 0),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    height: 1.2,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                    decoration: checked ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        qty,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.woodDark,
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.iconTile,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              alignment: Alignment.center,
+                              child: photo,
+                            ),
+                            Positioned(
+                              top: 6,
+                              left: 6,
+                              child: _CheckCircle(t: checked ? 1 : 0),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    if (price != null)
-                      Text(
-                        price!,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
+                      const SizedBox(height: 6),
+                      ...details,
+                    ],
+                  ),
           ),
         ),
       ),

@@ -294,6 +294,7 @@ class PlanShoppingService {
     String homeId,
     List<ShoppingListItem> items, {
     String? supermarketKey,
+    void Function()? onFound,
   }) async {
     var found = 0;
     final resolver = ProductPhotoResolver(_client);
@@ -333,6 +334,8 @@ class PlanShoppingService {
             .update({'image_url': url})
             .eq('id', item.id!);
         found++;
+        // Cada foto se enseña según llega, sin esperar al resto.
+        onFound?.call();
       } catch (_) {
         // Sin foto se ve la ilustración del producto.
       }
