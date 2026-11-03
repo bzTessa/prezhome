@@ -3185,4 +3185,95 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get slNewList => 'Nuova lista';
+
+  @override
+  String get slMyLists => 'Le mie liste';
+
+  @override
+  String get slActive => 'Attiva';
+
+  @override
+  String get slNewCat => 'Nuova categoria';
+
+  @override
+  String get slRenameCat => 'Rinomina categoria';
+
+  @override
+  String get slCategories => 'Categorie';
+
+  @override
+  String get slAddCat => 'Aggiungi categoria';
+
+  @override
+  String get slNoCats =>
+      'Ancora nessuna categoria. Aggiungi la prima con il pulsante qui sotto.';
+
+  @override
+  String get rename => 'Rinomina';
+
+  @override
+  String ppDayMeals(String day, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pasti',
+      one: '1 pasto',
+    );
+    return '$day, $_temp0';
+  }
+
+  @override
+  String ppFastTime(String time) {
+    return '$time · Digiuno';
+  }
+
+  @override
+  String get ppEatOut => '· Fuori';
+
+  @override
+  String mealAdd(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Aggiungi colazione',
+      'lunch': 'Aggiungi pranzo',
+      'snack': 'Aggiungi merenda',
+      'dinner': 'Aggiungi cena',
+      'dessert': 'Aggiungi dolce',
+      'other': 'Aggiungi pasto',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFromFreezer => 'Dal congelatore';
+
+  @override
+  String ppServings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count porz.',
+      one: '1 porzione',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFresh => 'Appena fatto';
+
+  @override
+  String ppFridge(String days) {
+    return 'Frigo · $days';
+  }
+
+  @override
+  String ppFreezer(String days) {
+    return 'Congelatore · $days';
+  }
+
+  @override
+  String get ppTapersAuto =>
+      'I contenitori si aggiungono da soli in La mia cucina';
 }

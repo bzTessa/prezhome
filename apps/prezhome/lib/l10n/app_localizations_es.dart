@@ -3183,4 +3183,94 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get slNewList => 'Nueva lista';
+
+  @override
+  String get slMyLists => 'Mis listas';
+
+  @override
+  String get slActive => 'Activa';
+
+  @override
+  String get slNewCat => 'Nueva categoría';
+
+  @override
+  String get slRenameCat => 'Renombrar categoría';
+
+  @override
+  String get slCategories => 'Categorías';
+
+  @override
+  String get slAddCat => 'Añadir categoría';
+
+  @override
+  String get slNoCats =>
+      'Aún no hay categorías. Añade la primera con el botón de abajo.';
+
+  @override
+  String get rename => 'Renombrar';
+
+  @override
+  String ppDayMeals(String day, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comidas',
+      one: '1 comida',
+    );
+    return '$day, $_temp0';
+  }
+
+  @override
+  String ppFastTime(String time) {
+    return '$time · Ayuno';
+  }
+
+  @override
+  String get ppEatOut => '· Fuera';
+
+  @override
+  String mealAdd(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Añadir desayuno',
+      'lunch': 'Añadir comida',
+      'snack': 'Añadir merienda',
+      'dinner': 'Añadir cena',
+      'dessert': 'Añadir postre',
+      'other': 'Añadir comida',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFromFreezer => 'Del congelador';
+
+  @override
+  String ppServings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rac.',
+      one: '1 ración',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFresh => 'Recién hecho';
+
+  @override
+  String ppFridge(String days) {
+    return 'Nevera · $days';
+  }
+
+  @override
+  String ppFreezer(String days) {
+    return 'Congelador · $days';
+  }
+
+  @override
+  String get ppTapersAuto => 'Los tápers se apuntan solos en Mi cocina';
 }

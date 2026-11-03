@@ -1950,5 +1950,69 @@
         "type": "int"
       }
     }
-  }
+  },
+  "slNewList": "Nueva lista",
+  "slMyLists": "Mis listas",
+  "slActive": "Activa",
+  "slNewCat": "Nueva categoría",
+  "slRenameCat": "Renombrar categoría",
+  "slCategories": "Categorías",
+  "slAddCat": "Añadir categoría",
+  "slNoCats": "Aún no hay categorías. Añade la primera con el botón de abajo.",
+  "rename": "Renombrar",
+  "ppDayMeals": "{day}, {count, plural, =1{1 comida} other{{count} comidas}}",
+  "@ppDayMeals": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ppFastTime": "{time} · Ayuno",
+  "@ppFastTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "ppEatOut": "· Fuera",
+  "mealAdd": "{type, select, breakfast{Añadir desayuno} lunch{Añadir comida} snack{Añadir merienda} dinner{Añadir cena} dessert{Añadir postre} other{Añadir comida}}",
+  "@mealAdd": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "ppFromFreezer": "Del congelador",
+  "ppServings": "{count, plural, =1{1 ración} other{{count} rac.}}",
+  "@ppServings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ppFresh": "Recién hecho",
+  "ppFridge": "Nevera · {days}",
+  "@ppFridge": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "ppFreezer": "Congelador · {days}",
+  "@ppFreezer": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "ppTapersAuto": "Los tápers se apuntan solos en Mi cocina"
 }

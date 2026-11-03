@@ -3196,4 +3196,95 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get slNewList => 'Nouvelle liste';
+
+  @override
+  String get slMyLists => 'Mes listes';
+
+  @override
+  String get slActive => 'Active';
+
+  @override
+  String get slNewCat => 'Nouvelle catégorie';
+
+  @override
+  String get slRenameCat => 'Renommer la catégorie';
+
+  @override
+  String get slCategories => 'Catégories';
+
+  @override
+  String get slAddCat => 'Ajouter une catégorie';
+
+  @override
+  String get slNoCats =>
+      'Pas encore de catégories. Ajoute la première avec le bouton ci-dessous.';
+
+  @override
+  String get rename => 'Renommer';
+
+  @override
+  String ppDayMeals(String day, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count repas',
+      one: '1 repas',
+    );
+    return '$day, $_temp0';
+  }
+
+  @override
+  String ppFastTime(String time) {
+    return '$time · Jeûne';
+  }
+
+  @override
+  String get ppEatOut => '· Dehors';
+
+  @override
+  String mealAdd(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Ajouter le petit-déjeuner',
+      'lunch': 'Ajouter le déjeuner',
+      'snack': 'Ajouter le goûter',
+      'dinner': 'Ajouter le dîner',
+      'dessert': 'Ajouter le dessert',
+      'other': 'Ajouter un repas',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFromFreezer => 'Du congélateur';
+
+  @override
+  String ppServings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count port.',
+      one: '1 portion',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFresh => 'Tout juste fait';
+
+  @override
+  String ppFridge(String days) {
+    return 'Frigo · $days';
+  }
+
+  @override
+  String ppFreezer(String days) {
+    return 'Congélateur · $days';
+  }
+
+  @override
+  String get ppTapersAuto =>
+      'Les boîtes s\'ajoutent toutes seules dans Ma cuisine';
 }

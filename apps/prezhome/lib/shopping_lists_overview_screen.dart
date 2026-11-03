@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'l10n/l10n.dart';
 import 'models/shopping_category.dart';
 import 'models/shopping_list.dart';
 import 'theme/app_theme.dart';
@@ -36,7 +37,7 @@ class _ShoppingListsOverviewScreenState
   late final List<ShoppingList> _lists = List.of(widget.lists);
 
   Future<void> _promptCreate() async {
-    final name = await _promptName(context, title: 'Nueva lista');
+    final name = await _promptName(context, title: context.l.slNewList);
     if (name == null || name.trim().isEmpty) return;
     // La creación real la hace la pantalla de la compra al volver (recarga).
     // Aquí devolvemos un marcador especial para que la cree y la seleccione.
@@ -48,16 +49,16 @@ class _ShoppingListsOverviewScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Mis listas')),
+      appBar: AppBar(title: Text(context.l.slMyLists)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-listas-nueva',
         backgroundColor: AppColors.wood,
         foregroundColor: AppColors.ink,
         onPressed: _promptCreate,
         icon: const Icon(Icons.add),
-        label: const Text(
-          'Nueva lista',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          context.l.slNewList,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: ListView(
@@ -65,7 +66,7 @@ class _ShoppingListsOverviewScreenState
         children: [
           _listTile(
             id: null,
-            name: 'Lista principal',
+            name: context.l.shopMainList,
             selected: widget.activeListId == null,
           ),
           for (final l in _lists)
@@ -111,7 +112,7 @@ class _ShoppingListsOverviewScreenState
         ),
         trailing: selected
             ? Text(
-                'Activa',
+                context.l.slActive,
                 style: TextStyle(
                   color: AppColors.sage,
                   fontWeight: FontWeight.w700,
@@ -151,7 +152,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
   late List<ShoppingCategory> _cats = List.of(widget.categories);
 
   Future<void> _promptCreate() async {
-    final name = await _promptName(context, title: 'Nueva categoría');
+    final name = await _promptName(context, title: context.l.slNewCat);
     if (name == null || name.trim().isEmpty) return;
     await widget.onCreate(name.trim());
     if (!mounted) return;
@@ -166,7 +167,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
   Future<void> _promptRename(ShoppingCategory category) async {
     final name = await _promptName(
       context,
-      title: 'Renombrar categoría',
+      title: context.l.slRenameCat,
       initial: category.name,
     );
     if (name == null || name.trim().isEmpty) return;
@@ -194,16 +195,16 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Categorías')),
+      appBar: AppBar(title: Text(context.l.slCategories)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-categorias-nueva',
         backgroundColor: AppColors.wood,
         foregroundColor: AppColors.ink,
         onPressed: _promptCreate,
         icon: const Icon(Icons.add),
-        label: const Text(
-          'Añadir categoría',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          context.l.slAddCat,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: _cats.isEmpty
@@ -211,8 +212,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
-                  'Aún no hay categorías. Añade la primera con el botón de '
-                  'abajo.',
+                  context.l.slNoCats,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.inkMuted),
                 ),
@@ -249,7 +249,7 @@ class _ShoppingCategoriesScreenState extends State<ShoppingCategoriesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          tooltip: 'Renombrar',
+                          tooltip: context.l.rename,
                           icon: Icon(
                             Icons.edit_outlined,
                             color: AppColors.woodDark,
@@ -292,17 +292,17 @@ Future<String?> _promptName(
         controller: controller,
         autofocus: true,
         textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(labelText: 'Nombre'),
+        decoration: InputDecoration(labelText: ctx.l.name),
         onSubmitted: (v) => Navigator.of(ctx).pop(v),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Cancelar'),
+          child: Text(ctx.l.cancel),
         ),
         ElevatedButton(
           onPressed: () => Navigator.of(ctx).pop(controller.text),
-          child: const Text('Guardar'),
+          child: Text(ctx.l.save),
         ),
       ],
     ),

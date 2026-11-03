@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prezhome/l10n/app_localizations.dart';
 import 'package:prezhome/widgets/plan/plan_parts.dart';
 
 void main() {
@@ -11,6 +12,9 @@ void main() {
     int? picked;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('es'),
         home: Scaffold(
           body: WeekDayStrip(
             days: days,
@@ -35,6 +39,9 @@ void main() {
     var taps = 0;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('es'),
         home: Scaffold(
           body: Column(
             children: [

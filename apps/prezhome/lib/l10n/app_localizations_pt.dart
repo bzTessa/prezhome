@@ -3182,4 +3182,95 @@ class AppLocalizationsPt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get slNewList => 'Nova lista';
+
+  @override
+  String get slMyLists => 'As minhas listas';
+
+  @override
+  String get slActive => 'Ativa';
+
+  @override
+  String get slNewCat => 'Nova categoria';
+
+  @override
+  String get slRenameCat => 'Mudar o nome da categoria';
+
+  @override
+  String get slCategories => 'Categorias';
+
+  @override
+  String get slAddCat => 'Adicionar categoria';
+
+  @override
+  String get slNoCats =>
+      'Ainda não há categorias. Adiciona a primeira com o botão em baixo.';
+
+  @override
+  String get rename => 'Mudar o nome';
+
+  @override
+  String ppDayMeals(String day, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count refeições',
+      one: '1 refeição',
+    );
+    return '$day, $_temp0';
+  }
+
+  @override
+  String ppFastTime(String time) {
+    return '$time · Jejum';
+  }
+
+  @override
+  String get ppEatOut => '· Fora';
+
+  @override
+  String mealAdd(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'breakfast': 'Adicionar pequeno-almoço',
+      'lunch': 'Adicionar almoço',
+      'snack': 'Adicionar lanche',
+      'dinner': 'Adicionar jantar',
+      'dessert': 'Adicionar sobremesa',
+      'other': 'Adicionar refeição',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFromFreezer => 'Do congelador';
+
+  @override
+  String ppServings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count doses',
+      one: '1 dose',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ppFresh => 'Acabado de fazer';
+
+  @override
+  String ppFridge(String days) {
+    return 'Frigorífico · $days';
+  }
+
+  @override
+  String ppFreezer(String days) {
+    return 'Congelador · $days';
+  }
+
+  @override
+  String get ppTapersAuto =>
+      'As marmitas ficam registadas sozinhas em A minha cozinha';
 }
