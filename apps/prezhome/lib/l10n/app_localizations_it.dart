@@ -3276,4 +3276,202 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get ppTapersAuto =>
       'I contenitori si aggiungono da soli in La mia cucina';
+
+  @override
+  String drGoal(String goal) {
+    String _temp0 = intl.Intl.selectLogic(goal, {
+      'lose': 'Perdere grasso',
+      'gain': 'Aumentare muscoli',
+      'protein': 'Ricco di proteine',
+      'other': 'Mantenere',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String drDiet(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'veg': 'Vegetariana',
+      'vegan': 'Vegana',
+      'quick': 'Veloce',
+      'lowcarb': 'Pochi carboidrati',
+      'other': 'Nessuna restrizione',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String drFreeOf(String allergen) {
+    String _temp0 = intl.Intl.selectLogic(allergen, {
+      'gluten': 'Senza glutine (celiachia)',
+      'lactosa': 'Senza lattosio',
+      'huevo': 'Senza uova',
+      'marisco': 'Senza frutti di mare',
+      'soja': 'Senza soia',
+      'other': 'Senza frutta secca',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get drAnyType => 'Qualsiasi';
+
+  @override
+  String get drNoIdeas => 'Nessuna idea ricevuta';
+
+  @override
+  String get drSaved => 'Salvata nelle tue ricette';
+
+  @override
+  String get drSearchSuper => 'Cerca supermercato...';
+
+  @override
+  String get drNoSuper => 'Non troviamo quel supermercato.';
+
+  @override
+  String get drTitlePantry => 'Cosa cucino con questo?';
+
+  @override
+  String get drTitle => 'Idee personalizzate';
+
+  @override
+  String get drNewIdeas => 'Nuove idee';
+
+  @override
+  String get drWithPantry => 'Con quello che ho';
+
+  @override
+  String get drPantryLoading => 'Guardiamo la tua dispensa…';
+
+  @override
+  String get drPantryEmpty =>
+      'La tua dispensa è vuota: aggiungi quello che hai in casa per ricevere idee.';
+
+  @override
+  String drPantryUse(int count) {
+    return 'Useremo $count alimenti della tua dispensa, iniziando da quelli che scadono prima.';
+  }
+
+  @override
+  String get drCraving => 'Cosa ti va?';
+
+  @override
+  String get drSupers => 'Supermercati';
+
+  @override
+  String get drSupersHint =>
+      'Facoltativo. Se non ne scegli nessuno, le ricette vanno bene per qualsiasi supermercato.';
+
+  @override
+  String get drGoalTitle => 'Obiettivo';
+
+  @override
+  String get drDietTitle => 'Dieta';
+
+  @override
+  String drDietLocked(String diet) {
+    return 'Usiamo la dieta del tuo profilo: $diet';
+  }
+
+  @override
+  String get drAllergyTitle => 'Intolleranze e allergie';
+
+  @override
+  String get drAllergyHint => 'Non compariranno mai nelle ricette.';
+
+  @override
+  String get drAppliances => 'Elettrodomestici';
+
+  @override
+  String get drMaxCost => 'Costo massimo per porzione';
+
+  @override
+  String get drMaxCostHint => 'Facoltativo, es. 2,50';
+
+  @override
+  String get drSearching => 'Cerco idee…';
+
+  @override
+  String get drSeeIdeas => 'Vedi idee';
+
+  @override
+  String drAddedToShop(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count prodotti aggiunti alla spesa',
+      one: 'Aggiunto alla lista della spesa',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get drAddFail =>
+      'Impossibile aggiungere alla spesa. Controlla la connessione e riprova.';
+
+  @override
+  String drProteinShort(String grams) {
+    return 'P: ${grams}g';
+  }
+
+  @override
+  String get drCostTip =>
+      'Indicativo: prezzi dei tuoi scontrini o, altrimenti, prezzi medi del supermercato.';
+
+  @override
+  String drPerServing(String price) {
+    return '≈ $price/porzione';
+  }
+
+  @override
+  String get drHave => 'Hai:';
+
+  @override
+  String get drMissing => 'Ti manca:';
+
+  @override
+  String get drAddedShort => 'Aggiunto alla spesa';
+
+  @override
+  String get drAddMissing => 'Aggiungi ciò che manca';
+
+  @override
+  String get drSavedShort => 'Salvata';
+
+  @override
+  String get drSaveToRecipes => 'Salva nelle mie ricette';
+
+  @override
+  String taskKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'bano': 'Bagno',
+      'ropa': 'Bucato',
+      'compra': 'Spesa',
+      'basura': 'Spazzatura',
+      'platos': 'Piatti',
+      'limpieza': 'Pulizie',
+      'plantas': 'Piante',
+      'cama': 'Letto',
+      'mascota': 'Animale',
+      'cocinar': 'Cucinare',
+      'pagos': 'Pagamenti',
+      'other': 'Attività',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String taskPreset(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'dishes': 'Lavare i piatti',
+      'vacuum': 'Passare l\'aspirapolvere',
+      'bathroom': 'Pulire il bagno',
+      'laundry': 'Fare il bucato',
+      'trash': 'Portare fuori la spazzatura',
+      'shopping': 'Fare la spesa',
+      'plants': 'Annaffiare le piante',
+      'other': 'Cambiare le lenzuola',
+    });
+    return '$_temp0';
+  }
 }

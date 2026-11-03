@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'l10n/l10n.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/inventory_item.dart';
 import 'models/nutrition_profile.dart';
@@ -110,9 +111,6 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   final Set<int> _saving = {};
   final Set<int> _savedIdx = {};
 
-  static String _cap(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-
   static const _goals = [
     'mantener',
     'perder grasa',
@@ -126,14 +124,29 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
     'rápida',
     'baja en carbohidratos',
   ];
-  static const Map<String, String> _applianceOptions = {
-    'oven': 'Horno',
-    'stovetop': 'Sartén',
-    'pot': 'Olla',
-    'airfryer': 'Airfryer',
-    'microwave': 'Microondas',
-    'blender': 'Batidora',
+  // Los objetivos y dietas viajan en español a la IA; solo se traduce la
+  // etiqueta, por clave de ARB.
+  static const _goalKeys = {
+    'mantener': 'keep',
+    'perder grasa': 'lose',
+    'ganar músculo': 'gain',
+    'alta proteína': 'protein',
   };
+  static const _dietKeys = {
+    'sin restricción': 'any',
+    'vegetariana': 'veg',
+    'vegana': 'vegan',
+    'rápida': 'quick',
+    'baja en carbohidratos': 'lowcarb',
+  };
+  static const _applianceOptions = [
+    'oven',
+    'stovetop',
+    'pot',
+    'airfryer',
+    'microwave',
+    'blender',
+  ];
   static const Map<String, IconData> _applianceIcons = {
     'oven': Icons.local_fire_department_outlined,
     'stovetop': Icons.outdoor_grill_outlined,
@@ -145,10 +158,6 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
 
   // Tipo de plato: '' = cualquiera; si no, una clave de Recipe.mealTypeLabels.
   String _mealType = '';
-  static const Map<String, String> _mealTypeOptions = {
-    '': 'Cualquiera',
-    ...Recipe.mealTypeLabels,
-  };
   static const Map<String, IconData> _mealTypeIcons = {
     '': Icons.auto_awesome_outlined,
     'breakfast': Icons.free_breakfast_outlined,
@@ -162,14 +171,14 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   // Intolerancias elegidas aquí (claves como en el perfil). Se suman a las
   // alergias del perfil y se mandan como restricción dura.
   final Set<String> _intolerances = {};
-  static const Map<String, String> _intoleranceOptions = {
-    'gluten': 'Sin gluten (celiaquía)',
-    'lactosa': 'Sin lactosa',
-    'huevo': 'Sin huevo',
-    'frutos secos': 'Sin frutos secos',
-    'marisco': 'Sin marisco',
-    'soja': 'Sin soja',
-  };
+  static const _intoleranceOptions = [
+    'gluten',
+    'lactosa',
+    'huevo',
+    'frutos secos',
+    'marisco',
+    'soja',
+  ];
 
   @override
   void initState() {
@@ -202,7 +211,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           _intolerances.addAll(
             _profileAllergies
                 .map((a) => a.toLowerCase().trim())
-                .where(_intoleranceOptions.containsKey),
+                .where(_intoleranceOptions.contains),
           );
           _profileDisliked = asStrings(profile['disliked']);
           _profileCookTime = profile['cook_time_pref'] as String?;
@@ -216,7 +225,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           // Aparatos de su cuestionario como punto de partida.
           if (_appliances.isEmpty && prefs.appliances != null) {
             _appliances.addAll(
-              prefs.appliances!.where(_applianceOptions.containsKey),
+              prefs.appliances!.where(_applianceOptions.contains),
             );
           }
         });
@@ -295,6 +304,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   }
 
   Future<void> _generate() async {
+    final l = context.l;
     setState(() {
       _loading = true;
       _savedIdx.clear();
@@ -368,7 +378,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       } else {
         final msg = (data is Map && data['error'] != null)
             ? data['error'].toString()
-            : 'No se recibieron ideas';
+            : l.drNoIdeas;
         throw msg;
       }
     } catch (e) {
@@ -386,6 +396,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   }
 
   Future<void> _saveIdea(int index) async {
+    final l = context.l;
     setState(() => _saving.add(index));
     try {
       final user = _client.auth.currentUser;
@@ -396,7 +407,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           .eq('id', user.id)
           .single();
       final homeId = profile['home_id'];
-      if (homeId == null) throw 'No perteneces a ningún hogar.';
+      if (homeId == null) throw l.planNoHome;
 
       final r = _ideas[index];
       double? d(dynamic v) =>
@@ -414,7 +425,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       // Foto automática (Pexels) para la idea guardada. Las ideas no traen foto
       // manual, así que siempre lo intentamos. Degrada con elegancia: si falla o
       // viene null, se guarda sin foto (se verá el placeholder cozy).
-      final title = (r['title'] ?? 'Receta').toString();
+      final title = (r['title'] ?? l.recipe).toString();
       final autoImageUrl = await RecipePhotoService(
         _client,
       ).find(title: title, titleEn: r['photo_query_en']?.toString());
@@ -500,15 +511,15 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         _savedAny = true;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Guardada en tus recetas')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l.drSaved)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, l.nutSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -624,13 +635,13 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           onChanged: (_) => setState(() {}),
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
-            hintText: 'Buscar supermercado...',
+            hintText: context.l.drSearchSuper,
             prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
             suffixIcon: query.isEmpty
                 ? null
                 : IconButton(
                     icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
-                    tooltip: 'Limpiar',
+                    tooltip: context.l.clear,
                     onPressed: () => setState(_superSearch.clear),
                   ),
             isDense: true,
@@ -649,7 +660,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         const SizedBox(height: 12),
         if (visible.isEmpty)
           Text(
-            'No encontramos ese súper.',
+            context.l.drNoSuper,
             style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
           )
         else
@@ -734,10 +745,10 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         backgroundColor: AppColors.cream,
         appBar: AppBar(
           title: Text(
-            _pantryMode ? '¿Qué cocino con esto?' : 'Ideas personalizadas',
+            _pantryMode ? context.l.drTitlePantry : context.l.drTitle,
           ),
           leading: IconButton(
-            tooltip: 'Volver',
+            tooltip: context.l.back,
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.of(context).pop(_savedAny),
           ),
@@ -747,16 +758,16 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             SegmentedButton<bool>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: false,
-                  label: Text('Ideas nuevas'),
-                  icon: Icon(Icons.lightbulb_outline_rounded),
+                  label: Text(context.l.drNewIdeas),
+                  icon: const Icon(Icons.lightbulb_outline_rounded),
                 ),
                 ButtonSegment(
                   value: true,
-                  label: Text('Con lo que tengo'),
-                  icon: Icon(Icons.kitchen_outlined),
+                  label: Text(context.l.drWithPantry),
+                  icon: const Icon(Icons.kitchen_outlined),
                 ),
               ],
               selected: {_pantryMode},
@@ -768,21 +779,23 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                 padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
                 child: Text(
                   !_pantryLoaded
-                      ? 'Mirando tu despensa…'
+                      ? context.l.drPantryLoading
                       : _pantry.isEmpty
-                      ? 'Tu despensa está vacía: añade lo que tienes en '
-                            'casa para recibir ideas con ello.'
-                      : 'Usaremos ${_pantry.length} alimentos de tu '
-                            'despensa, empezando por lo que caduca antes.',
+                      ? context.l.drPantryEmpty
+                      : context.l.drPantryUse(_pantry.length),
                   style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
                 ),
               ),
             const SizedBox(height: 16),
             _section(
               Icons.restaurant_menu_rounded,
-              '¿Qué te apetece?',
+              context.l.drCraving,
               _choiceChips<String>(
-                options: _mealTypeOptions,
+                options: {
+                  '': context.l.drAnyType,
+                  for (final k in Recipe.mealTypeLabels.keys)
+                    k: context.l.mealType(k),
+                },
                 icons: _mealTypeIcons,
                 isSelected: (k) => _mealType == k,
                 onTap: (k) => _mealType = k,
@@ -790,51 +803,58 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
             ),
             _section(
               Icons.storefront_rounded,
-              'Supermercados',
+              context.l.drSupers,
               _supermarketPicker(),
-              hint:
-                  'Opcional. Si no eliges ninguno, las recetas valen para cualquier súper.',
+              hint: context.l.drSupersHint,
             ),
             _section(
               Icons.flag_outlined,
-              'Objetivo',
+              context.l.drGoalTitle,
               _choiceChips<String>(
-                options: {for (final g in _goals) g: _cap(g)},
+                options: {
+                  for (final g in _goals) g: context.l.drGoal(_goalKeys[g]!),
+                },
                 isSelected: (k) => _goal == k,
                 onTap: (k) => _goal = k,
               ),
             ),
             _section(
               Icons.eco_outlined,
-              'Dieta',
+              context.l.drDietTitle,
               _choiceChips<String>(
-                options: {for (final d in _diets) d: _cap(d)},
+                options: {
+                  for (final d in _diets) d: context.l.drDiet(_dietKeys[d]!),
+                },
                 isSelected: (k) => _diet == k,
                 onTap: (k) => _diet = k,
                 enabled: !dietLocked,
               ),
               hint: dietLocked
-                  ? 'Usamos la dieta de tu perfil: '
-                        '${NutritionProfile.dietLabels[_profileDiet]}'
+                  ? context.l.drDietLocked(context.l.pwDiet(_profileDiet!))
                   : null,
             ),
             _section(
               Icons.health_and_safety_outlined,
-              'Intolerancias y alergias',
+              context.l.drAllergyTitle,
               _choiceChips<String>(
-                options: _intoleranceOptions,
+                options: {
+                  for (final k in _intoleranceOptions)
+                    k: context.l.drFreeOf(k.replaceAll(' ', '')),
+                },
                 isSelected: _intolerances.contains,
                 onTap: (k) {
                   if (!_intolerances.remove(k)) _intolerances.add(k);
                 },
               ),
-              hint: 'Nunca saldrán en las recetas.',
+              hint: context.l.drAllergyHint,
             ),
             _section(
               Icons.blender_outlined,
-              'Electrodomésticos',
+              context.l.drAppliances,
               _choiceChips<String>(
-                options: _applianceOptions,
+                options: {
+                  for (final k in _applianceOptions) k: context.l.appliance(k),
+                },
                 icons: _applianceIcons,
                 isSelected: _appliances.contains,
                 onTap: (k) {
@@ -844,14 +864,14 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
             ),
             _section(
               Icons.euro_rounded,
-              'Coste máximo por ración',
+              context.l.drMaxCost,
               TextField(
                 controller: _maxCostController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Opcional, p. ej. 2,50',
+                  hintText: context.l.drMaxCostHint,
                   suffixText: currencySymbol(),
                 ),
               ),
@@ -869,7 +889,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.search_rounded),
-              label: Text(_loading ? 'Buscando ideas…' : 'Ver ideas'),
+              label: Text(
+                _loading ? context.l.drSearching : context.l.drSeeIdeas,
+              ),
             ),
             const SizedBox(height: 20),
             ..._ideas.asMap().entries.map((e) => _ideaCard(e.key, e.value)),
@@ -927,24 +949,13 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       if (!mounted) return;
       setState(() => _addedMissing.add(index));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            missing.length == 1
-                ? 'Añadido a la lista de la compra'
-                : 'Añadidos ${missing.length} productos a la compra',
-          ),
-        ),
+        SnackBar(content: Text(context.l.drAddedToShop(missing.length))),
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No se pudo añadir a la compra. Revisa la conexión e '
-            'inténtalo de nuevo.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.drAddFail)));
     } finally {
       if (mounted) setState(() => _addingMissing.remove(index));
     }
@@ -997,7 +1008,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            (r['title'] ?? 'Receta').toString(),
+            (r['title'] ?? context.l.recipe).toString(),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           if (r['description'] != null) ...[
@@ -1021,7 +1032,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
               if (protein != null) ...[
                 const SizedBox(width: 12),
                 Text(
-                  'P: ${protein}g',
+                  context.l.drProteinShort('$protein'),
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.inkMuted,
@@ -1031,11 +1042,9 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
               const Spacer(),
               if (costPerServing != null)
                 Tooltip(
-                  message:
-                      'Orientativo: precios de tus tickets o, si no, '
-                      'precios medios de supermercado.',
+                  message: context.l.drCostTip,
                   child: Text(
-                    '≈ ${formatEuros(costPerServing)}/ración',
+                    context.l.drPerServing(formatEuros(costPerServing)),
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.sage,
@@ -1048,14 +1057,14 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
             if (split.have.isNotEmpty)
               _infoLine(
                 Icons.check_circle_outline,
-                'Tienes:',
+                context.l.drHave,
                 split.have.join(', '),
                 AppColors.sage,
               ),
             if (split.missing.isNotEmpty)
               _infoLine(
                 Icons.shopping_basket_outlined,
-                'Te falta:',
+                context.l.drMissing,
                 split.missing.join(', '),
                 AppColors.terracotta,
               ),
@@ -1071,7 +1080,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                     size: 18,
                   ),
                   label: Text(
-                    added ? 'Añadido a la compra' : 'Añadir lo que falta',
+                    added ? context.l.drAddedShort : context.l.drAddMissing,
                   ),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.woodDark,
@@ -1086,7 +1095,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                 ? OutlinedButton.icon(
                     onPressed: null,
                     icon: const Icon(Icons.check),
-                    label: const Text('Guardada'),
+                    label: Text(context.l.drSavedShort),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(44),
                       shape: RoundedRectangleBorder(
@@ -1105,7 +1114,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Guardar en mis recetas'),
+                        : Text(context.l.drSaveToRecipes),
                   ),
           ),
         ],

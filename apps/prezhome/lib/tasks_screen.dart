@@ -1525,7 +1525,7 @@ class _TaskTile extends StatelessWidget {
                           )
                         else
                           Text(
-                            meta.isEmpty ? kind.label : meta,
+                            meta.isEmpty ? context.l.taskKind(kind.name) : meta,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.bodyMuted.copyWith(
@@ -1940,12 +1940,13 @@ class _TaskSheetState extends State<_TaskSheet> {
                         SizedBox(
                           width: w,
                           child: _PresetTile(
-                            title: p.title,
-                            selected: _title.text == p.title,
+                            title: context.l.taskPreset(p.key),
+                            selected:
+                                _title.text == context.l.taskPreset(p.key),
                             onTap: () {
                               HapticFeedback.selectionClick();
                               setState(() {
-                                _title.text = p.title;
+                                _title.text = context.l.taskPreset(p.key);
                                 _repeat = p.recurrence;
                               });
                             },

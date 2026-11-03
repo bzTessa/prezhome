@@ -2014,5 +2014,116 @@
       }
     }
   },
-  "ppTapersAuto": "Los tápers se apuntan solos en Mi cocina"
+  "ppTapersAuto": "Los tápers se apuntan solos en Mi cocina",
+  "drGoal": "{goal, select, lose{Perder grasa} gain{Ganar músculo} protein{Alta proteína} other{Mantener}}",
+  "@drGoal": {
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "drDiet": "{diet, select, veg{Vegetariana} vegan{Vegana} quick{Rápida} lowcarb{Baja en carbohidratos} other{Sin restricción}}",
+  "@drDiet": {
+    "placeholders": {
+      "diet": {
+        "type": "String"
+      }
+    }
+  },
+  "drFreeOf": "{allergen, select, gluten{Sin gluten (celiaquía)} lactosa{Sin lactosa} huevo{Sin huevo} marisco{Sin marisco} soja{Sin soja} other{Sin frutos secos}}",
+  "@drFreeOf": {
+    "placeholders": {
+      "allergen": {
+        "type": "String"
+      }
+    }
+  },
+  "drAnyType": "Cualquiera",
+  "drNoIdeas": "No se recibieron ideas",
+  "drSaved": "Guardada en tus recetas",
+  "drSearchSuper": "Buscar supermercado...",
+  "drNoSuper": "No encontramos ese súper.",
+  "drTitlePantry": "¿Qué cocino con esto?",
+  "drTitle": "Ideas personalizadas",
+  "drNewIdeas": "Ideas nuevas",
+  "drWithPantry": "Con lo que tengo",
+  "drPantryLoading": "Mirando tu despensa…",
+  "drPantryEmpty": "Tu despensa está vacía: añade lo que tienes en casa para recibir ideas con ello.",
+  "drPantryUse": "Usaremos {count} alimentos de tu despensa, empezando por lo que caduca antes.",
+  "@drPantryUse": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "drCraving": "¿Qué te apetece?",
+  "drSupers": "Supermercados",
+  "drSupersHint": "Opcional. Si no eliges ninguno, las recetas valen para cualquier súper.",
+  "drGoalTitle": "Objetivo",
+  "drDietTitle": "Dieta",
+  "drDietLocked": "Usamos la dieta de tu perfil: {diet}",
+  "@drDietLocked": {
+    "placeholders": {
+      "diet": {
+        "type": "String"
+      }
+    }
+  },
+  "drAllergyTitle": "Intolerancias y alergias",
+  "drAllergyHint": "Nunca saldrán en las recetas.",
+  "drAppliances": "Electrodomésticos",
+  "drMaxCost": "Coste máximo por ración",
+  "drMaxCostHint": "Opcional, p. ej. 2,50",
+  "drSearching": "Buscando ideas…",
+  "drSeeIdeas": "Ver ideas",
+  "drAddedToShop": "{count, plural, =1{Añadido a la lista de la compra} other{Añadidos {count} productos a la compra}}",
+  "@drAddedToShop": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "drAddFail": "No se pudo añadir a la compra. Revisa la conexión e inténtalo de nuevo.",
+  "drProteinShort": "P: {grams}g",
+  "@drProteinShort": {
+    "placeholders": {
+      "grams": {
+        "type": "String"
+      }
+    }
+  },
+  "drCostTip": "Orientativo: precios de tus tickets o, si no, precios medios de supermercado.",
+  "drPerServing": "≈ {price}/ración",
+  "@drPerServing": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "drHave": "Tienes:",
+  "drMissing": "Te falta:",
+  "drAddedShort": "Añadido a la compra",
+  "drAddMissing": "Añadir lo que falta",
+  "drSavedShort": "Guardada",
+  "drSaveToRecipes": "Guardar en mis recetas",
+  "taskKind": "{kind, select, bano{Baño} ropa{Ropa} compra{Compra} basura{Basura} platos{Platos} limpieza{Limpieza} plantas{Plantas} cama{Cama} mascota{Mascota} cocinar{Cocinar} pagos{Pagos} other{Tarea}}",
+  "@taskKind": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "taskPreset": "{preset, select, dishes{Fregar los platos} vacuum{Aspirar} bathroom{Limpiar el baño} laundry{Poner lavadora} trash{Sacar la basura} shopping{Hacer la compra} plants{Regar las plantas} other{Cambiar sábanas}}",
+  "@taskPreset": {
+    "placeholders": {
+      "preset": {
+        "type": "String"
+      }
+    }
+  }
 }
