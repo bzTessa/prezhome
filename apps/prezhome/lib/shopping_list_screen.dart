@@ -281,7 +281,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 isStockPhoto(i.imageUrl) ||
                 isSharablePhoto(i.imageUrl!)))
           i,
-    ].take(25).toList();
+    ].take(60).toList();
     if (todo.isEmpty) return;
     _photosUpgraded = true;
     _homeId()
@@ -290,6 +290,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             homeId,
             todo,
             supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+            onFound: () {
+              if (mounted) _refreshFromRemote();
+            },
           ),
         )
         .then((n) {
@@ -1164,6 +1167,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               homeId,
               added,
               supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+              onFound: () {
+                if (mounted) _refreshFromRemote();
+              },
             )
             .then((n) {
               if (n > 0 && mounted) _reload();
@@ -1802,7 +1808,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 190,
+            // Sin fotos, la tarjeta es solo texto y ocupa menos.
+            height: _view.showPhotos
+                ? 190
+                : MediaQuery.textScalerOf(context).scale(84),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
@@ -1819,13 +1828,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   price: price == null ? null : money(price),
                   added: _justAdded.contains(s.name),
                   onAdd: () => _addUsual(s.name),
-                  photo: FoodImage(
-                    name: s.name,
-                    imageUrl: _photoByName[FoodPhotoService.cacheKey(s.name)],
-                    width: double.infinity,
-                    height: double.infinity,
-                    radius: 10,
-                  ),
+                  photo: _view.showPhotos ? _suggestionPhoto(s.name) : null,
                 );
               },
             ),
@@ -1834,6 +1837,39 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ),
     );
   }
+
+  /// Foto del súper de una sugerencia, como las de la lista: la guardada
+  /// sale ya y, si falta o no vale, se busca en segundo plano (una vez).
+  Widget _suggestionPhoto(String name) {
+    final key = FoodPhotoService.cacheKey(name);
+    if (_suggestionPhotoAsked.add(key)) {
+      _suggestionPhotos = _suggestionPhotos.then((_) async {
+        try {
+          final url = await ProductPhotoResolver(_client).photoFor(
+            homeId: await _homeId(),
+            name: name,
+            supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+          );
+          if (!mounted || url == null || url == _photoByName[key]) return;
+          setState(() => _photoByName = {..._photoByName, key: url});
+        } catch (_) {}
+      });
+    }
+    final url = _photoByName[key];
+    return FoodImage(
+      name: name,
+      imageUrl: isStockPhoto(url) ? null : url,
+      photoOnly: true,
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      radius: 10,
+    );
+  }
+
+  /// Búsquedas de fotos de sugerencias, de una en una (no saturar el súper).
+  final Set<String> _suggestionPhotoAsked = {};
+  Future<void> _suggestionPhotos = Future.value();
 
   /// Añade un producto de "Lo habitual" y deja su chip con el check un
   /// momento, para seguir añadiendo sin perder el sitio.
@@ -1972,6 +2008,40 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// fila con la foto grande.
   List<Widget> _itemWidgets(List<ShoppingListItem> items) {
     if (!_view.grid) return [for (final i in items) _buildRow(i)];
+    Widget tile(ShoppingListItem item) => ShoppingGridTile(
+      key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
+      name: shoppingCleanName(item.name),
+      checked: item.checked,
+      quantityLabel: shoppingQtyLabel(item.quantity, item.unit),
+      price: _linePrice(item),
+      photo: _view.showPhotos ? _photo(item, width: double.infinity) : null,
+      onToggle: () => _toggleChecked(item, !item.checked),
+      onLongPress: () => _openItemActions(item),
+    );
+    // Sin fotos: tarjetas de solo texto, de dos en dos y tan altas como su
+    // contenido (sin el hueco de la foto).
+    if (!_view.showPhotos) {
+      return [
+        for (var i = 0; i < items.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : 10),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: tile(items[i])),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: i + 1 < items.length
+                        ? tile(items[i + 1])
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ];
+    }
     return [
       GridView.count(
         crossAxisCount: 2,
@@ -1981,21 +2051,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
         childAspectRatio: 0.78,
-        children: [
-          for (final item in items)
-            ShoppingGridTile(
-              key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
-              name: shoppingCleanName(item.name),
-              checked: item.checked,
-              quantityLabel: shoppingQtyLabel(item.quantity, item.unit),
-              price: _linePrice(item),
-              photo: _view.showPhotos
-                  ? _photo(item, width: double.infinity)
-                  : null,
-              onToggle: () => _toggleChecked(item, !item.checked),
-              onLongPress: () => _openItemActions(item),
-            ),
-        ],
+        children: [for (final item in items) tile(item)],
       ),
     ];
   }
@@ -2016,6 +2072,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     imageUrl: isStockPhoto(item.imageUrl) ? null : item.imageUrl,
     // Solo fotos, nunca dibujos: si no hay, el hueco liso.
     photoOnly: true,
+    fit: BoxFit.contain,
     size: 42,
     width: width,
     height: width,

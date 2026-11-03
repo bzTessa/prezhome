@@ -101,10 +101,7 @@ class FoodImage extends StatelessWidget {
                   // se reconozca el producto (recortada no se entiende).
                   ? ColoredBox(
                       color: Colors.white,
-                      child: Padding(
-                        padding: EdgeInsets.all(w * 0.06),
-                        child: _network(BoxFit.contain, w),
-                      ),
+                      child: _inset(0.06, _network(BoxFit.contain, w)),
                     )
                   : _network(fit, w)
             : _cozyIllustration(),
@@ -116,7 +113,10 @@ class FoodImage extends StatelessWidget {
   /// genéricas (`product-image`). Se ven enteras, como en el súper online.
   bool get _isPackshot {
     final url = imageUrl ?? '';
-    return url.contains('openfoodfacts') || url.contains('/generic/');
+    // Con contain se pide la foto entera: va sobre blanco, como el envase.
+    return fit == BoxFit.contain ||
+        url.contains('openfoodfacts') ||
+        url.contains('/generic/');
   }
 
   Widget _network(BoxFit boxFit, double w) {
@@ -188,14 +188,22 @@ class FoodImage extends StatelessWidget {
   /// Icono de producto sobre el fondo cálido de su categoría.
   Widget _iconBox(Widget icon) {
     final style = CategoryIcons.styleFor(name, itemType: itemType);
-    return ColoredBox(
-      color: style.background,
-      child: Padding(
-        padding: EdgeInsets.all((width ?? size) * 0.14),
-        child: icon,
-      ),
-    );
+    return ColoredBox(color: style.background, child: _inset(0.14, icon));
   }
+
+  /// Margen proporcional al ancho pintado. Con `width: double.infinity`
+  /// (tarjetas de la cuadrícula) el margen salía infinito y la foto no se veía.
+  Widget _inset(double factor, Widget child) => LayoutBuilder(
+    builder: (context, constraints) {
+      final side = constraints.maxWidth.isFinite
+          ? constraints.maxWidth
+          : (width ?? size);
+      return Padding(
+        padding: EdgeInsets.all(side.isFinite ? side * factor : 0),
+        child: child,
+      );
+    },
+  );
 
   /// Icono vectorial de la categoría (o un spinner mientras carga la foto).
   Widget _categoryIcon({bool loading = false}) {

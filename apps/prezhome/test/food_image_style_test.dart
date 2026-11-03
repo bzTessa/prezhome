@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/services/food_photo_service.dart';
 import 'package:prezhome/theme/app_theme.dart';
 import 'package:prezhome/widgets/food_category_icon.dart';
+import 'package:prezhome/widgets/food_image.dart';
 
 void main() {
   group('CategoryIcons estilo cozy (icono + colores) por categoría', () {
@@ -113,5 +114,38 @@ void main() {
     test('recorta espacios y pasa a minúsculas', () {
       expect(FoodPhotoService.cacheKey('  Jamón '), 'jamon');
     });
+  });
+
+  testWidgets('foto de envase a todo el ancho: margen finito, no infinito', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 160,
+            height: 160,
+            child: FoodImage(
+              name: 'Aceite de sésamo',
+              imageUrl: 'https://example.com/sesamo.jpg',
+              photoOnly: true,
+              fit: BoxFit.contain,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+          ),
+        ),
+      ),
+    );
+    final pads = tester.widgetList<Padding>(
+      find.descendant(
+        of: find.byType(FoodImage),
+        matching: find.byType(Padding),
+      ),
+    );
+    expect(pads, isNotEmpty);
+    for (final p in pads) {
+      expect((p.padding as EdgeInsets).left, closeTo(160 * 0.06, 0.01));
+    }
   });
 }
