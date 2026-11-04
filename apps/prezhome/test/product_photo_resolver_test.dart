@@ -1,7 +1,50 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prezhome/services/food_photo_service.dart';
 import 'package:prezhome/services/product_photo_resolver.dart';
 import 'package:prezhome/services/product_search_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Banco de fotos recipe-photo falso: devuelve [_url] y anota si lo llamaron,
+/// sin tocar Supabase ni la red.
+class _FakePhotos extends FoodPhotoService {
+  _FakePhotos(this._url) : super(SupabaseClient('http://x', 'k'));
+
+  final String? _url;
+  int calls = 0;
+
+  @override
+  Future<String?> resolvePhotoUrl({
+    required String homeId,
+    required String name,
+    String mode = 'ingredient',
+  }) async {
+    calls++;
+    return _url;
+  }
+}
+
+/// Resolver con la vía de catálogo/OFF simulada ([_catalogUrl] + [_price]),
+/// para ejercer el CABLEADO real de resolveAddByNamePhoto (respaldo al banco y
+/// pickImageUrl) sin montar Supabase ni red.
+class _FakeResolver extends ProductPhotoResolver {
+  _FakeResolver({
+    required String? catalogUrl,
+    required double? price,
+    required FoodPhotoService photos,
+  }) : _catalogUrl = catalogUrl,
+       _price = price,
+       super(SupabaseClient('http://x', 'k'), photos: photos);
+
+  final String? _catalogUrl;
+  final double? _price;
+
+  @override
+  Future<({String? url, double? price})> resolveWithPrice({
+    required String homeId,
+    required String name,
+    String? supermarketKey,
+  }) async => (url: _catalogUrl, price: _price);
+}
 
 void main() {
   test('solo se comparten fotos de Open Food Facts', () {
@@ -90,6 +133,71 @@ void main() {
       expect(pickImageUrl(), isNull);
       expect(pickImageUrl(catalog: '', fallback: '', previous: ''), isNull);
     });
+  });
+
+  group('resolveAddByNamePhoto (cableado del alta por nombre)', () {
+    test(
+      'con foto de catálogo gana el catálogo y NO se llama al banco',
+      () async {
+        final photos = _FakePhotos('https://banco/queso-azul.jpg');
+        final resolver = _FakeResolver(
+          catalogUrl: 'https://prod-bonarea/queso-azul.jpg',
+          price: 3.45,
+          photos: photos,
+        );
+        final out = await resolver.resolveAddByNamePhoto(
+          homeId: 'h1',
+          name: 'Queso azul',
+          previous: 'https://previa/x.jpg',
+        );
+        expect(out.imageUrl, 'https://prod-bonarea/queso-azul.jpg');
+        expect(out.price, 3.45);
+        // El catálogo trajo foto: el banco no se llega a consultar.
+        expect(photos.calls, 0);
+      },
+    );
+
+    test(
+      'sin foto de catálogo, gana el banco (regresión del PR #259)',
+      () async {
+        // Este es el bug real: "Queso azul" sin foto de catálogo debía caer al
+        // banco recipe-photo, no quedarse con la ilustración cozy. Si alguien
+        // quitara el respaldo o el pickImageUrl del cableado, este test falla.
+        final photos = _FakePhotos('https://banco/queso-azul.jpg');
+        final resolver = _FakeResolver(
+          catalogUrl: null,
+          price: null,
+          photos: photos,
+        );
+        final out = await resolver.resolveAddByNamePhoto(
+          homeId: 'h1',
+          name: 'Queso azul',
+          previous: null,
+        );
+        expect(out.imageUrl, 'https://banco/queso-azul.jpg');
+        // Sin catálogo sí se consulta el banco (una sola vez).
+        expect(photos.calls, 1);
+      },
+    );
+
+    test(
+      'sin catálogo ni banco, se conserva la foto previa del item',
+      () async {
+        final photos = _FakePhotos(null);
+        final resolver = _FakeResolver(
+          catalogUrl: null,
+          price: null,
+          photos: photos,
+        );
+        final out = await resolver.resolveAddByNamePhoto(
+          homeId: 'h1',
+          name: 'Queso azul',
+          previous: 'https://previa/queso.jpg',
+        );
+        expect(out.imageUrl, 'https://previa/queso.jpg');
+        expect(photos.calls, 1);
+      },
+    );
   });
 
   test('un dibujo guardado nunca vale: se busca la foto del súper', () async {
