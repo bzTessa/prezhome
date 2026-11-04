@@ -283,13 +283,18 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         // cualquier fallo conservamos la foto que tuviera el item.
         try {
           final keys = await HomeSupermarkets(Supabase.instance.client).load();
+          // El cableado (catálogo/OFF -> banco recipe-photo -> foto previa)
+          // vive en resolveAddByNamePhoto para poder probarlo sin Supabase; no
+          // repliques aquí la cadena de respaldo ni el pickImageUrl: romperías
+          // la regla "la foto real manda, la ilustración es el último recurso".
           final resolved = await ProductPhotoResolver(Supabase.instance.client)
-              .resolveWithPrice(
+              .resolveAddByNamePhoto(
                 homeId: homeId,
                 name: name,
                 supermarketKey: keys.keys.isEmpty ? null : keys.keys.first,
+                previous: editing?.imageUrl,
               );
-          imageUrl = resolved.url ?? editing?.imageUrl;
+          imageUrl = resolved.imageUrl;
           // El precio real del catálogo se recuerda para que el "≈" salga como
           // en el buscador (mismo número que "… € aprox.").
           final price = resolved.price;

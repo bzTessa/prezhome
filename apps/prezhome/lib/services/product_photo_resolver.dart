@@ -6,6 +6,16 @@ import 'food_photo_service.dart';
 import 'home_country.dart';
 import 'product_search_service.dart';
 
+/// Elige la URL de foto a usar en el alta por nombre, respetando la prioridad:
+/// catálogo/OFF ([catalog]) manda, luego el banco de fotos recipe-photo
+/// ([fallback]) y, en último término, la foto previa del item ([previous]).
+/// Las cadenas vacías se tratan como null para no pintar un hueco. Devuelve
+/// null solo si no hay ninguna foto por ninguna vía. Función PURA, sin efectos.
+String? pickImageUrl({String? catalog, String? fallback, String? previous}) {
+  String? clean(String? url) => (url == null || url.isEmpty) ? null : url;
+  return clean(catalog) ?? clean(fallback) ?? clean(previous);
+}
+
 /// Foto de banco de imágenes (Unsplash, Pexels): en la compra salen
 /// demasiado al azar, así que no se usan para productos.
 bool isStockPhoto(String? url) {
@@ -47,13 +57,58 @@ class ProductPhotoResolver {
   ProductPhotoResolver(
     this._client, {
     ProductSearchService? search,
+    FoodPhotoService? photos,
     Duration throttleWait = const Duration(seconds: 8),
   }) : _search = search ?? ProductSearchService(),
+       _photos = photos ?? FoodPhotoService(_client),
        _throttleWait = throttleWait;
 
   final SupabaseClient _client;
   final ProductSearchService _search;
+  final FoodPhotoService _photos;
   final Duration _throttleWait;
+
+  /// Decide la foto del alta POR NOMBRE combinando las tres vías con su
+  /// prioridad real (la misma que ejercía el `else if` de la pantalla): el
+  /// catálogo/OFF de [resolveWithPrice] manda; si no da foto se cae al banco de
+  /// fotos recipe-photo ([FoodPhotoService.resolvePhotoUrl], modo 'ingredient')
+  /// y, en último recurso, se conserva la foto [previous] del item. Devuelve la
+  /// URL elegida (o null) y el precio real de catálogo para recordarlo.
+  ///
+  /// El respaldo al banco SOLO se consulta cuando el catálogo/OFF no trae foto,
+  /// así un producto con foto oficial nunca dispara la segunda búsqueda ni se
+  /// la pisa el banco. Este método concentra el CABLEADO (antes inline en la
+  /// pantalla) para poder probarlo sin montar Supabase: un test puede verificar
+  /// que, sin foto de catálogo, acaba ganando la del banco.
+  Future<({String? imageUrl, double? price})> resolveAddByNamePhoto({
+    required String homeId,
+    required String name,
+    String? supermarketKey,
+    String? previous,
+  }) async {
+    final resolved = await resolveWithPrice(
+      homeId: homeId,
+      name: name,
+      supermarketKey: supermarketKey,
+    );
+    // Si el catálogo/OFF no da foto, caemos al banco de fotos recipe-photo
+    // (como antes del PR #259) antes de conservar la previa.
+    final fallback = resolved.url == null
+        ? await _photos.resolvePhotoUrl(
+            homeId: homeId,
+            name: name,
+            mode: 'ingredient',
+          )
+        : null;
+    return (
+      imageUrl: pickImageUrl(
+        catalog: resolved.url,
+        fallback: fallback,
+        previous: previous,
+      ),
+      price: resolved.price,
+    );
+  }
 
   static final Map<String, bool> _checked = {};
 
