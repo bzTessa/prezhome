@@ -533,6 +533,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get shopSearchStore => 'Procurar no supermercado';
 
   @override
+  String get shopAddDetailed => 'Adicionar com detalhes';
+
+  @override
   String get moreOptions => 'Mais opções';
 
   @override

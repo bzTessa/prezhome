@@ -235,7 +235,7 @@ class ShoppingQuickAddBar extends StatefulWidget {
   /// Busca el texto escrito entre los productos del súper (con foto).
   final ValueChanged<String>? onSearch;
 
-  /// Abre el formulario completo (tipo, cantidad, unidad).
+  /// Añade con detalles: abre el formulario completo (tipo, cantidad, unidad).
   final VoidCallback onMore;
 
   @override
@@ -261,15 +261,42 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
     _focus.requestFocus();
   }
 
+  /// Fila de una acción del menú: icono + texto que puede encoger sin
+  /// desbordar en pantallas estrechas.
+  Widget _menuRow(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: AppColors.woodDark),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+      ],
+    );
+  }
+
+  /// Busca en el súper el texto escrito (o abre el buscador vacío).
+  void _search() {
+    if (widget.onSearch == null) return;
+    final text = _controller.text.trim();
+    _controller.clear();
+    widget.onSearch!(text);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: AppTheme.tactileDecoration(radius: AppRadius.md, shadow: 2),
-      padding: const EdgeInsets.only(left: AppSpacing.md),
+      padding: const EdgeInsets.only(left: AppSpacing.xs),
       child: Row(
         children: [
-          Icon(Icons.add_rounded, color: AppColors.woodDark),
-          const SizedBox(width: AppSpacing.sm),
+          // El "+" AÑADE de verdad lo escrito (igual que pulsar Intro). Vacío
+          // es un no-op seguro.
+          IconButton(
+            tooltip: context.l.shopAddProduct,
+            onPressed: _submit,
+            icon: const Icon(Icons.add_rounded),
+            color: AppColors.woodDark,
+          ),
           Expanded(
             child: TextField(
               controller: _controller,
@@ -291,19 +318,38 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
           if (widget.onSearch != null)
             IconButton(
               tooltip: context.l.shopSearchStore,
-              onPressed: () {
-                final text = _controller.text.trim();
-                _controller.clear();
-                widget.onSearch!(text);
-              },
+              onPressed: _search,
               icon: const Icon(Icons.storefront_rounded),
               color: AppColors.woodDark,
             ),
-          IconButton(
+          // Menú de acciones CLARAS con nombre (ya no un formulario sin
+          // contexto): buscar en el súper y añadir con detalles.
+          PopupMenuButton<String>(
             tooltip: context.l.moreOptions,
-            onPressed: widget.onMore,
             icon: const Icon(Icons.more_horiz_rounded),
-            color: AppColors.inkMuted,
+            color: AppColors.cream,
+            onSelected: (value) {
+              switch (value) {
+                case 'search':
+                  _search();
+                case 'details':
+                  widget.onMore();
+              }
+            },
+            itemBuilder: (context) => [
+              if (widget.onSearch != null)
+                PopupMenuItem(
+                  value: 'search',
+                  child: _menuRow(
+                    Icons.storefront_rounded,
+                    context.l.shopSearchStore,
+                  ),
+                ),
+              PopupMenuItem(
+                value: 'details',
+                child: _menuRow(Icons.tune_rounded, context.l.shopAddDetailed),
+              ),
+            ],
           ),
         ],
       ),

@@ -530,6 +530,9 @@ class AppLocalizationsBs extends AppLocalizations {
   String get shopSearchStore => 'Traži u supermarketu';
 
   @override
+  String get shopAddDetailed => 'Dodaj s detaljima';
+
+  @override
   String get moreOptions => 'Više opcija';
 
   @override

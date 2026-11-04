@@ -309,8 +309,8 @@ class _ProductTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  // Solo fotos reales: los dibujos genéricos no dicen qué
-                  // producto es.
+                  // Prioridad a la foto real del catálogo; sin ninguna, la
+                  // ilustración cozy de categoría en vez de un recuadro blanco.
                   child: FoodImage(
                     name: p.name,
                     imageUrl: p.imageUrl,
@@ -318,6 +318,7 @@ class _ProductTile extends StatelessWidget {
                     radius: 14,
                     fit: BoxFit.contain,
                     photoOnly: true,
+                    illustrationFallback: true,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),

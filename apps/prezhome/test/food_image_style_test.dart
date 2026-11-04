@@ -116,6 +116,92 @@ void main() {
     });
   });
 
+  testWidgets(
+    'photoOnly + illustrationFallback sin url pinta la ilustración de categoría, '
+    'no un hueco en blanco',
+    (tester) async {
+      // "xyzzy" no tiene icono propio ni dibujo: cae en el icono de categoría
+      // (otros -> carrito), nunca en un SizedBox.expand vacío.
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: FoodImage(
+                name: 'xyzzy',
+                photoOnly: true,
+                illustrationFallback: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: find.byType(FoodImage),
+          matching: find.byIcon(FoodCategory.otros.icon),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'photoOnly sin illustrationFallback y sin url sigue dejando hueco liso',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: FoodImage(name: 'xyzzy', photoOnly: true),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      // Sin la opción: ni foto ni icono de categoría (hueco liso de antes).
+      expect(find.byType(Image), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(FoodImage),
+          matching: find.byIcon(FoodCategory.otros.icon),
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'con url real, photoOnly + illustrationFallback pinta la foto (la foto '
+    'manda sobre la ilustración)',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: FoodImage(
+                name: 'leche',
+                imageUrl: 'https://example.com/leche.jpg',
+                photoOnly: true,
+                illustrationFallback: true,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      );
+      // Mientras carga hay Image.network; nunca el icono de categoría como
+      // contenido final cuando SÍ hay foto real.
+      expect(find.byType(Image), findsOneWidget);
+    },
+  );
+
   testWidgets('foto de envase a todo el ancho: margen finito, no infinito', (
     tester,
   ) async {

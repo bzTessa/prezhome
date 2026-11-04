@@ -32,6 +32,62 @@ void main() {
     expect(find.text('2 kg tomates'), findsNothing);
   });
 
+  testWidgets('el botón + añade el texto escrito y es no-op si está vacío', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    await tester.pumpWidget(
+      _host(ShoppingQuickAddBar(onSubmit: sent.add, onMore: () {})),
+    );
+
+    // Vacío: el + no añade nada.
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pump();
+    expect(sent, isEmpty);
+
+    // Con texto: el + añade igual que pulsar Intro y limpia el campo.
+    await tester.enterText(find.byType(TextField), 'cerveza');
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pump();
+    expect(sent, ['cerveza']);
+    expect(find.text('cerveza'), findsNothing);
+  });
+
+  testWidgets(
+    'el menú ··· ofrece acciones con nombre (buscar / con detalles)',
+    (tester) async {
+      var searched = '';
+      var moreTaps = 0;
+      await tester.pumpWidget(
+        _host(
+          ShoppingQuickAddBar(
+            onSubmit: (_) {},
+            onMore: () => moreTaps++,
+            onSearch: (t) => searched = t,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+      // Acciones claras con su nombre, no un formulario sin contexto.
+      expect(find.text('Buscar en el súper'), findsOneWidget);
+      expect(find.text('Añadir con detalles'), findsOneWidget);
+
+      await tester.tap(find.text('Añadir con detalles'));
+      await tester.pumpAndSettle();
+      expect(moreTaps, 1);
+
+      // El buscador del menú usa el texto escrito.
+      await tester.enterText(find.byType(TextField), 'leche');
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Buscar en el súper'));
+      await tester.pumpAndSettle();
+      expect(searched, 'leche');
+    },
+  );
+
   testWidgets('la fila marca al tocar y muestra la cantidad', (tester) async {
     var toggles = 0;
     await tester.pumpWidget(

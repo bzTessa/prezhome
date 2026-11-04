@@ -816,6 +816,12 @@ abstract class AppLocalizations {
   /// **'Buscar en el súper'**
   String get shopSearchStore;
 
+  /// No description provided for @shopAddDetailed.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir con detalles'**
+  String get shopAddDetailed;
+
   /// No description provided for @moreOptions.
   ///
   /// In es, this message translates to:

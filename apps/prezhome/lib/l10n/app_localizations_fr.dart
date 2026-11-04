@@ -535,6 +535,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shopSearchStore => 'Chercher au supermarché';
 
   @override
+  String get shopAddDetailed => 'Ajouter avec détails';
+
+  @override
   String get moreOptions => 'Plus d\'options';
 
   @override
