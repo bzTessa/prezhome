@@ -6,6 +6,16 @@ import 'food_photo_service.dart';
 import 'home_country.dart';
 import 'product_search_service.dart';
 
+/// Elige la URL de foto a usar en el alta por nombre, respetando la prioridad:
+/// catálogo/OFF ([catalog]) manda, luego el banco de fotos recipe-photo
+/// ([fallback]) y, en último término, la foto previa del item ([previous]).
+/// Las cadenas vacías se tratan como null para no pintar un hueco. Devuelve
+/// null solo si no hay ninguna foto por ninguna vía. Función PURA, sin efectos.
+String? pickImageUrl({String? catalog, String? fallback, String? previous}) {
+  String? clean(String? url) => (url == null || url.isEmpty) ? null : url;
+  return clean(catalog) ?? clean(fallback) ?? clean(previous);
+}
+
 /// Foto de banco de imágenes (Unsplash, Pexels): en la compra salen
 /// demasiado al azar, así que no se usan para productos.
 bool isStockPhoto(String? url) {

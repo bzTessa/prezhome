@@ -165,6 +165,53 @@ void main() {
         bestCatalogMatch('cerveza', products)!.imageUrl,
       );
     });
+
+    test(
+      'confidentProductPhoto no pierde foto si el top por tie-break no la trae',
+      () {
+        // El top elegido por bestCatalogMatch es el de catálogo con precio
+        // (sin foto); otro producto empatado en score sí trae foto de OFF.
+        // confidentProductPhoto debe devolver esa foto, no null.
+        const products = [
+          SupermarketProduct(code: 'mercadona:1', name: 'Leche', price: 1.05),
+          SupermarketProduct(
+            code: 'off:9',
+            name: 'Leche',
+            imageUrl:
+                'https://images.openfoodfacts.org/images/products/111/front_es.3.200.jpg',
+          ),
+        ];
+        // El top por tie-break es el que tiene precio (sin foto).
+        expect(bestCatalogMatch('leche', products)!.code, 'mercadona:1');
+        expect(bestCatalogMatch('leche', products)!.imageUrl, isNull);
+        // Pero la foto se encuentra en el otro empatado: nunca menos fotos.
+        expect(
+          confidentProductPhoto('leche', products),
+          'https://images.openfoodfacts.org/images/products/111/front_es.3.200.jpg',
+        );
+      },
+    );
+
+    test('confidentProductPhoto devuelve la foto del top cuando la trae', () {
+      const products = [
+        SupermarketProduct(
+          code: 'mercadona:1',
+          name: 'Leche',
+          price: 1.05,
+          imageUrl: 'https://prod-mercadona.imgix.net/leche.jpg',
+        ),
+        SupermarketProduct(
+          code: 'off:9',
+          name: 'Leche',
+          imageUrl:
+              'https://images.openfoodfacts.org/images/products/111/front_es.3.200.jpg',
+        ),
+      ];
+      expect(
+        confidentProductPhoto('leche', products),
+        'https://prod-mercadona.imgix.net/leche.jpg',
+      );
+    });
   });
 
   group('ProductSearchService.search', () {

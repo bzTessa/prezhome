@@ -289,7 +289,22 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 name: name,
                 supermarketKey: keys.keys.isEmpty ? null : keys.keys.first,
               );
-          imageUrl = resolved.url ?? editing?.imageUrl;
+          // Si el catálogo/OFF no da foto, caemos al banco de fotos
+          // recipe-photo (como antes del PR #259) antes de conservar la previa.
+          final fallback = resolved.url == null
+              ? await FoodPhotoService(
+                  Supabase.instance.client,
+                ).resolvePhotoUrl(
+                  homeId: homeId,
+                  name: name,
+                  mode: 'ingredient',
+                )
+              : null;
+          imageUrl = pickImageUrl(
+            catalog: resolved.url,
+            fallback: fallback,
+            previous: editing?.imageUrl,
+          );
           // El precio real del catálogo se recuerda para que el "≈" salga como
           // en el buscador (mismo número que "… € aprox.").
           final price = resolved.price;
