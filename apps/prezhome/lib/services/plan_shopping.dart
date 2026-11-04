@@ -326,12 +326,15 @@ class PlanShoppingService {
           name: item.name,
           supermarketKey: store,
         );
-        // Sin producto claro, mejor la ilustración que una foto que no es.
-        if (url == null && !wrong) continue;
-        if (url == current) continue;
+        // Nunca se borra una foto buena con null: aunque la actual parezca de
+        // otro producto (wrong), si la búsqueda no encuentra nada se deja la
+        // que había (una foto real aproximada es mejor que un hueco blanco; la
+        // persona puede cambiarla a mano). Solo se escribe una foto nueva.
+        final next = photoUpdateOrNull(current, url);
+        if (next == null) continue;
         await _client
             .from('shopping_list_items')
-            .update({'image_url': url})
+            .update({'image_url': next})
             .eq('id', item.id!);
         found++;
         // Cada foto se enseña según llega, sin esperar al resto.

@@ -42,6 +42,7 @@ import 'widgets/product_search_sheet.dart';
 import 'widgets/shopping/shopping_parts.dart';
 import 'widgets/tactile_button.dart';
 import 'widgets/animations/app_transitions.dart';
+import 'utils/debouncer.dart';
 import 'utils/friendly_error.dart';
 import 'utils/money.dart';
 import 'l10n/l10n.dart';
@@ -80,6 +81,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // Los avisos en vivo llegan a ráfagas (p. ej. al poner fotos): se agrupan
   // en un solo refresco, y nunca se solapan dos refrescos.
   Timer? _realtimeDebounce;
+
+  // Convergencia tras ráfagas de +/- (o toggles): el cambio se ve y se
+  // persiste al instante; el reload/refresco de fondo se agrupa en una sola
+  // pasada cuando la persona deja de tocar (anti-tirones del stepper).
+  final Debouncer _converge = Debouncer();
   bool _refreshing = false;
   bool _refreshAgain = false;
   bool _generating = false;
@@ -594,6 +600,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   @override
   void dispose() {
     _realtimeDebounce?.cancel();
+    _converge.cancel();
     final channel = _channel;
     if (channel != null) {
       _client.removeChannel(channel);
@@ -619,6 +626,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     });
     // Convergencia con el servidor y drenado en segundo plano.
     _refreshFromRemote();
+  }
+
+  /// Agrupa la convergencia con el servidor tras ráfagas de escrituras rápidas
+  /// (p. ej. subir/bajar la cantidad varias veces seguidas). El cambio ya se ha
+  /// visto al instante (_showChanged) y persistido en la cola offline; aquí solo
+  /// coalescemos el _reload para que NO se re-lea/refresque la lista entera en
+  /// cada toque (eso era lo que daba tirones). Varias llamadas seguidas
+  /// programan un único _reload, [delay] después del último toque.
+  void _scheduleConverge() {
+    _converge.run(() {
+      if (mounted) _reload();
+    });
   }
 
   /// Obtiene el home_id del usuario autenticado leyendo su perfil.
@@ -656,6 +675,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Future<void> _setQuantity(ShoppingListItem item, double quantity) async {
     if (item.id == null) return;
     HapticFeedback.selectionClick();
+    // Se ve al instante y se persiste en la cola offline. El reload/refresco de
+    // fondo NO va por toque: se agrupa (debounce) para que subir/bajar varias
+    // veces seguidas sea fluido y no re-lea la lista entera en cada +/-.
     _showChanged(item, {'quantity': quantity});
     try {
       await _repo.applyLocalWrite(
@@ -667,7 +689,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           seq: _nextSeq(),
         ),
       );
-      await _reload();
+      _scheduleConverge();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -711,7 +733,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     try {
       final homeId = await _homeId();
       await ShoppingCheckout().setBought(item, value, homeId: homeId);
-      await _reload();
+      // El cambio ya se ve; la convergencia de fondo se agrupa para que marcar
+      // varios seguidos sea fluido (no un reload de la lista entera por toque).
+      _scheduleConverge();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1067,15 +1091,28 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           manual: true,
         );
       } else {
-        // Foto del envase en Open Food Facts (o la ya guardada). Si tarda,
-        // el producto entra sin foto y se le pone después.
-        imageUrl = await ProductPhotoResolver(_client)
-            .photoFor(
+        // Foto del envase del catálogo (o la ya guardada) Y el precio real del
+        // producto más probable, como el buscador manual. Si tarda, el
+        // producto entra sin foto y se le pone después.
+        final resolved = await ProductPhotoResolver(_client)
+            .resolveWithPrice(
               homeId: homeId,
               name: name,
               supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
             )
-            .timeout(const Duration(seconds: 4), onTimeout: () => null);
+            .timeout(
+              const Duration(seconds: 4),
+              onTimeout: () => (url: null, price: null),
+            );
+        imageUrl = resolved.url;
+        // El precio real del catálogo se recuerda para que el "≈" salga como
+        // en el buscador (p. ej. "Cerveza Heineken · 0,68 € aprox.").
+        final price = resolved.price;
+        if (price != null) {
+          final mem = PriceMemory(_client);
+          await mem.rememberCatalogPrice(homeId, name, price);
+          _prices = await mem.loadAll(homeId);
+        }
       }
       // Alta OPTIMISTA con id temporal local y created_at = ahora: la fila
       // aparece en la lista al instante (ordenada por fecha de creación) y se
@@ -1860,6 +1897,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       name: name,
       imageUrl: isStockPhoto(url) ? null : url,
       photoOnly: true,
+      illustrationFallback: true,
       fit: BoxFit.contain,
       width: double.infinity,
       height: double.infinity,
@@ -2070,8 +2108,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     itemType: item.itemType,
     // Las fotos de banco salen al azar: hueco hasta que llegue la del súper.
     imageUrl: isStockPhoto(item.imageUrl) ? null : item.imageUrl,
-    // Solo fotos, nunca dibujos: si no hay, el hueco liso.
+    // Prioridad a la foto real del catálogo; si no hay ninguna, la ilustración
+    // cozy de categoría como último recurso (nunca un recuadro blanco).
     photoOnly: true,
+    illustrationFallback: true,
     fit: BoxFit.contain,
     size: 42,
     width: width,

@@ -22,9 +22,9 @@ class _Offline implements RemoteSender {
 }
 
 void main() {
-  // Cerrar "Añadir a la lista" (botón ···) daba pantalla roja
-  // '_dependents.isEmpty': se liberaban los campos antes de que el diálogo
-  // terminara de cerrarse.
+  // Cerrar "Añadir a la lista" (menú ··· -> "Añadir con detalles") daba
+  // pantalla roja '_dependents.isEmpty': se liberaban los campos antes de que
+  // el diálogo terminara de cerrarse.
   testWidgets('cancelar el diálogo de añadir no rompe la pantalla', (
     tester,
   ) async {
@@ -47,6 +47,10 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    // El menú ofrece la acción con nombre; esa abre el formulario completo.
+    await tester.tap(find.text('Añadir con detalles'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Añadir a la lista'), findsOneWidget);

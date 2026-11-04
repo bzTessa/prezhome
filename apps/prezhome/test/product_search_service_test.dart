@@ -110,6 +110,63 @@ void main() {
     expect(catalogSearchOrder('conad'), ['lidl_it']);
   });
 
+  group('bestCatalogMatch', () {
+    test('elige el producto de catálogo que es justo lo buscado', () {
+      final best = bestCatalogMatch('cerveza', const [
+        SupermarketProduct(
+          code: 'mercadona:1',
+          name: 'Cerveza Heineken',
+          price: 0.68,
+          imageUrl: 'https://prod-mercadona.imgix.net/heineken.jpg',
+        ),
+        SupermarketProduct(code: 'mercadona:2', name: 'Patatas fritas'),
+      ]);
+      expect(best, isNotNull);
+      expect(best!.name, 'Cerveza Heineken');
+      expect(best.price, 0.68);
+      expect(best.imageUrl, 'https://prod-mercadona.imgix.net/heineken.jpg');
+    });
+
+    test('devuelve null si nada encaja con lo buscado', () {
+      final best = bestCatalogMatch('cerveza', const [
+        SupermarketProduct(code: 'mercadona:1', name: 'Agua mineral'),
+        SupermarketProduct(code: 'mercadona:2', name: 'Zumo de naranja'),
+      ]);
+      expect(best, isNull);
+    });
+
+    test('a igualdad de puntuación, gana el que trae precio y foto', () {
+      final best = bestCatalogMatch('leche', const [
+        // Mismo score (0 palabras de más) pero sin precio ni foto.
+        SupermarketProduct(code: 'off:1', name: 'Leche'),
+        SupermarketProduct(
+          code: 'mercadona:1',
+          name: 'Leche',
+          price: 1.05,
+          imageUrl: 'https://prod-mercadona.imgix.net/leche.jpg',
+        ),
+      ]);
+      expect(best, isNotNull);
+      expect(best!.code, 'mercadona:1');
+      expect(best.price, 1.05);
+    });
+
+    test('confidentProductPhoto usa el mismo producto más probable', () {
+      const products = [
+        SupermarketProduct(
+          code: 'mercadona:1',
+          name: 'Cerveza Heineken',
+          price: 0.68,
+          imageUrl: 'https://prod-mercadona.imgix.net/heineken.jpg',
+        ),
+      ];
+      expect(
+        confidentProductPhoto('cerveza', products),
+        bestCatalogMatch('cerveza', products)!.imageUrl,
+      );
+    });
+  });
+
   group('ProductSearchService.search', () {
     test('si el súper no tiene resultados, busca en todos', () async {
       final calls = <Uri>[];

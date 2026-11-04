@@ -534,6 +534,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopSearchStore => 'Search the supermarket';
 
   @override
+  String get shopAddDetailed => 'Add with details';
+
+  @override
   String get moreOptions => 'More options';
 
   @override

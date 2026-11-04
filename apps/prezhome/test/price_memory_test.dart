@@ -96,6 +96,39 @@ void main() {
       expect(est.priced, 2);
     });
 
+    test('el precio real del catálogo gana al aproximado por categoría', () {
+      // ApproxPrice inventa ~0,60 € para "leche" (lácteos). El precio real del
+      // catálogo (recordado como muestra, samples:0) debe ganarle.
+      final aprox = ApproxPrice.estimate('Leche', 1, null);
+      expect(aprox, isNotNull);
+      final est = PriceMemory.estimateCost(
+        [(name: 'Leche', quantity: 1, unit: 'ud')],
+        {
+          'leche': const ProductPrice(
+            nameNormalized: 'leche',
+            displayName: 'Cerveza Heineken',
+            lastUnitPrice: 0.68,
+            avgUnitPrice: 0.68,
+            samples: 0,
+          ),
+        },
+      );
+      expect(est.total, closeTo(0.68, 0.001));
+      expect(est.total, isNot(closeTo(aprox!, 0.001)));
+    });
+
+    test(
+      'sin precio de catálogo ni ticket, el aproximado es el último recurso',
+      () {
+        final aprox = ApproxPrice.estimate('Leche', 1, null)!;
+        final est = PriceMemory.estimateCost([
+          (name: 'Leche', quantity: 1, unit: null),
+        ], const {});
+        expect(est.total, closeTo(aprox, 0.001));
+        expect(est.priced, 1);
+      },
+    );
+
     test('la clave normaliza acentos/mayúsculas', () {
       // 'Plátano' normaliza a 'platano'; si no está, no cuenta.
       final est = PriceMemory.estimateCost([

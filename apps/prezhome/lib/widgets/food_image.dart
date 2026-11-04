@@ -22,6 +22,11 @@ import 'product_icons.dart';
 ///
 /// Degrada con elegancia: sin clave de Unsplash (o sin foto cacheada) todos los
 /// items se ven con su ilustración cozy y nada se rompe.
+///
+/// En modo [photoOnly] (lista de la compra, despensa, buscador) la foto real
+/// del catálogo tiene prioridad absoluta; con [illustrationFallback] true, si
+/// no existe foto alguna, se pinta la ilustración cozy de categoría como último
+/// recurso en vez de un recuadro blanco.
 class FoodImage extends StatelessWidget {
   /// Nombre del producto (base para inferir la categoría de la ilustración).
   final String name;
@@ -51,8 +56,17 @@ class FoodImage extends StatelessWidget {
   final bool forceIllustration;
 
   /// Solo la foto real: se enseña aunque el producto sea genérico y, si no
-  /// hay, queda el hueco liso en vez del dibujo (buscador, iconos apagados).
+  /// hay, se cae a la ilustración cozy de categoría SOLO cuando
+  /// [illustrationFallback] es true; si es false queda el hueco liso (buscador,
+  /// iconos apagados).
   final bool photoOnly;
+
+  /// En modo [photoOnly], si no hay foto real, muestra la ilustración cozy de
+  /// categoría (icono propio / dibujo / icono de categoría) como ÚLTIMO RECURSO
+  /// en vez de dejar un recuadro blanco vacío. La foto real del catálogo SIEMPRE
+  /// tiene prioridad: la ilustración solo aparece cuando no existe foto alguna.
+  /// Por defecto false para no cambiar el comportamiento de los demás usos.
+  final bool illustrationFallback;
 
   /// Ajuste de la foto. Las fotos de envase del súper se ven mejor enteras
   /// (contain); las de alimentos, recortadas (cover).
@@ -69,6 +83,7 @@ class FoodImage extends StatelessWidget {
     this.radius = 14,
     this.forceIllustration = false,
     this.photoOnly = false,
+    this.illustrationFallback = false,
     this.fit = BoxFit.cover,
   });
 
@@ -156,7 +171,10 @@ class FoodImage extends StatelessWidget {
   /// spinner sobre el fondo de la categoría.
   Widget _cozyIllustration({bool loading = false}) {
     if (loading) return _categoryIcon(loading: true);
-    if (photoOnly) return const SizedBox.expand();
+    // En photoOnly sin foto real: la ilustración cozy es el ÚLTIMO recurso
+    // (nunca un recuadro blanco) cuando se pide explícitamente; si no, hueco
+    // liso como antes.
+    if (photoOnly && !illustrationFallback) return const SizedBox.expand();
     final asset = ProductIcons.assetFor(name);
     if (asset != null) {
       return _iconBox(Image.asset(asset, fit: BoxFit.contain));

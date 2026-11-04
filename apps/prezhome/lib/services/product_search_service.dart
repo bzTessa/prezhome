@@ -326,9 +326,44 @@ String? offBarcodeFromUrl(String url) {
   return code.isEmpty ? null : code;
 }
 
+/// Producto más probable para [query] de entre [products]: el mismo que
+/// enseña el buscador manual ("Productos de Mercadona"). Usa el MISMO orden
+/// (rankProducts) y exige que el primero sea claramente lo buscado
+/// (isProductFor, score<=3). Null si nada encaja. Entre los que empatan en
+/// puntuación gana el que trae precio y foto reales del catálogo, para que el
+/// precio "≈" y la foto automática salgan siempre que el catálogo los tenga.
+/// Función PURA, sin efectos.
+SupermarketProduct? bestCatalogMatch(
+  String query,
+  List<SupermarketProduct> products,
+) {
+  final ranked = rankProducts(query, products);
+  if (ranked.isEmpty || !isProductFor(query, ranked.first)) return null;
+  final topScore = productMatchScore(query, ranked.first);
+  // Entre los empatados a la mejor puntuación, se prefiere uno con precio Y
+  // foto; si no, uno con precio; si no, el primero del orden.
+  bool priced(SupermarketProduct p) => p.price != null;
+  bool photoed(SupermarketProduct p) => (p.imageUrl ?? '').isNotEmpty;
+  final tied = [
+    for (final p in ranked)
+      if (isProductFor(query, p) && productMatchScore(query, p) == topScore) p,
+  ];
+  for (final p in tied) {
+    if (priced(p) && photoed(p)) return p;
+  }
+  for (final p in tied) {
+    if (priced(p)) return p;
+  }
+  return ranked.first;
+}
+
 /// Foto para [query] solo si hay un producto que es claramente eso (con foto
 /// y, como mucho, 3 palabras de más). Mejor sin foto que con una que no es.
 String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
+  final best = bestCatalogMatch(query, products);
+  if (best != null && (best.imageUrl ?? '').isNotEmpty) return best.imageUrl;
+  // El más probable puede no traer foto (p. ej. OFF sin imagen): se busca el
+  // primer producto que es eso y sí tiene foto, respetando el orden.
   for (final p in rankProducts(query, products)) {
     if (!isProductFor(query, p)) return null;
     if ((p.imageUrl ?? '').isNotEmpty) return p.imageUrl;

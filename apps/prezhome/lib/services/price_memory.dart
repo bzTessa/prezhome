@@ -145,6 +145,46 @@ class PriceMemory {
     }
   }
 
+  /// Recuerda el precio real del catálogo del súper para [name] (el que
+  /// enseña el buscador como "… € aprox."). Se guarda en product_prices como
+  /// una muestra, así que estimateCost lo usa luego como precio real con el
+  /// mismo "≈". No pisa un precio aprendido de tickets que tenga más muestras:
+  /// solo rellena cuando aún no hay nada (o solo este mismo catálogo).
+  /// Best-effort: nunca lanza hacia la UI.
+  Future<void> rememberCatalogPrice(
+    String homeId,
+    String name,
+    double price,
+  ) async {
+    if (homeId.isEmpty || price <= 0) return;
+    final key = keyFor(name);
+    if (key.isEmpty) return;
+    try {
+      final existing = await _client
+          .from(_table)
+          .select('samples')
+          .eq('home_id', homeId)
+          .eq('name_normalized', key)
+          .maybeSingle();
+      // Si ya hay precio del hogar (tickets), no se pisa: ese manda.
+      if (existing != null &&
+          ((existing['samples'] as num?)?.toInt() ?? 0) > 0) {
+        return;
+      }
+      await _client.from(_table).upsert({
+        'home_id': homeId,
+        'name_normalized': key,
+        'display_name': name,
+        'last_unit_price': price,
+        'avg_unit_price': price,
+        'samples': 0,
+        'last_seen': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'home_id,name_normalized');
+    } catch (_) {
+      // best-effort: si falla, el precio aproximado por categoría sigue.
+    }
+  }
+
   /// Carga todos los precios conocidos del hogar, indexados por clave, y
   /// rellena los que faltan con la mediana anónima de otros hogares (0064).
   Future<Map<String, ProductPrice>> loadAll(String homeId) async {
