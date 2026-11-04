@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/inventory_item.dart';
 import 'services/food_photo_service.dart';
 import 'services/home_supermarkets.dart';
+import 'services/price_memory.dart';
+import 'services/product_photo_resolver.dart';
 import 'services/product_search_service.dart';
 import 'services/inventory_prefill.dart';
 import 'services/shelf_life.dart';
@@ -274,10 +276,28 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
           _selectedCategory != 'Especias' &&
           nameChanged &&
           homeId != null) {
+        // Foto OFICIAL del catálogo del súper (y precio real) del producto más
+        // probable, igual que la lista de la compra y el buscador manual. El
+        // catálogo manda; si no hay, cae a OFF y, en último recurso, a la
+        // ilustración cozy (nunca un recuadro en blanco). Best-effort: ante
+        // cualquier fallo conservamos la foto que tuviera el item.
         try {
-          imageUrl = await FoodPhotoService(
-            Supabase.instance.client,
-          ).resolvePhotoUrl(homeId: homeId, name: name, mode: 'ingredient');
+          final keys = await HomeSupermarkets(Supabase.instance.client).load();
+          final resolved = await ProductPhotoResolver(Supabase.instance.client)
+              .resolveWithPrice(
+                homeId: homeId,
+                name: name,
+                supermarketKey: keys.keys.isEmpty ? null : keys.keys.first,
+              );
+          imageUrl = resolved.url ?? editing?.imageUrl;
+          // El precio real del catálogo se recuerda para que el "≈" salga como
+          // en el buscador (mismo número que "… € aprox.").
+          final price = resolved.price;
+          if (price != null) {
+            await PriceMemory(
+              Supabase.instance.client,
+            ).rememberCatalogPrice(homeId, name, price);
+          }
         } catch (_) {
           imageUrl = editing?.imageUrl;
         }
@@ -490,6 +510,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                       size: 120,
                       radius: AppRadius.md,
                       photoOnly: true,
+                      // Sin foto real: ilustración cozy en vez de hueco blanco.
+                      illustrationFallback: true,
                     ),
                   ),
                 ),

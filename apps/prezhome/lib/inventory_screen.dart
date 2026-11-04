@@ -20,6 +20,7 @@ import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/list_skeleton.dart';
 import 'widgets/skeleton.dart';
+import 'utils/debouncer.dart';
 import 'utils/offline_actions.dart';
 import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_image.dart';
@@ -64,6 +65,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   StreamSubscription<void>? _changesSub;
 
+  // Convergencia con el servidor agrupada tras ráfagas de escrituras rápidas
+  // (subir/bajar la cantidad varias veces seguidas). El cambio se ve al
+  // instante por el stream de _repo.changes y se persiste en la cola offline;
+  // el refresco de fondo se coalesce en una sola pasada cuando se deja de tocar
+  // (anti-tirones del stepper, mismo patrón que la lista de la compra).
+  final Debouncer _converge = Debouncer();
+
   @override
   void initState() {
     super.initState();
@@ -87,7 +95,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void dispose() {
     _changesSub?.cancel();
+    _converge.cancel();
     super.dispose();
+  }
+
+  /// Agrupa la convergencia con el servidor tras ráfagas de escrituras rápidas
+  /// (p. ej. +/- de la cantidad varias veces seguidas). El cambio ya se ha visto
+  /// al instante (stream de _repo.changes) y persistido en la cola offline; aquí
+  /// solo coalescemos el refresco para que NO se re-lea el inventario entero en
+  /// cada toque (eso era lo que daba tirones). Varias llamadas seguidas
+  /// programan un único refresco tras el último toque. Guarda contra
+  /// setState-después-de-dispose comprobando mounted.
+  void _scheduleConverge() {
+    _converge.run(() {
+      if (mounted) _refreshFromRemote();
+    });
   }
 
   /// Quita de la despensa lo que se ha usado en las comidas del plan que ya
@@ -1027,6 +1049,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     size: 52,
                     radius: 14,
                     photoOnly: true,
+                    // Sin foto real: la ilustración cozy de categoría (último
+                    // recurso) en vez de un recuadro en blanco. La foto del
+                    // catálogo siempre tiene prioridad (FEAT-003/004).
+                    illustrationFallback: true,
                   ),
                 ),
               ),
@@ -1124,6 +1150,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Future<void> _setQuantity(InventoryItem item, double quantity) async {
     HapticFeedback.selectionClick();
     try {
+      // Escritura optimista: la fila repinta AL INSTANTE desde el stream de
+      // _repo.changes (no hace falta _reload por cada toque). El refresco con el
+      // servidor se agrupa con el debouncer para que el +/- no vaya a tirones.
       await _repo.applyLocalWrite(
         buildUpdateOp(
           table: kInventoryTable,
@@ -1133,7 +1162,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           seq: _nextSeq(),
         ),
       );
-      await _reload();
+      _scheduleConverge();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
