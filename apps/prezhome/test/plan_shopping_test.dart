@@ -72,6 +72,36 @@ void main() {
     });
   });
 
+  group('photoUpdateOrNull (nunca borra una foto buena)', () {
+    const current =
+        'https://images.openfoodfacts.org/images/products/843/front.jpg';
+
+    test('si la búsqueda no encuentra nada, no toca la foto actual', () {
+      // Este es el bug de la foto que desaparece: antes escribía null encima.
+      expect(photoUpdateOrNull(current, null), isNull);
+      expect(photoUpdateOrNull(current, ''), isNull);
+    });
+
+    test('tampoco borra aunque la actual parezca de otro producto', () {
+      // Aun con wrong==true (foto sospechosa), si no hay repuesto se deja.
+      expect(photoUpdateOrNull(current, null), isNull);
+    });
+
+    test('actualiza cuando encuentra una foto nueva distinta', () {
+      const mejor = 'https://prod-mercadona.imgix.net/cocacola.jpg';
+      expect(photoUpdateOrNull(current, mejor), mejor);
+    });
+
+    test('no reescribe si la nueva es igual a la actual', () {
+      expect(photoUpdateOrNull(current, current), isNull);
+    });
+
+    test('pone foto cuando antes no había ninguna', () {
+      expect(photoUpdateOrNull(null, current), current);
+      expect(photoUpdateOrNull('', current), current);
+    });
+  });
+
   test('isStockPhoto distingue fotos de banco de las de producto', () {
     expect(isStockPhoto('https://images.unsplash.com/photo-1'), isTrue);
     expect(isStockPhoto('https://images.pexels.com/x.jpg'), isTrue);

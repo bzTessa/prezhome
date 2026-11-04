@@ -1067,15 +1067,28 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           manual: true,
         );
       } else {
-        // Foto del envase en Open Food Facts (o la ya guardada). Si tarda,
-        // el producto entra sin foto y se le pone después.
-        imageUrl = await ProductPhotoResolver(_client)
-            .photoFor(
+        // Foto del envase del catálogo (o la ya guardada) Y el precio real del
+        // producto más probable, como el buscador manual. Si tarda, el
+        // producto entra sin foto y se le pone después.
+        final resolved = await ProductPhotoResolver(_client)
+            .resolveWithPrice(
               homeId: homeId,
               name: name,
               supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
             )
-            .timeout(const Duration(seconds: 4), onTimeout: () => null);
+            .timeout(
+              const Duration(seconds: 4),
+              onTimeout: () => (url: null, price: null),
+            );
+        imageUrl = resolved.url;
+        // El precio real del catálogo se recuerda para que el "≈" salga como
+        // en el buscador (p. ej. "Cerveza Heineken · 0,68 € aprox.").
+        final price = resolved.price;
+        if (price != null) {
+          final mem = PriceMemory(_client);
+          await mem.rememberCatalogPrice(homeId, name, price);
+          _prices = await mem.loadAll(homeId);
+        }
       }
       // Alta OPTIMISTA con id temporal local y created_at = ahora: la fila
       // aparece en la lista al instante (ordenada por fecha de creación) y se

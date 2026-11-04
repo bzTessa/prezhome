@@ -23,6 +23,22 @@ bool isSharablePhoto(String url) =>
 /// las filas antiguas (sin prefijo) se ignoran.
 String sharedPhotoKey(String key) => 'v2|$key';
 
+/// Decide qué foto guardar al revisar una ya puesta: [current] es la actual y
+/// [resolved] la que acaba de devolver la búsqueda. Devuelve la URL a escribir
+/// o null si NO hay que tocar nada. Lógica PURA.
+///
+/// Regla clave (bug de la foto que desaparece): NUNCA se borra una foto buena
+/// escribiendo null. Si la búsqueda no encuentra nada ([resolved] == null) se
+/// deja la que había, aunque se sospeche que no es exactamente ese producto:
+/// una foto real aunque sea aproximada es mejor que un hueco en blanco, y la
+/// persona siempre puede cambiarla a mano. Solo se actualiza cuando hay una
+/// foto nueva distinta de la actual.
+String? photoUpdateOrNull(String? current, String? resolved) {
+  if (resolved == null || resolved.isEmpty) return null;
+  if (resolved == (current ?? '')) return null;
+  return resolved;
+}
+
 /// Foto de producto para la compra: la del envase en Open Food Facts (del
 /// súper principal si lo hay), solo si el producto es claramente lo buscado.
 /// Las fotos ya guardadas se comprueban antes de reutilizarlas. Lo encontrado se guarda por hogar y se
@@ -65,9 +81,24 @@ class ProductPhotoResolver {
     required String homeId,
     required String name,
     String? supermarketKey,
+  }) async => (await resolveWithPrice(
+    homeId: homeId,
+    name: name,
+    supermarketKey: supermarketKey,
+  )).url;
+
+  /// Igual que [photoFor] pero devuelve también el precio real del catálogo
+  /// del producto más probable (el mismo que enseña el buscador manual como
+  /// "… € aprox."). El precio solo sale de un producto de catálogo
+  /// (store != null); para lo genérico y para Open Food Facts es null. Así el
+  /// alta por nombre puede poner la foto oficial Y recordar el precio real.
+  Future<({String? url, double? price})> resolveWithPrice({
+    required String homeId,
+    required String name,
+    String? supermarketKey,
   }) async {
     final key = FoodPhotoService.cacheKey(name);
-    if (key.isEmpty) return null;
+    if (key.isEmpty) return (url: null, price: null);
     try {
       final cached = await _client
           .from('food_photo_cache')
@@ -80,12 +111,12 @@ class ProductPhotoResolver {
       if (cached?['manual'] == true &&
           url.isNotEmpty &&
           !DrawnIcons.isDrawn(url)) {
-        return url;
+        return (url: url, price: null);
       }
       if (url.isNotEmpty &&
           !isStockPhoto(url) &&
           await photoMatches(name, url) != false) {
-        return url;
+        return (url: url, price: null);
       }
     } catch (_) {}
     // Lo genérico (cebolla, leche...) lleva la foto de la sección de frescos
@@ -100,7 +131,8 @@ class ProductPhotoResolver {
         await FoodPhotoService(
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: url);
-        return url;
+        // Lo genérico no lleva precio de producto concreto.
+        return (url: url, price: null);
       }
     }
 
@@ -118,7 +150,8 @@ class ProductPhotoResolver {
         await FoodPhotoService(
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: url);
-        return url;
+        // Foto compartida de OFF: sin precio de catálogo.
+        return (url: url, price: null);
       }
     } catch (_) {}
 
@@ -141,6 +174,13 @@ class ProductPhotoResolver {
     var found = confidentProductPhoto(name, result.products);
     // Un envase de OFF no sirve para lo genérico.
     if (generic && found != null && isSharablePhoto(found)) found = null;
+    // Precio real: solo del producto de catálogo más probable (store != null),
+    // el mismo que enseña el buscador manual. OFF no trae precio.
+    double? price;
+    if (!generic) {
+      final best = bestCatalogMatch(name, result.products);
+      if (best != null && best.store != null) price = best.price;
+    }
     if (found != null) {
       await FoodPhotoService(
         _client,
@@ -154,6 +194,6 @@ class ProductPhotoResolver {
         } catch (_) {}
       }
     }
-    return found;
+    return (url: found, price: price);
   }
 }

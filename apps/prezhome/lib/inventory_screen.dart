@@ -201,12 +201,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
           homeId: homeId,
           name: r['name'].toString(),
         );
-        if (url == r['image_url']) continue;
+        // Nunca se borra una foto buena con null: si la búsqueda no encuentra
+        // nada, se deja la que había (mejor una foto aproximada que un hueco).
+        final next = photoUpdateOrNull(current, url);
+        if (next == null) continue;
         await _repo.applyLocalWrite(
           buildUpdateOp(
             table: kInventoryTable,
             id: id,
-            changes: {'image_url': url},
+            changes: {'image_url': next},
             nowMillis: DateTime.now().millisecondsSinceEpoch,
             seq: _nextSeq(),
           ),
