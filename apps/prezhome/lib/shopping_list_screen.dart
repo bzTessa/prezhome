@@ -1099,6 +1099,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               homeId: homeId,
               name: name,
               supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+              // Acción DIRECTA de la persona (acaba de escribir el producto):
+              // background: false para no caer en el límite de 4/min de fondo y
+              // que la foto+precio del catálogo lleguen antes del timeout de 4 s.
+              background: false,
             )
             .timeout(
               const Duration(seconds: 4),
@@ -1890,6 +1894,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             homeId: homeId,
             name: name,
             supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+            // "Te toca" es acción DIRECTA de la persona (sugerencia que pidió
+            // ver): background: false, como el alta por nombre, para que la
+            // foto+precio del catálogo no queden throttled en el bucket de fondo.
+            background: false,
           );
           // Precio real del catálogo: se recuerda y se recargan los precios
           // para que el "≈" de la sugerencia deje de ser el aproximado por

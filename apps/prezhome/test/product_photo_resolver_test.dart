@@ -49,6 +49,7 @@ class _FakeResolver extends ProductPhotoResolver {
     required String homeId,
     required String name,
     String? supermarketKey,
+    bool background = true,
   }) async => (url: _catalogUrl, price: _price);
 }
 
