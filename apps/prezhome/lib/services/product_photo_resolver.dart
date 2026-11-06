@@ -210,6 +210,11 @@ class ProductPhotoResolver {
       }
     } catch (_) {}
 
+    // Alta por nombre y "Te toca" son ACCIÓN DIRECTA de la persona (pidió este
+    // producto), no una foto de fondo de la lista: se busca con background:
+    // false para que no caiga en el límite de 4/min de las búsquedas en
+    // segundo plano y la foto+precio del catálogo lleguen antes del timeout de
+    // 4 s de _addItem. El límite general de OFF (8/min) se mantiene.
     Future<ProductSearchResult> searchIn(String? store) async {
       ProductSearchResult result;
       var tries = 0;
@@ -217,7 +222,7 @@ class ProductPhotoResolver {
         result = await _search.search(
           name,
           supermarketKey: store,
-          background: true,
+          background: false,
         );
         if (!result.throttled) break;
         await Future<void>.delayed(_throttleWait);
@@ -227,15 +232,20 @@ class ProductPhotoResolver {
 
     final result = await searchIn(supermarketKey);
     var found = confidentProductPhoto(name, result.products);
-    // Un envase de OFF no sirve para lo genérico.
+    // Un envase de OFF no sirve para lo genérico (pondría una foto equivocada);
+    // pero la foto del envase del catálogo del súper (image_url de
+    // supermarket_products, no openfoodfacts) SÍ vale para un genérico como
+    // leche/cerveza, igual que la enseña el buscador manual. isSharablePhoto
+    // solo descarta las de OFF, así que la del catálogo sobrevive.
     if (generic && found != null && isSharablePhoto(found)) found = null;
-    // Precio real: solo del producto de catálogo más probable (store != null),
-    // el mismo que enseña el buscador manual. OFF no trae precio.
-    double? price;
-    if (!generic) {
-      final best = bestCatalogMatch(name, result.products);
-      if (best != null && best.store != null) price = best.price;
-    }
+    // Precio real del producto de catálogo más probable (store != null), el
+    // mismo que enseña el buscador manual. También para lo genérico
+    // (leche/cerveza): antes el guard `if (!generic)` dejaba price=null y el
+    // "≈" caía al precio inventado por categoría. OFF no trae precio.
+    final best = bestCatalogMatch(name, result.products);
+    final double? price = (best != null && best.store != null)
+        ? best.price
+        : null;
     if (found != null) {
       await FoodPhotoService(
         _client,

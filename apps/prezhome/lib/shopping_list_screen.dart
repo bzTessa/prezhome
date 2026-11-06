@@ -1877,18 +1877,38 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   /// Foto del súper de una sugerencia, como las de la lista: la guardada
   /// sale ya y, si falta o no vale, se busca en segundo plano (una vez).
+  /// Además trae el PRECIO real del catálogo cuando lo hay (resolveWithPrice,
+  /// no photoFor): así el "≈" de la tarjeta sale como en el buscador manual y
+  /// no con el precio inventado por categoría.
   Widget _suggestionPhoto(String name) {
     final key = FoodPhotoService.cacheKey(name);
     if (_suggestionPhotoAsked.add(key)) {
       _suggestionPhotos = _suggestionPhotos.then((_) async {
         try {
-          final url = await ProductPhotoResolver(_client).photoFor(
-            homeId: await _homeId(),
+          final homeId = await _homeId();
+          final resolved = await ProductPhotoResolver(_client).resolveWithPrice(
+            homeId: homeId,
             name: name,
             supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
           );
-          if (!mounted || url == null || url == _photoByName[key]) return;
-          setState(() => _photoByName = {..._photoByName, key: url});
+          // Precio real del catálogo: se recuerda y se recargan los precios
+          // para que el "≈" de la sugerencia deje de ser el aproximado por
+          // categoría. Se calcula antes del setState (nunca arrow con Future).
+          final price = resolved.price;
+          Map<String, ProductPrice>? prices;
+          if (price != null) {
+            final mem = PriceMemory(_client);
+            await mem.rememberCatalogPrice(homeId, name, price);
+            prices = await mem.loadAll(homeId);
+          }
+          final url = resolved.url;
+          if (!mounted) return;
+          final sameUrl = url == null || url == _photoByName[key];
+          if (sameUrl && prices == null) return;
+          setState(() {
+            if (!sameUrl) _photoByName = {..._photoByName, key: url};
+            if (prices != null) _prices = prices;
+          });
         } catch (_) {}
       });
     }
