@@ -86,6 +86,11 @@ class ProductPhotoResolver {
     String? supermarketKey,
     String? previous,
   }) async {
+    // La despensa resuelve con el `background` por defecto (true) de
+    // [resolveWithPrice]: se deja como el comportamiento de fondo de siempre
+    // para no alterar lo que ya funcionaba (PR #260). El catálogo de Mercadona
+    // resuelve sin tocar el límite de OFF, así que la foto+precio igualmente
+    // llegan; solo si cae a OFF respeta la cuota de fondo.
     final resolved = await resolveWithPrice(
       homeId: homeId,
       name: name,
@@ -131,7 +136,11 @@ class ProductPhotoResolver {
   }
 
   /// Busca la foto de [name]. Si Open Food Facts pide esperar, espera y
-  /// reintenta (pensado para ir en segundo plano). Nunca lanza.
+  /// reintenta (pensado para ir en segundo plano). Nunca lanza. Es una búsqueda
+  /// de FONDO (lo usan `fillMissingPhotos` de la lista y el recheck de la
+  /// despensa): delega en [resolveWithPrice] con su `background` por defecto
+  /// (true) para reservar la cuota de 4/min y no agotar los 8/min del buscador
+  /// manual de la persona.
   Future<String?> photoFor({
     required String homeId,
     required String name,
@@ -147,10 +156,22 @@ class ProductPhotoResolver {
   /// "… € aprox."). El precio solo sale de un producto de catálogo
   /// (store != null); para lo genérico y para Open Food Facts es null. Así el
   /// alta por nombre puede poner la foto oficial Y recordar el precio real.
+  ///
+  /// [background] reparte el límite de Open Food Facts: `true` (por defecto) es
+  /// una búsqueda de FONDO, limitada a 4/min, que reserva su cuota para no
+  /// agotar los 8/min que necesita el buscador manual de la persona. Lo usan
+  /// las rutas que rellenan fotos sin que nadie lo pida ahora mismo
+  /// (`fillMissingPhotos` de la lista, recheck de la despensa). Las ACCIONES
+  /// DIRECTAS de la persona (añadir por nombre, "Te toca") pasan `false` para
+  /// no caer en ese límite de fondo y que la foto+precio lleguen antes del
+  /// timeout de 4 s. El límite general de OFF (8/min) se mantiene en ambos
+  /// casos; el flag solo cambia el reparto cuando la búsqueda llega a OFF (los
+  /// hits de catálogo, como leche/cerveza en Mercadona, no lo tocan).
   Future<({String? url, double? price})> resolveWithPrice({
     required String homeId,
     required String name,
     String? supermarketKey,
+    bool background = true,
   }) async {
     final key = FoodPhotoService.cacheKey(name);
     if (key.isEmpty) return (url: null, price: null);
@@ -210,6 +231,12 @@ class ProductPhotoResolver {
       }
     } catch (_) {}
 
+    // El reparto del límite de OFF depende de [background] (ver doc): las
+    // rutas de FONDO (fillMissingPhotos, recheck de la despensa) buscan con
+    // background: true para reservar su cuota de 4/min; las ACCIONES DIRECTAS
+    // de la persona (añadir por nombre, "Te toca") pasan false para no caer en
+    // ese límite y que la foto+precio del catálogo lleguen antes del timeout de
+    // 4 s de _addItem. El límite general de OFF (8/min) se mantiene.
     Future<ProductSearchResult> searchIn(String? store) async {
       ProductSearchResult result;
       var tries = 0;
@@ -217,7 +244,7 @@ class ProductPhotoResolver {
         result = await _search.search(
           name,
           supermarketKey: store,
-          background: true,
+          background: background,
         );
         if (!result.throttled) break;
         await Future<void>.delayed(_throttleWait);
@@ -227,15 +254,20 @@ class ProductPhotoResolver {
 
     final result = await searchIn(supermarketKey);
     var found = confidentProductPhoto(name, result.products);
-    // Un envase de OFF no sirve para lo genérico.
+    // Un envase de OFF no sirve para lo genérico (pondría una foto equivocada);
+    // pero la foto del envase del catálogo del súper (image_url de
+    // supermarket_products, no openfoodfacts) SÍ vale para un genérico como
+    // leche/cerveza, igual que la enseña el buscador manual. isSharablePhoto
+    // solo descarta las de OFF, así que la del catálogo sobrevive.
     if (generic && found != null && isSharablePhoto(found)) found = null;
-    // Precio real: solo del producto de catálogo más probable (store != null),
-    // el mismo que enseña el buscador manual. OFF no trae precio.
-    double? price;
-    if (!generic) {
-      final best = bestCatalogMatch(name, result.products);
-      if (best != null && best.store != null) price = best.price;
-    }
+    // Precio real del producto de catálogo más probable (store != null), el
+    // mismo que enseña el buscador manual. También para lo genérico
+    // (leche/cerveza): antes el guard `if (!generic)` dejaba price=null y el
+    // "≈" caía al precio inventado por categoría. OFF no trae precio.
+    final best = bestCatalogMatch(name, result.products);
+    final double? price = (best != null && best.store != null)
+        ? best.price
+        : null;
     if (found != null) {
       await FoodPhotoService(
         _client,

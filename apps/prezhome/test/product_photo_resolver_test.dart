@@ -1,5 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:prezhome/models/country.dart';
 import 'package:prezhome/services/food_photo_service.dart';
+import 'package:prezhome/services/home_country.dart';
 import 'package:prezhome/services/product_photo_resolver.dart';
 import 'package:prezhome/services/product_search_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -43,6 +49,7 @@ class _FakeResolver extends ProductPhotoResolver {
     required String homeId,
     required String name,
     String? supermarketKey,
+    bool background = true,
   }) async => (url: _catalogUrl, price: _price);
 }
 
@@ -208,6 +215,125 @@ void main() {
         'https://x.supabase.co/storage/v1/object/public/recipe-images/icons/pimenton.png',
       ),
       isFalse,
+    );
+  });
+
+  group('resolveWithPrice: foto y precio del catálogo para lo genérico', () {
+    // Sin tocar OFF ni Supabase: catálogo de Mercadona inyectado. Las consultas
+    // a Supabase (food_photo_cache, product_photo_shared) fallan solas con el
+    // cliente sin red y el flujo continúa a la búsqueda de catálogo.
+    setUp(() {
+      ProductSearchService.resetForTest();
+      HomeCountry.current.value = Country.of('ES');
+    });
+    tearDown(() => HomeCountry.current.value = Country.of('ES'));
+
+    // El catálogo responde al súper Mercadona: con [freshOnly] no hay foto de
+    // frescos para leche/cerveza (no son frescos), así que el resolver cae a la
+    // búsqueda normal, donde sí está el producto de envase con foto y precio.
+    ProductSearchService milkBeerService() => ProductSearchService(
+      client: MockClient(
+        (_) async => http.Response(jsonEncode({'hits': []}), 200),
+      ),
+      catalog: (q, store, {freshOnly = false}) async {
+        if (store != 'mercadona' || freshOnly) return const [];
+        if (q.toLowerCase().contains('leche')) {
+          return const [
+            SupermarketProduct(
+              code: 'mercadona:1',
+              name: 'Leche entera Hacendado',
+              quantity: '1 l',
+              price: 1.15,
+              imageUrl: 'https://prod-mercadona.imgix.net/leche.jpg',
+            ),
+          ];
+        }
+        if (q.toLowerCase().contains('cerveza')) {
+          return const [
+            SupermarketProduct(
+              code: 'mercadona:2',
+              name: 'Cerveza Hacendado',
+              quantity: '33 cl',
+              price: 0.45,
+              imageUrl: 'https://prod-mercadona.imgix.net/cerveza.jpg',
+            ),
+          ];
+        }
+        return const [];
+      },
+    );
+
+    test('leche (genérico no fresco): foto de envase y precio reales', () async {
+      final resolver = ProductPhotoResolver(
+        SupabaseClient('http://x', 'k'),
+        search: milkBeerService(),
+      );
+      final out = await resolver.resolveWithPrice(
+        homeId: 'h1',
+        name: 'leche',
+        supermarketKey: 'mercadona',
+      );
+      expect(out.url, 'https://prod-mercadona.imgix.net/leche.jpg');
+      // Con el código antiguo (guard `if (!generic)`) el precio salía null y el
+      // "≈" caía al aproximado por categoría.
+      expect(out.price, 1.15);
+    });
+
+    test(
+      'cerveza (genérico no fresco): foto de envase y precio reales',
+      () async {
+        final resolver = ProductPhotoResolver(
+          SupabaseClient('http://x', 'k'),
+          search: milkBeerService(),
+        );
+        final out = await resolver.resolveWithPrice(
+          homeId: 'h1',
+          name: 'cerveza',
+          supermarketKey: 'mercadona',
+        );
+        expect(out.url, 'https://prod-mercadona.imgix.net/cerveza.jpg');
+        expect(out.price, 0.45);
+      },
+    );
+
+    test(
+      'cebolla (genérico fresco): sigue tomando la foto de frescos',
+      () async {
+        // No regresión: un fresco usa freshPhoto (sección de frescos del súper),
+        // no la búsqueda normal de catálogo.
+        final service = ProductSearchService(
+          client: MockClient(
+            (_) async => http.Response(jsonEncode({'hits': []}), 200),
+          ),
+          catalog: (q, store, {freshOnly = false}) async {
+            if (store != 'mercadona') return const [];
+            // Solo en la sección de frescos hay foto de cebolla.
+            if (freshOnly) {
+              return const [
+                SupermarketProduct(
+                  code: 'mercadona:9',
+                  name: 'Cebolla',
+                  imageUrl:
+                      'https://prod-mercadona.imgix.net/cebolla-fresca.jpg',
+                ),
+              ];
+            }
+            return const [];
+          },
+        );
+        final resolver = ProductPhotoResolver(
+          SupabaseClient('http://x', 'k'),
+          search: service,
+        );
+        final out = await resolver.resolveWithPrice(
+          homeId: 'h1',
+          name: 'cebolla',
+          supermarketKey: 'mercadona',
+        );
+        expect(out.url, 'https://prod-mercadona.imgix.net/cebolla-fresca.jpg');
+        // Lo genérico fresco no lleva precio de producto concreto.
+        expect(out.price, isNull);
+      },
     );
   });
 }
