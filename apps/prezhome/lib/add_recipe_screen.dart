@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/ingredient.dart';
 import 'models/recipe.dart';
+import 'services/home_country.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/food_facts_service.dart';
 import 'services/recipe_refiner.dart';
@@ -281,7 +282,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       // uno, la IA lo respeta).
       final res = await _client.functions.invoke(
         'generate-recipe',
-        body: {'query': query},
+        body: {'query': query, ...HomeCountry.aiLocale},
       );
 
       final data = res.data;
@@ -417,7 +418,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       final text = isUrl ? await fetchLinkText(input) : input;
       final res = await _client.functions.invoke(
         'import-recipe-link',
-        body: {'url': ?url, 'text': ?text},
+        body: {'url': ?url, 'text': ?text, ...HomeCountry.aiLocale},
       );
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {

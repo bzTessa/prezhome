@@ -42,6 +42,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
+import { recipeLocale, recipeLocaleLine } from "../_shared/recipe_locale.ts";
 import { isPublicUrl } from "./url_guard.ts";
 import {
   tiktokDescription,
@@ -239,7 +240,12 @@ function pageText(html: string, url: string): string | null {
   }
 }
 
-function buildPrompt(sourceText: string, url: string, video = false): string {
+function buildPrompt(
+  sourceText: string,
+  url: string,
+  video = false,
+  loc = recipeLocale({}),
+): string {
   const fuente = video ? "del VÍDEO adjunto y del texto" : "del texto";
   return `Eres un asistente de cocina. A partir del TEXTO de la descripción de
 un vídeo/post de redes sociales (TikTok/Instagram/YouTube) de una receta, deduce y
@@ -293,7 +299,9 @@ MEDIDAS: sólidos en "g", líquidos en "ml", especias/condimentos en
 "unidad". Números redondos tipo supermercado. En "instructions" un paso por
 línea separado por salto de línea real (\\n), cada uno con su número. En
 "components" desglosa el plato en partes con su % (suman 100), [] solo si es un
-único alimento homogéneo. Todo en español.`;
+único alimento homogéneo.
+
+${recipeLocaleLine(loc)}`;
 }
 
 async function pickModels(apiKey: string): Promise<string[]> {
@@ -420,6 +428,7 @@ serveAi("import_link", async (req, useCredit) => {
 
     // 2. Validar la entrada: texto pegado y/o enlace.
     const body = await req.json().catch(() => ({}));
+    const loc = recipeLocale(body);
     const url = (body?.url ?? "").toString().trim();
     const pasted = (body?.text ?? "").toString().trim().substring(0, 8000);
     if (url) {
@@ -485,14 +494,14 @@ serveAi("import_link", async (req, useCredit) => {
 
     let result: GeminiResult | null = sourceText.length >= 15
       ? await askGemini(models, geminiKey, [
-        { text: buildPrompt(sourceText, url) },
+        { text: buildPrompt(sourceText, url, false, loc) },
       ])
       : null;
     // YouTube sin receta escrita: que Gemini vea el vídeo.
     if (ytId && (!result || hasNoRecipe(result))) {
       const video = await askGemini(models, geminiKey, [
         { file_data: { file_uri: `https://www.youtube.com/watch?v=${ytId}` } },
-        { text: buildPrompt(sourceText || "(sin descripción)", url, true) },
+        { text: buildPrompt(sourceText || "(sin descripción)", url, true, loc) },
       ], { mediaResolution: "MEDIA_RESOLUTION_LOW" });
       // Si ver el vídeo falla, nos quedamos con lo que dijo el texto.
       if (!("error" in video) || !result) result = video;

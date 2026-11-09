@@ -12,6 +12,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
+import { recipeLocale, recipeLocaleLine } from "../_shared/recipe_locale.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,7 @@ async function pickModels(apiKey: string): Promise<string[]> {
 }
 
 function buildPrompt(p: Record<string, unknown>): string {
+  const loc = recipeLocale(p);
   const supermarket = (p.supermarket ?? "").toString().trim();
   const goal = (p.goal ?? "mantener").toString();
   const diet = (p.diet ?? "sin restricción").toString();
@@ -138,14 +140,14 @@ function buildPrompt(p: Record<string, unknown>): string {
      aprovechar alimentos distintos.`
     : "";
   const costLine = maxCost > 0
-    ? `\n- Coste máximo orientativo por ración: ${maxCost.toFixed(2)} EUR, con
-     precios medios de supermercado español. Elige ingredientes y cantidades
+    ? `\n- Coste máximo orientativo por ración: ${maxCost.toFixed(2)} ${loc.currency}, con
+     precios medios de supermercado de ${loc.country}. Elige ingredientes y cantidades
      que respeten ese límite (legumbres, huevos, pollo, verdura de temporada,
      arroz y pasta abaratan; ternera, marisco y pescados nobles encarecen).`
     : "";
   const superLine = supermarket
     ? `- Supermercado(s) donde se compra: ${supermarket}. Ten en cuenta ese(os)
-     supermercado(s) español(es) para elegir ingredientes FÁCILES de encontrar
+     supermercado(s) para elegir ingredientes FÁCILES de encontrar
      ahí y usar FORMATOS DE VENTA reales (botes/latas/paquetes y tamaños que se
      venden en ese súper). MUY IMPORTANTE: en el nombre de cada ingrediente usa
      el nombre GENÉRICO del alimento (p. ej. "garbanzos cocidos", "queso de
@@ -161,7 +163,7 @@ ${superLine}
 - Objetivo nutricional: ${goal}
 - Dieta / restricción: ${diet}
 - Electrodomésticos disponibles: ${appliances || "cualquiera"}
-- Presupuesto semanal aproximado: ${budget || "sin límite"} EUR${mealTypeLine}${cookTimeLine}${cuisineLine}${costLine}${pantryLine}${allergyLine}${dislikedLine}${avoidLine}
+- Presupuesto semanal aproximado: ${budget || "sin límite"} ${loc.currency}${mealTypeLine}${cookTimeLine}${cuisineLine}${costLine}${pantryLine}${allergyLine}${dislikedLine}${avoidLine}
 
 Responde SOLO con un JSON válido (sin markdown) con esta forma:
 {
@@ -218,8 +220,10 @@ expresión va en "unit".
 En "instructions" es OBLIGATORIO un paso por línea
 separado por salto de línea real (\\n), cada uno con su número; NO juntes todo en
 un párrafo. En "components" desglosa SIEMPRE el plato en partes con su % del peso
-(suman 100); solo [] si es un único alimento homogéneo. Todo en español. Recetas
-realistas y variadas, adecuadas al objetivo y la dieta indicados.`;
+(suman 100); solo [] si es un único alimento homogéneo. Recetas
+realistas y variadas, adecuadas al objetivo y la dieta indicados.
+
+${recipeLocaleLine(loc)}`;
 }
 
 serveAi("recipes", async (req, useCredit) => {
