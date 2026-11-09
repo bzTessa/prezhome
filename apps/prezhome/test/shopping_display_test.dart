@@ -5,6 +5,10 @@ void main() {
   group('shoppingQtyLabel', () {
     test('gramos', () => expect(shoppingQtyLabel(300, 'g'), '300 g'));
     test('unidades -> ud', () => expect(shoppingQtyLabel(4, 'unidad'), '4 ud'));
+    test('1 comida en singular', () {
+      expect(shoppingQtyLabel(1, 'comidas'), '1 comida');
+      expect(shoppingQtyLabel(3, 'comidas'), '3 comidas');
+    });
     test('un diente (singular)', () {
       expect(shoppingQtyLabel(1, 'diente'), '1 diente');
     });

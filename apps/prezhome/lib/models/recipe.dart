@@ -91,7 +91,11 @@ class Recipe {
       imagePath: _nonEmptyString(map['image_path']),
       videoUrl: map['video_url'] as String?,
       components: _componentsFrom(map['components']),
-      freezerDays: map['freezer_days'],
+      // 0 no es una duración: sin dato, se usa la ventana por defecto.
+      freezerDays: switch (map['freezer_days']) {
+        final num d when d > 0 => d.toInt(),
+        _ => null,
+      },
     );
   }
 

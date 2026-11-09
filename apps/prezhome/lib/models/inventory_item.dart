@@ -164,7 +164,12 @@ class InventoryItem {
   ///   hay fecha de caducidad.
   DateTime? get effectiveExpiry {
     if (category == 'Congelador') {
-      if (bestBefore != null) return bestBefore;
+      // Una fecha que no pasa del día en que se congeló es un dato roto
+      // (recetas con freezer_days = 0): se usa la ventana por defecto.
+      if (bestBefore != null &&
+          (frozenOn == null || bestBefore!.isAfter(frozenOn!))) {
+        return bestBefore;
+      }
       if (frozenOn != null) {
         return frozenOn!.add(const Duration(days: defaultFreezerDays));
       }

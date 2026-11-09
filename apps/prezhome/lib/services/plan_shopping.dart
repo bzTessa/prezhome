@@ -316,9 +316,10 @@ class PlanShoppingService {
       if (item.id == null) continue;
       // Una foto ya puesta se deja si es de verdad ese producto.
       final wrong =
+          brokenPhotos.contains(current) ||
           current.isNotEmpty &&
-          !isStockPhoto(current) &&
-          await resolver.photoMatches(item.name, current) == false;
+              !isStockPhoto(current) &&
+              await resolver.photoMatches(item.name, current) == false;
       if (current.isNotEmpty && !isStockPhoto(current) && !wrong) continue;
       try {
         final url = await resolver.photoFor(

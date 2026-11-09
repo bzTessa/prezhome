@@ -335,5 +335,64 @@ void main() {
         expect(out.price, isNull);
       },
     );
+
+    // Otra cadena tiene "Cerveza" a secas (casa mejor por nombre) y Mercadona
+    // "Cerveza Amstel": sale la de Mercadona, salvo que su foto no cargue.
+    ProductSearchService twoStores() => ProductSearchService(
+      client: MockClient(
+        (_) async => http.Response(jsonEncode({'hits': []}), 200),
+      ),
+      catalog: (q, store, {freshOnly = false}) async {
+        if (freshOnly) return const [];
+        return switch (store) {
+          'mercadona' => const [
+            SupermarketProduct(
+              code: 'mercadona:1',
+              name: 'Cerveza Amstel',
+              price: 0.6,
+              imageUrl: 'https://m/amstel.jpg',
+            ),
+          ],
+          'consum' => const [
+            SupermarketProduct(
+              code: 'consum:1',
+              name: 'Cerveza',
+              price: 0.22,
+              imageUrl: 'https://c/cerveza.jpg',
+            ),
+          ],
+          _ => const [],
+        };
+      },
+    );
+
+    test('manda la foto y el precio del súper del hogar', () async {
+      final out =
+          await ProductPhotoResolver(
+            SupabaseClient('http://x', 'k'),
+            search: twoStores(),
+          ).resolveWithPrice(
+            homeId: 'h1',
+            name: 'cerveza',
+            supermarketKey: 'mercadona',
+          );
+      expect(out.url, 'https://m/amstel.jpg');
+      expect(out.price, 0.6);
+    });
+
+    test('una foto que no carga en el móvil se cambia por otra', () async {
+      brokenPhotos.add('https://m/amstel.jpg');
+      addTearDown(brokenPhotos.clear);
+      final out =
+          await ProductPhotoResolver(
+            SupabaseClient('http://x', 'k'),
+            search: twoStores(),
+          ).resolveWithPrice(
+            homeId: 'h1',
+            name: 'cerveza',
+            supermarketKey: 'mercadona',
+          );
+      expect(out.url, 'https://c/cerveza.jpg');
+    });
   });
 }

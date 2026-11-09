@@ -16,6 +16,10 @@ String? pickImageUrl({String? catalog, String? fallback, String? previous}) {
   return clean(catalog) ?? clean(fallback) ?? clean(previous);
 }
 
+/// Fotos que no se han podido cargar en este móvil (la web del súper falla o
+/// la bloquea): se buscan otras en su lugar. Lo rellena [FoodImage].
+final Set<String> brokenPhotos = {};
+
 /// Foto de banco de imágenes (Unsplash, Pexels): en la compra salen
 /// demasiado al azar, así que no se usan para productos.
 bool isStockPhoto(String? url) {
@@ -191,6 +195,7 @@ class ProductPhotoResolver {
       }
       if (url.isNotEmpty &&
           !isStockPhoto(url) &&
+          !brokenPhotos.contains(url) &&
           await photoMatches(name, url) != false) {
         return (url: url, price: null);
       }
@@ -203,7 +208,7 @@ class ProductPhotoResolver {
           ? supermarketKey!
           : catalogForCountry[HomeCountry.current.value.code];
       final url = store == null ? null : await _search.freshPhoto(name, store);
-      if (url != null) {
+      if (url != null && !brokenPhotos.contains(url)) {
         await FoodPhotoService(
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: url);
@@ -222,6 +227,7 @@ class ProductPhotoResolver {
       final url = shared?['url']?.toString();
       if (url != null &&
           url.isNotEmpty &&
+          !brokenPhotos.contains(url) &&
           await photoMatches(name, url) == true) {
         await FoodPhotoService(
           _client,
@@ -253,7 +259,20 @@ class ProductPhotoResolver {
     }
 
     final result = await searchIn(supermarketKey);
-    var found = confidentProductPhoto(name, result.products);
+    final usable = [
+      for (final p in result.products)
+        if (!brokenPhotos.contains(p.imageUrl)) p,
+    ];
+    // El súper del hogar manda: "Cerveza" de otra cadena casaba mejor por
+    // nombre que "Cerveza Amstel" de Mercadona y salía la foto de otra tienda.
+    final own = catalogKeyFor(supermarketKey);
+    final ownProducts = [
+      for (final p in usable)
+        if (own != null && p.store == own) p,
+    ];
+    var found =
+        confidentProductPhoto(name, ownProducts) ??
+        confidentProductPhoto(name, usable);
     // Un envase de OFF no sirve para lo genérico (pondría una foto equivocada);
     // pero la foto del envase del catálogo del súper (image_url de
     // supermarket_products, no openfoodfacts) SÍ vale para un genérico como
@@ -264,7 +283,9 @@ class ProductPhotoResolver {
     // mismo que enseña el buscador manual. También para lo genérico
     // (leche/cerveza): antes el guard `if (!generic)` dejaba price=null y el
     // "≈" caía al precio inventado por categoría. OFF no trae precio.
-    final best = bestCatalogMatch(name, result.products);
+    final best =
+        bestCatalogMatch(name, ownProducts) ??
+        bestCatalogMatch(name, result.products);
     final double? price = (best != null && best.store != null)
         ? best.price
         : null;
