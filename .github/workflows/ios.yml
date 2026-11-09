@@ -1,0 +1,32 @@
+# Compila la app de iOS (sin firmar) cuando cambia algo nativo de iOS, para
+# no enterarnos de un proyecto de Xcode roto al ir a subir a la App Store.
+# Solo corre con cambios en ios/ o en las dependencias: los minutos de macOS
+# cuentan 10 veces.
+name: iOS
+
+on:
+  pull_request:
+    paths:
+      - apps/prezhome/ios/**
+      - apps/prezhome/pubspec.yaml
+      - .github/workflows/ios.yml
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compilar iOS (sin firmar)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/prezhome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build ios --no-codesign --debug
