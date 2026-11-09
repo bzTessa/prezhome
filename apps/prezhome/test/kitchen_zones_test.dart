@@ -39,6 +39,7 @@ void main() {
     _item('Pimentón', 'Especias', expiresInDays: -10),
     _item('Lejía', 'Despensa', type: 'hogar'),
     _item('Champú', 'Hogar', type: 'hogar'),
+    _item('Jabón de manos', 'Despensa', type: 'hogar'),
     // Guardado como comida por error: va igual con lo de casa.
     _item('Guantes', 'Limpieza'),
   ];
@@ -57,7 +58,7 @@ void main() {
     expect(byZone[KitchenZone.nevera]!.expired, 1);
     expect(byZone[KitchenZone.especias]!.expired, 0);
     expect(byZone[KitchenZone.limpieza]!.count, 2);
-    expect(byZone[KitchenZone.hogar]!.count, 1);
+    expect(byZone[KitchenZone.hogar]!.count, 2);
     expect(byZone[KitchenZone.despensa]!.count, 1);
     expect(byZone[KitchenZone.bebidas]!.count, 0);
   });
@@ -79,7 +80,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('8 productos'), findsOneWidget);
+    expect(find.text('9 productos'), findsOneWidget);
     expect(find.text('Bebidas'), findsNothing);
     // La zona y la tarjeta "Revisar" (lo urgente de todas).
     expect(find.text('1 caducado'), findsNWidgets(2));

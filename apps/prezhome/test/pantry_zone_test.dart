@@ -48,6 +48,26 @@ void main() {
         'Limpieza',
       );
     });
+
+    test('Varios recoge lo de casa que no es de limpiar', () {
+      for (final name in [
+        'Jabón de manos',
+        'Pastillas para la ropa',
+        'Toallitas húmedas',
+        'Pasta de dientes',
+        'Cosa sin nombre conocido',
+      ]) {
+        expect(
+          ShelfLife.pantryZoneFor(name: name, itemType: 'hogar'),
+          'Hogar',
+          reason: name,
+        );
+      }
+      expect(
+        ShelfLife.pantryZoneFor(name: 'Lejía', itemType: 'hogar'),
+        'Limpieza',
+      );
+    });
   });
 
   test('InventoryItem.fromMap tolera filas incompletas', () {

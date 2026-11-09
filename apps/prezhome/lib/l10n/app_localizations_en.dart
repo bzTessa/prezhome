@@ -831,7 +831,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'bebidas': 'Drinks',
       'especias': 'Seasonings',
       'limpieza': 'Cleaning',
-      'hogar': 'Hygiene and home',
+      'hogar': 'Miscellaneous',
       'other': '$zone',
     });
     return '$_temp0';

@@ -654,7 +654,13 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               initialValue: _selectedCategory,
               decoration: _dec(isFood ? 'Ubicación' : 'Categoría'),
               items: _categories
-                  .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                  .map(
+                    (cat) => DropdownMenuItem(
+                      value: cat,
+                      // 'Hogar' es la clave guardada de la zona "Varios".
+                      child: Text(cat == 'Hogar' ? 'Varios' : cat),
+                    ),
+                  )
                   .toList(),
               onChanged: (val) {
                 setState(() {

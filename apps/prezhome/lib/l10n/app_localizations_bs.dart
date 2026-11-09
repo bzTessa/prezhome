@@ -825,7 +825,7 @@ class AppLocalizationsBs extends AppLocalizations {
       'bebidas': 'Pića',
       'especias': 'Začini',
       'limpieza': 'Čišćenje',
-      'hogar': 'Higijena i dom',
+      'hogar': 'Razno',
       'other': '$zone',
     });
     return '$_temp0';

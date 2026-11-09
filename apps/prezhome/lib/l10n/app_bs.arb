@@ -200,7 +200,7 @@
   "panWhatToCook": "Šta da skuham s ovim?",
   "panExpiringHeader": "Istekli i pred istekom",
   "panNothingHere": "Ovdje nema ničega.",
-  "kitchenZone": "{zone, select, nevera{Frižider} congelador{Zamrzivač} despensa{Ostava} bebidas{Pića} especias{Začini} limpieza{Čišćenje} hogar{Higijena i dom} other{{zone}}}",
+  "kitchenZone": "{zone, select, nevera{Frižider} congelador{Zamrzivač} despensa{Ostava} bebidas{Pića} especias{Začini} limpieza{Čišćenje} hogar{Razno} other{{zone}}}",
   "kitchenReview": "Provjeri",
   "expiryGroup": "{group, select, expired{Isteklo} week{Ove sedmice} later{Kasnije} other{Bez datuma}}",
   "panExpiredAgo": "Isteklo prije {days} dana",
