@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/recipe.dart';
 import '../theme/app_theme.dart';
+import 'animations/app_transitions.dart';
 
 /// Muestra la foto de la receta si existe; si no, un placeholder cozy con un
 /// icono grande según el tipo de plato. Reutilizable en tarjetas y detalle.
@@ -58,10 +59,13 @@ class RecipeImage extends StatelessWidget {
                   // rejilla, ahorrando memoria y datos en el móvil.
                   cacheWidth: _cacheWidthFor(context, constraints),
                   errorBuilder: (context, error, stack) => _placeholder(),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return _placeholder(loading: true);
-                  },
+                  frameBuilder: (context, child, frame, sync) => fadeInPhoto(
+                    context: context,
+                    image: child,
+                    frame: frame,
+                    wasSynchronouslyLoaded: sync,
+                    placeholder: _placeholder(loading: true),
+                  ),
                 ),
               )
             : _placeholder(),

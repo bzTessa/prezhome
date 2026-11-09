@@ -5,6 +5,7 @@ import 'home_onboarding_screen.dart';
 import 'main_shell.dart';
 import 'login_screen.dart';
 import 'services/offline_provider.dart';
+import 'theme/app_motion.dart';
 import 'widgets/miau_character.dart';
 import 'l10n/l10n.dart';
 
@@ -13,8 +14,9 @@ import 'l10n/l10n.dart';
 /// ofrece desde Inicio y Perfil para no alargar el primer arranque.
 class _SessionState {
   final bool hasHome;
+  final String? homeId;
 
-  const _SessionState({required this.hasHome});
+  const _SessionState({required this.hasHome, this.homeId});
 }
 
 class HomeSessionScreen extends StatefulWidget {
@@ -25,12 +27,60 @@ class HomeSessionScreen extends StatefulWidget {
 }
 
 class _HomeSessionScreenState extends State<HomeSessionScreen> {
-  late Future<_SessionState> _session;
+  /// Último hogar de esta persona en este móvil ('usuario|hogar').
+  static const _lastHomeKey = 'last_home';
+
+  /// Solo al abrir la app se entra con el hogar recordado; al unirse a otro
+  /// hogar o salir de él se espera a la respuesta del servidor.
+  static bool _coldStart = true;
+
+  _SessionState? _state;
+  Object? _error;
 
   @override
   void initState() {
     super.initState();
-    _session = _loadSession();
+    _start();
+  }
+
+  /// Al abrir la app no se espera a la red: con el hogar de la última vez se
+  /// entra al momento y se comprueba por detrás. Si el servidor dice otra
+  /// cosa (otro hogar, sin hogar), se cambia en cuanto llega.
+  Future<void> _start() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final optimistic = _coldStart;
+    _coldStart = false;
+    final store = OfflineProvider.instance.store;
+    if (user != null && optimistic) {
+      try {
+        final last = (await store.read(_lastHomeKey))?.split('|');
+        if (last != null &&
+            last.length == 2 &&
+            last[0] == user.id &&
+            last[1].isNotEmpty) {
+          await OfflineProvider.instance.switchHome(last[1]);
+          _show(_SessionState(hasHome: true, homeId: last[1]));
+        }
+      } catch (_) {
+        // Sin recuerdo legible: se espera al servidor como siempre.
+      }
+    }
+    try {
+      final fresh = await _loadSession();
+      if (user != null) {
+        await store.write(_lastHomeKey, '${user.id}|${fresh.homeId ?? ''}');
+      }
+      if (fresh.hasHome != _state?.hasHome || fresh.homeId != _state?.homeId) {
+        _show(fresh);
+      }
+    } catch (e) {
+      // Ya dentro con el hogar recordado (p. ej. sin red): se sigue offline.
+      if (_state == null && mounted) setState(() => _error = e);
+    }
+  }
+
+  void _show(_SessionState state) {
+    if (mounted) setState(() => _state = state);
   }
 
   Future<_SessionState> _loadSession() async {
@@ -56,14 +106,12 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
       await OfflineProvider.instance.switchHome(homeId);
     }
 
-    return _SessionState(hasHome: hasHome);
+    return _SessionState(hasHome: hasHome, homeId: hasHome ? homeId : null);
   }
 
   void _retry() {
-    final future = _loadSession();
-    setState(() {
-      _session = future;
-    });
+    setState(() => _error = null);
+    _start();
   }
 
   @override
@@ -72,23 +120,28 @@ class _HomeSessionScreenState extends State<HomeSessionScreen> {
       return const LoginScreen();
     }
 
-    return FutureBuilder<_SessionState>(
-      future: _session,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _ProfileLoadError(onRetry: _retry);
-        }
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final state = snapshot.data!;
-        if (!state.hasHome) {
-          return const HomeOnboardingScreen();
-        }
-        return const MainShell();
-      },
+    final state = _state;
+    final Widget child;
+    if (state != null) {
+      child = state.hasHome
+          // Otro hogar: pantallas nuevas, sin datos del anterior.
+          ? MainShell(key: ValueKey(state.homeId))
+          : const HomeOnboardingScreen(key: ValueKey('onboarding'));
+    } else if (_error != null) {
+      child = _ProfileLoadError(onRetry: _retry);
+    } else {
+      child = const Scaffold(
+        key: ValueKey('loading'),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    // Del cargando a la app con un fundido, no de golpe.
+    return AnimatedSwitcher(
+      duration: AppMotion.effectiveDuration(
+        AppMotion.base,
+        reduceMotion: AppMotion.reduceMotionOf(context),
+      ),
+      child: child,
     );
   }
 }

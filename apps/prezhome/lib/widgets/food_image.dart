@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/product_photo_resolver.dart';
+import 'animations/app_transitions.dart';
 import 'drawn_icons.dart';
 import 'food_category_icon.dart';
 import 'product_icons.dart';
@@ -14,7 +15,7 @@ import 'product_icons.dart';
 ///   - Si [imageUrl] no es null ni vacío -> [Image.network] recortado con
 ///     esquinas redondeadas, con `cacheWidth` acotado al ancho real pintado
 ///     (igual que [RecipeImage]) para no decodificar la foto a resolución
-///     completa en una miniatura. El [loadingBuilder] muestra un spinner suave
+///     completa en una miniatura. Mientras carga se ve un spinner suave
 ///     sobre la ilustración cozy y el [errorBuilder] cae a la ilustración.
 ///   - Si no hay URL -> ilustración cozy: un contenedor con el color de fondo
 ///     cálido de la categoría y su icono vectorial Material centrado, ambos de
@@ -147,10 +148,13 @@ class FoodImage extends StatelessWidget {
           brokenPhotos.add(imageUrl!);
           return _cozyIllustration();
         },
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return _cozyIllustration(loading: true);
-        },
+        frameBuilder: (context, child, frame, sync) => fadeInPhoto(
+          context: context,
+          image: child,
+          frame: frame,
+          wasSynchronouslyLoaded: sync,
+          placeholder: _cozyIllustration(loading: true),
+        ),
       ),
     );
   }
