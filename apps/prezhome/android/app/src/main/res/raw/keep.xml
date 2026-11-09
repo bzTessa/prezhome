@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El icono de los avisos se pide por nombre desde Dart: que el recorte de
+     recursos de la versión de tienda no lo quite. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_notification" />

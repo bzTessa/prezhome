@@ -27,6 +27,13 @@ void main() {
           dueTime: '18:30',
         ),
         HomeTask(
+          id: '3',
+          homeId: 'h',
+          title: 'Tender',
+          dueDate: DateTime(2026, 10, 22),
+          dueTime: '18:30',
+        ),
+        HomeTask(
           id: '2',
           homeId: 'h',
           title: 'Ya pasó',
@@ -45,14 +52,29 @@ void main() {
     expect(
       [for (final r in list) (r.at, r.title)],
       [
-        (DateTime(2026, 10, 22, 18, 30), 'Toca: Regar'),
-        (DateTime(2026, 10, 22, 20), 'Tu racha te espera'),
+        (DateTime(2026, 10, 22, 18, 30), 'Tocan 2 tareas'),
+        (DateTime(2026, 10, 22, 20), 'Llevas 4 días con la casa al día'),
         (DateTime(2026, 10, 23, 10), 'Mañana caducan 2 productos'),
-        (DateTime(2026, 10, 23, 20), 'Tu racha te espera'),
-        (DateTime(2026, 10, 24, 20), 'Tu racha te espera'),
+        (DateTime(2026, 10, 23, 20), '¿Cómo va la casa hoy?'),
+        (DateTime(2026, 10, 24, 20), 'Tu racha sigue viva'),
       ],
     );
-    expect(list[2].body, 'leche, yogur');
+    expect(list[0].body, startsWith('Regar y Tender.'));
+    expect(list[2].body, startsWith('leche y yogur.'));
+    expect(
+      [for (final r in list) r.kind],
+      ['tasks', 'streak', 'expiry', 'streak', 'streak'],
+    );
+  });
+
+  test('avisa del hito de racha que se alcanza hoy', () {
+    final list = Reminders.plan(
+      tasks: const [],
+      items: const [],
+      streak: const Streak(days: 6, doneToday: false),
+      now: now,
+    );
+    expect(list.first.title, 'Hoy llegas a 7 días');
   });
 
   test('sin racha no se avisa; si hoy ya cuenta, empieza mañana', () {

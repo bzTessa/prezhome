@@ -7,7 +7,10 @@ import 'models/dashboard_prefs.dart';
 import 'models/inventory_item.dart';
 import 'services/connection_status.dart';
 import 'services/offline_provider.dart';
+import 'services/file_local_store.dart';
 import 'services/proactive_suggestions_service.dart';
+import 'services/reminders.dart';
+import 'discover_recipes_screen.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/comidas_tab.dart';
 import 'tabs/despensa_tab.dart';
@@ -112,9 +115,11 @@ class MainShellState extends State<MainShell> {
   // muestran en un banner descartable sobre el body del IndexedStack.
   List<ExpiringSuggestion> _suggestions = const [];
 
-  // La usuaria puede descartar el banner; se vuelve a evaluar en la próxima
-  // recarga del shell.
+  // Descartado (o ya usado) hoy: no vuelve hasta mañana.
   bool _suggestionsDismissed = false;
+  static final _settings = FileLocalStore(folderName: 'settings');
+  static const _dismissKey = 'expiry_banner_dismissed';
+  static String get _today => DateTime.now().toIso8601String().split('T')[0];
 
   @override
   void initState() {
@@ -125,10 +130,13 @@ class MainShellState extends State<MainShell> {
     _loadPrefs();
     _loadSuggestions();
     ConnectionStatus.instance.start();
+    Reminders.opened.addListener(_openReminder);
+    _openReminder();
   }
 
   @override
   void dispose() {
+    Reminders.opened.removeListener(_openReminder);
     if (identical(MainShell.current, this)) MainShell.current = null;
     super.dispose();
   }
@@ -141,6 +149,12 @@ class MainShellState extends State<MainShell> {
   /// [buildExpiringSuggestions]. Refresca en segundo plano sin bloquear. Si
   /// algo falla, simplemente no se muestra el banner.
   Future<void> _loadSuggestions() async {
+    try {
+      if (await _settings.read(_dismissKey) == _today) {
+        _suggestionsDismissed = true;
+        return;
+      }
+    } catch (_) {}
     final repo = OfflineProvider.instance.inventory;
     try {
       final rows = await repo.readCached();
@@ -349,27 +363,47 @@ class MainShellState extends State<MainShell> {
   /// cambio de módulos sin recrear MainShell.
   void reloadModules() => _loadPrefs();
 
-  /// Acción del banner del Asistente Proactivo.
-  ///
-  /// DECISIÓN (FEAT-003): el ingrediente que caduca NO es una receta, así que
-  /// no existe una integración directa ingrediente -> receta que abrir. La
-  /// opción realista y honesta es llevar a la pestaña Comida, donde vive el
-  /// plan y el acceso al "Modo cocina" (meal_plan_screen abre
-  /// BatchPrepTimelineScreen). Desde ahí la usuaria aprovecha lo que caduca en
-  /// su próximo Batch Cooking. No inventamos un atajo que no existe.
-  void _onSuggestionsAction() {
+  /// Oculta el aviso de caducidad hasta mañana.
+  void _dismissSuggestions() {
     setState(() => _suggestionsDismissed = true);
-    goToTab(_indexOf(TabId.comidas));
+    _settings.write(_dismissKey, _today).catchError((_) {});
+  }
+
+  /// Acción del aviso: ideas de recetas con lo que hay en casa (lo que caduca
+  /// antes va primero, ver pantryNamesForIdeas).
+  void _onSuggestionsAction() {
+    _dismissSuggestions();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+      ),
+    );
+  }
+
+  /// Al tocar un aviso del móvil, abre la pestaña de lo que avisa.
+  void _openReminder() {
+    final kind = Reminders.opened.value;
+    if (kind == null) return;
+    Reminders.opened.value = null;
+    final tab = switch (kind) {
+      'tasks' => TabId.tareas,
+      'expiry' => TabId.despensa,
+      _ => TabId.inicio,
+    };
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) goToTab(_indexOf(tab));
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     _opened.add(_tabs[_index].id);
-    // En Inicio no: la ficha "Por caducar" ya lo cuenta.
+    // Solo en Comida, donde se decide qué cocinar: en Inicio y Despensa ya
+    // se ve lo que caduca, y en el resto tapaba la pantalla sin venir a cuento.
     final showBanner =
         _suggestions.isNotEmpty &&
         !_suggestionsDismissed &&
-        _index != _indexOf(TabId.inicio);
+        _index == _indexOf(TabId.comidas);
     // Ordenador (web): menú lateral y contenido centrado en vez de la barra
     // inferior de móvil.
     final wide = MediaQuery.sizeOf(context).width >= 900;
@@ -410,8 +444,7 @@ class MainShellState extends State<MainShell> {
                       ProactiveSuggestionsBanner(
                         suggestions: _suggestions,
                         onAction: _onSuggestionsAction,
-                        onDismiss: () =>
-                            setState(() => _suggestionsDismissed = true),
+                        onDismiss: _dismissSuggestions,
                       ),
                   ],
                 ),

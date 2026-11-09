@@ -8,26 +8,24 @@ import 'package:prezhome/widgets/proactive_suggestions_banner.dart';
 /// monta widgets ni requiere plugins nativos ni Supabase.
 void main() {
   group('ProactiveSuggestionsBanner.bannerMessage', () {
-    test('sin sugerencias devuelve cadena vacía', () {
-      expect(ProactiveSuggestionsBanner.bannerMessage(const []), '');
-    });
-
-    test('con una sugerencia usa su mensaje cercano', () {
+    test('dice qué caduca y cuándo', () {
       const sugs = [ExpiringSuggestion(name: 'Yogur', daysUntilExpiry: 0)];
-      expect(
-        ProactiveSuggestionsBanner.bannerMessage(sugs),
-        'Cocina Yogur antes de que caduque (caduca hoy)',
-      );
+      expect(ProactiveSuggestionsBanner.bannerTitle(sugs), 'Caduca pronto');
+      expect(ProactiveSuggestionsBanner.bannerMessage(sugs), 'Yogur hoy');
     });
 
-    test('con varias sugerencias resume la cantidad (sin la palabra IA)', () {
+    test('con muchas, las dos más urgentes y cuántas más', () {
       const sugs = [
         ExpiringSuggestion(name: 'Pollo', daysUntilExpiry: 1),
         ExpiringSuggestion(name: 'Espinacas', daysUntilExpiry: 2),
+        ExpiringSuggestion(name: 'Queso', daysUntilExpiry: 2),
+        ExpiringSuggestion(name: 'Pan', daysUntilExpiry: 2),
       ];
-      final msg = ProactiveSuggestionsBanner.bannerMessage(sugs);
-      expect(msg, contains('2 alimentos a punto de caducar'));
-      expect(msg.toLowerCase(), isNot(contains('ia')));
+      expect(ProactiveSuggestionsBanner.bannerTitle(sugs), 'Caducan pronto');
+      expect(
+        ProactiveSuggestionsBanner.bannerMessage(sugs),
+        'Pollo mañana · Espinacas en 2 días · +2',
+      );
     });
   });
 
@@ -52,7 +50,8 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.takeException(), isNull);
-    expect(find.text('Consejo del día'), findsOneWidget);
+    expect(find.text('Caduca pronto'), findsOneWidget);
+    expect(find.text('Ideas'), findsOneWidget);
     expect(find.textContaining('Miau'), findsNothing);
   });
 }
