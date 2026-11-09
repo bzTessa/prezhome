@@ -9,6 +9,7 @@ import '../utils/shopping_categories.dart';
 import '../widgets/food_category_icon.dart';
 import 'food_photo_service.dart';
 import 'meal_prep_planner.dart';
+import 'price_memory.dart';
 import 'product_photo_resolver.dart';
 
 /// Lo que hay en casa de un producto (para descontarlo del plan).
@@ -316,17 +317,24 @@ class PlanShoppingService {
       if (item.id == null) continue;
       // Una foto ya puesta se deja si es de verdad ese producto.
       final wrong =
-          brokenPhotos.contains(current) ||
+          isBrokenPhoto(current) ||
           current.isNotEmpty &&
               !isStockPhoto(current) &&
               await resolver.photoMatches(item.name, current) == false;
       if (current.isNotEmpty && !isStockPhoto(current) && !wrong) continue;
       try {
-        final url = await resolver.photoFor(
+        final resolved = await resolver.resolveWithPrice(
           homeId: homeId,
           name: item.name,
           supermarketKey: store,
         );
+        // El precio "≈" sale del mismo producto que la foto.
+        if (resolved.price != null) {
+          await PriceMemory(
+            _client,
+          ).rememberCatalogPrice(homeId, item.name, resolved.price!);
+        }
+        final url = resolved.url;
         // Nunca se borra una foto buena con null: aunque la actual parezca de
         // otro producto (wrong), si la búsqueda no encuentra nada se deja la
         // que había (una foto real aproximada es mejor que un hueco blanco; la

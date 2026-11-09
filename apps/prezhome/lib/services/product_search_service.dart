@@ -348,9 +348,13 @@ SupermarketProduct? bestCatalogMatch(
     for (final p in ranked)
       if (isProductFor(query, p) && productMatchScore(query, p) == topScore) p,
   ];
-  for (final p in tied) {
-    if (priced(p) && photoed(p)) return p;
-  }
+  // Entre varios con precio y foto, el más barato: la lata suelta antes que
+  // el pack, para que "Cerveza" no salga a 9,90 €.
+  final full = [
+    for (final p in tied)
+      if (priced(p) && photoed(p)) p,
+  ]..sort((a, b) => a.price!.compareTo(b.price!));
+  if (full.isNotEmpty) return full.first;
   for (final p in tied) {
     if (priced(p)) return p;
   }

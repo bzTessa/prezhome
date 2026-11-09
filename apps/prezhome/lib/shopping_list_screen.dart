@@ -285,7 +285,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             // Las de OFF se comprueban (y se cambian si no son ese producto).
             ((i.imageUrl ?? '').isEmpty ||
                 isStockPhoto(i.imageUrl) ||
-                brokenPhotos.contains(i.imageUrl) ||
+                isBrokenPhoto(i.imageUrl) ||
                 isSharablePhoto(i.imageUrl!)))
           i,
     ].take(60).toList();
@@ -302,7 +302,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             },
           ),
         )
-        .then((n) {
+        .then((n) async {
+          // Los precios del catálogo recordados al buscar las fotos.
+          if (mounted) await _loadPrices();
           if (n > 0 && mounted) _reload();
           return n;
         })
@@ -858,6 +860,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           seq: _nextSeq(),
         ),
       );
+      // El producto elegido trae su precio: el "≈" se actualiza ya.
+      _prices = await PriceMemory(_client).loadAll(homeId);
       await _reload();
     } catch (e) {
       if (!mounted) return;

@@ -20,6 +20,11 @@ String? pickImageUrl({String? catalog, String? fallback, String? previous}) {
 /// la bloquea): se buscan otras en su lugar. Lo rellena [FoodImage].
 final Set<String> brokenPhotos = {};
 
+/// Si [url] no se puede enseñar: falló en este móvil o es de Consum, cuyo
+/// servidor de imágenes no las sirve a la app (en el buscador salen vacías).
+bool isBrokenPhoto(String? url) =>
+    url != null && (brokenPhotos.contains(url) || url.contains('cdn-consum.'));
+
 /// Foto de banco de imágenes (Unsplash, Pexels): en la compra salen
 /// demasiado al azar, así que no se usan para productos.
 bool isStockPhoto(String? url) {
@@ -195,7 +200,7 @@ class ProductPhotoResolver {
       }
       if (url.isNotEmpty &&
           !isStockPhoto(url) &&
-          !brokenPhotos.contains(url) &&
+          !isBrokenPhoto(url) &&
           await photoMatches(name, url) != false) {
         return (url: url, price: null);
       }
@@ -208,7 +213,7 @@ class ProductPhotoResolver {
           ? supermarketKey!
           : catalogForCountry[HomeCountry.current.value.code];
       final url = store == null ? null : await _search.freshPhoto(name, store);
-      if (url != null && !brokenPhotos.contains(url)) {
+      if (url != null && !isBrokenPhoto(url)) {
         await FoodPhotoService(
           _client,
         ).rememberPhoto(homeId: homeId, name: name, url: url);
@@ -227,7 +232,7 @@ class ProductPhotoResolver {
       final url = shared?['url']?.toString();
       if (url != null &&
           url.isNotEmpty &&
-          !brokenPhotos.contains(url) &&
+          !isBrokenPhoto(url) &&
           await photoMatches(name, url) == true) {
         await FoodPhotoService(
           _client,
@@ -261,7 +266,7 @@ class ProductPhotoResolver {
     final result = await searchIn(supermarketKey);
     final usable = [
       for (final p in result.products)
-        if (!brokenPhotos.contains(p.imageUrl)) p,
+        if (!isBrokenPhoto(p.imageUrl)) p,
     ];
     // El súper del hogar manda: "Cerveza" de otra cadena casaba mejor por
     // nombre que "Cerveza Amstel" de Mercadona y salía la foto de otra tienda.

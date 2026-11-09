@@ -395,4 +395,31 @@ void main() {
       expect(out.url, 'https://c/cerveza.jpg');
     });
   });
+
+  test('las fotos de Consum no se usan: no cargan en la app', () {
+    expect(
+      isBrokenPhoto('https://cdn-consum.aktiosdigitalservices.com/x.jpg'),
+      isTrue,
+    );
+    expect(isBrokenPhoto('https://prod-mercadona.imgix.net/x.jpg'), isFalse);
+  });
+
+  test('entre marcas igual de probables, la más barata (lata, no pack)', () {
+    const products = [
+      SupermarketProduct(
+        code: 'mercadona:1',
+        name: 'Cerveza Heineken',
+        price: 5.12,
+        imageUrl: 'https://m/pack.jpg',
+      ),
+      SupermarketProduct(
+        code: 'mercadona:2',
+        name: 'Cerveza Amstel',
+        price: 0.53,
+        imageUrl: 'https://m/lata.jpg',
+      ),
+    ];
+    expect(confidentProductPhoto('cerveza', products), 'https://m/lata.jpg');
+    expect(bestCatalogMatch('cerveza', products)?.price, 0.53);
+  });
 }
