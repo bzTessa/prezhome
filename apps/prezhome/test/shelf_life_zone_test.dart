@@ -11,7 +11,7 @@ void main() {
     expect(zone('Gel de baño coco'), 'Hogar');
     expect(zone('Ensaladilla rusa'), 'Nevera');
     expect(zone('Cosa', aisle: 'Platos preparados'), 'Nevera');
-    expect(zone('Cosa', type: 'hogar'), 'Limpieza');
+    expect(zone('Cosa', type: 'hogar'), 'Hogar'); // Varios recoge lo demás
     expect(zone('Arroz'), 'Despensa');
   });
 }

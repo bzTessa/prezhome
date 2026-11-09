@@ -200,7 +200,7 @@
   "panWhatToCook": "Cosa cucino con questo?",
   "panExpiringHeader": "Scaduti e in scadenza",
   "panNothingHere": "Qui non c'è niente.",
-  "kitchenZone": "{zone, select, nevera{Frigo} congelador{Freezer} despensa{Dispensa} bebidas{Bevande} especias{Condimenti} limpieza{Pulizia} hogar{Igiene e casa} other{{zone}}}",
+  "kitchenZone": "{zone, select, nevera{Frigo} congelador{Freezer} despensa{Dispensa} bebidas{Bevande} especias{Condimenti} limpieza{Pulizia} hogar{Varie} other{{zone}}}",
   "kitchenReview": "Controlla",
   "expiryGroup": "{group, select, expired{Scaduto} week{Questa settimana} later{Più avanti} other{Senza data}}",
   "panExpiredAgo": "Scaduto da {days} giorni",

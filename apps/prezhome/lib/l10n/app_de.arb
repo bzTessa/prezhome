@@ -200,7 +200,7 @@
   "panWhatToCook": "Was koche ich damit?",
   "panExpiringHeader": "Abgelaufen und bald ablaufend",
   "panNothingHere": "Hier ist nichts.",
-  "kitchenZone": "{zone, select, nevera{Kühlschrank} congelador{Gefrierschrank} despensa{Vorrat} bebidas{Getränke} especias{Gewürze} limpieza{Reinigung} hogar{Hygiene und Haushalt} other{{zone}}}",
+  "kitchenZone": "{zone, select, nevera{Kühlschrank} congelador{Gefrierschrank} despensa{Vorrat} bebidas{Getränke} especias{Gewürze} limpieza{Reinigung} hogar{Sonstiges} other{{zone}}}",
   "kitchenReview": "Prüfen",
   "expiryGroup": "{group, select, expired{Abgelaufen} week{Diese Woche} later{Später} other{Ohne Datum}}",
   "panExpiredAgo": "Seit {days} Tagen abgelaufen",
