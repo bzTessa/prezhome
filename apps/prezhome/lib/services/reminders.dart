@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -11,7 +12,9 @@ import 'calendar_sync.dart';
 import 'file_local_store.dart';
 import 'streak.dart';
 
-typedef Reminder = ({DateTime at, String title, String body});
+/// [kind] es una clave de [Reminders.kinds]: decide el canal del aviso y a
+/// qué pestaña lleva al tocarlo.
+typedef Reminder = ({DateTime at, String title, String body, String kind});
 
 /// Avisos del móvil programados en el propio dispositivo, sin servidor:
 /// tareas con hora, productos que caducan y la racha. Cada vez que la app
@@ -27,6 +30,10 @@ class Reminders {
     'expiry': 'Productos que caducan',
     'streak': 'Racha de casa al día',
   };
+
+  /// Tipo del aviso que la persona acaba de tocar; el shell lo consume para
+  /// abrir la pestaña que toca y lo vuelve a poner a null.
+  static final opened = ValueNotifier<String?>(null);
 
   /// Tipos de aviso que la persona apagó (por defecto, todos encendidos).
   static final off = ValueNotifier<Set<String>>({});
@@ -53,16 +60,52 @@ class Reminders {
     } catch (_) {}
   }
 
-  static Future<bool?> _init() => _ready ??= _plugin.initialize(
-    settings: const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      // El permiso se pide en [sync], no al arrancar.
-      iOS: DarwinInitializationSettings(
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
-      ),
+  static Future<bool?> _init() => _ready ??= _initialize();
+
+  static Future<bool?> _initialize() async {
+    final ok = await _plugin.initialize(
+      settings: _settings,
+      onDidReceiveNotificationResponse: (r) => opened.value = r.payload,
+    );
+    // La app estaba cerrada y se abrió tocando un aviso.
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp ?? false) {
+      opened.value = launch!.notificationResponse?.payload;
+    }
+    // Antes había un solo canal para todo; ahora cada tipo tiene el suyo.
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.deleteNotificationChannel(channelId: 'recordatorios');
+    return ok;
+  }
+
+  static const _settings = InitializationSettings(
+    // Silueta blanca: el icono de la app a color sale como un cuadrado.
+    android: AndroidInitializationSettings('ic_notification'),
+    // El permiso se pide en [sync], no al arrancar.
+    iOS: DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     ),
+  );
+
+  static const _brand = Color(0xFFD85A32);
+
+  static NotificationDetails _details(Reminder r) => NotificationDetails(
+    android: AndroidNotificationDetails(
+      r.kind,
+      kinds[r.kind]!,
+      color: _brand,
+      // El texto entero al desplegar, no cortado en una línea.
+      styleInformation: BigTextStyleInformation(r.body),
+      category: r.kind == 'tasks'
+          ? AndroidNotificationCategory.reminder
+          : AndroidNotificationCategory.recommendation,
+    ),
+    iOS: DarwinNotificationDetails(threadIdentifier: r.kind),
   );
 
   static Future<void>? _running;
@@ -100,14 +143,8 @@ class Reminders {
           scheduledDate: tz.TZDateTime.from(r.at, tz.UTC),
           title: r.title,
           body: r.body,
-          notificationDetails: const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'recordatorios',
-              'Recordatorios',
-              channelDescription: 'Tareas, caducidades y racha',
-            ),
-            iOS: DarwinNotificationDetails(),
-          ),
+          notificationDetails: _details(r),
+          payload: r.kind,
           // Sin hora exacta: no hace falta el permiso de alarmas de Android.
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
@@ -183,10 +220,25 @@ class Reminders {
   }) {
     final today = DateTime(now.year, now.month, now.day);
     final until = today.add(const Duration(days: _days));
-    final out = <Reminder>[
-      for (final e in CalendarSync.taskEvents(tasks, today, until))
-        (at: e.start, title: 'Toca: ${e.title}', body: 'Tarea de hoy'),
-    ];
+    final out = <Reminder>[];
+
+    // Tareas a la misma hora, en un solo aviso.
+    final byTime = <DateTime, List<String>>{};
+    for (final e in CalendarSync.taskEvents(tasks, today, until)) {
+      (byTime[e.start] ??= []).add(e.title);
+    }
+    byTime.forEach((at, titles) {
+      out.add((
+        at: at,
+        title: titles.length == 1
+            ? 'Toca: ${titles.first}'
+            : 'Tocan ${titles.length} tareas',
+        body: titles.length == 1
+            ? 'Cuando la acabes, táchala para sumar puntos.'
+            : '${_list(titles)}. Táchalas al acabar para sumar puntos.',
+        kind: 'tasks',
+      ));
+    });
 
     // Un aviso por día, a las 10:00 del día anterior a caducar.
     final byDay = <DateTime, List<String>>{};
@@ -199,19 +251,44 @@ class Reminders {
       out.add((
         at: DateTime(d.year, d.month, d.day - 1, 10),
         title: names.length == 1
-            ? 'Mañana caduca ${names.first}'
+            ? 'Mañana caduca: ${names.first}'
             : 'Mañana caducan ${names.length} productos',
-        body: names.join(', '),
+        body:
+            '${names.length == 1 ? '' : '${_list(names)}. '}'
+            'Cocina hoy con ello o congela lo que no vayas a usar.',
+        kind: 'expiry',
       ));
     });
 
-    // A las 20:00 de hoy (si aún no cuenta) y de los dos días siguientes.
+    // A las 20:00 de hoy (si aún no cuenta) y de los dos días siguientes,
+    // con un texto distinto cada día para que no canse.
     if (streak != null && streak.days > 0) {
+      final next = streak.doneToday ? streak.days : streak.days + 1;
+      final texts = [
+        Streak.milestones.contains(next)
+            ? (
+                'Hoy llegas a $next días',
+                'Tacha una tarea o apunta una comida y lo celebras.',
+              )
+            : (
+                'Llevas ${streak.days} días con la casa al día',
+                'Tacha una tarea o apunta una comida para no perder la racha.',
+              ),
+        (
+          '¿Cómo va la casa hoy?',
+          'Un gesto basta para sumar un día más a tu racha.',
+        ),
+        (
+          'Tu racha sigue viva',
+          'Apunta lo que has comido o tacha una tarea antes de dormir.',
+        ),
+      ];
       for (var i = streak.doneToday ? 1 : 0; i < 3; i++) {
         out.add((
           at: DateTime(today.year, today.month, today.day + i, 20),
-          title: 'Tu racha te espera',
-          body: 'Tacha una tarea o apunta una comida para no perderla.',
+          title: texts[i].$1,
+          body: texts[i].$2,
+          kind: 'streak',
         ));
       }
     }
@@ -220,5 +297,14 @@ class Reminders {
           ..sort((a, b) => a.at.compareTo(b.at)))
         .take(_max)
         .toList();
+  }
+
+  /// "a, b y c"; con más de 4, "a, b, c, d y 3 más".
+  static String _list(List<String> names) {
+    final shown = names.take(4).toList();
+    final rest = names.length - shown.length;
+    if (rest > 0) return '${shown.join(', ')} y $rest más';
+    if (shown.length == 1) return shown.first;
+    return '${shown.sublist(0, shown.length - 1).join(', ')} y ${shown.last}';
   }
 }
