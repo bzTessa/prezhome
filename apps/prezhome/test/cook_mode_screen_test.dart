@@ -30,18 +30,19 @@ void main() {
     await tester.tap(find.text('Siguiente paso'));
     await tester.pumpAndSettle();
     expect(find.text('PASO 2 DE 2'), findsOneWidget);
-    expect(find.text('Temporizador 30 min'), findsOneWidget);
+    expect(find.text('30 min'), findsOneWidget);
     expect(find.text('Listo'), findsOneWidget);
 
-    await tester.tap(find.text('Temporizador 30 min'));
+    await tester.tap(find.text('Iniciar'));
     await tester.pump();
     expect(find.text('30:00'), findsOneWidget);
     await tester.tap(find.text('Parar'));
     await tester.pump();
     expect(find.text('Parar'), findsNothing);
 
-    await tester.tap(find.byTooltip('Ingredientes'));
+    await tester.tap(find.text('Ingredientes'));
     await tester.pumpAndSettle();
+    expect(find.text('0 de 2 listos'), findsOneWidget);
     expect(find.text('200 g lentejas'), findsOneWidget);
     await tester.tap(find.text('200 g lentejas'));
     await tester.pump();
@@ -49,6 +50,7 @@ void main() {
       find.widgetWithText(CheckboxListTile, '200 g lentejas'),
     );
     expect(tile.value, isTrue);
+    expect(find.text('1 de 2 listos'), findsOneWidget);
   });
 
   testWidgets('en tanda lleva varios temporizadores a la vez', (tester) async {
@@ -78,15 +80,16 @@ void main() {
       ),
     );
 
-    expect(find.text('Horno · lasaña'), findsOneWidget);
+    expect(find.text('Horno'), findsOneWidget); // la nota, en etiquetas
+    expect(find.text('lasaña'), findsOneWidget);
     expect(find.text('Lava el arroz'), findsOneWidget); // "Luego"
-    await tester.tap(find.text('Temporizador 40 min'));
+    await tester.tap(find.text('Iniciar'));
     await tester.pump();
     await tester.tap(find.text('Siguiente paso'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Siguiente paso'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Temporizador 18 min'));
+    await tester.tap(find.text('Iniciar'));
     await tester.pump();
 
     expect(find.text('Parar'), findsNWidgets(2));

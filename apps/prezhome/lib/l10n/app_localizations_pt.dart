@@ -3034,6 +3034,42 @@ class AppLocalizationsPt extends AppLocalizations {
   String get bpStart => 'Começar passo a passo';
 
   @override
+  String bpHeroTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count receitas de uma vez',
+      one: '1 receita de uma vez',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bpSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count passos',
+      one: '1 passo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bpStepsTitle => 'Como vai correr';
+
+  @override
+  String get bpCooking => 'O que vais cozinhar';
+
+  @override
+  String get cmTimer => 'Temporizador';
+
+  @override
+  String cmIngredientsReady(int done, int total) {
+    return '$done de $total prontos';
+  }
+
+  @override
   String get bpEmpty => 'Não há nada para cozinhar agora';
 
   @override
@@ -3044,36 +3080,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get bpNeed => 'O que precisas';
 
   @override
-  String get bpSplit => 'Divide em marmitas';
-
-  @override
-  String get bpSplitSub => 'Ficam registadas sozinhas em A minha cozinha';
-
-  @override
-  String get bpYourPlan => 'O teu plano de cozinha';
-
-  @override
-  String bpTotalMinutes(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Cerca de $count minutos no total',
-      one: 'Cerca de 1 minuto no total',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String minutesShort(int count) {
     return '$count min';
-  }
-
-  @override
-  String get bpParallel => 'Em paralelo';
-
-  @override
-  String bpFor(String recipes) {
-    return 'Para $recipes';
   }
 
   @override
@@ -3087,12 +3095,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get reset => 'Repor';
-
-  @override
-  String get bpDone => 'Feito';
-
-  @override
-  String get bpMarkDone => 'Marcar como feito';
 
   @override
   String cmStep(int n) {
@@ -3138,11 +3140,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get cmTimerRunning => 'Temporizador a correr';
-
-  @override
-  String cmTimerMin(int count) {
-    return 'Temporizador $count min';
-  }
 
   @override
   String get cmThen => 'Depois';

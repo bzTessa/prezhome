@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -11,28 +9,17 @@ import 'services/meal_prep_planner.dart';
 import 'services/plan_shopping.dart';
 import 'theme/app_theme.dart';
 import 'utils/recipe_steps.dart';
-import 'widgets/animations/celebrate.dart';
-import 'widgets/animations/press_scale.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/miau_character.dart';
 import 'l10n/l10n.dart';
 
-/// "Modo cocina": pantalla del orquestador de BATCH COOKING.
+/// Cocina en lote: la vista previa tranquila de una tanda antes de cocinar.
 ///
-/// Recibe las recetas que se van a cocinar a la vez, construye con
-/// [MealPrepOrchestrator] una [TimelinePlan] unificada (agrupando las cocciones
-/// que comparten aparato y marcando las preparaciones que solapan) y la pinta
-/// como una línea de tiempo vertical cercana (tarjetas con conector, chip de
-/// aparato, qué recetas cubre cada bloque y la duración).
-///
-/// Además, cada paso con duración trae un TEMPORIZADOR EN VIVO (cuenta atrás
-/// mm:ss) con botones grandes de iniciar / pausar / reiniciar, pensados para
-/// usarse mientras se cocina. Y cada paso puede marcarse como "Hecho"; cuando
-/// todos están completos se dispara una pequeña celebración de Miau.
-///
-/// NOTA: el progreso de los temporizadores y de los pasos completados NO se
-/// persiste (al salir de la pantalla se reinicia). Persistirlo entre sesiones
-/// queda como posible mejora futura.
+/// Recibe las recetas que se van a cocinar a la vez y construye con
+/// [MealPrepOrchestrator] una [TimelinePlan] unificada. Aquí solo se lee:
+/// qué se cocina (y a qué táper va), lo que hay que sacar y el orden de los
+/// pasos. Cocinar, con los temporizadores, se hace en [CookModeScreen], un
+/// paso por pantalla.
 class BatchPrepTimelineScreen extends StatefulWidget {
   final List<Recipe> recipes;
 
@@ -58,22 +45,6 @@ class BatchPrepTimelineScreen extends StatefulWidget {
 class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
   late final TimelinePlan _plan;
 
-  /// Estado de completado por índice de paso.
-  late final List<bool> _done;
-
-  /// Un temporizador por índice de paso (null si el paso aún no se ha iniciado
-  /// o está pausado). Se guardan TODOS aquí para poder cancelarlos en dispose.
-  late final List<Timer?> _timers;
-
-  /// Segundos restantes de la cuenta atrás por paso.
-  late final List<int> _remainingSeconds;
-
-  /// true si la cuenta atrás del paso está corriendo ahora mismo.
-  late final List<bool> _running;
-
-  /// true cuando ya hemos celebrado el fin de la sesión (para no repetir).
-  bool _celebrated = false;
-
   @override
   void initState() {
     super.initState();
@@ -96,12 +67,6 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
     _plan = const MealPrepOrchestrator().buildTimeline(
       recipes: orchestratorRecipes,
     );
-
-    final count = _plan.steps.length;
-    _done = List<bool>.filled(count, false);
-    _timers = List<Timer?>.filled(count, null);
-    _running = List<bool>.filled(count, false);
-    _remainingSeconds = _plan.steps.map((s) => s.durationMinutes * 60).toList();
     _loadIngredients();
   }
 
@@ -126,126 +91,38 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    // Cancelamos TODOS los temporizadores antes de super.dispose() para no
-    // dejar callbacks vivos que intenten tocar un State ya desmontado.
-    for (final timer in _timers) {
-      timer?.cancel();
-    }
-    super.dispose();
-  }
-
-  // --- Lógica del temporizador ------------------------------------------------
-
-  void _startTimer(int index) {
-    if (_remainingSeconds[index] <= 0) return;
-    _timers[index]?.cancel();
-    setState(() {
-      _running[index] = true;
-    });
-    _timers[index] = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      if (_remainingSeconds[index] <= 1) {
-        timer.cancel();
-        setState(() {
-          _remainingSeconds[index] = 0;
-          _running[index] = false;
-          _timers[index] = null;
-        });
-        _onTimerFinished();
-        return;
-      }
-      setState(() {
-        _remainingSeconds[index] = _remainingSeconds[index] - 1;
-      });
-    });
-  }
-
-  void _pauseTimer(int index) {
-    _timers[index]?.cancel();
-    if (!mounted) return;
-    setState(() {
-      _timers[index] = null;
-      _running[index] = false;
-    });
-  }
-
-  void _resetTimer(int index) {
-    _timers[index]?.cancel();
-    if (!mounted) return;
-    setState(() {
-      _timers[index] = null;
-      _running[index] = false;
-      _remainingSeconds[index] = _plan.steps[index].durationMinutes * 60;
-    });
-  }
-
-  /// Aviso táctil suave cuando una cuenta atrás llega a 0. No bloquea nada si
-  /// el dispositivo no soporta vibración.
-  void _onTimerFinished() {
-    HapticFeedback.lightImpact();
-  }
-
-  void _toggleDone(int index) {
-    setState(() {
-      _done[index] = !_done[index];
-      if (_done[index]) {
-        // Al dar por hecho un paso, detenemos su temporizador si seguía vivo.
-        _timers[index]?.cancel();
-        _timers[index] = null;
-        _running[index] = false;
-      }
-    });
-    _maybeCelebrate();
-  }
-
-  /// Dispara la micro-celebración cuando TODOS los pasos están completados.
-  void _maybeCelebrate() {
-    if (_celebrated) return;
-    if (_plan.steps.isEmpty) return;
-    if (_done.every((d) => d)) {
-      _celebrated = true;
-      Celebrate.show(context);
-    }
-  }
-
-  /// Formatea segundos a mm:ss.
-  String _formatTime(int totalSeconds) {
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    final mm = minutes.toString().padLeft(2, '0');
-    final ss = seconds.toString().padLeft(2, '0');
-    return '$mm:$ss';
-  }
-
-  /// Icono VÁLIDO de Material según el aparato del paso.
+  /// Icono según el aparato del paso.
   IconData _applianceIcon(String appliance) {
     switch (appliance) {
       case 'oven':
-        return Icons.local_fire_department;
+        return Icons.local_fire_department_rounded;
       case 'stovetop':
-        return Icons.outdoor_grill;
+        return Icons.outdoor_grill_rounded;
       case 'pot':
-        return Icons.soup_kitchen;
+        return Icons.soup_kitchen_rounded;
       case 'airfryer':
-        return Icons.air;
+        return Icons.air_rounded;
       case 'microwave':
-        return Icons.microwave;
+        return Icons.microwave_rounded;
       case 'blender':
-        return Icons.blender;
+        return Icons.blender_rounded;
       default:
-        return Icons.restaurant;
+        return Icons.back_hand_outlined;
     }
   }
+
+  /// "1 h 55 min" o "40 min".
+  String _duration(int minutes) => minutes < 60
+      ? context.l.minutesShort(minutes)
+      : '${minutes ~/ 60} h${minutes % 60 == 0 ? '' : ' ${minutes % 60} min'}';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: Text(context.l.cookMode)),
+      appBar: AppBar(title: Text(context.l.bpBatchCook)),
       body: SafeArea(
-        child: _plan.isEmpty ? _buildEmptyState() : _buildTimeline(),
+        child: _plan.isEmpty ? _buildEmptyState() : _buildOverview(),
       ),
       bottomNavigationBar: _plan.isEmpty ? null : _buildStartBar(),
     );
@@ -296,7 +173,7 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
           AppSpacing.lg,
         ),
         child: SizedBox(
-          height: 56,
+          height: 60,
           child: FilledButton.icon(
             onPressed: () {
               HapticFeedback.mediumImpact();
@@ -310,18 +187,13 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.play_arrow_rounded),
+            icon: const Icon(Icons.play_arrow_rounded, size: 26),
             label: Text(context.l.bpStart),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.ink,
-              foregroundColor: AppColors.cream,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
+              backgroundColor: AppColors.terracotta,
+              foregroundColor: AppColors.onBrand,
+              shape: const StadiumBorder(),
+              textStyle: AppTextStyles.title.copyWith(fontSize: 18),
             ),
           ),
         ),
@@ -357,394 +229,264 @@ class _BatchPrepTimelineScreenState extends State<BatchPrepTimelineScreen> {
     );
   }
 
-  // --- Cabecera + línea de tiempo ---------------------------------------------
+  // --- Vista previa -----------------------------------------------------------
 
-  Widget _buildTimeline() {
-    final steps = _plan.steps;
-    return ListView.builder(
-      padding: AppSpacing.screenPadding,
-      // Cabecera y lo que necesitas (0 y 1) y los tápers (al final).
-      itemCount: steps.length + 3,
-      itemBuilder: (context, i) {
-        if (i == 0) return _buildHeader();
-        if (i == 1) return _buildIngredients();
-        if (i == steps.length + 2) return _buildTapers();
-        final index = i - 2;
-        return StaggeredEntrance(
-          index: index,
-          child: _buildStepCard(index, steps[index]),
-        );
-      },
-    );
-  }
-
-  /// Todo lo que hace falta para la tanda, sumado entre recetas.
-  Widget _buildIngredients() {
-    if (_ingredients.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-      child: Container(
-        padding: AppSpacing.cardPadding,
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.shopping_basket_outlined, color: AppColors.sage),
-                const SizedBox(width: AppSpacing.sm),
-                Text(context.l.bpNeed, style: AppTextStyles.title),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            for (final line in _ingredients)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xs),
-                child: Text(line, style: AppTextStyles.body),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Reparto final en tápers: qué va a la nevera y qué al congelador.
-  Widget _buildTapers() {
-    final rows = [
-      for (final b in widget.batches)
-        if (_taperText(b) != null) (b.title, _taperText(b)!),
+  Widget _buildOverview() {
+    final sections = [
+      _buildHeader(),
+      _buildRecipes(),
+      if (_ingredients.isNotEmpty) _buildIngredients(),
+      _buildSteps(),
     ];
-    if (rows.isEmpty) return const SizedBox.shrink();
-    return Container(
-      padding: AppSpacing.cardPadding,
-      decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.sm,
+        AppSpacing.xl,
+        AppSpacing.xxxl,
+      ),
+      children: [
+        for (var i = 0; i < sections.length; i++)
+          StaggeredEntrance(index: i, child: sections[i]),
+      ],
+    );
+  }
+
+  /// Ilustración, cuántas recetas y tres datos: tiempo, pasos y raciones.
+  Widget _buildHeader() {
+    final servings = widget.batches.fold(0, (s, b) => s + b.totalServings);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.kitchen_outlined, color: AppColors.frost),
-              const SizedBox(width: AppSpacing.sm),
-              Text(context.l.bpSplit, style: AppTextStyles.title),
+              Expanded(
+                child: Text(
+                  context.l.bpHeroTitle(widget.recipes.length),
+                  style: AppTextStyles.display.copyWith(fontSize: 28),
+                ),
+              ),
+              const MiauCharacter(mood: MiauMood.cooking, size: 84),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(context.l.bpSplitSub, style: AppTextStyles.bodyMuted),
-          for (final (title, text) in rows) ...[
-            const SizedBox(height: AppSpacing.md),
-            Text(title, style: AppTextStyles.bodyStrong),
-            Text(text, style: AppTextStyles.bodyMuted),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    final total = _plan.totalEstimatedMinutes;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-      child: Container(
-        padding: AppSpacing.cardPadding,
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const MiauCharacter(mood: MiauMood.cooking, size: 72),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(context.l.bpYourPlan, style: AppTextStyles.title),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(resumenTimeline(_plan), style: AppTextStyles.bodyMuted),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Icon(Icons.schedule, size: 18, color: AppColors.sage),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        context.l.bpTotalMinutes(total),
-                        style: AppTextStyles.bodyStrong,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepCard(int index, TimelineStep step) {
-    final done = _done[index];
-    final isLast = index == _plan.steps.length - 1;
-
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Conector vertical cozy: punto del paso + línea hacia el siguiente.
-          Column(
+          const SizedBox(height: AppSpacing.lg),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
-              Container(
-                width: 16,
-                height: 16,
-                margin: const EdgeInsets.only(top: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: done ? AppColors.sage : AppColors.wood,
-                  shape: BoxShape.circle,
-                ),
+              _stat(
+                Icons.schedule_rounded,
+                _duration(_plan.totalEstimatedMinutes),
+                AppColors.sageBg,
+                AppColors.sage,
               ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                    color: AppColors.wood,
-                  ),
+              _stat(
+                Icons.format_list_numbered_rounded,
+                context.l.bpSteps(_plan.steps.length),
+                AppColors.peachBg,
+                AppColors.peach,
+              ),
+              if (servings > 0)
+                _stat(
+                  Icons.restaurant_rounded,
+                  context.l.planServings(servings),
+                  AppColors.frostBg,
+                  AppColors.frost,
                 ),
             ],
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-              child: Opacity(
-                opacity: done ? 0.6 : 1,
-                child: Container(
-                  padding: AppSpacing.cardPadding,
-                  decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildChips(step),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        step.title,
-                        style: AppTextStyles.title.copyWith(
-                          decoration: done
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                          color: done ? AppColors.inkMuted : AppColors.ink,
-                        ),
-                      ),
-                      if (step.recipeTitles.isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          _recipesLabel(step),
-                          style: AppTextStyles.labelMuted,
-                        ),
-                      ],
-                      if (step.durationMinutes > 0 && !done) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildStepTimer(index),
-                      ],
-                      const SizedBox(height: AppSpacing.md),
-                      _buildDoneButton(index, done),
-                    ],
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildChips(TimelineStep step) {
-    final chips = <Widget>[];
-
-    // Chip de aparato (con icono válido y etiqueta en español).
-    if (step.appliance != kApplianceNone && step.appliance.isNotEmpty) {
-      final label = Recipe.applianceLabels[step.appliance] ?? step.appliance;
-      chips.add(
-        _chip(
-          icon: _applianceIcon(step.appliance),
-          label: label,
-          bg: AppColors.peachBg,
-          fg: AppColors.peach,
-        ),
-      );
-    }
-
-    // Chip de duración.
-    if (step.durationMinutes > 0) {
-      chips.add(
-        _chip(
-          icon: Icons.schedule,
-          label: context.l.minutesShort(step.durationMinutes),
-          bg: AppColors.sageBg,
-          fg: AppColors.sage,
-        ),
-      );
-    }
-
-    // Chip "en paralelo" para los pasos que solapan.
-    if (step.canRunInParallel) {
-      chips.add(
-        _chip(
-          icon: Icons.sync,
-          label: context.l.bpParallel,
-          bg: AppColors.frostBg,
-          fg: AppColors.frost,
-        ),
-      );
-    }
-
-    if (chips.isEmpty) return const SizedBox.shrink();
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: chips,
-    );
-  }
-
-  Widget _chip({
-    required IconData icon,
-    required String label,
-    required Color bg,
-    required Color fg,
-  }) {
+  Widget _stat(IconData icon, String text, Color bg, Color fg) {
     return Container(
-      padding: AppSpacing.chipPadding,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(color: bg, borderRadius: AppRadius.pillRadius),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: fg),
-          const SizedBox(width: AppSpacing.xs),
-          Text(label, style: AppTextStyles.label.copyWith(color: fg)),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: AppTextStyles.bodyStrong.copyWith(color: fg, fontSize: 14),
+          ),
         ],
       ),
     );
   }
 
-  String _recipesLabel(TimelineStep step) {
-    return context.l.bpFor(step.recipeTitles.join(', '));
-  }
-
-  // --- Temporizador por paso --------------------------------------------------
-
-  Widget _buildStepTimer(int index) {
-    final remaining = _remainingSeconds[index];
-    final running = _running[index];
-    final finished = remaining == 0;
-
-    final Color timeColor = finished ? AppColors.sage : AppColors.ink;
-
-    return Container(
-      width: double.infinity,
-      padding: AppSpacing.cardPadding,
-      decoration: BoxDecoration(
-        color: finished ? AppColors.sageBg : AppColors.cream,
-        borderRadius: AppRadius.mdRadius,
-      ),
+  Widget _section(String title, Widget child) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (finished) ...[
-                Icon(Icons.check_circle, color: AppColors.sage, size: 28),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-              Text(
-                finished ? context.l.ready : _formatTime(remaining),
-                style: AppTextStyles.display.copyWith(
-                  fontSize: 44,
-                  color: timeColor,
-                ),
-              ),
-            ],
-          ),
+          Text(title, style: AppTextStyles.headline.copyWith(fontSize: 19)),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (!finished)
-                _timerButton(
-                  icon: running ? Icons.pause : Icons.play_arrow,
-                  label: running ? context.l.pause : context.l.start,
-                  bg: AppColors.wood,
-                  fg: AppColors.ink,
-                  onTap: () =>
-                      running ? _pauseTimer(index) : _startTimer(index),
-                ),
-              if (!finished) const SizedBox(width: AppSpacing.md),
-              _timerButton(
-                icon: Icons.replay,
-                label: context.l.reset,
-                bg: AppColors.frostBg,
-                fg: AppColors.frost,
-                onTap: () => _resetTimer(index),
-              ),
-            ],
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.xs,
+            ),
+            decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+            child: child,
           ),
         ],
       ),
     );
   }
 
-  Widget _timerButton({
-    required IconData icon,
-    required String label,
-    required Color bg,
-    required Color fg,
-    required VoidCallback onTap,
-  }) {
-    return PressScale(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xl,
-          vertical: AppSpacing.md,
-        ),
-        decoration: BoxDecoration(color: bg, borderRadius: AppRadius.mdRadius),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+  /// Filas separadas por una línea fina.
+  Widget _rows(List<Widget> rows) => Column(
+    children: [
+      for (var i = 0; i < rows.length; i++) ...[
+        if (i > 0) Divider(height: 1, color: AppColors.line),
+        rows[i],
+      ],
+    ],
+  );
+
+  /// Qué se cocina, cuántas raciones y a qué táper va cada receta.
+  Widget _buildRecipes() {
+    final batchById = {for (final b in widget.batches) b.recipeId: b};
+    return _section(
+      context.l.bpCooking,
+      _rows([
+        for (final r in widget.recipes)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.terracottaBg,
+                    borderRadius: AppRadius.mdRadius,
+                  ),
+                  child: Icon(
+                    _applianceIcon(r.appliance),
+                    size: 20,
+                    color: AppColors.terracottaText,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(r.title, style: AppTextStyles.bodyStrong),
+                      const SizedBox(height: 2),
+                      Text(
+                        [
+                          context.l.planServings(
+                            batchById[r.id]?.totalServings ?? r.servings,
+                          ),
+                          if (batchById[r.id] case final b?) ?_taperText(b),
+                        ].join(' · '),
+                        style: AppTextStyles.bodyMuted,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ]),
+    );
+  }
+
+  /// Todo lo que hace falta para la tanda, sumado entre recetas.
+  Widget _buildIngredients() {
+    return _section(
+      context.l.bpNeed,
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Column(
           children: [
-            Icon(icon, size: 22, color: fg),
-            const SizedBox(width: AppSpacing.sm),
-            Text(label, style: AppTextStyles.bodyStrong.copyWith(color: fg)),
+            for (final line in _ingredients)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: AppColors.wood,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: Text(line, style: AppTextStyles.body)),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDoneButton(int index, bool done) {
-    return PressScale(
-      onTap: () => _toggleDone(index),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: done ? AppColors.sageBg : AppColors.wood,
-          borderRadius: AppRadius.mdRadius,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              done ? Icons.check_circle : Icons.check_circle_outline,
-              size: 22,
-              color: done ? AppColors.sage : AppColors.ink,
+  /// El orden de la tanda, solo para leer: número, paso y un dato discreto.
+  Widget _buildSteps() {
+    final steps = _plan.steps;
+    return _section(
+      context.l.bpStepsTitle,
+      _rows([
+        for (var i = 0; i < steps.length; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.iconTile,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${i + 1}',
+                    style: AppTextStyles.label.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(steps[i].title, style: AppTextStyles.body),
+                      const SizedBox(height: 2),
+                      Text(
+                        [
+                          if (!steps[i].isPrep)
+                            context.l.appliance(steps[i].appliance),
+                          if (steps[i].durationMinutes > 0)
+                            context.l.minutesShort(steps[i].durationMinutes),
+                          if (steps[i].canRunInParallel) context.l.bpMeanwhile,
+                          steps[i].recipeTitles.join(', '),
+                        ].join(' · '),
+                        style: AppTextStyles.labelMuted,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              done ? context.l.bpDone : context.l.bpMarkDone,
-              style: AppTextStyles.bodyStrong.copyWith(
-                color: done ? AppColors.sage : AppColors.ink,
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+      ]),
     );
   }
 }
