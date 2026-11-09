@@ -3518,4 +3518,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get recClearFilters => 'Effacer les filtres';
+
+  @override
+  String get recMore => 'Plus';
+
+  @override
+  String get recLess => 'Moins';
 }

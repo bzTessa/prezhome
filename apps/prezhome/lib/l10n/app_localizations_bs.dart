@@ -3437,4 +3437,10 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get recClearFilters => 'Ukloni filtere';
+
+  @override
+  String get recMore => 'Više';
+
+  @override
+  String get recLess => 'Manje';
 }

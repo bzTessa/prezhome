@@ -5477,6 +5477,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Quitar filtros'**
   String get recClearFilters;
+
+  /// No description provided for @recMore.
+  ///
+  /// In es, this message translates to:
+  /// **'Más'**
+  String get recMore;
+
+  /// No description provided for @recLess.
+  ///
+  /// In es, this message translates to:
+  /// **'Menos'**
+  String get recLess;
 }
 
 class _AppLocalizationsDelegate

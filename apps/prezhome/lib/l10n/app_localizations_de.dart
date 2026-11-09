@@ -3497,4 +3497,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get recClearFilters => 'Filter löschen';
+
+  @override
+  String get recMore => 'Mehr';
+
+  @override
+  String get recLess => 'Weniger';
 }

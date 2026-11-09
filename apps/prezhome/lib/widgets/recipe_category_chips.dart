@@ -22,9 +22,34 @@ IconData recipeCategoryIcon(String key) => switch (key) {
   _ => mealTypeIcon(key),
 };
 
-/// Categorías del recetario como baldosas de 5 en fila (sin deslizar), con
-/// cuántas recetas hay en cada una. Tocar una la elige; otra vez la quita.
-class RecipeCategoryChips extends StatelessWidget {
+(Color bg, Color fg) recipeCategoryColors(String key) => switch (key) {
+  'favorites' => (AppColors.terracottaBg, AppColors.terracotta),
+  'breakfast' || 'quick' => (AppColors.goldBg, AppColors.gold),
+  'lunch' || 'light' => (AppColors.sageBg, AppColors.sage),
+  'dinner' => (AppColors.lilacBg, AppColors.lilac),
+  'dessert' => (AppColors.peachBg, AppColors.peach),
+  'snack' => (AppColors.freshBg, AppColors.fresh),
+  _ => (AppColors.frostBg, AppColors.frost),
+};
+
+/// Orden en pantalla: las 4 primeras con recetas van siempre a la vista;
+/// el resto aparece al tocar "Más".
+const _displayOrder = [
+  'favorites',
+  'breakfast',
+  'lunch',
+  'dinner',
+  'quick',
+  'light',
+  'dessert',
+  'snack',
+  'drink',
+  'freezer',
+];
+
+/// Categorías del recetario como círculos de color en una fila, al estilo de
+/// las apps de recetas. Tocar una la elige; otra vez la quita.
+class RecipeCategoryChips extends StatefulWidget {
   const RecipeCategoryChips({
     super.key,
     required this.recipes,
@@ -37,25 +62,44 @@ class RecipeCategoryChips extends StatelessWidget {
   final ValueChanged<String?> onSelected;
 
   @override
+  State<RecipeCategoryChips> createState() => _RecipeCategoryChipsState();
+}
+
+class _RecipeCategoryChipsState extends State<RecipeCategoryChips> {
+  bool _more = false;
+
+  @override
   Widget build(BuildContext context) {
-    final counts = recipeCategoryCounts(recipes);
+    final counts = recipeCategoryCounts(widget.recipes);
+    final keys = _displayOrder.where(counts.containsKey).toList();
+    final hasMore = keys.length > 5;
+    final open = _more || (hasMore && keys.indexOf(widget.selected ?? '') >= 4);
+    final shown = !hasMore || open ? keys : keys.take(4).toList();
     return LayoutBuilder(
       builder: (context, c) {
-        const gap = 8.0;
+        const gap = 6.0;
         final width = (c.maxWidth - gap * 4) / 5;
+        Widget tile(String key) => SizedBox(
+          width: width,
+          child: _Tile(
+            category: key,
+            label: recipeCategoryLabel(context, key),
+            count: counts[key] ?? 0,
+            selected: key == widget.selected,
+            onTap: () => widget.onSelected(key == widget.selected ? null : key),
+          ),
+        );
         return Wrap(
           spacing: gap,
-          runSpacing: gap,
+          runSpacing: 10,
           children: [
-            for (final e in counts.entries)
+            for (final k in shown) tile(k),
+            if (hasMore)
               SizedBox(
                 width: width,
-                child: _Tile(
-                  icon: recipeCategoryIcon(e.key),
-                  label: recipeCategoryLabel(context, e.key),
-                  count: e.value,
-                  selected: e.key == selected,
-                  onTap: () => onSelected(e.key == selected ? null : e.key),
+                child: _MoreTile(
+                  open: open,
+                  onTap: () => setState(() => _more = !open),
                 ),
               ),
           ],
@@ -67,14 +111,14 @@ class RecipeCategoryChips extends StatelessWidget {
 
 class _Tile extends StatelessWidget {
   const _Tile({
-    required this.icon,
+    required this.category,
     required this.label,
     required this.count,
     required this.selected,
     required this.onTap,
   });
 
-  final IconData icon;
+  final String category;
   final String label;
   final int count;
   final bool selected;
@@ -82,50 +126,97 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final (bg, fg) = recipeCategoryColors(category);
     return Semantics(
       button: true,
       selected: selected,
       label: '$label, $count',
       excludeSemantics: true,
-      child: Material(
-        color: selected ? AppColors.wood : AppColors.card,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: selected ? AppColors.woodDark : AppColors.wood,
-          ),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
-            child: Column(
-              children: [
-                Icon(
-                  icon,
-                  size: 22,
-                  color: selected ? AppColors.ink : AppColors.woodDark,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: selected ? fg : bg,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
-                    ),
+                child: Icon(
+                  recipeCategoryIcon(category),
+                  size: 24,
+                  color: selected ? Colors.white : fg,
+                ),
+              ),
+              const SizedBox(height: 6),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                    color: AppColors.ink,
                   ),
                 ),
-                Text(
-                  '$count',
-                  style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoreTile extends StatelessWidget {
+  const _MoreTile({required this.open, required this.onTap});
+
+  final bool open;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = open ? context.l.recLess : context.l.recMore;
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.line),
                 ),
-              ],
-            ),
+                child: Icon(
+                  open ? Icons.expand_less_rounded : Icons.more_horiz_rounded,
+                  color: AppColors.inkMuted,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
           ),
         ),
       ),

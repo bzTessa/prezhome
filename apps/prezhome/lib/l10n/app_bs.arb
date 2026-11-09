@@ -894,5 +894,7 @@
   "recSortAz": "Od A do Ž",
   "recSortFastest": "Najbrži prvo",
   "recSortLightest": "Najmanje kalorija prvo",
-  "recClearFilters": "Ukloni filtere"
+  "recClearFilters": "Ukloni filtere",
+  "recMore": "Više",
+  "recLess": "Manje"
 }

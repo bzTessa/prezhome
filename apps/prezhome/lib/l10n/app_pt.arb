@@ -894,5 +894,7 @@
   "recSortAz": "De A a Z",
   "recSortFastest": "Mais rápidas primeiro",
   "recSortLightest": "Menos calorias primeiro",
-  "recClearFilters": "Limpar filtros"
+  "recClearFilters": "Limpar filtros",
+  "recMore": "Mais",
+  "recLess": "Menos"
 }

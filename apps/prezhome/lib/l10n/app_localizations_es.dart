@@ -3504,4 +3504,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get recClearFilters => 'Quitar filtros';
+
+  @override
+  String get recMore => 'Más';
+
+  @override
+  String get recLess => 'Menos';
 }
