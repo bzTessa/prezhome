@@ -348,9 +348,13 @@ SupermarketProduct? bestCatalogMatch(
     for (final p in ranked)
       if (isProductFor(query, p) && productMatchScore(query, p) == topScore) p,
   ];
-  for (final p in tied) {
-    if (priced(p) && photoed(p)) return p;
-  }
+  // Entre varios con precio y foto, el más barato: la lata suelta antes que
+  // el pack, para que "Cerveza" no salga a 9,90 €.
+  final full = [
+    for (final p in tied)
+      if (priced(p) && photoed(p)) p,
+  ]..sort((a, b) => a.price!.compareTo(b.price!));
+  if (full.isNotEmpty) return full.first;
   for (final p in tied) {
     if (priced(p)) return p;
   }
@@ -483,15 +487,27 @@ Future<List<SupermarketProduct>> searchCatalog(
           : w,
   ];
   if (words.isEmpty) return const [];
-  var q = Supabase.instance.client
-      .from('supermarket_products')
-      .select('product_id,name,brand,size,price,image_url')
-      .eq('store', store);
-  if (freshOnly) q = q.inFilter('category', freshCategories);
-  for (final w in words) {
-    q = q.ilike('name_normalized', '%$w%');
+  Future<List<Map<String, dynamic>>> fetch({required bool prefix}) {
+    var q = Supabase.instance.client
+        .from('supermarket_products')
+        .select('product_id,name,brand,size,price,image_url')
+        .eq('store', store);
+    if (freshOnly) q = q.inFilter('category', freshCategories);
+    for (final w in words) {
+      q = q.ilike('name_normalized', '%$w%');
+    }
+    if (prefix) q = q.ilike('name_normalized', '${words.first}%');
+    return q.limit(40);
   }
-  final rows = await q.limit(40);
+
+  // Sin orden, los 40 primeros de "leche" eran chocolates con leche y la
+  // leche de verdad no salía nunca. Primero lo que EMPIEZA por lo buscado.
+  final both = await Future.wait([fetch(prefix: true), fetch(prefix: false)]);
+  final seen = <Object?>{};
+  final rows = [
+    for (final r in [...both[0], ...both[1]])
+      if (seen.add(r['product_id'])) r,
+  ];
   return [
     for (final r in rows)
       SupermarketProduct(

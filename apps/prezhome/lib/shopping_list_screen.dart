@@ -285,6 +285,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             // Las de OFF se comprueban (y se cambian si no son ese producto).
             ((i.imageUrl ?? '').isEmpty ||
                 isStockPhoto(i.imageUrl) ||
+                isBrokenPhoto(i.imageUrl) ||
                 isSharablePhoto(i.imageUrl!)))
           i,
     ].take(60).toList();
@@ -301,7 +302,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             },
           ),
         )
-        .then((n) {
+        .then((n) async {
+          // Los precios del catálogo recordados al buscar las fotos.
+          if (mounted) await _loadPrices();
           if (n > 0 && mounted) _reload();
           return n;
         })
@@ -857,6 +860,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           seq: _nextSeq(),
         ),
       );
+      // El producto elegido trae su precio: el "≈" se actualiza ya.
+      _prices = await PriceMemory(_client).loadAll(homeId);
       await _reload();
     } catch (e) {
       if (!mounted) return;
@@ -1583,6 +1588,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       context: context,
       backgroundColor: AppColors.cream,
       showDragHandle: true,
+      // Sin esto la hoja se corta a media pantalla y se desborda.
+      isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) {
           void update(ShoppingViewPrefs next) {
@@ -1591,55 +1598,58 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           }
 
           return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SwitchListTile(
-                  title: Text(context.l.shopGroupByAisle),
-                  subtitle: Text(context.l.shopGroupHint),
-                  value: _view.groupByAisle,
-                  onChanged: (v) => update(_view.copyWith(groupByAisle: v)),
-                ),
-                SwitchListTile(
-                  title: Text(context.l.shopShowPhotos),
-                  value: _view.showPhotos,
-                  onChanged: (v) => update(_view.copyWith(showPhotos: v)),
-                ),
-                SwitchListTile(
-                  title: Text(context.l.shopGridView),
-                  subtitle: Text(context.l.shopGridHint),
-                  value: _view.grid,
-                  onChanged: (v) => update(_view.copyWith(grid: v)),
-                ),
-                SwitchListTile(
-                  title: Text(context.l.shopShowSuggestions),
-                  subtitle: Text(context.l.shopSuggestionsHint),
-                  value: _view.showSuggestions,
-                  onChanged: (v) => update(_view.copyWith(showSuggestions: v)),
-                ),
-                SwitchListTile(
-                  title: Text(context.l.shopShowPrices),
-                  value: _view.showPrices,
-                  onChanged: (v) => update(_view.copyWith(showPrices: v)),
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.list_alt_rounded),
-                  title: Text(context.l.shopMyLists),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _openListsOverview();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.category_outlined),
-                  title: Text(context.l.categories),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _openCategoriesManager();
-                  },
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchListTile(
+                    title: Text(context.l.shopGroupByAisle),
+                    subtitle: Text(context.l.shopGroupHint),
+                    value: _view.groupByAisle,
+                    onChanged: (v) => update(_view.copyWith(groupByAisle: v)),
+                  ),
+                  SwitchListTile(
+                    title: Text(context.l.shopShowPhotos),
+                    value: _view.showPhotos,
+                    onChanged: (v) => update(_view.copyWith(showPhotos: v)),
+                  ),
+                  SwitchListTile(
+                    title: Text(context.l.shopGridView),
+                    subtitle: Text(context.l.shopGridHint),
+                    value: _view.grid,
+                    onChanged: (v) => update(_view.copyWith(grid: v)),
+                  ),
+                  SwitchListTile(
+                    title: Text(context.l.shopShowSuggestions),
+                    subtitle: Text(context.l.shopSuggestionsHint),
+                    value: _view.showSuggestions,
+                    onChanged: (v) =>
+                        update(_view.copyWith(showSuggestions: v)),
+                  ),
+                  SwitchListTile(
+                    title: Text(context.l.shopShowPrices),
+                    value: _view.showPrices,
+                    onChanged: (v) => update(_view.copyWith(showPrices: v)),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.list_alt_rounded),
+                    title: Text(context.l.shopMyLists),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _openListsOverview();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.category_outlined),
+                    title: Text(context.l.categories),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _openCategoriesManager();
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         },

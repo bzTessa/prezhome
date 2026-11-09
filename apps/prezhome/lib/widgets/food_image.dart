@@ -142,7 +142,11 @@ class FoodImage extends StatelessWidget {
         // Acotamos la resolución de decodificado al ancho real que se
         // va a pintar (en píxeles físicos), igual que RecipeImage.
         cacheWidth: _cacheWidthFor(context, constraints, w),
-        errorBuilder: (context, error, stack) => _cozyIllustration(),
+        errorBuilder: (context, error, stack) {
+          // Se busca otra foto la próxima vez (ver brokenPhotos).
+          brokenPhotos.add(imageUrl!);
+          return _cozyIllustration();
+        },
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
           return _cozyIllustration(loading: true);

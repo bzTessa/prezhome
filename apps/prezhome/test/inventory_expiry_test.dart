@@ -30,6 +30,16 @@ DateTime _daysFromNow(int days) {
 }
 
 void main() {
+  test('congelado con consumo preferente = día de congelar usa 90 días', () {
+    final item = _item(
+      category: 'Congelador',
+      frozenOn: _daysFromNow(-5),
+      bestBefore: _daysFromNow(-5),
+    );
+    expect(item.daysUntilExpiry, 85);
+    expect(item.expiryStatus, ExpiryStatus.fresco);
+  });
+
   group('ExpiryStatus en Nevera/Despensa (expiration_date)', () {
     test('caducado cuando la fecha ya pasó', () {
       final item = _item(category: 'Nevera', expirationDate: _daysFromNow(-1));

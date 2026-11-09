@@ -875,6 +875,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
       });
     }
 
+    // Los tápers de un mismo plato (uno por día del plan) van en una sola
+    // fila: la del que antes caduca, con el total de comidas.
+    final sameDish = <String, List<InventoryItem>>{};
+    shown.removeWhere((i) {
+      if (i.kind != 'dish' || i.recipeId == null) return false;
+      final list = sameDish.putIfAbsent(
+        '${i.recipeId}|${i.category}',
+        () => [],
+      );
+      list.add(i);
+      return list.length > 1;
+    });
+    _sameDish = {
+      for (final list in sameDish.values)
+        if (list.length > 1) list.first.id: list,
+    };
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -1002,8 +1019,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
         : groups;
   }
 
+  /// Tápers del mismo plato juntados en una fila (id de la fila -> todos).
+  Map<String, List<InventoryItem>> _sameDish = const {};
+
   /// Fila de producto: foto, nombre, cantidad y, si caduca, cuándo.
   Widget _itemRow(InventoryItem item, {required bool showZone}) {
+    final same = _sameDish[item.id];
+    final total = same?.fold<double>(0, (t, i) => t + i.quantity);
     final days = _tracksExpiry(item) ? item.daysUntilExpiry : null;
     final (String, Color)? expiry = switch (days) {
       null => null,
@@ -1062,7 +1084,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      shoppingCleanName(item.name),
+                      shoppingCleanName(
+                        // Juntos no tiene sentido el día de cada táper.
+                        same == null
+                            ? item.name
+                            : item.name.replaceFirst(
+                                RegExp(r' \([^)]*\)$'),
+                                '',
+                              ),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1112,7 +1142,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               if (stepUnit) ...[
                 const SizedBox(width: 8),
                 QuantityStepper(
-                  label: shoppingQtyLabel(item.quantity, item.unit),
+                  label: shoppingQtyLabel(total ?? item.quantity, item.unit),
                   // Bajar del último lo da por consumido hoy (con deshacer).
                   onMinus: item.quantity <= 1
                       ? () => _consume(item)

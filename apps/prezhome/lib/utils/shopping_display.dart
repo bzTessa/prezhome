@@ -64,6 +64,9 @@ String? _unitKey(String unit) {
     case 'bolsa':
     case 'bolsas':
       return 'bolsa';
+    case 'comida':
+    case 'comidas':
+      return 'comida';
     case 'cucharada':
     case 'cucharadas':
       return 'cucharada';
@@ -91,6 +94,7 @@ const Map<String, (String, String)> _unitForms = {
   'lata': ('lata', 'latas'),
   'bote': ('bote', 'botes'),
   'bolsa': ('bolsa', 'bolsas'),
+  'comida': ('comida', 'comidas'),
   'cucharada': ('cucharada', 'cucharadas'),
   'cucharadita': ('cucharadita', 'cucharaditas'),
 };

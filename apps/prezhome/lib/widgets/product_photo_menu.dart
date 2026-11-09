@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/food_photo_service.dart';
+import '../services/price_memory.dart';
 import '../theme/app_theme.dart';
 import '../utils/friendly_error.dart';
 import '../utils/shopping_display.dart';
@@ -76,6 +77,10 @@ Future<String?> pickProductPhoto(
         );
         url = product?.imageUrl;
         if (url == null) return null;
+        // El precio del producto elegido pasa a ser el "≈" de ese alimento.
+        if (product?.price case final price?) {
+          await PriceMemory(client).rememberCatalogPrice(homeId, name, price);
+        }
       default:
         return null;
     }
