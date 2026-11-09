@@ -422,4 +422,18 @@ void main() {
       expect(await service.freshPhoto('patata', 'mercadona'), isNull);
     });
   });
+
+  test('bolsas de basura: "bolsa" cuenta y el tamaño no', () {
+    const bag = SupermarketProduct(
+      code: 'mercadona:1',
+      name: 'Bolsas de basura 30L Bosque Verde perfumadas',
+    );
+    expect(isProductFor('Bolsas de basura', bag), isTrue);
+    expect(isProductFor('bolsa de basura', bag), isTrue);
+    const box = SupermarketProduct(
+      code: 'mercadona:2',
+      name: 'Recipiente de plástico redondo 1L Bosque Verde',
+    );
+    expect(isProductFor('Bolsa de plástico', box), isFalse);
+  });
 }
