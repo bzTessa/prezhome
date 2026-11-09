@@ -32,6 +32,9 @@ class Recipe {
   final String? videoUrl; // enlace de video opcional (Instagram, TikTok...)
   final List<RecipeComponent> components; // partes del plato (pollo, arroz...)
   final int? freezerDays; // días recomendados de congelación (estimado por IA)
+  // Nombres de ingredientes, solo si la consulta trae recipe_ingredients(name):
+  // sirven para buscar recetas por ingrediente.
+  final List<String> ingredientNames;
 
   Recipe({
     required this.id,
@@ -56,6 +59,7 @@ class Recipe {
     this.videoUrl,
     this.components = const [],
     this.freezerDays,
+    this.ingredientNames = const [],
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
@@ -96,6 +100,11 @@ class Recipe {
         final num d when d > 0 => d.toInt(),
         _ => null,
       },
+      ingredientNames: [
+        if (map['recipe_ingredients'] case final List rows)
+          for (final row in rows)
+            if (row is Map && row['name'] != null) row['name'].toString(),
+      ],
     );
   }
 
@@ -232,6 +241,7 @@ class Recipe {
       videoUrl: videoUrl,
       components: components,
       freezerDays: freezerDays,
+      ingredientNames: ingredientNames,
     );
   }
 

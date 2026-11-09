@@ -28,3 +28,23 @@ Deno.test("casa plurales en inglés", () => {
   const photos = [{ alt: "roasted chicken with potatoes" }];
   assertEquals(pickRelevant(photos, alt, kw)?.alt, photos[0].alt);
 });
+
+Deno.test("una sola palabra suelta no basta si el plato tiene varias", () => {
+  const kw = keywordsFor("Pollo al queso azul con arroz redondo");
+  const photos = [
+    { alt: "bowl of white rice" },
+    { alt: "caesar salad with chicken and parmesan cheese" },
+  ];
+  assertEquals(pickRelevant([photos[0]], alt, kw), null);
+  assertEquals(pickRelevant(photos, alt, kw)?.alt, photos[1].alt);
+});
+
+Deno.test("query_en no cuenta dos veces la misma palabra", () => {
+  const kw = keywordsFor("Lentejas con chorizo", "lentil stew");
+  assertEquals(pickRelevant([{ alt: "lentil soup" }], alt, kw), null);
+});
+
+Deno.test("un plato de una palabra vale con esa palabra", () => {
+  const kw = keywordsFor("Gazpacho");
+  assertEquals(pickRelevant([{ alt: "cold tomato soup" }], alt, kw)?.alt, "cold tomato soup");
+});

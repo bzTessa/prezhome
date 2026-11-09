@@ -3407,4 +3407,34 @@ class AppLocalizationsBs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get recQuick => 'Brzi';
+
+  @override
+  String get recLight => 'Lagani';
+
+  @override
+  String get recFreezer => 'Za zamrzivač';
+
+  @override
+  String get recSearchHint => 'Traži po nazivu ili sastojku';
+
+  @override
+  String get recSort => 'Sortiraj';
+
+  @override
+  String get recSortRecent => 'Najnoviji';
+
+  @override
+  String get recSortAz => 'Od A do Ž';
+
+  @override
+  String get recSortFastest => 'Najbrži prvo';
+
+  @override
+  String get recSortLightest => 'Najmanje kalorija prvo';
+
+  @override
+  String get recClearFilters => 'Ukloni filtere';
 }

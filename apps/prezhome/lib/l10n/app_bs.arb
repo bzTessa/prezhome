@@ -884,5 +884,15 @@
   "drSavedShort": "Sačuvano",
   "drSaveToRecipes": "Sačuvaj u moje recepte",
   "taskKind": "{kind, select, bano{Kupatilo} ropa{Veš} compra{Kupovina} basura{Smeće} platos{Suđe} limpieza{Čišćenje} plantas{Biljke} cama{Krevet} mascota{Ljubimac} cocinar{Kuhanje} pagos{Plaćanja} other{Zadatak}}",
-  "taskPreset": "{preset, select, dishes{Oprati suđe} vacuum{Usisati} bathroom{Očistiti kupatilo} laundry{Oprati veš} trash{Iznijeti smeće} shopping{Kupovina namirnica} plants{Zaliti biljke} other{Promijeniti posteljinu}}"
+  "taskPreset": "{preset, select, dishes{Oprati suđe} vacuum{Usisati} bathroom{Očistiti kupatilo} laundry{Oprati veš} trash{Iznijeti smeće} shopping{Kupovina namirnica} plants{Zaliti biljke} other{Promijeniti posteljinu}}",
+  "recQuick": "Brzi",
+  "recLight": "Lagani",
+  "recFreezer": "Za zamrzivač",
+  "recSearchHint": "Traži po nazivu ili sastojku",
+  "recSort": "Sortiraj",
+  "recSortRecent": "Najnoviji",
+  "recSortAz": "Od A do Ž",
+  "recSortFastest": "Najbrži prvo",
+  "recSortLightest": "Najmanje kalorija prvo",
+  "recClearFilters": "Ukloni filtere"
 }

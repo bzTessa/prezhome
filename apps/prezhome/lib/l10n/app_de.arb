@@ -884,5 +884,15 @@
   "drSavedShort": "Gespeichert",
   "drSaveToRecipes": "In meinen Rezepten speichern",
   "taskKind": "{kind, select, bano{Bad} ropa{Wäsche} compra{Einkauf} basura{Müll} platos{Geschirr} limpieza{Putzen} plantas{Pflanzen} cama{Bett} mascota{Haustier} cocinar{Kochen} pagos{Zahlungen} other{Aufgabe}}",
-  "taskPreset": "{preset, select, dishes{Geschirr spülen} vacuum{Staubsaugen} bathroom{Bad putzen} laundry{Wäsche waschen} trash{Müll rausbringen} shopping{Einkaufen} plants{Pflanzen gießen} other{Bettwäsche wechseln}}"
+  "taskPreset": "{preset, select, dishes{Geschirr spülen} vacuum{Staubsaugen} bathroom{Bad putzen} laundry{Wäsche waschen} trash{Müll rausbringen} shopping{Einkaufen} plants{Pflanzen gießen} other{Bettwäsche wechseln}}",
+  "recQuick": "Schnell",
+  "recLight": "Leicht",
+  "recFreezer": "Einfrierbar",
+  "recSearchHint": "Nach Name oder Zutat suchen",
+  "recSort": "Sortieren",
+  "recSortRecent": "Neueste",
+  "recSortAz": "A bis Z",
+  "recSortFastest": "Schnellste zuerst",
+  "recSortLightest": "Wenigste Kalorien zuerst",
+  "recClearFilters": "Filter löschen"
 }

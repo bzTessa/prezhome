@@ -28,6 +28,8 @@ import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/tactile_button.dart';
 import 'widgets/plan/plan_parts.dart';
+import 'utils/recipe_browse.dart';
+import 'widgets/recipe_category_chips.dart';
 import 'widgets/recipe_image.dart';
 import 'widgets/segmented_pill.dart';
 import 'utils/friendly_error.dart';
@@ -172,7 +174,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
 
     // Recetas del hogar
-    final recRes = await _client.from('recipes').select().eq('home_id', homeId);
+    final recRes = await _client
+        .from('recipes')
+        .select('*, recipe_ingredients(name)')
+        .eq('home_id', homeId)
+        .order('created_at', ascending: false);
     final recipes = (recRes as List).map((m) => Recipe.fromMap(m)).toList();
 
     // Plan de esta semana, con las comidas que se repiten ya puestas.
@@ -1091,7 +1097,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// congelador") porque el plato ya no es el mismo.
   Future<void> _changeRecipe(_PlanData data, MealPlanEntry e) async {
     if (e.id == null) return;
-    final chosen = await _pickRecipe(data, title: context.l.planPickRecipe);
+    final chosen = await _pickRecipe(
+      data,
+      title: context.l.planPickRecipe,
+      mealType: e.mealType,
+    );
     if (chosen == null) return;
     try {
       await _client
@@ -1172,7 +1182,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         );
     if (!mounted || mealType == null) return;
 
-    final chosen = await _pickRecipe(data, title: context.l.planPickRecipe);
+    final chosen = await _pickRecipe(
+      data,
+      title: context.l.planPickRecipe,
+      mealType: mealType,
+    );
     if (chosen == null) return;
 
     try {
@@ -1200,7 +1214,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   /// Bottom sheet con buscador para elegir una receta del hogar. Devuelve la
   /// receta elegida o null si se cancela.
-  Future<Recipe?> _pickRecipe(_PlanData data, {required String title}) {
+  Future<Recipe?> _pickRecipe(
+    _PlanData data, {
+    required String title,
+    String? mealType,
+  }) {
     return showModalBottomSheet<Recipe>(
       context: context,
       backgroundColor: AppColors.cream,
@@ -1208,7 +1226,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => _RecipePickerSheet(title: title, recipes: data.recipes),
+      builder: (ctx) => _RecipePickerSheet(
+        title: title,
+        recipes: data.recipes,
+        mealType: mealType,
+      ),
     );
   }
 
@@ -2168,12 +2190,18 @@ class _PlanData {
   }) : prefs = prefs ?? DashboardPrefs.defaults();
 }
 
-/// Bottom sheet para elegir una receta del hogar, con buscador por nombre.
-/// Devuelve la receta elegida (Navigator.pop) o null si se cierra.
+/// Bottom sheet para elegir una receta del hogar: buscador por nombre o
+/// ingrediente, categorías (arranca en la del hueco, p. ej. "Desayuno") y
+/// lista con foto. Devuelve la receta elegida (Navigator.pop) o null.
 class _RecipePickerSheet extends StatefulWidget {
   final String title;
   final List<Recipe> recipes;
-  const _RecipePickerSheet({required this.title, required this.recipes});
+  final String? mealType;
+  const _RecipePickerSheet({
+    required this.title,
+    required this.recipes,
+    this.mealType,
+  });
 
   @override
   State<_RecipePickerSheet> createState() => _RecipePickerSheetState();
@@ -2182,6 +2210,11 @@ class _RecipePickerSheet extends StatefulWidget {
 class _RecipePickerSheetState extends State<_RecipePickerSheet> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+  late String? _category =
+      widget.mealType != null &&
+          widget.recipes.any((r) => r.mealTypes.contains(widget.mealType))
+      ? widget.mealType
+      : null;
 
   @override
   void dispose() {
@@ -2191,12 +2224,16 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final q = _query.trim().toLowerCase();
-    final visible = q.isEmpty
-        ? widget.recipes
-        : widget.recipes
-              .where((r) => r.title.toLowerCase().contains(q))
-              .toList();
+    // Favoritas primero dentro de lo encontrado.
+    final found = browseRecipes(
+      widget.recipes,
+      query: _query,
+      category: _category,
+    );
+    final visible = [
+      ...found.where((r) => r.isFavorite),
+      ...found.where((r) => !r.isFavorite),
+    ];
 
     return Padding(
       // Deja espacio para el teclado al buscar.
@@ -2205,104 +2242,185 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
       ),
       child: DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 0.7,
-        maxChildSize: 0.9,
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
         minChildSize: 0.4,
-        builder: (context, scrollController) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.ink,
+        builder: (context, scrollController) => CustomScrollView(
+          controller: scrollController,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                          color: AppColors.ink,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: context.l.close,
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+                    IconButton(
+                      tooltip: context.l.close,
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v),
-                decoration: InputDecoration(
-                  hintText: context.l.planSearchRecipe,
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: AppColors.woodDark,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.card,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.wood, width: 1.4),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: (v) => setState(() => _query = v),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: context.l.recSearchHint,
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
                       color: AppColors.woodDark,
-                      width: 1.8,
+                    ),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: context.l.clear,
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: AppColors.woodDark,
+                            ),
+                            onPressed: () => setState(() {
+                              _searchCtrl.clear();
+                              _query = '';
+                            }),
+                          ),
+                    filled: true,
+                    fillColor: AppColors.card,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppColors.wood, width: 1.4),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: AppColors.woodDark,
+                        width: 1.8,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: visible.isEmpty
-                  ? Center(
-                      child: Text(
-                        context.l.planNoMatch,
-                        style: TextStyle(color: AppColors.inkMuted),
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                      itemCount: visible.length,
-                      itemBuilder: (context, i) {
-                        final r = visible[i];
-                        return Card(
-                          color: AppColors.card,
-                          elevation: 0,
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.restaurant_menu,
-                              color: AppColors.woodDark,
-                            ),
-                            title: Text(
-                              r.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: r.calories != null
-                                ? Text('${r.calories} kcal')
-                                : null,
-                            onTap: () => Navigator.of(context).pop(r),
-                          ),
-                        );
-                      },
-                    ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: RecipeCategoryChips(
+                  recipes: widget.recipes,
+                  selected: _category,
+                  onSelected: (c) => setState(() => _category = c),
+                ),
+              ),
             ),
+            if (visible.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    context.l.planNoMatch,
+                    style: TextStyle(color: AppColors.inkMuted),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                sliver: SliverList.builder(
+                  itemCount: visible.length,
+                  itemBuilder: (context, i) => _PickerRecipeTile(
+                    recipe: visible[i],
+                    onTap: () => Navigator.of(context).pop(visible[i]),
+                  ),
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Fila del selector: foto, nombre, tiempo y calorías, y corazón si es
+/// favorita.
+class _PickerRecipeTile extends StatelessWidget {
+  const _PickerRecipeTile({required this.recipe, required this.onTap});
+
+  final Recipe recipe;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = [
+      if (recipe.totalTimeMinutes case final int m when m > 0) '$m min',
+      if (recipe.calories != null) '${recipe.calories} kcal',
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                RecipeImage(recipe: recipe, width: 64, height: 64, radius: 14),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        recipe.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      if (meta.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          meta,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (recipe.isFavorite)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, right: 4),
+                    child: Icon(
+                      Icons.favorite_rounded,
+                      size: 18,
+                      color: AppColors.favorite,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

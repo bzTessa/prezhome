@@ -3467,4 +3467,34 @@ class AppLocalizationsDe extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get recQuick => 'Schnell';
+
+  @override
+  String get recLight => 'Leicht';
+
+  @override
+  String get recFreezer => 'Einfrierbar';
+
+  @override
+  String get recSearchHint => 'Nach Name oder Zutat suchen';
+
+  @override
+  String get recSort => 'Sortieren';
+
+  @override
+  String get recSortRecent => 'Neueste';
+
+  @override
+  String get recSortAz => 'A bis Z';
+
+  @override
+  String get recSortFastest => 'Schnellste zuerst';
+
+  @override
+  String get recSortLightest => 'Wenigste Kalorien zuerst';
+
+  @override
+  String get recClearFilters => 'Filter löschen';
 }

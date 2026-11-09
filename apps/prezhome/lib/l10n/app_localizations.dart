@@ -5417,6 +5417,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{preset, select, dishes{Fregar los platos} vacuum{Aspirar} bathroom{Limpiar el baño} laundry{Poner lavadora} trash{Sacar la basura} shopping{Hacer la compra} plants{Regar las plantas} other{Cambiar sábanas}}'**
   String taskPreset(String preset);
+
+  /// No description provided for @recQuick.
+  ///
+  /// In es, this message translates to:
+  /// **'Rápidas'**
+  String get recQuick;
+
+  /// No description provided for @recLight.
+  ///
+  /// In es, this message translates to:
+  /// **'Ligeras'**
+  String get recLight;
+
+  /// No description provided for @recFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'Congelables'**
+  String get recFreezer;
+
+  /// No description provided for @recSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Busca por nombre o ingrediente'**
+  String get recSearchHint;
+
+  /// No description provided for @recSort.
+  ///
+  /// In es, this message translates to:
+  /// **'Ordenar'**
+  String get recSort;
+
+  /// No description provided for @recSortRecent.
+  ///
+  /// In es, this message translates to:
+  /// **'Más nuevas'**
+  String get recSortRecent;
+
+  /// No description provided for @recSortAz.
+  ///
+  /// In es, this message translates to:
+  /// **'De la A a la Z'**
+  String get recSortAz;
+
+  /// No description provided for @recSortFastest.
+  ///
+  /// In es, this message translates to:
+  /// **'Más rápidas primero'**
+  String get recSortFastest;
+
+  /// No description provided for @recSortLightest.
+  ///
+  /// In es, this message translates to:
+  /// **'Menos calorías primero'**
+  String get recSortLightest;
+
+  /// No description provided for @recClearFilters.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar filtros'**
+  String get recClearFilters;
 }
 
 class _AppLocalizationsDelegate

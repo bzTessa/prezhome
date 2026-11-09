@@ -3459,4 +3459,34 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get recQuick => 'Quick';
+
+  @override
+  String get recLight => 'Light';
+
+  @override
+  String get recFreezer => 'Freezable';
+
+  @override
+  String get recSearchHint => 'Search by name or ingredient';
+
+  @override
+  String get recSort => 'Sort';
+
+  @override
+  String get recSortRecent => 'Newest';
+
+  @override
+  String get recSortAz => 'A to Z';
+
+  @override
+  String get recSortFastest => 'Quickest first';
+
+  @override
+  String get recSortLightest => 'Fewest calories first';
+
+  @override
+  String get recClearFilters => 'Clear filters';
 }
