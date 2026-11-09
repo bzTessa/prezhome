@@ -34,13 +34,19 @@ class ShareViewController: UIViewController {
     return URL(string: "com.prezhome.app://share?text=\(q)")
   }
 
-  // Las extensiones no tienen UIApplication.shared: se busca en la cadena de
-  // respondedores (por eso APPLICATION_EXTENSION_API_ONLY = NO en el target).
+  // Las extensiones no pueden llamar a UIApplication.open: se busca la
+  // UIApplication en la cadena de respondedores y se llama al método por su
+  // nombre (lo mismo que hacen otras apps de recetas con su "Compartir").
   private func openApp(_ url: URL) {
+    typealias Open = @convention(c) (
+      AnyObject, Selector, NSURL, NSDictionary, (@convention(block) (Bool) -> Void)?
+    ) -> Void
+    let sel = NSSelectorFromString("openURL:options:completionHandler:")
     var responder: UIResponder? = self
     while let r = responder {
-      if let app = r as? UIApplication {
-        app.open(url, options: [:], completionHandler: nil)
+      if let app = r as? UIApplication, app.responds(to: sel) {
+        let open = unsafeBitCast(app.method(for: sel), to: Open.self)
+        open(app, sel, url as NSURL, NSDictionary(), nil)
         return
       }
       responder = r.next
