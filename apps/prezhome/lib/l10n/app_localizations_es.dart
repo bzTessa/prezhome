@@ -830,7 +830,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'bebidas': 'Bebidas',
       'especias': 'Condimentos',
       'limpieza': 'Limpieza',
-      'hogar': 'Higiene y hogar',
+      'hogar': 'Varios',
       'other': '$zone',
     });
     return '$_temp0';

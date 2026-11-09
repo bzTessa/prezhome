@@ -274,6 +274,18 @@ class ShelfLife {
     'Hogar',
   };
 
+  /// Zona de algo de casa: 'Limpieza' solo para lo de limpiar; el resto
+  /// (higiene, jabón, ropa, pilas o lo que no se reconoce) va a 'Hogar', que
+  /// en pantalla se llama "Varios".
+  static String householdZone(String name) {
+    if (CategoryIcons.categoryFor(name) != FoodCategory.limpieza)
+      return 'Hogar';
+    final n = CategoryIcons.normalize(name);
+    return _variosWords.any(n.contains) ? 'Hogar' : 'Limpieza';
+  }
+
+  static const _variosWords = ['jabon', 'sabo', 'ropa', 'lavadora'];
+
   /// Zona de la despensa donde guardar un producto comprado. [category] puede
   /// ser ya una zona o el pasillo de la lista de la compra ("Verduras",
   /// "Especias y condimentos"…): el pasillo se traduce a su zona y, si no
@@ -286,7 +298,7 @@ class ShelfLife {
     if (category != null && pantryZones.contains(category)) return category;
     final cat = CategoryIcons.categoryFor(name, itemType: itemType);
     // Lo de casa nunca va con la comida, aunque se apuntara como comida.
-    if (CategoryIcons.isHousehold(cat)) return _locationByCategory[cat]!;
+    if (CategoryIcons.isHousehold(cat)) return householdZone(name);
     final aisle = CategoryIcons.normalize(category ?? '');
     if (aisle.contains('higiene')) return 'Hogar';
     if (aisle.contains('limpieza')) return 'Limpieza';

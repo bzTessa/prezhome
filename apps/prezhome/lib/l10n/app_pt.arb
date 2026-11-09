@@ -200,7 +200,7 @@
   "panWhatToCook": "O que cozinho com isto?",
   "panExpiringHeader": "Fora de prazo e quase a expirar",
   "panNothingHere": "Aqui não há nada.",
-  "kitchenZone": "{zone, select, nevera{Frigorífico} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpeza} hogar{Higiene e casa} other{{zone}}}",
+  "kitchenZone": "{zone, select, nevera{Frigorífico} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpeza} hogar{Vários} other{{zone}}}",
   "kitchenReview": "Rever",
   "expiryGroup": "{group, select, expired{Fora de prazo} week{Esta semana} later{Mais tarde} other{Sem data}}",
   "panExpiredAgo": "Expirou há {days} dias",

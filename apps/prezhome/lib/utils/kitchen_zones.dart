@@ -3,6 +3,7 @@
 library;
 
 import '../models/inventory_item.dart';
+import '../services/shelf_life.dart';
 import '../widgets/food_category_icon.dart';
 
 enum KitchenZone {
@@ -12,7 +13,7 @@ enum KitchenZone {
   bebidas('Bebidas', 'Bebidas'),
   especias('Especias', 'Condimentos'),
   limpieza('Limpieza', 'Limpieza'),
-  hogar('Hogar', 'Higiene y hogar');
+  hogar('Hogar', 'Varios');
 
   const KitchenZone(this.filterKey, this.label);
 
@@ -21,13 +22,14 @@ enum KitchenZone {
   final String label;
 
   /// ¿Pertenece [i] a esta zona? (misma regla que el filtro del inventario).
-  /// Lo de casa se reparte por su zona guardada ('Hogar' = higiene y hogar,
-  /// lo demás a limpieza); la comida, por la suya.
+  /// Lo de casa se reparte por su zona guardada ('Hogar' = Varios, el cajón
+  /// de sastre); si se guardó en una zona de comida, se deduce por el nombre.
+  /// La comida, por su zona.
   bool matches(InventoryItem i) {
     final home = i.itemType != 'comida' || _homeZones.contains(i.category);
     return switch (this) {
-      KitchenZone.hogar => home && i.category == 'Hogar',
-      KitchenZone.limpieza => home && i.category != 'Hogar',
+      KitchenZone.hogar => home && _homeZone(i) == 'Hogar',
+      KitchenZone.limpieza => home && _homeZone(i) == 'Limpieza',
       KitchenZone.nevera => !home && i.category == 'Nevera',
       KitchenZone.congelador => !home && i.category == 'Congelador',
       KitchenZone.especias => !home && i.category == 'Especias',
@@ -44,6 +46,10 @@ enum KitchenZone {
   }
 
   static const _homeZones = {'Limpieza', 'Hogar'};
+
+  static String _homeZone(InventoryItem i) => _homeZones.contains(i.category)
+      ? i.category
+      : ShelfLife.householdZone(i.name);
 
   static KitchenZone? byFilterKey(String key) {
     for (final z in KitchenZone.values) {

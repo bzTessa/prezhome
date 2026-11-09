@@ -834,7 +834,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'bebidas': 'Boissons',
       'especias': 'Condiments',
       'limpieza': 'Ménage',
-      'hogar': 'Hygiène et maison',
+      'hogar': 'Divers',
       'other': '$zone',
     });
     return '$_temp0';

@@ -1311,7 +1311,7 @@ abstract class AppLocalizations {
   /// No description provided for @kitchenZone.
   ///
   /// In es, this message translates to:
-  /// **'{zone, select, nevera{Nevera} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpieza} hogar{Higiene y hogar} other{{zone}}}'**
+  /// **'{zone, select, nevera{Nevera} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpieza} hogar{Varios} other{{zone}}}'**
   String kitchenZone(String zone);
 
   /// No description provided for @kitchenReview.

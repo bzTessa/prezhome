@@ -519,7 +519,7 @@
   "panWhatToCook": "¿Qué cocino con esto?",
   "panExpiringHeader": "Caducados y a punto de caducar",
   "panNothingHere": "Aquí no hay nada.",
-  "kitchenZone": "{zone, select, nevera{Nevera} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpieza} hogar{Higiene y hogar} other{{zone}}}",
+  "kitchenZone": "{zone, select, nevera{Nevera} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpieza} hogar{Varios} other{{zone}}}",
   "@kitchenZone": {
     "placeholders": {
       "zone": {

@@ -200,7 +200,7 @@
   "panWhatToCook": "Qu'est-ce que je cuisine avec ça ?",
   "panExpiringHeader": "Périmés et bientôt périmés",
   "panNothingHere": "Rien ici.",
-  "kitchenZone": "{zone, select, nevera{Frigo} congelador{Congélateur} despensa{Placards} bebidas{Boissons} especias{Condiments} limpieza{Ménage} hogar{Hygiène et maison} other{{zone}}}",
+  "kitchenZone": "{zone, select, nevera{Frigo} congelador{Congélateur} despensa{Placards} bebidas{Boissons} especias{Condiments} limpieza{Ménage} hogar{Divers} other{{zone}}}",
   "kitchenReview": "À vérifier",
   "expiryGroup": "{group, select, expired{Périmé} week{Cette semaine} later{Plus tard} other{Sans date}}",
   "panExpiredAgo": "Périmé depuis {days} jours",
