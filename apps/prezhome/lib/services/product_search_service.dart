@@ -153,7 +153,6 @@ const _filler = {
   'a',
   'para',
   'sin',
-  'bolsa',
   'pack',
   'paquete',
   'malla',
@@ -261,7 +260,8 @@ List<String> _words(String s) {
         (w) =>
             w.length > 1 &&
             !_filler.contains(w) &&
-            !RegExp(r'^\d+$').hasMatch(w),
+            // Números y tamaños ("30l", "33cl", "500g") no cuentan como palabra.
+            !RegExp(r'^\d+(l|ml|cl|g|gr|kg)?$').hasMatch(w),
       )
       .toList();
 }
@@ -640,13 +640,19 @@ class ProductSearchService {
       }
       final seen = {for (final p in inStore) p.code};
       // Open Food Facts siempre al final, detrás de los catálogos.
-      return _cache[key] = ProductSearchResult([
-        ...official,
-        ...rankProducts(q, [
-          ...inStore,
-          ...offAll.where((p) => seen.add(p.code)),
-        ]),
-      ]);
+      return _cache[key] = ProductSearchResult(
+        [
+          ...official,
+          ...rankProducts(q, [
+            ...inStore,
+            ...offAll.where((p) => seen.add(p.code)),
+          ]),
+        ],
+        // Si hay algo del súper del hogar no se dice "son de otros súper".
+        filteredByStore: official.any(
+          (p) => p.store == catalogKeyFor(supermarketKey),
+        ),
+      );
     } on http.ClientException {
       // El móvil no llega a ningún servidor (sin datos, modo avión…).
       return official.isNotEmpty
