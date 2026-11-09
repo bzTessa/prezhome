@@ -326,6 +326,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
       final cookTime = DiscoverRecipesScreen.cookTimeLabel(_profileCookTime);
 
       final body = <String, dynamic>{
+        ...HomeCountry.aiLocale,
         // Enviamos los supermercados elegidos como etiquetas legibles
         // (p. ej. "Mercadona, Lidl"); vacío si no se eligió ninguno.
         'supermarket': Supermarket.labelsFor(_supermarkets.toList()).join(', '),

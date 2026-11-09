@@ -15,6 +15,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
+import { recipeLocale, recipeLocaleLine } from "../_shared/recipe_locale.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +32,11 @@ function json(body: unknown, status = 200): Response {
 }
 
 // Prompt que fuerza a Gemini a devolver el esquema exacto que usa la app.
-function buildPrompt(query: string, supermarket = ""): string {
+function buildPrompt(
+  query: string,
+  supermarket = "",
+  loc = recipeLocale({}),
+): string {
   // Súper principal del hogar (opcional): ingredientes fáciles de encontrar
   // allí, con nombres genéricos (sin marcas).
   const superLine = supermarket
@@ -125,7 +130,7 @@ alimentos SIEMPRE tiene componentes; por ejemplo "patata y pavo" sería
 En "freezer_days" indica cuántos días aguanta bien congelado ESTE tipo de plato
 (sé realista: pescado ~30-60, guisos/legumbres ~90, carnes cocinadas ~60-90,
 platos con nata/lácteos menos). Si no es congelable, pon 0.
-Escribe todo el contenido en español.`;
+${recipeLocaleLine(loc)}`;
 }
 
 // Consulta a Google qué modelos hay disponibles para esta key y devuelve los que
@@ -223,6 +228,7 @@ serveAi("recipes", async (req, useCredit) => {
     const body = await req.json().catch(() => ({}));
     const query = (body?.query ?? "").toString().trim();
     const supermarket = (body?.supermarket ?? "").toString().trim();
+    const loc = recipeLocale(body);
     if (!query) {
       return json({ error: "Falta el nombre o descripción de la receta" }, 400);
     }
@@ -253,7 +259,7 @@ serveAi("recipes", async (req, useCredit) => {
     }
 
     const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: buildPrompt(query, supermarket) }] }],
+      contents: [{ parts: [{ text: buildPrompt(query, supermarket, loc) }] }],
       generationConfig: { responseMimeType: "application/json" },
     });
 

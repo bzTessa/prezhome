@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/country.dart';
@@ -9,6 +10,13 @@ class HomeCountry {
   static final ValueNotifier<Country> current = ValueNotifier(
     Country.all.first,
   );
+
+  /// Idioma de la app y país del hogar, para que la IA escriba las recetas en
+  /// ese idioma y con ingredientes de ese país.
+  static Map<String, String> get aiLocale => {
+    'lang': (Intl.defaultLocale ?? 'es').split(RegExp('[_-]')).first,
+    'country': current.value.code,
+  };
 
   /// Lee el país del hogar. Si el hogar aún no tiene (recién creado), guarda
   /// el del móvil.
