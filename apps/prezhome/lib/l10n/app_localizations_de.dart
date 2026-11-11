@@ -1147,6 +1147,45 @@ class AppLocalizationsDe extends AppLocalizations {
   String get planBatchCookHint => 'Einkaufstag, Kochtag und Dosen';
 
   @override
+  String get planAddDish => 'Weiteres Gericht hinzufügen';
+
+  @override
+  String get planAutoDessert => 'Automatischer Nachtisch';
+
+  @override
+  String get planAutoDessertHint =>
+      'Der Plan fügt diesen Mahlzeiten einen Nachtisch hinzu';
+
+  @override
+  String get planBoughtReady => 'Fertig gekauft';
+
+  @override
+  String get planBoughtReadyHint =>
+      'Ein Fertiggericht aus dem Supermarkt, ohne Kochen';
+
+  @override
+  String get planYourReady => 'Deine Fertiggerichte';
+
+  @override
+  String get planReadySearch => 'Im Supermarkt suchen';
+
+  @override
+  String get planReadyEmpty =>
+      'Du hast noch keine bewährten Fertiggerichte. Such sie im Supermarkt-Katalog.';
+
+  @override
+  String get planReadyMain => 'Gericht';
+
+  @override
+  String get planReadyDessert => 'Nachtisch';
+
+  @override
+  String get planReadyKcal => 'Kalorien pro Portion (optional)';
+
+  @override
+  String get planReadyRemove => 'Aus deinen Fertiggerichten entfernen';
+
+  @override
   String get planTimes => 'Uhrzeiten';
 
   @override
@@ -1292,7 +1331,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get planEnergyHint =>
-      'Mit \"wenig\" nutzt der Plan mehr den Gefrierschrank.';
+      'Mit „wenig“ wählt der Plan schnelle Rezepte und nutzt Gefrierfach und deine Fertiggerichte.';
 
   @override
   String get planHowMuchCook => 'Wie viel kochen';

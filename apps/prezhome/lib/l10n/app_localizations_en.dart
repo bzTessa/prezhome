@@ -1149,6 +1149,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planBatchCookHint => 'Shopping day, cooking day and containers';
 
   @override
+  String get planAddDish => 'Add another dish';
+
+  @override
+  String get planAutoDessert => 'Automatic dessert';
+
+  @override
+  String get planAutoDessertHint => 'The plan adds a dessert to these meals';
+
+  @override
+  String get planBoughtReady => 'Store-bought';
+
+  @override
+  String get planBoughtReadyHint => 'A ready-made product, no cooking';
+
+  @override
+  String get planYourReady => 'Your ready meals';
+
+  @override
+  String get planReadySearch => 'Search the supermarket';
+
+  @override
+  String get planReadyEmpty =>
+      'You have no trusted ready meals yet. Find them in the supermarket catalog.';
+
+  @override
+  String get planReadyMain => 'Dish';
+
+  @override
+  String get planReadyDessert => 'Dessert';
+
+  @override
+  String get planReadyKcal => 'Calories per serving (optional)';
+
+  @override
+  String get planReadyRemove => 'Remove from your ready meals';
+
+  @override
   String get planTimes => 'Times';
 
   @override
@@ -1293,7 +1330,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planEnergyHint =>
-      'With \"little\" the plan relies more on the freezer.';
+      'With \"little\" the plan picks quick recipes and uses your freezer and ready meals.';
 
   @override
   String get planHowMuchCook => 'How much to cook';
