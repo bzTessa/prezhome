@@ -2994,6 +2994,44 @@ class AppLocalizationsBs extends AppLocalizations {
   String get bpStart => 'Počni korak po korak';
 
   @override
+  String bpHeroTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recepata odjednom',
+      few: '$count recepta odjednom',
+      one: '1 recept odjednom',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bpSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count koraka',
+      few: '$count koraka',
+      one: '1 korak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bpStepsTitle => 'Kako ide kuhanje';
+
+  @override
+  String get bpCooking => 'Šta ćeš kuhati';
+
+  @override
+  String get cmTimer => 'Tajmer';
+
+  @override
+  String cmIngredientsReady(int done, int total) {
+    return '$done od $total spremno';
+  }
+
+  @override
   String get bpEmpty => 'Trenutno nema ništa za kuhati';
 
   @override
@@ -3004,30 +3042,8 @@ class AppLocalizationsBs extends AppLocalizations {
   String get bpNeed => 'Šta ti treba';
 
   @override
-  String get bpSplit => 'Podijeli u posude';
-
-  @override
-  String get bpSplitSub => 'Sami se upisuju u Moja kuhinja';
-
-  @override
-  String get bpYourPlan => 'Tvoj plan kuhanja';
-
-  @override
-  String bpTotalMinutes(int count) {
-    return 'Ukupno oko $count min';
-  }
-
-  @override
   String minutesShort(int count) {
     return '$count min';
-  }
-
-  @override
-  String get bpParallel => 'Paralelno';
-
-  @override
-  String bpFor(String recipes) {
-    return 'Za $recipes';
   }
 
   @override
@@ -3041,12 +3057,6 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get reset => 'Resetuj';
-
-  @override
-  String get bpDone => 'Urađeno';
-
-  @override
-  String get bpMarkDone => 'Označi kao urađeno';
 
   @override
   String cmStep(int n) {
@@ -3091,11 +3101,6 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get cmTimerRunning => 'Tajmer radi';
-
-  @override
-  String cmTimerMin(int count) {
-    return 'Tajmer $count min';
-  }
 
   @override
   String get cmThen => 'Zatim';

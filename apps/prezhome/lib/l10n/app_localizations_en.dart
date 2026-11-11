@@ -3019,6 +3019,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bpStart => 'Start step by step';
 
   @override
+  String bpHeroTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recipes in one go',
+      one: '1 recipe in one go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bpSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count steps',
+      one: '1 step',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bpStepsTitle => 'How the batch goes';
+
+  @override
+  String get bpCooking => 'What you\'ll cook';
+
+  @override
+  String get cmTimer => 'Timer';
+
+  @override
+  String cmIngredientsReady(int done, int total) {
+    return '$done of $total ready';
+  }
+
+  @override
   String get bpEmpty => 'Nothing to cook right now';
 
   @override
@@ -3029,36 +3065,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bpNeed => 'What you need';
 
   @override
-  String get bpSplit => 'Split into containers';
-
-  @override
-  String get bpSplitSub => 'They\'re added to My kitchen automatically';
-
-  @override
-  String get bpYourPlan => 'Your cooking plan';
-
-  @override
-  String bpTotalMinutes(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'About $count minutes in total',
-      one: 'About 1 minute in total',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String minutesShort(int count) {
     return '$count min';
-  }
-
-  @override
-  String get bpParallel => 'In parallel';
-
-  @override
-  String bpFor(String recipes) {
-    return 'For $recipes';
   }
 
   @override
@@ -3072,12 +3080,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reset => 'Reset';
-
-  @override
-  String get bpDone => 'Done';
-
-  @override
-  String get bpMarkDone => 'Mark as done';
 
   @override
   String cmStep(int n) {
@@ -3123,11 +3125,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cmTimerRunning => 'Timer running';
-
-  @override
-  String cmTimerMin(int count) {
-    return 'Timer $count min';
-  }
 
   @override
   String get cmThen => 'Next';

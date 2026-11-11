@@ -4812,6 +4812,42 @@ abstract class AppLocalizations {
   /// **'Empezar paso a paso'**
   String get bpStart;
 
+  /// No description provided for @bpHeroTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 receta de una vez} other{{count} recetas de una vez}}'**
+  String bpHeroTitle(int count);
+
+  /// No description provided for @bpSteps.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 paso} other{{count} pasos}}'**
+  String bpSteps(int count);
+
+  /// No description provided for @bpStepsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Así irá la tanda'**
+  String get bpStepsTitle;
+
+  /// No description provided for @bpCooking.
+  ///
+  /// In es, this message translates to:
+  /// **'Qué vas a cocinar'**
+  String get bpCooking;
+
+  /// No description provided for @cmTimer.
+  ///
+  /// In es, this message translates to:
+  /// **'Temporizador'**
+  String get cmTimer;
+
+  /// No description provided for @cmIngredientsReady.
+  ///
+  /// In es, this message translates to:
+  /// **'{done} de {total} listos'**
+  String cmIngredientsReady(int done, int total);
+
   /// No description provided for @bpEmpty.
   ///
   /// In es, this message translates to:
@@ -4830,47 +4866,11 @@ abstract class AppLocalizations {
   /// **'Lo que necesitas'**
   String get bpNeed;
 
-  /// No description provided for @bpSplit.
-  ///
-  /// In es, this message translates to:
-  /// **'Reparte en tápers'**
-  String get bpSplit;
-
-  /// No description provided for @bpSplitSub.
-  ///
-  /// In es, this message translates to:
-  /// **'Se apuntan solos en Mi cocina'**
-  String get bpSplitSub;
-
-  /// No description provided for @bpYourPlan.
-  ///
-  /// In es, this message translates to:
-  /// **'Tu plan de cocina'**
-  String get bpYourPlan;
-
-  /// No description provided for @bpTotalMinutes.
-  ///
-  /// In es, this message translates to:
-  /// **'{count, plural, =1{Unos 1 minuto en total} other{Unos {count} minutos en total}}'**
-  String bpTotalMinutes(int count);
-
   /// No description provided for @minutesShort.
   ///
   /// In es, this message translates to:
   /// **'{count} min'**
   String minutesShort(int count);
-
-  /// No description provided for @bpParallel.
-  ///
-  /// In es, this message translates to:
-  /// **'En paralelo'**
-  String get bpParallel;
-
-  /// No description provided for @bpFor.
-  ///
-  /// In es, this message translates to:
-  /// **'Para {recipes}'**
-  String bpFor(String recipes);
 
   /// No description provided for @ready.
   ///
@@ -4895,18 +4895,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Reiniciar'**
   String get reset;
-
-  /// No description provided for @bpDone.
-  ///
-  /// In es, this message translates to:
-  /// **'Hecho'**
-  String get bpDone;
-
-  /// No description provided for @bpMarkDone.
-  ///
-  /// In es, this message translates to:
-  /// **'Marcar como hecho'**
-  String get bpMarkDone;
 
   /// No description provided for @cmStep.
   ///
@@ -4985,12 +4973,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Temporizador en marcha'**
   String get cmTimerRunning;
-
-  /// No description provided for @cmTimerMin.
-  ///
-  /// In es, this message translates to:
-  /// **'Temporizador {count} min'**
-  String cmTimerMin(int count);
 
   /// No description provided for @cmThen.
   ///

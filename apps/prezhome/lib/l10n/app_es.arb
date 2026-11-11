@@ -1859,20 +1859,39 @@
   },
   "bpBatchCook": "Cocina en tanda",
   "bpStart": "Empezar paso a paso",
-  "bpEmpty": "No hay nada que cocinar ahora mismo",
-  "bpEmptySub": "Cuando tengas recetas planificadas, aquí te prepararé un plan de cocina para hacerlo todo de una vez.",
-  "bpNeed": "Lo que necesitas",
-  "bpSplit": "Reparte en tápers",
-  "bpSplitSub": "Se apuntan solos en Mi cocina",
-  "bpYourPlan": "Tu plan de cocina",
-  "bpTotalMinutes": "{count, plural, =1{Unos 1 minuto en total} other{Unos {count} minutos en total}}",
-  "@bpTotalMinutes": {
+  "bpHeroTitle": "{count, plural, =1{1 receta de una vez} other{{count} recetas de una vez}}",
+  "@bpHeroTitle": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
   },
+  "bpSteps": "{count, plural, =1{1 paso} other{{count} pasos}}",
+  "@bpSteps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bpStepsTitle": "Así irá la tanda",
+  "bpCooking": "Qué vas a cocinar",
+  "cmTimer": "Temporizador",
+  "cmIngredientsReady": "{done} de {total} listos",
+  "@cmIngredientsReady": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bpEmpty": "No hay nada que cocinar ahora mismo",
+  "bpEmptySub": "Cuando tengas recetas planificadas, aquí te prepararé un plan de cocina para hacerlo todo de una vez.",
+  "bpNeed": "Lo que necesitas",
   "minutesShort": "{count} min",
   "@minutesShort": {
     "placeholders": {
@@ -1881,21 +1900,10 @@
       }
     }
   },
-  "bpParallel": "En paralelo",
-  "bpFor": "Para {recipes}",
-  "@bpFor": {
-    "placeholders": {
-      "recipes": {
-        "type": "String"
-      }
-    }
-  },
   "ready": "Listo",
   "pause": "Pausar",
   "start": "Iniciar",
   "reset": "Reiniciar",
-  "bpDone": "Hecho",
-  "bpMarkDone": "Marcar como hecho",
   "cmStep": "Paso {n}",
   "@cmStep": {
     "placeholders": {
@@ -1926,14 +1934,6 @@
     }
   },
   "cmTimerRunning": "Temporizador en marcha",
-  "cmTimerMin": "Temporizador {count} min",
-  "@cmTimerMin": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "cmThen": "Luego",
   "cmNextStep": "Siguiente paso",
   "shopSugDue": "Te toca",

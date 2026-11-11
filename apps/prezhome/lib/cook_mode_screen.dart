@@ -252,14 +252,30 @@ class _CookModeScreenState extends State<CookModeScreen> {
               shrinkWrap: true,
               padding: const EdgeInsets.all(AppSpacing.xl),
               children: [
-                Text(
-                  context.l.ingredients,
-                  style: TextStyle(
-                    fontSize: 22,
-                    letterSpacing: -0.4,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.ink,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.l.ingredients,
+                        style: TextStyle(
+                          fontSize: 22,
+                          letterSpacing: -0.4,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      context.l.cmIngredientsReady(
+                        _checkedIngredients.length,
+                        widget.ingredients.length,
+                      ),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.sage,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 for (var i = 0; i < widget.ingredients.length; i++)
@@ -317,11 +333,15 @@ class _CookModeScreenState extends State<CookModeScreen> {
         ),
         actions: [
           if (widget.ingredients.isNotEmpty)
-            IconButton(
+            TextButton.icon(
               onPressed: _showIngredients,
-              icon: const Icon(Icons.format_list_bulleted_rounded),
-              tooltip: context.l.ingredients,
-              color: AppColors.ink,
+              icon: const Icon(Icons.checklist_rounded, size: 20),
+              label: Text(context.l.ingredients),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.ink,
+                backgroundColor: AppColors.card,
+                shape: StadiumBorder(side: BorderSide(color: AppColors.line)),
+              ),
             ),
           IconButton(
             onPressed: _toggleVoice,
@@ -338,27 +358,9 @@ class _CookModeScreenState extends State<CookModeScreen> {
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            child: Row(
-              children: [
-                for (var i = 0; i < _total; i++)
-                  Expanded(
-                    child: Container(
-                      height: 5,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        color: i <= _page
-                            ? AppColors.woodDark
-                            : AppColors.wood.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          _progress(),
           if (_voiceOn)
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -372,7 +374,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                 style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
             ),
-          if (_timerEnds.isNotEmpty) _timers(),
+          _timers(),
           Expanded(
             child: PageView.builder(
               controller: _pages,
@@ -388,11 +390,56 @@ class _CookModeScreenState extends State<CookModeScreen> {
     );
   }
 
-  /// Todos los temporizadores en marcha (el que acaba antes, arriba); tocar
-  /// uno lleva a su paso.
+  /// "PASO 3 DE 6" y una barra que se llena con suavidad.
+  Widget _progress() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xs,
+        AppSpacing.xl,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            context.l.cmStepOf(_page + 1, _total),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1,
+              color: AppColors.woodDark,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ClipRRect(
+            borderRadius: AppRadius.pillRadius,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: (_page + 1) / _total),
+              duration: AppMotion.reduceMotionOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              builder: (_, v, _) => LinearProgressIndicator(
+                value: v,
+                minHeight: 8,
+                color: AppColors.terracotta,
+                backgroundColor: AppColors.line,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Los temporizadores en marcha de OTROS pasos (el del paso que se ve ya
+  /// está en grande en la página), el que acaba antes arriba; tocar uno
+  /// lleva a su paso.
   Widget _timers() {
-    final steps = _timerEnds.keys.toList()
+    final steps = _timerEnds.keys.where((s) => s != _page).toList()
       ..sort((a, b) => _timerEnds[a]!.compareTo(_timerEnds[b]!));
+    if (steps.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.xl,
@@ -407,15 +454,15 @@ class _CookModeScreenState extends State<CookModeScreen> {
               padding: const EdgeInsets.only(bottom: AppSpacing.xs),
               child: Material(
                 color: AppColors.ink,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: AppRadius.pillRadius,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: AppRadius.pillRadius,
                   onTap: () => _go(s),
                   child: Padding(
                     padding: const EdgeInsets.only(left: AppSpacing.lg),
                     child: Row(
                       children: [
-                        Icon(Icons.timer_rounded, color: AppColors.cream),
+                        Icon(Icons.timer_rounded, color: AppColors.gold),
                         const SizedBox(width: AppSpacing.sm),
                         Text(
                           _fmt(_left(s)),
@@ -457,87 +504,183 @@ class _CookModeScreenState extends State<CookModeScreen> {
 
   Widget _stepPage(int i) {
     final step = widget.steps[i];
-    final minutes = step.minutes;
-    final running = _timerEnds.containsKey(i);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xxl,
+        AppSpacing.xl,
+        AppSpacing.xl,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            context.l.cmStepOf(i + 1, _total),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1,
-              color: AppColors.woodDark,
+          if (step.note != null)
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final tag in step.note!.split(' · '))
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.iconTile,
+                      borderRadius: AppRadius.pillRadius,
+                    ),
+                    child: Text(
+                      tag,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ),
-          if (step.note != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              step.note!,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppColors.inkMuted,
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             step.text,
             style: TextStyle(
-              fontSize: 26,
-              letterSpacing: -0.4,
-              height: 1.35,
-              fontWeight: FontWeight.w600,
+              fontSize: 30,
+              letterSpacing: -0.5,
+              height: 1.3,
+              fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),
           ),
-          if (minutes != null) ...[
-            const SizedBox(height: AppSpacing.xl),
-            OutlinedButton.icon(
-              onPressed: running ? null : () => _startTimer(i),
-              icon: const Icon(Icons.timer_outlined),
-              label: Text(
-                running
-                    ? context.l.cmTimerRunning
-                    : context.l.cmTimerMin(minutes),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.ink,
-                side: BorderSide(color: AppColors.ink, width: 1.5),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
+          if (step.minutes != null) ...[
+            const SizedBox(height: AppSpacing.xxl),
+            _timerCard(i, step.minutes!),
           ],
           if (i < _total - 1) ...[
-            const SizedBox(height: AppSpacing.xxl),
-            Text(
-              context.l.cmThen,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: AppColors.inkMuted,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              widget.steps[i + 1].text,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 16, color: AppColors.inkMuted),
-            ),
+            const SizedBox(height: AppSpacing.xxxl),
+            _nextPreview(i + 1),
           ],
         ],
+      ),
+    );
+  }
+
+  /// Temporizador del paso en grande: los minutos, o la cuenta atrás con un
+  /// anillo que se vacía, y un solo botón para iniciar o parar.
+  Widget _timerCard(int i, int minutes) {
+    final running = _timerEnds.containsKey(i);
+    final left = running ? _left(i) : Duration(minutes: minutes);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        color: running ? AppColors.goldBg : null,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 52,
+            height: 52,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: left.inSeconds / (minutes * 60),
+                  strokeWidth: 4,
+                  color: AppColors.terracotta,
+                  backgroundColor: AppColors.line,
+                ),
+                Icon(Icons.timer_outlined, color: AppColors.ink),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  running ? context.l.cmTimerRunning : context.l.cmTimer,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+                Text(
+                  running ? _fmt(left) : context.l.minutesShort(minutes),
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.ink,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 52,
+            child: running
+                ? OutlinedButton(
+                    onPressed: () => _stopTimer(i),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.ink, width: 1.5),
+                    ),
+                    child: Text(context.l.cmStop),
+                  )
+                : FilledButton.icon(
+                    onPressed: () => _startTimer(i),
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: Text(context.l.start),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.terracotta,
+                      foregroundColor: AppColors.onBrand,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Lo que viene después, en suave; tocarlo avanza.
+  Widget _nextPreview(int next) {
+    return Material(
+      color: AppColors.iconTile.withValues(alpha: 0.6),
+      borderRadius: AppRadius.lgRadius,
+      child: InkWell(
+        borderRadius: AppRadius.lgRadius,
+        onTap: () => _go(next),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l.cmThen,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      widget.steps[next].text,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 16, color: AppColors.ink),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -563,8 +706,9 @@ class _CookModeScreenState extends State<CookModeScreen> {
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.zero,
                     foregroundColor: AppColors.ink,
+                    backgroundColor: AppColors.card,
                     shape: const CircleBorder(),
-                    side: BorderSide(color: AppColors.ink, width: 1.5),
+                    side: BorderSide(color: AppColors.line, width: 1.5),
                   ),
                   child: const Icon(Icons.arrow_back_rounded),
                 ),
@@ -573,22 +717,24 @@ class _CookModeScreenState extends State<CookModeScreen> {
             Expanded(
               child: SizedBox(
                 height: 60,
-                child: FilledButton(
+                child: FilledButton.icon(
                   onPressed: _isLast
                       ? () => Navigator.of(context).pop(true)
                       : () => _go(_page + 1),
+                  iconAlignment: IconAlignment.end,
+                  icon: Icon(
+                    _isLast ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                  ),
+                  label: Text(_isLast ? context.l.ready : context.l.cmNextStep),
                   style: FilledButton.styleFrom(
-                    backgroundColor: _isLast ? AppColors.sage : AppColors.ink,
+                    backgroundColor: _isLast ? AppColors.done : AppColors.ink,
                     foregroundColor: _isLast ? Colors.white : AppColors.cream,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+                    shape: const StadiumBorder(),
                     textStyle: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  child: Text(_isLast ? context.l.ready : context.l.cmNextStep),
                 ),
               ),
             ),
