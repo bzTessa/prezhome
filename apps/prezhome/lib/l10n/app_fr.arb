@@ -884,5 +884,17 @@
   "drSavedShort": "Enregistrée",
   "drSaveToRecipes": "Enregistrer dans mes recettes",
   "taskKind": "{kind, select, bano{Salle de bain} ropa{Linge} compra{Courses} basura{Poubelles} platos{Vaisselle} limpieza{Ménage} plantas{Plantes} cama{Lit} mascota{Animal} cocinar{Cuisine} pagos{Paiements} other{Tâche}}",
-  "taskPreset": "{preset, select, dishes{Faire la vaisselle} vacuum{Passer l'aspirateur} bathroom{Nettoyer la salle de bain} laundry{Lancer une lessive} trash{Sortir les poubelles} shopping{Faire les courses} plants{Arroser les plantes} other{Changer les draps}}"
+  "taskPreset": "{preset, select, dishes{Faire la vaisselle} vacuum{Passer l'aspirateur} bathroom{Nettoyer la salle de bain} laundry{Lancer une lessive} trash{Sortir les poubelles} shopping{Faire les courses} plants{Arroser les plantes} other{Changer les draps}}",
+  "recQuick": "Rapides",
+  "recLight": "Légères",
+  "recFreezer": "Congelables",
+  "recSearchHint": "Cherche par nom ou ingrédient",
+  "recSort": "Trier",
+  "recSortRecent": "Plus récentes",
+  "recSortAz": "De A à Z",
+  "recSortFastest": "Plus rapides d'abord",
+  "recSortLightest": "Moins de calories d'abord",
+  "recClearFilters": "Effacer les filtres",
+  "recMore": "Plus",
+  "recLess": "Moins"
 }

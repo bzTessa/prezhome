@@ -141,23 +141,33 @@ function norm(s: string): string {
   return s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
 }
 
-/** Palabras que deberían aparecer en la descripción de una foto acertada. */
-export function keywordsFor(query: string, queryEn = ""): string[] {
-  const out = new Set<string>();
+/**
+ * Grupos de palabras que deberían aparecer en la descripción de una foto
+ * acertada: uno por palabra del plato, con su raíz y su traducción
+ * ("pollo" -> ["pollo", "chicken"]). Las palabras de query_en que ya traduce
+ * algún grupo no cuentan dos veces.
+ */
+export function keywordsFor(query: string, queryEn = ""): string[][] {
+  const groups: string[][] = [];
+  const seen = new Set<string>();
   for (const w of norm(`${query} ${queryEn}`).split(/[^\p{L}\p{N}]+/u)) {
     if (w.length < 3 || IGNORE.has(w)) continue;
     // "potatoes" -> "potato": comparamos por raíz para casar plurales.
     const stem = w.replace(/(es|s)$/, "");
-    out.add(stem.length >= 3 ? stem : w);
-    for (const en of ES_EN[w] ?? []) out.add(en);
+    const root = stem.length >= 3 ? stem : w;
+    if (seen.has(root)) continue;
+    const group = [root, ...(ES_EN[w] ?? [])].filter((k) => !seen.has(k));
+    if (group.length === 0) continue;
+    group.forEach((k) => seen.add(k));
+    groups.push(group);
   }
-  return [...out];
+  return groups;
 }
 
-/** Cuántas palabras clave menciona el texto de la foto (0 = no es el plato). */
-export function relevance(photoText: string, keywords: string[]): number {
+/** Cuántas palabras del plato menciona el texto de la foto (0 = no es el plato). */
+export function relevance(photoText: string, keywords: string[][]): number {
   const text = norm(photoText);
-  return keywords.filter((k) => text.includes(k)).length;
+  return keywords.filter((g) => g.some((k) => text.includes(k))).length;
 }
 
 /** Texto descriptivo de un resultado de Unsplash (alt, descripción, etiquetas). */
@@ -171,15 +181,18 @@ export function unsplashText(r: Record<string, any>): string {
 
 /**
  * La foto más relevante de una lista (la primera en caso de empate, que es la
- * más popular para el banco). null si ninguna menciona el plato.
+ * más popular para el banco). null si ninguna menciona al menos [minWords]
+ * palabras distintas del plato (o todas, si el plato tiene menos): una sola
+ * coincidencia suelta ("rice" para "Pollo con arroz") traía fotos de otro plato.
  */
 export function pickRelevant<T>(
   items: T[],
   textOf: (item: T) => string,
-  keywords: string[],
+  keywords: string[][],
+  minWords = 2,
 ): T | null {
   let best: T | null = null;
-  let bestScore = 0;
+  let bestScore = Math.max(0, Math.min(minWords, keywords.length) - 1);
   for (const item of items) {
     const s = relevance(textOf(item), keywords);
     if (s > bestScore) {

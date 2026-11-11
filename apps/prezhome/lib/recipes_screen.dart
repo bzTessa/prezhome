@@ -9,6 +9,8 @@ import 'models/recipe.dart';
 import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/miau_character.dart';
+import 'utils/recipe_browse.dart';
+import 'widgets/recipe_category_chips.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
 import 'widgets/skeleton.dart';
@@ -67,9 +69,13 @@ class _RecipesScreenState extends State<RecipesScreen> {
   // Secciones desplegadas con "Ver todas"; el resto enseña solo 4 recetas.
   final Set<String> _expanded = {};
 
-  // Texto del buscador (en cliente, sobre nombre e ingredientes).
+  // Texto del buscador (en cliente, sobre nombre, descripción e ingredientes).
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+
+  // Categoría elegida (ver recipeBrowseCategories) y orden de los resultados.
+  String? _category;
+  RecipeSort _sort = RecipeSort.recent;
 
   @override
   void initState() {
@@ -86,8 +92,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
   Future<_RecipesData> _fetch() async {
     final recipesRes = await supabase
         .from('recipes')
-        .select()
-        .order('is_favorite', ascending: false)
+        .select('*, recipe_ingredients(name)')
         .order('created_at', ascending: false);
     final recipes = (recipesRes as List)
         .map((item) => Recipe.fromMap(item))
@@ -243,17 +248,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
     }
   }
 
-  /// Buscador en cliente sobre nombre y descripción, manteniendo el orden
-  /// original (favoritas primero, luego recientes).
-  List<Recipe> _search(List<Recipe> recipes) {
-    final q = _query.trim().toLowerCase();
-    return recipes.where((r) {
-      final title = r.title.toLowerCase();
-      final desc = (r.description ?? '').toLowerCase();
-      return title.contains(q) || desc.contains(q);
-    }).toList();
-  }
-
   Widget _card(Recipe recipe, int? perMeal) => _RecipeCard(
     recipe: recipe,
     caloriesPerMeal: perMeal,
@@ -306,7 +300,13 @@ class _RecipesScreenState extends State<RecipesScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: TextButton(
-                onPressed: () => setState(() => _expanded.add(key)),
+                // "Ver las N" abre la categoría entera en vez de alargar la
+                // página; "Otras" no es categoría y se despliega aquí.
+                onPressed: () => setState(
+                  () => recipeBrowseCategories.contains(key)
+                      ? _category = key
+                      : _expanded.add(key),
+                ),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.woodDark,
                   textStyle: const TextStyle(fontWeight: FontWeight.w800),
@@ -393,8 +393,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
             );
           }
 
-          final searching = _query.trim().isNotEmpty;
-          final found = searching ? _search(allRecipes) : const <Recipe>[];
+          final browsing = _query.trim().isNotEmpty || _category != null;
+          final found = browsing
+              ? browseRecipes(
+                  allRecipes,
+                  query: _query,
+                  category: _category,
+                  sort: _sort,
+                )
+              : const <Recipe>[];
 
           return CustomScrollView(
             slivers: [
@@ -408,7 +415,30 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   }),
                 ),
               ),
-              if (!searching) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                  child: RecipeCategoryChips(
+                    recipes: allRecipes,
+                    selected: _category,
+                    onSelected: (c) => setState(() => _category = c),
+                  ),
+                ),
+              ),
+              if (browsing)
+                SliverToBoxAdapter(
+                  child: _ResultsBar(
+                    count: found.length,
+                    sort: _sort,
+                    onSort: (s) => setState(() => _sort = s),
+                    onClear: () => setState(() {
+                      _searchCtrl.clear();
+                      _query = '';
+                      _category = null;
+                    }),
+                  ),
+                ),
+              if (!browsing) ...[
                 SliverToBoxAdapter(
                   child: _PantryBanner(
                     onTap: () => Navigator.of(context).push(
@@ -425,25 +455,86 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   hasScrollBody: false,
                   child: _NoSearchResults(query: _query.trim()),
                 )
-              else ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                    child: Text(
-                      context.l.recCount(found.length),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ),
-                ),
+              else
                 _grid(found, perMeal, bottom: 120),
-              ],
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Encima de los resultados: cuántas recetas hay, cómo ordenarlas y un botón
+/// para volver al recetario completo.
+class _ResultsBar extends StatelessWidget {
+  const _ResultsBar({
+    required this.count,
+    required this.sort,
+    required this.onSort,
+    required this.onClear,
+  });
+
+  final int count;
+  final RecipeSort sort;
+  final ValueChanged<RecipeSort> onSort;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    String label(RecipeSort s) => switch (s) {
+      RecipeSort.recent => context.l.recSortRecent,
+      RecipeSort.az => context.l.recSortAz,
+      RecipeSort.fastest => context.l.recSortFastest,
+      RecipeSort.lightest => context.l.recSortLightest,
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              context.l.recCount(count),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+          PopupMenuButton<RecipeSort>(
+            tooltip: context.l.recSort,
+            initialValue: sort,
+            onSelected: onSort,
+            color: AppColors.cream,
+            itemBuilder: (_) => [
+              for (final s in RecipeSort.values)
+                PopupMenuItem(value: s, child: Text(label(s))),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.swap_vert_rounded, color: AppColors.woodDark),
+                  const SizedBox(width: 4),
+                  Text(
+                    label(sort),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.woodDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: onClear,
+            tooltip: context.l.recClearFilters,
+            icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
+          ),
+        ],
       ),
     );
   }
@@ -742,7 +833,7 @@ class _SearchBar extends StatelessWidget {
         textInputAction: TextInputAction.search,
         style: TextStyle(color: AppColors.ink, fontSize: 15),
         decoration: InputDecoration(
-          hintText: context.l.planSearchRecipe,
+          hintText: context.l.recSearchHint,
           hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
           prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
           suffixIcon: controller.text.isEmpty
@@ -785,7 +876,9 @@ class _NoSearchResults extends StatelessWidget {
             const MiauCharacter(mood: MiauMood.curious, size: 96),
             const SizedBox(height: 16),
             Text(
-              context.l.recNoMatch(query),
+              query.isEmpty
+                  ? context.l.recNoFilter
+                  : context.l.recNoMatch(query),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,

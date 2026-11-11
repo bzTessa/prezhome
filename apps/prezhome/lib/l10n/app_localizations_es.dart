@@ -3474,4 +3474,40 @@ class AppLocalizationsEs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get recQuick => 'Rápidas';
+
+  @override
+  String get recLight => 'Ligeras';
+
+  @override
+  String get recFreezer => 'Congelables';
+
+  @override
+  String get recSearchHint => 'Busca por nombre o ingrediente';
+
+  @override
+  String get recSort => 'Ordenar';
+
+  @override
+  String get recSortRecent => 'Más nuevas';
+
+  @override
+  String get recSortAz => 'De la A a la Z';
+
+  @override
+  String get recSortFastest => 'Más rápidas primero';
+
+  @override
+  String get recSortLightest => 'Menos calorías primero';
+
+  @override
+  String get recClearFilters => 'Quitar filtros';
+
+  @override
+  String get recMore => 'Más';
+
+  @override
+  String get recLess => 'Menos';
 }

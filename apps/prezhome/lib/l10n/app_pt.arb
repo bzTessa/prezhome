@@ -884,5 +884,17 @@
   "drSavedShort": "Guardada",
   "drSaveToRecipes": "Guardar nas minhas receitas",
   "taskKind": "{kind, select, bano{Casa de banho} ropa{Roupa} compra{Compras} basura{Lixo} platos{Loiça} limpieza{Limpeza} plantas{Plantas} cama{Cama} mascota{Animal} cocinar{Cozinhar} pagos{Pagamentos} other{Tarefa}}",
-  "taskPreset": "{preset, select, dishes{Lavar a loiça} vacuum{Aspirar} bathroom{Limpar a casa de banho} laundry{Pôr a máquina a lavar} trash{Levar o lixo} shopping{Fazer as compras} plants{Regar as plantas} other{Mudar os lençóis}}"
+  "taskPreset": "{preset, select, dishes{Lavar a loiça} vacuum{Aspirar} bathroom{Limpar a casa de banho} laundry{Pôr a máquina a lavar} trash{Levar o lixo} shopping{Fazer as compras} plants{Regar as plantas} other{Mudar os lençóis}}",
+  "recQuick": "Rápidas",
+  "recLight": "Leves",
+  "recFreezer": "Congeláveis",
+  "recSearchHint": "Pesquisa por nome ou ingrediente",
+  "recSort": "Ordenar",
+  "recSortRecent": "Mais recentes",
+  "recSortAz": "De A a Z",
+  "recSortFastest": "Mais rápidas primeiro",
+  "recSortLightest": "Menos calorias primeiro",
+  "recClearFilters": "Limpar filtros",
+  "recMore": "Mais",
+  "recLess": "Menos"
 }

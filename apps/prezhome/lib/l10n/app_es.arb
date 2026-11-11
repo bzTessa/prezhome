@@ -2126,5 +2126,17 @@
         "type": "String"
       }
     }
-  }
+  },
+  "recQuick": "Rápidas",
+  "recLight": "Ligeras",
+  "recFreezer": "Congelables",
+  "recSearchHint": "Busca por nombre o ingrediente",
+  "recSort": "Ordenar",
+  "recSortRecent": "Más nuevas",
+  "recSortAz": "De la A a la Z",
+  "recSortFastest": "Más rápidas primero",
+  "recSortLightest": "Menos calorías primero",
+  "recClearFilters": "Quitar filtros",
+  "recMore": "Más",
+  "recLess": "Menos"
 }

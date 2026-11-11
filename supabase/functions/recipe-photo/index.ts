@@ -147,7 +147,7 @@ async function searchUnsplash(
   searches: PhotoSearch[],
   key: string,
   exclude: Set<string>,
-  keywords: string[],
+  keywords: string[][],
 ): Promise<{ url: string | null; [k: string]: unknown }> {
   for (const s of searches) {
     const result = await searchUnsplashOnce(s, key, exclude, keywords);
@@ -162,7 +162,7 @@ async function searchUnsplashOnce(
   search: PhotoSearch,
   key: string,
   exclude: Set<string>,
-  keywords: string[],
+  keywords: string[][],
 ): Promise<{ url: string | null; [k: string]: unknown }> {
   try {
     const url =
@@ -247,7 +247,7 @@ async function searchPexels(
   searches: PhotoSearch[],
   key: string,
   exclude: Set<string>,
-  keywords: string[],
+  keywords: string[][],
 ): Promise<string | null> {
   for (const s of searches) {
     try {
@@ -403,7 +403,10 @@ Deno.serve(async (req: Request) => {
     const searches = buildFoodSearches(query, queryEn, mode);
     // Palabras que la descripción de la foto debe mencionar; si ninguna foto
     // las menciona, mejor sin foto (ilustración) que una al azar.
-    const keywords = keywordsFor(query, queryEn);
+    // Un alimento suelto (despensa) vale con que la foto nombre cualquiera de
+    // sus palabras: todas van en un solo grupo.
+    const groups = keywordsFor(query, queryEn);
+    const keywords = mode === "ingredient" ? [groups.flat()] : groups;
 
     // 4. Selección de proveedor. Unsplash es el PRINCIPAL; Pexels el RESPALDO.
     //    Si no hay ninguna clave, degradar: { url: null } (NUNCA 500).
