@@ -1159,6 +1159,35 @@ class AppLocalizationsIt extends AppLocalizations {
   String get planAutoDessertHint => 'Il piano aggiunge un dolce a questi pasti';
 
   @override
+  String get planBoughtReady => 'Comprato pronto';
+
+  @override
+  String get planBoughtReadyHint =>
+      'Un piatto pronto del supermercato, senza cucinare';
+
+  @override
+  String get planYourReady => 'I tuoi piatti pronti';
+
+  @override
+  String get planReadySearch => 'Cerca al supermercato';
+
+  @override
+  String get planReadyEmpty =>
+      'Non hai ancora piatti pronti di fiducia. Cercali nel catalogo del supermercato.';
+
+  @override
+  String get planReadyMain => 'Piatto';
+
+  @override
+  String get planReadyDessert => 'Dolce';
+
+  @override
+  String get planReadyKcal => 'Calorie per porzione (facoltativo)';
+
+  @override
+  String get planReadyRemove => 'Togli dai tuoi piatti pronti';
+
+  @override
   String get planTimes => 'Orari';
 
   @override
@@ -1303,7 +1332,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get planEnergyHigh => 'Molto';
 
   @override
-  String get planEnergyHint => 'Con \"poco\" il piano usa di più il freezer.';
+  String get planEnergyHint =>
+      'Con \"poco\" il piano sceglie ricette veloci e usa il congelatore e i tuoi piatti pronti.';
 
   @override
   String get planHowMuchCook => 'Quanto cucinare';

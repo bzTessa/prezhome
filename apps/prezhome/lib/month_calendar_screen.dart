@@ -127,7 +127,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
         .from('meal_plan_entries')
         .select(
           'plan_date, meal_type, skipped, recipe_id, servings, from_freezer, '
-          'inventory_item_id, position, recipes(title)',
+          'inventory_item_id, position, recipes(title), ready_meals(name)',
         )
         .eq('home_id', homeId)
         .gte('plan_date', _day(_gridStart))
@@ -140,7 +140,10 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
       final e = MealPlanEntry.fromMap(row);
       entries.add(e);
       final rec = row['recipes'];
-      final title = (rec is Map ? rec['title'] : null) as String?;
+      final ready = row['ready_meals'];
+      final title =
+          (rec is Map ? rec['title'] : null) as String? ??
+          (ready is Map ? ready['name'] : null) as String?;
       final key = DateTime(e.date.year, e.date.month, e.date.day);
       final item = _PlanItem(
         mealType: e.mealType,

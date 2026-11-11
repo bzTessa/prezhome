@@ -1161,6 +1161,35 @@ class AppLocalizationsFr extends AppLocalizations {
   String get planAutoDessertHint => 'Le plan ajoute un dessert à ces repas';
 
   @override
+  String get planBoughtReady => 'Acheté tout prêt';
+
+  @override
+  String get planBoughtReadyHint =>
+      'Un plat préparé du supermarché, sans cuisiner';
+
+  @override
+  String get planYourReady => 'Tes plats préparés';
+
+  @override
+  String get planReadySearch => 'Chercher au supermarché';
+
+  @override
+  String get planReadyEmpty =>
+      'Tu n\'as pas encore de plats préparés de confiance. Cherche-les dans le catalogue du supermarché.';
+
+  @override
+  String get planReadyMain => 'Plat';
+
+  @override
+  String get planReadyDessert => 'Dessert';
+
+  @override
+  String get planReadyKcal => 'Calories par portion (facultatif)';
+
+  @override
+  String get planReadyRemove => 'Retirer de tes plats préparés';
+
+  @override
   String get planTimes => 'Horaires';
 
   @override
@@ -1306,7 +1335,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get planEnergyHint =>
-      'Avec « peu », le planning puise davantage dans le congélateur.';
+      'Avec « peu », le plan choisit des recettes rapides et puise dans le congélateur et tes plats préparés.';
 
   @override
   String get planHowMuchCook => 'Combien cuisiner';

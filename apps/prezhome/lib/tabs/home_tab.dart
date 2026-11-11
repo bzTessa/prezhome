@@ -199,7 +199,9 @@ class HomeTabState extends State<HomeTab> {
       final todayKey = DateTime.now().toIso8601String().split('T').first;
       final res = await _client
           .from('meal_plan_entries')
-          .select('plan_date, meal_type, skipped, position, recipes(*)')
+          .select(
+            'plan_date, meal_type, skipped, position, recipes(*), ready_meals(name)',
+          )
           .eq('home_id', homeId)
           .eq('plan_date', todayKey);
 
@@ -214,7 +216,10 @@ class HomeTabState extends State<HomeTab> {
             recipe = Recipe.fromMap(rec);
           } catch (_) {}
         }
-        final title = (rec is Map ? rec['title'] : null) as String?;
+        final ready = row['ready_meals'];
+        final title =
+            (rec is Map ? rec['title'] : null) as String? ??
+            (ready is Map ? ready['name'] : null) as String?;
         final item = _PlanItem(
           mealType: e.mealType,
           title: title ?? 'Receta',

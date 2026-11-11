@@ -1152,6 +1152,35 @@ class AppLocalizationsBs extends AppLocalizations {
   String get planAutoDessertHint => 'Plan dodaje desert ovim obrocima';
 
   @override
+  String get planBoughtReady => 'Kupljeno gotovo';
+
+  @override
+  String get planBoughtReadyHint =>
+      'Gotov proizvod iz supermarketa, bez kuhanja';
+
+  @override
+  String get planYourReady => 'Tvoja gotova jela';
+
+  @override
+  String get planReadySearch => 'Traži u supermarketu';
+
+  @override
+  String get planReadyEmpty =>
+      'Još nemaš gotovih jela od povjerenja. Potraži ih u katalogu supermarketa.';
+
+  @override
+  String get planReadyMain => 'Jelo';
+
+  @override
+  String get planReadyDessert => 'Desert';
+
+  @override
+  String get planReadyKcal => 'Kalorije po porciji (neobavezno)';
+
+  @override
+  String get planReadyRemove => 'Ukloni iz tvojih gotovih jela';
+
+  @override
   String get planTimes => 'Vremena';
 
   @override
@@ -1296,7 +1325,8 @@ class AppLocalizationsBs extends AppLocalizations {
   String get planEnergyHigh => 'Puno';
 
   @override
-  String get planEnergyHint => 'Sa \"malo\" plan više koristi zamrzivač.';
+  String get planEnergyHint =>
+      'Sa \"malo\" plan bira brze recepte i koristi zamrzivač i tvoja gotova jela.';
 
   @override
   String get planHowMuchCook => 'Koliko kuhati';
