@@ -199,11 +199,12 @@ class HomeTabState extends State<HomeTab> {
       final todayKey = DateTime.now().toIso8601String().split('T').first;
       final res = await _client
           .from('meal_plan_entries')
-          .select('plan_date, meal_type, skipped, recipes(*)')
+          .select('plan_date, meal_type, skipped, position, recipes(*)')
           .eq('home_id', homeId)
           .eq('plan_date', todayKey);
 
       final items = <_PlanItem>[];
+      final position = <_PlanItem, int>{}; // plato principal antes que postre
       for (final row in (res as List)) {
         final e = MealPlanEntry.fromMap(row);
         final rec = row['recipes'];
@@ -214,20 +215,21 @@ class HomeTabState extends State<HomeTab> {
           } catch (_) {}
         }
         final title = (rec is Map ? rec['title'] : null) as String?;
-        items.add(
-          _PlanItem(
-            mealType: e.mealType,
-            title: title ?? 'Receta',
-            skipped: e.skipped,
-            recipe: recipe,
-          ),
+        final item = _PlanItem(
+          mealType: e.mealType,
+          title: title ?? 'Receta',
+          skipped: e.skipped,
+          recipe: recipe,
         );
+        items.add(item);
+        position[item] = e.position;
       }
-      items.sort(
-        (a, b) => _mealOrder
+      items.sort((a, b) {
+        final byMeal = _mealOrder
             .indexOf(a.mealType)
-            .compareTo(_mealOrder.indexOf(b.mealType)),
-      );
+            .compareTo(_mealOrder.indexOf(b.mealType));
+        return byMeal != 0 ? byMeal : position[a]!.compareTo(position[b]!);
+      });
       if (mounted) {
         setState(() => _todayItems = items);
       }

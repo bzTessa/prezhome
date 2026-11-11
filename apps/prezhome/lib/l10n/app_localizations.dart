@@ -1782,6 +1782,24 @@ abstract class AppLocalizations {
   /// **'Día de compra, de cocina y tápers'**
   String get planBatchCookHint;
 
+  /// No description provided for @planAddDish.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir otro plato'**
+  String get planAddDish;
+
+  /// No description provided for @planAutoDessert.
+  ///
+  /// In es, this message translates to:
+  /// **'Postre automático'**
+  String get planAutoDessert;
+
+  /// No description provided for @planAutoDessertHint.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan pone un postre en estas comidas'**
+  String get planAutoDessertHint;
+
   /// No description provided for @planTimes.
   ///
   /// In es, this message translates to:

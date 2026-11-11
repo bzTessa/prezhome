@@ -127,7 +127,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
         .from('meal_plan_entries')
         .select(
           'plan_date, meal_type, skipped, recipe_id, servings, from_freezer, '
-          'inventory_item_id, recipes(title)',
+          'inventory_item_id, position, recipes(title)',
         )
         .eq('home_id', homeId)
         .gte('plan_date', _day(_gridStart))
@@ -135,26 +135,28 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
 
     final entries = <MealPlanEntry>[];
     final mealsByDay = <DateTime, List<_PlanItem>>{};
+    final position = <_PlanItem, int>{}; // plato principal antes que postre
     for (final row in (mealsRes as List)) {
       final e = MealPlanEntry.fromMap(row);
       entries.add(e);
       final rec = row['recipes'];
       final title = (rec is Map ? rec['title'] : null) as String?;
       final key = DateTime(e.date.year, e.date.month, e.date.day);
-      (mealsByDay[key] ??= []).add(
-        _PlanItem(
-          mealType: e.mealType,
-          title: title ?? 'Receta',
-          skipped: e.skipped,
-        ),
+      final item = _PlanItem(
+        mealType: e.mealType,
+        title: title ?? 'Receta',
+        skipped: e.skipped,
       );
+      (mealsByDay[key] ??= []).add(item);
+      position[item] = e.position;
     }
     for (final list in mealsByDay.values) {
-      list.sort(
-        (a, b) => _mealOrder
+      list.sort((a, b) {
+        final byMeal = _mealOrder
             .indexOf(a.mealType)
-            .compareTo(_mealOrder.indexOf(b.mealType)),
-      );
+            .compareTo(_mealOrder.indexOf(b.mealType));
+        return byMeal != 0 ? byMeal : position[a]!.compareTo(position[b]!);
+      });
     }
 
     // Tareas del hogar (todas las no completadas puntuales + recurrentes) para

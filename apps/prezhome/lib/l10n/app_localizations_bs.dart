@@ -1143,6 +1143,15 @@ class AppLocalizationsBs extends AppLocalizations {
   String get planBatchCookHint => 'Dan kupovine, kuhanja i posude';
 
   @override
+  String get planAddDish => 'Dodaj još jedno jelo';
+
+  @override
+  String get planAutoDessert => 'Automatski desert';
+
+  @override
+  String get planAutoDessertHint => 'Plan dodaje desert ovim obrocima';
+
+  @override
   String get planTimes => 'Vremena';
 
   @override

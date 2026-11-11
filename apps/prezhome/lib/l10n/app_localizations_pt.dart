@@ -1149,6 +1149,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get planBatchCookHint => 'Dia de compras, de cozinha e marmitas';
 
   @override
+  String get planAddDish => 'Adicionar outro prato';
+
+  @override
+  String get planAutoDessert => 'Sobremesa automática';
+
+  @override
+  String get planAutoDessertHint =>
+      'O plano junta uma sobremesa a estas refeições';
+
+  @override
   String get planTimes => 'Horas';
 
   @override

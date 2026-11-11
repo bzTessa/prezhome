@@ -65,7 +65,7 @@ class PlanRepeats {
           until: lastDay,
         );
         if (dates.isNotEmpty) {
-          // Lo que ya hay en ese hueco se respeta (UNIQUE hogar/día/comida).
+          // Lo que ya hay en ese hueco se respeta (plato principal, position 0).
           await client
               .from('meal_plan_entries')
               .upsert(
@@ -77,13 +77,14 @@ class PlanRepeats {
                       'meal_type': r['meal_type'],
                       'recipe_id': r['recipe_id'],
                       'repeat_id': r['id'],
+                      'position': 0,
                       'servings': servingsFor?.call(
                         r['meal_type'] as String,
                         d,
                       ),
                     },
                 ],
-                onConflict: 'home_id,plan_date,meal_type',
+                onConflict: 'home_id,plan_date,meal_type,position',
                 ignoreDuplicates: true,
               );
           added += dates.length;
