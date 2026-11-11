@@ -1,7 +1,7 @@
 analyzer:
   errors:
-    # Flutter estable nuevo marca package:flutter/material.dart como deprecado;
-    # igual que en apps/prezhome, que no tumbe el CI hasta migrar.
+    # Flutter 3.50 marca package:flutter/material.dart como obsoleto; igual
+    # que en apps/prezhome, no rompe CI hasta migrar a material_ui.
     deprecated_member_use: ignore
   exclude:
     - build/**
