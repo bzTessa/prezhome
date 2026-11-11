@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 import '../food_diary_screen.dart';
 import '../meal_plan_screen.dart';
@@ -19,7 +20,7 @@ class ComidasTab extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.cream,
         appBar: AppBar(
-          title: const Text('Comidas'),
+          title: Text(context.l.meals),
           bottom: TabBar(
             indicatorColor: AppColors.woodDark,
             indicatorSize: TabBarIndicatorSize.label,

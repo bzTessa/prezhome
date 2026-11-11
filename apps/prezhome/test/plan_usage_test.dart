@@ -14,7 +14,7 @@ void main() {
         {'feature': 'scan_ticket', 'used': 15},
       ],
     );
-    expect(rows.map((r) => r.label), ['Escanear tickets', 'Ideas y recetas']);
+    expect(rows.map((r) => r.feature), ['scan_ticket', 'recipes']);
     expect(rows[0].left, 0);
     expect(rows[0].limit, 15);
     expect(rows[1].left, 15);

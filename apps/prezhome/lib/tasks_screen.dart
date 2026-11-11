@@ -436,7 +436,15 @@ class _TasksScreenState extends State<TasksScreen> {
     try {
       await _client.from('tasks').delete().eq('id', task.id);
       _reload();
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
   }
 
   /// "Me la pido": una tarea de la bolsa del hogar pasa a ser tuya.

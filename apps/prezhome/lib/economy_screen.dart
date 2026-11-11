@@ -313,7 +313,18 @@ class _EconomyScreenState extends State<EconomyScreen> {
       ),
     );
     if (ok != true) return;
-    await _client.from('tickets').delete().eq('id', id);
+    try {
+      await _client.from('tickets').delete().eq('id', id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+      return;
+    }
     _reload();
   }
 

@@ -122,6 +122,39 @@ class TaperSync {
     }
   }
 
+  /// Tápers de la nevera que puso la app para comer entre [from] y [to] y que
+  /// el plan de esas fechas ya no come ese día (se rehízo el plan). Sin su
+  /// comida en el plan nunca se darían por comidos, así que se quedarían en
+  /// Mi cocina para siempre. Lanza si falla la consulta.
+  static Future<List<({String id, String name})>> orphans(
+    SupabaseClient client,
+    String homeId,
+    DateTime from,
+    DateTime to,
+  ) async {
+    String day(DateTime d) => d.toIso8601String().split('T').first;
+    final items = await client
+        .from('inventory_items')
+        .select('id, name, recipe_id, best_before')
+        .eq('home_id', homeId)
+        .eq('kind', 'dish')
+        .eq('category', 'Nevera')
+        .not('recipe_id', 'is', null)
+        .gte('best_before', day(from))
+        .lt('best_before', day(to));
+    if ((items as List).isEmpty) return const [];
+    final plan = await client
+        .from('meal_plan_entries')
+        .select('plan_date, recipe_id, skipped')
+        .eq('home_id', homeId)
+        .gte('plan_date', day(from))
+        .lt('plan_date', day(to));
+    return orphanTapers(
+      items.cast<Map<String, dynamic>>(),
+      (plan as List).cast<Map<String, dynamic>>(),
+    );
+  }
+
   static Future<void> _apply(
     SupabaseClient client,
     String homeId,
@@ -172,4 +205,28 @@ class TaperSync {
         await client.from('inventory_items').delete().inFilter('id', ids);
     }
   }
+}
+
+/// Nombre que pone [TaperMove.name]: "Lentejas (vie 10)".
+final _autoTaperName = RegExp(r' \(\S{3} \d{1,2}\)$');
+
+/// De [items] (filas de Mi cocina), los tápers puestos por la app cuyo día de
+/// comer (best_before) no tiene esa receta en [plan] (filas del plan).
+List<({String id, String name})> orphanTapers(
+  List<Map<String, dynamic>> items,
+  List<Map<String, dynamic>> plan,
+) {
+  final eaten = {
+    for (final e in plan)
+      if (e['skipped'] != true) '${e['plan_date']}|${e['recipe_id']}',
+  };
+  return [
+    for (final i in items)
+      if (_autoTaperName.hasMatch(i['name'] as String? ?? '') &&
+          !eaten.contains(
+            '${(i['best_before'] as String?)?.split('T').first}|'
+            '${i['recipe_id']}',
+          ))
+        (id: i['id'] as String, name: i['name'] as String),
+  ];
 }

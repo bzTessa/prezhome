@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 import '../models/inventory_item.dart';
 import '../models/recipe.dart';
@@ -13,7 +14,7 @@ Future<int?> askFreezeServings(
   BuildContext context, {
   required Recipe recipe,
   required int initial,
-  String title = '¿Guardas raciones en el congelador?',
+  String? title,
 }) {
   var servings = initial < 1 ? 1 : initial;
   return showModalBottomSheet<int>(
@@ -31,7 +32,7 @@ Future<int?> askFreezeServings(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                title ?? context.l.fzTitle,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -52,7 +53,7 @@ Future<int?> askFreezeServings(
               SizedBox(
                 width: double.infinity,
                 child: TactileButton(
-                  label: 'Guardar en el congelador',
+                  label: context.l.fzSave,
                   icon: Icons.ac_unit,
                   onPressed: () => Navigator.of(ctx).pop(servings),
                 ),
@@ -61,7 +62,7 @@ Future<int?> askFreezeServings(
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Ahora no'),
+                  child: Text(context.l.notNow),
                 ),
               ),
             ],

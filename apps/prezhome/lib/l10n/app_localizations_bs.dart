@@ -3448,4 +3448,638 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get recLess => 'Manje';
+
+  @override
+  String get planOldTapersTitle => 'Posude iz starog plana';
+
+  @override
+  String planOldTapersBody(int count, String names) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'je $count posuda',
+      one: 'je 1 posuda',
+    );
+    return 'U frižideru $_temp0 koje novi plan više ne koristi: $names. Ukloniti iz Moje kuhinje?';
+  }
+
+  @override
+  String get planOldTapersKeep => 'Ostavi ih';
+
+  @override
+  String get hhCreateError => 'Nije moguće kreirati domaćinstvo';
+
+  @override
+  String get hhJoinTitle => 'Pridruži se domaćinstvu';
+
+  @override
+  String get hhInviteCode => 'Pozivni kod';
+
+  @override
+  String get hhJoin => 'Pridruži se';
+
+  @override
+  String get hhCodeFormat => 'Kod ima 8 slova i brojeva';
+
+  @override
+  String get hhCodeInvalid => 'Nevažeći ili istekao kod';
+
+  @override
+  String get hhCodeCreateError => 'Nije moguće kreirati kod';
+
+  @override
+  String get hhThisMember => 'ovog člana';
+
+  @override
+  String hhRemoveMemberTitle(String name) {
+    return 'Ukloniti $name iz domaćinstva?';
+  }
+
+  @override
+  String get hhRemoveMemberBody => 'Više neće vidjeti kupovinu, ostavu i plan.';
+
+  @override
+  String get hhRemoveError => 'Nije moguće ukloniti';
+
+  @override
+  String get hhAddGuestTitle => 'Dodaj osobu bez računa';
+
+  @override
+  String get hhAddGuestBody =>
+      'Za ukućana koji ne koristi aplikaciju. Možeš mu dodijeliti zadatke i bilježiti urađene.';
+
+  @override
+  String get hhAddError => 'Nije moguće dodati';
+
+  @override
+  String hhRemoveGuestTitle(String name) {
+    return 'Ukloniti $name?';
+  }
+
+  @override
+  String get hhRemoveGuestBody =>
+      'Bodovi će biti obrisani, a zadaci ostaju nedodijeljeni.';
+
+  @override
+  String get hhLeaveTitle => 'Napustiti domaćinstvo?';
+
+  @override
+  String get hhLeaveBody =>
+      'Više nećeš vidjeti podatke. Za povratak ti treba novi kod.';
+
+  @override
+  String get hhLeave => 'Napusti';
+
+  @override
+  String get hhLeaveError => 'Nije moguće napustiti domaćinstvo';
+
+  @override
+  String get hhNameTitle => 'Naziv domaćinstva';
+
+  @override
+  String get hhRenameError => 'Nije moguće preimenovati';
+
+  @override
+  String get hhDeleteAccountTitle => 'Obrisati račun?';
+
+  @override
+  String get hhDeleteAccountBody =>
+      'Brišu se tvoj račun i podaci. Ako si jedina osoba u domaćinstvu, briše se i domaćinstvo. Ovo se ne može poništiti.';
+
+  @override
+  String get hhDeleteConfirm => 'Obriši';
+
+  @override
+  String get hhDeleteAccountError => 'Nije moguće obrisati račun';
+
+  @override
+  String get hhDeleteAccount => 'Obriši moj račun';
+
+  @override
+  String get hhMyHome => 'Moj dom';
+
+  @override
+  String get hhSignOut => 'Odjava';
+
+  @override
+  String get hhNoHome => 'Još ne pripadaš nijednom domaćinstvu.';
+
+  @override
+  String get hhCreateHome => 'Kreiraj novo domaćinstvo';
+
+  @override
+  String get hhJoinExisting => 'Pridruži se postojećem domaćinstvu';
+
+  @override
+  String get hhRename => 'Preimenuj domaćinstvo';
+
+  @override
+  String hhPeople(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Domaćinstvo od $count osoba.',
+      one: 'Tvoj dom, zasad samo za tebe.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hhMembers(int count) {
+    return 'Članovi ($count)';
+  }
+
+  @override
+  String get hhAdmin => 'Administrator';
+
+  @override
+  String get hhRemoveFromHome => 'Ukloni iz domaćinstva';
+
+  @override
+  String get hhYou => 'Ti';
+
+  @override
+  String get hhNoAccount => 'Bez računa';
+
+  @override
+  String get hhLeaveHome => 'Napusti domaćinstvo';
+
+  @override
+  String get hhSettings => 'Domaćinstvo i postavke';
+
+  @override
+  String get hhAppearance => 'Izgled';
+
+  @override
+  String get hhPhoneAlerts => 'Obavještenja na telefonu';
+
+  @override
+  String get hhYourData => 'Tvoji podaci';
+
+  @override
+  String get hhYourDataSub =>
+      'Grafikoni troškova, kupovine, kuhanja i zadataka';
+
+  @override
+  String get hhExpenses => 'Troškovi i računi';
+
+  @override
+  String get hhExpensesSub => 'Budžet, skenirani računi i troškovi po mjesecu';
+
+  @override
+  String get hhYourPlan => 'Tvoj paket';
+
+  @override
+  String get hhYourPlanSub => 'Preostala korištenja ovog mjeseca';
+
+  @override
+  String get hhNutrition => 'Moj nutritivni profil';
+
+  @override
+  String get hhNutritionSub => 'Cilj kalorija, preferencije i asistent';
+
+  @override
+  String get hhInvite => 'Pozovi nekoga';
+
+  @override
+  String get hhCreateCode => 'Kreiraj kod';
+
+  @override
+  String get hhCopy => 'Kopiraj';
+
+  @override
+  String get hhCodeCopied => 'Kod kopiran';
+
+  @override
+  String hhValidUntil(String date) {
+    return 'Važi do $date';
+  }
+
+  @override
+  String get hhNewCode => 'Novi kod';
+
+  @override
+  String get hhChoose => 'Odaberi';
+
+  @override
+  String get hhSupersHint =>
+      'Recepti će se prilagoditi onome što ima u tvojim marketima. Opcionalno.';
+
+  @override
+  String get hhNoSuper => 'Nije odabran market.';
+
+  @override
+  String get hhCountryError => 'Nije moguće promijeniti državu';
+
+  @override
+  String get hhWhereShop => 'Gdje kupujete?';
+
+  @override
+  String get hhPickMany => 'Možeš odabrati više. Opcionalno.';
+
+  @override
+  String get hhSaveError => 'Nije moguće sačuvati';
+
+  @override
+  String themeMode(String mode) {
+    String _temp0 = intl.Intl.selectLogic(mode, {
+      'claro': 'Svijetlo',
+      'oscuro': 'Tamno',
+      'other': 'Sistem',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get bcNotFound =>
+      'Taj kod nije na Open Food Facts. Možeš ga dodati ručno.';
+
+  @override
+  String get bcTitle => 'Skeniraj kod';
+
+  @override
+  String get bcSearching => 'Tražim proizvod…';
+
+  @override
+  String get bcNoPermission =>
+      'Treba mi dozvola za kameru da skeniram kod. Možeš je dati u postavkama telefona.';
+
+  @override
+  String get bcCameraError =>
+      'Nije moguće otvoriti kameru. Proizvod možeš dodati ručno iz ostave.';
+
+  @override
+  String planFeature(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'scan_ticket': 'Skeniranje računa',
+      'recipes': 'Ideje i recepti',
+      'meal_photo': 'Fotografija obroka',
+      'other': 'Recepti iz linka',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String puPlanName(String plan) {
+    String _temp0 = intl.Intl.selectLogic(plan, {
+      'pro': 'Pro paket',
+      'other': 'Besplatni paket',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get puExplain =>
+      'Ostava, kupovina, zadaci i plan nemaju ograničenje. Ovo ti je preostalo ovog mjeseca; obnavlja se 1. u mjesecu. Ako nešto ne uspije, ne računa se.';
+
+  @override
+  String get puGoPro => 'Pređi na Pro';
+
+  @override
+  String puLeft(int left, int limit) {
+    return 'Preostalo $left od $limit';
+  }
+
+  @override
+  String get psTitle => 'Statistika kupovine';
+
+  @override
+  String get psMostBought => 'Šta najviše kupuješ';
+
+  @override
+  String get psMostSpent => 'Na šta najviše trošiš';
+
+  @override
+  String get psPriciest => 'Najskuplji (po komadu)';
+
+  @override
+  String get psHistory => 'Tvoja historija kupovine';
+
+  @override
+  String psTotal(String amount) {
+    return 'Ukupno zabilježeno: $amount';
+  }
+
+  @override
+  String get psNoPrices => 'Još nema dovoljno podataka o cijenama.';
+
+  @override
+  String get psEmptyTitle => 'Još nema statistike';
+
+  @override
+  String get psEmptyBody =>
+      'Skeniraj račune i ovdje ćeš vidjeti šta najviše kupuješ, na šta najviše trošiš i najskuplje proizvode.';
+
+  @override
+  String get meals => 'Obroci';
+
+  @override
+  String get mcNoHome => 'Ne pripadaš nijednom domaćinstvu.';
+
+  @override
+  String mcPrep(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'compra': 'Kupovina',
+      'cocina': 'Kuhanje',
+      'other': 'Izvaditi',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get mcPlanIt => 'Isplaniraj';
+
+  @override
+  String get mcSeeInPlan => 'Vidi u planu';
+
+  @override
+  String get mcNothing => 'Ništa planirano za ovaj dan.';
+
+  @override
+  String get tasks => 'Zadaci';
+
+  @override
+  String proPeriod(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'annual': 'Godišnje',
+      'sixMonth': 'Svakih 6 mjeseci',
+      'threeMonth': 'Svaka 3 mjeseca',
+      'twoMonth': 'Svaka 2 mjeseca',
+      'monthly': 'Mjesečno',
+      'weekly': 'Sedmično',
+      'lifetime': 'Zauvijek',
+      'other': 'Pro',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get proAlready => 'Već imaš Pro';
+
+  @override
+  String get proMoreUses => 'Više korištenja svakog mjeseca';
+
+  @override
+  String get proRestSame =>
+      'Ostalo ostaje isto: bez ograničenja i za cijelo domaćinstvo.';
+
+  @override
+  String get proFree => 'Besplatno';
+
+  @override
+  String get proSoon => 'Pro će uskoro biti dostupan.';
+
+  @override
+  String get proNothingToRestore => 'Nema kupovina za vraćanje.';
+
+  @override
+  String get proRestore => 'Vrati kupovine';
+
+  @override
+  String get proRenews =>
+      'Obnavlja se automatski. Možeš otkazati bilo kada u prodavnici.';
+
+  @override
+  String get proTerms => 'Uslovi';
+
+  @override
+  String get proPrivacy => 'Privatnost';
+
+  @override
+  String get aiSaveError => 'Greška pri spremanju';
+
+  @override
+  String get aiStoreProduct => 'Proizvod iz marketa';
+
+  @override
+  String get aiRemoveProduct => 'Ukloni proizvod';
+
+  @override
+  String get aiEditTitle => 'Uredi proizvod';
+
+  @override
+  String get aiAddTitle => 'Dodaj u ostavu';
+
+  @override
+  String get aiChangePhoto => 'Promijeni fotografiju';
+
+  @override
+  String get aiProductType => 'Vrsta proizvoda';
+
+  @override
+  String get aiWhatIsIt => 'Šta je to?';
+
+  @override
+  String aiDishKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'ingredient': 'Sastojak za kuhanje',
+      'base': 'Gotova osnova',
+      'other': 'Gotovo jelo',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSearchStore => 'Traži u marketu';
+
+  @override
+  String get aiSearchStoreLong => 'Pronađi proizvod iz marketa sa slikom';
+
+  @override
+  String get aiQuickAdd => 'Dodaj uobičajene jednim dodirom';
+
+  @override
+  String get aiLocation => 'Lokacija';
+
+  @override
+  String get aiCategory => 'Kategorija';
+
+  @override
+  String get aiQuantity => 'Količina';
+
+  @override
+  String get aiUnit => 'Jedinica';
+
+  @override
+  String get aiServings => 'Porcije (opcionalno)';
+
+  @override
+  String get aiFrozenDate => 'Datum zamrzavanja';
+
+  @override
+  String get aiFrozenOn => 'Zamrznuto (opcionalno)';
+
+  @override
+  String get aiWillEstimate => 'Izračunat ćemo koliko traje u zamrzivaču.';
+
+  @override
+  String aiBestBefore(String date) {
+    return 'Najbolje upotrijebiti do $date (otprilike).';
+  }
+
+  @override
+  String get aiExpiryDate => 'Rok trajanja';
+
+  @override
+  String get aiExpires => 'Ističe';
+
+  @override
+  String get aiExpiresApprox => 'Ističe (otprilike)';
+
+  @override
+  String get aiNotToList => 'Ne dodaj u kupovinu';
+
+  @override
+  String get aiStaplesSub => 'Osnovne stvari koje uvijek imaš';
+
+  @override
+  String get aiSaveChanges => 'Sačuvaj izmjene';
+
+  @override
+  String get aiSaveNew => 'Sačuvaj u ostavu';
+
+  @override
+  String get kzMyKitchen => 'Moja kuhinja';
+
+  @override
+  String get kzAllGood => 'Sve u redu';
+
+  @override
+  String get phStore => 'Odaberi proizvod iz marketa';
+
+  @override
+  String get phCamera => 'Fotografiši';
+
+  @override
+  String get phGallery => 'Odaberi iz galerije';
+
+  @override
+  String get phError => 'Nije moguće promijeniti fotografiju';
+
+  @override
+  String get psStoreTitle => 'Proizvodi iz marketa';
+
+  @override
+  String psStoreTitleOf(String store) {
+    return 'Proizvodi iz $store';
+  }
+
+  @override
+  String get psHint => 'Mlijeko, grčki jogurt, deterdžent…';
+
+  @override
+  String get psTypeHint => 'Upiši proizvod i dodirni traži.';
+
+  @override
+  String get psThrottled => 'Previše pretraga zaredom. Pokušaj za minutu.';
+
+  @override
+  String get psOffline => 'Nema internet veze. Svejedno ga možeš dodati.';
+
+  @override
+  String get psDown =>
+      'Pretraga proizvoda trenutno ne radi. Pokušaj kasnije ili ga svejedno dodaj.';
+
+  @override
+  String get psNotInStore => 'Nije u marketu. Svejedno ga možeš dodati.';
+
+  @override
+  String psNoResultsIn(String store) {
+    return 'Nema rezultata u $store. Ovi su iz drugih marketa.';
+  }
+
+  @override
+  String psNotYet(String store) {
+    return 'Još nemamo proizvode iz $store. Ovi su iz drugih marketa.';
+  }
+
+  @override
+  String get psOffData => 'Podaci sa Open Food Facts.';
+
+  @override
+  String psAddAsIs(String q) {
+    return 'Dodaj \"$q\" bez odabira proizvoda';
+  }
+
+  @override
+  String get offlineExplain =>
+      'Možeš i dalje koristiti listu za kupovinu i ostavu: ono što upišeš čuva se na telefonu i šalje kad se veza vrati. Ostalo će se tada ažurirati.';
+
+  @override
+  String get offlineNow => 'Trenutno bez veze';
+
+  @override
+  String streakMilestone(int days) {
+    return '$days dana zaredom!';
+  }
+
+  @override
+  String streakMilestoneSub(int next) {
+    return 'Cilj ostvaren. Sljedeći: $next dana.';
+  }
+
+  @override
+  String streakDoneSub(int next) {
+    return 'Danas se računa. Sljedeći cilj: $next dana.';
+  }
+
+  @override
+  String get streakKeepSub => 'Označi zadatak ili upiši obrok da nastaviš.';
+
+  @override
+  String get streakStart => 'Započni svoj niz';
+
+  @override
+  String get streakStartSub => 'Danas označi zadatak ili upiši obrok.';
+
+  @override
+  String streakDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days dana zaredom',
+      one: '1 dan zaredom',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncSaved => 'Sačuvano. Sinhronizovat će se kad se veza vrati.';
+
+  @override
+  String get fzTitle => 'Spremiti porcije u zamrzivač?';
+
+  @override
+  String get fzSave => 'Spremi u zamrzivač';
+
+  @override
+  String get notNow => 'Ne sada';
+
+  @override
+  String get fastIn => 'Post';
+
+  @override
+  String get fastCanEat => 'Možeš jesti';
+
+  @override
+  String fastLeft(String left, String time) {
+    return 'Još $left · Jedeš u $time';
+  }
+
+  @override
+  String fastUntil(String time) {
+    return 'Do $time';
+  }
+
+  @override
+  String get shWeekReady =>
+      'Tvoja sedmica je spremna: ručkovi, večere i lista za kupovinu';
+
+  @override
+  String get comingSoon => 'USKORO';
+
+  @override
+  String psSummary(int distinct, int lines) {
+    return '$distinct različitih proizvoda · $lines kupovina';
+  }
 }

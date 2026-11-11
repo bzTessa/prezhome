@@ -3507,4 +3507,641 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get recLess => 'Menos';
+
+  @override
+  String get planOldTapersTitle => 'Tápers del plan anterior';
+
+  @override
+  String planOldTapersBody(int count, String names) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'quedan $count tápers',
+      one: 'queda 1 táper',
+    );
+    return 'En la nevera $_temp0 que el plan nuevo ya no usa: $names. ¿Los quitas de Mi cocina?';
+  }
+
+  @override
+  String get planOldTapersKeep => 'Dejarlos';
+
+  @override
+  String get hhCreateError => 'No se pudo crear el hogar';
+
+  @override
+  String get hhJoinTitle => 'Unirme a un hogar';
+
+  @override
+  String get hhInviteCode => 'Código de invitación';
+
+  @override
+  String get hhJoin => 'Unirme';
+
+  @override
+  String get hhCodeFormat => 'El código tiene 8 letras y números';
+
+  @override
+  String get hhCodeInvalid => 'Código no válido o caducado';
+
+  @override
+  String get hhCodeCreateError => 'No se pudo crear el código';
+
+  @override
+  String get hhThisMember => 'este miembro';
+
+  @override
+  String hhRemoveMemberTitle(String name) {
+    return '¿Quitar a $name del hogar?';
+  }
+
+  @override
+  String get hhRemoveMemberBody =>
+      'Dejará de ver la compra, la despensa y el plan.';
+
+  @override
+  String get hhRemoveError => 'No se pudo quitar';
+
+  @override
+  String get hhAddGuestTitle => 'Añadir persona sin cuenta';
+
+  @override
+  String get hhAddGuestBody =>
+      'Para alguien de casa que no usa la app. Podrás asignarle tareas y apuntar las que haga.';
+
+  @override
+  String get hhAddError => 'No se pudo añadir';
+
+  @override
+  String hhRemoveGuestTitle(String name) {
+    return '¿Quitar a $name?';
+  }
+
+  @override
+  String get hhRemoveGuestBody =>
+      'Se borrarán sus puntos y sus tareas quedarán sin asignar.';
+
+  @override
+  String get hhLeaveTitle => '¿Salir del hogar?';
+
+  @override
+  String get hhLeaveBody =>
+      'Dejarás de ver sus datos. Para volver necesitarás un código nuevo.';
+
+  @override
+  String get hhLeave => 'Salir';
+
+  @override
+  String get hhLeaveError => 'No se pudo salir del hogar';
+
+  @override
+  String get hhNameTitle => 'Nombre del hogar';
+
+  @override
+  String get hhRenameError => 'No se pudo renombrar';
+
+  @override
+  String get hhDeleteAccountTitle => '¿Borrar tu cuenta?';
+
+  @override
+  String get hhDeleteAccountBody =>
+      'Se borran tu cuenta y tus datos. Si eres la única persona del hogar, también el hogar entero. No se puede deshacer.';
+
+  @override
+  String get hhDeleteConfirm => 'Borrar';
+
+  @override
+  String get hhDeleteAccountError => 'No se pudo borrar la cuenta';
+
+  @override
+  String get hhDeleteAccount => 'Borrar mi cuenta';
+
+  @override
+  String get hhMyHome => 'Mi Hogar';
+
+  @override
+  String get hhSignOut => 'Cerrar sesión';
+
+  @override
+  String get hhNoHome => 'Aún no perteneces a ningún hogar.';
+
+  @override
+  String get hhCreateHome => 'Crear un hogar nuevo';
+
+  @override
+  String get hhJoinExisting => 'Unirme a un hogar existente';
+
+  @override
+  String get hhRename => 'Renombrar hogar';
+
+  @override
+  String hhPeople(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Un hogar de $count personas.',
+      one: 'Tu hogar, de momento para ti.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hhMembers(int count) {
+    return 'Miembros ($count)';
+  }
+
+  @override
+  String get hhAdmin => 'Administrador';
+
+  @override
+  String get hhRemoveFromHome => 'Quitar del hogar';
+
+  @override
+  String get hhYou => 'Tú';
+
+  @override
+  String get hhNoAccount => 'Sin cuenta';
+
+  @override
+  String get hhLeaveHome => 'Salir del hogar';
+
+  @override
+  String get hhSettings => 'Hogar y ajustes';
+
+  @override
+  String get hhAppearance => 'Apariencia';
+
+  @override
+  String get hhPhoneAlerts => 'Avisos en el móvil';
+
+  @override
+  String get hhYourData => 'Tus datos';
+
+  @override
+  String get hhYourDataSub => 'Gráficas de gasto, compra, cocina y tareas';
+
+  @override
+  String get hhExpenses => 'Gastos y tickets';
+
+  @override
+  String get hhExpensesSub => 'Presupuesto, tickets escaneados y gasto por mes';
+
+  @override
+  String get hhYourPlan => 'Tu plan';
+
+  @override
+  String get hhYourPlanSub => 'Usos que te quedan este mes';
+
+  @override
+  String get hhNutrition => 'Mi perfil nutricional';
+
+  @override
+  String get hhNutritionSub => 'Objetivo de calorías, preferencias y asistente';
+
+  @override
+  String get hhInvite => 'Invitar a alguien';
+
+  @override
+  String get hhCreateCode => 'Crear código';
+
+  @override
+  String get hhCopy => 'Copiar';
+
+  @override
+  String get hhCodeCopied => 'Código copiado';
+
+  @override
+  String hhValidUntil(String date) {
+    return 'Vale hasta el $date';
+  }
+
+  @override
+  String get hhNewCode => 'Nuevo código';
+
+  @override
+  String get hhChoose => 'Elegir';
+
+  @override
+  String get hhSupersHint =>
+      'Las recetas se adaptarán a lo que haya en tus súper. Es opcional.';
+
+  @override
+  String get hhNoSuper => 'Sin supermercado elegido.';
+
+  @override
+  String get hhCountryError => 'No se pudo cambiar el país';
+
+  @override
+  String get hhWhereShop => '¿Dónde compráis?';
+
+  @override
+  String get hhPickMany => 'Puedes elegir varios. Es opcional.';
+
+  @override
+  String get hhSaveError => 'No se pudo guardar';
+
+  @override
+  String themeMode(String mode) {
+    String _temp0 = intl.Intl.selectLogic(mode, {
+      'claro': 'Claro',
+      'oscuro': 'Oscuro',
+      'other': 'Sistema',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get bcNotFound =>
+      'No encontré ese código en Open Food Facts, puedes añadirlo a mano.';
+
+  @override
+  String get bcTitle => 'Escanear código';
+
+  @override
+  String get bcSearching => 'Buscando el producto…';
+
+  @override
+  String get bcNoPermission =>
+      'Necesito permiso para usar la cámara y poder escanear el código. Puedes concederlo en los ajustes del teléfono.';
+
+  @override
+  String get bcCameraError =>
+      'No pude abrir la cámara para escanear. Puedes añadir el producto a mano desde el inventario.';
+
+  @override
+  String planFeature(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'scan_ticket': 'Escanear tickets',
+      'recipes': 'Ideas y recetas',
+      'meal_photo': 'Foto de lo que comes',
+      'other': 'Recetas desde un enlace',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String puPlanName(String plan) {
+    String _temp0 = intl.Intl.selectLogic(plan, {
+      'pro': 'Plan Pro',
+      'other': 'Plan gratis',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get puExplain =>
+      'La despensa, la compra, las tareas y el plan no tienen límite. Esto es lo que te queda este mes; se renueva el día 1. Si algo falla, no cuenta.';
+
+  @override
+  String get puGoPro => 'Pasar a Pro';
+
+  @override
+  String puLeft(int left, int limit) {
+    return 'Te quedan $left de $limit';
+  }
+
+  @override
+  String get psTitle => 'Estadísticas de la compra';
+
+  @override
+  String get psMostBought => 'Lo que más compras';
+
+  @override
+  String get psMostSpent => 'En lo que más gastas';
+
+  @override
+  String get psPriciest => 'Los más caros (por unidad)';
+
+  @override
+  String get psHistory => 'Tu historial de compra';
+
+  @override
+  String psTotal(String amount) {
+    return 'Gasto total registrado: $amount';
+  }
+
+  @override
+  String get psNoPrices => 'Aún no hay suficientes datos de precios.';
+
+  @override
+  String get psEmptyTitle => 'Aún no hay estadísticas';
+
+  @override
+  String get psEmptyBody =>
+      'Escanea tickets de la compra y aquí verás lo que más compras, en qué gastas más y los productos más caros.';
+
+  @override
+  String get meals => 'Comidas';
+
+  @override
+  String get mcNoHome => 'No perteneces a ningún hogar.';
+
+  @override
+  String mcPrep(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'compra': 'Compra',
+      'cocina': 'Cocinar',
+      'other': 'Sacar',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get mcPlanIt => 'Planificar';
+
+  @override
+  String get mcSeeInPlan => 'Ver en el plan';
+
+  @override
+  String get mcNothing => 'Nada planificado este día.';
+
+  @override
+  String get tasks => 'Tareas';
+
+  @override
+  String proPeriod(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'annual': 'Al año',
+      'sixMonth': 'Cada 6 meses',
+      'threeMonth': 'Cada 3 meses',
+      'twoMonth': 'Cada 2 meses',
+      'monthly': 'Al mes',
+      'weekly': 'A la semana',
+      'lifetime': 'Para siempre',
+      'other': 'Pro',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get proAlready => 'Ya tienes Pro';
+
+  @override
+  String get proMoreUses => 'Más usos cada mes';
+
+  @override
+  String get proRestSame =>
+      'Lo demás sigue igual: sin límite y para todo el hogar.';
+
+  @override
+  String get proFree => 'Gratis';
+
+  @override
+  String get proSoon => 'Pro estará disponible muy pronto.';
+
+  @override
+  String get proNothingToRestore => 'No hay compras que restaurar.';
+
+  @override
+  String get proRestore => 'Restaurar compras';
+
+  @override
+  String get proRenews =>
+      'Se renueva solo. Puedes cancelar cuando quieras desde la tienda.';
+
+  @override
+  String get proTerms => 'Condiciones';
+
+  @override
+  String get proPrivacy => 'Privacidad';
+
+  @override
+  String get aiSaveError => 'Error al guardar';
+
+  @override
+  String get aiStoreProduct => 'Producto del súper';
+
+  @override
+  String get aiRemoveProduct => 'Quitar producto';
+
+  @override
+  String get aiEditTitle => 'Editar producto';
+
+  @override
+  String get aiAddTitle => 'Añadir al inventario';
+
+  @override
+  String get aiChangePhoto => 'Cambiar foto';
+
+  @override
+  String get aiProductType => 'Tipo de producto';
+
+  @override
+  String get aiWhatIsIt => '¿Qué es?';
+
+  @override
+  String aiDishKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'ingredient': 'Ingrediente para cocinar',
+      'base': 'Base ya preparada',
+      'other': 'Plato listo para comer',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSearchStore => 'Buscar en el súper';
+
+  @override
+  String get aiSearchStoreLong => 'Buscar el producto del súper con foto';
+
+  @override
+  String get aiQuickAdd => 'Añade los de siempre con un toque';
+
+  @override
+  String get aiLocation => 'Ubicación';
+
+  @override
+  String get aiCategory => 'Categoría';
+
+  @override
+  String get aiQuantity => 'Cantidad';
+
+  @override
+  String get aiUnit => 'Unidad';
+
+  @override
+  String get aiServings => 'Raciones que representa (opcional)';
+
+  @override
+  String get aiFrozenDate => 'Fecha de congelación';
+
+  @override
+  String get aiFrozenOn => 'Congelado el (opcional)';
+
+  @override
+  String get aiWillEstimate => 'Calcularemos cuánto aguanta en el congelador.';
+
+  @override
+  String aiBestBefore(String date) {
+    return 'Mejor consumir antes del $date (aprox.).';
+  }
+
+  @override
+  String get aiExpiryDate => 'Fecha de caducidad';
+
+  @override
+  String get aiExpires => 'Caduca el';
+
+  @override
+  String get aiExpiresApprox => 'Caduca el (aprox.)';
+
+  @override
+  String get aiNotToList => 'No añadir a la compra';
+
+  @override
+  String get aiStaplesSub => 'Básicos que siempre tienes';
+
+  @override
+  String get aiSaveChanges => 'Guardar cambios';
+
+  @override
+  String get aiSaveNew => 'Guardar en el inventario';
+
+  @override
+  String get kzMyKitchen => 'Mi cocina';
+
+  @override
+  String get kzAllGood => 'Al día';
+
+  @override
+  String get phStore => 'Elegir producto del súper';
+
+  @override
+  String get phCamera => 'Hacer una foto';
+
+  @override
+  String get phGallery => 'Elegir de la galería';
+
+  @override
+  String get phError => 'No se pudo cambiar la foto';
+
+  @override
+  String get psStoreTitle => 'Productos del súper';
+
+  @override
+  String psStoreTitleOf(String store) {
+    return 'Productos de $store';
+  }
+
+  @override
+  String get psHint => 'Leche, yogur griego, detergente…';
+
+  @override
+  String get psTypeHint => 'Escribe un producto y pulsa buscar.';
+
+  @override
+  String get psThrottled =>
+      'Demasiadas búsquedas seguidas. Prueba en un minuto.';
+
+  @override
+  String get psOffline =>
+      'Sin conexión a internet. Puedes añadirlo igualmente.';
+
+  @override
+  String get psDown =>
+      'El buscador de productos no responde ahora. Prueba en un rato o añádelo igualmente.';
+
+  @override
+  String get psNotInStore => 'No está en el súper. Puedes añadirlo igualmente.';
+
+  @override
+  String psNoResultsIn(String store) {
+    return 'Sin resultados en $store. Estos son de otros súper.';
+  }
+
+  @override
+  String psNotYet(String store) {
+    return 'Aún no tenemos los productos de $store. Estos son de otros súper.';
+  }
+
+  @override
+  String get psOffData => 'Datos de Open Food Facts.';
+
+  @override
+  String psAddAsIs(String q) {
+    return 'Añadir \"$q\" sin elegir producto';
+  }
+
+  @override
+  String get offlineExplain =>
+      'Puedes seguir usando la lista de la compra y la despensa: lo que apuntes se guarda en el móvil y se envía solo cuando vuelva. Lo demás se actualizará entonces.';
+
+  @override
+  String get offlineNow => 'Sin conexión ahora mismo';
+
+  @override
+  String streakMilestone(int days) {
+    return '¡$days días seguidos!';
+  }
+
+  @override
+  String streakMilestoneSub(int next) {
+    return 'Hito conseguido. Siguiente: $next días.';
+  }
+
+  @override
+  String streakDoneSub(int next) {
+    return 'Hoy ya cuenta. Próximo hito: $next días.';
+  }
+
+  @override
+  String get streakKeepSub =>
+      'Tacha una tarea o apunta una comida para seguir.';
+
+  @override
+  String get streakStart => 'Empieza tu racha';
+
+  @override
+  String get streakStartSub => 'Tacha una tarea o apunta una comida hoy.';
+
+  @override
+  String streakDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días seguidos',
+      one: '1 día seguido',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncSaved => 'Guardado. Se sincronizará al volver la conexión.';
+
+  @override
+  String get fzTitle => '¿Guardas raciones en el congelador?';
+
+  @override
+  String get fzSave => 'Guardar en el congelador';
+
+  @override
+  String get notNow => 'Ahora no';
+
+  @override
+  String get fastIn => 'En ayuno';
+
+  @override
+  String get fastCanEat => 'Puedes comer';
+
+  @override
+  String fastLeft(String left, String time) {
+    return 'Quedan $left · Comes a las $time';
+  }
+
+  @override
+  String fastUntil(String time) {
+    return 'Hasta las $time';
+  }
+
+  @override
+  String get shWeekReady =>
+      'Tu semana está lista: comidas, cenas y lista de la compra';
+
+  @override
+  String get comingSoon => 'PRÓXIMAMENTE';
+
+  @override
+  String psSummary(int distinct, int lines) {
+    return '$distinct productos distintos · $lines compras';
+  }
 }
