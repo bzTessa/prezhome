@@ -1614,6 +1614,12 @@ abstract class AppLocalizations {
   /// **'Como mucho dos meses de una vez.'**
   String get planMaxTwoMonths;
 
+  /// No description provided for @planCostEstimate.
+  ///
+  /// In es, this message translates to:
+  /// **'Este plan te costará unos {amount} en ingredientes.'**
+  String planCostEstimate(String amount);
+
   /// No description provided for @planReadyAllHome.
   ///
   /// In es, this message translates to:

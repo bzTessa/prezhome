@@ -251,6 +251,7 @@
   "planPickDates": "Izaberi datume",
   "planDates": "Datumi plana",
   "planMaxTwoMonths": "Najviše dva mjeseca odjednom.",
+  "planCostEstimate": "Ovaj plan će te koštati oko {amount} za namirnice.",
   "planReadyAllHome": "Plan je spreman. Već imaš kod kuće sve što ti treba",
   "planListReady": "Plan je spreman. Lista za kupovinu sa {count} proizvoda",
   "planBackInPlan": "Ponovo je u planu",

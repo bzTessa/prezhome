@@ -13,6 +13,10 @@ import '../models/recipe.dart';
 ///    permite repetir una receta dos veces, que es cocinar una tanda).
 ///  - Medianamente equilibrado: en comida y cena reparte legumbre, pescado,
 ///    huevo y carne según [weeklyTargets] y evita el mismo grupo seguido.
+///  - Aprovecha la compra: prefiere recetas que comparten ingredientes con las
+///    ya elegidas esa semana y las que usan lo que caduca pronto en casa.
+///  - Presupuesto: con [costPerServing] y [budgetPressure] prefiere las
+///    recetas más baratas (más cuanto más justo va el mes).
 class MealPlanner {
   final Random _random;
   MealPlanner({int? seed}) : _random = Random(seed);
@@ -57,6 +61,12 @@ class MealPlanner {
     int energyLevel = 1,
     // Cocina en lote: repetir una receta dos veces es lo esperado.
     bool batch = false,
+    // Nombres (en minúscula) de lo que hay en casa y caduca pronto.
+    Set<String> expiringIngredients = const {},
+    // Coste estimado por ración de cada receta.
+    Map<String, double> costPerServing = const {},
+    // 0 = sin presupuesto, 1 = hay presupuesto, 2 = el mes va justo.
+    int budgetPressure = 0,
   }) {
     final plan = <DateTime, Map<String, String>>{};
 
@@ -81,12 +91,17 @@ class MealPlanner {
     final uses = <String, int>{};
     final groupCount = <ProteinGroup, int>{};
     ProteinGroup? lastMainGroup;
+    // Ingredientes ya comprados para la semana y lo que caduca sin usar aún.
+    final weekIngredients = <String>{};
+    final expiring = {...expiringIngredients};
+    final medianCost = _median(costPerServing.values);
 
     for (var d = 0; d < days; d++) {
       // Planes de varias semanas: la pauta y los usos cuentan por semana.
       if (d > 0 && d % 7 == 0) {
         uses.clear();
         groupCount.clear();
+        weekIngredients.clear();
       }
       final date = DateTime(startDate.year, startDate.month, startDate.day + d);
       final dayMap = <String, String>{};
@@ -118,6 +133,21 @@ class MealPlanner {
               }
               if (g != ProteinGroup.otro && g == lastMainGroup) w *= 0.5;
             }
+            final ings = _shoppable(r);
+            final shared = ings.where(weekIngredients.contains).length;
+            w *= 1 + 0.25 * min(shared, 4);
+            final rescues = ings.where((i) => _usesAny(i, expiring)).length;
+            w *= 1 + 0.8 * min(rescues, 2);
+            final cost = costPerServing[r.id];
+            if (budgetPressure > 0 &&
+                cost != null &&
+                cost > 0 &&
+                medianCost > 0) {
+              final ratio = medianCost / cost;
+              w *= budgetPressure >= 2
+                  ? ratio.clamp(0.3, 3.0)
+                  : sqrt(ratio).clamp(0.6, 1.6);
+            }
             return w;
           },
           recentPenalty: batch ? 0.7 : 0.15,
@@ -125,6 +155,10 @@ class MealPlanner {
         if (picked != null) {
           dayMap[type] = picked.id;
           uses[picked.id] = (uses[picked.id] ?? 0) + 1;
+          final ings = _shoppable(picked);
+          weekIngredients.addAll(ings);
+          // Lo que caduca ya tiene receta: no seguir tirando de ello.
+          expiring.removeWhere((e) => ings.any((i) => _usesAny(i, {e})));
           if (isMain) {
             final g = proteinGroupOf(picked);
             groupCount[g] = (groupCount[g] ?? 0) + 1;
@@ -178,6 +212,54 @@ class MealPlanner {
       if (pick <= 0) return options[i];
     }
     return options.last;
+  }
+
+  /// Básicos que hay casi siempre en casa: compartirlos no ahorra compra.
+  static const _basics = {
+    'sal',
+    'aceite',
+    'aceite de oliva',
+    'aceite de oliva virgen extra',
+    'agua',
+    'pimienta',
+    'pimienta negra',
+    'azúcar',
+    'azucar',
+    'harina',
+    'vinagre',
+    'ajo',
+    'diente de ajo',
+    'dientes de ajo',
+    'perejil',
+    'orégano',
+    'oregano',
+    'pimentón',
+    'pimenton',
+    'comino',
+  };
+
+  static Set<String> _shoppable(Recipe r) => {
+    for (final n in r.ingredientNames)
+      if (n.trim().toLowerCase() case final k
+          when k.isNotEmpty && !_basics.contains(k))
+        k,
+  };
+
+  /// "pechuga de pollo" usa "Pollo entero": comparten una palabra con
+  /// sustancia (4+ letras, sin plural), así "sal" no casa con "salmón".
+  static bool _usesAny(String ingredient, Set<String> pantry) {
+    final words = _words(ingredient);
+    return pantry.any((p) => _words(p).any(words.contains));
+  }
+
+  static Set<String> _words(String text) => {
+    for (final w in text.toLowerCase().split(RegExp(r'[^a-záéíóúüñç]+')))
+      if (w.length >= 4) w.endsWith('s') ? w.substring(0, w.length - 1) : w,
+  };
+
+  static double _median(Iterable<double> values) {
+    final v = values.where((c) => c > 0).toList()..sort();
+    return v.isEmpty ? 0 : v[v.length ~/ 2];
   }
 
   /// Peso por usos previos en la semana: cada repetición pesa menos. En lote

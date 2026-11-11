@@ -251,6 +251,7 @@
   "planPickDates": "Scegli le date",
   "planDates": "Date del piano",
   "planMaxTwoMonths": "Al massimo due mesi alla volta.",
+  "planCostEstimate": "Questo piano ti costerà circa {amount} di ingredienti.",
   "planReadyAllHome": "Piano pronto. Hai già in casa tutto il necessario",
   "planListReady": "Piano pronto. Lista della spesa con {count} prodotti",
   "planBackInPlan": "È di nuovo nel piano",

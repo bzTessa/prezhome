@@ -18,6 +18,7 @@ import 'services/household_servings.dart';
 import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
+import 'services/plan_hints.dart';
 import 'services/plan_prefs.dart';
 import 'services/plan_repeats.dart';
 import 'services/plan_prep.dart';
@@ -33,6 +34,7 @@ import 'widgets/recipe_category_chips.dart';
 import 'widgets/recipe_image.dart';
 import 'widgets/segmented_pill.dart';
 import 'utils/friendly_error.dart';
+import 'utils/money.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'l10n/l10n.dart';
@@ -354,6 +356,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       final cookable = data.recipes
           .where((r) => data.prefs.canCook(r.appliance))
           .toList();
+      final hints = await PlanHints.load(_client, data.homeId!);
       final planner = MealPlanner();
       final plan = planner.generate(
         startDate: start,
@@ -364,6 +367,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         frozenRecipeIds: frozenRecipeIds,
         energyLevel: _energyLevel,
         batch: data.isMealPrep,
+        expiringIngredients: hints.expiring,
+        costPerServing: hints.costPerServing,
+        budgetPressure: hints.budgetPressure,
       );
 
       // Borrar el plan anterior de esas fechas y guardar el nuevo.
@@ -452,6 +458,17 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       _reload();
       if (rows.isNotEmpty) {
         await _fillShoppingFromPlan(data.homeId!, start, end);
+        // Lo congelado ya está pagado: solo cuenta lo que hay que cocinar.
+        var cost = 0.0;
+        for (final r in rows) {
+          if (r['from_freezer'] == true) continue;
+          cost +=
+              (hints.costPerServing[r['recipe_id']] ?? 0) *
+              ((r['servings'] as num?) ?? 1);
+        }
+        if (cost > 0 && mounted) {
+          _showMiau(context.l.planCostEstimate(money(cost, decimals: 0)));
+        }
       }
     } catch (e) {
       if (mounted) {

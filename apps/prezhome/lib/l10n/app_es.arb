@@ -695,6 +695,14 @@
   "planPickDates": "Elegir fechas",
   "planDates": "Fechas del plan",
   "planMaxTwoMonths": "Como mucho dos meses de una vez.",
+  "planCostEstimate": "Este plan te costará unos {amount} en ingredientes.",
+  "@planCostEstimate": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "planReadyAllHome": "Plan listo. Ya tienes en casa todo lo que necesitas",
   "planListReady": "Plan listo. Lista de la compra con {count} productos",
   "@planListReady": {

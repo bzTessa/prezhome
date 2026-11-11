@@ -1031,6 +1031,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get planMaxTwoMonths => 'No máximo dois meses de cada vez.';
 
   @override
+  String planCostEstimate(String amount) {
+    return 'Este plano vai custar cerca de $amount em ingredientes.';
+  }
+
+  @override
   String get planReadyAllHome =>
       'Plano pronto. Já tens em casa tudo o que precisas';
 
