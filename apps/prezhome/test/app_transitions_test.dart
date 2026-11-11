@@ -45,4 +45,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(key.currentState, same(state));
   });
+
+  testWidgets('CollapseOut pliega hasta altura 0 animando', (tester) async {
+    Widget build(bool collapsed) => MaterialApp(
+      home: Column(
+        children: [
+          CollapseOut(
+            collapsed: collapsed,
+            child: const SizedBox(key: Key('row'), height: 80),
+          ),
+          const SizedBox(key: Key('below'), height: 10),
+        ],
+      ),
+    );
+    await tester.pumpWidget(build(false));
+    expect(tester.getTopLeft(find.byKey(const Key('below'))).dy, 80);
+    await tester.pumpWidget(build(true));
+    await tester.pump(const Duration(milliseconds: 100));
+    final mid = tester.getTopLeft(find.byKey(const Key('below'))).dy;
+    expect(mid, greaterThan(0));
+    expect(mid, lessThan(80));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byKey(const Key('below'))).dy, 0);
+  });
 }
