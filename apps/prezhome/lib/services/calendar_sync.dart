@@ -279,22 +279,22 @@ class CalendarSync {
   ];
 
   /// 0 libre (una hora o menos ocupada entre las 8:00 y las 22:00), 2 cargado
-  /// (seis horas o más) y 1 lo demás.
+  /// (dos horas o más ocupadas de 17:00 a 22:00, cuando se cocina, o diez o
+  /// más en todo el día) y 1 lo demás: una jornada de trabajo normal es 1.
   static int loadOf(List<({DateTime start, DateTime end})> busy, DateTime day) {
     final base = DateTime(day.year, day.month, day.day);
     var minutes = 0;
+    var evening = 0;
     for (var m = 8 * 60; m < 22 * 60; m += 15) {
       final s = base.add(Duration(minutes: m));
       final e = s.add(const Duration(minutes: 15));
       if (busy.any((b) => b.start.isBefore(e) && b.end.isAfter(s))) {
         minutes += 15;
+        if (m >= 17 * 60) evening += 15;
       }
     }
-    return minutes >= 6 * 60
-        ? 2
-        : minutes <= 60
-        ? 0
-        : 1;
+    if (evening >= 2 * 60 || minutes >= 10 * 60) return 2;
+    return minutes <= 60 ? 0 : 1;
   }
 
   /// Eventos de [day] en todos los calendarios del móvil (vacío sin permiso).

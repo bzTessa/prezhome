@@ -13,7 +13,10 @@ void main() {
   );
 
   test('carga del día según las horas ocupadas', () {
-    expect(CalendarSync.loadOf([slot(9, 16)], day), 2);
+    // Jornada de 9 a 17: día normal, no cargado.
+    expect(CalendarSync.loadOf([slot(9, 17)], day), 1);
+    expect(CalendarSync.loadOf([slot(9, 17), slot(18, 20)], day), 2);
+    expect(CalendarSync.loadOf([slot(8, 18)], day), 2);
     expect(CalendarSync.loadOf([slot(9, 12), slot(10, 11)], day), 1);
     expect(CalendarSync.loadOf([slot(23, 24)], day), 0);
     expect(CalendarSync.loadOf(const [], day), 0);
