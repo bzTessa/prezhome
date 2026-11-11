@@ -100,6 +100,9 @@ flutter:
 
   assets:
     - assets/images/
+    # Plus Jakarta Sans dentro de la app: no se descarga al abrir, así la letra
+    # no cambia de golpe en el primer arranque ni falta sin red.
+    - google_fonts/
     - assets/icons/products/
     - assets/supermarkets/
     # Logo del menú lateral en la versión de ordenador.

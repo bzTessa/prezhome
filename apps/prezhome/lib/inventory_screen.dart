@@ -22,6 +22,7 @@ import 'widgets/list_skeleton.dart';
 import 'widgets/skeleton.dart';
 import 'utils/debouncer.dart';
 import 'utils/offline_actions.dart';
+import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/animations/swipe_action.dart';
 import 'widgets/food_image.dart';
 import 'widgets/freeze_dish_sheet.dart';
@@ -950,7 +951,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           )
         else
-          for (final g in _groups(shown, byExpiry: !alphabetical)) ...[
+          for (final (gi, g) in _groups(
+            shown,
+            byExpiry: !alphabetical,
+          ).indexed) ...[
             if (g.label != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 4, 0, 6),
@@ -963,20 +967,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                 ),
               ),
-            Container(
-              // El relleno deja el borde por encima de las filas opacas.
-              padding: const EdgeInsets.all(1.5),
-              decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.md - 1.5),
-                child: Column(
-                  children: [
-                    for (var k = 0; k < g.items.length; k++) ...[
-                      if (k > 0)
-                        Divider(height: 1, indent: 76, color: AppColors.line),
-                      _itemRow(g.items[k], showZone: review),
+            // Al cambiar de zona, los productos entran con un fundido suave.
+            StaggeredEntrance(
+              key: ValueKey('$_sectionFilter-$gi'),
+              index: gi,
+              slideFrom: 8,
+              child: Container(
+                // El relleno deja el borde por encima de las filas opacas.
+                padding: const EdgeInsets.all(1.5),
+                decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md - 1.5),
+                  child: Column(
+                    children: [
+                      for (var k = 0; k < g.items.length; k++) ...[
+                        if (k > 0)
+                          Divider(height: 1, indent: 76, color: AppColors.line),
+                        _itemRow(g.items[k], showZone: review),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

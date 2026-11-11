@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -20,8 +21,15 @@ import 'onboarding/onboarding_flow.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // La letra va dentro de la app: se carga aquí (milisegundos) para que el
+  // primer fotograma ya salga con ella y el texto no salte al cambiar.
+  for (final w in FontWeight.values.sublist(3, 8)) {
+    GoogleFonts.plusJakartaSans(fontWeight: w);
+  }
   // Las preferencias locales se leen a la vez que arranca Supabase.
   final prefs = Future.wait([
+    // Si fallara, la app arranca igual con la letra del sistema.
+    GoogleFonts.pendingFonts().then((_) {}, onError: (_) {}),
     ThemePreference.load(),
     PlanPrefs.load(),
     Reminders.load(),

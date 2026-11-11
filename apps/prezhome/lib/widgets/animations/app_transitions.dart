@@ -148,3 +148,30 @@ class _FadeInOnActivateState extends State<FadeInOnActivate>
     ),
   );
 }
+
+/// `frameBuilder` para fotos de red: mientras se descarga y decodifica se ve
+/// [placeholder] y, al tener el primer fotograma, la foto aparece con un
+/// fundido corto en vez de saltar. Si ya estaba en caché o se pide reducir
+/// movimiento, sale directamente.
+Widget fadeInPhoto({
+  required BuildContext context,
+  required Widget image,
+  required int? frame,
+  required bool wasSynchronouslyLoaded,
+  required Widget placeholder,
+}) {
+  if (wasSynchronouslyLoaded) return image;
+  return AnimatedSwitcher(
+    duration: AppMotion.effectiveDuration(
+      AppMotion.normal,
+      reduceMotion: AppMotion.reduceMotionOf(context),
+    ),
+    switchInCurve: AppMotion.easeOut,
+    // Sin layoutBuilder propio: Stack centrado que ocupa el hueco del padre.
+    layoutBuilder: (current, previous) =>
+        Stack(fit: StackFit.expand, children: [...previous, ?current]),
+    child: frame == null
+        ? KeyedSubtree(key: const ValueKey(false), child: placeholder)
+        : KeyedSubtree(key: const ValueKey(true), child: image),
+  );
+}
