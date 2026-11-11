@@ -16,6 +16,7 @@ class PlanPrefs {
     this.fastHours,
     this.calendarId,
     this.energy = 1,
+    this.leftoverMeals = const {'lunch', 'dinner'},
   });
 
   final Set<String> hidden;
@@ -32,6 +33,9 @@ class PlanPrefs {
 
   /// Cuánto cocinar (0 poco, 1 normal, 2 mucho): cuántos días de tanda hay.
   final int energy;
+
+  /// En el modo "Cada dos días", qué comidas se repiten al día siguiente.
+  final Set<String> leftoverMeals;
 
   static const defaultTimes = {
     'breakfast': 8 * 60 + 30,
@@ -98,12 +102,14 @@ class PlanPrefs {
     int? Function()? fastHours,
     String? Function()? calendarId,
     int? energy,
+    Set<String>? leftoverMeals,
   }) => PlanPrefs(
     hidden: hidden ?? this.hidden,
     times: times ?? this.times,
     fastHours: fastHours == null ? this.fastHours : fastHours(),
     calendarId: calendarId == null ? this.calendarId : calendarId(),
     energy: energy ?? this.energy,
+    leftoverMeals: leftoverMeals ?? this.leftoverMeals,
   );
 
   static Future<void> load() async {
@@ -121,6 +127,10 @@ class PlanPrefs {
         fastHours: m['fast_hours'] as int?,
         calendarId: m['calendar_id'] as String?,
         energy: m['energy'] as int? ?? 1,
+        leftoverMeals: switch (m['leftover_meals']) {
+          final List l => {...l.cast<String>()},
+          _ => const {'lunch', 'dinner'},
+        },
       );
     } catch (_) {}
   }
@@ -136,6 +146,7 @@ class PlanPrefs {
           'fast_hours': p.fastHours,
           'calendar_id': p.calendarId,
           'energy': p.energy,
+          'leftover_meals': p.leftoverMeals.toList(),
         }),
       );
     } catch (_) {}

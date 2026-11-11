@@ -893,5 +893,13 @@
   "recSortLightest": "Fewest calories first",
   "recClearFilters": "Clear filters",
   "recMore": "More",
-  "recLess": "Less"
+  "recLess": "Less",
+  "nutAlternate": "Every other day",
+  "nutAlternateSub": "I cook extra and eat the leftovers the next day",
+  "planHowYouCook": "How you cook",
+  "planModeDaily": "Daily",
+  "planModeAlternate": "Every 2 days",
+  "planModeBatch": "Batch",
+  "planLeftoverMeals": "What repeats the next day",
+  "planLeftover": "Yesterday's leftovers"
 }

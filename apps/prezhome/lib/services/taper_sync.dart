@@ -5,6 +5,7 @@ import '../models/inventory_item.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/recipe.dart';
 import 'file_local_store.dart';
+import 'leftovers.dart';
 import 'meal_prep_planner.dart';
 import 'plan_prefs.dart';
 import 'plan_prep.dart';
@@ -43,6 +44,8 @@ class TaperSync {
           .select('cooking_mode')
           .eq('home_id', homeId);
       final batch = (modes as List).any((m) => m['cooking_mode'] == 'mealprep');
+      final alternate =
+          !batch && modes.any((m) => m['cooking_mode'] == 'alternate');
 
       final today = DateTime(now.year, now.month, now.day);
       final weekAgo = today.subtract(const Duration(days: 7));
@@ -107,6 +110,38 @@ class TaperSync {
             );
           }
           moves.sort((a, b) => a.at.compareTo(b.at));
+          for (final m in moves) {
+            if (!m.at.isAfter(since) || m.at.isAfter(now)) continue;
+            await _apply(client, homeId, m, recipes[m.recipeId]);
+            done++;
+          }
+        }
+      }
+      if (alternate) {
+        // Sobras: táper a la nevera el día que se cocina, fuera al día
+        // siguiente de comerlo.
+        final planRes = await client
+            .from('meal_plan_entries')
+            .select()
+            .eq('home_id', homeId)
+            .gte('plan_date', day(since.subtract(const Duration(days: 2))))
+            .lte('plan_date', day(today.add(const Duration(days: 1))));
+        final entries = [
+          for (final m in planRes as List) MealPlanEntry.fromMap(m),
+        ];
+        final ids = {for (final e in entries) ?e.recipeId};
+        if (ids.isNotEmpty) {
+          final recRes = await client
+              .from('recipes')
+              .select()
+              .inFilter('id', ids.toList());
+          final recipes = {
+            for (final m in recRes as List)
+              m['id'] as String: Recipe.fromMap(m),
+          };
+          final moves = leftoverTaperMoves(entries, {
+            for (final r in recipes.values) r.id: r.title,
+          }, PlanPrefs.current.value.minutesOf);
           for (final m in moves) {
             if (!m.at.isAfter(since) || m.at.isAfter(now)) continue;
             await _apply(client, homeId, m, recipes[m.recipeId]);

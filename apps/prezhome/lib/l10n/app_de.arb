@@ -893,5 +893,13 @@
   "recSortLightest": "Wenigste Kalorien zuerst",
   "recClearFilters": "Filter löschen",
   "recMore": "Mehr",
-  "recLess": "Weniger"
+  "recLess": "Weniger",
+  "nutAlternate": "Jeden zweiten Tag",
+  "nutAlternateSub": "Ich koche mehr und esse am nächsten Tag die Reste",
+  "planHowYouCook": "Wie du kochst",
+  "planModeDaily": "Täglich",
+  "planModeAlternate": "Alle 2 Tage",
+  "planModeBatch": "Vorkochen",
+  "planLeftoverMeals": "Was sich am nächsten Tag wiederholt",
+  "planLeftover": "Reste von gestern"
 }

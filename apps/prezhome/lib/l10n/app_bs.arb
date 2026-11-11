@@ -893,5 +893,13 @@
   "recSortLightest": "Najmanje kalorija prvo",
   "recClearFilters": "Ukloni filtere",
   "recMore": "Više",
-  "recLess": "Manje"
+  "recLess": "Manje",
+  "nutAlternate": "Svaki drugi dan",
+  "nutAlternateSub": "Skuham više i sutradan jedem ostatke",
+  "planHowYouCook": "Kako kuhaš",
+  "planModeDaily": "Svaki dan",
+  "planModeAlternate": "Svaka 2 dana",
+  "planModeBatch": "Unaprijed",
+  "planLeftoverMeals": "Šta se ponavlja sutradan",
+  "planLeftover": "Ostaci od jučer"
 }

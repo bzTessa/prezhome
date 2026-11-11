@@ -3500,4 +3500,29 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get recLess => 'Weniger';
+
+  @override
+  String get nutAlternate => 'Jeden zweiten Tag';
+
+  @override
+  String get nutAlternateSub =>
+      'Ich koche mehr und esse am nächsten Tag die Reste';
+
+  @override
+  String get planHowYouCook => 'Wie du kochst';
+
+  @override
+  String get planModeDaily => 'Täglich';
+
+  @override
+  String get planModeAlternate => 'Alle 2 Tage';
+
+  @override
+  String get planModeBatch => 'Vorkochen';
+
+  @override
+  String get planLeftoverMeals => 'Was sich am nächsten Tag wiederholt';
+
+  @override
+  String get planLeftover => 'Reste von gestern';
 }

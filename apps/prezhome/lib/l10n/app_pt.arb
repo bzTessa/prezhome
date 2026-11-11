@@ -893,5 +893,13 @@
   "recSortLightest": "Menos calorias primeiro",
   "recClearFilters": "Limpar filtros",
   "recMore": "Mais",
-  "recLess": "Menos"
+  "recLess": "Menos",
+  "nutAlternate": "Dia sim, dia não",
+  "nutAlternateSub": "Cozinho a mais e no dia seguinte como as sobras",
+  "planHowYouCook": "Como cozinhas",
+  "planModeDaily": "Todos os dias",
+  "planModeAlternate": "De 2 em 2 dias",
+  "planModeBatch": "Em lote",
+  "planLeftoverMeals": "O que se repete no dia seguinte",
+  "planLeftover": "Sobras de ontem"
 }

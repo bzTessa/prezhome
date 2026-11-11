@@ -170,6 +170,7 @@ class MealSlotCard extends StatelessWidget {
     this.detail,
     this.skipped = false,
     this.fromFreezer = false,
+    this.leftover = false,
     this.time,
     this.inFast = false,
   });
@@ -187,6 +188,9 @@ class MealSlotCard extends StatelessWidget {
   final Widget? detail;
   final bool skipped;
   final bool fromFreezer;
+
+  /// Sobras de lo cocinado ayer (modo "Cada dos días").
+  final bool leftover;
 
   @override
   Widget build(BuildContext context) {
@@ -289,6 +293,28 @@ class MealSlotCard extends StatelessWidget {
                           ),
                         ),
                         if (!empty && detail != null) detail!,
+                        if (leftover)
+                          Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.replay_rounded,
+                                  size: 13,
+                                  color: AppColors.woodDark,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  context.l.planLeftover,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.woodDark,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         if (fromFreezer)
                           Padding(
                             padding: EdgeInsets.only(top: 2),
