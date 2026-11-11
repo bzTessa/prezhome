@@ -139,3 +139,21 @@ class ShoppingListItem {
     return '$measure $name';
   }
 }
+
+/// Orden de la lista: pendientes antes que comprados y, dentro de cada grupo,
+/// por fecha de creación. Desempata por id porque las filas añadidas de golpe
+/// (receta, plan…) comparten created_at y Postgres devuelve los empates en
+/// otro orden tras un UPDATE: sin esto, tocar + / − movía el producto.
+int compareShoppingItems(ShoppingListItem a, ShoppingListItem b) {
+  final byChecked = (a.checked ? 1 : 0).compareTo(b.checked ? 1 : 0);
+  if (byChecked != 0) return byChecked;
+  final da = a.createdAt;
+  final db = b.createdAt;
+  if (da != db) {
+    if (da == null) return 1;
+    if (db == null) return -1;
+    final byDate = da.compareTo(db);
+    if (byDate != 0) return byDate;
+  }
+  return (a.id ?? '').compareTo(b.id ?? '');
+}

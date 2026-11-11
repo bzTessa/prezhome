@@ -197,17 +197,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// pendientes y, dentro de cada grupo, por fecha de creación ascendente.
   List<ShoppingListItem> _rowsToItems(List<Map<String, dynamic>> rows) {
     final items = rows.map(ShoppingListItem.fromMap).toList();
-    items.sort((a, b) {
-      // checked=false antes que checked=true.
-      final byChecked = (a.checked ? 1 : 0).compareTo(b.checked ? 1 : 0);
-      if (byChecked != 0) return byChecked;
-      final da = a.createdAt;
-      final db = b.createdAt;
-      if (da == null && db == null) return 0;
-      if (da == null) return 1;
-      if (db == null) return -1;
-      return da.compareTo(db);
-    });
+    items.sort(compareShoppingItems);
     return items;
   }
 
