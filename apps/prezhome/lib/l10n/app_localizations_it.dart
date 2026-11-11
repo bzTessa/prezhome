@@ -4147,4 +4147,369 @@ class AppLocalizationsIt extends AppLocalizations {
   String psSummary(int distinct, int lines) {
     return '$distinct prodotti diversi · $lines acquisti';
   }
+
+  @override
+  String get errNoConnection =>
+      'Sembra che non ci sia connessione. Riprova tra un momento.';
+
+  @override
+  String get errBadLogin => 'Email o password non corretti.';
+
+  @override
+  String get errConfirmEmail =>
+      'Conferma la tua email (controlla la posta in arrivo) e riprova.';
+
+  @override
+  String get errSession => 'La sessione è scaduta. Accedi di nuovo.';
+
+  @override
+  String get errPermission => 'Non hai il permesso di farlo in questa casa.';
+
+  @override
+  String get errRateLimit => 'Troppe richieste di fila. Riprova tra poco.';
+
+  @override
+  String get errExists => 'Esiste già.';
+
+  @override
+  String get errUpload =>
+      'Impossibile caricare l\'immagine. Provane una più piccola.';
+
+  @override
+  String get errGeneric => 'Qualcosa è andato storto. Riprova.';
+
+  @override
+  String get errBadQuantity => 'Inserisci una quantità valida.';
+
+  @override
+  String get errRecipeComplete => 'Impossibile completare la ricetta';
+
+  @override
+  String get errRecipeImport =>
+      'Non sono riuscito a importare la ricetta da quel link';
+
+  @override
+  String get someone => 'Qualcuno';
+
+  @override
+  String get reward => 'Premio';
+
+  @override
+  String remKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'tasks': 'Compiti con orario',
+      'expiry': 'Prodotti in scadenza',
+      'other': 'Serie della casa',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String remTaskOne(String title) {
+    return 'Tocca a: $title';
+  }
+
+  @override
+  String remTaskMany(int count) {
+    return '$count compiti da fare';
+  }
+
+  @override
+  String get remTaskOneBody =>
+      'Quando hai finito, spuntalo per guadagnare punti.';
+
+  @override
+  String remTaskManyBody(String list) {
+    return '$list. Spuntali alla fine per guadagnare punti.';
+  }
+
+  @override
+  String remExpiryOne(String name) {
+    return 'Scade domani: $name';
+  }
+
+  @override
+  String remExpiryMany(int count) {
+    return 'Domani scadono $count prodotti';
+  }
+
+  @override
+  String get remExpiryBody => 'Cucinalo oggi o congela ciò che non userai.';
+
+  @override
+  String remStreakMilestone(int days) {
+    return 'Oggi arrivi a $days giorni';
+  }
+
+  @override
+  String get remStreakMilestoneBody =>
+      'Spunta un compito o annota un pasto e festeggia.';
+
+  @override
+  String remStreakDays(int days) {
+    return '$days giorni con la casa in ordine';
+  }
+
+  @override
+  String get remStreakDaysBody =>
+      'Spunta un compito o annota un pasto per non perdere la serie.';
+
+  @override
+  String get remHowIsHome => 'Come va la casa oggi?';
+
+  @override
+  String get remHowIsHomeBody =>
+      'Basta un gesto per aggiungere un giorno alla serie.';
+
+  @override
+  String get remStreakAlive => 'La tua serie è ancora viva';
+
+  @override
+  String get remStreakAliveBody =>
+      'Annota cosa hai mangiato o spunta un compito prima di dormire.';
+
+  @override
+  String listAnd(String items, String last) {
+    return '$items e $last';
+  }
+
+  @override
+  String listMore(String items, int count) {
+    return '$items e altri $count';
+  }
+
+  @override
+  String get planMovedLater => 'Lo lascio per un altro momento';
+
+  @override
+  String get planTheDish => 'il piatto';
+
+  @override
+  String planMovedTo(String recipe, String day) {
+    return '$recipe spostato a $day';
+  }
+
+  @override
+  String weekday(String day) {
+    String _temp0 = intl.Intl.selectLogic(day, {
+      '1': 'lunedì',
+      '2': 'martedì',
+      '3': 'mercoledì',
+      '4': 'giovedì',
+      '5': 'venerdì',
+      '6': 'sabato',
+      'other': 'domenica',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String weekdayShortName(String day) {
+    String _temp0 = intl.Intl.selectLogic(day, {
+      '1': 'lun',
+      '2': 'mar',
+      '3': 'mer',
+      '4': 'gio',
+      '5': 'ven',
+      '6': 'sab',
+      'other': 'dom',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get prepShopTitle => 'Fare la spesa';
+
+  @override
+  String prepShopLine(String day) {
+    return 'Per cucinare in blocco $day';
+  }
+
+  @override
+  String get prepCookTitle => 'Cucinare in blocco';
+
+  @override
+  String get prepAutoTapers =>
+      'I contenitori si aggiungono da soli a La mia cucina';
+
+  @override
+  String get prepThawTitle => 'Dal freezer al frigo';
+
+  @override
+  String prepThawLine(String recipe, int count, String day) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenitori',
+      one: '1 contenitore',
+    );
+    return '$recipe: $_temp0 per $day';
+  }
+
+  @override
+  String get taperFresh => 'appena fatto';
+
+  @override
+  String taperFridge(String days) {
+    return 'frigo per $days';
+  }
+
+  @override
+  String taperFreezer(String days) {
+    return 'freezer per $days';
+  }
+
+  @override
+  String stepPrepare(String recipe) {
+    return 'Preparare $recipe';
+  }
+
+  @override
+  String stepUseAppliance(String appliance, String recipes) {
+    String _temp0 = intl.Intl.selectLogic(appliance, {
+      'oven': 'Accendi il forno',
+      'stovetop': 'Accendi i fornelli',
+      'pot': 'Accendi la pentola',
+      'airfryer': 'Accendi la friggitrice ad aria',
+      'microwave': 'Accendi il microonde',
+      'blender': 'Accendi il frullatore',
+      'other': 'Usa $appliance',
+    });
+    return '$_temp0 per $recipes';
+  }
+
+  @override
+  String comidasTab(String tab) {
+    String _temp0 = intl.Intl.selectLogic(tab, {
+      'plan': 'Piano',
+      'recipes': 'Ricette',
+      'other': 'Diario',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String bannerExpiring(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'In scadenza',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bannerIdeas => 'Idee';
+
+  @override
+  String get bannerHide => 'Nascondi fino a domani';
+
+  @override
+  String get loading => 'Caricamento';
+
+  @override
+  String get mascot => 'Mascotte';
+
+  @override
+  String voiceStep(int n) {
+    return 'Passo $n.';
+  }
+
+  @override
+  String voiceTime(String what) {
+    return 'Tempo scaduto. $what.';
+  }
+
+  @override
+  String get voiceLastStep => 'È l\'ultimo passo.';
+
+  @override
+  String get voiceNoTime => 'Questo passo non ha un tempo.';
+
+  @override
+  String voiceTimer(int minutes) {
+    return 'Timer di $minutes minuti.';
+  }
+
+  @override
+  String get voiceNoTimers => 'Nessun timer.';
+
+  @override
+  String get voiceStopped => 'Fermato.';
+
+  @override
+  String get voiceNoIngredients => 'Nessuna lista di ingredienti.';
+
+  @override
+  String unitOne(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'unidad': 'pezzo',
+      'diente': 'spicchio',
+      'loncha': 'fetta',
+      'lata': 'lattina',
+      'bote': 'barattolo',
+      'bolsa': 'sacchetto',
+      'comida': 'pasto',
+      'cucharada': 'cucchiaio',
+      'cucharadita': 'cucchiaino',
+      'other': '$unit',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitMany(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'unidad': 'pezzi',
+      'diente': 'spicchi',
+      'loncha': 'fette',
+      'lata': 'lattine',
+      'bote': 'barattoli',
+      'bolsa': 'sacchetti',
+      'comida': 'pasti',
+      'cucharada': 'cucchiai',
+      'cucharadita': 'cucchiaini',
+      'other': '$unit',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitShort(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'unidad': 'pz',
+      'cucharada': 'cucch.',
+      'cucharadita': 'cucchiaino',
+      'other': '$unit',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitToTaste(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'a_ojo': 'a occhio',
+      'other': 'q.b.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiItemType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'hogar': 'Casa/Pulizia',
+      'other': 'Cibo',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiKindShort(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'prep': 'Preparato',
+      'dish': 'Piatto pronto',
+      'other': 'Ingrediente',
+    });
+    return '$_temp0';
+  }
 }

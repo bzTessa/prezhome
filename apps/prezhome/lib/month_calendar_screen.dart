@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/l10n.dart';
+import 'tasks_screen.dart' show taskRepeatLabel;
 import 'models/meal_plan_entry.dart';
 import 'models/recipe.dart';
 import 'models/task.dart';
@@ -121,7 +122,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
       (mealsByDay[key] ??= []).add(
         _PlanItem(
           mealType: e.mealType,
-          title: title ?? 'Receta',
+          title: title ?? appL10n.recipe,
           skipped: e.skipped,
         ),
       );
@@ -585,7 +586,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                             ),
                           ),
                           Text(
-                            t.recurrenceLabel,
+                            taskRepeatLabel(context, t),
                             style: TextStyle(
                               color: AppColors.inkMuted,
                               fontSize: 11,

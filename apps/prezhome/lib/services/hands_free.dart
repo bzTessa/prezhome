@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../l10n/l10n.dart';
 import '../utils/cook_voice.dart';
 
 /// Manos libres del modo cocina: lee en voz alta y escucha órdenes
@@ -19,6 +20,18 @@ class HandsFree {
   bool _speaking = false;
   String? _locale;
 
+  /// Idioma de la app: la voz habla y escucha en él.
+  String get _lang => appL10n.localeName;
+  String get _tag => switch (_lang) {
+    'en' => 'en-US',
+    'de' => 'de-DE',
+    'fr' => 'fr-FR',
+    'it' => 'it-IT',
+    'pt' => 'pt-PT',
+    'bs' => 'bs-BA',
+    _ => 'es-ES',
+  };
+
   bool get active => _active;
 
   /// Pide permiso de micrófono y prepara la voz. false si no se puede.
@@ -33,11 +46,15 @@ class HandsFree {
       if (!ok) return false;
       final ids = (await _stt.locales()).map((l) => l.localeId).toList();
       _locale = ids.firstWhere(
-        (id) => id.toLowerCase().replaceAll('-', '_') == 'es_es',
-        orElse: () =>
-            ids.firstWhere((id) => id.startsWith('es'), orElse: () => 'es_ES'),
+        (id) =>
+            id.toLowerCase().replaceAll('-', '_') ==
+            _tag.replaceAll('-', '_').toLowerCase(),
+        orElse: () => ids.firstWhere(
+          (id) => id.startsWith(_lang),
+          orElse: () => _tag.replaceAll('-', '_'),
+        ),
       );
-      await _tts.setLanguage('es-ES');
+      await _tts.setLanguage(_tag);
       await _tts.awaitSpeakCompletion(true);
       // iOS: hablar y escuchar comparten la sesión de audio.
       await _tts.setSharedInstance(true);
@@ -87,7 +104,7 @@ class HandsFree {
     _stt
         .listen(
           onResult: (r) {
-            final command = parseCookCommand(r.recognizedWords);
+            final command = parseCookCommand(r.recognizedWords, _lang);
             if (command == null) return;
             _stt.cancel();
             onCommand(command);

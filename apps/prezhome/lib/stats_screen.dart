@@ -233,7 +233,9 @@ class _StatsScreenState extends State<StatsScreen> {
     final names = <String, String>{};
     for (final p in (results[6] as List)) {
       final full = (p['full_name'] as String?)?.trim() ?? '';
-      names[p['id'] as String] = full.isEmpty ? 'Miembro' : full.split(' ')[0];
+      names[p['id'] as String] = full.isEmpty
+          ? appL10n.rdMember
+          : full.split(' ')[0];
     }
     names.addAll(await HomePeople(_client).load(homeId));
     final byPerson = <String, double>{};
@@ -242,7 +244,7 @@ class _StatsScreenState extends State<StatsScreen> {
       final d = DateTime.tryParse(r['created_at'] as String? ?? '')?.toLocal();
       if (d == null) continue;
       if (!d.isBefore(monthStart)) {
-        final who = names[r['user_id']] ?? 'Miembro';
+        final who = names[r['user_id']] ?? appL10n.rdMember;
         byPerson[who] = (byPerson[who] ?? 0) + 1;
       }
       final idx = weeks.lastIndexWhere((w) => !d.isBefore(w));

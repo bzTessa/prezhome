@@ -155,7 +155,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         HouseholdMember(
           name: (p.fullName?.trim().isNotEmpty ?? false)
               ? p.fullName!.trim()
-              : 'Alguien',
+              : appL10n.someone,
           isMe: isMe,
           mealsAtHome: p.mealsAtHome,
         ),
@@ -167,7 +167,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         HouseholdMember(
           name: (myProfile.fullName?.trim().isNotEmpty ?? false)
               ? myProfile.fullName!.trim()
-              : 'Alguien',
+              : appL10n.someone,
           isMe: true,
           mealsAtHome: myProfile.mealsAtHome,
         ),

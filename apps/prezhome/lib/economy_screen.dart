@@ -160,7 +160,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
       memberNames[p['id']
           as String] = (p['full_name'] as String?)?.trim().isNotEmpty == true
           ? p['full_name'] as String
-          : 'Miembro';
+          : appL10n.rdMember;
     }
     memberNames.addAll(await HomePeople(_client).load(homeId));
 
@@ -765,7 +765,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     required Map<String, dynamic> reward,
     required int myBalance,
   }) {
-    final title = (reward['title'] as String?)?.trim() ?? 'Recompensa';
+    final title = (reward['title'] as String?)?.trim() ?? appL10n.reward;
     final desc = (reward['description'] as String?)?.trim();
     final cost = (reward['cost_points'] as num?)?.toInt() ?? 0;
     final canRedeem = myBalance >= cost;

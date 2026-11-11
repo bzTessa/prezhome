@@ -7,6 +7,7 @@ library;
 import 'dart:convert';
 
 import 'package:supabase_flutter/supabase_flutter.dart' show FunctionException;
+import '../l10n/l10n.dart';
 
 /// Mensaje para el usuario. [context] es lo que se intentaba hacer
 /// ("No se pudo guardar") y va delante: "No se pudo guardar. Parece que no
@@ -19,7 +20,7 @@ String friendlyError(Object? error, [String? context]) {
 
 String _reason(Object? error) {
   // Los mensajes que lanza la propia app (o devuelven nuestras funciones del
-  // servidor) ya están en español y pensados para el usuario.
+  // servidor) ya están en el idioma de la persona.
   if (error is String) {
     final s = error.trim();
     if (s.isEmpty) return _generic;
@@ -48,29 +49,28 @@ String _reason(Object? error) {
     'timed out',
     'xmlhttprequest',
   ])) {
-    return 'Parece que no hay conexión. Inténtalo de nuevo en un momento.';
+    return appL10n.errNoConnection;
   }
   if (has(['invalid login credentials', 'invalid_credentials'])) {
-    return 'El correo o la contraseña no son correctos.';
+    return appL10n.errBadLogin;
   }
   if (has(['email not confirmed'])) {
-    return 'Confirma tu correo (revisa tu bandeja de entrada) y vuelve a '
-        'intentarlo.';
+    return appL10n.errConfirmEmail;
   }
   if (has(['authexception', 'jwt', 'refresh_token'])) {
-    return 'Tu sesión ha caducado. Vuelve a iniciar sesión.';
+    return appL10n.errSession;
   }
   if (has(['42501', 'row-level security', 'permission denied'])) {
-    return 'No tienes permiso para hacer esto en este hogar.';
+    return appL10n.errPermission;
   }
   if (has(['429', 'quota', 'rate limit', 'límite de ia'])) {
-    return 'Demasiadas peticiones seguidas. Prueba en un rato.';
+    return appL10n.errRateLimit;
   }
   if (has(['23505', 'duplicate key'])) {
-    return 'Eso ya existe.';
+    return appL10n.errExists;
   }
   if (has(['payload too large', '413', 'storageexception'])) {
-    return 'No se pudo subir la imagen. Prueba con otra más pequeña.';
+    return appL10n.errUpload;
   }
   return _generic;
 }
@@ -87,4 +87,4 @@ String? _serverMessage(dynamic details) {
   return msg is String && msg.trim().isNotEmpty ? msg : null;
 }
 
-const String _generic = 'Algo ha fallado. Inténtalo de nuevo.';
+String get _generic => appL10n.errGeneric;

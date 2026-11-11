@@ -4082,4 +4082,366 @@ class AppLocalizationsBs extends AppLocalizations {
   String psSummary(int distinct, int lines) {
     return '$distinct različitih proizvoda · $lines kupovina';
   }
+
+  @override
+  String get errNoConnection =>
+      'Izgleda da nema veze. Pokušaj ponovo za trenutak.';
+
+  @override
+  String get errBadLogin => 'E-mail ili lozinka nisu tačni.';
+
+  @override
+  String get errConfirmEmail =>
+      'Potvrdi e-mail (provjeri inbox) i pokušaj ponovo.';
+
+  @override
+  String get errSession => 'Sesija je istekla. Prijavi se ponovo.';
+
+  @override
+  String get errPermission => 'Nemaš dozvolu za ovo u ovom domaćinstvu.';
+
+  @override
+  String get errRateLimit => 'Previše zahtjeva zaredom. Pokušaj kasnije.';
+
+  @override
+  String get errExists => 'To već postoji.';
+
+  @override
+  String get errUpload => 'Slika nije učitana. Probaj manju.';
+
+  @override
+  String get errGeneric => 'Nešto nije uspjelo. Pokušaj ponovo.';
+
+  @override
+  String get errBadQuantity => 'Unesi ispravnu količinu.';
+
+  @override
+  String get errRecipeComplete => 'Recept nije moguće dovršiti';
+
+  @override
+  String get errRecipeImport => 'Nije moguće uvesti recept s tog linka';
+
+  @override
+  String get someone => 'Neko';
+
+  @override
+  String get reward => 'Nagrada';
+
+  @override
+  String remKind(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'tasks': 'Zadaci sa vremenom',
+      'expiry': 'Proizvodi kojima ističe rok',
+      'other': 'Niz za dom',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String remTaskOne(String title) {
+    return 'Na redu: $title';
+  }
+
+  @override
+  String remTaskMany(int count) {
+    return '$count zadataka na redu';
+  }
+
+  @override
+  String get remTaskOneBody => 'Kad završiš, označi ga i osvoji bodove.';
+
+  @override
+  String remTaskManyBody(String list) {
+    return '$list. Označi ih kad završiš i osvoji bodove.';
+  }
+
+  @override
+  String remExpiryOne(String name) {
+    return 'Sutra ističe: $name';
+  }
+
+  @override
+  String remExpiryMany(int count) {
+    return 'Sutra ističe $count proizvoda';
+  }
+
+  @override
+  String get remExpiryBody =>
+      'Skuhaj danas s tim ili zamrzni ono što nećeš iskoristiti.';
+
+  @override
+  String remStreakMilestone(int days) {
+    return 'Danas dostižeš $days dana';
+  }
+
+  @override
+  String get remStreakMilestoneBody =>
+      'Označi zadatak ili upiši obrok i proslavi.';
+
+  @override
+  String remStreakDays(int days) {
+    return '$days dana s domom u redu';
+  }
+
+  @override
+  String get remStreakDaysBody =>
+      'Označi zadatak ili upiši obrok da ne izgubiš niz.';
+
+  @override
+  String get remHowIsHome => 'Kako je danas u kući?';
+
+  @override
+  String get remHowIsHomeBody =>
+      'Jedan potez je dovoljan za još jedan dan niza.';
+
+  @override
+  String get remStreakAlive => 'Tvoj niz još traje';
+
+  @override
+  String get remStreakAliveBody =>
+      'Upiši šta si jeo ili označi zadatak prije spavanja.';
+
+  @override
+  String listAnd(String items, String last) {
+    return '$items i $last';
+  }
+
+  @override
+  String listMore(String items, int count) {
+    return '$items i još $count';
+  }
+
+  @override
+  String get planMovedLater => 'Ostavljam za drugi put';
+
+  @override
+  String get planTheDish => 'jelo';
+
+  @override
+  String planMovedTo(String recipe, String day) {
+    return '$recipe premješteno na $day';
+  }
+
+  @override
+  String weekday(String day) {
+    String _temp0 = intl.Intl.selectLogic(day, {
+      '1': 'ponedjeljak',
+      '2': 'utorak',
+      '3': 'srijeda',
+      '4': 'četvrtak',
+      '5': 'petak',
+      '6': 'subota',
+      'other': 'nedjelja',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String weekdayShortName(String day) {
+    String _temp0 = intl.Intl.selectLogic(day, {
+      '1': 'pon',
+      '2': 'uto',
+      '3': 'sri',
+      '4': 'čet',
+      '5': 'pet',
+      '6': 'sub',
+      'other': 'ned',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get prepShopTitle => 'Obaviti kupovinu';
+
+  @override
+  String prepShopLine(String day) {
+    return 'Za kuhanje unaprijed u $day';
+  }
+
+  @override
+  String get prepCookTitle => 'Kuhanje unaprijed';
+
+  @override
+  String get prepAutoTapers => 'Posude se same upisuju u Moju kuhinju';
+
+  @override
+  String get prepThawTitle => 'Iz zamrzivača u frižider';
+
+  @override
+  String prepThawLine(String recipe, int count, String day) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posude',
+      one: '1 posuda',
+    );
+    return '$recipe: $_temp0 za $day';
+  }
+
+  @override
+  String get taperFresh => 'svježe pripremljeno';
+
+  @override
+  String taperFridge(String days) {
+    return 'frižider za $days';
+  }
+
+  @override
+  String taperFreezer(String days) {
+    return 'zamrzivač za $days';
+  }
+
+  @override
+  String stepPrepare(String recipe) {
+    return 'Pripremi $recipe';
+  }
+
+  @override
+  String stepUseAppliance(String appliance, String recipes) {
+    String _temp0 = intl.Intl.selectLogic(appliance, {
+      'oven': 'Upali rernu',
+      'stovetop': 'Upali ringlu',
+      'pot': 'Upali lonac',
+      'airfryer': 'Upali air fryer',
+      'microwave': 'Upali mikrotalasnu',
+      'blender': 'Upali blender',
+      'other': 'Koristi $appliance',
+    });
+    return '$_temp0 za $recipes';
+  }
+
+  @override
+  String comidasTab(String tab) {
+    String _temp0 = intl.Intl.selectLogic(tab, {
+      'plan': 'Plan',
+      'recipes': 'Recepti',
+      'other': 'Dnevnik',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String bannerExpiring(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uskoro ističe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bannerIdeas => 'Ideje';
+
+  @override
+  String get bannerHide => 'Sakrij do sutra';
+
+  @override
+  String get loading => 'Učitavanje';
+
+  @override
+  String get mascot => 'Maskota';
+
+  @override
+  String voiceStep(int n) {
+    return 'Korak $n.';
+  }
+
+  @override
+  String voiceTime(String what) {
+    return 'Vrijeme je. $what.';
+  }
+
+  @override
+  String get voiceLastStep => 'To je zadnji korak.';
+
+  @override
+  String get voiceNoTime => 'Ovaj korak nema vrijeme.';
+
+  @override
+  String voiceTimer(int minutes) {
+    return 'Tajmer od $minutes minuta.';
+  }
+
+  @override
+  String get voiceNoTimers => 'Nema tajmera.';
+
+  @override
+  String get voiceStopped => 'Zaustavljeno.';
+
+  @override
+  String get voiceNoIngredients => 'Nema liste sastojaka.';
+
+  @override
+  String unitOne(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'unidad': 'komad',
+      'diente': 'čen',
+      'loncha': 'šnita',
+      'lata': 'konzerva',
+      'bote': 'tegla',
+      'bolsa': 'kesa',
+      'comida': 'obrok',
+      'cucharada': 'kašika',
+      'cucharadita': 'kašičica',
+      'other': '$unit',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitMany(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'unidad': 'komada',
+      'diente': 'čena',
+      'loncha': 'šnita',
+      'lata': 'konzerve',
+      'bote': 'tegle',
+      'bolsa': 'kese',
+      'comida': 'obroka',
+      'cucharada': 'kašike',
+      'cucharadita': 'kašičice',
+      'other': '$unit',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitShort(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'unidad': 'kom',
+      'cucharada': 'kaš.',
+      'cucharadita': 'kašič.',
+      'other': '$unit',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitToTaste(String unit) {
+    String _temp0 = intl.Intl.selectLogic(unit, {
+      'a_ojo': 'od oka',
+      'other': 'po ukusu',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiItemType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'hogar': 'Dom/Čišćenje',
+      'other': 'Hrana',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiKindShort(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'prep': 'Pripremljeno',
+      'dish': 'Gotovo jelo',
+      'other': 'Sastojak',
+    });
+    return '$_temp0';
+  }
 }

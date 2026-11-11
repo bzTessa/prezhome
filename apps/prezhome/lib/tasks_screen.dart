@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
@@ -718,7 +719,6 @@ class _TasksScreenState extends State<TasksScreen> {
                     children: [
                       for (final (gi, g) in groupUpcomingByDay(
                         upcoming,
-                        DateTime.now(),
                       ).indexed) ...[
                         if (gi > 0) Divider(height: 1, color: AppColors.line),
                         _DayHeader(g.key),
@@ -1188,16 +1188,17 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-String _repeatLabel(BuildContext context, HomeTask t) => switch (t.recurrence) {
-  'daily' => context.l.planEveryDays(1),
-  'weekly' => context.l.planEveryWeeks(1),
-  'custom_interval' =>
-    t.intervalUnit == 'week'
-        ? context.l.planEveryWeeks(t.intervalCount ?? 1)
-        : context.l.planEveryDays(t.intervalCount ?? 1),
-  'custom_weekdays' => context.l.tskSomeDays,
-  _ => context.l.tskOnce,
-};
+String taskRepeatLabel(BuildContext context, HomeTask t) =>
+    switch (t.recurrence) {
+      'daily' => context.l.planEveryDays(1),
+      'weekly' => context.l.planEveryWeeks(1),
+      'custom_interval' =>
+        t.intervalUnit == 'week'
+            ? context.l.planEveryWeeks(t.intervalCount ?? 1)
+            : context.l.planEveryDays(t.intervalCount ?? 1),
+      'custom_weekdays' => context.l.tskSomeDays,
+      _ => context.l.tskOnce,
+    };
 
 /// Icono de la tarea en su color: así se reconoce sin leer.
 class _KindBadge extends StatelessWidget {
@@ -1257,7 +1258,22 @@ class _SectionTitle extends StatelessWidget {
 /// Cabecera de un día dentro del bloque "Próximos días".
 class _DayHeader extends StatelessWidget {
   const _DayHeader(this.day);
-  final String day;
+
+  /// Día sin hora; null = tareas sin fecha.
+  final DateTime? day;
+
+  String _label(BuildContext context) {
+    final d = day;
+    if (d == null) return context.l.tskNoDate;
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    if (d == tomorrow) return context.l.tomorrow;
+    final locale = Localizations.localeOf(context).toString();
+    return toBeginningOfSentenceCase(
+      DateFormat.MMMEd(locale).format(d),
+      locale,
+    );
+  }
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -1268,7 +1284,7 @@ class _DayHeader extends StatelessWidget {
       AppSpacing.xs,
     ),
     child: Text(
-      day,
+      _label(context),
       style: AppTextStyles.label.copyWith(color: AppColors.terracottaText),
     ),
   );
@@ -1419,7 +1435,7 @@ class _TaskTile extends StatelessWidget {
     final kind = taskKindFor(task.title);
     final (_, fg) = kind.colors;
     final meta = [
-      if (task.recurrence != 'once') _repeatLabel(context, task),
+      if (task.recurrence != 'once') taskRepeatLabel(context, task),
       ?who,
     ].join(' · ');
     return SwipeAction(
@@ -1622,7 +1638,7 @@ class _UpcomingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final kind = taskKindFor(task.title);
     final meta = [
-      if (task.recurrence != 'once') _repeatLabel(context, task),
+      if (task.recurrence != 'once') taskRepeatLabel(context, task),
       ?who,
     ].join(' · ');
     return InkWell(
@@ -1920,7 +1936,7 @@ class _TaskSheetState extends State<_TaskSheet> {
       ('custom_weekdays', context.l.tskSomeDays),
       // Las de "cada N días" se crearon antes; se conservan al editarlas.
       if (widget.task?.recurrence == 'custom_interval')
-        ('custom_interval', widget.task!.recurrenceLabel),
+        ('custom_interval', taskRepeatLabel(context, widget.task!)),
     ];
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -2027,8 +2043,13 @@ class _TaskSheetState extends State<_TaskSheet> {
                 children: [
                   for (var day = 1; day <= 7; day++)
                     _WeekdayDot(
-                      label: HomeTask.weekdayShort[day - 1],
-                      tooltip: HomeTask.weekdayLong[day - 1],
+                      // 2024-01-01 fue lunes.
+                      label: DateFormat.EEEEE(
+                        Localizations.localeOf(context).toString(),
+                      ).format(DateTime(2024, 1, day)),
+                      tooltip: DateFormat.EEEE(
+                        Localizations.localeOf(context).toString(),
+                      ).format(DateTime(2024, 1, day)),
                       selected: _weekdays.contains(day),
                       onTap: () => setState(
                         () => _weekdays.contains(day)

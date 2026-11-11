@@ -184,6 +184,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
                 onFailure: (_) => locale.languageCode,
               )
             : 'es_ES';
+        appL10n = lookupAppLocalizations(locale);
         return locale;
       },
       home: const _AuthGate(),

@@ -786,13 +786,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       children: [
         for (final type in r.mealTypes)
           RecipeChip(
-            text: Recipe.mealTypeLabels[type] ?? type,
+            text: context.l.mealType(type),
             icon: mealTypeIcon(type),
             style: RecipeChipStyle.type,
           ),
         if (r.appliance != 'none')
           RecipeChip(
-            text: r.applianceLabel,
+            text: context.l.appliance(r.appliance),
             icon: Icons.kitchen_rounded,
             style: RecipeChipStyle.type,
           ),

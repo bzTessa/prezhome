@@ -750,13 +750,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 valueListenable: Reminders.off,
                 builder: (context, off, _) => Column(
                   children: [
-                    for (final k in Reminders.kinds.entries)
+                    for (final k in Reminders.kinds)
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(k.value),
-                        value: !off.contains(k.key),
+                        title: Text(context.l.remKind(k)),
+                        value: !off.contains(k),
                         onChanged: (v) async {
-                          await Reminders.setOn(k.key, v);
+                          await Reminders.setOn(k, v);
                           await Reminders.sync(_client);
                         },
                       ),

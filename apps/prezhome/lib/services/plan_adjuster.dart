@@ -2,14 +2,16 @@
 /// (skipped), su plato NO se pierde, sino que se recoloca a otro hueco del
 /// MISMO tipo de comida más adelante en la semana.
 ///
-/// Toda la lógica de este archivo es PURA: no depende de Flutter ni de
-/// Supabase, solo de dart:core. Así se puede testear con datos fijos y el
+/// Toda la lógica de este archivo es PURA: no depende de Supabase (los textos
+/// salen de appL10n). Así se puede testear con datos fijos y el
 /// resultado es determinista.
 ///
 /// Filosofía (de Tessa): flexibilidad por encima de perfección. Si no hay
 /// hueco posterior para recolocar el plato, no pasa nada: no se recoloca y no
 /// se inventa nada raro (mejor repetir o dejarlo).
 library;
+
+import '../l10n/l10n.dart';
 
 /// Representación ligera de una entrada del plan para la lógica pura.
 ///
@@ -161,16 +163,6 @@ class PlanAdjuster {
 }
 
 /// Nombres de los días de la semana en español (1=Lunes .. 7=Domingo).
-const List<String> _diasSemana = [
-  'lunes',
-  'martes',
-  'miércoles',
-  'jueves',
-  'viernes',
-  'sábado',
-  'domingo',
-];
-
 /// Construye el mensaje cozy de Miau a partir de un reajuste.
 ///
 /// Función PURA y separada de la UI para poder testearla. [recipeTitle] es el
@@ -181,11 +173,10 @@ const List<String> _diasSemana = [
 String miauMoveMessage(PlanAdjustment adjustment, {String? recipeTitle}) {
   final destino = adjustment.movedToDate;
   if (adjustment.movedRecipeId == null || destino == null) {
-    return 'Lo dejo para otro momento';
+    return appL10n.planMovedLater;
   }
   final receta = (recipeTitle != null && recipeTitle.trim().isNotEmpty)
       ? recipeTitle.trim()
-      : 'el plato';
-  final dia = _diasSemana[destino.weekday - 1];
-  return 'Movido $receta al $dia';
+      : appL10n.planTheDish;
+  return appL10n.planMovedTo(receta, appL10n.weekday('${destino.weekday}'));
 }

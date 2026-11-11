@@ -224,7 +224,7 @@ class HomeTabState extends State<HomeTab> {
         items.add(
           _PlanItem(
             mealType: e.mealType,
-            title: title ?? 'Receta',
+            title: title ?? appL10n.recipe,
             skipped: e.skipped,
             recipe: recipe,
           ),

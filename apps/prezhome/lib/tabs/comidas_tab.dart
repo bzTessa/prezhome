@@ -29,9 +29,9 @@ class ComidasTab extends StatelessWidget {
             unselectedLabelColor: AppColors.inkMuted,
             labelStyle: TextStyle(fontWeight: FontWeight.bold),
             tabs: [
-              Tab(text: 'Plan'),
-              Tab(text: 'Recetas'),
-              Tab(text: 'Diario'),
+              Tab(text: context.l.comidasTab('plan')),
+              Tab(text: context.l.comidasTab('recipes')),
+              Tab(text: context.l.comidasTab('diary')),
             ],
           ),
         ),

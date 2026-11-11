@@ -13,6 +13,8 @@
 /// cocción en 1-2 días y tirar del congelador cuando toque cocinar poco.
 library;
 
+import '../l10n/l10n.dart';
+
 /// Umbral de días para decidir NEVERA vs CONGELADOR: una ración se guarda en la
 /// nevera si se va a consumir dentro de los próximos [kDiasNevera] días desde el
 /// día de cocción (incluido). El resto va al congelador (si es congelable).
@@ -432,8 +434,13 @@ class MealPrepPlanner {
   }
 }
 
-/// Nombre del día de la semana en español (1=Lunes .. 7=Domingo).
+/// Nombre del día de la semana en español (1=Lunes .. 7=Domingo). Solo para
+/// el nombre del táper (lo identifica en Mi cocina) y los resúmenes en
+/// español; lo que se ve en pantalla usa [_dia].
 String _diaSemana(DateTime date) => _diasSemana[date.weekday - 1];
+
+/// Nombre del día en el idioma de la app.
+String _dia(DateTime date) => appL10n.weekday('${date.weekday}');
 
 /// Genera el resumen cozy en español de un día de cocción, estilo:
 /// "Domingo cocinas: lentejas (x6) y pollo (x4). 3 raciones a la nevera, 3 al
@@ -541,8 +548,8 @@ List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
       PrepEvent(
         date: shop,
         kind: PrepEventKind.compra,
-        title: 'Hacer la compra',
-        lines: ['Para cocinar en tanda el ${_diaSemana(firstCook)}'],
+        title: appL10n.prepShopTitle,
+        lines: [appL10n.prepShopLine(_dia(firstCook))],
       ),
     );
   }
@@ -557,17 +564,16 @@ List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
         var out = eat.subtract(const Duration(days: kDiasSacarAntes));
         if (out.isBefore(day.date)) out = day.date;
         (thaw[out] ??= []).add(
-          '${_capitalizar(b.title)}: $n ${n == 1 ? 'táper' : 'tápers'} '
-          'para el ${_diaSemana(eat)}',
+          appL10n.prepThawLine(_capitalizar(b.title), n, _dia(eat)),
         );
       });
     }
-    lines.add('Los tápers se apuntan solos en Mi cocina');
+    lines.add(appL10n.prepAutoTapers);
     events.add(
       PrepEvent(
         date: day.date,
         kind: PrepEventKind.cocina,
-        title: 'Cocinar en tanda',
+        title: appL10n.prepCookTitle,
         lines: lines,
       ),
     );
@@ -577,7 +583,7 @@ List<PrepEvent> prepAgenda(MealPrepPlan plan, {DateTime? earliest}) {
       PrepEvent(
         date: date,
         kind: PrepEventKind.sacar,
-        title: 'Del congelador a la nevera',
+        title: appL10n.prepThawTitle,
         lines: lines,
       ),
     );
@@ -676,9 +682,9 @@ List<TaperMove> taperMoves(
 String taperPlan(PrepBatch b, DateTime cookDay) => [
   for (final (spot, days) in taperSpots(b, cookDay))
     switch (spot) {
-      TaperSpot.reciente => 'recién hecho',
-      TaperSpot.nevera => 'nevera para el $days',
-      TaperSpot.congelador => 'congelador para el $days',
+      TaperSpot.reciente => appL10n.taperFresh,
+      TaperSpot.nevera => appL10n.taperFridge(days),
+      TaperSpot.congelador => appL10n.taperFreezer(days),
     },
 ].join(' · ');
 
@@ -700,7 +706,9 @@ List<(TaperSpot, String)> taperSpots(PrepBatch b, DateTime cookDay) {
 /// "lun, mar y jue" a partir de los días de un mapa.
 String _dias(Map<DateTime, int> byDay) {
   final days = byDay.keys.toList()..sort();
-  return _unirConY([for (final d in days) _diaSemana(d).substring(0, 3)]);
+  return _unirConY([
+    for (final d in days) appL10n.weekdayShortName('${d.weekday}'),
+  ]);
 }
 
 /// Une una lista con comas y una "y" final: ["a","b","c"] -> "a, b y c".
@@ -708,7 +716,7 @@ String _unirConY(List<String> items) {
   if (items.isEmpty) return '';
   if (items.length == 1) return items.first;
   final todosMenosUltimo = items.sublist(0, items.length - 1);
-  return '${todosMenosUltimo.join(', ')} y ${items.last}';
+  return appL10n.listAnd(todosMenosUltimo.join(', '), items.last);
 }
 
 /// "ración" en singular cuando toca, "raciones" en el resto.

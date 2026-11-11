@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'l10n/l10n.dart';
+import 'utils/shopping_display.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
@@ -244,7 +245,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       final qty = double.tryParse(
         _quantityController.text.trim().replaceAll(',', '.'),
       );
-      if (qty == null) throw 'Introduce una cantidad válida.';
+      if (qty == null) throw appL10n.errBadQuantity;
 
       final isFood = _itemType == 'comida';
       final name = _nameController.text.trim();
@@ -546,7 +547,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               children: InventoryItem.itemTypeLabels.entries.map((e) {
                 final selected = _itemType == e.key;
                 return ChoiceChip(
-                  label: Text(e.value),
+                  label: Text(context.l.aiItemType(e.key)),
                   selected: selected,
                   backgroundColor: AppColors.card,
                   onSelected: (_) {
@@ -575,7 +576,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 children: InventoryItem.kindLabels.entries.map((e) {
                   final selected = _kind == e.key;
                   return ChoiceChip(
-                    label: Text(e.value),
+                    label: Text(context.l.aiKindShort(e.key)),
                     selected: selected,
                     backgroundColor: AppColors.card,
                     onSelected: (_) => setState(() => _kind = e.key),
@@ -698,8 +699,10 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     decoration: _dec(context.l.aiUnit),
                     items: _units
                         .map(
-                          (unit) =>
-                              DropdownMenuItem(value: unit, child: Text(unit)),
+                          (unit) => DropdownMenuItem(
+                            value: unit,
+                            child: Text(unitName(unit)),
+                          ),
                         )
                         .toList(),
                     onChanged: (val) => setState(() => _selectedUnit = val!),
