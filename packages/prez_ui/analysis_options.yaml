@@ -1,4 +1,7 @@
 analyzer:
+  errors:
+    # Flutter 3.50 deprecó package:flutter/material.dart; la app ya lo ignora.
+    deprecated_member_use: ignore
   exclude:
     - build/**
 include: package:flutter_lints/flutter.yaml
