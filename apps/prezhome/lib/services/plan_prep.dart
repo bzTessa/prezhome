@@ -15,6 +15,7 @@ MealPrepPlan prepPlanForWeek({
   required Map<String, Recipe> recipesById,
   required DateTime weekStart,
   int energyLevel = 1,
+  Map<String, int> dayLoads = const {},
 }) {
   final end = weekStart.add(const Duration(days: 7));
   // Rehacer el plan borra la semana y la vuelve a crear: la fila más antigua
@@ -87,5 +88,6 @@ MealPrepPlan prepPlanForWeek({
     },
     weekStart: from,
     energyLevel: energyLevel,
+    dayLoads: dayLoads,
   );
 }

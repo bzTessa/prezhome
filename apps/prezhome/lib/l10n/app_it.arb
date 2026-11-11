@@ -893,5 +893,8 @@
   "recSortLightest": "Meno calorie prima",
   "recClearFilters": "Togli filtri",
   "recMore": "Altro",
-  "recLess": "Meno"
+  "recLess": "Meno",
+  "planBusyAware": "Organizza secondo il mio calendario",
+  "planBusyAwareHint": "Nei giorni pieni ricette veloci o dal congelatore, si cucina nel giorno più libero e le attività senza orario vanno in un momento libero. Si applica quando fai il piano.",
+  "planBusyDay": "Giornata piena"
 }

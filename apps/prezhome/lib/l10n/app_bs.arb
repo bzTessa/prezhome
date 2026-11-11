@@ -893,5 +893,8 @@
   "recSortLightest": "Najmanje kalorija prvo",
   "recClearFilters": "Ukloni filtere",
   "recMore": "Više",
-  "recLess": "Manje"
+  "recLess": "Manje",
+  "planBusyAware": "Organizuj prema mom kalendaru",
+  "planBusyAwareHint": "U zauzetim danima brzi recepti ili iz zamrzivača, kuha se najslobodnijeg dana, a zadaci bez vremena idu u slobodan termin. Primjenjuje se pri pravljenju plana.",
+  "planBusyDay": "Zauzet dan"
 }

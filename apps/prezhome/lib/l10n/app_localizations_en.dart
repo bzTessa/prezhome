@@ -1172,7 +1172,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planCalendarLinked => 'Calendar connected';
 
   @override
-  String get planCalendarHint => 'Meals and timed tasks, in Google Calendar';
+  String get planCalendarHint =>
+      'Meals and timed tasks, in your phone calendar (Google, Outlook…)';
 
   @override
   String get planCalendarUpdates => 'Updates when you open the plan';
@@ -3492,4 +3493,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recLess => 'Less';
+
+  @override
+  String get planBusyAware => 'Plan around my calendar';
+
+  @override
+  String get planBusyAwareHint =>
+      'Busy days get quick or frozen meals, batch cooking goes to the freest day and tasks without a time go into a free slot. Applies when you make the plan.';
+
+  @override
+  String get planBusyDay => 'Busy day';
 }

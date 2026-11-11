@@ -893,5 +893,8 @@
   "recSortLightest": "Menos calorias primeiro",
   "recClearFilters": "Limpar filtros",
   "recMore": "Mais",
-  "recLess": "Menos"
+  "recLess": "Menos",
+  "planBusyAware": "Organizar segundo o meu calendário",
+  "planBusyAwareHint": "Nos dias cheios, receitas rápidas ou do congelador; cozinha-se no dia mais livre e as tarefas sem hora vão para um espaço livre. Aplica-se ao fazer o plano.",
+  "planBusyDay": "Dia cheio"
 }

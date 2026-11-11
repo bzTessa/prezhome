@@ -893,5 +893,8 @@
   "recSortLightest": "Wenigste Kalorien zuerst",
   "recClearFilters": "Filter löschen",
   "recMore": "Mehr",
-  "recLess": "Weniger"
+  "recLess": "Weniger",
+  "planBusyAware": "Nach meinem Kalender planen",
+  "planBusyAwareHint": "An vollen Tagen schnelle oder tiefgekühlte Gerichte, gekocht wird am freiesten Tag und Aufgaben ohne Uhrzeit kommen in eine freie Lücke. Gilt beim Erstellen des Plans.",
+  "planBusyDay": "Voller Tag"
 }

@@ -198,6 +198,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
           recipesById: recipes,
           weekStart: w,
           energyLevel: PlanPrefs.current.value.energy,
+          dayLoads: PlanPrefs.current.value.dayLoads,
         );
         for (final ev in prepAgenda(plan, earliest: today)) {
           (prepByDay[ev.date] ??= []).add(ev);

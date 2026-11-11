@@ -1172,7 +1172,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get planCalendarHint =>
-      'Comidas y tareas con hora, en Google Calendar';
+      'Comidas y tareas con hora, en el calendario del móvil (Google, Outlook…)';
 
   @override
   String get planCalendarUpdates => 'Se actualiza al abrir el plan';
@@ -3507,4 +3507,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get recLess => 'Menos';
+
+  @override
+  String get planBusyAware => 'Organizar según mi calendario';
+
+  @override
+  String get planBusyAwareHint =>
+      'Los días cargados tocan recetas rápidas o del congelador, se cocina en el día más libre y las tareas sin hora van a un hueco. Se aplica al hacer el plan.';
+
+  @override
+  String get planBusyDay => 'Día cargado';
 }

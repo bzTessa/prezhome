@@ -185,6 +185,7 @@ class MealPrepPlanner {
     required Map<String, PrepRecipe> recipesById,
     required DateTime weekStart,
     int energyLevel = 1,
+    Map<String, int> dayLoads = const {},
   }) {
     // Solo nos interesan comidas con receta conocida y al menos una ración.
     final relevant =
@@ -216,7 +217,7 @@ class MealPrepPlanner {
       weekStart.day,
     );
     final cookDates = [
-      ..._chooseCookDates(mealDays, maxCookingDays, weekStartDay),
+      ..._chooseCookDates(mealDays, maxCookingDays, weekStartDay, dayLoads),
     ];
 
     // Lo no congelable no puede pasar más de [kDiasNevera] días en la nevera:
@@ -295,11 +296,16 @@ class MealPrepPlanner {
   /// [weekStart] (inicio de semana) y no en el primer día con comida, para que
   /// con energía baja se cocine pronto. Nunca se cuece después de la comida
   /// (el día de cocción no es posterior al primer consumo del bloque).
+  ///
+  /// Con [dayLoads] (fecha ISO → 0 libre, 1 normal, 2 cargado), cada día de
+  /// cocción se adelanta al día menos cargado entre el anterior día de cocción
+  /// y el suyo; si empatan, se queda donde estaba.
   List<DateTime> _chooseCookDates(
     List<DateTime> mealDays,
     int maxDays,
-    DateTime weekStart,
-  ) {
+    DateTime weekStart, [
+    Map<String, int> dayLoads = const {},
+  ]) {
     if (mealDays.isEmpty) return const [];
     final blocks = maxDays < 1 ? 1 : maxDays;
 
@@ -321,10 +327,24 @@ class MealPrepPlanner {
     // El primer bloque se cuece al INICIO de la semana (o antes del primer
     // consumo), no el primer día que casualmente tiene comida. Solo adelantamos
     // (nunca retrasamos) y sin pasar del primer día con comida.
-    if (blockStarts.isNotEmpty && weekStart.isBefore(blockStarts.first)) {
+    final firstMeal = blockStarts.first;
+    if (weekStart.isBefore(firstMeal)) {
       blockStarts[0] = weekStart;
     }
+    if (dayLoads.isEmpty) return blockStarts;
 
+    int load(DateTime d) => dayLoads[d.toIso8601String().split('T').first] ?? 1;
+    for (var b = 0; b < blockStarts.length; b++) {
+      final from = b == 0
+          ? (weekStart.isBefore(firstMeal) ? weekStart : firstMeal)
+          : _nextDay(blockStarts[b - 1]);
+      final to = b == 0 ? firstMeal : blockStarts[b];
+      var best = blockStarts[b];
+      for (var d = from; !d.isAfter(to); d = _nextDay(d)) {
+        if (load(d) < load(best)) best = d;
+      }
+      blockStarts[b] = best;
+    }
     return blockStarts;
   }
 
@@ -433,6 +453,8 @@ class MealPrepPlanner {
 }
 
 /// Nombre del día de la semana en español (1=Lunes .. 7=Domingo).
+DateTime _nextDay(DateTime d) => DateTime(d.year, d.month, d.day + 1);
+
 String _diaSemana(DateTime date) => _diasSemana[date.weekday - 1];
 
 /// Genera el resumen cozy en español de un día de cocción, estilo:

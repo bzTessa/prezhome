@@ -286,7 +286,7 @@
   "planCalendar": "Calendar",
   "planToCalendar": "Send to calendar",
   "planCalendarLinked": "Calendar connected",
-  "planCalendarHint": "Meals and timed tasks, in Google Calendar",
+  "planCalendarHint": "Meals and timed tasks, in your phone calendar (Google, Outlook…)",
   "planCalendarUpdates": "Updates when you open the plan",
   "remove": "Remove",
   "planPickRecipe": "Pick a recipe",
@@ -893,5 +893,8 @@
   "recSortLightest": "Fewest calories first",
   "recClearFilters": "Clear filters",
   "recMore": "More",
-  "recLess": "Less"
+  "recLess": "Less",
+  "planBusyAware": "Plan around my calendar",
+  "planBusyAwareHint": "Busy days get quick or frozen meals, batch cooking goes to the freest day and tasks without a time go into a free slot. Applies when you make the plan.",
+  "planBusyDay": "Busy day"
 }

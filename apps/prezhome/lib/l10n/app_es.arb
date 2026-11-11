@@ -785,7 +785,7 @@
   "planCalendar": "Calendario",
   "planToCalendar": "Pasar al calendario",
   "planCalendarLinked": "Calendario conectado",
-  "planCalendarHint": "Comidas y tareas con hora, en Google Calendar",
+  "planCalendarHint": "Comidas y tareas con hora, en el calendario del móvil (Google, Outlook…)",
   "planCalendarUpdates": "Se actualiza al abrir el plan",
   "remove": "Quitar",
   "planPickRecipe": "Elige una receta",
@@ -2138,5 +2138,8 @@
   "recSortLightest": "Menos calorías primero",
   "recClearFilters": "Quitar filtros",
   "recMore": "Más",
-  "recLess": "Menos"
+  "recLess": "Menos",
+  "planBusyAware": "Organizar según mi calendario",
+  "planBusyAwareHint": "Los días cargados tocan recetas rápidas o del congelador, se cocina en el día más libre y las tareas sin hora van a un hueco. Se aplica al hacer el plan.",
+  "planBusyDay": "Día cargado"
 }

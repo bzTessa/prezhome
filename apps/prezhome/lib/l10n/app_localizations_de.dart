@@ -3500,4 +3500,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get recLess => 'Weniger';
+
+  @override
+  String get planBusyAware => 'Nach meinem Kalender planen';
+
+  @override
+  String get planBusyAwareHint =>
+      'An vollen Tagen schnelle oder tiefgekühlte Gerichte, gekocht wird am freiesten Tag und Aufgaben ohne Uhrzeit kommen in eine freie Lücke. Gilt beim Erstellen des Plans.';
+
+  @override
+  String get planBusyDay => 'Voller Tag';
 }

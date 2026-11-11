@@ -1827,7 +1827,7 @@ abstract class AppLocalizations {
   /// No description provided for @planCalendarHint.
   ///
   /// In es, this message translates to:
-  /// **'Comidas y tareas con hora, en Google Calendar'**
+  /// **'Comidas y tareas con hora, en el calendario del móvil (Google, Outlook…)'**
   String get planCalendarHint;
 
   /// No description provided for @planCalendarUpdates.
@@ -5471,6 +5471,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Menos'**
   String get recLess;
+
+  /// No description provided for @planBusyAware.
+  ///
+  /// In es, this message translates to:
+  /// **'Organizar según mi calendario'**
+  String get planBusyAware;
+
+  /// No description provided for @planBusyAwareHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Los días cargados tocan recetas rápidas o del congelador, se cocina en el día más libre y las tareas sin hora van a un hueco. Se aplica al hacer el plan.'**
+  String get planBusyAwareHint;
+
+  /// No description provided for @planBusyDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día cargado'**
+  String get planBusyDay;
 }
 
 class _AppLocalizationsDelegate
