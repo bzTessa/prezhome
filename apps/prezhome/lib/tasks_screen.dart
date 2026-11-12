@@ -26,6 +26,7 @@ import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'utils/task_kinds.dart';
+import 'utils/task_rotation.dart';
 import 'l10n/l10n.dart';
 
 class TasksScreen extends StatefulWidget {
@@ -272,6 +273,18 @@ class _TasksScreenState extends State<TasksScreen> {
     setState(() => _completing.add(task.id));
     try {
       await TaskScheduler(_client).completeAttributed(task, doneBy);
+      // Por turnos: la próxima vez le toca a la siguiente persona.
+      if (task.rotates &&
+          task.recurrence != 'once' &&
+          data.members.length > 1) {
+        final next = nextInRotation(rotationOrder(data.members), doneBy);
+        if (next != null) {
+          await _client
+              .from('tasks')
+              .update({'assigned_to': next})
+              .eq('id', task.id);
+        }
+      }
       if (mounted) {
         Celebrate.check(
           context,
@@ -647,6 +660,10 @@ class _TasksScreenState extends State<TasksScreen> {
               ? null
               : t.assignedTo == null
               ? context.l.tskAnyone
+              : t.rotates
+              ? context.l.tskTurnOf(
+                  data.members[t.assignedTo] ?? context.l.rdMember,
+                )
               : (data.members[t.assignedTo] ?? context.l.rdMember);
 
           final pool = pending.where((t) => t.isInPool).toList();
@@ -1736,6 +1753,7 @@ class _TaskSheetState extends State<_TaskSheet> {
   String _repeat = 'once';
   final Set<int> _weekdays = {}; // 1=Lun..7=Dom
   String? _assigned;
+  bool _rotates = false;
   TimeOfDay? _time;
   int _points = 10;
   bool _details = false;
@@ -1753,6 +1771,7 @@ class _TaskSheetState extends State<_TaskSheet> {
     _repeat = t.recurrence;
     _weekdays.addAll(t.weekdays);
     _assigned = widget.members.containsKey(t.assignedTo) ? t.assignedTo : null;
+    _rotates = t.rotates;
     _points = t.points;
     final parts = t.dueTime?.split(':');
     if (parts != null && parts.length >= 2) {
@@ -1864,7 +1883,10 @@ class _TaskSheetState extends State<_TaskSheet> {
         intervalCount: original?.intervalCount,
         intervalUnit: original?.intervalUnit,
         weekdays: _weekdays.toList()..sort(),
-        assignedTo: _assigned,
+        assignedTo: _rotates && _repeat != 'once'
+            ? (_assigned ?? rotationOrder(widget.members).firstOrNull)
+            : _assigned,
+        rotates: _rotates && _repeat != 'once',
         dueDate: _due,
         dueTime: _time == null
             ? null
@@ -1884,6 +1906,8 @@ class _TaskSheetState extends State<_TaskSheet> {
             original.nextDue != null) {
           map['next_due'] = _dayKey(original.nextDue);
         }
+        // Quitar los turnos también se guarda.
+        if (original.rotates && !task.rotates) map['rotates'] = false;
         await client.from('tasks').update(map).eq('id', original.id);
       }
       unawaited(CalendarSync.sync(client, force: true));
@@ -2075,6 +2099,29 @@ class _TaskSheetState extends State<_TaskSheet> {
                     ),
                 ],
               ),
+              // Por turnos: solo en las que se repiten. Empieza por la
+              // persona elegida (o la primera) y pasa a la siguiente al
+              // hacerla.
+              if (_repeat != 'once')
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _rotates,
+                  onChanged: (v) => setState(() {
+                    _rotates = v;
+                    if (v) {
+                      _assigned ??= rotationOrder(widget.members).firstOrNull;
+                    }
+                  }),
+                  secondary: Icon(Icons.sync_rounded, color: AppColors.sage),
+                  title: Text(
+                    context.l.tskRotates,
+                    style: AppTextStyles.bodyStrong,
+                  ),
+                  subtitle: Text(
+                    context.l.tskRotatesHint,
+                    style: AppTextStyles.bodyMuted,
+                  ),
+                ),
             ] else ...[
               _label(context.l.tskWho),
               Text(context.l.tskAddPersonHint, style: AppTextStyles.bodyMuted),

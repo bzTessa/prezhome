@@ -3390,6 +3390,24 @@ abstract class AppLocalizations {
   /// **'Cualquiera'**
   String get tskAnyone;
 
+  /// No description provided for @tskRotates.
+  ///
+  /// In es, this message translates to:
+  /// **'Por turnos'**
+  String get tskRotates;
+
+  /// No description provided for @tskRotatesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Al hacerla, le toca a la siguiente persona'**
+  String get tskRotatesHint;
+
+  /// No description provided for @tskTurnOf.
+  ///
+  /// In es, this message translates to:
+  /// **'Turno de {name}'**
+  String tskTurnOf(String name);
+
   /// No description provided for @tskForToday.
   ///
   /// In es, this message translates to:

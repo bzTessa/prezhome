@@ -2120,6 +2120,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tskAnyone => 'Cualquiera';
 
   @override
+  String get tskRotates => 'Por turnos';
+
+  @override
+  String get tskRotatesHint => 'Al hacerla, le toca a la siguiente persona';
+
+  @override
+  String tskTurnOf(String name) {
+    return 'Turno de $name';
+  }
+
+  @override
   String get tskForToday => 'Para hoy';
 
   @override
