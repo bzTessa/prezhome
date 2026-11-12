@@ -423,6 +423,14 @@
   "couldNotUndo": "No se pudo deshacer",
   "shopToCart": "Al carrito",
   "shopFromPlan": "Del plan de la semana",
+  "shopPackNeed": "para {need}",
+  "@shopPackNeed": {
+    "placeholders": {
+      "need": {
+        "type": "String"
+      }
+    }
+  },
   "changePhoto": "Cambiar foto",
   "shopEmptyTitle": "Tu lista está vacía",
   "shopEmptyHint": "Escribe arriba lo que necesitas o trae lo del plan.",

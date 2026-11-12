@@ -21,6 +21,7 @@ import 'services/plan_shopping.dart';
 import 'services/product_photo_resolver.dart';
 import 'services/shopping_checkout.dart';
 import 'shopping_lists_overview_screen.dart';
+import 'services/product_search_service.dart';
 import 'utils/offline_actions.dart';
 import 'utils/realtime_sync.dart';
 import 'utils/shopping_categories.dart';
@@ -255,6 +256,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         _pendingCount = pending;
       });
       _upgradePhotosOnce(items);
+      _fillPacks();
     } catch (_) {
       // Sin conexión: nos quedamos con lo que ya pintamos desde la caché.
     } finally {
@@ -671,10 +673,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Cambia la cantidad desde la pastilla − / + de la fila.
   Future<void> _setQuantity(ShoppingListItem item, double quantity) async {
     if (item.id == null) return;
-    HapticFeedback.selectionClick();
-    // Se ve al instante y se persiste en la cola offline. El reload/refresco de
-    // fondo NO va por toque: se agrupa (debounce) para que subir/bajar varias
-    // veces seguidas sea fluido y no re-lea la lista entera en cada +/-.
+    // La pastilla ya enseñó cada toque por su cuenta; aquí llega una sola vez
+    // cuando se deja de tocar. El refresco de fondo también se agrupa.
     _showChanged(item, {'quantity': quantity});
     try {
       await _repo.applyLocalWrite(
@@ -1064,12 +1064,26 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
     final cat = CategoryIcons.categoryFor(product.name);
     final isHome = CategoryIcons.isHousehold(cat);
+    // El envase del producto elegido. Sin unidad escrita, el número son
+    // envases ("2 nata" = 2 briks); sin nada, uno.
+    final pack = parsePackageQuantity(product.quantity);
+    final unit =
+        entry?.unit ??
+        switch (pack?.unit) {
+          'kg' || 'g' => 'g',
+          null => null,
+          _ => 'ml',
+        };
+    final packSize = packSizeIn(pack, unit);
     await _addItem(
       name: product.displayName,
-      quantity: entry?.quantity,
-      unit: entry?.unit,
+      quantity: packSize == null || entry?.unit != null
+          ? entry?.quantity
+          : (entry?.quantity ?? 1) * packSize,
+      unit: packSize == null ? entry?.unit : unit,
       itemType: isHome ? 'hogar' : 'comida',
       imageUrl: product.imageUrl,
+      packSize: packSize,
     );
   }
 
@@ -1081,6 +1095,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     String? unit,
     required String itemType,
     String? imageUrl,
+    double? packSize,
   }) async {
     final qty = quantity;
     final productPhoto = imageUrl;
@@ -1145,6 +1160,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         category: catName,
         categoryId: _categoryIdForName(catName),
         listId: _activeListId,
+        packSize: packSize,
       );
       await _repo.applyLocalWrite(
         buildInsertOp(
@@ -1512,6 +1528,34 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       _superHomeId = r.homeId;
       _superKeys = r.keys;
     });
+    _fillPacks();
+  }
+
+  /// Busca en segundo plano el envase del súper de lo que aún no lo tiene
+  /// (cada producto una vez por pantalla) y repinta al encontrarlo.
+  final Set<String> _packTried = {};
+  bool _fillingPacks = false;
+  Future<void> _fillPacks() async {
+    final shown = _shown;
+    if (_fillingPacks || _superKeys.isEmpty || shown == null) return;
+    final todo = [
+      for (final i in shown)
+        if (i.id != null &&
+            !isLocalId(i.id!) &&
+            i.packSize == null &&
+            _packTried.add(i.id!))
+          i,
+    ];
+    if (todo.isEmpty) return;
+    _fillingPacks = true;
+    try {
+      final n = await PlanShoppingService(
+        _client,
+      ).fillPackSizes(todo, supermarketKey: _superKeys.first);
+      if (n > 0 && mounted) _refreshFromRemote();
+    } finally {
+      _fillingPacks = false;
+    }
   }
 
   /// Elige dónde se compra. Se guarda como súper principal del hogar: lo
@@ -2114,7 +2158,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
       name: shoppingCleanName(item.name),
       checked: item.checked,
-      quantityLabel: shoppingQtyLabel(item.quantity, item.unit),
+      quantityLabel: shoppingQtyLabel(
+        item.quantity,
+        item.unit,
+        packSize: item.packSize,
+      ),
       price: _linePrice(item),
       photo: _view.showPhotos ? _photo(item, width: double.infinity) : null,
       onToggle: () => _toggleChecked(item, !item.checked),
@@ -2162,7 +2210,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   String? _linePrice(ShoppingListItem item) {
     if (!_view.showPrices) return null;
     final est = PriceMemory.estimateCost([
-      (name: item.name, quantity: item.quantity, unit: item.unit),
+      (name: item.name, quantity: item.boughtQuantity, unit: item.unit),
     ], _prices);
     return est.priced == 0 ? null : '≈ ${money(est.total)}';
   }
@@ -2186,8 +2234,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Widget _buildRow(ShoppingListItem item) {
     final done = item.checked;
     final photo = _photo(item);
+    // Con envases, se dice para cuánto hacen falta si no es justo ("para
+    // 350 ml"): así se entiende por qué son 2 briks.
+    final need = item.boughtQuantity != item.quantity
+        ? context.l.shopPackNeed(shoppingQtyLabel(item.quantity, item.unit))
+        : null;
     final subtitle = [
       if (item.source == 'auto') context.l.shopFromPlan,
+      ?need,
       ?_linePrice(item),
     ].join(' · ');
     return SwipeAction(
@@ -2203,9 +2257,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       child: ShoppingItemTile(
         name: shoppingCleanName(item.name),
         checked: done,
-        quantityLabel: shoppingQtyLabel(item.quantity, item.unit),
+        quantityLabel: shoppingQtyLabel(
+          item.quantity,
+          item.unit,
+          packSize: item.packSize,
+        ),
         quantity: item.quantity,
         unit: item.unit,
+        packSize: item.packSize,
         onQuantityChanged: (q) => _setQuantity(item, q),
         subtitle: subtitle.isEmpty ? null : subtitle,
         onToggle: () => _toggleChecked(item, !done),

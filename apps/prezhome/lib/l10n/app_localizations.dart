@@ -1110,6 +1110,12 @@ abstract class AppLocalizations {
   /// **'Del plan de la semana'**
   String get shopFromPlan;
 
+  /// No description provided for @shopPackNeed.
+  ///
+  /// In es, this message translates to:
+  /// **'para {need}'**
+  String shopPackNeed(String need);
+
   /// No description provided for @changePhoto.
   ///
   /// In es, this message translates to:

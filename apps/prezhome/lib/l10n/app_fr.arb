@@ -167,6 +167,7 @@
   "couldNotUndo": "Impossible d'annuler",
   "shopToCart": "Au panier",
   "shopFromPlan": "Du planning de la semaine",
+  "shopPackNeed": "pour {need}",
   "changePhoto": "Changer la photo",
   "shopEmptyTitle": "Ta liste est vide",
   "shopEmptyHint": "Écris en haut ce dont tu as besoin ou importe le planning.",

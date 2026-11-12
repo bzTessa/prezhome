@@ -4,13 +4,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/ingredient.dart';
 import '../models/shopping_list_item.dart';
+import '../utils/offline_actions.dart';
 import '../utils/practical_quantity.dart';
+import '../utils/shopping_display.dart';
 import '../utils/shopping_categories.dart';
 import '../widgets/food_category_icon.dart';
 import 'food_photo_service.dart';
 import 'meal_prep_planner.dart';
 import 'price_memory.dart';
 import 'product_photo_resolver.dart';
+import 'product_search_service.dart';
 
 /// Lo que hay en casa de un producto (para descontarlo del plan).
 class PantryStock {
@@ -140,9 +143,10 @@ List<({String name, double? qty, String? unit})> shoppingLines(
       need.quantity,
       need.unit,
     );
-    final key =
-        '${CategoryIcons.normalize(need.name)}|'
-        '${practical.unit.trim().toLowerCase()}';
+    final unit = practical.unit.trim().toLowerCase();
+    // "unidad", "unidades" y "ud" son lo mismo: una sola fila.
+    final unitKey = const {'unidad', 'unidades'}.contains(unit) ? 'ud' : unit;
+    final key = '${CategoryIcons.normalize(need.name)}|$unitKey';
     final prev = merged[key];
     if (prev == null) {
       merged[key] = (
@@ -151,9 +155,11 @@ List<({String name, double? qty, String? unit})> shoppingLines(
         unit: practical.unit,
       );
     } else {
-      final isUnit = (prev.unit ?? '').toLowerCase().startsWith('ud');
-      // Las unidades sueltas (1 ud de especia) no se suman: con una basta.
-      final q = isUnit || prev.qty == null || practical.quantity == null
+      // Un bote de especia (1 ud) no se suma: con uno basta.
+      final q =
+          isCondiment(need.name) ||
+              prev.qty == null ||
+              practical.quantity == null
           ? prev.qty
           : prev.qty! + practical.quantity!;
       merged[key] = (name: prev.name, qty: q, unit: prev.unit);
@@ -312,6 +318,50 @@ class PlanShoppingService {
       for (final m in inserted as List)
         ShoppingListItem.fromMap(Map<String, dynamic>.from(m as Map)),
     ];
+  }
+
+  /// Apunta el envase del súper ([ShoppingListItem.packSize]) de lo que va a
+  /// peso o volumen, buscando el producto en el catálogo de [supermarketKey]
+  /// (nunca en Open Food Facts). Lo suelto (fruta, verdura) y las especias
+  /// no llevan envase. Devuelve cuántos se apuntaron.
+  Future<int> fillPackSizes(
+    List<ShoppingListItem> items, {
+    required String? supermarketKey,
+    void Function()? onFound,
+  }) async {
+    final store = catalogKeyFor(supermarketKey);
+    if (store == null) return 0;
+    var found = 0;
+    for (final item in items.take(40)) {
+      final id = item.id;
+      if (id == null || isLocalId(id) || item.checked) continue;
+      if (item.packSize != null || item.quantity == null) continue;
+      if (!isMeasureUnit(item.unit) ||
+          isCondiment(item.name) ||
+          looseProduceGrams(item.name) != null) {
+        continue;
+      }
+      try {
+        final best = bestCatalogMatch(
+          item.name,
+          await searchCatalog(item.name, store),
+        );
+        final pack = packSizeIn(
+          parsePackageQuantity(best?.quantity),
+          item.unit,
+        );
+        if (pack == null) continue;
+        await _client
+            .from('shopping_list_items')
+            .update({'pack_size': pack})
+            .eq('id', id);
+        found++;
+        onFound?.call();
+      } catch (_) {
+        // Sin envase se sigue contando en g o ml.
+      }
+    }
+    return found;
   }
 
   /// Pone la foto del envase (Open Food Facts) a los productos sin foto, con

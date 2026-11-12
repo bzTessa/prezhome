@@ -135,7 +135,93 @@ PracticalQuantity makePracticalForShopping(
   if (isCondiment(name)) {
     return const PracticalQuantity(1, 'ud');
   }
+  // La fruta y verdura suelta se compra por piezas: 100 g de pimiento es
+  // 1 pimiento, y así se junta con el "1 ud" de otra receta.
+  final grams = _weightInGrams(quantity, unit);
+  final perPiece = looseProduceGrams(name);
+  if (grams != null && perPiece != null) {
+    final pieces = (grams / perPiece).round();
+    return PracticalQuantity((pieces < 1 ? 1 : pieces).toDouble(), 'ud');
+  }
   return makePractical(name, quantity, unit, packageGrams: packageGrams);
+}
+
+double? _weightInGrams(double? quantity, String? unit) {
+  if (quantity == null) return null;
+  final u = (unit ?? '').trim().toLowerCase();
+  if (_weightUnits.contains(u)) return quantity;
+  if (u == 'kg') return quantity * 1000;
+  return null;
+}
+
+/// Peso medio de una pieza de la fruta y verdura que se compra suelta y se
+/// cuenta por piezas. La patata, el ajo o las hojas no están: se compran a
+/// peso, por dientes o en bolsa.
+const Map<String, double> _pieceGrams = {
+  'pimiento': 150,
+  'zanahoria': 80,
+  'cebolla': 150,
+  'cebolleta': 100,
+  'tomate': 120,
+  'limon': 120,
+  'lima': 70,
+  'calabacin': 250,
+  'berenjena': 300,
+  'pepino': 250,
+  'puerro': 150,
+  'manzana': 180,
+  'pera': 180,
+  'platano': 120,
+  'naranja': 200,
+  'mandarina': 80,
+  'aguacate': 200,
+  'mango': 300,
+  'boniato': 300,
+};
+
+/// Palabras que indican que ya no es la pieza fresca ("tomate frito",
+/// "zumo de naranja", "pimiento asado en tarro").
+const Set<String> _processedWords = {
+  'frito',
+  'triturado',
+  'tamizado',
+  'concentrado',
+  'seco',
+  'secos',
+  'deshidratado',
+  'polvo',
+  'zumo',
+  'mermelada',
+  'salsa',
+  'asado',
+  'asados',
+  'tarro',
+  'lata',
+  'conserva',
+  'congelado',
+  'congelada',
+  'rallado',
+  'rallada',
+  'piquillo',
+  'choricero',
+  'cherry',
+};
+
+/// Gramos de una pieza de [name] si es fruta o verdura que se compra suelta,
+/// o null. Mira la primera palabra (singular) y descarta lo procesado.
+double? looseProduceGrams(String name) {
+  final tokens = _normalizeName(
+    name,
+  ).split(RegExp(r'[^a-z0-9]+')).where((t) => t.isNotEmpty).toList();
+  if (tokens.isEmpty || tokens.any(_processedWords.contains)) return null;
+  final first = tokens.first;
+  return _pieceGrams[first] ??
+      (first.endsWith('es')
+          ? _pieceGrams[first.substring(0, first.length - 2)]
+          : null) ??
+      (first.endsWith('s')
+          ? _pieceGrams[first.substring(0, first.length - 1)]
+          : null);
 }
 
 /// Redondea [value] al múltiplo de [step] más cercano (hacia arriba a partir de

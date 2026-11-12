@@ -167,6 +167,7 @@
   "couldNotUndo": "Não foi possível desfazer",
   "shopToCart": "Para o carrinho",
   "shopFromPlan": "Do plano da semana",
+  "shopPackNeed": "para {need}",
   "changePhoto": "Mudar foto",
   "shopEmptyTitle": "A tua lista está vazia",
   "shopEmptyHint": "Escreve em cima o que precisas ou traz o do plano.",
