@@ -246,34 +246,35 @@ class _NavItem extends StatelessWidget {
             ],
           )
         : LayoutBuilder(
-      builder: (context, constraints) {
-        final showLabel = selected && constraints.maxWidth >= _minWidthForLabel;
-        if (!showLabel) return Center(child: icon);
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              icon,
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
+            builder: (context, constraints) {
+              final showLabel =
+                  selected && constraints.maxWidth >= _minWidthForLabel;
+              if (!showLabel) return Center(child: icon);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    icon,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+              );
+            },
+          );
 
     final tile = Semantics(
       button: true,
