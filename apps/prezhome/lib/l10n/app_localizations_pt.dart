@@ -1717,6 +1717,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get recFavorites => 'Favoritas';
 
   @override
+  String get recReadyNow => 'Podes fazer já';
+
+  @override
+  String get recHaveAll => 'Tens tudo';
+
+  @override
+  String get recMissingOne => 'Falta 1';
+
+  @override
   String get recOther => 'Outras';
 
   @override

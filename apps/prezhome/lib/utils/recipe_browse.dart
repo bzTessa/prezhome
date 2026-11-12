@@ -1,4 +1,5 @@
 import '../models/recipe.dart';
+import 'pantry_ideas.dart';
 import 'shopping_categories.dart' show normalizeCategoryText;
 
 /// Categorías para explorar el recetario, en el orden en que se enseñan.
@@ -107,3 +108,23 @@ List<Recipe> browseRecipes(
 
   return [...found.where(inTitle), ...found.where((r) => !inTitle(r))];
 }
+
+/// Cuántos ingredientes de [r] faltan en casa según la despensa [pantry]
+/// (los básicos como sal o aceite se dan por supuestos). Null si no se puede
+/// saber: receta sin ingredientes cargados, despensa vacía o ningún
+/// ingrediente en casa (así una receta vacía no parece "lista").
+int? missingAtHome(Recipe r, List<String> pantry) {
+  if (pantry.isEmpty || r.ingredientNames.isEmpty) return null;
+  final split = splitByPantry(r.ingredientNames, pantry);
+  if (split.have.isEmpty) return null;
+  return split.missing.length;
+}
+
+/// Recetas que se pueden cocinar ya: no falta nada y hay al menos dos
+/// ingredientes en casa (una receta de "sal y agua" no cuenta).
+List<Recipe> readyToCook(List<Recipe> recipes, List<String> pantry) => [
+  for (final r in recipes)
+    if (missingAtHome(r, pantry) == 0 &&
+        splitByPantry(r.ingredientNames, pantry).have.length >= 2)
+      r,
+];

@@ -2700,6 +2700,24 @@ abstract class AppLocalizations {
   /// **'Favoritas'**
   String get recFavorites;
 
+  /// No description provided for @recReadyNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes hacerlas ya'**
+  String get recReadyNow;
+
+  /// No description provided for @recHaveAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes todo'**
+  String get recHaveAll;
+
+  /// No description provided for @recMissingOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta 1'**
+  String get recMissingOne;
+
   /// No description provided for @recOther.
   ///
   /// In es, this message translates to:

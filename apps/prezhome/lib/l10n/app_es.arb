@@ -1065,6 +1065,9 @@
   "recPantryIdeas": "Ideas con lo que hay en tu despensa",
   "recAll": "Todas",
   "recFavorites": "Favoritas",
+  "recReadyNow": "Puedes hacerlas ya",
+  "recHaveAll": "Tienes todo",
+  "recMissingOne": "Falta 1",
   "recOther": "Otras",
   "recSeeAll": "Ver las {count}",
   "@recSeeAll": {

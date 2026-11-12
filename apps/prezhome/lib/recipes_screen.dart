@@ -5,7 +5,9 @@ import 'add_recipe_chooser.dart';
 import 'discover_recipes_screen.dart';
 import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
+import 'models/inventory_item.dart';
 import 'models/recipe.dart';
+import 'utils/pantry_ideas.dart';
 import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/miau_character.dart';
@@ -77,6 +79,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
   String? _category;
   RecipeSort _sort = RecipeSort.recent;
 
+  // Despensa del último fetch: las tarjetas dicen si tienes todo.
+  List<String> _pantry = const [];
+
   @override
   void initState() {
     super.initState();
@@ -109,7 +114,25 @@ class _RecipesScreenState extends State<RecipesScreen> {
           .maybeSingle();
       if (p != null) profile = NutritionProfile.fromMap(p);
     }
-    return _RecipesData(recipes: recipes, profile: profile);
+    // Despensa del hogar: marca las recetas que se pueden hacer ya.
+    var pantry = const <String>[];
+    if (recipes.isNotEmpty) {
+      try {
+        final rows = await supabase
+            .from('inventory_items')
+            .select()
+            .eq('home_id', recipes.first.homeId);
+        pantry = pantryNamesForIdeas(
+          (rows as List)
+              .map((r) => InventoryItem.fromMap(Map<String, dynamic>.from(r)))
+              .toList(),
+          max: 1000,
+        );
+      } catch (_) {
+        // Sin despensa, el recetario se enseña igual.
+      }
+    }
+    return _RecipesData(recipes: recipes, profile: profile, pantry: pantry);
   }
 
   void _reload() {
@@ -251,6 +274,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
   Widget _card(Recipe recipe, int? perMeal) => _RecipeCard(
     recipe: recipe,
     caloriesPerMeal: perMeal,
+    missing: missingAtHome(recipe, _pantry),
     onToggleFavorite: () => _toggleFavorite(recipe),
     onLongPress: () => _openQuickActions(recipe),
     onTap: () async {
@@ -279,7 +303,12 @@ class _RecipesScreenState extends State<RecipesScreen> {
   List<Widget> _sections(List<Recipe> recipes, int? perMeal) {
     const preview = 4;
     final slivers = <Widget>[];
-    for (final section in groupRecipesBySection(recipes)) {
+    final ready = readyToCook(recipes, _pantry);
+    final sections = [
+      if (ready.isNotEmpty) MapEntry('ready', ready),
+      ...groupRecipesBySection(recipes),
+    ];
+    for (final section in sections) {
       final key = section.key;
       final items = section.value;
       final open = _expanded.contains(key) || items.length <= preview;
@@ -325,12 +354,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
   static String _sectionTitle(BuildContext context, String key) =>
       switch (key) {
         'favorites' => context.l.recFavorites,
+        'ready' => context.l.recReadyNow,
         'other' => context.l.recOther,
         _ => context.l.mealType(key),
       };
 
   static IconData _sectionIcon(String key) => switch (key) {
     'favorites' => Icons.favorite_rounded,
+    'ready' => Icons.kitchen_rounded,
     'other' => Icons.restaurant_rounded,
     _ => mealTypeIcon(key),
   };
@@ -372,6 +403,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
             );
           }
           final data = snapshot.data!;
+          _pantry = data.pantry;
           final allRecipes = data.recipes;
           final perMeal = data.profile?.caloriesPerMeal;
 
@@ -561,11 +593,7 @@ class _SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: AppColors.ink,
-              ),
+              style: AppTextStyles.headline.copyWith(fontSize: 20),
             ),
           ),
           Text(
@@ -642,9 +670,10 @@ class _PantryBanner extends StatelessWidget {
 }
 
 class _RecipesData {
+  final List<String> pantry;
   final List<Recipe> recipes;
   final NutritionProfile? profile;
-  _RecipesData({required this.recipes, this.profile});
+  _RecipesData({required this.recipes, this.profile, this.pantry = const []});
 }
 
 /// Barra horizontal de chips de filtro sobre la rejilla.
@@ -656,9 +685,13 @@ class _RecipeCard extends StatelessWidget {
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onLongPress;
 
+  /// Ingredientes que faltan en casa (null = no se sabe).
+  final int? missing;
+
   const _RecipeCard({
     required this.recipe,
     this.caloriesPerMeal,
+    this.missing,
     this.onTap,
     this.onToggleFavorite,
     this.onLongPress,
@@ -702,6 +735,12 @@ class _RecipeCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (missing != null && missing! <= 1)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: _HomeStockPill(missing: missing!),
+                ),
               Positioned(
                 top: 6,
                 right: 6,
@@ -737,9 +776,8 @@ class _RecipeCard extends StatelessWidget {
                       recipe.title,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
+                      style: AppTextStyles.headline.copyWith(
+                        fontSize: 17,
                         height: 1.15,
                         color: Colors.white,
                       ),
@@ -886,6 +924,44 @@ class _NoSearchResults extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Pastilla sobre la foto: "Tienes todo" o "Falta 1" según la despensa.
+class _HomeStockPill extends StatelessWidget {
+  const _HomeStockPill({required this.missing});
+
+  final int missing;
+
+  @override
+  Widget build(BuildContext context) {
+    final all = missing == 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: all ? AppColors.sageBg : AppColors.card,
+        borderRadius: AppRadius.pillRadius,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            all ? Icons.check_rounded : Icons.shopping_basket_outlined,
+            size: 14,
+            color: all ? AppColors.sage : AppColors.terracottaText,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            all ? context.l.recHaveAll : context.l.recMissingOne,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: all ? AppColors.sage : AppColors.terracottaText,
+            ),
+          ),
+        ],
       ),
     );
   }

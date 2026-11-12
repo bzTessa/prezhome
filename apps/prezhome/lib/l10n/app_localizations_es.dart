@@ -1714,6 +1714,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recFavorites => 'Favoritas';
 
   @override
+  String get recReadyNow => 'Puedes hacerlas ya';
+
+  @override
+  String get recHaveAll => 'Tienes todo';
+
+  @override
+  String get recMissingOne => 'Falta 1';
+
+  @override
   String get recOther => 'Otras';
 
   @override

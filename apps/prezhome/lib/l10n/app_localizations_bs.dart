@@ -1712,6 +1712,15 @@ class AppLocalizationsBs extends AppLocalizations {
   String get recFavorites => 'Omiljeni';
 
   @override
+  String get recReadyNow => 'Možeš odmah';
+
+  @override
+  String get recHaveAll => 'Imaš sve';
+
+  @override
+  String get recMissingOne => 'Fali 1';
+
+  @override
   String get recOther => 'Ostali';
 
   @override
