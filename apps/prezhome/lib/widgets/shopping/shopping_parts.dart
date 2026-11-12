@@ -834,7 +834,7 @@ class _QuantityStepperState extends State<QuantityStepper> {
       decoration: BoxDecoration(
         color: AppColors.paper,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.stroke, width: 1.5),
+        border: AppElevation.border,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -917,7 +917,7 @@ class QuickAddChip extends StatelessWidget {
             decoration: BoxDecoration(
               color: added ? AppColors.sageBg : AppColors.paper,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: AppColors.stroke, width: 1.5),
+              border: AppElevation.border,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -974,7 +974,7 @@ class SuggestionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: added ? AppColors.done : AppColors.terracotta,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.stroke, width: 1.5),
+        border: AppElevation.border,
       ),
       child: Icon(
         added ? Icons.check_rounded : Icons.add_rounded,

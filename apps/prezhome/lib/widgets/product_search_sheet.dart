@@ -25,7 +25,7 @@ Future<SupermarketProduct?> showProductSearchSheet(
     // Hoja táctil: esquinas de 24 y trazo carbón de 2 px arriba.
     shape: RoundedRectangleBorder(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      side: BorderSide(color: AppColors.stroke, width: 2),
+      side: BorderSide.none,
     ),
     builder: (_) => ProductSearchSheet(
       initialQuery: initialQuery,

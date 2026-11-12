@@ -108,7 +108,7 @@ class _CheckBurstState extends State<_CheckBurst>
                       decoration: BoxDecoration(
                         color: AppColors.paper,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.stroke, width: 2),
+                        border: AppElevation.border,
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.stroke,

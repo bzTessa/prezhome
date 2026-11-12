@@ -413,6 +413,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeYourDay => 'Your day';
 
   @override
+  String get homeNextUp => 'Up next';
+
+  @override
+  String get homeNextDone => 'Done';
+
+  @override
+  String get homeNextLater => 'Later';
+
+  @override
+  String get homeNextOpen => 'Open';
+
+  @override
   String homeDefrost(String names) {
     return 'Take out of the freezer: $names';
   }

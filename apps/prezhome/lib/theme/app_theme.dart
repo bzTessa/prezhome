@@ -116,6 +116,14 @@ class AppColors {
   static Color get iconTile =>
       dark ? const Color(0xFF302A24) : const Color(0xFFF2E9D8);
 
+  /// Borde de tarjeta: transparente en claro, línea suave en oscuro.
+  static Color get cardEdge =>
+      dark ? const Color(0xFF332D26) : const Color(0x00000000);
+
+  /// Sombra cálida y difusa de las tarjetas.
+  static Color get cardShadow =>
+      dark ? const Color(0x66000000) : const Color(0x477A5028);
+
   /// Trazo carbón de bordes y sombras duras (en oscuro, uno que se vea).
   static Color get stroke =>
       dark ? const Color(0xFF3E362E) : const Color(0xFF1E1E1E);
@@ -180,8 +188,8 @@ class AppTheme {
     );
 
     return base.copyWith(
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(
-        base.textTheme,
+      textTheme: _withSerifHeadings(
+        GoogleFonts.plusJakartaSansTextTheme(base.textTheme),
       ).apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.cream,
@@ -189,20 +197,17 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.fraunces(
           color: AppColors.ink,
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.4,
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.3,
         ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.card,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.lgRadius,
-          side: BorderSide(color: AppColors.stroke, width: 1.5),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.lgRadius),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -320,10 +325,7 @@ class AppTheme {
         focusElevation: 0,
         hoverElevation: 0,
         highlightElevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          side: BorderSide(color: AppColors.stroke, width: 2),
-        ),
+        shape: const StadiumBorder(),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
@@ -401,6 +403,22 @@ class AppTheme {
     );
   }
 
+  /// Títulos grandes en Fraunces (serifa cálida); el resto, Plus Jakarta.
+  static TextTheme _withSerifHeadings(TextTheme t) {
+    TextStyle? serif(TextStyle? s) => s == null
+        ? null
+        : GoogleFonts.fraunces(textStyle: s, fontWeight: FontWeight.w600);
+    return t.copyWith(
+      displayLarge: serif(t.displayLarge),
+      displayMedium: serif(t.displayMedium),
+      displaySmall: serif(t.displaySmall),
+      headlineLarge: serif(t.headlineLarge),
+      headlineMedium: serif(t.headlineMedium),
+      headlineSmall: serif(t.headlineSmall),
+      titleLarge: serif(t.titleLarge),
+    );
+  }
+
   /// Decoración estándar de tarjeta (para Containers).
   ///
   /// Se conserva por compatibilidad con el código existente. Para nuevas
@@ -409,8 +427,9 @@ class AppTheme {
   static BoxDecoration cardDecoration({double radius = AppRadius.lg}) =>
       surfaceDecoration(radius: radius);
 
-  /// Tarjeta táctil del logo: papel, borde de trazo y sombra dura debajo
-  /// (sin desenfoque), como si estuviera dibujada a mano.
+  /// Tarjeta de la app: papel cálido, sin borde negro y con sombra suave.
+  /// [shadow] 0 = plana; 6 o más = elevada. [borderWidth] se ignora (se
+  /// conserva para no romper llamadas antiguas).
   static BoxDecoration tactileDecoration({
     double radius = 14,
     Color? color,
@@ -419,11 +438,12 @@ class AppTheme {
   }) => BoxDecoration(
     color: color ?? AppColors.paper,
     borderRadius: BorderRadius.circular(radius),
-    border: Border.all(color: AppColors.stroke, width: borderWidth),
-    boxShadow: [
-      if (shadow > 0)
-        BoxShadow(color: AppColors.stroke, offset: Offset(0, shadow)),
-    ],
+    border: AppElevation.border,
+    boxShadow: shadow <= 0
+        ? AppElevation.level0
+        : shadow >= 6
+        ? AppElevation.level2
+        : AppElevation.level1,
   );
 
   /// Decoración de superficie recomendada de aquí en adelante.

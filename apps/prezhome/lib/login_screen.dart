@@ -359,7 +359,7 @@ class _OAuthButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.card,
           foregroundColor: AppColors.ink,
-          side: BorderSide(color: AppColors.stroke, width: 1.5),
+          side: BorderSide.none,
         ),
         icon: loading
             ? const SizedBox(

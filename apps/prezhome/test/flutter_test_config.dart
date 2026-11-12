@@ -12,6 +12,9 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   for (final w in FontWeight.values.sublist(3, 8)) {
     GoogleFonts.plusJakartaSans(fontWeight: w);
   }
+  for (final w in const [FontWeight.w500, FontWeight.w600, FontWeight.w700]) {
+    GoogleFonts.fraunces(fontWeight: w);
+  }
   await GoogleFonts.pendingFonts().then((_) {}, onError: (_) {});
   await testMain();
 }

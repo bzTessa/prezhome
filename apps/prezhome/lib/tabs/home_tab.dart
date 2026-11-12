@@ -544,6 +544,12 @@ class HomeTabState extends State<HomeTab> {
           (c) => c == DashboardCard.calories || c == DashboardCard.spending,
         )
         .toList();
+    final allLines = _loaded ? _dayLines() : const <DayLine>[];
+    final next = _nextLine(allLines);
+    final restLines = [
+      for (final l in allLines)
+        if (!identical(l, next)) l,
+    ];
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: SafeArea(
@@ -565,6 +571,10 @@ class HomeTabState extends State<HomeTab> {
               if (!_loaded)
                 const HomeSkeleton()
               else ...[
+                if (next != null) ...[
+                  StaggeredEntrance(index: 1, child: _nextUpCard(next)),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
                 ValueListenableBuilder(
                   valueListenable: PlanPrefs.current,
                   builder: (_, p, _) => p.fastHours == null
@@ -583,8 +593,10 @@ class HomeTabState extends State<HomeTab> {
 
                 // De un vistazo: caducidades, tareas y compra. Tocar lleva a
                 // su pestaña.
-                StaggeredEntrance(index: 2, child: _dayCard()),
-                const SizedBox(height: AppSpacing.lg),
+                if (restLines.isNotEmpty || next == null) ...[
+                  StaggeredEntrance(index: 2, child: _dayCard(restLines)),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
 
                 StaggeredEntrance(index: 3, child: StreakCard(key: _streakKey)),
                 const SizedBox(height: AppSpacing.md),
@@ -637,13 +649,7 @@ class HomeTabState extends State<HomeTab> {
               const SizedBox(height: 4),
               Text(
                 _greeting(),
-                style: TextStyle(
-                  fontSize: 30,
-                  letterSpacing: -0.6,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.ink,
-                ),
+                style: AppTextStyles.display.copyWith(height: 1.1),
               ),
             ],
           ),
@@ -674,9 +680,7 @@ class HomeTabState extends State<HomeTab> {
       message: tooltip,
       child: Material(
         color: filled ? AppColors.ink : AppColors.card,
-        shape: CircleBorder(
-          side: BorderSide(color: AppColors.stroke, width: 1.5),
-        ),
+        shape: CircleBorder(side: BorderSide.none),
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
@@ -958,11 +962,12 @@ class HomeTabState extends State<HomeTab> {
   /// "Tu día": lo que toca hoy, ya decidido y en orden (descongelar, lo que
   /// caduca, hasta tres tareas, la compra). Cada línea se resuelve de un
   /// toque. Sin nada pendiente, la casa está al día.
-  Widget _dayCard() {
+  /// Líneas de "Tu día" por urgencia (ver [buildDayBrief]).
+  List<DayLine> _dayLines() {
     final tasksOn =
         _prefs.isModuleEnabled(HomeModule.tasks) &&
         _prefs.visibleCards.contains(DashboardCard.tasks);
-    final lines = buildDayBrief(
+    return buildDayBrief(
       today: DateTime.now(),
       defrost: [
         for (final i in _todayItems)
@@ -973,6 +978,21 @@ class HomeTabState extends State<HomeTab> {
       tasks: tasksOn ? _todayTasks : const [],
       shopping: _pendingShopping,
     );
+  }
+
+  /// Cuántas veces se ha pulsado "Más tarde": pasa a la siguiente línea.
+  int _nextSkips = 0;
+
+  /// La línea que va arriba como "Lo siguiente" (null si no hay nada).
+  DayLine? _nextLine(List<DayLine> lines) {
+    final candidates = lines
+        .where((l) => l.kind != DayLineKind.moreTasks)
+        .toList();
+    if (candidates.isEmpty) return null;
+    return candidates[_nextSkips % candidates.length];
+  }
+
+  Widget _dayCard(List<DayLine> lines) {
     if (lines.isEmpty) {
       return Semantics(
         label: '${context.l.homeAllDone}. ${context.l.homeAllDoneSub}',
@@ -1027,6 +1047,168 @@ class HomeTabState extends State<HomeTab> {
           ),
           const SizedBox(height: AppSpacing.xs),
           for (final line in lines) _dayLine(line),
+        ],
+      ),
+    );
+  }
+
+  /// "Lo siguiente": lo más urgente del día, en grande y con su acción.
+  /// "Más tarde" pasa a la siguiente cosa sin cambiar nada.
+  Widget _nextUpCard(DayLine line) {
+    final (
+      IconData icon,
+      String title,
+      String? sub,
+      VoidCallback? open,
+    ) = switch (line.kind) {
+      DayLineKind.task => (
+        Icons.check_circle_outline_rounded,
+        line.task!.title,
+        [
+          ?_taskWhen(line.task!),
+          context.l.homePoints(line.task!.points),
+        ].join(' · '),
+        widget.onNavigateToTasks,
+      ),
+      DayLineKind.defrost => (
+        Icons.ac_unit_rounded,
+        context.l.homeDefrost(line.names.join(', ')),
+        null,
+        _openMealPlan,
+      ),
+      DayLineKind.expiring => (
+        Icons.hourglass_bottom_rounded,
+        context.l.homeExpiringLine(line.names.join(', ')),
+        null,
+        widget.onNavigateToDespensa,
+      ),
+      DayLineKind.expired => (
+        Icons.delete_outline_rounded,
+        context.l.homeExpiredLine(line.count),
+        null,
+        widget.onNavigateToDespensa,
+      ),
+      DayLineKind.shopping => (
+        Icons.shopping_cart_outlined,
+        context.l.homeShoppingLine(line.count),
+        null,
+        widget.onNavigateToShopping,
+      ),
+      DayLineKind.moreTasks => (
+        Icons.more_horiz_rounded,
+        context.l.homeMoreTasks(line.count),
+        null,
+        widget.onNavigateToTasks,
+      ),
+    };
+    final onBrand = AppColors.onBrand;
+    final isTask = line.kind == DayLineKind.task;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.terracotta,
+        borderRadius: BorderRadius.circular(AppRadius.lg + 6),
+        boxShadow: AppElevation.level1,
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -40,
+            top: -50,
+            child: Container(
+              width: 190,
+              height: 190,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: onBrand.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            right: AppSpacing.xl,
+            top: AppSpacing.xl,
+            child: Icon(icon, size: 56, color: onBrand.withValues(alpha: 0.9)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l.homeNextUp.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                    color: onBrand.withValues(alpha: 0.85),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Padding(
+                  padding: const EdgeInsets.only(right: 76),
+                  child: Text(
+                    title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.headline.copyWith(
+                      color: onBrand,
+                      fontSize: 24,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+                if (sub != null && sub.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    sub,
+                    style: AppTextStyles.body.copyWith(
+                      color: onBrand.withValues(alpha: 0.9),
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: isTask
+                          ? () => _completeTaskFromDashboard(line.task!)
+                          : open,
+                      icon: Icon(
+                        isTask
+                            ? Icons.check_rounded
+                            : Icons.arrow_forward_rounded,
+                        size: 20,
+                      ),
+                      label: Text(
+                        isTask
+                            ? context.l.homeNextDone
+                            : context.l.homeNextOpen,
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: onBrand,
+                        foregroundColor: AppColors.terracottaPressed,
+                        minimumSize: const Size(64, 48),
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => setState(() => _nextSkips++),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: onBrand,
+                        side: BorderSide(
+                          color: onBrand.withValues(alpha: 0.5),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(context.l.homeNextLater),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

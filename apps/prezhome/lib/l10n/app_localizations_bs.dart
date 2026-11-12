@@ -410,6 +410,18 @@ class AppLocalizationsBs extends AppLocalizations {
   String get homeYourDay => 'Tvoj dan';
 
   @override
+  String get homeNextUp => 'Sljedeće';
+
+  @override
+  String get homeNextDone => 'Gotovo';
+
+  @override
+  String get homeNextLater => 'Kasnije';
+
+  @override
+  String get homeNextOpen => 'Otvori';
+
+  @override
   String homeDefrost(String names) {
     return 'Izvadi iz zamrzivača: $names';
   }
