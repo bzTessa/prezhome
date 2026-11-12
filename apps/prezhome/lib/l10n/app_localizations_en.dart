@@ -4518,6 +4518,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'comida': 'meal',
       'cucharada': 'tbsp',
       'cucharadita': 'tsp',
+      'pizca': 'pinch',
       'other': '$unit',
     });
     return '$_temp0';
@@ -4535,6 +4536,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'comida': 'meals',
       'cucharada': 'tbsp',
       'cucharadita': 'tsp',
+      'pizca': 'pinches',
       'other': '$unit',
     });
     return '$_temp0';

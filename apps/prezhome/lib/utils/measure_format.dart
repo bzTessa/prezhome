@@ -19,6 +19,8 @@
 ///     nunca inventamos un plural.
 library;
 
+import '../l10n/l10n.dart';
+
 /// Mapa de unidades contables conocidas (clave normalizada -> plural).
 const Map<String, String> _pluralByUnit = {
   'unidad': 'unidades',
@@ -40,6 +42,21 @@ const Map<String, String> _pluralByUnit = {
 
 /// Unidades invariables: nunca se pluralizan (ya son abreviaturas de
 /// peso/volumen o expresiones que no admiten número plural).
+/// Unidades que se muestran en el idioma de la app (unitOne/unitMany del ARB).
+/// En la base de datos siguen en español: la compra y la despensa las usan
+/// como claves.
+const Set<String> _translatedUnits = {
+  'unidad',
+  'cucharada',
+  'cucharadita',
+  'pizca',
+  'diente',
+  'loncha',
+  'lata',
+  'bote',
+  'bolsa',
+};
+
 const Set<String> _invariableUnits = {
   'g',
   'kg',
@@ -74,6 +91,20 @@ String pluralizeUnit(String unit, num quantity) {
   final trimmed = unit.trim();
   if (trimmed.isEmpty) return trimmed;
   final normalized = _normalizeUnit(trimmed);
+  if (normalized == 'al gusto' || normalized == 'a ojo') {
+    return appL10n.unitToTaste(normalized == 'a ojo' ? 'a_ojo' : 'al_gusto');
+  }
+  final key = _translatedUnits.contains(normalized)
+      ? normalized
+      : _pluralByUnit.entries
+            .where(
+              (e) => e.value == normalized && _translatedUnits.contains(e.key),
+            )
+            .firstOrNull
+            ?.key;
+  if (key != null) {
+    return quantity == 1 ? appL10n.unitOne(key) : appL10n.unitMany(key);
+  }
   if (_invariableUnits.contains(normalized)) return trimmed;
   if (quantity == 1) return trimmed;
   final plural = _pluralByUnit[normalized];
@@ -95,7 +126,12 @@ String formatQuantityUnit(num? quantity, String? unit) {
   final cleanUnit = unit?.trim() ?? '';
 
   // Sin cantidad: solo la expresión de la unidad ("al gusto", ...).
-  if (quantity == null) return cleanUnit;
+  if (quantity == null) {
+    final n = _normalizeUnit(cleanUnit);
+    return n == 'al gusto' || n == 'a ojo'
+        ? pluralizeUnit(cleanUnit, 0)
+        : cleanUnit;
+  }
 
   final qty = quantity % 1 == 0
       ? quantity.toStringAsFixed(0)

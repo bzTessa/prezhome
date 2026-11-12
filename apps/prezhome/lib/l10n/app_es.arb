@@ -2783,7 +2783,7 @@
   "voiceNoTimers": "No hay temporizadores.",
   "voiceStopped": "Parado.",
   "voiceNoIngredients": "No hay lista de ingredientes.",
-  "unitOne": "{unit, select, unidad{unidad} diente{diente} loncha{loncha} lata{lata} bote{bote} bolsa{bolsa} comida{comida} cucharada{cucharada} cucharadita{cucharadita} other{{unit}}}",
+  "unitOne": "{unit, select, unidad{unidad} diente{diente} loncha{loncha} lata{lata} bote{bote} bolsa{bolsa} comida{comida} cucharada{cucharada} cucharadita{cucharadita} pizca{pizca} other{{unit}}}",
   "@unitOne": {
     "placeholders": {
       "unit": {
@@ -2791,7 +2791,7 @@
       }
     }
   },
-  "unitMany": "{unit, select, unidad{unidades} diente{dientes} loncha{lonchas} lata{latas} bote{botes} bolsa{bolsas} comida{comidas} cucharada{cucharadas} cucharadita{cucharaditas} other{{unit}}}",
+  "unitMany": "{unit, select, unidad{unidades} diente{dientes} loncha{lonchas} lata{latas} bote{botes} bolsa{bolsas} comida{comidas} cucharada{cucharadas} cucharadita{cucharaditas} pizca{pizcas} other{{unit}}}",
   "@unitMany": {
     "placeholders": {
       "unit": {

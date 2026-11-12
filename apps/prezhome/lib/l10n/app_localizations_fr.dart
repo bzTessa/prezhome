@@ -4548,6 +4548,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'comida': 'repas',
       'cucharada': 'c. à soupe',
       'cucharadita': 'c. à café',
+      'pizca': 'pincée',
       'other': '$unit',
     });
     return '$_temp0';
@@ -4565,6 +4566,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'comida': 'repas',
       'cucharada': 'c. à soupe',
       'cucharadita': 'c. à café',
+      'pizca': 'pincées',
       'other': '$unit',
     });
     return '$_temp0';

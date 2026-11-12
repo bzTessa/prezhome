@@ -4462,6 +4462,7 @@ class AppLocalizationsBs extends AppLocalizations {
       'comida': 'obrok',
       'cucharada': 'kašika',
       'cucharadita': 'kašičica',
+      'pizca': 'prstohvat',
       'other': '$unit',
     });
     return '$_temp0';
@@ -4479,6 +4480,7 @@ class AppLocalizationsBs extends AppLocalizations {
       'comida': 'obroka',
       'cucharada': 'kašike',
       'cucharadita': 'kašičice',
+      'pizca': 'prstohvata',
       'other': '$unit',
     });
     return '$_temp0';

@@ -4528,6 +4528,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'comida': 'comida',
       'cucharada': 'cucharada',
       'cucharadita': 'cucharadita',
+      'pizca': 'pizca',
       'other': '$unit',
     });
     return '$_temp0';
@@ -4545,6 +4546,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'comida': 'comidas',
       'cucharada': 'cucharadas',
       'cucharadita': 'cucharaditas',
+      'pizca': 'pizcas',
       'other': '$unit',
     });
     return '$_temp0';
