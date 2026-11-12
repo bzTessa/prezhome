@@ -9,6 +9,7 @@ import 'stats_screen.dart';
 import 'l10n/l10n.dart';
 import 'models/country.dart';
 import 'models/dashboard_prefs.dart';
+import 'widgets/usage_mode_picker.dart';
 import 'models/supermarket.dart';
 import 'services/home_country.dart';
 import 'services/home_invites.dart';
@@ -708,11 +709,10 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                context.l.hhSettings,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
+              Text(context.l.hhSettings, style: AppTextStyles.headline),
               const SizedBox(height: 12),
+              UsageModePicker(onChanged: _reload),
+              const SizedBox(height: 20),
               Text(
                 context.l.hhAppearance,
                 style: TextStyle(fontWeight: FontWeight.w600),

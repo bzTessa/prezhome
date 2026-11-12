@@ -3876,6 +3876,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hhSettings => 'Home and settings';
 
   @override
+  String get modeTitle => 'How you use PrezHome';
+
+  @override
+  String get modeHint =>
+      'Choose what you want to see. You can change it anytime.';
+
+  @override
+  String get modeCustomHint =>
+      'You\'ve set it up your own way. Pick a mode to go back to one of these.';
+
+  @override
+  String get modeEssential => 'Essential';
+
+  @override
+  String get modeEssentialSub => 'Shopping, pantry and what to eat';
+
+  @override
+  String get modeKitchen => 'Kitchen';
+
+  @override
+  String get modeKitchenSub => 'The essentials plus batch cooking and calories';
+
+  @override
+  String get modeComplete => 'Complete';
+
+  @override
+  String get modeCompleteSub => 'Everything: shared chores, points and cooking';
+
+  @override
   String get hhAppearance => 'Appearance';
 
   @override

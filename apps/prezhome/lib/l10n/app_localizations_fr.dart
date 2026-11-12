@@ -3899,6 +3899,36 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hhSettings => 'Foyer et réglages';
 
   @override
+  String get modeTitle => 'Comment tu utilises PrezHome';
+
+  @override
+  String get modeHint =>
+      'Choisis ce que tu veux voir. Tu peux changer quand tu veux.';
+
+  @override
+  String get modeCustomHint =>
+      'Tu l\'as réglé à ta façon. Choisis un mode pour revenir à l\'un d\'eux.';
+
+  @override
+  String get modeEssential => 'Essentiel';
+
+  @override
+  String get modeEssentialSub => 'Courses, garde-manger et repas';
+
+  @override
+  String get modeKitchen => 'Cuisine';
+
+  @override
+  String get modeKitchenSub => 'L\'essentiel, plus cuisine en lot et calories';
+
+  @override
+  String get modeComplete => 'Complet';
+
+  @override
+  String get modeCompleteSub =>
+      'Tout : tâches à tour de rôle, points et cuisine';
+
+  @override
   String get hhAppearance => 'Apparence';
 
   @override

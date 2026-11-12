@@ -6066,6 +6066,60 @@ abstract class AppLocalizations {
   /// **'Hogar y ajustes'**
   String get hhSettings;
 
+  /// No description provided for @modeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo usas PrezHome'**
+  String get modeTitle;
+
+  /// No description provided for @modeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige qué quieres ver. Puedes cambiarlo cuando quieras.'**
+  String get modeHint;
+
+  /// No description provided for @modeCustomHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo has ajustado a tu manera. Elige un modo para volver a uno de estos.'**
+  String get modeCustomHint;
+
+  /// No description provided for @modeEssential.
+  ///
+  /// In es, this message translates to:
+  /// **'Esencial'**
+  String get modeEssential;
+
+  /// No description provided for @modeEssentialSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra, despensa y qué comer'**
+  String get modeEssentialSub;
+
+  /// No description provided for @modeKitchen.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocina'**
+  String get modeKitchen;
+
+  /// No description provided for @modeKitchenSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo esencial, más cocina en lote y calorías'**
+  String get modeKitchenSub;
+
+  /// No description provided for @modeComplete.
+  ///
+  /// In es, this message translates to:
+  /// **'Completo'**
+  String get modeComplete;
+
+  /// No description provided for @modeCompleteSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo: tareas por turnos, puntos y cocina'**
+  String get modeCompleteSub;
+
   /// No description provided for @hhAppearance.
   ///
   /// In es, this message translates to:
