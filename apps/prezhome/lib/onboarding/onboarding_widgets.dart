@@ -35,7 +35,7 @@ class OnboardingButton extends StatelessWidget {
         minimumSize: const Size.fromHeight(52),
         backgroundColor: AppColors.paper,
         foregroundColor: AppColors.ink,
-        side: BorderSide(color: AppColors.stroke, width: 1.5),
+        side: BorderSide.none,
         textStyle: AppTextStyles.title,
       ),
       child: Text(label),

@@ -414,6 +414,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeYourDay => 'Votre journée';
 
   @override
+  String get homeNextUp => 'Prochaine étape';
+
+  @override
+  String get homeNextDone => 'Fait';
+
+  @override
+  String get homeNextLater => 'Plus tard';
+
+  @override
+  String get homeNextOpen => 'Voir';
+
+  @override
   String homeDefrost(String names) {
     return 'À sortir du congélateur : $names';
   }

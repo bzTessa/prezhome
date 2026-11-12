@@ -556,7 +556,7 @@ class _PhotoMealScreenState extends State<PhotoMealScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card,
-        border: Border(top: BorderSide(color: AppColors.stroke, width: 1.5)),
+        border: Border(top: BorderSide(color: AppColors.line)),
       ),
       child: SafeArea(
         top: false,

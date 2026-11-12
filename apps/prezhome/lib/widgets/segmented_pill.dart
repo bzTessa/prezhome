@@ -46,7 +46,7 @@ class SegmentedPill extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.gold,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: AppColors.stroke, width: 1.5),
+                        border: AppElevation.border,
                       ),
                     ),
                   ),

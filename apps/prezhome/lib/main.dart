@@ -26,6 +26,10 @@ Future<void> main() async {
   for (final w in FontWeight.values.sublist(3, 8)) {
     GoogleFonts.plusJakartaSans(fontWeight: w);
   }
+  // Títulos en Fraunces (también va dentro de la app).
+  for (final w in const [FontWeight.w500, FontWeight.w600, FontWeight.w700]) {
+    GoogleFonts.fraunces(fontWeight: w);
+  }
   // Las preferencias locales se leen a la vez que arranca Supabase.
   final prefs = Future.wait([
     // Si fallara, la app arranca igual con la letra del sistema.

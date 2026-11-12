@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_theme.dart';
 
-/// Escala tipográfica SEMÁNTICA de PrezHome sobre Plus Jakarta Sans.
+/// Escala tipográfica SEMÁNTICA de PrezHome: títulos grandes en Fraunces
+/// (serifa cálida) y todo lo demás en Plus Jakarta Sans.
 ///
 /// Títulos apretados (tracking negativo, alto de línea 1.15) y cuerpo con aire
 /// (1.45).
@@ -22,20 +23,20 @@ class AppTextStyles {
   const AppTextStyles._();
 
   /// ~28 / bold — números y titulares grandes (cabeceras de pantalla).
-  static TextStyle get display => GoogleFonts.plusJakartaSans(
+  static TextStyle get display => GoogleFonts.fraunces(
     fontSize: 28,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w600,
     color: AppColors.ink,
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
     height: 1.15,
   );
 
   /// ~22 / bold — cabeceras de sección / AppBar.
-  static TextStyle get headline => GoogleFonts.plusJakartaSans(
+  static TextStyle get headline => GoogleFonts.fraunces(
     fontSize: 22,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w600,
     color: AppColors.ink,
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
     height: 1.15,
   );
 

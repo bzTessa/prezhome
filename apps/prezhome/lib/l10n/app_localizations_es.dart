@@ -413,6 +413,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeYourDay => 'Tu día';
 
   @override
+  String get homeNextUp => 'Lo siguiente';
+
+  @override
+  String get homeNextDone => 'Hecho';
+
+  @override
+  String get homeNextLater => 'Más tarde';
+
+  @override
+  String get homeNextOpen => 'Ver';
+
+  @override
   String homeDefrost(String names) {
     return 'Saca del congelador: $names';
   }

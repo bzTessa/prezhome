@@ -512,14 +512,14 @@ class MainShellState extends State<MainShell> {
           selectedIndex: _index,
           onSelected: _onDestinationSelected,
           showAllLabels: true,
-          // Píldora con trazo y sombra dura; la pestaña activa se desliza
+          // Píldora sin borde con sombra suave; la pestaña activa se desliza
           // con muelle. Sin translucidez: el contenido no pasa por debajo.
           backgroundColor: AppColors.card,
-          border: Border.all(color: AppColors.stroke, width: 2),
-          indicatorColor: AppColors.wood,
+          border: AppElevation.border,
+          indicatorColor: AppColors.goldBg,
           selectedColor: AppColors.ink,
           unselectedColor: AppColors.inkMuted,
-          shadow: AppElevation.level1,
+          shadow: AppElevation.level2,
           duration: AppMotion.slow,
           curve: AppMotion.springCurve(AppMotion.fluidDefault),
         ),
@@ -547,7 +547,7 @@ class _SideNav extends StatelessWidget {
       width: 232,
       decoration: BoxDecoration(
         color: AppColors.card,
-        border: Border(right: BorderSide(color: AppColors.stroke, width: 2)),
+        border: Border(right: BorderSide(color: AppColors.line)),
       ),
       child: SafeArea(
         right: false,

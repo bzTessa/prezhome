@@ -26,7 +26,7 @@ class OfflineBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.goldBg,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.stroke, width: 2),
+          border: AppElevation.border,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

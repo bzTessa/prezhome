@@ -663,7 +663,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.iconTile,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: AppColors.stroke, width: 1.5),
+                    border: AppElevation.border,
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: SpringValue(
@@ -988,7 +988,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
               decoration: BoxDecoration(
                 color: AppColors.iconTile,
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.stroke, width: 1.5),
+                border: AppElevation.border,
               ),
               clipBehavior: Clip.antiAlias,
               child: SpringValue(

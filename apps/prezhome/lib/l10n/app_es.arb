@@ -211,6 +211,10 @@
   "homeForToday": "Para hoy",
   "homeSeeAll": "Ver todo",
   "homeYourDay": "Tu día",
+  "homeNextUp": "Lo siguiente",
+  "homeNextDone": "Hecho",
+  "homeNextLater": "Más tarde",
+  "homeNextOpen": "Ver",
   "homeDefrost": "Saca del congelador: {names}",
   "@homeDefrost": {
     "placeholders": {

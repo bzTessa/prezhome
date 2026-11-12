@@ -1163,7 +1163,7 @@ class _Avatar extends StatelessWidget {
             decoration: BoxDecoration(
               color: bg,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.stroke, width: 1.5),
+              border: AppElevation.border,
             ),
             child: Text(
               initial,
@@ -1214,7 +1214,7 @@ class _KindBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: faded ? AppColors.line : bg,
         borderRadius: BorderRadius.circular(size * 0.32),
-        border: faded ? null : Border.all(color: AppColors.stroke, width: 1.5),
+        border: faded ? null : AppElevation.border,
       ),
       child: Icon(
         kind.icon,
@@ -1473,9 +1473,7 @@ class _TaskTile extends StatelessWidget {
                     height: 6,
                     decoration: BoxDecoration(
                       color: fg,
-                      border: Border(
-                        bottom: BorderSide(color: AppColors.stroke, width: 1.5),
-                      ),
+                      border: Border(bottom: BorderSide(color: AppColors.line)),
                     ),
                   ),
                   Padding(

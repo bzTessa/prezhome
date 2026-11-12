@@ -654,6 +654,30 @@ abstract class AppLocalizations {
   /// **'Tu día'**
   String get homeYourDay;
 
+  /// No description provided for @homeNextUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo siguiente'**
+  String get homeNextUp;
+
+  /// No description provided for @homeNextDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho'**
+  String get homeNextDone;
+
+  /// No description provided for @homeNextLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Más tarde'**
+  String get homeNextLater;
+
+  /// No description provided for @homeNextOpen.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver'**
+  String get homeNextOpen;
+
   /// No description provided for @homeDefrost.
   ///
   /// In es, this message translates to:
