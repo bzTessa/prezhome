@@ -24,6 +24,7 @@ import '../models/task.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
 import '../services/plan_repeats.dart';
+import '../services/recipe_photo_audit.dart';
 import '../services/taper_sync.dart';
 import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
@@ -405,6 +406,8 @@ class HomeTabState extends State<HomeTab> {
       // Lo usado en las comidas del plan sale también de la despensa.
       unawaited(PantryUsage.syncPlan(_client));
       unawaited(TaperSync.sync(_client));
+      // Fotos automáticas antiguas que no son del plato: se cambian o se quitan.
+      unawaited(RecipePhotoAudit.run(_client));
 
       final profileRow = await _profile();
       // Las comidas que se repiten, puestas en el plan de las 2 próximas semanas.

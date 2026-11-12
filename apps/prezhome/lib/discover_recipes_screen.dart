@@ -423,14 +423,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
           : <String>[];
       if (types.isEmpty && _mealType.isNotEmpty) types.add(_mealType);
 
-      // Foto automática (Pexels) para la idea guardada. Las ideas no traen foto
-      // manual, así que siempre lo intentamos. Degrada con elegancia: si falla o
-      // viene null, se guarda sin foto (se verá el placeholder cozy).
       final title = (r['title'] ?? l.recipe).toString();
-      final autoImageUrl = await RecipePhotoService(
-        _client,
-      ).find(title: title, titleEn: r['photo_query_en']?.toString());
-
       final servings = i(r['servings']) ?? 1;
 
       // Refinar la receta con Open Food Facts: cantidades prácticas (formatos
@@ -443,6 +436,17 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
                 .map((m) => Map<String, dynamic>.from(m))
                 .toList()
           : <Map<String, dynamic>>[];
+      // Foto automática (Unsplash/Pexels, revisada por IA) para la idea guardada. Las ideas no traen foto
+      // manual, así que siempre lo intentamos. Degrada con elegancia: si falla o
+      // viene null, se guarda sin foto (se verá el placeholder cozy).
+      final autoImageUrl = await RecipePhotoService(_client).find(
+        title: title,
+        titleEn: r['photo_query_en']?.toString(),
+        description: r['description']?.toString(),
+        ingredients: [
+          for (final m in rawIngredients) (m['name'] ?? '').toString(),
+        ],
+      );
       final supermarket = _supermarkets.isNotEmpty ? _supermarkets.first : '';
       final refined = await RecipeRefiner(FoodFactsService(_client)).refine(
         raw: rawIngredients,

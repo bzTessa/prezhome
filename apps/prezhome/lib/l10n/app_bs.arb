@@ -430,6 +430,8 @@
   "rdAutoPhotoHint": "Traži novu sliku po nazivu",
   "rdGallery": "Izaberi iz galerije",
   "rdNoBetterPhoto": "Za sada nisam našao bolju fotografiju",
+  "rdRemovePhoto": "Ukloni fotografiju",
+  "rdRemovePhotoHint": "Prikazat će se crtež jela",
   "rdUploadError": "Fotografija nije otpremljena",
   "rdShareText": "Šaljem ti svoj recept za {title} u PrezHome. U aplikaciji idi na Recepti, dodirni Dodaj recept pa S kodom: {code}",
   "rdSavedFreezer": "Sačuvano u zamrzivaču.",

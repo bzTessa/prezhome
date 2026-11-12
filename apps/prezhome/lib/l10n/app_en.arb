@@ -430,6 +430,8 @@
   "rdAutoPhotoHint": "Searches for a new image by name",
   "rdGallery": "Choose from gallery",
   "rdNoBetterPhoto": "I haven't found a better photo for now",
+  "rdRemovePhoto": "Remove photo",
+  "rdRemovePhotoHint": "The dish illustration will show instead",
   "rdUploadError": "Couldn't upload the photo",
   "rdShareText": "Here's my {title} recipe on PrezHome. In the app, go to Recipes, tap Add recipe and then With a code: {code}",
   "rdSavedFreezer": "Saved in the freezer.",

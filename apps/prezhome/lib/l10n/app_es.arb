@@ -1074,6 +1074,8 @@
   "rdAutoPhotoHint": "Busca una imagen nueva por el nombre",
   "rdGallery": "Elegir de la galería",
   "rdNoBetterPhoto": "No he encontrado otra foto mejor por ahora",
+  "rdRemovePhoto": "Quitar la foto",
+  "rdRemovePhotoHint": "Se verá el dibujo del plato",
   "rdUploadError": "No se pudo subir la foto",
   "rdShareText": "Te paso mi receta de {title} en PrezHome. En la app, ve a Recetas, toca Añadir receta y luego Con un código: {code}",
   "@rdShareText": {

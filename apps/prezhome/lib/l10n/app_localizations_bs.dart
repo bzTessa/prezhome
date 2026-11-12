@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -1696,6 +1697,12 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get rdNoBetterPhoto => 'Za sada nisam našao bolju fotografiju';
+
+  @override
+  String get rdRemovePhoto => 'Ukloni fotografiju';
+
+  @override
+  String get rdRemovePhotoHint => 'Prikazat će se crtež jela';
 
   @override
   String get rdUploadError => 'Fotografija nije otpremljena';

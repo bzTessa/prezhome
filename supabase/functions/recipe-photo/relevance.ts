@@ -179,11 +179,62 @@ export function unsplashText(r: Record<string, any>): string {
   return `${r?.alt_description ?? ""} ${r?.description ?? ""} ${tags}`;
 }
 
+// Palabras que son comida (claves y traducciones de ES_EN). Una foto tiene que
+// casar con al menos una: "Cheesecake Happy Hippo" casaba con una foto de un
+// hipopótamo porque "happy" y "hippo" eran dos palabras del título.
+const FOOD_WORDS = new Set<string>([
+  ...Object.keys(ES_EN),
+  ...Object.values(ES_EN).flat(),
+]);
+
+/** ¿Es comida alguna palabra del grupo? */
+function isFoodGroup(group: string[]): boolean {
+  return group.some((k) => FOOD_WORDS.has(k) || FOOD_WORDS.has(`${k}s`));
+}
+
+// Tipos de plato que, si la foto los nombra y la receta no, delatan otro plato
+// ("chicken caesar salad" para "Pollo al queso azul con arroz").
+const DISH_TYPES = [
+  "salad", "pizza", "burger", "sandwich", "soup", "sushi", "taco", "burrito",
+  "cake", "cupcake", "cookie", "pie", "pancake", "waffle", "donut", "ice cream",
+  "smoothie", "cocktail", "pasta", "spaghetti", "noodle", "ramen", "curry",
+  "steak", "omelet", "toast", "bread", "sausage", "hot dog", "dumpling",
+  "ensalada", "hamburguesa", "bocadillo", "sopa", "tarta", "galleta",
+];
+
+/** Tipos de plato que nombra la foto y la receta no (vacío = ninguno). */
+export function conflictingDishTypes(
+  photoText: string,
+  keywords: string[][],
+): string[] {
+  const text = ` ${norm(photoText).replace(/[^\p{L}\p{N}]+/gu, " ")} `;
+  const all = keywords.flat();
+  return DISH_TYPES.filter((t) => {
+    if (!text.includes(` ${t}`)) return false;
+    // "cheesecake" ya contiene "cake"; "pasta" vale para "macarrones".
+    return !all.some((k) => k.includes(t) || t.includes(k));
+  });
+}
+
+/**
+ * ¿Puede ser el plato? Menciona alguna palabra de comida de la receta y no
+ * nombra otro tipo de plato. Sirve de filtro previo y de respaldo sin IA.
+ */
+export function plausible(photoText: string, keywords: string[][]): boolean {
+  const text = norm(photoText);
+  const food = keywords.filter(isFoodGroup);
+  if (food.length > 0 && !food.some((g) => g.some((k) => text.includes(k)))) {
+    return false;
+  }
+  return conflictingDishTypes(photoText, keywords).length === 0;
+}
+
 /**
  * La foto más relevante de una lista (la primera en caso de empate, que es la
  * más popular para el banco). null si ninguna menciona al menos [minWords]
  * palabras distintas del plato (o todas, si el plato tiene menos): una sola
  * coincidencia suelta ("rice" para "Pollo con arroz") traía fotos de otro plato.
+ * Tampoco vale una foto que no sea [plausible].
  */
 export function pickRelevant<T>(
   items: T[],
@@ -192,8 +243,13 @@ export function pickRelevant<T>(
   minWords = 2,
 ): T | null {
   let best: T | null = null;
-  let bestScore = Math.max(0, Math.min(minWords, keywords.length) - 1);
+  // Las palabras que no son comida (marcas, "Happy Hippo") no cuentan para
+  // el mínimo: la foto de una tarta de queso no las va a nombrar.
+  const food = keywords.filter(isFoodGroup).length;
+  const needed = Math.min(minWords, food > 0 ? food : keywords.length);
+  let bestScore = Math.max(0, needed - 1);
   for (const item of items) {
+    if (!plausible(textOf(item), keywords)) continue;
     const s = relevance(textOf(item), keywords);
     if (s > bestScore) {
       best = item;

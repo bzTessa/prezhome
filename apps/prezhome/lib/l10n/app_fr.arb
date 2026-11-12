@@ -430,6 +430,8 @@
   "rdAutoPhotoHint": "Cherche une nouvelle image par le nom",
   "rdGallery": "Choisir dans la galerie",
   "rdNoBetterPhoto": "Je n'ai pas trouvé de meilleure photo pour l'instant",
+  "rdRemovePhoto": "Retirer la photo",
+  "rdRemovePhotoHint": "L'illustration du plat s'affichera",
   "rdUploadError": "Impossible d'envoyer la photo",
   "rdShareText": "Voici ma recette de {title} sur PrezHome. Dans l'appli, va dans Recettes, touche Ajouter une recette puis Avec un code : {code}",
   "rdSavedFreezer": "Rangé au congélateur.",
