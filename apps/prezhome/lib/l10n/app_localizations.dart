@@ -846,6 +846,18 @@ abstract class AppLocalizations {
   /// **'Elegir supermercado'**
   String get shopPickStore;
 
+  /// No description provided for @shopStoreModeOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Estoy en la tienda'**
+  String get shopStoreModeOn;
+
+  /// No description provided for @shopStoreModeOff.
+  ///
+  /// In es, this message translates to:
+  /// **'Salir del modo tienda'**
+  String get shopStoreModeOff;
+
   /// No description provided for @shopAddFromPlan.
   ///
   /// In es, this message translates to:
@@ -1403,6 +1415,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'¿Qué cocino con esto?'**
   String get panWhatToCook;
+
+  /// No description provided for @panReviewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Repaso rápido · {position} de {total}'**
+  String panReviewTitle(int position, int total);
+
+  /// No description provided for @panReviewAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Sigue bien: {name}?'**
+  String panReviewAsk(String name);
+
+  /// No description provided for @panReviewExpiredAgo.
+  ///
+  /// In es, this message translates to:
+  /// **'Caducó hace {days, plural, =1{1 día} other{{days} días}}'**
+  String panReviewExpiredAgo(int days);
+
+  /// No description provided for @panReviewOk.
+  ///
+  /// In es, this message translates to:
+  /// **'Sigue bien'**
+  String get panReviewOk;
+
+  /// No description provided for @panReviewUsed.
+  ///
+  /// In es, this message translates to:
+  /// **'Se acabó'**
+  String get panReviewUsed;
+
+  /// No description provided for @panReviewThrown.
+  ///
+  /// In es, this message translates to:
+  /// **'A la basura'**
+  String get panReviewThrown;
 
   /// No description provided for @panExpiringHeader.
   ///

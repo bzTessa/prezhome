@@ -34,6 +34,8 @@ import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
+import 'widgets/kitchen/pantry_review_card.dart';
+import 'theme/app_motion.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'discover_recipes_screen.dart';
 import 'l10n/l10n.dart';
@@ -835,6 +837,79 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
+  /// Productos del repaso rápido a los que ya se ha respondido (o que se
+  /// han dejado para luego) en esta sesión.
+  final Set<String> _reviewed = {};
+
+  /// Caducados con fecha, para el repaso rápido (el más antiguo primero).
+  List<InventoryItem> _toReview(List<InventoryItem> items) {
+    final list = [
+      for (final i in items)
+        if (_tracksExpiry(i) &&
+            i.expirationDate != null &&
+            i.expiryStatus == ExpiryStatus.caducado)
+          i,
+    ]..sort((a, b) => a.expirationDate!.compareTo(b.expirationDate!));
+    return list;
+  }
+
+  /// "Sigue bien": le da tres días más y sale del repaso.
+  Future<void> _stillGood(InventoryItem item) async {
+    final now = DateTime.now();
+    final next = DateTime(now.year, now.month, now.day + 3);
+    setState(() => _reviewed.add(item.id));
+    try {
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: {'expiration_date': next.toIso8601String().split('T').first},
+          nowMillis: now.millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(friendlyError(e, context.l.couldNotUpdate)),
+            backgroundColor: AppColors.expired,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _reviewCard(List<InventoryItem> items) {
+    final all = _toReview(items);
+    final pending = all.where((i) => !_reviewed.contains(i.id)).toList();
+    if (pending.isEmpty) return const SizedBox.shrink();
+    final item = pending.first;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: AnimatedSwitcher(
+        duration: AppMotion.normal,
+        child: PantryReviewCard(
+          key: ValueKey(item.id),
+          item: item,
+          position: all.length - pending.length + 1,
+          total: all.length,
+          onStillGood: () => _stillGood(item),
+          onUsedUp: () {
+            setState(() => _reviewed.add(item.id));
+            _consume(item);
+          },
+          onThrown: () {
+            HapticFeedback.mediumImpact();
+            setState(() => _reviewed.add(item.id));
+            _deleteItem(item);
+          },
+        ),
+      ),
+    );
+  }
+
   static bool _tracksExpiry(InventoryItem i) =>
       i.itemType == 'comida' && i.category != 'Especias';
 
@@ -903,6 +978,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         112,
       ),
       children: [
+        _reviewCard(items),
         KitchenZonesGrid(
           zones: zones,
           selected: zone,
