@@ -38,7 +38,20 @@
 // ============================================================================
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { keywordsFor, pickRelevant, unsplashText } from "./relevance.ts";
+import {
+  conflictingDishTypes,
+  keywordsFor,
+  pickRelevant,
+  plausible,
+  relevance,
+  unsplashText,
+} from "./relevance.ts";
+import {
+  allowedPhotoUrl,
+  chooseDishPhoto,
+  type Dish,
+  photoQueries,
+} from "./vision.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -138,146 +151,194 @@ function dedupe(searches: PhotoSearch[]): PhotoSearch[] {
   });
 }
 
-// --- Unsplash ---------------------------------------------------------------
-// Prueba las búsquedas en orden y devuelve la primera foto que NO esté en
-// `exclude` (las que la app ya mostró: así "Otra foto" trae una distinta).
-// Cualquier excepción de red, respuesta no OK o ausencia de resultados se
-// degrada a { url: null }: NUNCA lanza hacia el flujo principal.
-async function searchUnsplash(
-  searches: PhotoSearch[],
-  key: string,
-  exclude: Set<string>,
-  keywords: string[][],
-): Promise<{ url: string | null; [k: string]: unknown }> {
-  for (const s of searches) {
-    const result = await searchUnsplashOnce(s, key, exclude, keywords);
-    if (result.url) return result;
-  }
-  return { url: null };
+// --- Candidatas -------------------------------------------------------------
+// Antes nos quedábamos con la primera foto cuyo texto mencionaba el plato; ahora
+// juntamos varias candidatas de las primeras búsquedas y elegimos entre todas:
+// con Gemini (mira las fotos) o, si no hay, por el texto (relevance.ts).
+interface Candidate {
+  url: string; // foto que se guarda en la receta
+  thumb: string; // versión pequeña para que Gemini la mire
+  text: string; // alt, descripción y etiquetas del banco
+  provider: "unsplash" | "pexels";
+  // deno-lint-ignore no-explicit-any
+  raw: Record<string, any>;
 }
 
-// Una sola búsqueda en Unsplash (10 resultados, para poder saltar los
-// excluidos).
-async function searchUnsplashOnce(
+// Cuántas candidatas mira Gemini y cuántas búsquedas hacemos como mucho (la
+// cuota de Unsplash es por petición).
+const MAX_CANDIDATES = 8;
+const MAX_SEARCHES = 3;
+
+async function unsplashCandidates(
   search: PhotoSearch,
   key: string,
-  exclude: Set<string>,
-  keywords: string[][],
-): Promise<{ url: string | null; [k: string]: unknown }> {
+): Promise<Candidate[]> {
   try {
     const url =
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(search.query)}` +
       `&lang=${search.lang}&per_page=10&orientation=landscape&content_filter=high`;
     const res = await fetch(url, {
       headers: { Authorization: `Client-ID ${key}` },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {
       console.error("Unsplash error:", res.status, await res.text());
-      return { url: null };
+      return [];
     }
     const data = await res.json();
     const results = Array.isArray(data?.results) ? data.results : [];
-    // No la primera sin más: la que su descripción dice que es el plato.
-    const first = pickRelevant(
-      results.filter((r: Record<string, any>) => {
-        const u = r?.urls?.regular ?? r?.urls?.small;
-        return typeof u === "string" && !exclude.has(u);
-      }),
-      unsplashText,
-      keywords,
-    ) as Record<string, any> | null;
-    if (!first) return { url: null };
-    const photoUrl: string = first.urls.regular ?? first.urls.small;
-
-    const photographerName = first?.user?.name ?? null;
-    const photographerUrl = first?.user?.links?.html ?? null;
-    const unsplashUrl = "https://unsplash.com";
-
-    // Requisito de la API de Unsplash: hay que "disparar" el endpoint de
-    // descarga (links.download_location) cuando se usa/selecciona una foto.
-    // Es BEST-EFFORT y no retiene la respuesta: se acota con un timeout corto
-    // (~2.5s) y, si existe `EdgeRuntime.waitUntil`, se lanza en segundo plano.
-    // Un fallo o timeout del disparo NUNCA afecta a la foto devuelta.
-    const downloadLocation = first?.links?.download_location;
-    if (typeof downloadLocation === "string" && downloadLocation.length > 0) {
-      const triggerDownload = async () => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2500);
-        try {
-          await fetch(downloadLocation, {
-            headers: { Authorization: `Client-ID ${key}` },
-            signal: controller.signal,
-          });
-        } catch (e) {
-          console.error("Unsplash download trigger exception:", e);
-        } finally {
-          clearTimeout(timeout);
-        }
-      };
-
-      const edgeRuntime = (globalThis as {
-        EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
-      }).EdgeRuntime;
-      if (edgeRuntime && typeof edgeRuntime.waitUntil === "function") {
-        edgeRuntime.waitUntil(triggerDownload());
-      } else {
-        await triggerDownload();
-      }
-    }
-
-    return {
-      url: photoUrl,
-      provider: "unsplash",
-      attribution: {
-        photographer: photographerName,
-        photographerUrl,
-        source: "Unsplash",
-        sourceUrl: unsplashUrl,
-      },
-    };
+    // deno-lint-ignore no-explicit-any
+    return results.flatMap((r: Record<string, any>) => {
+      const u = r?.urls?.regular ?? r?.urls?.small;
+      if (typeof u !== "string") return [];
+      return [{
+        url: u,
+        thumb: r?.urls?.small ?? u,
+        text: unsplashText(r),
+        provider: "unsplash" as const,
+        raw: r,
+      }];
+    });
   } catch (e) {
     console.error("Unsplash fetch exception:", e);
-    return { url: null };
+    return [];
   }
 }
 
-// --- Pexels (respaldo con clave) --------------------------------------------
-// Mismo contrato que Unsplash. Pexels interpreta el idioma con `locale`.
-async function searchPexels(
-  searches: PhotoSearch[],
+async function pexelsCandidates(
+  search: PhotoSearch,
   key: string,
+): Promise<Candidate[]> {
+  try {
+    const locale = search.lang === "es" ? "es-ES" : "en-US";
+    const url =
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(search.query)}` +
+      `&locale=${locale}&per_page=10&orientation=landscape`;
+    const res = await fetch(url, {
+      headers: { Authorization: key },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) {
+      console.error("Pexels error:", res.status, await res.text());
+      return [];
+    }
+    const data = await res.json();
+    const photos = Array.isArray(data?.photos) ? data.photos : [];
+    // deno-lint-ignore no-explicit-any
+    return photos.flatMap((p: Record<string, any>) => {
+      const u = p?.src?.large || p?.src?.medium || p?.src?.original;
+      if (typeof u !== "string") return [];
+      return [{
+        url: u,
+        thumb: p?.src?.medium ?? u,
+        text: `${p?.alt ?? ""}`,
+        provider: "pexels" as const,
+        raw: p,
+      }];
+    });
+  } catch (e) {
+    console.error("Pexels fetch exception:", e);
+    return [];
+  }
+}
+
+// Junta candidatas de las primeras búsquedas, sin repetidas ni excluidas.
+// Con Gemini, las que el texto ya descarta (otro tipo de plato, nada de comida
+// de la receta) no se le enseñan; las demás van ordenadas por relevancia.
+async function gather(
+  searches: PhotoSearch[],
+  fetchOne: (s: PhotoSearch) => Promise<Candidate[]>,
   exclude: Set<string>,
   keywords: string[][],
-): Promise<string | null> {
-  for (const s of searches) {
-    try {
-      const locale = s.lang === "es" ? "es-ES" : "en-US";
-      const url =
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(s.query)}` +
-        `&locale=${locale}&per_page=10&orientation=landscape`;
-      const res = await fetch(url, { headers: { Authorization: key } });
-      if (!res.ok) {
-        console.error("Pexels error:", res.status, await res.text());
-        continue;
-      }
-      const data = await res.json();
-      const photos = Array.isArray(data?.photos) ? data.photos : [];
-      const srcOf = (p: Record<string, any>) =>
-        p?.src?.large || p?.src?.medium || p?.src?.original;
-      const best = pickRelevant(
-        photos.filter((p: Record<string, any>) => {
-          const u = srcOf(p);
-          return typeof u === "string" && !exclude.has(u);
-        }),
-        (p: Record<string, any>) => `${p?.alt ?? ""}`,
-        keywords,
-      );
-      if (best) return srcOf(best);
-    } catch (e) {
-      console.error("Pexels fetch exception:", e);
+): Promise<Candidate[]> {
+  const seen = new Set<string>(exclude);
+  const out: Candidate[] = [];
+  for (const s of searches.slice(0, MAX_SEARCHES)) {
+    for (const c of await fetchOne(s)) {
+      if (seen.has(c.url)) continue;
+      seen.add(c.url);
+      out.push(c);
+    }
+    if (out.filter((c) => plausible(c.text, keywords)).length >= MAX_CANDIDATES) {
+      break;
     }
   }
-  return null;
+  return out;
+}
+
+// Elige la foto: Gemini mira las plausibles (o, si el texto no da ninguna,
+// las primeras: a veces el alt es pobre). Sin Gemini, filtro por texto.
+async function choose(
+  candidates: Candidate[],
+  keywords: string[][],
+  dish: Dish,
+  geminiKey: string | undefined,
+): Promise<{ pick: Candidate | null; verified: boolean }> {
+  if (candidates.length === 0) return { pick: null, verified: false };
+  if (geminiKey) {
+    const ranked = candidates
+      .map((c, i) => ({ c, i, ok: plausible(c.text, keywords), s: relevance(c.text, keywords) }))
+      .sort((a, b) => Number(b.ok) - Number(a.ok) || b.s - a.s || a.i - b.i)
+      .filter((x) => !conflictingDishTypes(x.c.text, keywords).length)
+      .slice(0, MAX_CANDIDATES)
+      .map((x) => x.c);
+    if (ranked.length === 0) return { pick: null, verified: true };
+    const best = await chooseDishPhoto(geminiKey, dish, ranked.map((c) => c.thumb));
+    if (best !== null) {
+      return { pick: best >= 0 ? ranked[best] : null, verified: true };
+    }
+    // Gemini no ha respondido: seguimos con el filtro por texto.
+  }
+  return {
+    pick: pickRelevant(candidates, (c) => c.text, keywords),
+    verified: false,
+  };
+}
+
+// Requisito de la API de Unsplash: hay que "disparar" el endpoint de descarga
+// (links.download_location) cuando se usa una foto. Best-effort y en segundo
+// plano si se puede: un fallo NUNCA afecta a la foto devuelta.
+async function triggerUnsplashDownload(
+  // deno-lint-ignore no-explicit-any
+  raw: Record<string, any>,
+  key: string,
+): Promise<void> {
+  const downloadLocation = raw?.links?.download_location;
+  if (typeof downloadLocation !== "string" || downloadLocation.length === 0) {
+    return;
+  }
+  const trigger = async () => {
+    try {
+      await fetch(downloadLocation, {
+        headers: { Authorization: `Client-ID ${key}` },
+        signal: AbortSignal.timeout(2500),
+      });
+    } catch (e) {
+      console.error("Unsplash download trigger exception:", e);
+    }
+  };
+  const edgeRuntime = (globalThis as {
+    EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
+  }).EdgeRuntime;
+  if (edgeRuntime && typeof edgeRuntime.waitUntil === "function") {
+    edgeRuntime.waitUntil(trigger());
+  } else {
+    await trigger();
+  }
+}
+
+function unsplashResult(c: Candidate, verified: boolean) {
+  return {
+    url: c.url,
+    provider: "unsplash",
+    verified,
+    attribution: {
+      photographer: c.raw?.user?.name ?? null,
+      photographerUrl: c.raw?.user?.links?.html ?? null,
+      source: "Unsplash",
+      sourceUrl: "https://unsplash.com",
+    },
+  };
 }
 
 // --- Open Food Facts (RESPALDO keyless) -------------------------------------
@@ -327,6 +388,23 @@ async function searchOFFPhoto(query: string): Promise<string | null> {
     console.error("OFF fallback fetch exception:", e);
     return null;
   }
+}
+
+// Versión pequeña de una foto ya guardada, para que Gemini la mire rápido.
+function thumbOf(url: string): string {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "images.unsplash.com") {
+      u.searchParams.set("w", "400");
+      return u.toString();
+    }
+    if (u.hostname === "images.pexels.com") {
+      u.searchParams.set("h", "350");
+      u.searchParams.set("w", "525");
+      return u.toString();
+    }
+  } catch (_) { /* URL rara: se usa tal cual */ }
+  return url;
 }
 
 Deno.serve(async (req: Request) => {
@@ -385,9 +463,14 @@ Deno.serve(async (req: Request) => {
     //    - query: título del plato (o nombre del alimento) en español.
     //    - query_en: opcional, el mismo nombre en inglés (lo da la IA al
     //      generar/importar recetas). Mejora mucho el acierto.
+    //    - description / ingredients: opcionales; Gemini los usa para saber
+    //      qué plato es al buscar y al mirar las fotos.
     //    - mode: 'dish' (receta, por defecto) o 'ingredient' (despensa).
     //    - exclude: opcional, URLs ya mostradas; se devuelve otra distinta
     //      (botón "Otra foto" de la app).
+    //    - verify_url: opcional; no busca, solo dice si esa foto es del plato
+    //      ({ ok: true|false|null }). La app lo usa para revisar las fotos
+    //      automáticas que ya tienen las recetas.
     const body = await req.json().catch(() => ({}));
     const query = (body?.query ?? "").toString().trim();
     const queryEn = (body?.query_en ?? "").toString().trim();
@@ -400,7 +483,28 @@ Deno.serve(async (req: Request) => {
     if (!query) {
       return json({ error: "Falta el nombre del plato" }, 400);
     }
-    const searches = buildFoodSearches(query, queryEn, mode);
+    const dish: Dish = {
+      title: query,
+      description: (body?.description ?? "").toString().trim().slice(0, 500),
+      ingredients: Array.isArray(body?.ingredients)
+        ? body.ingredients
+          .map((i: unknown) => String(i ?? "").trim())
+          .filter(Boolean)
+          .slice(0, 15)
+        : [],
+    };
+    const geminiKey = Deno.env.get("GEMINI_API_KEY") || undefined;
+
+    // Solo revisar una foto que ya tiene la receta.
+    const verifyUrl = (body?.verify_url ?? "").toString().trim();
+    if (verifyUrl) {
+      if (!geminiKey || !allowedPhotoUrl(verifyUrl)) return json({ ok: null });
+      const best = await chooseDishPhoto(geminiKey, dish, [
+        thumbOf(verifyUrl),
+      ]);
+      return json({ ok: best === null ? null : best === 0 });
+    }
+
     // Palabras que la descripción de la foto debe mencionar; si ninguna foto
     // las menciona, mejor sin foto (ilustración) que una al azar.
     // Un alimento suelto (despensa) vale con que la foto nombre cualquiera de
@@ -408,18 +512,48 @@ Deno.serve(async (req: Request) => {
     const groups = keywordsFor(query, queryEn);
     const keywords = mode === "ingredient" ? [groups.flat()] : groups;
 
+    // Para un plato, Gemini escribe primero búsquedas en inglés que describen
+    // cómo se ve, sin marcas ("Happy Hippo" -> "chocolate cheesecake").
+    let searches = buildFoodSearches(query, queryEn, mode);
+    if (mode !== "ingredient" && geminiKey) {
+      const ai = await photoQueries(geminiKey, dish);
+      if (ai) {
+        searches = dedupe([
+          ...ai.map((q) => ({ query: q, lang: "en" as const })),
+          ...searches,
+        ]);
+      }
+    }
+    // Despensa: un alimento suelto, la foto no necesita que la mire Gemini.
+    const judge = mode === "ingredient" ? undefined : geminiKey;
+
     // 4. Selección de proveedor. Unsplash es el PRINCIPAL; Pexels el RESPALDO.
     //    Si no hay ninguna clave, degradar: { url: null } (NUNCA 500).
     const unsplashKey = Deno.env.get("UNSPLASH_ACCESS_KEY");
     const pexelsKey = Deno.env.get("PEXELS_API_KEY");
 
     if (unsplashKey) {
-      const result = await searchUnsplash(searches, unsplashKey, exclude, keywords);
-      if (result.url) return json(result);
+      const candidates = await gather(
+        searches,
+        (s) => unsplashCandidates(s, unsplashKey),
+        exclude,
+        keywords,
+      );
+      const { pick, verified } = await choose(candidates, keywords, dish, judge);
+      if (pick) {
+        await triggerUnsplashDownload(pick.raw, unsplashKey);
+        return json(unsplashResult(pick, verified));
+      }
     }
     if (pexelsKey) {
-      const url = await searchPexels(searches, pexelsKey, exclude, keywords);
-      if (url) return json({ url, provider: "pexels" });
+      const candidates = await gather(
+        searches,
+        (s) => pexelsCandidates(s, pexelsKey),
+        exclude,
+        keywords,
+      );
+      const { pick, verified } = await choose(candidates, keywords, dish, judge);
+      if (pick) return json({ url: pick.url, provider: "pexels", verified });
     }
 
     // 5. Open Food Facts SOLO para alimentos sueltos (despensa): da la foto

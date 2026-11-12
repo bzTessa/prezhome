@@ -434,6 +434,8 @@
   "rdAutoPhotoHint": "Sucht ein neues Bild nach dem Namen",
   "rdGallery": "Aus der Galerie wählen",
   "rdNoBetterPhoto": "Ich habe vorerst kein besseres Foto gefunden",
+  "rdRemovePhoto": "Foto entfernen",
+  "rdRemovePhotoHint": "Stattdessen wird die Zeichnung des Gerichts gezeigt",
   "rdUploadError": "Foto konnte nicht hochgeladen werden",
   "rdShareText": "Hier ist mein Rezept für {title} in PrezHome. Geh in der App zu Rezepte, tippe auf Rezept hinzufügen und dann Mit einem Code: {code}",
   "rdSavedFreezer": "Im Gefrierschrank gespeichert.",

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import 'utils/money.dart';
 
 import 'add_recipe_screen.dart';
@@ -223,6 +224,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               title: Text(context.l.rdGallery),
               onTap: () => Navigator.of(ctx).pop('gallery'),
             ),
+            if (_recipe.imageUrl != null)
+              ListTile(
+                leading: Icon(
+                  Icons.hide_image_outlined,
+                  color: AppColors.woodDark,
+                ),
+                title: Text(context.l.rdRemovePhoto),
+                subtitle: Text(context.l.rdRemovePhotoHint),
+                onTap: () => Navigator.of(ctx).pop('remove'),
+              ),
             const SizedBox(height: 8),
           ],
         ),
@@ -233,6 +244,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       await _regeneratePhoto();
     } else if (action == 'gallery') {
       await _pickPhotoFromGallery();
+    } else if (action == 'remove') {
+      await _removePhoto();
     }
   }
 
@@ -245,9 +258,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       // (antes devolvía siempre el mismo primer resultado).
       final current = _recipe.externalImageUrl;
       if (current != null) _seenPhotoUrls.add(current);
-      final url = await RecipePhotoService(
-        _client,
-      ).find(title: _recipe.title, exclude: _seenPhotoUrls);
+      final ings = await _ingredientsFuture.catchError((_) => <Ingredient>[]);
+      final url = await RecipePhotoService(_client).find(
+        title: _recipe.title,
+        description: _recipe.description,
+        ingredients: [for (final i in ings) i.name],
+        exclude: _seenPhotoUrls,
+      );
       if (url != null) _seenPhotoUrls.add(url);
       if (!mounted) return;
       if (url == null) {
@@ -261,6 +278,30 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       await _client
           .from('recipes')
           .update({'image_url': url, 'image_path': null})
+          .eq('id', _recipe.id);
+      await _refreshRecipe();
+      _changed = true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(friendlyError(e, context.l.couldNotChangePhoto)),
+            backgroundColor: AppColors.expired,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _changingPhoto = false);
+    }
+  }
+
+  /// Quita la foto (automática o subida): la receta vuelve a su dibujo.
+  Future<void> _removePhoto() async {
+    setState(() => _changingPhoto = true);
+    try {
+      await _client
+          .from('recipes')
+          .update({'image_url': null, 'image_path': null})
           .eq('id', _recipe.id);
       await _refreshRecipe();
       _changed = true;

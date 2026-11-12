@@ -434,6 +434,8 @@
   "rdAutoPhotoHint": "Procura uma imagem nova pelo nome",
   "rdGallery": "Escolher da galeria",
   "rdNoBetterPhoto": "Não encontrei outra foto melhor por agora",
+  "rdRemovePhoto": "Remover a foto",
+  "rdRemovePhotoHint": "Verá a ilustração do prato",
   "rdUploadError": "Não foi possível carregar a foto",
   "rdShareText": "Envio-te a minha receita de {title} no PrezHome. Na app, vai a Receitas, toca em Adicionar receita e depois Com um código: {code}",
   "rdSavedFreezer": "Guardado no congelador.",

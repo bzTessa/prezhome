@@ -2712,6 +2712,18 @@ abstract class AppLocalizations {
   /// **'No he encontrado otra foto mejor por ahora'**
   String get rdNoBetterPhoto;
 
+  /// No description provided for @rdRemovePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar la foto'**
+  String get rdRemovePhoto;
+
+  /// No description provided for @rdRemovePhotoHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Se verá el dibujo del plato'**
+  String get rdRemovePhotoHint;
+
   /// No description provided for @rdUploadError.
   ///
   /// In es, this message translates to:

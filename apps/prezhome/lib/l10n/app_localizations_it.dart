@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -1713,6 +1714,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get rdNoBetterPhoto => 'Per ora non ho trovato una foto migliore';
+
+  @override
+  String get rdRemovePhoto => 'Rimuovi la foto';
+
+  @override
+  String get rdRemovePhotoHint => 'Si vedrà il disegno del piatto';
 
   @override
   String get rdUploadError => 'Impossibile caricare la foto';

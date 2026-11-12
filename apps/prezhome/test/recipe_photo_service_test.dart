@@ -32,5 +32,31 @@ void main() {
       );
       expect(body['exclude'], ['https://a', 'https://b']);
     });
+
+    test('manda descripción e ingredientes sin vacíos ni repetidos', () {
+      final body = RecipePhotoService.requestBody(
+        title: 'Cheesecake Happy Hippo',
+        description: ' Tarta de queso con chocolate ',
+        ingredients: ['queso crema', ' ', 'queso crema', 'chocolate'],
+      );
+      expect(body['description'], 'Tarta de queso con chocolate');
+      expect(body['ingredients'], ['queso crema', 'chocolate']);
+    });
+
+    test('verify_url solo cuando se revisa una foto', () {
+      expect(
+        RecipePhotoService.requestBody(
+          title: 'Tortilla',
+        ).containsKey('verify_url'),
+        isFalse,
+      );
+      expect(
+        RecipePhotoService.requestBody(
+          title: 'Tortilla',
+          verifyUrl: 'https://images.unsplash.com/x',
+        )['verify_url'],
+        'https://images.unsplash.com/x',
+      );
+    });
   });
 }

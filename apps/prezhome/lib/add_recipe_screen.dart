@@ -751,9 +751,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           title.isNotEmpty;
       if (needsAutoPhoto) {
         // No bloquea el alta: si no hay foto, se guarda sin ella.
-        autoImageUrl = await RecipePhotoService(
-          _client,
-        ).find(title: title, titleEn: _photoQueryEn);
+        autoImageUrl = await RecipePhotoService(_client).find(
+          title: title,
+          titleEn: _photoQueryEn,
+          description: _descriptionController.text,
+          ingredients: [for (final i in _ingredients) i.name.text],
+        );
       }
 
       // Raciones: las que se escriban; si no, se deducen del peso total.
