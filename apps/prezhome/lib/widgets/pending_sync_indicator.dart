@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
@@ -99,7 +100,7 @@ class _PendingSyncIndicatorState extends State<PendingSyncIndicator>
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  'Guardado. Se sincronizará al volver la conexión.',
+                  context.l.syncSaved,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

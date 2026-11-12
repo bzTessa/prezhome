@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
+import '../l10n/l10n.dart';
 
 /// Esqueletos de carga con la MISMA forma que la pantalla que va a salir:
 /// mismas medidas, radios, márgenes y columnas. Las tarjetas son planas (sin
@@ -43,7 +44,7 @@ class _SkeletonState extends State<Skeleton>
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Cargando',
+      label: context.l.loading,
       child: ExcludeSemantics(
         child: FadeTransition(
           opacity: Tween(

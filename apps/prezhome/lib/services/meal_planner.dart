@@ -38,6 +38,14 @@ class MealPlanner {
 
   /// Genera un plan para [days] días a partir de [startDate].
   ///
+  /// Peso por tiempo con "cocinar poco": rápidas (≤ 20 min) ×3, largas
+  /// (> 45 min) ×0,3; sin tiempo conocido, igual.
+  static double _quickFactor(int? minutes) {
+    if (minutes == null || minutes <= 0) return 1;
+    if (minutes <= 20) return 3;
+    return minutes > 45 ? 0.3 : 1;
+  }
+
   /// [mealTypes]: comidas activas a planificar (ej. ['lunch','dinner']).
   /// [recipes]: recetas disponibles del hogar.
   /// [scoreByRecipe]: peso extra por receta (>0 sube prob., <0 baja). Opcional.
@@ -111,6 +119,8 @@ class MealPlanner {
           frozenBoost: frozenBoost,
           extra: (r) {
             var w = _repeatFactor(uses[r.id] ?? 0, batch);
+            // Cocinar poco: mejor lo rápido, peor lo que lleva mucho rato.
+            if (energyLevel <= 0) w *= _quickFactor(r.totalTimeMinutes);
             // Cocinar en tandas para semanas: mejor lo que aguanta congelado,
             // para ir llenando el congelador de cara al mes.
             if (batch && days > 7 && r.freezesWell) w *= 1.6;

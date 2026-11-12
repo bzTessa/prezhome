@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'l10n/l10n.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -84,13 +85,9 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const AddInventoryItemScreen()),
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No encontré ese código en Open Food Facts, puedes añadirlo a mano.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.bcNotFound)));
     }
   }
 
@@ -98,7 +95,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Escanear código')),
+      appBar: AppBar(title: Text(context.l.bcTitle)),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -118,7 +115,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                   CircularProgressIndicator(color: AppColors.cream),
                   SizedBox(height: AppSpacing.md),
                   Text(
-                    'Buscando el producto…',
+                    context.l.bcSearching,
                     style: TextStyle(color: AppColors.cream),
                   ),
                 ],
@@ -141,11 +138,7 @@ class _ScannerError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
-    final message = denied
-        ? 'Necesito permiso para usar la cámara y poder escanear el código. '
-              'Puedes concederlo en los ajustes del teléfono.'
-        : 'No pude abrir la cámara para escanear. Puedes añadir el producto a '
-              'mano desde el inventario.';
+    final message = denied ? context.l.bcNoPermission : context.l.bcCameraError;
     return Container(
       color: AppColors.cream,
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -167,7 +160,7 @@ class _ScannerError extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           ElevatedButton(
             onPressed: () => Navigator.of(context).maybePop(),
-            child: const Text('Volver'),
+            child: Text(context.l.back),
           ),
         ],
       ),

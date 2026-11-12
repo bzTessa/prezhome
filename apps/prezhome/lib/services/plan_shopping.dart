@@ -183,12 +183,22 @@ class PlanShoppingService {
     String day(DateTime d) => d.toIso8601String().split('T').first;
     final planRes = await _client
         .from('meal_plan_entries')
-        .select('recipe_id, skipped, inventory_item_id')
+        .select(
+          'recipe_id, ready_meal_id, servings, skipped, inventory_item_id',
+        )
         .eq('home_id', homeId)
         .gte('plan_date', day(from))
         .lt('plan_date', day(to));
     final recipeIds = <String>[];
+    // Preparados del súper: se compran tal cual, una unidad por ración.
+    final readyServings = <String, double>{};
     for (final row in planRes as List) {
+      final ready = row['ready_meal_id'] as String?;
+      if (ready != null && row['skipped'] != true) {
+        readyServings[ready] =
+            (readyServings[ready] ?? 0) +
+            ((row['servings'] as num?)?.toDouble() ?? 1);
+      }
       final id = row['recipe_id'] as String?;
       // Un plato que ya está en el congelador no se compra otra vez.
       if (id != null &&
@@ -197,21 +207,37 @@ class PlanShoppingService {
         recipeIds.add(id);
       }
     }
-    if (recipeIds.isEmpty) return const [];
+    if (recipeIds.isEmpty && readyServings.isEmpty) return const [];
 
     // Una receta que se repite en el plan se compra tantas veces como salga.
-    final ingRes = await _client
-        .from('recipe_ingredients')
-        .select()
-        .inFilter('recipe_id', recipeIds.toSet().toList());
+    final ingRes = recipeIds.isEmpty
+        ? const []
+        : await _client
+              .from('recipe_ingredients')
+              .select()
+              .inFilter('recipe_id', recipeIds.toSet().toList());
     final byRecipe = <String, List<Ingredient>>{};
-    for (final m in ingRes as List) {
+    for (final m in ingRes) {
       final map = Map<String, dynamic>.from(m as Map);
       byRecipe
           .putIfAbsent(map['recipe_id'] as String, () => [])
           .add(Ingredient.fromMap(map));
     }
     final ingredients = [for (final id in recipeIds) ...?byRecipe[id]];
+    if (readyServings.isNotEmpty) {
+      final readyRes = await _client
+          .from('ready_meals')
+          .select('id, name')
+          .inFilter('id', readyServings.keys.toList());
+      for (final m in readyRes as List) {
+        ingredients.add(
+          Ingredient(
+            name: m['name'] as String,
+            quantity: readyServings[m['id']],
+          ),
+        );
+      }
+    }
 
     final invRes = await _client
         .from('inventory_items')

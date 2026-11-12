@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prezhome/l10n/app_localizations.dart';
 import 'package:prezhome/models/inventory_item.dart';
 import 'package:prezhome/utils/kitchen_zones.dart';
 import 'package:prezhome/widgets/kitchen/kitchen_zones_grid.dart';
@@ -69,6 +70,9 @@ void main() {
     KitchenZone? picked;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('es'),
         home: Scaffold(
           body: SingleChildScrollView(
             child: KitchenZonesGrid(

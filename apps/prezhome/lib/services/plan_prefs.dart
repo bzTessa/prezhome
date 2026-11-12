@@ -18,6 +18,8 @@ class PlanPrefs {
     this.energy = 1,
     this.busyAware = false,
     this.dayLoads = const {},
+    this.leftoverMeals = const {'lunch', 'dinner'},
+    this.dessertWith = const {},
   });
 
   final Set<String> hidden;
@@ -42,6 +44,12 @@ class PlanPrefs {
   /// calendario al hacer el plan. Se guarda para que el día de cocina en lote
   /// y la etiqueta "Día cargado" no cambien hasta rehacerlo.
   final Map<String, int> dayLoads;
+
+  /// En el modo "Cada dos días", qué comidas se repiten al día siguiente.
+  final Set<String> leftoverMeals;
+
+  /// Comidas (lunch/dinner) a las que "Generar plan" añade un postre.
+  final Set<String> dessertWith;
 
   static const defaultTimes = {
     'breakfast': 8 * 60 + 30,
@@ -110,6 +118,8 @@ class PlanPrefs {
     int? energy,
     bool? busyAware,
     Map<String, int>? dayLoads,
+    Set<String>? leftoverMeals,
+    Set<String>? dessertWith,
   }) => PlanPrefs(
     hidden: hidden ?? this.hidden,
     times: times ?? this.times,
@@ -118,6 +128,8 @@ class PlanPrefs {
     energy: energy ?? this.energy,
     busyAware: busyAware ?? this.busyAware,
     dayLoads: dayLoads ?? this.dayLoads,
+    leftoverMeals: leftoverMeals ?? this.leftoverMeals,
+    dessertWith: dessertWith ?? this.dessertWith,
   );
 
   static Future<void> load() async {
@@ -141,6 +153,13 @@ class PlanPrefs {
             (k, v) => MapEntry(k as String, v as int),
           ),
         },
+        leftoverMeals: switch (m['leftover_meals']) {
+          final List l => {...l.cast<String>()},
+          _ => const {'lunch', 'dinner'},
+        },
+        dessertWith: {
+          ...(m['dessert_with'] as List? ?? const []).cast<String>(),
+        },
       );
     } catch (_) {}
   }
@@ -158,6 +177,8 @@ class PlanPrefs {
           'energy': p.energy,
           'busy_aware': p.busyAware,
           'day_loads': p.dayLoads,
+          'leftover_meals': p.leftoverMeals.toList(),
+          'dessert_with': p.dessertWith.toList(),
         }),
       );
     } catch (_) {}

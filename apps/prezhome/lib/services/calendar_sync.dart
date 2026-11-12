@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/task.dart';
 import 'plan_prefs.dart';
+import '../l10n/l10n.dart';
 
 /// Pasa comidas del plan y tareas con hora al calendario del móvil (el de
 /// Google si la cuenta está en el móvil) y lee los huecos ocupados.
@@ -14,13 +15,6 @@ import 'plan_prefs.dart';
 class CalendarSync {
   static const _mark = 'Desde PrezHome';
   static const _days = 7;
-  static const mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Merienda',
-    'dessert': 'Postre',
-  };
 
   static DeviceCalendar get _cal => DeviceCalendar.instance;
 
@@ -158,8 +152,8 @@ class CalendarSync {
     for (final e in entries)
       (
         title:
-            '${mealLabels[e.mealType] ?? e.mealType}: '
-            '${titles[e.recipeId] ?? 'Receta'}',
+            '${appL10n.mealType(e.mealType)}: '
+            '${titles[e.recipeId] ?? appL10n.recipe}',
         start: DateTime(
           e.date.year,
           e.date.month,

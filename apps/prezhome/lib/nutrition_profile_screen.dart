@@ -330,6 +330,14 @@ class _NutritionProfileScreenState extends State<NutritionProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 _ModeCard(
+                  title: context.l.nutAlternate,
+                  subtitle: context.l.nutAlternateSub,
+                  icon: Icons.replay_rounded,
+                  selected: _cookingMode == 'alternate',
+                  onTap: () => setState(() => _cookingMode = 'alternate'),
+                ),
+                const SizedBox(height: 8),
+                _ModeCard(
                   title: context.l.nutBatch,
                   subtitle: context.l.nutBatchSub,
                   icon: Icons.ac_unit,

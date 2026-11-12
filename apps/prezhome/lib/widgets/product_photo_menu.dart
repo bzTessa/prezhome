@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -22,9 +23,9 @@ List<Widget> productPhotoTiles(
     onTap: () => Navigator.of(ctx).pop(action),
   );
   return [
-    tile(Icons.storefront_rounded, 'Elegir producto del súper', 'store'),
-    tile(Icons.photo_camera_outlined, 'Hacer una foto', 'camera'),
-    tile(Icons.photo_library_outlined, 'Elegir de la galería', 'gallery'),
+    tile(Icons.storefront_rounded, ctx.l.phStore, 'store'),
+    tile(Icons.photo_camera_outlined, ctx.l.phCamera, 'camera'),
+    tile(Icons.photo_library_outlined, ctx.l.phGallery, 'gallery'),
   ];
 }
 
@@ -43,6 +44,7 @@ Future<String?> pickProductPhoto(
 }) async {
   final client = Supabase.instance.client;
   final messenger = ScaffoldMessenger.of(context);
+  final errorText = context.l.phError;
   try {
     final String? url;
     switch (action) {
@@ -94,7 +96,7 @@ Future<String?> pickProductPhoto(
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        content: Text(friendlyError(e, 'No se pudo cambiar la foto')),
+        content: Text(friendlyError(e, errorText)),
         backgroundColor: AppColors.expired,
       ),
     );

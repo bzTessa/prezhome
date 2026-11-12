@@ -200,11 +200,9 @@ class MainShellState extends State<MainShell> {
       if (applied && OnboardingApplier.weekBuilt && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Tu semana está lista: comidas, cenas y lista de la compra',
-            ),
+            content: Text(context.l.shWeekReady),
             action: SnackBarAction(
-              label: 'Ver',
+              label: context.l.view,
               onPressed: () => goToTab(_indexOf(TabId.comidas)),
             ),
           ),

@@ -6,6 +6,8 @@
 /// Lógica PURA (sin Flutter) para poder testearla.
 library;
 
+import '../l10n/l10n.dart';
+
 /// Marcas de distribuidor y palabras de marca que a veces se cuelan en el
 /// nombre (de recetas antiguas de IA) y que NO queremos mostrar.
 const Set<String> _brandWords = {
@@ -99,6 +101,21 @@ const Map<String, (String, String)> _unitForms = {
   'cucharadita': ('cucharadita', 'cucharaditas'),
 };
 
+/// Palabra de la unidad en el idioma de la app: g, kg, ml y L son iguales en
+/// todos; el resto sale de l10n (unitOne/unitMany).
+String _unitWord(String key, bool plural) {
+  final forms = _unitForms[key]!;
+  if (forms.$1 == forms.$2) return forms.$1;
+  return plural ? appL10n.unitMany(key) : appL10n.unitOne(key);
+}
+
+/// Nombre de una unidad para un selector ("unidades", "botes", "L").
+String unitName(String unit) {
+  final key = _unitKey(unit);
+  if (key == null || key.isEmpty || !_unitForms.containsKey(key)) return unit;
+  return _unitWord(key, true);
+}
+
 /// Abreviatura CORTA de una unidad para la pastilla de cantidad de la compra.
 /// Deriva de la clave canónica (`_unitKey`) para no duplicar el mapeo de
 /// variantes; solo cambia la forma mostrada (p. ej. 'unidad' -> 'ud').
@@ -107,18 +124,13 @@ String _shortUnit(String unit, num quantity) {
   if (key == null) return unit.trim();
   final plural = quantity != 1;
   switch (key) {
-    case 'unidad':
-      return 'ud';
-    case 'cucharada':
-      return 'cda';
-    case 'cucharadita':
-      return 'cdta';
+    case 'unidad' || 'cucharada' || 'cucharadita':
+      return appL10n.unitShort(key);
     case '':
       return '';
     default:
-      final forms = _unitForms[key];
-      if (forms == null) return key;
-      return plural ? forms.$2 : forms.$1;
+      if (!_unitForms.containsKey(key)) return key;
+      return _unitWord(key, plural);
   }
 }
 
@@ -136,7 +148,9 @@ String shoppingQtyLabel(double? quantity, String? unit) {
   if (quantity == null) {
     // Solo expresión suelta (al gusto / a ojo).
     final lu = u.toLowerCase();
-    if (lu == 'al gusto' || lu == 'a ojo') return u;
+    if (lu == 'al gusto' || lu == 'a ojo') {
+      return appL10n.unitToTaste(lu == 'a ojo' ? 'a_ojo' : 'al_gusto');
+    }
     return '';
   }
   final short = _shortUnit(u, quantity);
@@ -157,7 +171,9 @@ String inventoryQtyLabel(double? quantity, String? unit) {
   if (quantity == null) {
     // Sin cantidad solo tiene sentido una expresión suelta (al gusto / a ojo).
     final lu = u.toLowerCase();
-    if (lu == 'al gusto' || lu == 'a ojo') return u;
+    if (lu == 'al gusto' || lu == 'a ojo') {
+      return appL10n.unitToTaste(lu == 'a ojo' ? 'a_ojo' : 'al_gusto');
+    }
     return '';
   }
   final num q = quantity;
@@ -172,9 +188,7 @@ String inventoryQtyLabel(double? quantity, String? unit) {
   if (key.isEmpty) return _fmtNum(q);
   final forms = _unitForms[key];
   if (forms == null) return _fmtNum(q);
-  final plural = q != 1;
-  final label = plural ? forms.$2 : forms.$1;
-  return '${_fmtNum(q)} $label';
+  return '${_fmtNum(q)} ${_unitWord(key, q != 1)}';
 }
 
 /// Limpia el NOMBRE del producto para mostrarlo: quita palabras de marca
