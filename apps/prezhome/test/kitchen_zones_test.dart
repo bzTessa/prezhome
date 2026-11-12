@@ -64,37 +64,38 @@ void main() {
     expect(byZone[KitchenZone.bebidas]!.count, 0);
   });
 
-  testWidgets('la cuadrícula filtra al tocar y enseña también las zonas vacías', (
-    tester,
-  ) async {
-    KitchenZone? picked;
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('es'),
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: KitchenZonesGrid(
-              zones: summarizeZones(items),
-              selected: null,
-              onSelect: (z) => picked = z,
+  testWidgets(
+    'la cuadrícula filtra al tocar y enseña también las zonas vacías',
+    (tester) async {
+      KitchenZone? picked;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: KitchenZonesGrid(
+                zones: summarizeZones(items),
+                selected: null,
+                onSelect: (z) => picked = z,
+              ),
             ),
           ),
         ),
-      ),
-    );
-    expect(find.text('9 productos'), findsOneWidget);
-    // Las zonas vacías también se ven, para poder añadir en ellas.
-    expect(find.text('Bebidas'), findsOneWidget);
-    expect(find.text('Vacía'), findsWidgets);
-    // La zona y la tarjeta "Revisar" (lo urgente de todas).
-    expect(find.text('1 caducado'), findsNWidgets(2));
+      );
+      expect(find.text('9 productos'), findsOneWidget);
+      // Las zonas vacías también se ven, para poder añadir en ellas.
+      expect(find.text('Bebidas'), findsOneWidget);
+      expect(find.text('Vacía'), findsWidgets);
+      // La zona y la tarjeta "Revisar" (lo urgente de todas).
+      expect(find.text('1 caducado'), findsNWidgets(2));
 
-    await tester.tap(find.text('Congelador'));
-    expect(picked, KitchenZone.congelador);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.tap(find.text('Congelador'));
+      expect(picked, KitchenZone.congelador);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 void _dupes() {
