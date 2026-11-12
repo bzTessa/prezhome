@@ -705,6 +705,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get shopFromPlan => 'Dal piano della settimana';
 
   @override
+  String get shopCountIn => 'Contare in';
+
+  @override
+  String get shopCountPack => 'Confezioni del supermercato';
+
+  @override
+  String get shopCountPiece => 'Pezzi';
+
+  @override
+  String get shopCountWeight => 'Peso o volume';
+
+  @override
+  String get shopPackNotFound => 'Confezione non trovata nel tuo supermercato';
+
+  @override
   String shopPackNeed(String need) {
     return 'per $need';
   }

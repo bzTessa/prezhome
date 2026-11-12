@@ -699,6 +699,22 @@ class AppLocalizationsBs extends AppLocalizations {
   String get shopFromPlan => 'Iz sedmičnog plana';
 
   @override
+  String get shopCountIn => 'Brojati u';
+
+  @override
+  String get shopCountPack => 'Pakovanja iz marketa';
+
+  @override
+  String get shopCountPiece => 'Komadi';
+
+  @override
+  String get shopCountWeight => 'Težina ili zapremina';
+
+  @override
+  String get shopPackNotFound =>
+      'Ne mogu naći pakovanje ovog proizvoda u tvom marketu';
+
+  @override
   String shopPackNeed(String need) {
     return 'za $need';
   }

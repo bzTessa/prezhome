@@ -9,6 +9,7 @@ import '../utils/practical_quantity.dart';
 import '../utils/shopping_display.dart';
 import '../utils/shopping_categories.dart';
 import '../widgets/food_category_icon.dart';
+import 'count_prefs.dart';
 import 'food_photo_service.dart';
 import 'meal_prep_planner.dart';
 import 'price_memory.dart';
@@ -134,14 +135,18 @@ List<String> batchIngredientLines(
 /// Pasa las necesidades a cantidades de súper ("1 ud" de pimienta) y junta
 /// en una sola línea lo que coincide en nombre y unidad.
 List<({String name, double? qty, String? unit})> shoppingLines(
-  List<PlanNeed> needs,
-) {
+  List<PlanNeed> needs, {
+  Map<String, CountMode> modes = const {},
+}) {
   final merged = <String, ({String name, double? qty, String? unit})>{};
   for (final need in needs) {
+    // Lo que el hogar cuenta a peso o en envases no se pasa a piezas.
+    final mode = modes[CountPrefs.key(need.name)];
     final practical = makePracticalForShopping(
       need.name,
       need.quantity,
       need.unit,
+      pieces: mode == null || mode == CountMode.piece,
     );
     final unit = practical.unit.trim().toLowerCase();
     // "unidad", "unidades" y "ud" son lo mismo: una sola fila.
@@ -279,7 +284,10 @@ class PlanShoppingService {
           p['name_normalized'] as String: p['url'] as String,
     };
 
-    final merged = shoppingLines(planShoppingNeeds(ingredients, pantry));
+    final merged = shoppingLines(
+      planShoppingNeeds(ingredients, pantry),
+      modes: await CountPrefs(_client).load(homeId),
+    );
 
     final items = <ShoppingListItem>[];
     for (final m in merged) {
@@ -327,28 +335,27 @@ class PlanShoppingService {
   Future<int> fillPackSizes(
     List<ShoppingListItem> items, {
     required String? supermarketKey,
+    Map<String, CountMode> modes = const {},
     void Function()? onFound,
   }) async {
-    final store = catalogKeyFor(supermarketKey);
-    if (store == null) return 0;
+    if (catalogKeyFor(supermarketKey) == null) return 0;
     var found = 0;
     for (final item in items.take(40)) {
       final id = item.id;
       if (id == null || isLocalId(id) || item.checked) continue;
       if (item.packSize != null || item.quantity == null) continue;
+      final mode = modes[CountPrefs.key(item.name)];
+      if (mode == CountMode.weight || mode == CountMode.piece) continue;
       if (!isMeasureUnit(item.unit) ||
           isCondiment(item.name) ||
-          looseProduceGrams(item.name) != null) {
+          (mode == null && looseProduceGrams(item.name) != null)) {
         continue;
       }
       try {
-        final best = bestCatalogMatch(
+        final pack = await packSizeFor(
           item.name,
-          await searchCatalog(item.name, store),
-        );
-        final pack = packSizeIn(
-          parsePackageQuantity(best?.quantity),
           item.unit,
+          supermarketKey: supermarketKey,
         );
         if (pack == null) continue;
         await _client
@@ -362,6 +369,19 @@ class PlanShoppingService {
       }
     }
     return found;
+  }
+
+  /// Tamaño del envase de [name] en el catálogo del súper, en [unit]. Null si
+  /// el súper no tiene catálogo, no está el producto o no tiene tamaño.
+  Future<double?> packSizeFor(
+    String name,
+    String? unit, {
+    required String? supermarketKey,
+  }) async {
+    final store = catalogKeyFor(supermarketKey);
+    if (store == null) return null;
+    final best = bestCatalogMatch(name, await searchCatalog(name, store));
+    return packSizeIn(parsePackageQuantity(best?.quantity), unit);
   }
 
   /// Pone la foto del envase (Open Food Facts) a los productos sin foto, con
