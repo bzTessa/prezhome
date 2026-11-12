@@ -6420,6 +6420,12 @@ abstract class AppLocalizations {
   /// **'Mi cocina'**
   String get kzMyKitchen;
 
+  /// No description provided for @kzEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Vacía'**
+  String get kzEmpty;
+
   /// No description provided for @kzAllGood.
   ///
   /// In es, this message translates to:

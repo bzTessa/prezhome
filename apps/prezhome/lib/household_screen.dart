@@ -975,6 +975,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       context: context,
       backgroundColor: AppColors.cream,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1014,6 +1015,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       context: context,
       backgroundColor: AppColors.cream,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1143,7 +1145,9 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: AppTheme.cardDecoration(),
-      child: child,
+      // Material propio: sin él, la pulsación de las filas queda debajo del
+      // color de la tarjeta y no se ve.
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }
