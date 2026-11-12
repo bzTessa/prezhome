@@ -63,4 +63,44 @@ void main() {
     await tester.tap(find.text('Añadir cena'));
     expect(taps, 1);
   });
+
+  testWidgets('comida con postre: platos extra, añadir y quitar deslizando', (
+    tester,
+  ) async {
+    var added = 0;
+    var opened = 0;
+    var removed = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('es'),
+        home: Scaffold(
+          body: MealSlotCard(
+            mealType: 'lunch',
+            title: 'Lentejas con chorizo',
+            onTap: () {},
+            extras: [
+              (
+                id: 'flan',
+                title: 'Flan de huevo',
+                onTap: () => opened++,
+                onRemove: () => removed++,
+              ),
+            ],
+            onAddDish: () => added++,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Flan de huevo'), findsOneWidget);
+    await tester.tap(find.text('Añadir otro plato'));
+    expect(added, 1);
+    await tester.tap(find.text('Flan de huevo'));
+    expect(opened, 1);
+    await tester.drag(find.text('Flan de huevo'), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(removed, 1);
+    expect(tester.takeException(), isNull);
+  });
 }

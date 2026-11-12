@@ -12,6 +12,9 @@ void main() {
     expect(shoppingQtyLabel(4, 'unidad'), '4 pc');
     expect(inventoryQtyLabel(2, 'bote'), '2 jars');
     expect(inventoryQtyLabel(300, 'g'), '300 g');
-    expect(friendlyError(Exception('boom')), 'Something went wrong. Try again.');
+    expect(
+      friendlyError(Exception('boom')),
+      'Something went wrong. Try again.',
+    );
   });
 }

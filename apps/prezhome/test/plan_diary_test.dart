@@ -49,6 +49,24 @@ void main() {
       );
       expect(due.map((e) => e.mealType), ['dinner']);
     });
+
+    test('un preparado del súper también cuenta', () {
+      final bought = MealPlanEntry(
+        homeId: 'h',
+        date: day,
+        mealType: 'lunch',
+        readyMealId: 'natillas',
+        position: 1,
+      );
+      final empty = MealPlanEntry(homeId: 'h', date: day, mealType: 'dinner');
+      final due = PlanDiary.passed(
+        [bought, empty],
+        me,
+        day,
+        DateTime(2026, 10, 15),
+      );
+      expect(due.map((e) => e.readyMealId), ['natillas']);
+    });
   });
 
   group('DashboardPrefs del cuestionario', () {

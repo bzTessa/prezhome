@@ -1149,6 +1149,45 @@ class AppLocalizationsPt extends AppLocalizations {
   String get planBatchCookHint => 'Dia de compras, de cozinha e marmitas';
 
   @override
+  String get planAddDish => 'Adicionar outro prato';
+
+  @override
+  String get planAutoDessert => 'Sobremesa automática';
+
+  @override
+  String get planAutoDessertHint =>
+      'O plano junta uma sobremesa a estas refeições';
+
+  @override
+  String get planBoughtReady => 'Comprado feito';
+
+  @override
+  String get planBoughtReadyHint =>
+      'Um prato pronto do supermercado, sem cozinhar';
+
+  @override
+  String get planYourReady => 'Os teus pratos prontos';
+
+  @override
+  String get planReadySearch => 'Procurar no supermercado';
+
+  @override
+  String get planReadyEmpty =>
+      'Ainda não tens pratos prontos de confiança. Procura-os no catálogo do supermercado.';
+
+  @override
+  String get planReadyMain => 'Prato';
+
+  @override
+  String get planReadyDessert => 'Sobremesa';
+
+  @override
+  String get planReadyKcal => 'Calorias por dose (opcional)';
+
+  @override
+  String get planReadyRemove => 'Tirar dos teus pratos prontos';
+
+  @override
   String get planTimes => 'Horas';
 
   @override
@@ -1294,7 +1333,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get planEnergyHint =>
-      'Com \"pouco\" o plano recorre mais ao congelador.';
+      'Com \"pouco\" o plano escolhe receitas rápidas e usa o congelador e os teus pratos prontos.';
 
   @override
   String get planHowMuchCook => 'Quanto cozinhar';

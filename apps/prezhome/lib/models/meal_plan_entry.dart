@@ -10,6 +10,8 @@ class MealPlanEntry {
   final int? servings; // raciones a cocinar (nº de personas que comen en casa)
   final DateTime? createdAt; // cuándo se hizo el plan (fija la cocina en lote)
   final String? repeatId; // regla de meal_plan_repeats si se repite
+  final int position; // orden del plato en su comida: 0 = principal
+  final String? readyMealId; // preparado del súper en vez de receta
 
   MealPlanEntry({
     this.id,
@@ -23,6 +25,8 @@ class MealPlanEntry {
     this.servings,
     this.createdAt,
     this.repeatId,
+    this.position = 0,
+    this.readyMealId,
   });
 
   factory MealPlanEntry.fromMap(Map<String, dynamic> map) {
@@ -44,6 +48,8 @@ class MealPlanEntry {
           ? null
           : DateTime.tryParse(map['created_at'].toString())?.toLocal(),
       repeatId: map['repeat_id'] as String?,
+      position: (map['position'] as num?)?.toInt() ?? 0,
+      readyMealId: map['ready_meal_id'] as String?,
     );
   }
 
@@ -68,6 +74,8 @@ class MealPlanEntry {
       'from_freezer': fromFreezer,
       'inventory_item_id': inventoryItemId,
       'servings': servings,
+      'position': position,
+      'ready_meal_id': readyMealId,
     };
   }
 }
