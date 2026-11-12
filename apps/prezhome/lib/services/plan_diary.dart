@@ -42,7 +42,7 @@ class PlanDiary {
     return [
       for (final e in entries)
         if (!e.skipped &&
-            e.recipeId != null &&
+            (e.recipeId != null || e.readyMealId != null) &&
             me.eatsAtHome(e.mealType, e.date.weekday) &&
             due(e))
           e,
@@ -57,7 +57,7 @@ class PlanDiary {
 
   static String _day(DateTime d) => d.toIso8601String().split('T').first;
   static String _keyOf(FoodLogEntry e) =>
-      '${_day(e.logDate)}|${e.mealType}|${e.recipeId}';
+      '${_day(e.logDate)}|${e.mealType}|${e.recipeId ?? e.name}';
 
   /// Apunta lo que falte (o lo deja en [asked]). Devuelve cuántas comidas se
   /// apuntaron. No lanza.
@@ -168,17 +168,23 @@ class PlanDiary {
           'id, title, calories_per_serving, protein_grams, carbs_grams, '
           'fat_grams',
         )
-        .inFilter('id', due.map((e) => e.recipeId!).toSet().toList());
+        .inFilter('id', {for (final e in due) ?e.recipeId}.toList());
     final recipes = {for (final r in recRes as List) r['id'] as String: r};
+    // Preparados del súper: con sus calorías por ración, si se saben.
+    final readyRes = await client
+        .from('ready_meals')
+        .select('id, name, calories')
+        .inFilter('id', {for (final e in due) ?e.readyMealId}.toList());
+    final ready = {for (final r in readyRes as List) r['id'] as String: r};
     // Lo que ya está en el diario (otro móvil, o apuntado a mano).
     final logged = await client
         .from('food_log_entries')
-        .select('log_date, meal_type, recipe_id')
+        .select('log_date, meal_type, recipe_id, name')
         .eq('user_id', userId)
         .gte('log_date', _day(since));
     final seen = {
       for (final l in logged as List)
-        '${l['log_date']}|${l['meal_type']}|${l['recipe_id']}',
+        '${l['log_date']}|${l['meal_type']}|${l['recipe_id'] ?? l['name']}',
     };
     double? n(Object? v) => (v as num?)?.toDouble();
     return [
@@ -197,6 +203,16 @@ class PlanDiary {
             fat: n(r['fat_grams']),
             source: 'receta',
             recipeId: e.recipeId,
+          )
+        else if (ready[e.readyMealId] case final r?
+            when r['calories'] != null &&
+                !seen.contains('${_day(e.date)}|${e.mealType}|${r['name']}'))
+          FoodLogEntry(
+            userId: userId,
+            logDate: e.date,
+            mealType: e.mealType,
+            name: r['name'] as String? ?? '',
+            calories: n(r['calories']),
           ),
     ];
   }

@@ -1782,6 +1782,78 @@ abstract class AppLocalizations {
   /// **'Día de compra, de cocina y tápers'**
   String get planBatchCookHint;
 
+  /// No description provided for @planAddDish.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir otro plato'**
+  String get planAddDish;
+
+  /// No description provided for @planAutoDessert.
+  ///
+  /// In es, this message translates to:
+  /// **'Postre automático'**
+  String get planAutoDessert;
+
+  /// No description provided for @planAutoDessertHint.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan pone un postre en estas comidas'**
+  String get planAutoDessertHint;
+
+  /// No description provided for @planBoughtReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprado hecho'**
+  String get planBoughtReady;
+
+  /// No description provided for @planBoughtReadyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Un preparado del súper, sin cocinar'**
+  String get planBoughtReadyHint;
+
+  /// No description provided for @planYourReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus preparados'**
+  String get planYourReady;
+
+  /// No description provided for @planReadySearch.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en el súper'**
+  String get planReadySearch;
+
+  /// No description provided for @planReadyEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes preparados de confianza. Búscalos en el catálogo del súper.'**
+  String get planReadyEmpty;
+
+  /// No description provided for @planReadyMain.
+  ///
+  /// In es, this message translates to:
+  /// **'Plato'**
+  String get planReadyMain;
+
+  /// No description provided for @planReadyDessert.
+  ///
+  /// In es, this message translates to:
+  /// **'Postre'**
+  String get planReadyDessert;
+
+  /// No description provided for @planReadyKcal.
+  ///
+  /// In es, this message translates to:
+  /// **'Calorías por ración (opcional)'**
+  String get planReadyKcal;
+
+  /// No description provided for @planReadyRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de tus preparados'**
+  String get planReadyRemove;
+
   /// No description provided for @planTimes.
   ///
   /// In es, this message translates to:
@@ -2019,7 +2091,7 @@ abstract class AppLocalizations {
   /// No description provided for @planEnergyHint.
   ///
   /// In es, this message translates to:
-  /// **'Con \"poco\" el plan tira más del congelador.'**
+  /// **'Con \"poco\" el plan elige recetas rápidas y tira del congelador y de tus preparados.'**
   String get planEnergyHint;
 
   /// No description provided for @planHowMuchCook.

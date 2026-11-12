@@ -107,6 +107,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // pasar al carrito, por si el toque fue sin querer y hay que desmarcar.
   final Set<String> _settling = {};
 
+  // Los que ya se están plegando para salir de su pasillo (tramo final de
+  // _settling): se recogen con animación y lo de debajo sube suave.
+  final Set<String> _leaving = {};
+
   // "Lo habitual" recién añadido: el chip sigue a la vista con su check un
   // momento para poder añadir varios seguidos.
   final Set<String> _justAdded = {};
@@ -717,11 +721,19 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (value) {
       HapticFeedback.mediumImpact();
       _settling.add(id);
-      Timer(const Duration(milliseconds: 900), () {
-        if (mounted && _settling.remove(id)) setState(() {});
+      // Tachado un momento, se pliega (AppMotion.slow) y pasa al carrito ya
+      // con altura 0: así la lista no da un salto al quitar la fila.
+      Timer(const Duration(milliseconds: 550), () {
+        if (mounted && _settling.contains(id)) setState(() => _leaving.add(id));
+      });
+      Timer(const Duration(milliseconds: 950), () {
+        if (mounted && _settling.remove(id)) {
+          setState(() => _leaving.remove(id));
+        }
       });
     } else {
       _settling.remove(id);
+      _leaving.remove(id);
     }
     try {
       final homeId = await _homeId();
@@ -1290,7 +1302,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               ),
             ),
             if (_view.showSuggestions)
-              SliverToBoxAdapter(child: _suggestions(porComprar)),
+              // Con toda la lista (también el carrito): si no, al marcar un
+              // producto reaparecía como sugerencia y la tira de arriba
+              // cambiaba de tamaño, empujando toda la lista.
+              SliverToBoxAdapter(child: _suggestions(items)),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             if (shouldShowPendingIndicator(_pendingCount))
               SliverToBoxAdapter(
@@ -1743,13 +1758,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       final expanded = !(_catCollapsed[key] ?? false);
       return [
         SliverToBoxAdapter(
-          child: ShoppingSection(
-            title: context.l.shopToBuy,
-            count: pendientes.where((i) => !i.checked).length,
-            complete: pendientes.every((i) => i.checked),
-            expanded: expanded,
-            onToggle: () => setState(() => _catCollapsed[key] = expanded),
-            children: _itemWidgets(pendientes),
+          child: CollapseOut(
+            collapsed: _allLeaving(pendientes),
+            child: ShoppingSection(
+              title: context.l.shopToBuy,
+              count: pendientes.where((i) => !i.checked).length,
+              complete: pendientes.every((i) => i.checked),
+              expanded: expanded,
+              onToggle: () => setState(() => _catCollapsed[key] = expanded),
+              children: _itemWidgets(pendientes),
+            ),
           ),
         ),
       ];
@@ -1766,6 +1784,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         for (final cat in FoodCategory.values)
           if (grupos[cat] case final items? when items.isNotEmpty)
             SliverToBoxAdapter(
+              key: ValueKey('aisle-${cat.label}'),
               child: _aisleSection(
                 cat.label,
                 CategoryIcons.styleForCategory(cat),
@@ -1787,6 +1806,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return [
       for (final (name, items) in grupos)
         SliverToBoxAdapter(
+          key: ValueKey('aisle-$name'),
           child: _aisleSection(
             name,
             CategoryIcons.styleForCategory(CategoryIcons.categoryFor(name)),
@@ -1799,9 +1819,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Sugerencias para añadir de un toque, en dos pestañas: lo que te toca
   /// reponer según tus tickets (o, sin fechas, lo que más compras) y lo que
   /// se acabó en la despensa. Sin nada que sugerir no ocupa sitio.
-  Widget _suggestions(List<ShoppingListItem> porComprar) {
+  Widget _suggestions(List<ShoppingListItem> enLista) {
     final l = context.l;
-    final inList = porComprar
+    final inList = enLista
         .map((i) => i.name)
         .where((n) => !_justAdded.contains(n));
     List<({String name, String? reason})> due = [
@@ -1955,18 +1975,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     List<ShoppingListItem> items,
   ) {
     final expanded = !(_catCollapsed[title] ?? false);
-    return ShoppingSection(
-      title: title,
-      count: items.where((i) => !i.checked).length,
-      complete: items.every((i) => i.checked),
-      icon: style.icon,
-      iconColor: style.foreground,
-      iconBackground: style.background,
-      expanded: expanded,
-      onToggle: () => setState(() => _catCollapsed[title] = expanded),
-      children: _itemWidgets(items),
+    // Si se va su último producto, el pasillo entero se pliega con él.
+    return CollapseOut(
+      collapsed: _allLeaving(items),
+      child: ShoppingSection(
+        title: title,
+        count: items.where((i) => !i.checked).length,
+        complete: items.every((i) => i.checked),
+        icon: style.icon,
+        iconColor: style.foreground,
+        iconBackground: style.background,
+        expanded: expanded,
+        onToggle: () => setState(() => _catCollapsed[title] = expanded),
+        children: _itemWidgets(items),
+      ),
     );
   }
+
+  bool _allLeaving(List<ShoppingListItem> items) =>
+      items.isNotEmpty && items.every((i) => _leaving.contains(i.id));
 
   /// "En el carrito": arranca plegado (lo comprado ya no apremia); se vacía
   /// con "Terminar compra".
@@ -2073,7 +2100,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Productos de una sección: filas o, en la vista de cuadrícula, dos por
   /// fila con la foto grande.
   List<Widget> _itemWidgets(List<ShoppingListItem> items) {
-    if (!_view.grid) return [for (final i in items) _buildRow(i)];
+    if (!_view.grid) {
+      return [
+        for (final i in items)
+          CollapseOut(
+            key: ValueKey(i.id ?? i.name + i.hashCode.toString()),
+            collapsed: _leaving.contains(i.id),
+            child: _buildRow(i),
+          ),
+      ];
+    }
     Widget tile(ShoppingListItem item) => ShoppingGridTile(
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
       name: shoppingCleanName(item.name),
