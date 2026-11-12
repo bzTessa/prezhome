@@ -69,7 +69,6 @@ class KitchenZonesGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = zones.fold<int>(0, (s, z) => s + z.count);
-    final visible = zones.where((z) => z.count > 0 || z.zone == selected);
     final urgent = ZoneSummary(
       zone: KitchenZone.despensa,
       count: zones.fold(0, (s, z) => s + z.soon + z.expired),
@@ -119,7 +118,8 @@ class KitchenZonesGrid extends StatelessWidget {
                     selected: selected == null,
                     onTap: () => onSelect(null),
                   ),
-                for (final z in visible)
+                // Las vacías también, para poder entrar y añadir (p. ej. Limpieza).
+                for (final z in zones)
                   _ZoneTile(
                     summary: z,
                     width: w,
@@ -183,6 +183,7 @@ class _ZoneTile extends StatelessWidget {
         ? ('${z.soon} pronto', AppColors.soon)
         : null;
 
+    final empty = !isAll && count == 0 && !selected;
     return Semantics(
       button: true,
       selected: selected,
@@ -201,72 +202,79 @@ class _ZoneTile extends StatelessWidget {
               offset: Offset(0, AppElevation.restOffset * p),
               child: child,
             ),
-            child: AnimatedContainer(
+            child: AnimatedOpacity(
               duration: AppMotion.fast,
-              width: width,
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-              decoration: AppTheme.tactileDecoration(
-                radius: AppRadius.md,
-                color: s.bg,
-                borderWidth: selected ? 2 : 1.5,
-                shadow: selected ? 0 : AppElevation.restOffset,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      if (isAll)
-                        SizedBox.square(
-                          dimension: 30,
-                          child: Icon(s.icon, color: s.fg, size: 20),
-                        )
-                      else
-                        // Ilustración: assets/images/zona_<1.ª palabra>.png
-                        Image.asset(
-                          'assets/images/zona_${z.zone.label.split(' ').first.toLowerCase()}.png',
-                          width: 30,
-                          height: 30,
-                          errorBuilder: (_, _, _) =>
-                              Icon(s.icon, color: s.fg, size: 20),
+              opacity: empty ? 0.55 : 1,
+              child: AnimatedContainer(
+                duration: AppMotion.fast,
+                width: width,
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                decoration: AppTheme.tactileDecoration(
+                  radius: AppRadius.md,
+                  color: s.bg,
+                  borderWidth: selected ? 2 : 1.5,
+                  shadow: selected ? 0 : AppElevation.restOffset,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (isAll)
+                          SizedBox.square(
+                            dimension: 30,
+                            child: Icon(s.icon, color: s.fg, size: 20),
+                          )
+                        else
+                          // Ilustración: assets/images/zona_<1.ª palabra>.png
+                          Image.asset(
+                            'assets/images/zona_${z.zone.label.split(' ').first.toLowerCase()}.png',
+                            width: 30,
+                            height: 30,
+                            errorBuilder: (_, _, _) =>
+                                Icon(s.icon, color: s.fg, size: 20),
+                          ),
+                        const Spacer(),
+                        Text(
+                          '$count',
+                          style: TextStyle(
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                            fontSize: 18,
+                            height: 1,
+                            fontWeight: FontWeight.w900,
+                            color: s.fg,
+                          ),
                         ),
-                      const Spacer(),
-                      Text(
-                        '$count',
-                        style: TextStyle(
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                          fontSize: 18,
-                          height: 1,
-                          fontWeight: FontWeight.w900,
-                          color: s.fg,
-                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: AppColors.ink,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: AppColors.ink,
                     ),
-                  ),
-                  Text(
-                    alert?.$1 ?? context.l.kzAllGood,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: alert == null
-                          ? FontWeight.w500
-                          : FontWeight.w800,
-                      color: alert?.$2 ?? AppColors.inkMuted,
+                    Text(
+                      alert?.$1 ??
+                          (count == 0
+                              ? context.l.kzEmpty
+                              : context.l.kzAllGood),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: alert == null
+                            ? FontWeight.w500
+                            : FontWeight.w800,
+                        color: alert?.$2 ?? AppColors.inkMuted,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

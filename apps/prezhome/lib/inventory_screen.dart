@@ -184,6 +184,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
       final rows = await _repo.refreshFromRemote();
       var items = _rowsToItems(rows);
       if (await _mergeDuplicates(items)) {
+        // Acabamos de leer de la nube, así que hay red: se envía ya la unión
+        // de repetidos para que no salga el aviso de "sin conexión".
+        await _repo.tryDrain(force: true);
         items = _rowsToItems(await _repo.readCached());
       }
       unawaited(_recheckOldPhotos(rows));
@@ -646,6 +649,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       backgroundColor: AppColors.cream,
       showDragHandle: true,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (ctx) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -1770,6 +1774,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.cream,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

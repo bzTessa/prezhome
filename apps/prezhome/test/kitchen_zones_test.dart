@@ -64,7 +64,7 @@ void main() {
     expect(byZone[KitchenZone.bebidas]!.count, 0);
   });
 
-  testWidgets('la cuadrícula filtra al tocar y oculta zonas vacías', (
+  testWidgets('la cuadrícula filtra al tocar y enseña también las zonas vacías', (
     tester,
   ) async {
     KitchenZone? picked;
@@ -85,7 +85,9 @@ void main() {
       ),
     );
     expect(find.text('9 productos'), findsOneWidget);
-    expect(find.text('Bebidas'), findsNothing);
+    // Las zonas vacías también se ven, para poder añadir en ellas.
+    expect(find.text('Bebidas'), findsOneWidget);
+    expect(find.text('Vacía'), findsWidgets);
     // La zona y la tarjeta "Revisar" (lo urgente de todas).
     expect(find.text('1 caducado'), findsNWidgets(2));
 

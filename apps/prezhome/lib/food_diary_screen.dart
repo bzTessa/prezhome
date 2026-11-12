@@ -452,6 +452,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       context: context,
       backgroundColor: AppColors.cream,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

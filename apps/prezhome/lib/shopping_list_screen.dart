@@ -1523,6 +1523,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       backgroundColor: AppColors.cream,
       showDragHandle: true,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (ctx) => SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -1595,6 +1596,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       showDragHandle: true,
       // Sin esto la hoja se corta a media pantalla y se desborda.
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) {
           void update(ShoppingViewPrefs next) {

@@ -4072,6 +4072,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kzMyKitchen => 'My kitchen';
 
   @override
+  String get kzEmpty => 'Empty';
+
+  @override
   String get kzAllGood => 'All good';
 
   @override

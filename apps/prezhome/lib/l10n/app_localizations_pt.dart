@@ -4082,6 +4082,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get kzMyKitchen => 'A minha cozinha';
 
   @override
+  String get kzEmpty => 'Vazia';
+
+  @override
   String get kzAllGood => 'Em dia';
 
   @override

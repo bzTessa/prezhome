@@ -4020,6 +4020,9 @@ class AppLocalizationsBs extends AppLocalizations {
   String get kzMyKitchen => 'Moja kuhinja';
 
   @override
+  String get kzEmpty => 'Prazno';
+
+  @override
   String get kzAllGood => 'Sve u redu';
 
   @override

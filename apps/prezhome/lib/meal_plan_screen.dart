@@ -1119,6 +1119,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.cream,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1570,6 +1571,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       context: context,
       backgroundColor: AppColors.cream,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1604,6 +1606,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       context: context,
       backgroundColor: AppColors.cream,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
