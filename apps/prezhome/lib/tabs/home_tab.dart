@@ -39,6 +39,7 @@ import '../widgets/animations/animated_counter.dart';
 import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
 import '../widgets/animations/staggered_entrance.dart';
+import '../utils/day_brief.dart';
 import '../utils/friendly_error.dart';
 import '../utils/pantry_ideas.dart' show formatEuros;
 import '../utils/ticket_date.dart';
@@ -94,8 +95,10 @@ class HomeTabState extends State<HomeTab> {
 
   // Resumen de caducidades del inventario de comida del hogar: cuántos
   // alimentos caducan pronto y cuántos ya han caducado.
-  int _expiringSoon = 0;
   int _expired = 0;
+
+  // Nombres de lo que caduca pronto, lo más urgente primero.
+  List<String> _expiringNames = [];
 
   // Productos pendientes en la lista de la compra (para el acceso de un
   // vistazo).
@@ -231,6 +234,7 @@ class HomeTabState extends State<HomeTab> {
           mealType: e.mealType,
           title: title ?? appL10n.recipe,
           skipped: e.skipped,
+          fromFreezer: e.fromFreezer,
           recipe: recipe,
         );
         items.add(item);
@@ -466,25 +470,26 @@ class HomeTabState extends State<HomeTab> {
           .map((m) => InventoryItem.fromMap(m as Map<String, dynamic>))
           .where((it) => it.itemType == 'comida');
 
-      var soon = 0;
+      final soon = <InventoryItem>[];
       var expired = 0;
       for (final it in items) {
         switch (it.expiryStatus) {
           case ExpiryStatus.pronto:
-            soon++;
-            break;
+            soon.add(it);
           case ExpiryStatus.caducado:
             expired++;
-            break;
           case ExpiryStatus.fresco:
           case ExpiryStatus.sinFecha:
             break;
         }
       }
+      soon.sort(
+        (a, b) => (a.daysUntilExpiry ?? 0).compareTo(b.daysUntilExpiry ?? 0),
+      );
 
       if (mounted) {
         setState(() {
-          _expiringSoon = soon;
+          _expiringNames = [for (final it in soon) it.name];
           _expired = expired;
         });
       }
@@ -533,15 +538,10 @@ class HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    // Tareas solo si el módulo está activo y hay algo para hoy: el recuento
-    // ya lo da la ficha de un vistazo.
-    final rest = _prefs.visibleCards
-        .where((c) => c != DashboardCard.meals)
+    // Las tareas van dentro de "Tu día"; aquí quedan solo las cifras.
+    final numbers = _prefs.visibleCards
         .where(
-          (c) =>
-              c != DashboardCard.tasks ||
-              (_prefs.isModuleEnabled(HomeModule.tasks) &&
-                  _todayTasks.isNotEmpty),
+          (c) => c == DashboardCard.calories || c == DashboardCard.spending,
         )
         .toList();
     return Scaffold(
@@ -583,7 +583,7 @@ class HomeTabState extends State<HomeTab> {
 
                 // De un vistazo: caducidades, tareas y compra. Tocar lleva a
                 // su pestaña.
-                StaggeredEntrance(index: 2, child: _glanceRow()),
+                StaggeredEntrance(index: 2, child: _dayCard()),
                 const SizedBox(height: AppSpacing.lg),
 
                 StaggeredEntrance(index: 3, child: StreakCard(key: _streakKey)),
@@ -597,32 +597,17 @@ class HomeTabState extends State<HomeTab> {
                   const SizedBox(height: AppSpacing.md),
                 ],
 
-                for (final (i, card) in rest.indexed) ...[
-                  StaggeredEntrance(index: 4 + i, child: _cardWidget(card)),
+                if (numbers.isNotEmpty) ...[
+                  StaggeredEntrance(index: 4, child: _numbersCard(numbers)),
                   const SizedBox(height: AppSpacing.md),
                 ],
 
-                // Atajos al final: son para hacer algo, no para leer el día.
                 if (_prefs.quick.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.sm),
-                  StaggeredEntrance(
-                    index: 4 + rest.length,
-                    child: _quickAccessRow(),
-                  ),
+                  StaggeredEntrance(index: 5, child: _quickAccessRow()),
                   const SizedBox(height: AppSpacing.lg),
                 ],
               ],
-
-              Center(
-                child: TextButton.icon(
-                  onPressed: _openCustomize,
-                  icon: const Icon(Icons.tune_rounded, size: 18),
-                  label: Text(context.l.homeCustomize),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.inkMuted,
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -664,9 +649,9 @@ class HomeTabState extends State<HomeTab> {
           ),
         ),
         _roundButton(
-          icon: Icons.insights_rounded,
-          tooltip: context.l.homeYourData,
-          onTap: _openStats,
+          icon: Icons.tune_rounded,
+          tooltip: context.l.homeCustomize,
+          onTap: _openCustomize,
         ),
         const SizedBox(width: AppSpacing.sm),
         _roundButton(
@@ -970,127 +955,154 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
-  /// Tres fichas de un vistazo. Cada una salta a su pestaña.
-  Widget _glanceRow() {
-    final expiring = _expiringSoon + _expired;
-    final tasksToday = _todayTasks.length;
-    return Row(
-      children: [
-        Expanded(
-          child: _glanceTile(
-            value: expiring,
-            label: context.l.homeExpiring,
-            icon: Icons.hourglass_bottom_rounded,
-            bg: _expired > 0 ? AppColors.expiredBg : AppColors.soonBg,
-            fg: _expired > 0 ? AppColors.expired : AppColors.soon,
-            onTap: widget.onNavigateToDespensa,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        if (_prefs.isModuleEnabled(HomeModule.tasks)) ...[
-          Expanded(
-            child: _glanceTile(
-              value: tasksToday,
-              label: context.l.homeTasksToday(tasksToday),
-              icon: Icons.check_circle_outline_rounded,
-              bg: AppColors.sageBg,
-              fg: AppColors.sage,
-              onTap: widget.onNavigateToTasks,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-        ],
-        Expanded(
-          child: _glanceTile(
-            value: _pendingShopping,
-            label: context.l.homeInShopping,
-            icon: Icons.shopping_cart_outlined,
-            bg: AppColors.frostBg,
-            fg: AppColors.frost,
-            onTap: widget.onNavigateToShopping,
-          ),
-        ),
+  /// "Tu día": lo que toca hoy, ya decidido y en orden (descongelar, lo que
+  /// caduca, hasta tres tareas, la compra). Cada línea se resuelve de un
+  /// toque. Sin nada pendiente, la casa está al día.
+  Widget _dayCard() {
+    final tasksOn =
+        _prefs.isModuleEnabled(HomeModule.tasks) &&
+        _prefs.visibleCards.contains(DashboardCard.tasks);
+    final lines = buildDayBrief(
+      today: DateTime.now(),
+      defrost: [
+        for (final i in _todayItems)
+          if (i.fromFreezer && !i.skipped) i.title,
       ],
+      expiring: _expiringNames,
+      expired: _expired,
+      tasks: tasksOn ? _todayTasks : const [],
+      shopping: _pendingShopping,
     );
-  }
-
-  Widget _glanceTile({
-    required int value,
-    required String label,
-    required IconData icon,
-    required Color bg,
-    required Color fg,
-    VoidCallback? onTap,
-  }) {
-    return Semantics(
-      button: onTap != null,
-      label: '$value $label',
-      // En cero la ficha se queda en papel y gris: solo llama la atención lo
-      // que pide algo.
-      child: Container(
-        decoration: AppTheme.surfaceDecoration(
-          radius: AppRadius.md,
-          color: value == 0 ? AppColors.card : bg,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: AppRadius.mdRadius,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    icon,
-                    color: value == 0 ? AppColors.inkMuted : fg,
-                    size: 22,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    '$value',
-                    style: TextStyle(
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      fontSize: 28,
-                      letterSpacing: -0.6,
-                      height: 1,
-                      fontWeight: FontWeight.w900,
-                      color: value == 0 ? AppColors.inkMuted : fg,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.inkMuted,
-                    ),
-                  ),
-                ],
+    if (lines.isEmpty) {
+      return Semantics(
+        label: '${context.l.homeAllDone}. ${context.l.homeAllDoneSub}',
+        excludeSemantics: true,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: AppTheme.surfaceDecoration(
+            elevation: 0,
+            color: AppColors.sageBg,
+          ),
+          child: Row(
+            children: [
+              const MiauCharacter(
+                mood: MiauMood.celebrating,
+                size: 64,
+                float: false,
               ),
-            ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(context.l.homeAllDone, style: AppTextStyles.title),
+                    const SizedBox(height: 2),
+                    Text(
+                      context.l.homeAllDoneSub,
+                      style: AppTextStyles.bodyMuted,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _cardLabel(
+            icon: Icons.wb_sunny_outlined,
+            color: AppColors.gold,
+            text: context.l.homeYourDay,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          for (final line in lines) _dayLine(line),
+        ],
       ),
     );
   }
 
-  /// Devuelve el widget de una tarjeta del dashboard por su tipo.
-  Widget _cardWidget(DashboardCard card) {
-    switch (card) {
-      case DashboardCard.meals:
-        return _todayMealHero(); // build() ya la pinta arriba; no llega aquí
-      case DashboardCard.calories:
-        return _caloriesCard();
-      case DashboardCard.tasks:
-        return _tasksCard();
-      case DashboardCard.spending:
-        return _spendingCard();
-    }
+  Widget _dayLine(DayLine line) {
+    String names() => line.count > line.names.length
+        ? '${line.names.join(', ')} +${line.count - line.names.length}'
+        : line.names.join(', ');
+    return switch (line.kind) {
+      DayLineKind.task => _todayTaskRow(line.task!),
+      DayLineKind.defrost => _dayAction(
+        icon: Icons.ac_unit_rounded,
+        color: AppColors.frost,
+        text: context.l.homeDefrost(line.names.join(', ')),
+        onTap: _openMealPlan,
+      ),
+      DayLineKind.expiring => _dayAction(
+        icon: Icons.hourglass_bottom_rounded,
+        color: AppColors.soon,
+        text: context.l.homeExpiringLine(names()),
+        onTap: widget.onNavigateToDespensa,
+      ),
+      DayLineKind.expired => _dayAction(
+        icon: Icons.delete_outline_rounded,
+        color: AppColors.expired,
+        text: context.l.homeExpiredLine(line.count),
+        onTap: widget.onNavigateToDespensa,
+      ),
+      DayLineKind.moreTasks => _dayAction(
+        icon: Icons.more_horiz_rounded,
+        color: AppColors.sage,
+        text: context.l.homeMoreTasks(line.count),
+        onTap: widget.onNavigateToTasks,
+      ),
+      DayLineKind.shopping => _dayAction(
+        icon: Icons.shopping_cart_outlined,
+        color: AppColors.frost,
+        text: context.l.homeShoppingLine(line.count),
+        onTap: widget.onNavigateToShopping,
+      ),
+    };
+  }
+
+  /// Línea de "Tu día" que lleva a donde se resuelve.
+  Widget _dayAction({
+    required IconData icon,
+    required Color color,
+    required String text,
+    VoidCallback? onTap,
+  }) {
+    return Semantics(
+      button: onTap != null,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadius.smRadius,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Row(
+            children: [
+              SizedBox(width: 26, child: Icon(icon, size: 22, color: color)),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.titleSmall,
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   /// Atajos elegidos por el usuario como pastillas compactas (icono +
@@ -1191,36 +1203,6 @@ class HomeTabState extends State<HomeTab> {
     if (result != null) await _savePrefs(result);
   }
 
-  /// Tarjeta 'Para hoy': las tareas de HOY (y atrasadas o sin fecha), cada una
-  /// marcable de un toque con el mismo flujo de puntos + reprogramación que la
-  /// pantalla de Tareas. El recuento ya está en la ficha de un vistazo, así
-  /// que aquí solo va la lista. Sin tareas para hoy no se pinta (ver build).
-  Widget _tasksCard() {
-    final today = _todayTasks;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardLabel(
-            icon: Icons.check_circle_outline_rounded,
-            color: AppColors.sage,
-            text: context.l.homeForToday,
-            onMore: widget.onNavigateToTasks,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          ...today.map(_todayTaskRow),
-        ],
-      ),
-    );
-  }
-
   /// Cabecera pequeña común a las tarjetas: icono de color, etiqueta en
   /// versalitas y, si se puede ir a la pantalla completa, "Ver todo".
   Widget _cardLabel({
@@ -1266,8 +1248,8 @@ class HomeTabState extends State<HomeTab> {
   /// Fila de una tarea de hoy con boton circular para marcarla hecha, con el
   /// mismo aspecto que _TaskCard de la pantalla de Tareas.
   Widget _todayTaskRow(HomeTask t) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 44),
       child: Row(
         children: [
           PressScale(
@@ -1384,115 +1366,119 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
-  /// Tarjeta de cifra con progreso (calorías, gasto): etiqueta, número grande
-  /// con su referencia ("de 2046 kcal"), barra y una línea de lo que queda.
-  /// Sin referencia (sin objetivo o presupuesto) solo muestra la cifra.
-  Widget _progressCard({
+  /// Cifras del día en una sola superficie plana (es información, no algo
+  /// que pulsar con prisa): calorías y gasto, cada una en su fila con barra.
+  Widget _numbersCard(List<DashboardCard> cards) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: AppTheme.surfaceDecoration(elevation: 0),
+      child: Column(
+        children: [
+          for (final (i, c) in cards.indexed) ...[
+            if (i > 0) Divider(height: 1, color: AppColors.line),
+            if (c == DashboardCard.calories)
+              _numberRow(
+                icon: Icons.local_fire_department_outlined,
+                color: AppColors.terracotta,
+                label: context.l.homeCaloriesToday,
+                value: _todayCalories,
+                format: (v) => context.l.homeKcal(v.round()),
+                target: _targetCalories?.toDouble(),
+                onTap: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FoodDiaryScreen()),
+                  );
+                  _loadCaloriesSummary(); // refrescar al volver del diario
+                },
+              )
+            else
+              _numberRow(
+                icon: Icons.savings_outlined,
+                color: AppColors.gold,
+                label: context.l.homeMonthSpend,
+                value: _monthSpent,
+                format: formatEuros,
+                target: _monthBudget,
+                onTap: _openStats,
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Fila de cifra: etiqueta, "valor de objetivo" y barra fina de progreso
+  /// (roja si se pasa). Sin objetivo o presupuesto, solo la cifra.
+  Widget _numberRow({
     required IconData icon,
     required Color color,
     required String label,
     required double value,
     required String Function(double) format,
     required double? target,
-    required String Function(double) leftText,
-    required String Function(double) overText,
     required VoidCallback onTap,
   }) {
     final hasTarget = target != null && target > 0;
     final over = hasTarget && value > target;
-    return PressScale(
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      borderRadius: AppRadius.smRadius,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _cardLabel(icon: icon, color: color, text: label),
-            const SizedBox(height: AppSpacing.sm),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
               children: [
+                Icon(icon, size: 18, color: color),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.inkMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
                 AnimatedCounter(
                   value: value,
                   formatter: format,
-                  style: AppTextStyles.display.copyWith(fontSize: 26),
+                  style: AppTextStyles.titleSmall,
                 ),
                 if (hasTarget) ...[
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      context.l.homeOf(format(target)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyMuted,
-                    ),
+                  const SizedBox(width: 4),
+                  Text(
+                    context.l.homeOf(format(target)),
+                    style: AppTextStyles.labelMuted,
                   ),
                 ],
-                const Spacer(),
-                Icon(Icons.chevron_right_rounded, color: AppColors.inkMuted),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: AppColors.inkMuted,
+                ),
               ],
             ),
             if (hasTarget) ...[
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.sm),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
                   value: (value / target).clamp(0.0, 1.0),
-                  minHeight: 8,
+                  minHeight: 6,
                   backgroundColor: AppColors.line,
                   color: over ? AppColors.expired : color,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                over ? overText(value - target) : leftText(target - value),
-                style: AppTextStyles.label.copyWith(
-                  color: over ? AppColors.expired : AppColors.inkMuted,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ],
         ),
       ),
-    );
-  }
-
-  /// Calorías de hoy del diario personal frente al objetivo del perfil. Al
-  /// tocarla abre el diario del día y refresca al volver.
-  Widget _caloriesCard() {
-    return _progressCard(
-      icon: Icons.local_fire_department_outlined,
-      color: AppColors.terracotta,
-      label: context.l.homeCaloriesToday,
-      value: _todayCalories,
-      format: (v) => context.l.homeKcal(v.round()),
-      target: _targetCalories?.toDouble(),
-      leftText: (d) => context.l.homeKcalLeft(d.round()),
-      overText: (d) => context.l.homeKcalOver(d.round()),
-      onTap: () async {
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
-        _loadCaloriesSummary(); // refrescar al volver del diario
-      },
-    );
-  }
-
-  /// Gasto del mes frente al presupuesto (misma lógica que economy_screen).
-  Widget _spendingCard() {
-    return _progressCard(
-      icon: Icons.savings_outlined,
-      color: AppColors.gold,
-      label: context.l.homeMonthSpend,
-      value: _monthSpent,
-      format: formatEuros,
-      target: _monthBudget,
-      leftText: (d) => context.l.homeMoneyLeft(formatEuros(d)),
-      overText: (d) => context.l.homeMoneyOver(formatEuros(d)),
-      onTap: _openStats,
     );
   }
 }
@@ -1503,11 +1489,13 @@ class _PlanItem {
   final String mealType;
   final String title;
   final bool skipped;
+  final bool fromFreezer;
   final Recipe? recipe;
   _PlanItem({
     required this.mealType,
     required this.title,
     required this.skipped,
+    this.fromFreezer = false,
     this.recipe,
   });
 }

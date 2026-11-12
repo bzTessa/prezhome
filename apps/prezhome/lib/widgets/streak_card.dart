@@ -66,7 +66,7 @@ class StreakView extends StatelessWidget {
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: AppTheme.cardDecoration(),
+        decoration: AppTheme.surfaceDecoration(elevation: 0),
         child: Row(
           children: [
             MiauCharacter(mood: mood, size: 64, float: false),

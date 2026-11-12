@@ -14,6 +14,7 @@ Widget _host({
   required int selected,
   ValueChanged<int>? onSelected,
   FloatingNavAction? action,
+  bool showAllLabels = false,
   List<FloatingNavItem> items = _items,
 }) {
   return MaterialApp(
@@ -25,6 +26,7 @@ Widget _host({
           selectedIndex: selected,
           onSelected: onSelected ?? (_) {},
           action: action,
+          showAllLabels: showAllLabels,
         ),
       ),
     ),
@@ -46,6 +48,19 @@ void main() {
     expect(find.text('Meal Prep'), findsOneWidget);
     expect(find.text('Hoy'), findsNothing);
     expect(find.text('Despensa'), findsNothing);
+  });
+
+  testWidgets('con showAllLabels todas muestran su texto sin desbordar', (
+    tester,
+  ) async {
+    await _setWidth(tester, 320);
+    await tester.pumpWidget(_host(selected: 2, showAllLabels: true));
+    await tester.pumpAndSettle();
+
+    for (final item in _items) {
+      expect(find.text(item.label), findsOneWidget);
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('tocar una pestaña avisa con su índice', (tester) async {

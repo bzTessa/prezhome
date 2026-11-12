@@ -88,6 +88,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   // pasada cuando la persona deja de tocar (anti-tirones del stepper).
   final Debouncer _converge = Debouncer();
   bool _refreshing = false;
+
+  // Hasta el primer refresco remoto, una caché vacía no significa "lista
+  // vacía": se sigue viendo el esqueleto en vez del estado vacío.
+  bool _remoteTried = false;
   bool _refreshAgain = false;
   bool _generating = false;
 
@@ -261,6 +265,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       // Sin conexión: nos quedamos con lo que ya pintamos desde la caché.
     } finally {
       _refreshing = false;
+      if (!_remoteTried && mounted) setState(() => _remoteTried = true);
       if (_refreshAgain && mounted) {
         _refreshAgain = false;
         _refreshFromRemote();
@@ -1272,6 +1277,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           }
 
           final all = snapshot.data ?? [];
+          if (all.isEmpty && !_remoteTried) return const ShoppingSkeleton();
           // Filtramos por la LISTA ACTIVA: list_id null = Lista principal.
           final items = all.where((i) => i.listId == _activeListId).toList();
           bool settling(ShoppingListItem i) => _settling.contains(i.id);

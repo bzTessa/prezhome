@@ -407,6 +407,61 @@ class AppLocalizationsBs extends AppLocalizations {
   String get homeSeeAll => 'Vidi sve';
 
   @override
+  String get homeYourDay => 'Tvoj dan';
+
+  @override
+  String homeDefrost(String names) {
+    return 'Izvadi iz zamrzivača: $names';
+  }
+
+  @override
+  String homeExpiringLine(String names) {
+    return 'Uskoro ističe: $names';
+  }
+
+  @override
+  String homeExpiredLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count proizvoda je isteklo: provjeri ih',
+      few: '$count proizvoda su istekla: provjeri ih',
+      one: '1 proizvod je istekao: provjeri ga',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeMoreTasks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'i još $count zadataka',
+      few: 'i još $count zadatka',
+      one: 'i još 1 zadatak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeShoppingLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count proizvoda na spisku za kupovinu',
+      few: '$count proizvoda na spisku za kupovinu',
+      one: '1 proizvod na spisku za kupovinu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeAllDone => 'Kuća je u redu';
+
+  @override
+  String get homeAllDoneSub => 'Za danas nema više ništa.';
+
+  @override
   String homePoints(int points) {
     return '$points bod.';
   }

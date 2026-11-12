@@ -784,8 +784,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
       floatingActionButton: FloatingActionButton(
         heroTag: 'fab-inventory',
         onPressed: _openAddOptions,
-        backgroundColor: AppColors.ink,
-        foregroundColor: AppColors.cream,
         tooltip: context.l.panAddTooltip,
         child: const Icon(Icons.add_rounded, size: 30),
       ),

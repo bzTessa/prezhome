@@ -410,6 +410,58 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeSeeAll => 'Ver todo';
 
   @override
+  String get homeYourDay => 'Tu día';
+
+  @override
+  String homeDefrost(String names) {
+    return 'Saca del congelador: $names';
+  }
+
+  @override
+  String homeExpiringLine(String names) {
+    return 'Caduca pronto: $names';
+  }
+
+  @override
+  String homeExpiredLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos caducados: revísalos',
+      one: '1 producto caducado: revísalo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeMoreTasks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'y $count tareas más',
+      one: 'y 1 tarea más',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeShoppingLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos en la lista de la compra',
+      one: '1 producto en la lista de la compra',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeAllDone => 'La casa está al día';
+
+  @override
+  String get homeAllDoneSub => 'No queda nada pendiente para hoy.';
+
+  @override
   String homePoints(int points) {
     return '$points pts';
   }
