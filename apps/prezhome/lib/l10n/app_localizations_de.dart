@@ -1681,6 +1681,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recFavorites => 'Favoriten';
 
   @override
+  String get recReadyNow => 'Jetzt kochbar';
+
+  @override
+  String get recHaveAll => 'Alles da';
+
+  @override
+  String get recMissingOne => '1 fehlt';
+
+  @override
   String get recOther => 'Weitere';
 
   @override

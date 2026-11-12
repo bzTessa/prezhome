@@ -1679,6 +1679,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recFavorites => 'Favourites';
 
   @override
+  String get recReadyNow => 'Ready to cook';
+
+  @override
+  String get recHaveAll => 'You have it all';
+
+  @override
+  String get recMissingOne => '1 missing';
+
+  @override
   String get recOther => 'Other';
 
   @override
