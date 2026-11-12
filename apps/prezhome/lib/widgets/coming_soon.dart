@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 import '../theme/app_theme.dart';
 import 'miau_character.dart';
@@ -33,7 +34,7 @@ class ComingSoon extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Text(
-                'PRÓXIMAMENTE',
+                context.l.comingSoon,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink,

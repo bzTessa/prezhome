@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 
 import 'economy_screen.dart';
 import 'plan_usage_screen.dart';
@@ -139,7 +140,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await HomeCountry.load(_client);
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo crear el hogar'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhCreateError), error: true);
     }
   }
 
@@ -149,31 +151,32 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       context: context,
       builder: (context) => AlertDialog(
         scrollable: true,
-        title: const Text('Unirme a un hogar'),
+        title: Text(context.l.hhJoinTitle),
         content: TextField(
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(
-            labelText: 'Código de invitación',
+          decoration: InputDecoration(
+            labelText: context.l.hhInviteCode,
             hintText: 'ABCD-EFGH',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Unirme'),
+            child: Text(context.l.hhJoin),
           ),
         ],
       ),
     );
     if (code == null || code.trim().isEmpty) return;
     if (!looksLikeInviteCode(code)) {
-      _snack('El código tiene 8 letras y números', error: true);
+      if (!mounted) return;
+      _snack(context.l.hhCodeFormat, error: true);
       return;
     }
     try {
@@ -186,7 +189,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         (_) => false,
       );
     } catch (e) {
-      _snack(friendlyError(e, 'Código no válido o caducado'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhCodeInvalid), error: true);
     }
   }
 
@@ -195,26 +199,29 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await HomeInvites(_client).create();
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo crear el código'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhCodeCreateError), error: true);
     }
   }
 
   Future<void> _removeMember(_Member m) async {
-    final name = (m.name?.isNotEmpty ?? false) ? m.name! : 'este miembro';
+    final name = (m.name?.isNotEmpty ?? false)
+        ? m.name!
+        : context.l.hhThisMember;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('¿Quitar a $name del hogar?'),
-        content: const Text('Dejará de ver la compra, la despensa y el plan.'),
+        title: Text(context.l.hhRemoveMemberTitle(name)),
+        content: Text(context.l.hhRemoveMemberBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Quitar'),
+            child: Text(context.l.remove),
           ),
         ],
       ),
@@ -224,7 +231,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await HomeInvites(_client).removeMember(m.userId);
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo quitar'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhRemoveError), error: true);
     }
   }
 
@@ -234,14 +242,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         scrollable: true,
-        title: const Text('Añadir persona sin cuenta'),
+        title: Text(context.l.hhAddGuestTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Para alguien de casa que no usa la app. Podrás asignarle '
-              'tareas y apuntar las que haga.',
+              context.l.hhAddGuestBody,
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
             const SizedBox(height: 12),
@@ -250,7 +257,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               autofocus: true,
               maxLength: 40,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Nombre'),
+              decoration: InputDecoration(labelText: context.l.name),
               onSubmitted: (v) => Navigator.of(ctx).pop(v),
             ),
           ],
@@ -258,11 +265,11 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(ctrl.text),
-            child: const Text('Añadir'),
+            child: Text(context.l.add),
           ),
         ],
       ),
@@ -273,7 +280,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await HomePeople(_client).add(homeId, name);
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo añadir'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhAddError), error: true);
     }
   }
 
@@ -281,19 +289,17 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('¿Quitar a $name?'),
-        content: const Text(
-          'Se borrarán sus puntos y sus tareas quedarán sin asignar.',
-        ),
+        title: Text(context.l.hhRemoveGuestTitle(name)),
+        content: Text(context.l.hhRemoveGuestBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Quitar'),
+            child: Text(context.l.remove),
           ),
         ],
       ),
@@ -303,7 +309,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await HomePeople(_client).remove(id);
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo quitar'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhRemoveError), error: true);
     }
   }
 
@@ -311,19 +318,17 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Salir del hogar?'),
-        content: const Text(
-          'Dejarás de ver sus datos. Para volver necesitarás un código nuevo.',
-        ),
+        title: Text(context.l.hhLeaveTitle),
+        content: Text(context.l.hhLeaveBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Salir'),
+            child: Text(context.l.hhLeave),
           ),
         ],
       ),
@@ -338,7 +343,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         (_) => false,
       );
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo salir del hogar'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhLeaveError), error: true);
     }
   }
 
@@ -349,7 +355,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       builder: (context) => AlertDialog(
         scrollable: true,
         backgroundColor: AppColors.cream,
-        title: const Text('Nombre del hogar'),
+        title: Text(context.l.hhNameTitle),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -365,7 +371,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -374,7 +380,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               elevation: 0,
             ),
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Guardar'),
+            child: Text(context.l.save),
           ),
         ],
       ),
@@ -384,7 +390,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       await _client.from('homes').update({'name': name}).eq('id', homeId);
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo renombrar'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhRenameError), error: true);
     }
   }
 
@@ -392,20 +399,17 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Borrar tu cuenta?'),
-        content: const Text(
-          'Se borran tu cuenta y tus datos. Si eres la única persona del '
-          'hogar, también el hogar entero. No se puede deshacer.',
-        ),
+        title: Text(context.l.hhDeleteAccountTitle),
+        content: Text(context.l.hhDeleteAccountBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.expired),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Borrar'),
+            child: Text(context.l.hhDeleteConfirm),
           ),
         ],
       ),
@@ -415,7 +419,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     try {
       await HomeInvites(_client).deleteAccount();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo borrar la cuenta'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhDeleteAccountError), error: true);
       return;
     }
     await OfflineProvider.instance.clearForLogout();
@@ -433,7 +438,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Widget _deleteAccountButton() => TextButton(
     onPressed: _deleteAccount,
     style: TextButton.styleFrom(foregroundColor: AppColors.inkMuted),
-    child: const Text('Borrar mi cuenta'),
+    child: Text(context.l.hhDeleteAccount),
   );
 
   Future<void> _logout() async {
@@ -461,8 +466,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text(
-          'Mi Hogar',
+        title: Text(
+          context.l.hhMyHome,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.cream,
@@ -470,7 +475,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
+            tooltip: context.l.hhSignOut,
             onPressed: _logout,
           ),
         ],
@@ -505,8 +510,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           children: [
             const MiauCharacter(mood: MiauMood.curious, size: 110),
             const SizedBox(height: 16),
-            const Text(
-              'Aún no perteneces a ningún hogar.',
+            Text(
+              context.l.hhNoHome,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 24),
@@ -521,7 +526,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 elevation: 0,
               ),
               onPressed: _createHome,
-              child: const Text('Crear un hogar nuevo'),
+              child: Text(context.l.hhCreateHome),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
@@ -533,7 +538,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
               ),
               onPressed: _joinHome,
-              child: const Text('Unirme a un hogar existente'),
+              child: Text(context.l.hhJoinExisting),
             ),
             const SizedBox(height: 24),
             _deleteAccountButton(),
@@ -578,16 +583,14 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                             size: 20,
                             color: AppColors.woodDark,
                           ),
-                          tooltip: 'Renombrar hogar',
+                          tooltip: context.l.hhRename,
                           onPressed: () =>
                               _renameHome(data.homeId!, data.homeName!),
                         ),
                       ],
                     ),
                     Text(
-                      data.peopleCount == 1
-                          ? 'Tu hogar, de momento para ti.'
-                          : 'Un hogar de ${data.peopleCount} personas.',
+                      context.l.hhPeople(data.peopleCount),
                       style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                     ),
                   ],
@@ -606,7 +609,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Miembros (${data.peopleCount})',
+                context.l.hhMembers(data.peopleCount),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -616,7 +619,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               ...data.members.map((m) {
                 final displayName = (m.name != null && m.name!.isNotEmpty)
                     ? m.name!
-                    : 'Miembro';
+                    : context.l.rdMember;
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: _memberAvatar(displayName),
@@ -625,11 +628,11 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
-                    m.role == 'owner' ? 'Administrador' : 'Miembro',
+                    m.role == 'owner' ? context.l.hhAdmin : context.l.rdMember,
                   ),
                   trailing: !m.isMe && data.iAmOwner
                       ? IconButton(
-                          tooltip: 'Quitar del hogar',
+                          tooltip: context.l.hhRemoveFromHome,
                           icon: Icon(
                             Icons.person_remove_outlined,
                             color: AppColors.inkMuted,
@@ -647,7 +650,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            'Tú',
+                            context.l.hhYou,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppColors.ink,
@@ -666,9 +669,9 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                     p.value,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  subtitle: const Text('Sin cuenta'),
+                  subtitle: Text(context.l.hhNoAccount),
                   trailing: IconButton(
-                    tooltip: 'Quitar',
+                    tooltip: context.l.remove,
                     icon: Icon(
                       Icons.person_remove_outlined,
                       color: AppColors.inkMuted,
@@ -681,7 +684,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 child: TextButton.icon(
                   onPressed: () => _addPerson(data.homeId!),
                   icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
-                  label: const Text('Añadir persona sin cuenta'),
+                  label: Text(context.l.hhAddGuestTitle),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.woodDark,
                   ),
@@ -691,7 +694,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               TextButton.icon(
                 onPressed: _leaveHome,
                 icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Salir del hogar'),
+                label: Text(context.l.hhLeaveHome),
                 style: TextButton.styleFrom(foregroundColor: AppColors.expired),
               ),
             ],
@@ -705,13 +708,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Hogar y ajustes',
+              Text(
+                context.l.hhSettings,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Apariencia',
+              Text(
+                context.l.hhAppearance,
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -723,7 +726,10 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                     showSelectedIcon: false,
                     segments: [
                       for (final m in AppThemeMode.values)
-                        ButtonSegment(value: m, label: Text(m.label)),
+                        ButtonSegment(
+                          value: m,
+                          label: Text(context.l.themeMode(m.name)),
+                        ),
                     ],
                     selected: {mode},
                     onSelectionChanged: (s) => ThemePreference.set(s.first),
@@ -736,21 +742,21 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Avisos en el móvil',
+              Text(
+                context.l.hhPhoneAlerts,
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               ValueListenableBuilder(
                 valueListenable: Reminders.off,
                 builder: (context, off, _) => Column(
                   children: [
-                    for (final k in Reminders.kinds.entries)
+                    for (final k in Reminders.kinds)
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(k.value),
-                        value: !off.contains(k.key),
+                        title: Text(context.l.remKind(k)),
+                        value: !off.contains(k),
                         onChanged: (v) async {
-                          await Reminders.setOn(k.key, v);
+                          await Reminders.setOn(k, v);
                           await Reminders.sync(_client);
                         },
                       ),
@@ -772,8 +778,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               // "Modo Puntos".
               _settingTile(
                 icon: Icons.insights_rounded,
-                title: 'Tus datos',
-                subtitle: 'Gráficas de gasto, compra, cocina y tareas',
+                title: context.l.hhYourData,
+                subtitle: context.l.hhYourDataSub,
                 iconBg: AppColors.lilacBg,
                 iconFg: AppColors.lilac,
                 onTap: () => Navigator.of(
@@ -782,8 +788,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               ),
               _settingTile(
                 icon: Icons.receipt_long_outlined,
-                title: 'Gastos y tickets',
-                subtitle: 'Presupuesto, tickets escaneados y gasto por mes',
+                title: context.l.hhExpenses,
+                subtitle: context.l.hhExpensesSub,
                 iconBg: AppColors.sageBg,
                 iconFg: AppColors.sage,
                 onTap: () => Navigator.of(context).push(
@@ -795,8 +801,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               ),
               _settingTile(
                 icon: Icons.workspace_premium_outlined,
-                title: 'Tu plan',
-                subtitle: 'Usos que te quedan este mes',
+                title: context.l.hhYourPlan,
+                subtitle: context.l.hhYourPlanSub,
                 iconBg: AppColors.sageBg,
                 iconFg: AppColors.sage,
                 onTap: () => Navigator.of(context).push(
@@ -807,8 +813,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               ),
               _settingTile(
                 icon: Icons.favorite_outline,
-                title: 'Mi perfil nutricional',
-                subtitle: 'Objetivo de calorías, preferencias y asistente',
+                title: context.l.hhNutrition,
+                subtitle: context.l.hhNutritionSub,
                 iconBg: AppColors.terracottaBg,
                 iconFg: AppColors.terracotta,
                 onTap: () => Navigator.of(context).push(
@@ -831,26 +837,12 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   /// Invitar: código corto que caduca. Uno nuevo anula el anterior.
   Widget _inviteCard(_HouseholdData data) {
     final invite = data.invite;
-    const months = [
-      'ene',
-      'feb',
-      'mar',
-      'abr',
-      'may',
-      'jun',
-      'jul',
-      'ago',
-      'sep',
-      'oct',
-      'nov',
-      'dic',
-    ];
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Invitar a alguien',
+          Text(
+            context.l.hhInvite,
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 12),
@@ -858,7 +850,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             FilledButton.icon(
               onPressed: _newInvite,
               icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
-              label: const Text('Crear código'),
+              label: Text(context.l.hhCreateCode),
             )
           else ...[
             Row(
@@ -875,20 +867,23 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Copiar',
+                  tooltip: context.l.hhCopy,
                   icon: Icon(Icons.copy_rounded, color: AppColors.woodDark),
                   onPressed: () {
                     Clipboard.setData(
                       ClipboardData(text: formatInviteCode(invite.code)),
                     );
-                    _snack('Código copiado');
+                    _snack(context.l.hhCodeCopied);
                   },
                 ),
               ],
             ),
             Text(
-              'Vale hasta el ${invite.expiresAt.day} '
-              '${months[invite.expiresAt.month - 1]}',
+              context.l.hhValidUntil(
+                DateFormat.MMMMd(
+                  Localizations.localeOf(context).toString(),
+                ).format(invite.expiresAt),
+              ),
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             ),
             Align(
@@ -896,7 +891,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               child: TextButton.icon(
                 onPressed: _newInvite,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Nuevo código'),
+                label: Text(context.l.hhNewCode),
               ),
             ),
           ],
@@ -923,9 +918,9 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 child: Icon(Icons.storefront_outlined, color: AppColors.sage),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Supermercados',
+                  context.l.drSupers,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
@@ -934,19 +929,21 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.woodDark,
                 ),
-                child: Text(labels.isEmpty ? 'Elegir' : 'Editar'),
+                child: Text(
+                  labels.isEmpty ? context.l.hhChoose : context.l.edit,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Las recetas se adaptarán a lo que haya en tus súper. Es opcional.',
+            context.l.hhSupersHint,
             style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
           const SizedBox(height: 10),
           if (labels.isEmpty)
             Text(
-              'Sin supermercado elegido.',
+              context.l.hhNoSuper,
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             )
           else
@@ -1003,7 +1000,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     try {
       await HomeCountry.set(_client, homeId, picked);
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo cambiar el país'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhCountryError), error: true);
     }
   }
 
@@ -1027,13 +1025,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '¿Dónde compráis?',
+                Text(
+                  context.l.hhWhereShop,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Puedes elegir varios. Es opcional.',
+                  context.l.hhPickMany,
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
@@ -1066,7 +1064,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(ctx).pop(selected.toList()),
-                    child: const Text('Guardar'),
+                    child: Text(context.l.save),
                   ),
                 ),
               ],
@@ -1084,7 +1082,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           .eq('id', data.homeId!);
       _reload();
     } catch (e) {
-      _snack(friendlyError(e, 'No se pudo guardar'), error: true);
+      if (!mounted) return;
+      _snack(friendlyError(e, context.l.hhSaveError), error: true);
     }
   }
 

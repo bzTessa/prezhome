@@ -175,3 +175,33 @@ Widget fadeInPhoto({
         : KeyedSubtree(key: const ValueKey(true), child: image),
   );
 }
+
+/// Pliega [child] hasta altura 0 (con fundido) cuando [collapsed] pasa a
+/// `true`, para que lo que hay debajo suba suave en vez de dar un salto al
+/// quitarlo de la lista. Con "reducir movimiento" se pliega sin animar.
+class CollapseOut extends StatelessWidget {
+  const CollapseOut({super.key, required this.collapsed, required this.child});
+
+  final bool collapsed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: collapsed ? 0 : 1),
+      duration: AppMotion.effectiveDuration(
+        AppMotion.slow,
+        reduceMotion: AppMotion.reduceMotionOf(context),
+      ),
+      curve: AppMotion.easeOut,
+      builder: (context, t, child) => ClipRect(
+        child: Align(
+          alignment: Alignment.topCenter,
+          heightFactor: t,
+          child: Opacity(opacity: t, child: child),
+        ),
+      ),
+      child: child,
+    );
+  }
+}

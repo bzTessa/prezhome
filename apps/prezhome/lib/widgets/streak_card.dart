@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/streak.dart';
@@ -45,24 +46,20 @@ class StreakView extends StatelessWidget {
     final (mood, title, subtitle) = switch (s) {
       _ when s.milestoneToday => (
         MiauMood.celebrating,
-        '¡${s.days} días seguidos!',
-        'Hito conseguido. Siguiente: $next días.',
+        context.l.streakMilestone(s.days),
+        context.l.streakMilestoneSub(next),
       ),
       _ when s.doneToday => (
         MiauMood.greeting,
-        _days(s.days),
-        'Hoy ya cuenta. Próximo hito: $next días.',
+        context.l.streakDays(s.days),
+        context.l.streakDoneSub(next),
       ),
       _ when s.days > 0 => (
         MiauMood.curious,
-        _days(s.days),
-        'Tacha una tarea o apunta una comida para seguir.',
+        context.l.streakDays(s.days),
+        context.l.streakKeepSub,
       ),
-      _ => (
-        MiauMood.sleeping,
-        'Empieza tu racha',
-        'Tacha una tarea o apunta una comida hoy.',
-      ),
+      _ => (MiauMood.sleeping, context.l.streakStart, context.l.streakStartSub),
     };
     return Semantics(
       label: '$title. $subtitle',
@@ -100,6 +97,4 @@ class StreakView extends StatelessWidget {
       ),
     );
   }
-
-  static String _days(int n) => n == 1 ? '1 día seguido' : '$n días seguidos';
 }

@@ -129,4 +129,30 @@ void main() {
       'lunch',
     ]);
   });
+
+  test('Cocinar poco: las recetas rápidas salen mucho más', () {
+    Recipe timed(String id, int minutes) => Recipe(
+      id: id,
+      homeId: 'h',
+      title: id,
+      servings: 2,
+      mealTypes: const ['dinner'],
+      prepTimeMinutes: minutes,
+    );
+    final plan = MealPlanner(seed: 7).generate(
+      startDate: DateTime(2026, 11, 16),
+      days: 56,
+      mealTypes: const ['dinner'],
+      recipes: [
+        for (var i = 0; i < 6; i++) ...[
+          timed('rapida$i', 15),
+          timed('lenta$i', 90),
+        ],
+      ],
+      energyLevel: 0,
+    );
+    final picks = [for (final d in plan.values) d['dinner']];
+    final quick = picks.where((p) => p!.startsWith('rapida')).length;
+    expect(quick, greaterThan(picks.length * 0.6));
+  });
 }

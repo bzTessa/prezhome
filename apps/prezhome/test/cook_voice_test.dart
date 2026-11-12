@@ -17,4 +17,15 @@ void main() {
     expect(parseCookCommand(''), isNull);
     expect(parseCookCommand('para la cena'), isNull);
   });
+
+  test('entiende las órdenes en el idioma de la app', () {
+    expect(parseCookCommand('Next please', 'en'), CookCommand.next);
+    expect(parseCookCommand('stop the timer', 'en'), CookCommand.stopTimer);
+    expect(parseCookCommand('Zurück', 'de'), CookCommand.previous);
+    expect(parseCookCommand('Répète', 'fr'), CookCommand.repeat);
+    expect(parseCookCommand('ingredienti?', 'it'), CookCommand.ingredients);
+    expect(parseCookCommand('Sljedeći', 'bs'), CookCommand.next);
+    // Las palabras de otro idioma no cuentan.
+    expect(parseCookCommand('siguiente', 'en'), isNull);
+  });
 }

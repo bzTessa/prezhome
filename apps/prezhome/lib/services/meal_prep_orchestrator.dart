@@ -16,6 +16,8 @@
 /// y dejar que las preparaciones manuales solapen con lo que está en el fuego.
 library;
 
+import '../l10n/l10n.dart';
+
 /// Valor de `appliance` que indica que un paso NO usa ningún aparato (trabajo
 /// manual de preparación: cortar, mezclar, emplatar...). Nunca se agrupa por
 /// aparato y es candidato a correr en paralelo.
@@ -297,7 +299,7 @@ class MealPrepOrchestrator {
             .fold(0, (a, b) => a > b ? a : b);
         steps.add(
           TimelineStep(
-            title: '${_etiquetaUsar(appliance)} para ${_unirConY(titulos)}',
+            title: appL10n.stepUseAppliance(appliance, _unirConY(titulos)),
             recipeTitles: titulos,
             appliance: appliance,
             durationMinutes: maxDuracion,
@@ -351,7 +353,7 @@ class MealPrepOrchestrator {
     } else {
       prepSteps.add(
         TimelineStep(
-          title: 'Preparar ${recipe.title}',
+          title: appL10n.stepPrepare(recipe.title),
           recipeTitles: [recipe.title],
           appliance: kApplianceNone,
           durationMinutes: prepTotal,
@@ -368,7 +370,7 @@ class MealPrepOrchestrator {
         recipeTitle: recipe.title,
         appliance: recipe.appliance,
         durationMinutes: cookDur,
-        title: '${_etiquetaUsar(recipe.appliance)} para ${recipe.title}',
+        title: appL10n.stepUseAppliance(recipe.appliance, recipe.title),
       );
     }
 
@@ -424,14 +426,6 @@ class _DerivedSteps {
   const _DerivedSteps({required this.prep, this.cook});
 }
 
-/// Texto imperativo para usar un aparato en el título de un paso, p. ej.
-/// "Enciende el horno". Para aparatos desconocidos cae a `Usa <id>`.
-String _etiquetaUsar(String appliance) {
-  final etiqueta = _etiquetasAparato[appliance];
-  if (etiqueta == null) return 'Usa $appliance';
-  return 'Enciende $etiqueta';
-}
-
 /// Nombre amable de un aparato para el resumen, p. ej. "el horno".
 String _nombreAparato(String appliance) =>
     _etiquetasAparato[appliance] ?? appliance;
@@ -480,7 +474,7 @@ String _unirConY(List<String> items) {
   if (items.isEmpty) return '';
   if (items.length == 1) return items.first;
   final todosMenosUltimo = items.sublist(0, items.length - 1);
-  return '${todosMenosUltimo.join(', ')} y ${items.last}';
+  return appL10n.listAnd(todosMenosUltimo.join(', '), items.last);
 }
 
 /// Compara dos listas por elementos en orden.

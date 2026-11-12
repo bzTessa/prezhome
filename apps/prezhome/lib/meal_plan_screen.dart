@@ -11,6 +11,7 @@ import 'models/dashboard_prefs.dart';
 import 'models/inventory_item.dart';
 import 'models/meal_plan_entry.dart';
 import 'models/nutrition_profile.dart';
+import 'models/ready_meal.dart';
 import 'models/recipe.dart';
 import 'month_calendar_screen.dart';
 import 'services/calendar_sync.dart';
@@ -20,10 +21,13 @@ import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
 import 'services/plan_prefs.dart';
+import 'services/taper_sync.dart';
 import 'services/plan_repeats.dart';
 import 'services/plan_prep.dart';
 import 'services/plan_shopping.dart';
 import 'shopping_list_screen.dart';
+import 'widgets/food_image.dart';
+import 'widgets/product_search_sheet.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
@@ -157,7 +161,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         HouseholdMember(
           name: (p.fullName?.trim().isNotEmpty ?? false)
               ? p.fullName!.trim()
-              : 'Alguien',
+              : appL10n.someone,
           isMe: isMe,
           mealsAtHome: p.mealsAtHome,
         ),
@@ -169,7 +173,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         HouseholdMember(
           name: (myProfile.fullName?.trim().isNotEmpty ?? false)
               ? myProfile.fullName!.trim()
-              : 'Alguien',
+              : appL10n.someone,
           isMe: true,
           mealsAtHome: myProfile.mealsAtHome,
         ),
@@ -183,6 +187,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         .eq('home_id', homeId)
         .order('created_at', ascending: false);
     final recipes = (recRes as List).map((m) => Recipe.fromMap(m)).toList();
+    final readyRes = await _client
+        .from('ready_meals')
+        .select()
+        .eq('home_id', homeId)
+        .order('created_at', ascending: false);
+    final readyMeals = [for (final m in readyRes as List) ReadyMeal.fromMap(m)];
 
     // Plan de esta semana, con las comidas que se repiten ya puestas.
     final start = _weekStart;
@@ -233,6 +243,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       activeMeals: activeMeals.isEmpty ? ['lunch', 'dinner'] : activeMeals,
       recipes: recipes,
       recipesById: {for (final r in recipes) r.id: r},
+      readyById: {for (final r in readyMeals) r.id: r},
       entries: entries,
       laterEntries: later,
       members: members,
@@ -454,6 +465,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           );
         });
       });
+      if (_energyLevel <= 0) _useReadyMains(data, rows);
+      rows.addAll(
+        _dessertRows(data, [
+          for (final d in plan.keys)
+            for (final t in PlanPrefs.current.value.dessertWith)
+              if (plan[d]!.containsKey(t) ||
+                  kept.contains('${d.toIso8601String().split('T').first}|$t'))
+                (d, t),
+        ]),
+      );
       if (rows.isNotEmpty) {
         await _client.from('meal_plan_entries').insert(rows);
       }
@@ -461,6 +482,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       if (rows.isNotEmpty) {
         await _fillShoppingFromPlan(data.homeId!, start, end);
       }
+      await _offerRemoveOldTapers(data.homeId!, start, end);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -472,6 +494,103 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       }
     } finally {
       if (mounted) setState(() => _generating = false);
+    }
+  }
+
+  /// Al rehacer el plan, los tápers del plan anterior que siguen en la nevera
+  /// ya no se darían por comidos nunca: se pregunta si quitarlos.
+  Future<void> _offerRemoveOldTapers(
+    String homeId,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final old = await TaperSync.orphans(_client, homeId, from, to);
+    if (old.isEmpty || !mounted) return;
+    final remove = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l.planOldTapersTitle),
+        content: Text(
+          ctx.l.planOldTapersBody(
+            old.length,
+            old.map((t) => t.name).join(', '),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(ctx.l.planOldTapersKeep),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(ctx.l.remove),
+          ),
+        ],
+      ),
+    );
+    if (remove != true) return;
+    await _client.from('inventory_items').delete().inFilter('id', [
+      for (final t in old) t.id,
+    ]);
+  }
+
+  /// Un postre como segundo plato de cada comida de [meals], rotando entre
+  /// las recetas de postre del hogar para no repetir el mismo cada día.
+  /// Con "Cocinar poco" y preparados de confianza, los postres son esos
+  /// preparados en vez de recetas.
+  List<Map<String, dynamic>> _dessertRows(
+    _PlanData data,
+    List<(DateTime, String)> meals,
+  ) {
+    final ready = _energyLevel <= 0
+        ? [
+            for (final r in data.readyById.values)
+              if (r.trusted && r.isDessert) r.id,
+          ]
+        : const <String>[];
+    final desserts = ready.isNotEmpty
+        ? ready
+        : [
+            for (final r in data.recipes)
+              if (r.mealTypes.contains('dessert')) r.id,
+          ];
+    if (desserts.isEmpty) return const [];
+    desserts.shuffle();
+    var i = 0;
+    return [
+      for (final (date, type) in meals)
+        () {
+          final id = desserts[i++ % desserts.length];
+          return MealPlanEntry(
+            homeId: data.homeId!,
+            date: date,
+            mealType: type,
+            recipeId: ready.isEmpty ? id : null,
+            readyMealId: ready.isEmpty ? null : id,
+            servings: servingsCountForMeal(data.members, type, date.weekday),
+            position: 1,
+          ).toMap();
+        }(),
+    ];
+  }
+
+  /// "Cocinar poco": hasta dos cenas por semana (miércoles y sábado) son un
+  /// preparado de confianza en vez de cocinar. Solo cenas que se cocinan.
+  void _useReadyMains(_PlanData data, List<Map<String, dynamic>> rows) {
+    final mains = [
+      for (final r in data.readyById.values)
+        if (r.trusted && !r.isDessert) r.id,
+    ]..shuffle();
+    if (mains.isEmpty) return;
+    var i = 0;
+    for (final row in rows) {
+      final weekday = DateTime.parse(row['plan_date'] as String).weekday;
+      if (row['meal_type'] == 'dinner' &&
+          row['from_freezer'] != true &&
+          (weekday == DateTime.wednesday || weekday == DateTime.saturday)) {
+        row['recipe_id'] = null;
+        row['ready_meal_id'] = mains[i++ % mains.length];
+      }
     }
   }
 
@@ -529,10 +648,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     try {
       if (!willSkip) {
         // Reactivar: dejamos la comida de nuevo activa.
-        await _client
-            .from('meal_plan_entries')
-            .update({'skipped': false})
-            .eq('id', e.id!);
+        await _mealQuery(
+          data,
+          e,
+          _client.from('meal_plan_entries').update({'skipped': false}),
+        );
         if (mounted) {
           _showMiau(context.l.planBackInPlan);
         }
@@ -590,6 +710,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             .eq('id', slot.id!);
       }
 
+      // Los demás platos de esa comida (postre...) también se comen fuera.
+      await _mealQuery(
+        data,
+        e,
+        _client.from('meal_plan_entries').update({'skipped': true}),
+      ).neq('id', e.id!);
+
       if (mounted) {
         final title = data.recipesById[adjustment.movedRecipeId]?.title;
         _showMiau(miauMoveMessage(adjustment, recipeTitle: title));
@@ -599,7 +726,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $err'),
+            content: Text(friendlyError(err)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -613,6 +740,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// del plan o marcarla como fuera/en casa.
   Future<void> _openEntryActions(_PlanData data, MealPlanEntry e) async {
     final recipe = data.recipesById[e.recipeId];
+    // Los platos extra van con su comida: quién come, fuera y repetir se
+    // deciden en el plato principal.
+    final extra = _dishesOf(data, e).first != e;
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: AppColors.cream,
@@ -628,7 +758,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               child: Text(
                 context.l.planEntryTitle(
                   context.l.mealType(e.mealType),
-                  recipe?.title ?? context.l.planNoRecipe,
+                  e.recipeId == null && e.readyMealId == null
+                      ? context.l.planNoRecipe
+                      : _dishTitle(data, e),
                 ),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -645,7 +777,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               title: Text(context.l.planChangeRecipe),
               onTap: () => Navigator.of(ctx).pop('change'),
             ),
-            if (data.members.length > 1 && !e.skipped)
+            if (data.members.length > 1 && !e.skipped && !extra)
               ListTile(
                 leading: Icon(
                   Icons.people_outline_rounded,
@@ -654,17 +786,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 title: Text(context.l.planWhoEats),
                 onTap: () => Navigator.of(ctx).pop('who'),
               ),
-            ListTile(
-              leading: Icon(
-                e.skipped ? Icons.restore : Icons.no_meals_outlined,
-                color: AppColors.woodDark,
+            if (!extra)
+              ListTile(
+                leading: Icon(
+                  e.skipped ? Icons.restore : Icons.no_meals_outlined,
+                  color: AppColors.woodDark,
+                ),
+                title: Text(
+                  e.skipped ? context.l.planMarkHome : context.l.planMarkOut,
+                ),
+                onTap: () => Navigator.of(ctx).pop('skip'),
               ),
-              title: Text(
-                e.skipped ? context.l.planMarkHome : context.l.planMarkOut,
-              ),
-              onTap: () => Navigator.of(ctx).pop('skip'),
-            ),
-            if (e.repeatId != null)
+            if (!extra && e.repeatId != null)
               ListTile(
                 leading: Icon(
                   Icons.repeat_on_rounded,
@@ -674,7 +807,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 subtitle: Text(context.l.planStopRepeatHint),
                 onTap: () => Navigator.of(ctx).pop('unrepeat'),
               )
-            else if (recipe != null && e.id != null)
+            else if (!extra && recipe != null && e.id != null)
               ListTile(
                 leading: Icon(Icons.repeat_rounded, color: AppColors.woodDark),
                 title: Text(context.l.planRepeat),
@@ -703,7 +836,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         await _toggleSkip(data, e);
         break;
       case 'remove':
-        await _removeEntry(e);
+        await _removeEntry(e, data.recipesById[e.recipeId]?.title);
         break;
       case 'repeat':
         await _repeatEntry(data, e);
@@ -885,10 +1018,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final count = eating.where((x) => x).length;
     if (count == 0) return _toggleSkip(data, e);
     try {
-      await _client
-          .from('meal_plan_entries')
-          .update({'servings': count})
-          .eq('id', e.id!);
+      await _mealQuery(
+        data,
+        e,
+        _client.from('meal_plan_entries').update({'servings': count}),
+      );
       _reload();
     } catch (err) {
       _showError(err);
@@ -933,6 +1067,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     var prefs = PlanPrefs.current.value;
     final hidden = {...prefs.hidden};
     final times = {...prefs.times};
+    final dessertWith = {...prefs.dessertWith};
     var fast = prefs.fastHours;
     var calendarId = prefs.calendarId;
     String? calendarName;
@@ -1056,6 +1191,19 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         ),
                       ),
                     ],
+                    title(context.l.planAutoDessert),
+                    for (final t in const ['lunch', 'dinner'])
+                      SwitchListTile(
+                        value: dessertWith.contains(t),
+                        activeThumbColor: AppColors.woodDark,
+                        title: Text(context.l.mealType(t)),
+                        subtitle: t == 'lunch'
+                            ? Text(context.l.planAutoDessertHint)
+                            : null,
+                        onChanged: (v) => setSheet(
+                          () => v ? dessertWith.add(t) : dessertWith.remove(t),
+                        ),
+                      ),
                     title(context.l.planTimes),
                     for (final t in _mainMealTypes)
                       if (!hidden.contains(t)) mealTime(t),
@@ -1126,6 +1274,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       fastHours: () => fast,
       calendarId: () => calendarId,
       leftoverMeals: leftover,
+      dessertWith: dessertWith,
     );
     await PlanPrefs.save(prefs);
     if (calendarId != null) {
@@ -1151,7 +1300,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   /// congelador") porque el plato ya no es el mismo.
   Future<void> _changeRecipe(_PlanData data, MealPlanEntry e) async {
     if (e.id == null) return;
-    final chosen = await _pickRecipe(
+    final chosen = await _pickDish(
       data,
       title: context.l.planPickRecipe,
       mealType: e.mealType,
@@ -1161,7 +1310,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       await _client
           .from('meal_plan_entries')
           .update({
-            'recipe_id': chosen.id,
+            'recipe_id': chosen.recipeId,
+            'ready_meal_id': chosen.readyMealId,
             'from_freezer': false,
             'inventory_item_id': null,
             // Al reasignar, la comida vuelve a estar "en casa".
@@ -1175,14 +1325,42 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   /// Elimina una comida del plan.
-  Future<void> _removeEntry(MealPlanEntry e) async {
+  Future<void> _removeEntry(MealPlanEntry e, String? title) async {
     if (e.id == null) return;
+    final Map<String, dynamic> row;
     try {
+      // Se guarda la fila entera para poder deshacer el borrado.
+      row = await _client
+          .from('meal_plan_entries')
+          .select()
+          .eq('id', e.id!)
+          .single();
       await _client.from('meal_plan_entries').delete().eq('id', e.id!);
       _reload();
     } catch (err) {
       _showError(err);
+      return;
     }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.l.shopRemovedOne(title ?? context.l.mealType(e.mealType)),
+        ),
+        persist: false,
+        action: SnackBarAction(
+          label: context.l.undo,
+          onPressed: () async {
+            try {
+              await _client.from('meal_plan_entries').insert(row);
+              _reload();
+            } catch (err) {
+              _showError(err);
+            }
+          },
+        ),
+      ),
+    );
   }
 
   /// Añade una comida nueva a un día concreto. Pide tipo de comida (solo entre
@@ -1236,7 +1414,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         );
     if (!mounted || mealType == null) return;
 
-    final chosen = await _pickRecipe(
+    final chosen = await _pickDish(
       data,
       title: context.l.planPickRecipe,
       mealType: mealType,
@@ -1256,7 +1434,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               homeId: data.homeId!,
               date: date,
               mealType: mealType,
-              recipeId: chosen.id,
+              recipeId: chosen.recipeId,
+              readyMealId: chosen.readyMealId,
               servings: servings,
             ).toMap(),
           );
@@ -1266,14 +1445,71 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
   }
 
-  /// Bottom sheet con buscador para elegir una receta del hogar. Devuelve la
-  /// receta elegida o null si se cancela.
-  Future<Recipe?> _pickRecipe(
+  /// Platos de la comida de [e] (mismo día y tipo), el principal primero.
+  List<MealPlanEntry> _dishesOf(_PlanData data, MealPlanEntry e) =>
+      _sortedDishes([
+        for (final x in data.entries)
+          if (x.mealType == e.mealType && _isSameDay(x.date, e.date)) x,
+      ]);
+
+  static List<MealPlanEntry> _sortedDishes(List<MealPlanEntry> dishes) =>
+      dishes..sort((a, b) => a.position.compareTo(b.position));
+
+  /// Filtra [q] a todos los platos de la comida de [e].
+  PostgrestFilterBuilder<T> _mealQuery<T>(
+    _PlanData data,
+    MealPlanEntry e,
+    PostgrestFilterBuilder<T> q,
+  ) => q
+      .eq('home_id', data.homeId!)
+      .eq('plan_date', e.date.toIso8601String().split('T').first)
+      .eq('meal_type', e.mealType);
+
+  /// "+ Añadir otro plato": un plato más (postre, segundo...) en la comida de
+  /// [main], con sus mismas raciones.
+  Future<void> _addDish(_PlanData data, MealPlanEntry main) async {
+    final chosen = await _pickDish(
+      data,
+      title: context.l.planAddDish,
+      mealType: 'dessert',
+    );
+    if (chosen == null) return;
+    final dishes = _dishesOf(data, main);
+    try {
+      await _client
+          .from('meal_plan_entries')
+          .insert(
+            MealPlanEntry(
+              homeId: data.homeId!,
+              date: main.date,
+              mealType: main.mealType,
+              recipeId: chosen.recipeId,
+              readyMealId: chosen.readyMealId,
+              servings: main.servings,
+              skipped: main.skipped,
+              position: dishes.last.position + 1,
+            ).toMap(),
+          );
+      _reload();
+    } catch (err) {
+      _showError(err);
+    }
+  }
+
+  /// Nombre de lo que hay en [e]: la receta o el preparado del súper.
+  String _dishTitle(_PlanData data, MealPlanEntry e) =>
+      data.recipesById[e.recipeId]?.title ??
+      data.readyById[e.readyMealId]?.name ??
+      context.l.recipe;
+
+  /// Elige qué poner en un hueco: una receta del hogar (buscador) o, desde
+  /// el mismo buscador, un preparado del súper. Null si se cancela.
+  Future<({String? recipeId, String? readyMealId})?> _pickDish(
     _PlanData data, {
     required String title,
     String? mealType,
-  }) {
-    return showModalBottomSheet<Recipe>(
+  }) async {
+    final picked = await showModalBottomSheet<Object>(
       context: context,
       backgroundColor: AppColors.cream,
       isScrollControlled: true,
@@ -1286,13 +1522,148 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         mealType: mealType,
       ),
     );
+    if (picked is Recipe) return (recipeId: picked.id, readyMealId: null);
+    if (picked != _RecipePickerSheet.boughtReady || !mounted) return null;
+    final ready = await _pickReadyMeal(data, dessert: mealType == 'dessert');
+    return ready == null ? null : (recipeId: null, readyMealId: ready.id);
+  }
+
+  /// "Tus preparados": los de confianza para elegir con un toque, quitarlos
+  /// de la lista o buscar uno nuevo en el catálogo del súper.
+  Future<ReadyMeal?> _pickReadyMeal(
+    _PlanData data, {
+    required bool dessert,
+  }) async {
+    final trusted =
+        [
+          for (final r in data.readyById.values)
+            if (r.trusted) r,
+        ]..sort(
+          (a, b) => (a.isDessert == dessert ? 0 : 1).compareTo(
+            b.isDessert == dessert ? 0 : 1,
+          ),
+        );
+    final picked = await showModalBottomSheet<Object>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.8,
+            ),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                  child: Text(
+                    context.l.planYourReady,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+                if (trusted.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                    child: Text(
+                      context.l.planReadyEmpty,
+                      style: TextStyle(color: AppColors.inkMuted),
+                    ),
+                  ),
+                for (final r in trusted)
+                  ListTile(
+                    leading: FoodImage(
+                      name: r.name,
+                      imageUrl: r.imageUrl,
+                      size: 44,
+                      radius: 12,
+                    ),
+                    title: Text(r.name),
+                    subtitle: Text(
+                      [
+                        r.isDessert
+                            ? context.l.planReadyDessert
+                            : context.l.planReadyMain,
+                        if (r.calories != null) '${r.calories!.round()} kcal',
+                      ].join(' · '),
+                    ),
+                    trailing: IconButton(
+                      tooltip: context.l.planReadyRemove,
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                      onPressed: () async {
+                        try {
+                          await _client
+                              .from('ready_meals')
+                              .update({'trusted': false})
+                              .eq('id', r.id);
+                          setSheet(() => trusted.remove(r));
+                        } catch (err) {
+                          _showError(err);
+                        }
+                      },
+                    ),
+                    onTap: () => Navigator.of(ctx).pop(r),
+                  ),
+                ListTile(
+                  leading: Icon(
+                    Icons.search_rounded,
+                    color: AppColors.woodDark,
+                  ),
+                  title: Text(context.l.planReadySearch),
+                  onTap: () => Navigator.of(ctx).pop('search'),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (picked is ReadyMeal) return picked;
+    if (picked != 'search' || !mounted) return null;
+    final product = await showProductSearchSheet(context, initialQuery: '');
+    if (product == null || !mounted) return null;
+    final form = await showDialog<({bool dessert, double? kcal})>(
+      context: context,
+      builder: (_) =>
+          _ReadyMealForm(name: product.displayName, dessert: dessert),
+    );
+    if (form == null) return null;
+    try {
+      final row = await _client
+          .from('ready_meals')
+          .insert({
+            'home_id': data.homeId,
+            'name': product.displayName,
+            'image_url': product.imageUrl,
+            'calories': form.kcal,
+            'kind': form.dessert ? 'dessert' : 'main',
+          })
+          .select()
+          .single();
+      return ReadyMeal.fromMap(row);
+    } catch (err) {
+      _showError(err);
+      return null;
+    }
   }
 
   void _showError(Object err) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Error: $err'),
+        content: Text(friendlyError(err)),
         backgroundColor: AppColors.expired,
       ),
     );
@@ -1304,7 +1675,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   List<PlanSlot> _buildSlots(_PlanData data) {
     return [
       for (final entry in data.entries)
-        if (entry.id != null)
+        if (entry.id != null && _dishesOf(data, entry).first == entry)
           PlanSlot(
             id: entry.id,
             date: entry.date,
@@ -1423,6 +1794,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
+  /// Platos de un día agrupados por comida, el principal primero.
+  static Map<String, List<MealPlanEntry>> _dishesByType(
+    List<MealPlanEntry> dayEntries,
+  ) {
+    final out = <String, List<MealPlanEntry>>{};
+    for (final e in dayEntries) {
+      out.putIfAbsent(e.mealType, () => []).add(e);
+    }
+    out.updateAll((_, v) => _sortedDishes(v));
+    return out;
+  }
+
   /// Tipos de comida que siempre se ven como huecos del día.
   static const _mainMealTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
 
@@ -1464,7 +1847,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               '${DateFormat.MMMMd(_locale).format(last)}';
     final date = days[sel];
     final dayEntries = byDate[keyOf(date)] ?? const <MealPlanEntry>[];
-    final byType = {for (final e in dayEntries) e.mealType: e};
+    final dishes = _dishesByType(dayEntries);
+    final byType = {for (final t in dishes.keys) t: dishes[t]!.first};
     final prefs = PlanPrefs.current.value;
     final types = _slotTypes(byType);
     final prepPlan = data.isMealPrep ? _buildMealPrepPlan(data) : null;
@@ -1626,26 +2010,56 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             () {
               final e = byType[t];
               final recipe = e == null ? null : data.recipesById[e.recipeId];
+              final ready = e == null ? null : data.readyById[e.readyMealId];
               return MealSlotCard(
                 mealType: t,
                 time: prefs.timeOf(t),
                 inFast: prefs.inFast(t),
-                title: e == null ? null : (recipe?.title ?? context.l.recipe),
-                image: recipe == null
-                    ? null
-                    : RecipeImage(
+                title: e == null ? null : _dishTitle(data, e),
+                image: recipe != null
+                    ? RecipeImage(
                         recipe: recipe,
                         width: 64,
                         height: 64,
                         radius: 18,
-                      ),
-                detail: e == null ? null : _servingsLine(data, e),
+                      )
+                    : ready != null
+                    ? FoodImage(
+                        name: ready.name,
+                        imageUrl: ready.imageUrl,
+                        size: 64,
+                        radius: 18,
+                      )
+                    : null,
+                detail: e == null
+                    ? null
+                    : ready != null
+                    ? Text(
+                        context.l.planBoughtReady,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.inkMuted,
+                        ),
+                      )
+                    : _servingsLine(data, e),
                 leftover:
                     data.isAlternate &&
                     e != null &&
                     isLeftover(e, data.entries),
                 skipped: e?.skipped ?? false,
                 fromFreezer: e?.fromFreezer ?? false,
+                extras: [
+                  for (final x in dishes[t]?.skip(1) ?? <MealPlanEntry>[])
+                    (
+                      id: x.id ?? '',
+                      title: _dishTitle(data, x),
+                      onTap: () => _openEntryActions(data, x),
+                      onRemove: () => _removeEntry(x, _dishTitle(data, x)),
+                    ),
+                ],
+                onAddDish: e == null || e.skipped
+                    ? null
+                    : () => _addDish(data, e),
                 onTap: e == null
                     ? () => _addEntryToDay(
                         data,
@@ -1687,7 +2101,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     int index, {
     required bool isToday,
   }) {
-    final byType = {for (final e in dayEntries) e.mealType: e};
+    final dishes = _dishesByType(dayEntries);
+    final byType = {for (final t in dishes.keys) t: dishes[t]!.first};
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Container(
@@ -1746,7 +2161,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 final s = mealStyle(t);
                 final title = e == null
                     ? null
-                    : (data.recipesById[e.recipeId]?.title ?? context.l.recipe);
+                    : [
+                        for (final x in dishes[t]!) _dishTitle(data, x),
+                      ].join(' + ');
                 return InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   onTap: e == null
@@ -2227,6 +2644,10 @@ class _PlanData {
   final List<String> activeMeals;
   final List<Recipe> recipes;
   final Map<String, Recipe> recipesById;
+
+  /// Preparados del súper del hogar (también los quitados de la lista, para
+  /// poder mostrar lo que ya está planificado).
+  final Map<String, ReadyMeal> readyById;
   final List<MealPlanEntry> entries;
   final List<MealPlanEntry> laterEntries;
   final List<HouseholdMember> members;
@@ -2243,6 +2664,7 @@ class _PlanData {
     this.activeMeals = const ['lunch', 'dinner'],
     this.recipes = const [],
     this.recipesById = const {},
+    this.readyById = const {},
     this.entries = const [],
     this.laterEntries = const [],
     this.members = const [],
@@ -2256,6 +2678,9 @@ class _PlanData {
 /// ingrediente, categorías (arranca en la del hueco, p. ej. "Desayuno") y
 /// lista con foto. Devuelve la receta elegida (Navigator.pop) o null.
 class _RecipePickerSheet extends StatefulWidget {
+  /// Lo que devuelve la hoja al tocar "Comprado hecho".
+  static const boughtReady = 'bought_ready';
+
   final String title;
   final List<Recipe> recipes;
   final String? mealType;
@@ -2380,6 +2805,25 @@ class _RecipePickerSheetState extends State<_RecipePickerSheet> {
             ),
             SliverToBoxAdapter(
               child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.shopping_bag_outlined,
+                    color: AppColors.woodDark,
+                  ),
+                  title: Text(
+                    context.l.planBoughtReady,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(context.l.planBoughtReadyHint),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () =>
+                      Navigator.of(context).pop(_RecipePickerSheet.boughtReady),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                 child: RecipeCategoryChips(
                   recipes: widget.recipes,
@@ -2485,6 +2929,67 @@ class _PickerRecipeTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Datos de un preparado nuevo: si es plato o postre y sus calorías por
+/// ración (opcional). Dueño de su controlador para no liberarlo antes de
+/// tiempo al cerrar el diálogo.
+class _ReadyMealForm extends StatefulWidget {
+  const _ReadyMealForm({required this.name, required this.dessert});
+
+  final String name;
+  final bool dessert;
+
+  @override
+  State<_ReadyMealForm> createState() => _ReadyMealFormState();
+}
+
+class _ReadyMealFormState extends State<_ReadyMealForm> {
+  final _kcal = TextEditingController();
+  late bool _dessert = widget.dessert;
+
+  @override
+  void dispose() {
+    _kcal.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.name),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SegmentedPill(
+            labels: [context.l.planReadyMain, context.l.planReadyDessert],
+            selected: _dessert ? 1 : 0,
+            onChanged: (i) => setState(() => _dessert = i == 1),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _kcal,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: context.l.planReadyKcal),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop((
+            dessert: _dessert,
+            kcal: double.tryParse(_kcal.text.trim().replaceAll(',', '.')),
+          )),
+          child: Text(context.l.save),
+        ),
+      ],
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'l10n/l10n.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'utils/money.dart';
 
@@ -63,7 +64,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Estadísticas de la compra')),
+      appBar: AppBar(title: Text(context.l.psTitle)),
       body: FutureBuilder<List<_ProductStat>>(
         future: _future,
         builder: (context, snapshot) {
@@ -98,7 +99,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
               _summaryCard(totalDistintos, totalLineas, gastoTotal),
               const SizedBox(height: 16),
               _barCard(
-                'Lo que más compras',
+                context.l.psMostBought,
                 Icons.repeat_rounded,
                 masComprados.take(6).toList(),
                 (s) => s.times.toDouble(),
@@ -106,7 +107,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
               ),
               const SizedBox(height: 16),
               _barCard(
-                'En lo que más gastas',
+                context.l.psMostSpent,
                 Icons.euro_rounded,
                 masGasto.take(6).toList(),
                 (s) => s.totalSpent,
@@ -114,7 +115,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
               ),
               const SizedBox(height: 16),
               _listCard(
-                'Los más caros (por unidad)',
+                context.l.psPriciest,
                 Icons.trending_up_rounded,
                 masCaros.take(6).toList(),
                 (s) => money(s.avgUnitPrice!),
@@ -138,14 +139,14 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Tu historial de compra',
+                Text(
+                  context.l.psHistory,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$distintos productos distintos · $lineas compras\n'
-                  'Gasto total registrado: ${money(gasto, decimals: 0)}',
+                  '${context.l.psSummary(distintos, lineas)}\n'
+                  '${context.l.psTotal(money(gasto, decimals: 0))}',
                   style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
                 ),
               ],
@@ -238,7 +239,7 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
           const SizedBox(height: 8),
           if (items.isEmpty)
             Text(
-              'Aún no hay suficientes datos de precios.',
+              context.l.psNoPrices,
               style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
             )
           else
@@ -302,14 +303,13 @@ class _ProductStatsScreenState extends State<ProductStatsScreen> {
           children: [
             const MiauCharacter(mood: MiauMood.curious, size: 120),
             const SizedBox(height: 16),
-            const Text(
-              'Aún no hay estadísticas',
+            Text(
+              context.l.psEmptyTitle,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
             Text(
-              'Escanea tickets de la compra y aquí verás lo que más compras, '
-              'en qué gastas más y los productos más caros.',
+              context.l.psEmptyBody,
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.inkMuted),
             ),

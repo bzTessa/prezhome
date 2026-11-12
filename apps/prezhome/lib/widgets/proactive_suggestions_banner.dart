@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/proactive_suggestions_service.dart';
 import '../theme/app_theme.dart';
 import 'miau_character.dart';
+import '../l10n/l10n.dart';
 
 /// Aviso de "caduca pronto" (motor LOCAL, sin IA) en lo alto de Comida: dice
 /// QUÉ caduca y CUÁNDO, y lleva a ideas de recetas con lo que hay en casa.
@@ -26,7 +27,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
 
   /// Título: "Caduca pronto" / "Caducan pronto".
   static String bannerTitle(List<ExpiringSuggestion> suggestions) =>
-      suggestions.length == 1 ? 'Caduca pronto' : 'Caducan pronto';
+      appL10n.bannerExpiring(suggestions.length);
 
   /// "Leche hoy · Yogur mañana · +3": lo más urgente primero.
   static String bannerMessage(List<ExpiringSuggestion> suggestions) {
@@ -94,7 +95,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onAction,
                   icon: const Icon(Icons.restaurant_rounded, size: 16),
-                  label: const Text('Ideas'),
+                  label: Text(context.l.bannerIdeas),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.terracotta,
                     foregroundColor: AppColors.onBrand,
@@ -107,7 +108,7 @@ class ProactiveSuggestionsBanner extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Ocultar hasta mañana',
+                  tooltip: context.l.bannerHide,
                   visualDensity: VisualDensity.compact,
                   onPressed: onDismiss,
                   icon: Icon(

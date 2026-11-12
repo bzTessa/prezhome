@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prezhome/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:prezhome/services/connection_status.dart';
 import 'package:prezhome/widgets/offline_banner.dart';
@@ -47,8 +48,14 @@ void main() {
   });
 
   group('OfflineBanner', () {
-    Future<void> pump(WidgetTester tester, Widget w) =>
-        tester.pumpWidget(MaterialApp(home: Scaffold(body: w)));
+    Future<void> pump(WidgetTester tester, Widget w) => tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('es'),
+        home: Scaffold(body: w),
+      ),
+    );
 
     testWidgets('con conexión y sin aviso no pinta nada', (tester) async {
       await pump(tester, const OfflineBanner(online: true));
@@ -62,7 +69,10 @@ void main() {
       );
       expect(find.text('Sin conexión ahora mismo'), findsOneWidget);
       expect(find.text('Volvemos en un rato.'), findsOneWidget);
-      expect(find.text(kOfflineExplanation), findsOneWidget);
+      expect(
+        find.textContaining('Puedes seguir usando la lista'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('con conexión muestra solo el aviso publicado', (tester) async {
@@ -71,7 +81,10 @@ void main() {
         const OfflineBanner(online: true, notice: 'Mantenimiento esta noche.'),
       );
       expect(find.text('Mantenimiento esta noche.'), findsOneWidget);
-      expect(find.text(kOfflineExplanation), findsNothing);
+      expect(
+        find.textContaining('Puedes seguir usando la lista'),
+        findsNothing,
+      );
     });
   });
 }
