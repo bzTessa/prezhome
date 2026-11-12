@@ -16,6 +16,7 @@ class PlanPrefs {
     this.fastHours,
     this.calendarId,
     this.energy = 1,
+    this.leftoverMeals = const {'lunch', 'dinner'},
     this.dessertWith = const {},
   });
 
@@ -33,6 +34,9 @@ class PlanPrefs {
 
   /// Cuánto cocinar (0 poco, 1 normal, 2 mucho): cuántos días de tanda hay.
   final int energy;
+
+  /// En el modo "Cada dos días", qué comidas se repiten al día siguiente.
+  final Set<String> leftoverMeals;
 
   /// Comidas (lunch/dinner) a las que "Generar plan" añade un postre.
   final Set<String> dessertWith;
@@ -102,6 +106,7 @@ class PlanPrefs {
     int? Function()? fastHours,
     String? Function()? calendarId,
     int? energy,
+    Set<String>? leftoverMeals,
     Set<String>? dessertWith,
   }) => PlanPrefs(
     hidden: hidden ?? this.hidden,
@@ -109,6 +114,7 @@ class PlanPrefs {
     fastHours: fastHours == null ? this.fastHours : fastHours(),
     calendarId: calendarId == null ? this.calendarId : calendarId(),
     energy: energy ?? this.energy,
+    leftoverMeals: leftoverMeals ?? this.leftoverMeals,
     dessertWith: dessertWith ?? this.dessertWith,
   );
 
@@ -127,6 +133,10 @@ class PlanPrefs {
         fastHours: m['fast_hours'] as int?,
         calendarId: m['calendar_id'] as String?,
         energy: m['energy'] as int? ?? 1,
+        leftoverMeals: switch (m['leftover_meals']) {
+          final List l => {...l.cast<String>()},
+          _ => const {'lunch', 'dinner'},
+        },
         dessertWith: {
           ...(m['dessert_with'] as List? ?? const []).cast<String>(),
         },
@@ -145,6 +155,7 @@ class PlanPrefs {
           'fast_hours': p.fastHours,
           'calendar_id': p.calendarId,
           'energy': p.energy,
+          'leftover_meals': p.leftoverMeals.toList(),
           'dessert_with': p.dessertWith.toList(),
         }),
       );

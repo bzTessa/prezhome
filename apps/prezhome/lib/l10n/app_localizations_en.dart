@@ -3531,6 +3531,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recLess => 'Less';
 
   @override
+  String get nutAlternate => 'Every other day';
+
+  @override
+  String get nutAlternateSub =>
+      'I cook extra and eat the leftovers the next day';
+
+  @override
+  String get planHowYouCook => 'How you cook';
+
+  @override
+  String get planModeDaily => 'Daily';
+
+  @override
+  String get planModeAlternate => 'Every 2 days';
+
+  @override
+  String get planModeBatch => 'Batch';
+
+  @override
+  String get planLeftoverMeals => 'What repeats the next day';
+
+  @override
+  String get planLeftover => 'Yesterday\'s leftovers';
+
+  @override
   String get planOldTapersTitle => 'Containers from the old plan';
 
   @override

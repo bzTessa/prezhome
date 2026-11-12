@@ -3551,6 +3551,31 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recLess => 'Meno';
 
   @override
+  String get nutAlternate => 'A giorni alterni';
+
+  @override
+  String get nutAlternateSub =>
+      'Cucino di più e il giorno dopo mangio gli avanzi';
+
+  @override
+  String get planHowYouCook => 'Come cucini';
+
+  @override
+  String get planModeDaily => 'Ogni giorno';
+
+  @override
+  String get planModeAlternate => 'Ogni 2 giorni';
+
+  @override
+  String get planModeBatch => 'In lotto';
+
+  @override
+  String get planLeftoverMeals => 'Cosa si ripete il giorno dopo';
+
+  @override
+  String get planLeftover => 'Avanzi di ieri';
+
+  @override
   String get planOldTapersTitle => 'Contenitori del piano precedente';
 
   @override

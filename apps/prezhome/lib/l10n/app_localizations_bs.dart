@@ -3489,6 +3489,30 @@ class AppLocalizationsBs extends AppLocalizations {
   String get recLess => 'Manje';
 
   @override
+  String get nutAlternate => 'Svaki drugi dan';
+
+  @override
+  String get nutAlternateSub => 'Skuham više i sutradan jedem ostatke';
+
+  @override
+  String get planHowYouCook => 'Kako kuhaš';
+
+  @override
+  String get planModeDaily => 'Svaki dan';
+
+  @override
+  String get planModeAlternate => 'Svaka 2 dana';
+
+  @override
+  String get planModeBatch => 'Unaprijed';
+
+  @override
+  String get planLeftoverMeals => 'Šta se ponavlja sutradan';
+
+  @override
+  String get planLeftover => 'Ostaci od jučer';
+
+  @override
   String get planOldTapersTitle => 'Posude iz starog plana';
 
   @override

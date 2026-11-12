@@ -5544,6 +5544,54 @@ abstract class AppLocalizations {
   /// **'Menos'**
   String get recLess;
 
+  /// No description provided for @nutAlternate.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada dos días'**
+  String get nutAlternate;
+
+  /// No description provided for @nutAlternateSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocino de más y al día siguiente como las sobras'**
+  String get nutAlternateSub;
+
+  /// No description provided for @planHowYouCook.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo cocinas'**
+  String get planHowYouCook;
+
+  /// No description provided for @planModeDaily.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada día'**
+  String get planModeDaily;
+
+  /// No description provided for @planModeAlternate.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada 2 días'**
+  String get planModeAlternate;
+
+  /// No description provided for @planModeBatch.
+  ///
+  /// In es, this message translates to:
+  /// **'En lote'**
+  String get planModeBatch;
+
+  /// No description provided for @planLeftoverMeals.
+  ///
+  /// In es, this message translates to:
+  /// **'Qué se repite al día siguiente'**
+  String get planLeftoverMeals;
+
+  /// No description provided for @planLeftover.
+  ///
+  /// In es, this message translates to:
+  /// **'Sobras de ayer'**
+  String get planLeftover;
+
   /// No description provided for @planOldTapersTitle.
   ///
   /// In es, this message translates to:

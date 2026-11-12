@@ -16,6 +16,7 @@ import 'models/recipe.dart';
 import 'month_calendar_screen.dart';
 import 'services/calendar_sync.dart';
 import 'services/household_servings.dart';
+import 'services/leftovers.dart';
 import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
@@ -150,9 +151,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     // El plan de cocción (meal prep) solo se activa si ALGÚN perfil del hogar
     // cocina en modo 'mealprep'. En modo 'daily' no mostramos nada nuevo.
     var isMealPrep = myProfile.isMealPrep;
+    var isAlternate = myProfile.isAlternate;
     for (final m in (profilesRes as List)) {
       final p = NutritionProfile.fromMap(m);
       if (p.isMealPrep) isMealPrep = true;
+      if (p.isAlternate) isAlternate = true;
       final isMe = p.id == user.id;
       members.add(
         HouseholdMember(
@@ -245,6 +248,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       laterEntries: later,
       members: members,
       isMealPrep: isMealPrep,
+      // Si alguien cocina en lote, manda el lote.
+      isAlternate: isAlternate && !isMealPrep,
       prefs: switch (profile['dashboard_prefs']) {
         final Map m => DashboardPrefs.fromJson(Map<String, dynamic>.from(m)),
         _ => null,
@@ -376,6 +381,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         energyLevel: _energyLevel,
         batch: data.isMealPrep,
       );
+      if (data.isAlternate) {
+        applyLeftovers(plan, start, PlanPrefs.current.value.leftoverMeals);
+      }
 
       // Borrar el plan anterior de esas fechas y guardar el nuevo.
       final end = start.add(Duration(days: days));
@@ -1063,7 +1071,14 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     var fast = prefs.fastHours;
     var calendarId = prefs.calendarId;
     String? calendarName;
-    var batch = data.isMealPrep;
+    const modes = ['daily', 'alternate', 'mealprep'];
+    final oldMode = data.isMealPrep
+        ? 'mealprep'
+        : data.isAlternate
+        ? 'alternate'
+        : 'daily';
+    var mode = oldMode;
+    final leftover = {...prefs.leftoverMeals};
     const fasts = [null, 12, 14, 16];
     await showModalBottomSheet<void>(
       context: context,
@@ -1131,13 +1146,51 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     title(context.l.planSettings),
                     mealSwitch('breakfast'),
                     mealSwitch('snack'),
-                    SwitchListTile(
-                      value: batch,
-                      activeThumbColor: AppColors.woodDark,
-                      title: Text(context.l.planBatchCook),
-                      subtitle: Text(context.l.planBatchCookHint),
-                      onChanged: (v) => setSheet(() => batch = v),
+                    title(context.l.planHowYouCook),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SegmentedPill(
+                        labels: [
+                          context.l.planModeDaily,
+                          context.l.planModeAlternate,
+                          context.l.planModeBatch,
+                        ],
+                        selected: modes.indexOf(mode),
+                        onChanged: (i) => setSheet(() => mode = modes[i]),
+                      ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      child: Text(switch (mode) {
+                        'mealprep' => context.l.planBatchCookHint,
+                        'alternate' => context.l.nutAlternateSub,
+                        _ => context.l.nutDailySub,
+                      }, style: TextStyle(color: AppColors.inkMuted)),
+                    ),
+                    if (mode == 'alternate') ...[
+                      title(context.l.planLeftoverMeals),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Wrap(
+                          spacing: 8,
+                          children: [
+                            for (final t in _mainMealTypes)
+                              if (!hidden.contains(t))
+                                FilterChip(
+                                  label: Text(context.l.mealType(t)),
+                                  selected: leftover.contains(t),
+                                  selectedColor: AppColors.wood,
+                                  backgroundColor: AppColors.card,
+                                  onSelected: (v) => setSheet(
+                                    () => v
+                                        ? leftover.add(t)
+                                        : leftover.remove(t),
+                                  ),
+                                ),
+                          ],
+                        ),
+                      ),
+                    ],
                     title(context.l.planAutoDessert),
                     for (final t in const ['lunch', 'dinner'])
                       SwitchListTile(
@@ -1220,17 +1273,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       times: times,
       fastHours: () => fast,
       calendarId: () => calendarId,
+      leftoverMeals: leftover,
       dessertWith: dessertWith,
     );
     await PlanPrefs.save(prefs);
     if (calendarId != null) {
       CalendarSync.sync(_client, force: true);
     }
-    if (batch != data.isMealPrep) {
+    if (mode != oldMode) {
       try {
         await _client
             .from('profiles')
-            .update({'cooking_mode': batch ? 'mealprep' : 'daily'})
+            .update({'cooking_mode': mode})
             .eq('id', _client.auth.currentUser!.id);
       } catch (err) {
         _showError(err);
@@ -1988,6 +2042,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         ),
                       )
                     : _servingsLine(data, e),
+                leftover:
+                    data.isAlternate &&
+                    e != null &&
+                    isLeftover(e, data.entries),
                 skipped: e?.skipped ?? false,
                 fromFreezer: e?.fromFreezer ?? false,
                 extras: [
@@ -2597,6 +2655,9 @@ class _PlanData {
   /// true si algún perfil del hogar cocina en modo 'mealprep' (en lote). Solo
   /// entonces mostramos la sección "Plan de cocción".
   final bool isMealPrep;
+
+  /// Modo "Cada dos días": comidas con sobras al día siguiente.
+  final bool isAlternate;
   final DashboardPrefs prefs;
   _PlanData({
     required this.homeId,
@@ -2608,6 +2669,7 @@ class _PlanData {
     this.laterEntries = const [],
     this.members = const [],
     this.isMealPrep = false,
+    this.isAlternate = false,
     DashboardPrefs? prefs,
   }) : prefs = prefs ?? DashboardPrefs.defaults();
 }
