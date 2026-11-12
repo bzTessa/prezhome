@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/models/ingredient.dart';
+import 'package:prezhome/services/count_prefs.dart';
 import 'package:prezhome/services/plan_shopping.dart';
 import 'package:prezhome/services/product_photo_resolver.dart';
 
@@ -58,6 +59,19 @@ void main() {
   });
 
   group('shoppingLines', () {
+    test('lo que el hogar cuenta a peso no se pasa a piezas', () {
+      final lines = shoppingLines(
+        const [
+          PlanNeed(name: 'Pimiento rojo', quantity: 100, unit: 'g'),
+          PlanNeed(name: 'Pimiento rojo', quantity: 1, unit: 'unidad'),
+        ],
+        modes: {CountPrefs.key('Pimiento rojo'): CountMode.weight},
+      );
+      expect(lines, hasLength(1));
+      expect(lines.single.qty, 250);
+      expect(lines.single.unit, 'g');
+    });
+
     test('fruta y verdura en g pasa a piezas y se junta con las ud', () {
       final lines = shoppingLines(const [
         PlanNeed(name: 'Pimiento rojo', quantity: 100, unit: 'g'),

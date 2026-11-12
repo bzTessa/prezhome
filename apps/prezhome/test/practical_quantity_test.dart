@@ -108,4 +108,24 @@ void main() {
       expect(a.quantity, b.quantity);
     });
   });
+
+  group('recountLine', () {
+    test('de gramos a piezas y vuelta', () {
+      expect(recountLine('Zanahoria', 400, 'g', toPieces: true), (
+        quantity: 5.0,
+        unit: 'ud',
+      ));
+      expect(recountLine('Zanahoria', 5, 'ud', toPieces: false), (
+        quantity: 400.0,
+        unit: 'g',
+      ));
+    });
+    test('piezas solo para fruta y verdura suelta', () {
+      expect(recountLine('Arroz', 500, 'g', toPieces: true), isNull);
+      expect(recountLine('Arroz', 500, 'g', toPieces: false), (
+        quantity: 500.0,
+        unit: 'g',
+      ));
+    });
+  });
 }

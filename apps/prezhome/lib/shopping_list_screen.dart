@@ -21,11 +21,13 @@ import 'services/plan_shopping.dart';
 import 'services/product_photo_resolver.dart';
 import 'services/shopping_checkout.dart';
 import 'shopping_lists_overview_screen.dart';
+import 'services/count_prefs.dart';
 import 'services/product_search_service.dart';
 import 'utils/offline_actions.dart';
 import 'utils/realtime_sync.dart';
 import 'utils/shopping_categories.dart';
 import 'utils/shopping_celebration.dart';
+import 'utils/practical_quantity.dart';
 import 'utils/shopping_display.dart';
 import 'utils/shopping_quick_add.dart';
 import 'scan_ticket_screen.dart';
@@ -317,6 +319,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     try {
       final homeId = await _homeId();
       _prices = await PriceMemory(_client).loadAll(homeId);
+      _countModes = await CountPrefs(_client).load(homeId);
     } catch (_) {
       _prices = {};
     }
@@ -819,6 +822,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               ),
             ),
             ...productPhotoTiles(ctx, name: item.name, imageUrl: item.imageUrl),
+            ..._countTiles(ctx, item),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: Text(context.l.shopRemoveFromList),
@@ -840,6 +844,109 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           item,
         ], context.l.shopRemovedOne(shoppingCleanName(item.name)));
         break;
+      case 'count:pack':
+        await _setCountMode(item, CountMode.pack);
+      case 'count:piece':
+        await _setCountMode(item, CountMode.piece);
+      case 'count:weight':
+        await _setCountMode(item, CountMode.weight);
+    }
+  }
+
+  /// "Contar en: envases / piezas / peso", solo con las formas que tienen
+  /// sentido para ese producto (y si hay al menos dos).
+  List<Widget> _countTiles(BuildContext ctx, ShoppingListItem item) {
+    if (item.quantity == null || isCondiment(item.name)) return const [];
+    final canPiece = looseProduceGrams(item.name) != null;
+    final canWeight =
+        isMeasureUnit(item.unit) || (canPiece && isPieceUnit(item.unit));
+    final canPack =
+        canWeight &&
+        catalogKeyFor(_superKeys.isEmpty ? null : _superKeys.first) != null;
+    final options = [
+      if (canPack) (CountMode.pack, ctx.l.shopCountPack),
+      if (canPiece) (CountMode.piece, ctx.l.shopCountPiece),
+      if (canWeight) (CountMode.weight, ctx.l.shopCountWeight),
+    ];
+    if (options.length < 2) return const [];
+    final current = item.packSize != null
+        ? CountMode.pack
+        : isPieceUnit(item.unit)
+        ? CountMode.piece
+        : CountMode.weight;
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            ctx.l.shopCountIn,
+            style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+          ),
+        ),
+      ),
+      for (final (mode, label) in options)
+        ListTile(
+          leading: Icon(
+            mode == current
+                ? Icons.radio_button_checked_rounded
+                : Icons.radio_button_off_rounded,
+            color: mode == current ? AppColors.terracotta : AppColors.inkMuted,
+          ),
+          title: Text(label),
+          selected: mode == current,
+          onTap: () => Navigator.of(ctx).pop('count:${mode.name}'),
+        ),
+    ];
+  }
+
+  /// Cambia cómo se cuenta [item] y lo recuerda para ese producto en el
+  /// hogar: la próxima lista del plan y los envases ya salen así.
+  Future<void> _setCountMode(ShoppingListItem item, CountMode mode) async {
+    final id = item.id;
+    if (id == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final notFound = context.l.shopPackNotFound;
+    final failed = context.l.couldNotUpdate;
+    try {
+      final line = recountLine(
+        item.name,
+        item.quantity,
+        item.unit,
+        toPieces: mode == CountMode.piece,
+      );
+      if (line == null) return;
+      double? pack;
+      if (mode == CountMode.pack) {
+        pack = await PlanShoppingService(_client).packSizeFor(
+          item.name,
+          line.unit,
+          supermarketKey: _superKeys.isEmpty ? null : _superKeys.first,
+        );
+        if (pack == null) {
+          messenger.showSnackBar(SnackBar(content: Text(notFound)));
+          return;
+        }
+      }
+      final homeId = await _homeId();
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kShoppingTable,
+          id: id,
+          changes: {
+            'quantity': line.quantity,
+            'unit': line.unit,
+            'pack_size': pack,
+          },
+          nowMillis: DateTime.now().millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await CountPrefs(_client).save(homeId, item.name, mode);
+      _countModes = {..._countModes, CountPrefs.key(item.name): mode};
+      await _reload();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(friendlyError(e, failed))));
     }
   }
 
@@ -1540,6 +1647,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Busca en segundo plano el envase del súper de lo que aún no lo tiene
   /// (cada producto una vez por pantalla) y repinta al encontrarlo.
   final Set<String> _packTried = {};
+  Map<String, CountMode> _countModes = const {};
   bool _fillingPacks = false;
   Future<void> _fillPacks() async {
     final shown = _shown;
@@ -1555,9 +1663,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (todo.isEmpty) return;
     _fillingPacks = true;
     try {
-      final n = await PlanShoppingService(
-        _client,
-      ).fillPackSizes(todo, supermarketKey: _superKeys.first);
+      final n = await PlanShoppingService(_client).fillPackSizes(
+        todo,
+        supermarketKey: _superKeys.first,
+        modes: _countModes,
+      );
       if (n > 0 && mounted) _refreshFromRemote();
     } finally {
       _fillingPacks = false;

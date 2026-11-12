@@ -131,20 +131,31 @@ PracticalQuantity makePracticalForShopping(
   double? quantity,
   String? unit, {
   double? packageGrams,
+  bool pieces = true,
 }) {
   if (isCondiment(name)) {
     return const PracticalQuantity(1, 'ud');
   }
   // La fruta y verdura suelta se compra por piezas: 100 g de pimiento es
-  // 1 pimiento, y así se junta con el "1 ud" de otra receta.
+  // 1 pimiento, y así se junta con el "1 ud" de otra receta. Con [pieces] a
+  // false (el hogar la cuenta a peso o en envases) se deja en gramos.
   final grams = _weightInGrams(quantity, unit);
   final perPiece = looseProduceGrams(name);
-  if (grams != null && perPiece != null) {
+  if (!pieces && perPiece != null && _isPieceUnit(unit) && quantity != null) {
+    return PracticalQuantity(quantity * perPiece, 'g');
+  }
+  if (pieces && grams != null && perPiece != null) {
     final pieces = (grams / perPiece).round();
     return PracticalQuantity((pieces < 1 ? 1 : pieces).toDouble(), 'ud');
   }
   return makePractical(name, quantity, unit, packageGrams: packageGrams);
 }
+
+bool _isPieceUnit(String? unit) => const {
+  'ud',
+  'unidad',
+  'unidades',
+}.contains((unit ?? '').trim().toLowerCase());
 
 double? _weightInGrams(double? quantity, String? unit) {
   if (quantity == null) return null;
@@ -304,3 +315,30 @@ PracticalQuantity makePractical(
   // Resto: dejamos la cantidad tal cual (ya era razonable).
   return PracticalQuantity(quantity, u);
 }
+
+/// Pasa una línea de la compra a piezas ([toPieces]) o a peso, cuando el
+/// hogar elige cómo contar un producto. Null si no tiene sentido (piezas de
+/// algo que no es fruta o verdura suelta).
+({double quantity, String unit})? recountLine(
+  String name,
+  double? quantity,
+  String? unit, {
+  required bool toPieces,
+}) {
+  if (quantity == null) return null;
+  final perPiece = looseProduceGrams(name);
+  final grams = _weightInGrams(quantity, unit);
+  if (toPieces) {
+    if (_isPieceUnit(unit)) return (quantity: quantity, unit: unit!);
+    if (perPiece == null || grams == null) return null;
+    final n = (grams / perPiece).round();
+    return (quantity: (n < 1 ? 1 : n).toDouble(), unit: 'ud');
+  }
+  if (_isPieceUnit(unit)) {
+    return perPiece == null ? null : (quantity: quantity * perPiece, unit: 'g');
+  }
+  return (unit ?? '').trim().isEmpty ? null : (quantity: quantity, unit: unit!);
+}
+
+/// ¿Es [unit] una unidad de piezas (ud, unidad, unidades)?
+bool isPieceUnit(String? unit) => _isPieceUnit(unit);

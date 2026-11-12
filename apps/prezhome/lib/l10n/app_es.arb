@@ -466,6 +466,11 @@
   "couldNotUndo": "No se pudo deshacer",
   "shopToCart": "Al carrito",
   "shopFromPlan": "Del plan de la semana",
+  "shopCountIn": "Contar en",
+  "shopCountPack": "Envases del súper",
+  "shopCountPiece": "Piezas",
+  "shopCountWeight": "Peso o volumen",
+  "shopPackNotFound": "No encuentro el envase de este producto en tu súper",
   "shopPackNeed": "para {need}",
   "@shopPackNeed": {
     "placeholders": {

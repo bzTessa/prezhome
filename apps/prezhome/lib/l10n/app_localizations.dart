@@ -1158,6 +1158,36 @@ abstract class AppLocalizations {
   /// **'Del plan de la semana'**
   String get shopFromPlan;
 
+  /// No description provided for @shopCountIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Contar en'**
+  String get shopCountIn;
+
+  /// No description provided for @shopCountPack.
+  ///
+  /// In es, this message translates to:
+  /// **'Envases del súper'**
+  String get shopCountPack;
+
+  /// No description provided for @shopCountPiece.
+  ///
+  /// In es, this message translates to:
+  /// **'Piezas'**
+  String get shopCountPiece;
+
+  /// No description provided for @shopCountWeight.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso o volumen'**
+  String get shopCountWeight;
+
+  /// No description provided for @shopPackNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No encuentro el envase de este producto en tu súper'**
+  String get shopPackNotFound;
+
   /// No description provided for @shopPackNeed.
   ///
   /// In es, this message translates to:
