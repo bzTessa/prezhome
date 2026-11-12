@@ -299,7 +299,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       } else {
         final msg = (data is Map && data['error'] != null)
             ? data['error'].toString()
-            : 'No se pudo completar la receta';
+            : appL10n.errRecipeComplete;
         throw msg;
       }
     } catch (e) {
@@ -436,7 +436,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       } else {
         final msg = (data is Map && data['error'] != null)
             ? data['error'].toString()
-            : 'No pude importar la receta de ese enlace';
+            : appL10n.errRecipeImport;
         throw msg;
       }
     } catch (e) {
@@ -1120,7 +1120,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         .map(
                           (e) => DropdownMenuItem(
                             value: e.key,
-                            child: Text(e.value),
+                            child: Text(context.l.appliance(e.key)),
                           ),
                         )
                         .toList(),

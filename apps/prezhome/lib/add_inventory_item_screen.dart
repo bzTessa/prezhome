@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'l10n/l10n.dart';
+import 'utils/shopping_display.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/inventory_item.dart';
@@ -242,7 +245,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       final qty = double.tryParse(
         _quantityController.text.trim().replaceAll(',', '.'),
       );
-      if (qty == null) throw 'Introduce una cantidad válida.';
+      if (qty == null) throw appL10n.errBadQuantity;
 
       final isFood = _itemType == 'comida';
       final name = _nameController.text.trim();
@@ -351,7 +354,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, 'Error al guardar')),
+            content: Text(friendlyError(e, context.l.aiSaveError)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -457,7 +460,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Producto del súper',
+                  context.l.aiStoreProduct,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -474,7 +477,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Quitar producto',
+            tooltip: context.l.aiRemoveProduct,
             icon: const Icon(Icons.close_rounded),
             onPressed: () => setState(() => _product = null),
           ),
@@ -491,7 +494,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: Text(
-          widget.isEditing ? 'Editar producto' : 'Añadir al inventario',
+          widget.isEditing ? context.l.aiEditTitle : context.l.aiAddTitle,
         ),
       ),
       body: Padding(
@@ -525,7 +528,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 child: TextButton.icon(
                   onPressed: _changePhoto,
                   icon: const Icon(Icons.image_outlined, size: 18),
-                  label: const Text('Cambiar foto'),
+                  label: Text(context.l.aiChangePhoto),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.woodDark,
                   ),
@@ -534,8 +537,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               const SizedBox(height: 12),
             ],
             // Tipo de producto (comida u hogar/limpieza)
-            const Text(
-              'Tipo de producto',
+            Text(
+              context.l.aiProductType,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -544,7 +547,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               children: InventoryItem.itemTypeLabels.entries.map((e) {
                 final selected = _itemType == e.key;
                 return ChoiceChip(
-                  label: Text(e.value),
+                  label: Text(context.l.aiItemType(e.key)),
                   selected: selected,
                   backgroundColor: AppColors.card,
                   onSelected: (_) {
@@ -563,8 +566,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
 
             // Nivel del item (solo aplica a comida).
             if (isFood) ...[
-              const Text(
-                '¿Qué es?',
+              Text(
+                context.l.aiWhatIsIt,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -573,7 +576,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 children: InventoryItem.kindLabels.entries.map((e) {
                   final selected = _kind == e.key;
                   return ChoiceChip(
-                    label: Text(e.value),
+                    label: Text(context.l.aiKindShort(e.key)),
                     selected: selected,
                     backgroundColor: AppColors.card,
                     onSelected: (_) => setState(() => _kind = e.key),
@@ -583,10 +586,10 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               const SizedBox(height: 4),
               Text(
                 _kind == 'ingredient'
-                    ? 'Ingrediente para cocinar'
+                    ? context.l.aiDishKind('ingredient')
                     : _kind == 'prep'
-                    ? 'Base ya preparada'
-                    : 'Plato listo para comer',
+                    ? context.l.aiDishKind('base')
+                    : context.l.aiDishKind('dish'),
                 style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
               ),
               const SizedBox(height: 20),
@@ -594,9 +597,9 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
 
             TextField(
               controller: _nameController,
-              decoration: _dec('Nombre').copyWith(
+              decoration: _dec(context.l.name).copyWith(
                 suffixIcon: IconButton(
-                  tooltip: 'Buscar en el súper',
+                  tooltip: context.l.aiSearchStore,
                   icon: Icon(
                     Icons.storefront_rounded,
                     color: AppColors.woodDark,
@@ -614,7 +617,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 child: TextButton.icon(
                   onPressed: _searchProduct,
                   icon: const Icon(Icons.storefront_rounded, size: 18),
-                  label: const Text('Buscar el producto del súper con foto'),
+                  label: Text(context.l.aiSearchStoreLong),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.woodDark,
                   ),
@@ -626,8 +629,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             // comino...) que rellenan el formulario con UN toque, sin escribir.
             if (isFood && _selectedCategory == 'Especias') ...[
               const SizedBox(height: 16),
-              const Text(
-                'Añade los de siempre con un toque',
+              Text(
+                context.l.aiQuickAdd,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -652,13 +655,15 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _selectedCategory,
-              decoration: _dec(isFood ? 'Ubicación' : 'Categoría'),
+              decoration: _dec(
+                isFood ? context.l.aiLocation : context.l.aiCategory,
+              ),
               items: _categories
                   .map(
                     (cat) => DropdownMenuItem(
                       value: cat,
                       // 'Hogar' es la clave guardada de la zona "Varios".
-                      child: Text(cat == 'Hogar' ? 'Varios' : cat),
+                      child: Text(context.l.kitchenZone(cat.toLowerCase())),
                     ),
                   )
                   .toList(),
@@ -684,18 +689,20 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: _dec('Cantidad'),
+                    decoration: _dec(context.l.aiQuantity),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _selectedUnit,
-                    decoration: _dec('Unidad'),
+                    decoration: _dec(context.l.aiUnit),
                     items: _units
                         .map(
-                          (unit) =>
-                              DropdownMenuItem(value: unit, child: Text(unit)),
+                          (unit) => DropdownMenuItem(
+                            value: unit,
+                            child: Text(unitName(unit)),
+                          ),
                         )
                         .toList(),
                     onChanged: (val) => setState(() => _selectedUnit = val!),
@@ -712,7 +719,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: _dec('Raciones que representa (opcional)'),
+                decoration: _dec(context.l.aiServings),
               ),
             ],
 
@@ -727,7 +734,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     initialDate: _frozenOn ?? now,
                     firstDate: DateTime(now.year - 1),
                     lastDate: now,
-                    helpText: 'Fecha de congelación',
+                    helpText: context.l.aiFrozenDate,
                   );
                   if (picked != null) {
                     setState(() => _frozenOn = picked);
@@ -751,10 +758,10 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: InputDecorator(
-                  decoration: _dec('Congelado el (opcional)'),
+                  decoration: _dec(context.l.aiFrozenOn),
                   child: Text(
                     _frozenOn == null
-                        ? 'Sin fecha'
+                        ? context.l.tskNoDate
                         : '${_frozenOn!.day.toString().padLeft(2, '0')}/'
                               '${_frozenOn!.month.toString().padLeft(2, '0')}/'
                               '${_frozenOn!.year}',
@@ -764,11 +771,12 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
               const SizedBox(height: 4),
               Text(
                 _bestBefore == null
-                    ? 'Calcularemos cuánto aguanta en el congelador.'
-                    : 'Mejor consumir antes del '
-                          '${_bestBefore!.day.toString().padLeft(2, '0')}/'
-                          '${_bestBefore!.month.toString().padLeft(2, '0')}/'
-                          '${_bestBefore!.year} (aprox.).',
+                    ? context.l.aiWillEstimate
+                    : context.l.aiBestBefore(
+                        DateFormat.yMd(
+                          Localizations.localeOf(context).toString(),
+                        ).format(_bestBefore!),
+                      ),
                 style: TextStyle(color: AppColors.inkMuted, fontSize: 13),
               ),
             ],
@@ -784,7 +792,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     initialDate: _expirationDate ?? now,
                     firstDate: DateTime(now.year - 1),
                     lastDate: DateTime(now.year + 5),
-                    helpText: 'Fecha de caducidad',
+                    helpText: context.l.aiExpiryDate,
                   );
                   if (picked != null) {
                     setState(() {
@@ -797,12 +805,14 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                 child: InputDecorator(
                   decoration:
                       _dec(
-                        _expirationManual ? 'Caduca el' : 'Caduca el (aprox.)',
+                        _expirationManual
+                            ? context.l.aiExpires
+                            : context.l.aiExpiresApprox,
                       ).copyWith(
                         suffixIcon: _expirationDate == null
                             ? null
                             : IconButton(
-                                tooltip: 'Sin fecha',
+                                tooltip: context.l.tskNoDate,
                                 icon: const Icon(Icons.close_rounded),
                                 onPressed: () => setState(() {
                                   _expirationDate = null;
@@ -812,7 +822,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                       ),
                   child: Text(
                     _expirationDate == null
-                        ? 'Sin fecha'
+                        ? context.l.tskNoDate
                         : '${_expirationDate!.day.toString().padLeft(2, '0')}/'
                               '${_expirationDate!.month.toString().padLeft(2, '0')}/'
                               '${_expirationDate!.year}',
@@ -837,11 +847,11 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  title: const Text(
-                    'No añadir a la compra',
+                  title: Text(
+                    context.l.aiNotToList,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: const Text('Básicos que siempre tienes'),
+                  subtitle: Text(context.l.aiStaplesSub),
                   onChanged: (v) => setState(() => _isStaple = v),
                 ),
               ),
@@ -854,8 +864,8 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                   ? const CircularProgressIndicator()
                   : Text(
                       widget.isEditing
-                          ? 'Guardar cambios'
-                          : 'Guardar en el inventario',
+                          ? context.l.aiSaveChanges
+                          : context.l.aiSaveNew,
                     ),
             ),
           ],

@@ -19,7 +19,8 @@ class NutritionProfile {
   /// ausente = todos los días. Ej.: {"lunch": [6,7]} = comida en casa solo finde.
   final Map<String, List<int>> mealsAtHome;
 
-  /// Cómo cocina: 'daily' (del día) o 'mealprep' (en lote y congela).
+  /// Cómo cocina: 'daily' (del día), 'alternate' (cada dos días, con sobras)
+  /// o 'mealprep' (en lote y congela).
   final String cookingMode;
 
   /// Porciones: 'practical' (formatos de súper, redondeo) o 'strict' (exacto).
@@ -97,6 +98,7 @@ class NutritionProfile {
   }
 
   bool get isMealPrep => cookingMode == 'mealprep';
+  bool get isAlternate => cookingMode == 'alternate';
   bool get isStrictPortions => portionMode == 'strict';
 
   static Map<String, int>? _parseSplit(dynamic raw) {

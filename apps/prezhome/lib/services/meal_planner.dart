@@ -42,6 +42,14 @@ class MealPlanner {
 
   /// Genera un plan para [days] días a partir de [startDate].
   ///
+  /// Peso por tiempo con "cocinar poco": rápidas (≤ 20 min) ×3, largas
+  /// (> 45 min) ×0,3; sin tiempo conocido, igual.
+  static double _quickFactor(int? minutes) {
+    if (minutes == null || minutes <= 0) return 1;
+    if (minutes <= 20) return 3;
+    return minutes > 45 ? 0.3 : 1;
+  }
+
   /// [mealTypes]: comidas activas a planificar (ej. ['lunch','dinner']).
   /// [recipes]: recetas disponibles del hogar.
   /// [scoreByRecipe]: peso extra por receta (>0 sube prob., <0 baja). Opcional.
@@ -67,6 +75,9 @@ class MealPlanner {
     Map<String, double> costPerServing = const {},
     // 0 = sin presupuesto, 1 = hay presupuesto, 2 = el mes va justo.
     int budgetPressure = 0,
+    // Carga de cada día según el calendario (fecha ISO → 0 libre, 1 normal,
+    // 2 cargado): los cargados tiran de lo rápido y del congelador.
+    Map<String, int> dayLoads = const {},
   }) {
     final plan = <DateTime, Map<String, String>>{};
 
@@ -105,6 +116,7 @@ class MealPlanner {
       }
       final date = DateTime(startDate.year, startDate.month, startDate.day + d);
       final dayMap = <String, String>{};
+      final load = dayLoads[date.toIso8601String().split('T').first] ?? 1;
 
       for (final type in mealTypes) {
         final all = byType[type] ?? [];
@@ -122,6 +134,8 @@ class MealPlanner {
           frozenBoost: frozenBoost,
           extra: (r) {
             var w = _repeatFactor(uses[r.id] ?? 0, batch);
+            // Cocinar poco: mejor lo rápido, peor lo que lleva mucho rato.
+            if (energyLevel <= 0) w *= _quickFactor(r.totalTimeMinutes);
             // Cocinar en tandas para semanas: mejor lo que aguanta congelado,
             // para ir llenando el congelador de cara al mes.
             if (batch && days > 7 && r.freezesWell) w *= 1.6;
@@ -148,7 +162,7 @@ class MealPlanner {
                   ? ratio.clamp(0.3, 3.0)
                   : sqrt(ratio).clamp(0.6, 1.6);
             }
-            return w;
+            return w * busyFactor(r, load, frozenRecipeIds.contains(r.id));
           },
           recentPenalty: batch ? 0.7 : 0.15,
         );
@@ -260,6 +274,24 @@ class MealPlanner {
   static double _median(Iterable<double> values) {
     final v = values.where((c) => c > 0).toList()..sort();
     return v.isEmpty ? 0 : v[v.length ~/ 2];
+  }
+
+  /// Peso según la carga del día: con el día cargado, lo que se hace en 20
+  /// minutos o hay congelado; con el día libre, mejor las recetas largas.
+  /// Sin tiempo conocido, la receta no sube ni baja.
+  static double busyFactor(Recipe r, int load, bool frozen) {
+    final t = r.totalTimeMinutes;
+    if (load >= 2) {
+      if (frozen) return 4;
+      if (t == null) return 1;
+      return t <= 20
+          ? 4
+          : t <= 40
+          ? 1
+          : 0.15;
+    }
+    if (load <= 0 && t != null && t > 40) return 1.5;
+    return 1;
   }
 
   /// Peso por usos previos en la semana: cada repetición pesa menos. En lote

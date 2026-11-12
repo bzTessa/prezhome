@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/task.dart';
 import 'plan_prefs.dart';
+import '../l10n/l10n.dart';
 
 /// Pasa comidas del plan y tareas con hora al calendario del móvil (el de
 /// Google si la cuenta está en el móvil) y lee los huecos ocupados.
@@ -14,13 +15,6 @@ import 'plan_prefs.dart';
 class CalendarSync {
   static const _mark = 'Desde PrezHome';
   static const _days = 7;
-  static const mealLabels = {
-    'breakfast': 'Desayuno',
-    'lunch': 'Comida',
-    'dinner': 'Cena',
-    'snack': 'Merienda',
-    'dessert': 'Postre',
-  };
 
   static DeviceCalendar get _cal => DeviceCalendar.instance;
 
@@ -93,14 +87,36 @@ class CalendarSync {
           .from('tasks')
           .select()
           .eq('home_id', homeId)
-          .eq('is_done', false)
-          .not('due_time', 'is', null);
+          .eq('is_done', false);
       final tasks = [for (final t in tasksRes as List) HomeTask.fromMap(t)];
+      final prefs = PlanPrefs.current.value;
 
       final events = [
-        ...mealEvents(entries, titles, PlanPrefs.current.value),
-        ...taskEvents(tasks, today, until),
+        ...mealEvents(entries, titles, prefs),
+        ...taskEvents(tasks.where((t) => t.dueTime != null), today, until),
       ];
+      // Las tareas sin hora (mías o de cualquiera) van al primer hueco libre.
+      if (prefs.busyAware) {
+        final others = busyOf(await _cal.listEvents(today, until));
+        events.addAll(
+          placeTasks(
+            [
+              for (final t in tasks)
+                if (t.dueTime == null &&
+                    (t.assignedTo == null || t.assignedTo == user.id))
+                  t,
+            ],
+            today,
+            until,
+            [
+              ...others,
+              for (final e in events)
+                (start: e.start, end: e.start.add(e.length)),
+            ],
+            now,
+          ),
+        );
+      }
 
       final old = await _cal.listEvents(
         today,
@@ -136,8 +152,8 @@ class CalendarSync {
     for (final e in entries)
       (
         title:
-            '${mealLabels[e.mealType] ?? e.mealType}: '
-            '${titles[e.recipeId] ?? 'Receta'}',
+            '${appL10n.mealType(e.mealType)}: '
+            '${titles[e.recipeId] ?? appL10n.recipe}',
         start: DateTime(
           e.date.year,
           e.date.month,
@@ -152,7 +168,7 @@ class CalendarSync {
   /// Un evento por cada vez que toca una tarea con hora entre [from] y
   /// [until] (excluido), de 30 minutos.
   static List<CalendarItem> taskEvents(
-    List<HomeTask> tasks,
+    Iterable<HomeTask> tasks,
     DateTime from,
     DateTime until,
   ) {
@@ -161,19 +177,118 @@ class CalendarSync {
       final parts = t.dueTime?.split(':');
       if (parts == null || parts.length < 2) continue;
       final minutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-      DateTime? d = t.nextDue ?? t.dueDate;
-      // Una recurrente atrasada sigue pendiente: se pone hoy.
-      if (d != null && d.isBefore(from)) d = from;
-      while (d != null && d.isBefore(until)) {
+      for (final d in dueDays(t, from, until)) {
         out.add((
           title: t.title,
           start: DateTime(d.year, d.month, d.day, 0, minutes),
           length: const Duration(minutes: 30),
         ));
-        d = t.computeNextDue(d);
       }
     }
     return out;
+  }
+
+  /// Días en que toca [t] entre [from] y [until] (excluido).
+  static Iterable<DateTime> dueDays(
+    HomeTask t,
+    DateTime from,
+    DateTime until,
+  ) sync* {
+    DateTime? d = t.nextDue ?? t.dueDate;
+    // Una recurrente atrasada sigue pendiente: se pone hoy.
+    if (d != null && d.isBefore(from)) d = from;
+    while (d != null && d.isBefore(until)) {
+      yield d;
+      d = t.computeNextDue(d);
+    }
+  }
+
+  /// Media hora por cada vez que toca una tarea sin hora, en el primer hueco
+  /// que no pisa [busy] ni otra tarea ya puesta. Si el día está lleno, no va.
+  static List<CalendarItem> placeTasks(
+    List<HomeTask> tasks,
+    DateTime from,
+    DateTime until,
+    List<({DateTime start, DateTime end})> busy,
+    DateTime now,
+  ) {
+    final taken = [...busy];
+    final out = <CalendarItem>[];
+    for (final t in tasks) {
+      for (final d in dueDays(t, from, until)) {
+        final m = freeSlot(taken, d, now);
+        if (m == null) continue;
+        final start = DateTime(d.year, d.month, d.day, 0, m);
+        const length = Duration(minutes: 30);
+        out.add((title: t.title, start: start, length: length));
+        taken.add((start: start, end: start.add(length)));
+      }
+    }
+    return out;
+  }
+
+  /// Pide permiso para leer el calendario. false si no lo da.
+  static Future<bool> askPermission() async {
+    try {
+      return await _cal.requestPermissions() ==
+          CalendarPermissionStatus.granted;
+    } catch (e) {
+      debugPrint('CalendarSync.askPermission error: $e');
+      return false;
+    }
+  }
+
+  /// Carga de cada uno de los [days] días desde [from] según los calendarios
+  /// del móvil (ver [loadOf]). Vacío sin permiso.
+  static Future<Map<String, int>> dayLoads(DateTime from, int days) async {
+    try {
+      final status = await _cal.hasPermissions();
+      if (status != CalendarPermissionStatus.granted) return const {};
+      final start = DateTime(from.year, from.month, from.day);
+      final end = DateTime(start.year, start.month, start.day + days);
+      final busy = busyOf(await _cal.listEvents(start, end));
+      return {
+        for (var i = 0; i < days; i++)
+          dayKey(DateTime(start.year, start.month, start.day + i)): loadOf(
+            busy,
+            DateTime(start.year, start.month, start.day + i),
+          ),
+      };
+    } catch (e) {
+      debugPrint('CalendarSync.dayLoads error: $e');
+      return const {};
+    }
+  }
+
+  static String dayKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
+  /// Huecos ocupados de [events], sin los de todo el día ni los de PrezHome.
+  static List<({DateTime start, DateTime end})> busyOf(List<Event> events) => [
+    for (final e in events)
+      if (!e.isAllDay && e.description != _mark)
+        (start: e.startDate, end: e.endDate),
+  ];
+
+  /// 0 libre (una hora o menos ocupada entre las 8:00 y las 22:00), 2 cargado
+  /// (dos horas o más ocupadas de 17:00 a 22:00, cuando se cocina, o diez o
+  /// más en todo el día) y 1 lo demás: una jornada de trabajo normal es 1.
+  static int loadOf(List<({DateTime start, DateTime end})> busy, DateTime day) {
+    final base = DateTime(day.year, day.month, day.day);
+    var minutes = 0;
+    var evening = 0;
+    for (var m = 8 * 60; m < 22 * 60; m += 15) {
+      final s = base.add(Duration(minutes: m));
+      final e = s.add(const Duration(minutes: 15));
+      if (busy.any((b) => b.start.isBefore(e) && b.end.isAfter(s))) {
+        minutes += 15;
+        if (m >= 17 * 60) evening += 15;
+      }
+    }
+    if (evening >= 2 * 60 || minutes >= 10 * 60) return 2;
+    return minutes <= 60 ? 0 : 1;
   }
 
   /// Eventos de [day] en todos los calendarios del móvil (vacío sin permiso).

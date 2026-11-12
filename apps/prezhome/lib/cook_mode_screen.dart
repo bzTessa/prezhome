@@ -100,7 +100,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
   String _spoken(int i) {
     final s = widget.steps[i];
     return [
-      'Paso ${i + 1}.',
+      context.l.voiceStep(i + 1),
       if (s.note != null) '${s.note}.',
       s.text,
     ].join(' ');
@@ -148,7 +148,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
     final what = widget.steps[step].note ?? context.l.cmStep(step + 1);
     HapticFeedback.heavyImpact();
     SystemSound.play(SystemSoundType.alert);
-    if (_voiceOn) _voice.say('Tiempo. $what.');
+    if (_voiceOn) _voice.say(context.l.voiceTime(what));
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -204,7 +204,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
     if (!mounted) return;
     switch (command) {
       case CookCommand.next:
-        _isLast ? _voice.say('Es el último paso.') : _go(_page + 1);
+        _isLast ? _voice.say(context.l.voiceLastStep) : _go(_page + 1);
       case CookCommand.previous:
         _page == 0 ? _voice.say(_spoken(0)) : _go(_page - 1);
       case CookCommand.repeat:
@@ -212,21 +212,23 @@ class _CookModeScreenState extends State<CookModeScreen> {
       case CookCommand.startTimer:
         final minutes = widget.steps[_page].minutes;
         if (minutes == null) {
-          _voice.say('Este paso no tiene tiempo.');
+          _voice.say(context.l.voiceNoTime);
         } else {
           _startTimer(_page);
-          _voice.say('Temporizador de $minutes minutos.');
+          _voice.say(context.l.voiceTimer(minutes));
         }
       case CookCommand.stopTimer:
         final step = _timerEnds.containsKey(_page)
             ? _page
             : (_timerEnds.isEmpty ? null : _timerEnds.keys.first);
         if (step != null) _stopTimer(step);
-        _voice.say(step == null ? 'No hay temporizadores.' : 'Parado.');
+        _voice.say(
+          step == null ? context.l.voiceNoTimers : context.l.voiceStopped,
+        );
       case CookCommand.ingredients:
         _voice.say(
           widget.ingredients.isEmpty
-              ? 'No hay lista de ingredientes.'
+              ? context.l.voiceNoIngredients
               : widget.ingredients.join('. '),
         );
     }

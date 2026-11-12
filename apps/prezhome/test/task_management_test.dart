@@ -5,8 +5,6 @@ HomeTask t(String id, {String? to, DateTime? due}) =>
     HomeTask(id: id, homeId: 'h', title: id, assignedTo: to, nextDue: due);
 
 void main() {
-  final today = DateTime(2026, 10, 13); // martes
-
   test('Filtro: sin asignar sale siempre', () {
     expect(taskMatchesFilter(t('a'), 'u1'), isTrue);
     expect(taskMatchesFilter(t('a', to: 'u2'), 'u1'), isFalse);
@@ -19,8 +17,12 @@ void main() {
       t('b', due: DateTime(2026, 10, 14)),
       t('c', due: DateTime(2026, 10, 15)),
       t('d'),
-    ], today);
-    expect(g.map((e) => e.key), ['Mañana', 'Jueves 15', 'Sin fecha']);
+    ]);
+    expect(g.map((e) => e.key), [
+      DateTime(2026, 10, 14),
+      DateTime(2026, 10, 15),
+      null,
+    ]);
     expect(g.first.value.length, 2);
   });
 }

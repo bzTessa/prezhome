@@ -192,81 +192,31 @@ class HomeTask {
     return s;
   }
 
-  static const Map<String, String> recurrenceLabels = {
-    'once': 'Puntual',
-    'daily': 'Cada día',
-    'weekly': 'Cada semana',
-    'custom_interval': 'Cada X días/semanas',
-    'custom_weekdays': 'Días concretos',
-  };
-
-  static const List<String> weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  static const List<String> weekdayLong = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-  ];
-
   /// Predicado puro: una tarea no tiene responsable asignado cuando
   /// assigned_to == null (la puede hacer cualquiera del hogar).
   bool get isInPool => assignedTo == null;
-
-  /// Etiqueta legible de la recurrencia (para mostrar en la lista).
-  String get recurrenceLabel {
-    switch (recurrence) {
-      case 'custom_interval':
-        final n = intervalCount ?? 1;
-        final unit = intervalUnit == 'week'
-            ? (n == 1 ? 'semana' : 'semanas')
-            : (n == 1 ? 'día' : 'días');
-        return 'Cada $n $unit';
-      case 'custom_weekdays':
-        if (weekdays.isEmpty) return 'Días concretos';
-        final sorted = [...weekdays]..sort();
-        return sorted.map((d) => weekdayShort[d - 1]).join(' ');
-      default:
-        return recurrenceLabels[recurrence] ?? 'Puntual';
-    }
-  }
 }
 
 /// Filtro por persona: [userId] null = todas. Las sin asignar salen siempre.
 bool taskMatchesFilter(HomeTask t, String? userId) =>
     userId == null || t.assignedTo == null || t.assignedTo == userId;
 
-/// Etiqueta del día para agrupar "Próximas": Mañana, "Jueves 15" o "Sin fecha".
-String upcomingDayLabel(DateTime? due, DateTime today) {
-  if (due == null) return 'Sin fecha';
-  final d = DateTime(due.year, due.month, due.day);
-  final t = DateTime(today.year, today.month, today.day);
-  if (d.difference(t).inDays == 1) return 'Mañana';
-  return '${HomeTask.weekdayLong[d.weekday - 1]} ${d.day}';
-}
-
-/// Agrupa tareas (ya ordenadas por fecha) por día; "Sin fecha" va al final.
-List<MapEntry<String, List<HomeTask>>> groupUpcomingByDay(
+/// Agrupa tareas (ya ordenadas por fecha) por día; las sin fecha (clave null)
+/// van al final.
+List<MapEntry<DateTime?, List<HomeTask>>> groupUpcomingByDay(
   List<HomeTask> tasks,
-  DateTime today,
 ) {
-  final groups = <String, List<HomeTask>>{};
+  final groups = <DateTime, List<HomeTask>>{};
   final undated = <HomeTask>[];
   for (final t in tasks) {
     final due = t.nextDue ?? t.dueDate;
     if (due == null) {
       undated.add(t);
     } else {
-      final key =
-          '${DateTime(due.year, due.month, due.day).toIso8601String()}'
-          '|${upcomingDayLabel(due, today)}';
-      groups.putIfAbsent(key, () => []).add(t);
+      groups
+          .putIfAbsent(DateTime(due.year, due.month, due.day), () => [])
+          .add(t);
     }
   }
-  return [
-    for (final e in groups.entries) MapEntry(e.key.split('|').last, e.value),
-    if (undated.isNotEmpty) MapEntry('Sin fecha', undated),
-  ];
+  return [...groups.entries, if (undated.isNotEmpty) MapEntry(null, undated)];
 }
