@@ -4531,6 +4531,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'comida': 'pasto',
       'cucharada': 'cucchiaio',
       'cucharadita': 'cucchiaino',
+      'pizca': 'pizzico',
       'other': '$unit',
     });
     return '$_temp0';
@@ -4548,6 +4549,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'comida': 'pasti',
       'cucharada': 'cucchiai',
       'cucharadita': 'cucchiaini',
+      'pizca': 'pizzichi',
       'other': '$unit',
     });
     return '$_temp0';

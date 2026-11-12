@@ -7017,13 +7017,13 @@ abstract class AppLocalizations {
   /// No description provided for @unitOne.
   ///
   /// In es, this message translates to:
-  /// **'{unit, select, unidad{unidad} diente{diente} loncha{loncha} lata{lata} bote{bote} bolsa{bolsa} comida{comida} cucharada{cucharada} cucharadita{cucharadita} other{{unit}}}'**
+  /// **'{unit, select, unidad{unidad} diente{diente} loncha{loncha} lata{lata} bote{bote} bolsa{bolsa} comida{comida} cucharada{cucharada} cucharadita{cucharadita} pizca{pizca} other{{unit}}}'**
   String unitOne(String unit);
 
   /// No description provided for @unitMany.
   ///
   /// In es, this message translates to:
-  /// **'{unit, select, unidad{unidades} diente{dientes} loncha{lonchas} lata{latas} bote{botes} bolsa{bolsas} comida{comidas} cucharada{cucharadas} cucharadita{cucharaditas} other{{unit}}}'**
+  /// **'{unit, select, unidad{unidades} diente{dientes} loncha{lonchas} lata{latas} bote{botes} bolsa{bolsas} comida{comidas} cucharada{cucharadas} cucharadita{cucharaditas} pizca{pizcas} other{{unit}}}'**
   String unitMany(String unit);
 
   /// No description provided for @unitShort.

@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
+import 'package:prezhome/l10n/l10n.dart';
 import 'package:prezhome/utils/measure_format.dart';
 
 void main() {
@@ -72,5 +74,16 @@ void main() {
     test('unidad vacia se deja igual', () {
       expect(pluralizeUnit('', 5), '');
     });
+  });
+
+  test('las unidades se muestran en el idioma de la app', () {
+    final before = appL10n;
+    addTearDown(() => appL10n = before);
+    appL10n = lookupAppLocalizations(const Locale('en'));
+    expect(formatQuantityUnit(2, 'unidad'), '2 units');
+    expect(formatQuantityUnit(3, 'pizcas'), '3 pinches');
+    expect(formatQuantityUnit(200, 'g'), '200 g');
+    expect(formatQuantityUnit(null, 'al gusto'), 'to taste');
+    expect(formatQuantityUnit(null, 'manojo'), 'manojo');
   });
 }
