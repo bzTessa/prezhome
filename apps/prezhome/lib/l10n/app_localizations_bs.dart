@@ -3489,6 +3489,16 @@ class AppLocalizationsBs extends AppLocalizations {
   String get recLess => 'Manje';
 
   @override
+  String get planBusyAware => 'Organizuj prema mom kalendaru';
+
+  @override
+  String get planBusyAwareHint =>
+      'U zauzetim danima brzi recepti ili iz zamrzivača, kuha se najslobodnijeg dana, a zadaci bez vremena idu u slobodan termin. Primjenjuje se pri pravljenju plana.';
+
+  @override
+  String get planBusyDay => 'Zauzet dan';
+
+  @override
   String get nutAlternate => 'Svaki drugi dan';
 
   @override

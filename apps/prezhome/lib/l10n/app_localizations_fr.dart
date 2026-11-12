@@ -3561,6 +3561,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get recLess => 'Moins';
 
   @override
+  String get planBusyAware => 'Organiser selon mon agenda';
+
+  @override
+  String get planBusyAwareHint =>
+      'Les jours chargés, recettes rapides ou du congélateur ; on cuisine le jour le plus libre et les tâches sans heure vont dans un créneau libre. S\'applique en créant le plan.';
+
+  @override
+  String get planBusyDay => 'Journée chargée';
+
+  @override
   String get nutAlternate => 'Un jour sur deux';
 
   @override

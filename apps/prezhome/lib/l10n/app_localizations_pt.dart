@@ -3548,6 +3548,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get recLess => 'Menos';
 
   @override
+  String get planBusyAware => 'Organizar segundo o meu calendário';
+
+  @override
+  String get planBusyAwareHint =>
+      'Nos dias cheios, receitas rápidas ou do congelador; cozinha-se no dia mais livre e as tarefas sem hora vão para um espaço livre. Aplica-se ao fazer o plano.';
+
+  @override
+  String get planBusyDay => 'Dia cheio';
+
+  @override
   String get nutAlternate => 'Dia sim, dia não';
 
   @override

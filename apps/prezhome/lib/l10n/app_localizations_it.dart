@@ -3551,6 +3551,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recLess => 'Meno';
 
   @override
+  String get planBusyAware => 'Organizza secondo il mio calendario';
+
+  @override
+  String get planBusyAwareHint =>
+      'Nei giorni pieni ricette veloci o dal congelatore, si cucina nel giorno più libero e le attività senza orario vanno in un momento libero. Si applica quando fai il piano.';
+
+  @override
+  String get planBusyDay => 'Giornata piena';
+
+  @override
   String get nutAlternate => 'A giorni alterni';
 
   @override

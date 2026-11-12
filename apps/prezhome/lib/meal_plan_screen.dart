@@ -370,6 +370,23 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       final cookable = data.recipes
           .where((r) => data.prefs.canCook(r.appliance))
           .toList();
+      // Con "Según mi calendario", lo ocupado de cada día. Se guarda para que
+      // el día de cocina en lote no cambie hasta rehacer el plan.
+      var prefs = PlanPrefs.current.value;
+      if (prefs.busyAware && !kIsWeb) {
+        final loads = await CalendarSync.dayLoads(start, days);
+        final keep = CalendarSync.dayKey(
+          DateTime.now().subtract(const Duration(days: 14)),
+        );
+        prefs = prefs.copyWith(
+          dayLoads: {
+            for (final e in prefs.dayLoads.entries)
+              if (e.key.compareTo(keep) >= 0) e.key: e.value,
+            ...loads,
+          },
+        );
+        await PlanPrefs.save(prefs);
+      }
       final planner = MealPlanner();
       final plan = planner.generate(
         startDate: start,
@@ -380,6 +397,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         frozenRecipeIds: frozenRecipeIds,
         energyLevel: _energyLevel,
         batch: data.isMealPrep,
+        dayLoads: prefs.busyAware ? prefs.dayLoads : const {},
       );
       if (data.isAlternate) {
         applyLeftovers(plan, start, PlanPrefs.current.value.leftoverMeals);
@@ -1070,6 +1088,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final dessertWith = {...prefs.dessertWith};
     var fast = prefs.fastHours;
     var calendarId = prefs.calendarId;
+    var busyAware = prefs.busyAware;
     String? calendarName;
     const modes = ['daily', 'alternate', 'mealprep'];
     final oldMode = data.isMealPrep
@@ -1259,6 +1278,25 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           }
                         },
                       ),
+                    if (!kIsWeb)
+                      SwitchListTile(
+                        value: busyAware,
+                        activeThumbColor: AppColors.woodDark,
+                        title: Text(context.l.planBusyAware),
+                        subtitle: Text(context.l.planBusyAwareHint),
+                        onChanged: (v) async {
+                          if (v && !await CalendarSync.askPermission()) {
+                            if (!ctx.mounted) return;
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text(ctx.l.planCalendarPermission),
+                              ),
+                            );
+                            return;
+                          }
+                          setSheet(() => busyAware = v);
+                        },
+                      ),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -1273,6 +1311,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       times: times,
       fastHours: () => fast,
       calendarId: () => calendarId,
+      busyAware: busyAware,
+      dayLoads: busyAware ? prefs.dayLoads : const {},
       leftoverMeals: leftover,
       dessertWith: dessertWith,
     );
@@ -1972,6 +2012,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   color: AppColors.ink,
                 ),
               ),
+              if (_isBusy(date)) ...[const SizedBox(width: 8), _busyBadge()],
               if (sel == todayIndex) ...[
                 const SizedBox(width: 8),
                 Container(
@@ -2129,6 +2170,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         color: AppColors.ink,
                       ),
                     ),
+                    if (_isBusy(date)) ...[
+                      const SizedBox(width: 8),
+                      _busyBadge(),
+                    ],
                     if (isToday) ...[
                       const SizedBox(width: 8),
                       Container(
@@ -2336,11 +2381,34 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
+  bool _isBusy(DateTime d) {
+    final p = PlanPrefs.current.value;
+    return p.busyAware && p.dayLoads[CalendarSync.dayKey(d)] == 2;
+  }
+
+  /// Etiqueta "Día cargado": dice por qué ese día toca algo rápido.
+  Widget _busyBadge() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: AppColors.terracotta.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      context.l.planBusyDay,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: AppColors.terracottaText,
+      ),
+    ),
+  );
+
   MealPrepPlan _buildMealPrepPlan(_PlanData data) => prepPlanForWeek(
     entries: [...data.entries, ...data.laterEntries],
     recipesById: data.recipesById,
     weekStart: _weekStart,
     energyLevel: _energyLevel,
+    dayLoads: PlanPrefs.current.value.dayLoads,
   );
 
   DateTime get _today {

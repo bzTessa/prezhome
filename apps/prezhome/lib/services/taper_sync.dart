@@ -100,6 +100,7 @@ class TaperSync {
               recipesById: recipes,
               weekStart: w,
               energyLevel: prefs.energy,
+              dayLoads: prefs.dayLoads,
             );
             moves.addAll(
               taperMoves(

@@ -16,6 +16,8 @@ class PlanPrefs {
     this.fastHours,
     this.calendarId,
     this.energy = 1,
+    this.busyAware = false,
+    this.dayLoads = const {},
     this.leftoverMeals = const {'lunch', 'dinner'},
     this.dessertWith = const {},
   });
@@ -34,6 +36,14 @@ class PlanPrefs {
 
   /// Cuánto cocinar (0 poco, 1 normal, 2 mucho): cuántos días de tanda hay.
   final int energy;
+
+  /// Si el plan tiene en cuenta lo ocupado que está cada día en el calendario.
+  final bool busyAware;
+
+  /// Carga de cada día (fecha ISO → 0 libre, 1 normal, 2 cargado) leída del
+  /// calendario al hacer el plan. Se guarda para que el día de cocina en lote
+  /// y la etiqueta "Día cargado" no cambien hasta rehacerlo.
+  final Map<String, int> dayLoads;
 
   /// En el modo "Cada dos días", qué comidas se repiten al día siguiente.
   final Set<String> leftoverMeals;
@@ -106,6 +116,8 @@ class PlanPrefs {
     int? Function()? fastHours,
     String? Function()? calendarId,
     int? energy,
+    bool? busyAware,
+    Map<String, int>? dayLoads,
     Set<String>? leftoverMeals,
     Set<String>? dessertWith,
   }) => PlanPrefs(
@@ -114,6 +126,8 @@ class PlanPrefs {
     fastHours: fastHours == null ? this.fastHours : fastHours(),
     calendarId: calendarId == null ? this.calendarId : calendarId(),
     energy: energy ?? this.energy,
+    busyAware: busyAware ?? this.busyAware,
+    dayLoads: dayLoads ?? this.dayLoads,
     leftoverMeals: leftoverMeals ?? this.leftoverMeals,
     dessertWith: dessertWith ?? this.dessertWith,
   );
@@ -133,6 +147,12 @@ class PlanPrefs {
         fastHours: m['fast_hours'] as int?,
         calendarId: m['calendar_id'] as String?,
         energy: m['energy'] as int? ?? 1,
+        busyAware: m['busy_aware'] as bool? ?? false,
+        dayLoads: {
+          ...(m['day_loads'] as Map? ?? const {}).map(
+            (k, v) => MapEntry(k as String, v as int),
+          ),
+        },
         leftoverMeals: switch (m['leftover_meals']) {
           final List l => {...l.cast<String>()},
           _ => const {'lunch', 'dinner'},
@@ -155,6 +175,8 @@ class PlanPrefs {
           'fast_hours': p.fastHours,
           'calendar_id': p.calendarId,
           'energy': p.energy,
+          'busy_aware': p.busyAware,
+          'day_loads': p.dayLoads,
           'leftover_meals': p.leftoverMeals.toList(),
           'dessert_with': p.dessertWith.toList(),
         }),

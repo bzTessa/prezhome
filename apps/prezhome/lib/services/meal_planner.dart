@@ -65,6 +65,9 @@ class MealPlanner {
     int energyLevel = 1,
     // Cocina en lote: repetir una receta dos veces es lo esperado.
     bool batch = false,
+    // Carga de cada día según el calendario (fecha ISO → 0 libre, 1 normal,
+    // 2 cargado): los cargados tiran de lo rápido y del congelador.
+    Map<String, int> dayLoads = const {},
   }) {
     final plan = <DateTime, Map<String, String>>{};
 
@@ -98,6 +101,7 @@ class MealPlanner {
       }
       final date = DateTime(startDate.year, startDate.month, startDate.day + d);
       final dayMap = <String, String>{};
+      final load = dayLoads[date.toIso8601String().split('T').first] ?? 1;
 
       for (final type in mealTypes) {
         final all = byType[type] ?? [];
@@ -128,7 +132,7 @@ class MealPlanner {
               }
               if (g != ProteinGroup.otro && g == lastMainGroup) w *= 0.5;
             }
-            return w;
+            return w * busyFactor(r, load, frozenRecipeIds.contains(r.id));
           },
           recentPenalty: batch ? 0.7 : 0.15,
         );
@@ -188,6 +192,24 @@ class MealPlanner {
       if (pick <= 0) return options[i];
     }
     return options.last;
+  }
+
+  /// Peso según la carga del día: con el día cargado, lo que se hace en 20
+  /// minutos o hay congelado; con el día libre, mejor las recetas largas.
+  /// Sin tiempo conocido, la receta no sube ni baja.
+  static double busyFactor(Recipe r, int load, bool frozen) {
+    final t = r.totalTimeMinutes;
+    if (load >= 2) {
+      if (frozen) return 4;
+      if (t == null) return 1;
+      return t <= 20
+          ? 4
+          : t <= 40
+          ? 1
+          : 0.15;
+    }
+    if (load <= 0 && t != null && t > 40) return 1.5;
+    return 1;
   }
 
   /// Peso por usos previos en la semana: cada repetición pesa menos. En lote
