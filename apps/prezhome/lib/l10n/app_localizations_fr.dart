@@ -2085,6 +2085,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tskAnyone => 'N\'importe qui';
 
   @override
+  String get tskRotates => 'À tour de rôle';
+
+  @override
+  String get tskRotatesHint =>
+      'Une fois faite, elle passe à la personne suivante';
+
+  @override
+  String tskTurnOf(String name) {
+    return 'Au tour de $name';
+  }
+
+  @override
   String get tskForToday => 'Pour aujourd\'hui';
 
   @override

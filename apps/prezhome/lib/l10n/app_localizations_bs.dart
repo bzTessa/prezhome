@@ -2073,6 +2073,17 @@ class AppLocalizationsBs extends AppLocalizations {
   String get tskAnyone => 'Bilo ko';
 
   @override
+  String get tskRotates => 'Naizmjenično';
+
+  @override
+  String get tskRotatesHint => 'Kad se uradi, prelazi na sljedeću osobu';
+
+  @override
+  String tskTurnOf(String name) {
+    return 'Red je na $name';
+  }
+
+  @override
   String get tskForToday => 'Za danas';
 
   @override

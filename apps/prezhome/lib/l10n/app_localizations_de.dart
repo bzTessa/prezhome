@@ -2084,6 +2084,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tskAnyone => 'Jeder';
 
   @override
+  String get tskRotates => 'Abwechselnd';
+
+  @override
+  String get tskRotatesHint => 'Wenn erledigt, ist die nächste Person dran';
+
+  @override
+  String tskTurnOf(String name) {
+    return '$name ist dran';
+  }
+
+  @override
   String get tskForToday => 'Für heute';
 
   @override

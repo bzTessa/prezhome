@@ -13,6 +13,9 @@ class HomeTask {
   final String? intervalUnit; // 'day' | 'week'
   final List<int> weekdays; // para custom_weekdays: 1=Lun..7=Dom
   final String? assignedTo; // user id, o null = cualquiera
+
+  /// Por turnos: al hacerla, pasa a la siguiente persona de casa.
+  final bool rotates;
   final DateTime? dueDate;
   final String? dueTime; // hora "HH:mm" opcional
   // Proxima fecha en la que la tarea debe volver a aparecer como pendiente.
@@ -36,6 +39,7 @@ class HomeTask {
     this.intervalUnit,
     this.weekdays = const [],
     this.assignedTo,
+    this.rotates = false,
     this.dueDate,
     this.dueTime,
     this.nextDue,
@@ -63,6 +67,7 @@ class HomeTask {
           ? rawWeekdays.map((e) => (e as num).toInt()).toList()
           : const [],
       assignedTo: map['assigned_to'],
+      rotates: map['rotates'] == true,
       dueDate: map['due_date'] != null
           ? DateTime.tryParse(map['due_date'])
           : null,
@@ -93,6 +98,9 @@ class HomeTask {
       'interval_unit': recurrence == 'custom_interval' ? intervalUnit : null,
       'weekdays': recurrence == 'custom_weekdays' ? weekdays : null,
       'assigned_to': assignedTo,
+      // Solo se manda si va por turnos: así crear tareas no depende de la
+      // columna (0086) en bases que aún no la tengan.
+      if (rotates && recurrence != 'once') 'rotates': true,
       'due_date': dueDate?.toIso8601String().split('T').first,
       // La primera aparicion de una tarea nueva es su fecha limite (si la hay).
       // Para recurrentes sin fecha, next_due = hoy para que entre en el flujo.
