@@ -628,8 +628,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-food-diary',
         onPressed: _openAddChooser,
-        backgroundColor: AppColors.wood,
-        foregroundColor: AppColors.ink,
         icon: const Icon(Icons.add),
         label: Text(
           context.l.diaAddMeal,

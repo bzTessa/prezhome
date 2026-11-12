@@ -36,7 +36,7 @@ class FloatingNavAction {
 
 /// Barra de navegación inferior flotante en forma de píldora.
 ///
-/// - Las pestañas inactivas muestran solo su icono.
+/// - Las pestañas inactivas muestran solo su icono (salvo [showAllLabels]).
 /// - La activa se expande (animada) en una cápsula tintada con icono + texto.
 /// - [action], si se da, es un botón circular aparte a la derecha.
 /// - Deslizar el dedo a lo largo de la barra va cambiando de pestaña.
@@ -51,6 +51,7 @@ class FloatingNavBar extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelected,
     this.action,
+    this.showAllLabels = false,
     this.height = 64,
     this.backgroundColor,
     this.indicatorColor,
@@ -69,6 +70,10 @@ class FloatingNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final FloatingNavAction? action;
+
+  /// Con `true`, todas las pestañas tienen el mismo ancho y enseñan su texto
+  /// bajo el icono (un icono suelto no siempre se entiende).
+  final bool showAllLabels;
 
   /// Alto de la píldora (y diámetro del botón de acción).
   final double height;
@@ -113,7 +118,9 @@ class FloatingNavBar extends StatelessWidget {
           // Las inactivas tienen un ancho fijo (como mucho 56); la activa se
           // queda con el resto. Animar el ancho da el efecto de "expandirse".
           final n = items.length;
-          final inactive = math.min(56.0, constraints.maxWidth / (n + 1.6));
+          final inactive = showAllLabels
+              ? constraints.maxWidth / n
+              : math.min(56.0, constraints.maxWidth / (n + 1.6));
           final active = constraints.maxWidth - inactive * (n - 1);
           // Al deslizar, la barra se reparte en tramos iguales: el tramo bajo
           // el dedo es la pestaña elegida.
@@ -134,6 +141,7 @@ class FloatingNavBar extends StatelessWidget {
                   child: _NavItem(
                     item: items[i],
                     selected: i == selectedIndex,
+                    stacked: showAllLabels,
                     onTap: () => onSelected(i),
                     indicatorColor: indicatorColor ?? scheme.secondaryContainer,
                     selectedColor: selectedColor ?? scheme.onSecondaryContainer,
@@ -182,6 +190,7 @@ class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.item,
     required this.selected,
+    required this.stacked,
     required this.onTap,
     required this.indicatorColor,
     required this.selectedColor,
@@ -192,6 +201,9 @@ class _NavItem extends StatelessWidget {
 
   final FloatingNavItem item;
   final bool selected;
+
+  /// Icono arriba y texto debajo, siempre visible.
+  final bool stacked;
   final VoidCallback onTap;
   final Color indicatorColor;
   final Color selectedColor;
@@ -208,9 +220,32 @@ class _NavItem extends StatelessWidget {
     final icon = Icon(
       selected ? (item.selectedIcon ?? item.icon) : item.icon,
       color: color,
-      size: 24,
+      size: stacked ? 22 : 24,
     );
-    final content = LayoutBuilder(
+    final content = stacked
+        ? Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              const SizedBox(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontSize: 11,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          )
+        : LayoutBuilder(
       builder: (context, constraints) {
         final showLabel = selected && constraints.maxWidth >= _minWidthForLabel;
         if (!showLabel) return Center(child: icon);
@@ -263,7 +298,9 @@ class _NavItem extends StatelessWidget {
       ),
     );
     // La activa ya muestra su texto; las demás lo ofrecen como tooltip.
-    return selected ? tile : Tooltip(message: item.label, child: tile);
+    return selected || stacked
+        ? tile
+        : Tooltip(message: item.label, child: tile);
   }
 }
 

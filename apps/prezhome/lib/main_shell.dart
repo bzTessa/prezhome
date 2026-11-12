@@ -502,8 +502,8 @@ class MainShellState extends State<MainShell> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: body,
-      // Barra flotante compartida (packages/prez_ui): píldora con la pestaña
-      // activa expandida (icono + texto) y las demás solo con icono.
+      // Barra flotante compartida (packages/prez_ui): píldora con todas las
+      // pestañas con icono y texto; la activa va tintada.
       bottomNavigationBar: SafeArea(
         top: false,
         minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -511,6 +511,7 @@ class MainShellState extends State<MainShell> {
           items: navItems,
           selectedIndex: _index,
           onSelected: _onDestinationSelected,
+          showAllLabels: true,
           // Píldora con trazo y sombra dura; la pestaña activa se desliza
           // con muelle. Sin translucidez: el contenido no pasa por debajo.
           backgroundColor: AppColors.card,

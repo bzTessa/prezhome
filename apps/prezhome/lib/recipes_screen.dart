@@ -352,8 +352,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-recipes',
         onPressed: _openAdd,
-        backgroundColor: AppColors.wood,
-        foregroundColor: AppColors.ink,
         icon: const Icon(Icons.add),
         label: Text(
           context.l.recNew,

@@ -210,6 +210,49 @@
   "homeShortcuts": "Atajos",
   "homeForToday": "Para hoy",
   "homeSeeAll": "Ver todo",
+  "homeYourDay": "Tu día",
+  "homeDefrost": "Saca del congelador: {names}",
+  "@homeDefrost": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "homeExpiringLine": "Caduca pronto: {names}",
+  "@homeExpiringLine": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "homeExpiredLine": "{count, plural, =1{1 producto caducado: revísalo} other{{count} productos caducados: revísalos}}",
+  "@homeExpiredLine": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeMoreTasks": "{count, plural, =1{y 1 tarea más} other{y {count} tareas más}}",
+  "@homeMoreTasks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeShoppingLine": "{count, plural, =1{1 producto en la lista de la compra} other{{count} productos en la lista de la compra}}",
+  "@homeShoppingLine": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeAllDone": "La casa está al día",
+  "homeAllDoneSub": "No queda nada pendiente para hoy.",
   "homePoints": "{points} pts",
   "@homePoints": {
     "placeholders": {

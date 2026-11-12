@@ -842,8 +842,6 @@ class _TasksScreenState extends State<TasksScreen> {
           return FloatingActionButton.extended(
             heroTag: 'fab-tasks',
             onPressed: () => _openNew(data!),
-            backgroundColor: AppColors.ink,
-            foregroundColor: AppColors.cream,
             icon: const Icon(Icons.add_rounded),
             label: Text(
               context.l.tskNew,

@@ -648,6 +648,54 @@ abstract class AppLocalizations {
   /// **'Ver todo'**
   String get homeSeeAll;
 
+  /// No description provided for @homeYourDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu día'**
+  String get homeYourDay;
+
+  /// No description provided for @homeDefrost.
+  ///
+  /// In es, this message translates to:
+  /// **'Saca del congelador: {names}'**
+  String homeDefrost(String names);
+
+  /// No description provided for @homeExpiringLine.
+  ///
+  /// In es, this message translates to:
+  /// **'Caduca pronto: {names}'**
+  String homeExpiringLine(String names);
+
+  /// No description provided for @homeExpiredLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 producto caducado: revísalo} other{{count} productos caducados: revísalos}}'**
+  String homeExpiredLine(int count);
+
+  /// No description provided for @homeMoreTasks.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{y 1 tarea más} other{y {count} tareas más}}'**
+  String homeMoreTasks(int count);
+
+  /// No description provided for @homeShoppingLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 producto en la lista de la compra} other{{count} productos en la lista de la compra}}'**
+  String homeShoppingLine(int count);
+
+  /// No description provided for @homeAllDone.
+  ///
+  /// In es, this message translates to:
+  /// **'La casa está al día'**
+  String get homeAllDone;
+
+  /// No description provided for @homeAllDoneSub.
+  ///
+  /// In es, this message translates to:
+  /// **'No queda nada pendiente para hoy.'**
+  String get homeAllDoneSub;
+
   /// No description provided for @homePoints.
   ///
   /// In es, this message translates to:
