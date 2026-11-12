@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'l10n/l10n.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pro_screen.dart';
@@ -9,22 +10,18 @@ import 'widgets/list_skeleton.dart';
 
 /// Una función con cupo mensual: cuántas veces se ha usado este mes.
 class PlanUsage {
-  const PlanUsage(this.label, this.used, this.limit);
+  const PlanUsage(this.feature, this.used, this.limit);
 
-  final String label;
+  /// Id de la función (scan_ticket, recipes...); su nombre es l10n.planFeature.
+  final String feature;
   final int used;
   final int limit;
 
   int get left => (limit - used).clamp(0, limit);
 }
 
-/// Nombres para la persona, en el orden en que se muestran.
-const planFeatureLabels = {
-  'scan_ticket': 'Escanear tickets',
-  'recipes': 'Ideas y recetas',
-  'meal_photo': 'Foto de lo que comes',
-  'import_link': 'Recetas desde un enlace',
-};
+/// Funciones con cupo, en el orden en que se muestran.
+const planFeatures = ['scan_ticket', 'recipes', 'meal_photo', 'import_link'];
 
 /// Une los cupos del plan con el uso del mes (filas de plan_quotas y ai_usage).
 List<PlanUsage> buildPlanUsage(
@@ -38,9 +35,8 @@ List<PlanUsage> buildPlanUsage(
   };
   final used = {for (final u in usage) u['feature']: u['used'] as int};
   return [
-    for (final e in planFeatureLabels.entries)
-      if (limits[e.key] != null)
-        PlanUsage(e.value, used[e.key] ?? 0, limits[e.key]!),
+    for (final f in planFeatures)
+      if (limits[f] != null) PlanUsage(f, used[f] ?? 0, limits[f]!),
   ];
 }
 
@@ -81,7 +77,7 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Tu plan')),
+      appBar: AppBar(title: Text(context.l.hhYourPlan)),
       body: FutureBuilder(
         future: _future,
         builder: (context, snapshot) {
@@ -96,7 +92,7 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               Text(
-                plan == 'pro' ? 'Plan Pro' : 'Plan gratis',
+                context.l.puPlanName(plan),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -104,9 +100,7 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'La despensa, la compra, las tareas y el plan no tienen '
-                'límite. Esto es lo que te queda este mes; se renueva el '
-                'día 1. Si algo falla, no cuenta.',
+                context.l.puExplain,
                 style: TextStyle(color: AppColors.inkMuted),
               ),
               const SizedBox(height: 20),
@@ -114,7 +108,7 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
               if (plan != 'pro') ...[
                 const SizedBox(height: 8),
                 TactileButton(
-                  label: 'Pasar a Pro',
+                  label: context.l.puGoPro,
                   onPressed: () async {
                     final pro = await Navigator.of(context).push<bool>(
                       MaterialPageRoute(builder: (_) => const ProScreen()),
@@ -141,11 +135,11 @@ class _PlanUsageScreenState extends State<PlanUsageScreen> {
             children: [
               Expanded(
                 child: Text(
-                  r.label,
+                  context.l.planFeature(r.feature),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
-              Text('Te quedan ${r.left} de ${r.limit}'),
+              Text(context.l.puLeft(r.left, r.limit)),
             ],
           ),
           const SizedBox(height: 6),

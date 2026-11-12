@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/l10n.dart';
+import 'tasks_screen.dart' show taskRepeatLabel;
 import 'models/meal_plan_entry.dart';
 import 'models/recipe.dart';
 import 'models/task.dart';
@@ -44,30 +46,6 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
     'dinner',
     'snack',
     'dessert',
-  ];
-  static const _monthNames = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
-  static const _weekdayHeaders = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  static const _dayNames = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
   ];
 
   @override
@@ -147,7 +125,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
       final key = DateTime(e.date.year, e.date.month, e.date.day);
       final item = _PlanItem(
         mealType: e.mealType,
-        title: title ?? 'Receta',
+        title: title ?? appL10n.recipe,
         skipped: e.skipped,
       );
       (mealsByDay[key] ??= []).add(item);
@@ -234,7 +212,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: AppBar(title: const Text('Calendario')),
+      appBar: AppBar(title: Text(context.l.planCalendar)),
       body: FutureBuilder<_MonthData>(
         future: _future,
         builder: (context, snapshot) {
@@ -247,7 +225,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
           }
           final data = snapshot.data!;
           if (data.homeId == null) {
-            return const Center(child: Text('No perteneces a ningún hogar.'));
+            return Center(child: Text(context.l.mcNoHome));
           }
           return Stack(
             children: [
@@ -277,8 +255,11 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
   }
 
   Widget _header() {
-    final label =
-        '${_monthNames[_visibleMonth.month - 1]} ${_visibleMonth.year}';
+    final locale = Localizations.localeOf(context).toString();
+    final label = toBeginningOfSentenceCase(
+      DateFormat.yMMMM(locale).format(_visibleMonth),
+      locale,
+    );
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     return Padding(
@@ -286,7 +267,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Anterior',
+            tooltip: context.l.previous,
             icon: Icon(Icons.chevron_left, color: AppColors.woodDark),
             onPressed: () => _changeMonth(-1),
           ),
@@ -302,14 +283,14 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Siguiente',
+            tooltip: context.l.next,
             icon: Icon(Icons.chevron_right, color: AppColors.woodDark),
             onPressed: () => _changeMonth(1),
           ),
           if (_selectedDay != today)
             TextButton(
               onPressed: () => _showMonth(DateTime(now.year, now.month, 1)),
-              child: const Text('Hoy'),
+              child: Text(context.l.today),
             ),
         ],
       ),
@@ -320,22 +301,29 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        children: _weekdayHeaders
-            .map(
-              (d) => Expanded(
-                child: Center(
-                  child: Text(
-                    d,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.inkMuted,
-                      fontSize: 13,
+        // 2024-01-01 fue lunes: de ahí salen las iniciales de cada día.
+        children:
+            [
+                  for (var i = 1; i <= 7; i++)
+                    DateFormat.EEEEE(
+                      Localizations.localeOf(context).toString(),
+                    ).format(DateTime(2024, 1, i)),
+                ]
+                .map(
+                  (d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.inkMuted,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            )
-            .toList(),
+                )
+                .toList(),
       ),
     );
   }
@@ -430,16 +418,16 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
         for (final e in l) e.kind,
     };
     final items = <(Color, String)>[
-      if (data.mealsByDay.isNotEmpty) (AppColors.woodDark, 'Comidas'),
-      if (data.tasksByDay.isNotEmpty) (AppColors.sage, 'Tareas'),
+      if (data.mealsByDay.isNotEmpty) (AppColors.woodDark, context.l.meals),
+      if (data.tasksByDay.isNotEmpty) (AppColors.sage, context.l.tasks),
       for (final k in PrepEventKind.values)
         if (kinds.contains(k))
           (
             prepEventStyle(k).fg,
             switch (k) {
-              PrepEventKind.compra => 'Compra',
-              PrepEventKind.cocina => 'Cocinar',
-              PrepEventKind.sacar => 'Sacar',
+              PrepEventKind.compra => context.l.mcPrep('compra'),
+              PrepEventKind.cocina => context.l.mcPrep('cocina'),
+              PrepEventKind.sacar => context.l.mcPrep('sacar'),
             },
           ),
     ];
@@ -480,9 +468,11 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
     final meals = data.mealsByDay[_selectedDay] ?? const [];
     final tasks = data.tasksByDay[_selectedDay] ?? const [];
     final prep = data.prepByDay[_selectedDay] ?? const <PrepEvent>[];
-    final label =
-        '${_dayNames[_selectedDay.weekday - 1]} ${_selectedDay.day} de '
-        '${_monthNames[_selectedDay.month - 1].toLowerCase()}';
+    final locale = Localizations.localeOf(context).toString();
+    final label = toBeginningOfSentenceCase(
+      DateFormat.MMMMEEEEd(locale).format(_selectedDay),
+      locale,
+    );
     final empty = meals.isEmpty && tasks.isEmpty && prep.isEmpty;
 
     return Container(
@@ -509,7 +499,9 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
               TextButton.icon(
                 onPressed: () => Navigator.of(context).pop(_selectedDay),
                 icon: const Icon(Icons.restaurant_menu_rounded, size: 18),
-                label: Text(meals.isEmpty ? 'Planificar' : 'Ver en el plan'),
+                label: Text(
+                  meals.isEmpty ? context.l.mcPlanIt : context.l.mcSeeInPlan,
+                ),
               ),
             ],
           ),
@@ -521,7 +513,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Nada planificado este día.',
+                    context.l.mcNothing,
                     style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ),
@@ -533,7 +525,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
               children: [
                 for (final ev in prep) PrepEventTile(event: ev),
                 if (meals.isNotEmpty) ...[
-                  _sectionTitle('Comidas'),
+                  _sectionTitle(context.l.meals),
                   ...meals.map(
                     (m) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -577,7 +569,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                 ],
                 if (tasks.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  _sectionTitle('Tareas'),
+                  _sectionTitle(context.l.tasks),
                   ...tasks.map(
                     (t) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -599,7 +591,7 @@ class _MonthCalendarScreenState extends State<MonthCalendarScreen> {
                             ),
                           ),
                           Text(
-                            t.recurrenceLabel,
+                            taskRepeatLabel(context, t),
                             style: TextStyle(
                               color: AppColors.inkMuted,
                               fontSize: 11,

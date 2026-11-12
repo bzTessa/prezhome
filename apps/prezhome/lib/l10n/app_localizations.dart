@@ -5543,6 +5543,1440 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Menos'**
   String get recLess;
+
+  /// No description provided for @planOldTapersTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tápers del plan anterior'**
+  String get planOldTapersTitle;
+
+  /// No description provided for @planOldTapersBody.
+  ///
+  /// In es, this message translates to:
+  /// **'En la nevera {count, plural, =1{queda 1 táper} other{quedan {count} tápers}} que el plan nuevo ya no usa: {names}. ¿Los quitas de Mi cocina?'**
+  String planOldTapersBody(int count, String names);
+
+  /// No description provided for @planOldTapersKeep.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejarlos'**
+  String get planOldTapersKeep;
+
+  /// No description provided for @hhCreateError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo crear el hogar'**
+  String get hhCreateError;
+
+  /// No description provided for @hhJoinTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Unirme a un hogar'**
+  String get hhJoinTitle;
+
+  /// No description provided for @hhInviteCode.
+  ///
+  /// In es, this message translates to:
+  /// **'Código de invitación'**
+  String get hhInviteCode;
+
+  /// No description provided for @hhJoin.
+  ///
+  /// In es, this message translates to:
+  /// **'Unirme'**
+  String get hhJoin;
+
+  /// No description provided for @hhCodeFormat.
+  ///
+  /// In es, this message translates to:
+  /// **'El código tiene 8 letras y números'**
+  String get hhCodeFormat;
+
+  /// No description provided for @hhCodeInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Código no válido o caducado'**
+  String get hhCodeInvalid;
+
+  /// No description provided for @hhCodeCreateError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo crear el código'**
+  String get hhCodeCreateError;
+
+  /// No description provided for @hhThisMember.
+  ///
+  /// In es, this message translates to:
+  /// **'este miembro'**
+  String get hhThisMember;
+
+  /// No description provided for @hhRemoveMemberTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quitar a {name} del hogar?'**
+  String hhRemoveMemberTitle(String name);
+
+  /// No description provided for @hhRemoveMemberBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejará de ver la compra, la despensa y el plan.'**
+  String get hhRemoveMemberBody;
+
+  /// No description provided for @hhRemoveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo quitar'**
+  String get hhRemoveError;
+
+  /// No description provided for @hhAddGuestTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir persona sin cuenta'**
+  String get hhAddGuestTitle;
+
+  /// No description provided for @hhAddGuestBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Para alguien de casa que no usa la app. Podrás asignarle tareas y apuntar las que haga.'**
+  String get hhAddGuestBody;
+
+  /// No description provided for @hhAddError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo añadir'**
+  String get hhAddError;
+
+  /// No description provided for @hhRemoveGuestTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quitar a {name}?'**
+  String hhRemoveGuestTitle(String name);
+
+  /// No description provided for @hhRemoveGuestBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borrarán sus puntos y sus tareas quedarán sin asignar.'**
+  String get hhRemoveGuestBody;
+
+  /// No description provided for @hhLeaveTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Salir del hogar?'**
+  String get hhLeaveTitle;
+
+  /// No description provided for @hhLeaveBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejarás de ver sus datos. Para volver necesitarás un código nuevo.'**
+  String get hhLeaveBody;
+
+  /// No description provided for @hhLeave.
+  ///
+  /// In es, this message translates to:
+  /// **'Salir'**
+  String get hhLeave;
+
+  /// No description provided for @hhLeaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo salir del hogar'**
+  String get hhLeaveError;
+
+  /// No description provided for @hhNameTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del hogar'**
+  String get hhNameTitle;
+
+  /// No description provided for @hhRenameError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo renombrar'**
+  String get hhRenameError;
+
+  /// No description provided for @hhDeleteAccountTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Borrar tu cuenta?'**
+  String get hhDeleteAccountTitle;
+
+  /// No description provided for @hhDeleteAccountBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borran tu cuenta y tus datos. Si eres la única persona del hogar, también el hogar entero. No se puede deshacer.'**
+  String get hhDeleteAccountBody;
+
+  /// No description provided for @hhDeleteConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar'**
+  String get hhDeleteConfirm;
+
+  /// No description provided for @hhDeleteAccountError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo borrar la cuenta'**
+  String get hhDeleteAccountError;
+
+  /// No description provided for @hhDeleteAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar mi cuenta'**
+  String get hhDeleteAccount;
+
+  /// No description provided for @hhMyHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi Hogar'**
+  String get hhMyHome;
+
+  /// No description provided for @hhSignOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar sesión'**
+  String get hhSignOut;
+
+  /// No description provided for @hhNoHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no perteneces a ningún hogar.'**
+  String get hhNoHome;
+
+  /// No description provided for @hhCreateHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear un hogar nuevo'**
+  String get hhCreateHome;
+
+  /// No description provided for @hhJoinExisting.
+  ///
+  /// In es, this message translates to:
+  /// **'Unirme a un hogar existente'**
+  String get hhJoinExisting;
+
+  /// No description provided for @hhRename.
+  ///
+  /// In es, this message translates to:
+  /// **'Renombrar hogar'**
+  String get hhRename;
+
+  /// No description provided for @hhPeople.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Tu hogar, de momento para ti.} other{Un hogar de {count} personas.}}'**
+  String hhPeople(int count);
+
+  /// No description provided for @hhMembers.
+  ///
+  /// In es, this message translates to:
+  /// **'Miembros ({count})'**
+  String hhMembers(int count);
+
+  /// No description provided for @hhAdmin.
+  ///
+  /// In es, this message translates to:
+  /// **'Administrador'**
+  String get hhAdmin;
+
+  /// No description provided for @hhRemoveFromHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar del hogar'**
+  String get hhRemoveFromHome;
+
+  /// No description provided for @hhYou.
+  ///
+  /// In es, this message translates to:
+  /// **'Tú'**
+  String get hhYou;
+
+  /// No description provided for @hhNoAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cuenta'**
+  String get hhNoAccount;
+
+  /// No description provided for @hhLeaveHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Salir del hogar'**
+  String get hhLeaveHome;
+
+  /// No description provided for @hhSettings.
+  ///
+  /// In es, this message translates to:
+  /// **'Hogar y ajustes'**
+  String get hhSettings;
+
+  /// No description provided for @hhAppearance.
+  ///
+  /// In es, this message translates to:
+  /// **'Apariencia'**
+  String get hhAppearance;
+
+  /// No description provided for @hhPhoneAlerts.
+  ///
+  /// In es, this message translates to:
+  /// **'Avisos en el móvil'**
+  String get hhPhoneAlerts;
+
+  /// No description provided for @hhYourData.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos'**
+  String get hhYourData;
+
+  /// No description provided for @hhYourDataSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Gráficas de gasto, compra, cocina y tareas'**
+  String get hhYourDataSub;
+
+  /// No description provided for @hhExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos y tickets'**
+  String get hhExpenses;
+
+  /// No description provided for @hhExpensesSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Presupuesto, tickets escaneados y gasto por mes'**
+  String get hhExpensesSub;
+
+  /// No description provided for @hhYourPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu plan'**
+  String get hhYourPlan;
+
+  /// No description provided for @hhYourPlanSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Usos que te quedan este mes'**
+  String get hhYourPlanSub;
+
+  /// No description provided for @hhNutrition.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi perfil nutricional'**
+  String get hhNutrition;
+
+  /// No description provided for @hhNutritionSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Objetivo de calorías, preferencias y asistente'**
+  String get hhNutritionSub;
+
+  /// No description provided for @hhInvite.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitar a alguien'**
+  String get hhInvite;
+
+  /// No description provided for @hhCreateCode.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear código'**
+  String get hhCreateCode;
+
+  /// No description provided for @hhCopy.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar'**
+  String get hhCopy;
+
+  /// No description provided for @hhCodeCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Código copiado'**
+  String get hhCodeCopied;
+
+  /// No description provided for @hhValidUntil.
+  ///
+  /// In es, this message translates to:
+  /// **'Vale hasta el {date}'**
+  String hhValidUntil(String date);
+
+  /// No description provided for @hhNewCode.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo código'**
+  String get hhNewCode;
+
+  /// No description provided for @hhChoose.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir'**
+  String get hhChoose;
+
+  /// No description provided for @hhSupersHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Las recetas se adaptarán a lo que haya en tus súper. Es opcional.'**
+  String get hhSupersHint;
+
+  /// No description provided for @hhNoSuper.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin supermercado elegido.'**
+  String get hhNoSuper;
+
+  /// No description provided for @hhCountryError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cambiar el país'**
+  String get hhCountryError;
+
+  /// No description provided for @hhWhereShop.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Dónde compráis?'**
+  String get hhWhereShop;
+
+  /// No description provided for @hhPickMany.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes elegir varios. Es opcional.'**
+  String get hhPickMany;
+
+  /// No description provided for @hhSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar'**
+  String get hhSaveError;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In es, this message translates to:
+  /// **'{mode, select, claro{Claro} oscuro{Oscuro} other{Sistema}}'**
+  String themeMode(String mode);
+
+  /// No description provided for @bcNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontré ese código en Open Food Facts, puedes añadirlo a mano.'**
+  String get bcNotFound;
+
+  /// No description provided for @bcTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanear código'**
+  String get bcTitle;
+
+  /// No description provided for @bcSearching.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscando el producto…'**
+  String get bcSearching;
+
+  /// No description provided for @bcNoPermission.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesito permiso para usar la cámara y poder escanear el código. Puedes concederlo en los ajustes del teléfono.'**
+  String get bcNoPermission;
+
+  /// No description provided for @bcCameraError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pude abrir la cámara para escanear. Puedes añadir el producto a mano desde el inventario.'**
+  String get bcCameraError;
+
+  /// No description provided for @planFeature.
+  ///
+  /// In es, this message translates to:
+  /// **'{id, select, scan_ticket{Escanear tickets} recipes{Ideas y recetas} meal_photo{Foto de lo que comes} other{Recetas desde un enlace}}'**
+  String planFeature(String id);
+
+  /// No description provided for @puPlanName.
+  ///
+  /// In es, this message translates to:
+  /// **'{plan, select, pro{Plan Pro} other{Plan gratis}}'**
+  String puPlanName(String plan);
+
+  /// No description provided for @puExplain.
+  ///
+  /// In es, this message translates to:
+  /// **'La despensa, la compra, las tareas y el plan no tienen límite. Esto es lo que te queda este mes; se renueva el día 1. Si algo falla, no cuenta.'**
+  String get puExplain;
+
+  /// No description provided for @puGoPro.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasar a Pro'**
+  String get puGoPro;
+
+  /// No description provided for @puLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'Te quedan {left} de {limit}'**
+  String puLeft(int left, int limit);
+
+  /// No description provided for @psTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas de la compra'**
+  String get psTitle;
+
+  /// No description provided for @psMostBought.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que más compras'**
+  String get psMostBought;
+
+  /// No description provided for @psMostSpent.
+  ///
+  /// In es, this message translates to:
+  /// **'En lo que más gastas'**
+  String get psMostSpent;
+
+  /// No description provided for @psPriciest.
+  ///
+  /// In es, this message translates to:
+  /// **'Los más caros (por unidad)'**
+  String get psPriciest;
+
+  /// No description provided for @psHistory.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu historial de compra'**
+  String get psHistory;
+
+  /// No description provided for @psTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto total registrado: {amount}'**
+  String psTotal(String amount);
+
+  /// No description provided for @psNoPrices.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay suficientes datos de precios.'**
+  String get psNoPrices;
+
+  /// No description provided for @psEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay estadísticas'**
+  String get psEmptyTitle;
+
+  /// No description provided for @psEmptyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Escanea tickets de la compra y aquí verás lo que más compras, en qué gastas más y los productos más caros.'**
+  String get psEmptyBody;
+
+  /// No description provided for @meals.
+  ///
+  /// In es, this message translates to:
+  /// **'Comidas'**
+  String get meals;
+
+  /// No description provided for @mcNoHome.
+  ///
+  /// In es, this message translates to:
+  /// **'No perteneces a ningún hogar.'**
+  String get mcNoHome;
+
+  /// No description provided for @mcPrep.
+  ///
+  /// In es, this message translates to:
+  /// **'{kind, select, compra{Compra} cocina{Cocinar} other{Sacar}}'**
+  String mcPrep(String kind);
+
+  /// No description provided for @mcPlanIt.
+  ///
+  /// In es, this message translates to:
+  /// **'Planificar'**
+  String get mcPlanIt;
+
+  /// No description provided for @mcSeeInPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver en el plan'**
+  String get mcSeeInPlan;
+
+  /// No description provided for @mcNothing.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada planificado este día.'**
+  String get mcNothing;
+
+  /// No description provided for @tasks.
+  ///
+  /// In es, this message translates to:
+  /// **'Tareas'**
+  String get tasks;
+
+  /// No description provided for @proPeriod.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, annual{Al año} sixMonth{Cada 6 meses} threeMonth{Cada 3 meses} twoMonth{Cada 2 meses} monthly{Al mes} weekly{A la semana} lifetime{Para siempre} other{Pro}}'**
+  String proPeriod(String type);
+
+  /// No description provided for @proAlready.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes Pro'**
+  String get proAlready;
+
+  /// No description provided for @proMoreUses.
+  ///
+  /// In es, this message translates to:
+  /// **'Más usos cada mes'**
+  String get proMoreUses;
+
+  /// No description provided for @proRestSame.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo demás sigue igual: sin límite y para todo el hogar.'**
+  String get proRestSame;
+
+  /// No description provided for @proFree.
+  ///
+  /// In es, this message translates to:
+  /// **'Gratis'**
+  String get proFree;
+
+  /// No description provided for @proSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Pro estará disponible muy pronto.'**
+  String get proSoon;
+
+  /// No description provided for @proNothingToRestore.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay compras que restaurar.'**
+  String get proNothingToRestore;
+
+  /// No description provided for @proRestore.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar compras'**
+  String get proRestore;
+
+  /// No description provided for @proRenews.
+  ///
+  /// In es, this message translates to:
+  /// **'Se renueva solo. Puedes cancelar cuando quieras desde la tienda.'**
+  String get proRenews;
+
+  /// No description provided for @proTerms.
+  ///
+  /// In es, this message translates to:
+  /// **'Condiciones'**
+  String get proTerms;
+
+  /// No description provided for @proPrivacy.
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad'**
+  String get proPrivacy;
+
+  /// No description provided for @aiSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar'**
+  String get aiSaveError;
+
+  /// No description provided for @aiStoreProduct.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto del súper'**
+  String get aiStoreProduct;
+
+  /// No description provided for @aiRemoveProduct.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar producto'**
+  String get aiRemoveProduct;
+
+  /// No description provided for @aiEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar producto'**
+  String get aiEditTitle;
+
+  /// No description provided for @aiAddTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir al inventario'**
+  String get aiAddTitle;
+
+  /// No description provided for @aiChangePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar foto'**
+  String get aiChangePhoto;
+
+  /// No description provided for @aiProductType.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de producto'**
+  String get aiProductType;
+
+  /// No description provided for @aiWhatIsIt.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué es?'**
+  String get aiWhatIsIt;
+
+  /// No description provided for @aiDishKind.
+  ///
+  /// In es, this message translates to:
+  /// **'{kind, select, ingredient{Ingrediente para cocinar} base{Base ya preparada} other{Plato listo para comer}}'**
+  String aiDishKind(String kind);
+
+  /// No description provided for @aiSearchStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en el súper'**
+  String get aiSearchStore;
+
+  /// No description provided for @aiSearchStoreLong.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar el producto del súper con foto'**
+  String get aiSearchStoreLong;
+
+  /// No description provided for @aiQuickAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade los de siempre con un toque'**
+  String get aiQuickAdd;
+
+  /// No description provided for @aiLocation.
+  ///
+  /// In es, this message translates to:
+  /// **'Ubicación'**
+  String get aiLocation;
+
+  /// No description provided for @aiCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get aiCategory;
+
+  /// No description provided for @aiQuantity.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantidad'**
+  String get aiQuantity;
+
+  /// No description provided for @aiUnit.
+  ///
+  /// In es, this message translates to:
+  /// **'Unidad'**
+  String get aiUnit;
+
+  /// No description provided for @aiServings.
+  ///
+  /// In es, this message translates to:
+  /// **'Raciones que representa (opcional)'**
+  String get aiServings;
+
+  /// No description provided for @aiFrozenDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha de congelación'**
+  String get aiFrozenDate;
+
+  /// No description provided for @aiFrozenOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Congelado el (opcional)'**
+  String get aiFrozenOn;
+
+  /// No description provided for @aiWillEstimate.
+  ///
+  /// In es, this message translates to:
+  /// **'Calcularemos cuánto aguanta en el congelador.'**
+  String get aiWillEstimate;
+
+  /// No description provided for @aiBestBefore.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor consumir antes del {date} (aprox.).'**
+  String aiBestBefore(String date);
+
+  /// No description provided for @aiExpiryDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha de caducidad'**
+  String get aiExpiryDate;
+
+  /// No description provided for @aiExpires.
+  ///
+  /// In es, this message translates to:
+  /// **'Caduca el'**
+  String get aiExpires;
+
+  /// No description provided for @aiExpiresApprox.
+  ///
+  /// In es, this message translates to:
+  /// **'Caduca el (aprox.)'**
+  String get aiExpiresApprox;
+
+  /// No description provided for @aiNotToList.
+  ///
+  /// In es, this message translates to:
+  /// **'No añadir a la compra'**
+  String get aiNotToList;
+
+  /// No description provided for @aiStaplesSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Básicos que siempre tienes'**
+  String get aiStaplesSub;
+
+  /// No description provided for @aiSaveChanges.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get aiSaveChanges;
+
+  /// No description provided for @aiSaveNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en el inventario'**
+  String get aiSaveNew;
+
+  /// No description provided for @kzMyKitchen.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi cocina'**
+  String get kzMyKitchen;
+
+  /// No description provided for @kzAllGood.
+  ///
+  /// In es, this message translates to:
+  /// **'Al día'**
+  String get kzAllGood;
+
+  /// No description provided for @phStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir producto del súper'**
+  String get phStore;
+
+  /// No description provided for @phCamera.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer una foto'**
+  String get phCamera;
+
+  /// No description provided for @phGallery.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir de la galería'**
+  String get phGallery;
+
+  /// No description provided for @phError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cambiar la foto'**
+  String get phError;
+
+  /// No description provided for @psStoreTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos del súper'**
+  String get psStoreTitle;
+
+  /// No description provided for @psStoreTitleOf.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos de {store}'**
+  String psStoreTitleOf(String store);
+
+  /// No description provided for @psHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Leche, yogur griego, detergente…'**
+  String get psHint;
+
+  /// No description provided for @psTypeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un producto y pulsa buscar.'**
+  String get psTypeHint;
+
+  /// No description provided for @psThrottled.
+  ///
+  /// In es, this message translates to:
+  /// **'Demasiadas búsquedas seguidas. Prueba en un minuto.'**
+  String get psThrottled;
+
+  /// No description provided for @psOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión a internet. Puedes añadirlo igualmente.'**
+  String get psOffline;
+
+  /// No description provided for @psDown.
+  ///
+  /// In es, this message translates to:
+  /// **'El buscador de productos no responde ahora. Prueba en un rato o añádelo igualmente.'**
+  String get psDown;
+
+  /// No description provided for @psNotInStore.
+  ///
+  /// In es, this message translates to:
+  /// **'No está en el súper. Puedes añadirlo igualmente.'**
+  String get psNotInStore;
+
+  /// No description provided for @psNoResultsIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin resultados en {store}. Estos son de otros súper.'**
+  String psNoResultsIn(String store);
+
+  /// No description provided for @psNotYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tenemos los productos de {store}. Estos son de otros súper.'**
+  String psNotYet(String store);
+
+  /// No description provided for @psOffData.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos de Open Food Facts.'**
+  String get psOffData;
+
+  /// No description provided for @psAddAsIs.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir \"{q}\" sin elegir producto'**
+  String psAddAsIs(String q);
+
+  /// No description provided for @offlineExplain.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes seguir usando la lista de la compra y la despensa: lo que apuntes se guarda en el móvil y se envía solo cuando vuelva. Lo demás se actualizará entonces.'**
+  String get offlineExplain;
+
+  /// No description provided for @offlineNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión ahora mismo'**
+  String get offlineNow;
+
+  /// No description provided for @streakMilestone.
+  ///
+  /// In es, this message translates to:
+  /// **'¡{days} días seguidos!'**
+  String streakMilestone(int days);
+
+  /// No description provided for @streakMilestoneSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Hito conseguido. Siguiente: {next} días.'**
+  String streakMilestoneSub(int next);
+
+  /// No description provided for @streakDoneSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy ya cuenta. Próximo hito: {next} días.'**
+  String streakDoneSub(int next);
+
+  /// No description provided for @streakKeepSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Tacha una tarea o apunta una comida para seguir.'**
+  String get streakKeepSub;
+
+  /// No description provided for @streakStart.
+  ///
+  /// In es, this message translates to:
+  /// **'Empieza tu racha'**
+  String get streakStart;
+
+  /// No description provided for @streakStartSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Tacha una tarea o apunta una comida hoy.'**
+  String get streakStartSub;
+
+  /// No description provided for @streakDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, =1{1 día seguido} other{{days} días seguidos}}'**
+  String streakDays(int days);
+
+  /// No description provided for @syncSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardado. Se sincronizará al volver la conexión.'**
+  String get syncSaved;
+
+  /// No description provided for @fzTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Guardas raciones en el congelador?'**
+  String get fzTitle;
+
+  /// No description provided for @fzSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en el congelador'**
+  String get fzSave;
+
+  /// No description provided for @notNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get notNow;
+
+  /// No description provided for @fastIn.
+  ///
+  /// In es, this message translates to:
+  /// **'En ayuno'**
+  String get fastIn;
+
+  /// No description provided for @fastCanEat.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes comer'**
+  String get fastCanEat;
+
+  /// No description provided for @fastLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'Quedan {left} · Comes a las {time}'**
+  String fastLeft(String left, String time);
+
+  /// No description provided for @fastUntil.
+  ///
+  /// In es, this message translates to:
+  /// **'Hasta las {time}'**
+  String fastUntil(String time);
+
+  /// No description provided for @shWeekReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu semana está lista: comidas, cenas y lista de la compra'**
+  String get shWeekReady;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'PRÓXIMAMENTE'**
+  String get comingSoon;
+
+  /// No description provided for @psSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'{distinct} productos distintos · {lines} compras'**
+  String psSummary(int distinct, int lines);
+
+  /// No description provided for @errNoConnection.
+  ///
+  /// In es, this message translates to:
+  /// **'Parece que no hay conexión. Inténtalo de nuevo en un momento.'**
+  String get errNoConnection;
+
+  /// No description provided for @errBadLogin.
+  ///
+  /// In es, this message translates to:
+  /// **'El correo o la contraseña no son correctos.'**
+  String get errBadLogin;
+
+  /// No description provided for @errConfirmEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirma tu correo (revisa tu bandeja de entrada) y vuelve a intentarlo.'**
+  String get errConfirmEmail;
+
+  /// No description provided for @errSession.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu sesión ha caducado. Vuelve a iniciar sesión.'**
+  String get errSession;
+
+  /// No description provided for @errPermission.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes permiso para hacer esto en este hogar.'**
+  String get errPermission;
+
+  /// No description provided for @errRateLimit.
+  ///
+  /// In es, this message translates to:
+  /// **'Demasiadas peticiones seguidas. Prueba en un rato.'**
+  String get errRateLimit;
+
+  /// No description provided for @errExists.
+  ///
+  /// In es, this message translates to:
+  /// **'Eso ya existe.'**
+  String get errExists;
+
+  /// No description provided for @errUpload.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo subir la imagen. Prueba con otra más pequeña.'**
+  String get errUpload;
+
+  /// No description provided for @errGeneric.
+  ///
+  /// In es, this message translates to:
+  /// **'Algo ha fallado. Inténtalo de nuevo.'**
+  String get errGeneric;
+
+  /// No description provided for @errBadQuantity.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce una cantidad válida.'**
+  String get errBadQuantity;
+
+  /// No description provided for @errRecipeComplete.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo completar la receta'**
+  String get errRecipeComplete;
+
+  /// No description provided for @errRecipeImport.
+  ///
+  /// In es, this message translates to:
+  /// **'No pude importar la receta de ese enlace'**
+  String get errRecipeImport;
+
+  /// No description provided for @someone.
+  ///
+  /// In es, this message translates to:
+  /// **'Alguien'**
+  String get someone;
+
+  /// No description provided for @reward.
+  ///
+  /// In es, this message translates to:
+  /// **'Recompensa'**
+  String get reward;
+
+  /// No description provided for @remKind.
+  ///
+  /// In es, this message translates to:
+  /// **'{kind, select, tasks{Tareas con hora} expiry{Productos que caducan} other{Racha de casa al día}}'**
+  String remKind(String kind);
+
+  /// No description provided for @remTaskOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca: {title}'**
+  String remTaskOne(String title);
+
+  /// No description provided for @remTaskMany.
+  ///
+  /// In es, this message translates to:
+  /// **'Tocan {count} tareas'**
+  String remTaskMany(int count);
+
+  /// No description provided for @remTaskOneBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando la acabes, táchala para sumar puntos.'**
+  String get remTaskOneBody;
+
+  /// No description provided for @remTaskManyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{list}. Táchalas al acabar para sumar puntos.'**
+  String remTaskManyBody(String list);
+
+  /// No description provided for @remExpiryOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana caduca: {name}'**
+  String remExpiryOne(String name);
+
+  /// No description provided for @remExpiryMany.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana caducan {count} productos'**
+  String remExpiryMany(int count);
+
+  /// No description provided for @remExpiryBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocina hoy con ello o congela lo que no vayas a usar.'**
+  String get remExpiryBody;
+
+  /// No description provided for @remStreakMilestone.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy llegas a {days} días'**
+  String remStreakMilestone(int days);
+
+  /// No description provided for @remStreakMilestoneBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Tacha una tarea o apunta una comida y lo celebras.'**
+  String get remStreakMilestoneBody;
+
+  /// No description provided for @remStreakDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Llevas {days} días con la casa al día'**
+  String remStreakDays(int days);
+
+  /// No description provided for @remStreakDaysBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Tacha una tarea o apunta una comida para no perder la racha.'**
+  String get remStreakDaysBody;
+
+  /// No description provided for @remHowIsHome.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo va la casa hoy?'**
+  String get remHowIsHome;
+
+  /// No description provided for @remHowIsHomeBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Un gesto basta para sumar un día más a tu racha.'**
+  String get remHowIsHomeBody;
+
+  /// No description provided for @remStreakAlive.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu racha sigue viva'**
+  String get remStreakAlive;
+
+  /// No description provided for @remStreakAliveBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Apunta lo que has comido o tacha una tarea antes de dormir.'**
+  String get remStreakAliveBody;
+
+  /// No description provided for @listAnd.
+  ///
+  /// In es, this message translates to:
+  /// **'{items} y {last}'**
+  String listAnd(String items, String last);
+
+  /// No description provided for @listMore.
+  ///
+  /// In es, this message translates to:
+  /// **'{items} y {count} más'**
+  String listMore(String items, int count);
+
+  /// No description provided for @planMovedLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo dejo para otro momento'**
+  String get planMovedLater;
+
+  /// No description provided for @planTheDish.
+  ///
+  /// In es, this message translates to:
+  /// **'el plato'**
+  String get planTheDish;
+
+  /// No description provided for @planMovedTo.
+  ///
+  /// In es, this message translates to:
+  /// **'Movido {recipe} al {day}'**
+  String planMovedTo(String recipe, String day);
+
+  /// No description provided for @weekday.
+  ///
+  /// In es, this message translates to:
+  /// **'{day, select, 1{lunes} 2{martes} 3{miércoles} 4{jueves} 5{viernes} 6{sábado} other{domingo}}'**
+  String weekday(String day);
+
+  /// No description provided for @weekdayShortName.
+  ///
+  /// In es, this message translates to:
+  /// **'{day, select, 1{lun} 2{mar} 3{mié} 4{jue} 5{vie} 6{sáb} other{dom}}'**
+  String weekdayShortName(String day);
+
+  /// No description provided for @prepShopTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer la compra'**
+  String get prepShopTitle;
+
+  /// No description provided for @prepShopLine.
+  ///
+  /// In es, this message translates to:
+  /// **'Para cocinar en tanda el {day}'**
+  String prepShopLine(String day);
+
+  /// No description provided for @prepCookTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocinar en tanda'**
+  String get prepCookTitle;
+
+  /// No description provided for @prepAutoTapers.
+  ///
+  /// In es, this message translates to:
+  /// **'Los tápers se apuntan solos en Mi cocina'**
+  String get prepAutoTapers;
+
+  /// No description provided for @prepThawTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Del congelador a la nevera'**
+  String get prepThawTitle;
+
+  /// No description provided for @prepThawLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{recipe}: {count, plural, =1{1 táper} other{{count} tápers}} para el {day}'**
+  String prepThawLine(String recipe, int count, String day);
+
+  /// No description provided for @taperFresh.
+  ///
+  /// In es, this message translates to:
+  /// **'recién hecho'**
+  String get taperFresh;
+
+  /// No description provided for @taperFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'nevera para el {days}'**
+  String taperFridge(String days);
+
+  /// No description provided for @taperFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'congelador para el {days}'**
+  String taperFreezer(String days);
+
+  /// No description provided for @stepPrepare.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparar {recipe}'**
+  String stepPrepare(String recipe);
+
+  /// No description provided for @stepUseAppliance.
+  ///
+  /// In es, this message translates to:
+  /// **'{appliance, select, oven{Enciende el horno} stovetop{Enciende los fogones} pot{Enciende la olla} airfryer{Enciende la freidora de aire} microwave{Enciende el microondas} blender{Enciende la batidora} other{Usa {appliance}}} para {recipes}'**
+  String stepUseAppliance(String appliance, String recipes);
+
+  /// No description provided for @comidasTab.
+  ///
+  /// In es, this message translates to:
+  /// **'{tab, select, plan{Plan} recipes{Recetas} other{Diario}}'**
+  String comidasTab(String tab);
+
+  /// No description provided for @bannerExpiring.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Caduca pronto} other{Caducan pronto}}'**
+  String bannerExpiring(int count);
+
+  /// No description provided for @bannerIdeas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ideas'**
+  String get bannerIdeas;
+
+  /// No description provided for @bannerHide.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar hasta mañana'**
+  String get bannerHide;
+
+  /// No description provided for @loading.
+  ///
+  /// In es, this message translates to:
+  /// **'Cargando'**
+  String get loading;
+
+  /// No description provided for @mascot.
+  ///
+  /// In es, this message translates to:
+  /// **'Mascota'**
+  String get mascot;
+
+  /// No description provided for @voiceStep.
+  ///
+  /// In es, this message translates to:
+  /// **'Paso {n}.'**
+  String voiceStep(int n);
+
+  /// No description provided for @voiceTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiempo. {what}.'**
+  String voiceTime(String what);
+
+  /// No description provided for @voiceLastStep.
+  ///
+  /// In es, this message translates to:
+  /// **'Es el último paso.'**
+  String get voiceLastStep;
+
+  /// No description provided for @voiceNoTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Este paso no tiene tiempo.'**
+  String get voiceNoTime;
+
+  /// No description provided for @voiceTimer.
+  ///
+  /// In es, this message translates to:
+  /// **'Temporizador de {minutes} minutos.'**
+  String voiceTimer(int minutes);
+
+  /// No description provided for @voiceNoTimers.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay temporizadores.'**
+  String get voiceNoTimers;
+
+  /// No description provided for @voiceStopped.
+  ///
+  /// In es, this message translates to:
+  /// **'Parado.'**
+  String get voiceStopped;
+
+  /// No description provided for @voiceNoIngredients.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay lista de ingredientes.'**
+  String get voiceNoIngredients;
+
+  /// No description provided for @unitOne.
+  ///
+  /// In es, this message translates to:
+  /// **'{unit, select, unidad{unidad} diente{diente} loncha{loncha} lata{lata} bote{bote} bolsa{bolsa} comida{comida} cucharada{cucharada} cucharadita{cucharadita} other{{unit}}}'**
+  String unitOne(String unit);
+
+  /// No description provided for @unitMany.
+  ///
+  /// In es, this message translates to:
+  /// **'{unit, select, unidad{unidades} diente{dientes} loncha{lonchas} lata{latas} bote{botes} bolsa{bolsas} comida{comidas} cucharada{cucharadas} cucharadita{cucharaditas} other{{unit}}}'**
+  String unitMany(String unit);
+
+  /// No description provided for @unitShort.
+  ///
+  /// In es, this message translates to:
+  /// **'{unit, select, unidad{ud} cucharada{cda} cucharadita{cdta} other{{unit}}}'**
+  String unitShort(String unit);
+
+  /// No description provided for @unitToTaste.
+  ///
+  /// In es, this message translates to:
+  /// **'{unit, select, a_ojo{a ojo} other{al gusto}}'**
+  String unitToTaste(String unit);
+
+  /// No description provided for @aiItemType.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, hogar{Hogar/Limpieza} other{Comida}}'**
+  String aiItemType(String type);
+
+  /// No description provided for @aiKindShort.
+  ///
+  /// In es, this message translates to:
+  /// **'{kind, select, prep{Preparado} dish{Plato listo} other{Ingrediente}}'**
+  String aiKindShort(String kind);
 }
 
 class _AppLocalizationsDelegate

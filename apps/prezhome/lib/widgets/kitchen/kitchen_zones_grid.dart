@@ -84,7 +84,7 @@ class KitchenZonesGrid extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              'Mi cocina',
+              context.l.kzMyKitchen,
               style: TextStyle(
                 fontSize: 26,
                 letterSpacing: -0.6,
@@ -255,7 +255,7 @@ class _ZoneTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    alert?.$1 ?? 'Al día',
+                    alert?.$1 ?? context.l.kzAllGood,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

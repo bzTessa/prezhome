@@ -2150,5 +2150,666 @@
   "recSortLightest": "Menos calorías primero",
   "recClearFilters": "Quitar filtros",
   "recMore": "Más",
-  "recLess": "Menos"
+  "recLess": "Menos",
+  "planOldTapersTitle": "Tápers del plan anterior",
+  "planOldTapersBody": "En la nevera {count, plural, =1{queda 1 táper} other{quedan {count} tápers}} que el plan nuevo ya no usa: {names}. ¿Los quitas de Mi cocina?",
+  "@planOldTapersBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "planOldTapersKeep": "Dejarlos",
+  "hhCreateError": "No se pudo crear el hogar",
+  "hhJoinTitle": "Unirme a un hogar",
+  "hhInviteCode": "Código de invitación",
+  "hhJoin": "Unirme",
+  "hhCodeFormat": "El código tiene 8 letras y números",
+  "hhCodeInvalid": "Código no válido o caducado",
+  "hhCodeCreateError": "No se pudo crear el código",
+  "hhThisMember": "este miembro",
+  "hhRemoveMemberTitle": "¿Quitar a {name} del hogar?",
+  "@hhRemoveMemberTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hhRemoveMemberBody": "Dejará de ver la compra, la despensa y el plan.",
+  "hhRemoveError": "No se pudo quitar",
+  "hhAddGuestTitle": "Añadir persona sin cuenta",
+  "hhAddGuestBody": "Para alguien de casa que no usa la app. Podrás asignarle tareas y apuntar las que haga.",
+  "hhAddError": "No se pudo añadir",
+  "hhRemoveGuestTitle": "¿Quitar a {name}?",
+  "@hhRemoveGuestTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hhRemoveGuestBody": "Se borrarán sus puntos y sus tareas quedarán sin asignar.",
+  "hhLeaveTitle": "¿Salir del hogar?",
+  "hhLeaveBody": "Dejarás de ver sus datos. Para volver necesitarás un código nuevo.",
+  "hhLeave": "Salir",
+  "hhLeaveError": "No se pudo salir del hogar",
+  "hhNameTitle": "Nombre del hogar",
+  "hhRenameError": "No se pudo renombrar",
+  "hhDeleteAccountTitle": "¿Borrar tu cuenta?",
+  "hhDeleteAccountBody": "Se borran tu cuenta y tus datos. Si eres la única persona del hogar, también el hogar entero. No se puede deshacer.",
+  "hhDeleteConfirm": "Borrar",
+  "hhDeleteAccountError": "No se pudo borrar la cuenta",
+  "hhDeleteAccount": "Borrar mi cuenta",
+  "hhMyHome": "Mi Hogar",
+  "hhSignOut": "Cerrar sesión",
+  "hhNoHome": "Aún no perteneces a ningún hogar.",
+  "hhCreateHome": "Crear un hogar nuevo",
+  "hhJoinExisting": "Unirme a un hogar existente",
+  "hhRename": "Renombrar hogar",
+  "hhPeople": "{count, plural, =1{Tu hogar, de momento para ti.} other{Un hogar de {count} personas.}}",
+  "@hhPeople": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hhMembers": "Miembros ({count})",
+  "@hhMembers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hhAdmin": "Administrador",
+  "hhRemoveFromHome": "Quitar del hogar",
+  "hhYou": "Tú",
+  "hhNoAccount": "Sin cuenta",
+  "hhLeaveHome": "Salir del hogar",
+  "hhSettings": "Hogar y ajustes",
+  "hhAppearance": "Apariencia",
+  "hhPhoneAlerts": "Avisos en el móvil",
+  "hhYourData": "Tus datos",
+  "hhYourDataSub": "Gráficas de gasto, compra, cocina y tareas",
+  "hhExpenses": "Gastos y tickets",
+  "hhExpensesSub": "Presupuesto, tickets escaneados y gasto por mes",
+  "hhYourPlan": "Tu plan",
+  "hhYourPlanSub": "Usos que te quedan este mes",
+  "hhNutrition": "Mi perfil nutricional",
+  "hhNutritionSub": "Objetivo de calorías, preferencias y asistente",
+  "hhInvite": "Invitar a alguien",
+  "hhCreateCode": "Crear código",
+  "hhCopy": "Copiar",
+  "hhCodeCopied": "Código copiado",
+  "hhValidUntil": "Vale hasta el {date}",
+  "@hhValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "hhNewCode": "Nuevo código",
+  "hhChoose": "Elegir",
+  "hhSupersHint": "Las recetas se adaptarán a lo que haya en tus súper. Es opcional.",
+  "hhNoSuper": "Sin supermercado elegido.",
+  "hhCountryError": "No se pudo cambiar el país",
+  "hhWhereShop": "¿Dónde compráis?",
+  "hhPickMany": "Puedes elegir varios. Es opcional.",
+  "hhSaveError": "No se pudo guardar",
+  "themeMode": "{mode, select, claro{Claro} oscuro{Oscuro} other{Sistema}}",
+  "@themeMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "bcNotFound": "No encontré ese código en Open Food Facts, puedes añadirlo a mano.",
+  "bcTitle": "Escanear código",
+  "bcSearching": "Buscando el producto…",
+  "bcNoPermission": "Necesito permiso para usar la cámara y poder escanear el código. Puedes concederlo en los ajustes del teléfono.",
+  "bcCameraError": "No pude abrir la cámara para escanear. Puedes añadir el producto a mano desde el inventario.",
+  "planFeature": "{id, select, scan_ticket{Escanear tickets} recipes{Ideas y recetas} meal_photo{Foto de lo que comes} other{Recetas desde un enlace}}",
+  "@planFeature": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "puPlanName": "{plan, select, pro{Plan Pro} other{Plan gratis}}",
+  "@puPlanName": {
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "puExplain": "La despensa, la compra, las tareas y el plan no tienen límite. Esto es lo que te queda este mes; se renueva el día 1. Si algo falla, no cuenta.",
+  "puGoPro": "Pasar a Pro",
+  "puLeft": "Te quedan {left} de {limit}",
+  "@puLeft": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "psTitle": "Estadísticas de la compra",
+  "psMostBought": "Lo que más compras",
+  "psMostSpent": "En lo que más gastas",
+  "psPriciest": "Los más caros (por unidad)",
+  "psHistory": "Tu historial de compra",
+  "psTotal": "Gasto total registrado: {amount}",
+  "@psTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "psNoPrices": "Aún no hay suficientes datos de precios.",
+  "psEmptyTitle": "Aún no hay estadísticas",
+  "psEmptyBody": "Escanea tickets de la compra y aquí verás lo que más compras, en qué gastas más y los productos más caros.",
+  "meals": "Comidas",
+  "mcNoHome": "No perteneces a ningún hogar.",
+  "mcPrep": "{kind, select, compra{Compra} cocina{Cocinar} other{Sacar}}",
+  "@mcPrep": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "mcPlanIt": "Planificar",
+  "mcSeeInPlan": "Ver en el plan",
+  "mcNothing": "Nada planificado este día.",
+  "tasks": "Tareas",
+  "proPeriod": "{type, select, annual{Al año} sixMonth{Cada 6 meses} threeMonth{Cada 3 meses} twoMonth{Cada 2 meses} monthly{Al mes} weekly{A la semana} lifetime{Para siempre} other{Pro}}",
+  "@proPeriod": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "proAlready": "Ya tienes Pro",
+  "proMoreUses": "Más usos cada mes",
+  "proRestSame": "Lo demás sigue igual: sin límite y para todo el hogar.",
+  "proFree": "Gratis",
+  "proSoon": "Pro estará disponible muy pronto.",
+  "proNothingToRestore": "No hay compras que restaurar.",
+  "proRestore": "Restaurar compras",
+  "proRenews": "Se renueva solo. Puedes cancelar cuando quieras desde la tienda.",
+  "proTerms": "Condiciones",
+  "proPrivacy": "Privacidad",
+  "aiSaveError": "Error al guardar",
+  "aiStoreProduct": "Producto del súper",
+  "aiRemoveProduct": "Quitar producto",
+  "aiEditTitle": "Editar producto",
+  "aiAddTitle": "Añadir al inventario",
+  "aiChangePhoto": "Cambiar foto",
+  "aiProductType": "Tipo de producto",
+  "aiWhatIsIt": "¿Qué es?",
+  "aiDishKind": "{kind, select, ingredient{Ingrediente para cocinar} base{Base ya preparada} other{Plato listo para comer}}",
+  "@aiDishKind": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "aiSearchStore": "Buscar en el súper",
+  "aiSearchStoreLong": "Buscar el producto del súper con foto",
+  "aiQuickAdd": "Añade los de siempre con un toque",
+  "aiLocation": "Ubicación",
+  "aiCategory": "Categoría",
+  "aiQuantity": "Cantidad",
+  "aiUnit": "Unidad",
+  "aiServings": "Raciones que representa (opcional)",
+  "aiFrozenDate": "Fecha de congelación",
+  "aiFrozenOn": "Congelado el (opcional)",
+  "aiWillEstimate": "Calcularemos cuánto aguanta en el congelador.",
+  "aiBestBefore": "Mejor consumir antes del {date} (aprox.).",
+  "@aiBestBefore": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "aiExpiryDate": "Fecha de caducidad",
+  "aiExpires": "Caduca el",
+  "aiExpiresApprox": "Caduca el (aprox.)",
+  "aiNotToList": "No añadir a la compra",
+  "aiStaplesSub": "Básicos que siempre tienes",
+  "aiSaveChanges": "Guardar cambios",
+  "aiSaveNew": "Guardar en el inventario",
+  "kzMyKitchen": "Mi cocina",
+  "kzAllGood": "Al día",
+  "phStore": "Elegir producto del súper",
+  "phCamera": "Hacer una foto",
+  "phGallery": "Elegir de la galería",
+  "phError": "No se pudo cambiar la foto",
+  "psStoreTitle": "Productos del súper",
+  "psStoreTitleOf": "Productos de {store}",
+  "@psStoreTitleOf": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "psHint": "Leche, yogur griego, detergente…",
+  "psTypeHint": "Escribe un producto y pulsa buscar.",
+  "psThrottled": "Demasiadas búsquedas seguidas. Prueba en un minuto.",
+  "psOffline": "Sin conexión a internet. Puedes añadirlo igualmente.",
+  "psDown": "El buscador de productos no responde ahora. Prueba en un rato o añádelo igualmente.",
+  "psNotInStore": "No está en el súper. Puedes añadirlo igualmente.",
+  "psNoResultsIn": "Sin resultados en {store}. Estos son de otros súper.",
+  "@psNoResultsIn": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "psNotYet": "Aún no tenemos los productos de {store}. Estos son de otros súper.",
+  "@psNotYet": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "psOffData": "Datos de Open Food Facts.",
+  "psAddAsIs": "Añadir \"{q}\" sin elegir producto",
+  "@psAddAsIs": {
+    "placeholders": {
+      "q": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineExplain": "Puedes seguir usando la lista de la compra y la despensa: lo que apuntes se guarda en el móvil y se envía solo cuando vuelva. Lo demás se actualizará entonces.",
+  "offlineNow": "Sin conexión ahora mismo",
+  "streakMilestone": "¡{days} días seguidos!",
+  "@streakMilestone": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "streakMilestoneSub": "Hito conseguido. Siguiente: {next} días.",
+  "@streakMilestoneSub": {
+    "placeholders": {
+      "next": {
+        "type": "int"
+      }
+    }
+  },
+  "streakDoneSub": "Hoy ya cuenta. Próximo hito: {next} días.",
+  "@streakDoneSub": {
+    "placeholders": {
+      "next": {
+        "type": "int"
+      }
+    }
+  },
+  "streakKeepSub": "Tacha una tarea o apunta una comida para seguir.",
+  "streakStart": "Empieza tu racha",
+  "streakStartSub": "Tacha una tarea o apunta una comida hoy.",
+  "streakDays": "{days, plural, =1{1 día seguido} other{{days} días seguidos}}",
+  "@streakDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSaved": "Guardado. Se sincronizará al volver la conexión.",
+  "fzTitle": "¿Guardas raciones en el congelador?",
+  "fzSave": "Guardar en el congelador",
+  "notNow": "Ahora no",
+  "fastIn": "En ayuno",
+  "fastCanEat": "Puedes comer",
+  "fastLeft": "Quedan {left} · Comes a las {time}",
+  "@fastLeft": {
+    "placeholders": {
+      "left": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "fastUntil": "Hasta las {time}",
+  "@fastUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "shWeekReady": "Tu semana está lista: comidas, cenas y lista de la compra",
+  "comingSoon": "PRÓXIMAMENTE",
+  "psSummary": "{distinct} productos distintos · {lines} compras",
+  "@psSummary": {
+    "placeholders": {
+      "distinct": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "int"
+      }
+    }
+  },
+  "errNoConnection": "Parece que no hay conexión. Inténtalo de nuevo en un momento.",
+  "errBadLogin": "El correo o la contraseña no son correctos.",
+  "errConfirmEmail": "Confirma tu correo (revisa tu bandeja de entrada) y vuelve a intentarlo.",
+  "errSession": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+  "errPermission": "No tienes permiso para hacer esto en este hogar.",
+  "errRateLimit": "Demasiadas peticiones seguidas. Prueba en un rato.",
+  "errExists": "Eso ya existe.",
+  "errUpload": "No se pudo subir la imagen. Prueba con otra más pequeña.",
+  "errGeneric": "Algo ha fallado. Inténtalo de nuevo.",
+  "errBadQuantity": "Introduce una cantidad válida.",
+  "errRecipeComplete": "No se pudo completar la receta",
+  "errRecipeImport": "No pude importar la receta de ese enlace",
+  "someone": "Alguien",
+  "reward": "Recompensa",
+  "remKind": "{kind, select, tasks{Tareas con hora} expiry{Productos que caducan} other{Racha de casa al día}}",
+  "@remKind": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "remTaskOne": "Toca: {title}",
+  "@remTaskOne": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "remTaskMany": "Tocan {count} tareas",
+  "@remTaskMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remTaskOneBody": "Cuando la acabes, táchala para sumar puntos.",
+  "remTaskManyBody": "{list}. Táchalas al acabar para sumar puntos.",
+  "@remTaskManyBody": {
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "remExpiryOne": "Mañana caduca: {name}",
+  "@remExpiryOne": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remExpiryMany": "Mañana caducan {count} productos",
+  "@remExpiryMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remExpiryBody": "Cocina hoy con ello o congela lo que no vayas a usar.",
+  "remStreakMilestone": "Hoy llegas a {days} días",
+  "@remStreakMilestone": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "remStreakMilestoneBody": "Tacha una tarea o apunta una comida y lo celebras.",
+  "remStreakDays": "Llevas {days} días con la casa al día",
+  "@remStreakDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "remStreakDaysBody": "Tacha una tarea o apunta una comida para no perder la racha.",
+  "remHowIsHome": "¿Cómo va la casa hoy?",
+  "remHowIsHomeBody": "Un gesto basta para sumar un día más a tu racha.",
+  "remStreakAlive": "Tu racha sigue viva",
+  "remStreakAliveBody": "Apunta lo que has comido o tacha una tarea antes de dormir.",
+  "listAnd": "{items} y {last}",
+  "@listAnd": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
+  "listMore": "{items} y {count} más",
+  "@listMore": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planMovedLater": "Lo dejo para otro momento",
+  "planTheDish": "el plato",
+  "planMovedTo": "Movido {recipe} al {day}",
+  "@planMovedTo": {
+    "placeholders": {
+      "recipe": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "weekday": "{day, select, 1{lunes} 2{martes} 3{miércoles} 4{jueves} 5{viernes} 6{sábado} other{domingo}}",
+  "@weekday": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "weekdayShortName": "{day, select, 1{lun} 2{mar} 3{mié} 4{jue} 5{vie} 6{sáb} other{dom}}",
+  "@weekdayShortName": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "prepShopTitle": "Hacer la compra",
+  "prepShopLine": "Para cocinar en tanda el {day}",
+  "@prepShopLine": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "prepCookTitle": "Cocinar en tanda",
+  "prepAutoTapers": "Los tápers se apuntan solos en Mi cocina",
+  "prepThawTitle": "Del congelador a la nevera",
+  "prepThawLine": "{recipe}: {count, plural, =1{1 táper} other{{count} tápers}} para el {day}",
+  "@prepThawLine": {
+    "placeholders": {
+      "recipe": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "taperFresh": "recién hecho",
+  "taperFridge": "nevera para el {days}",
+  "@taperFridge": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "taperFreezer": "congelador para el {days}",
+  "@taperFreezer": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "stepPrepare": "Preparar {recipe}",
+  "@stepPrepare": {
+    "placeholders": {
+      "recipe": {
+        "type": "String"
+      }
+    }
+  },
+  "stepUseAppliance": "{appliance, select, oven{Enciende el horno} stovetop{Enciende los fogones} pot{Enciende la olla} airfryer{Enciende la freidora de aire} microwave{Enciende el microondas} blender{Enciende la batidora} other{Usa {appliance}}} para {recipes}",
+  "@stepUseAppliance": {
+    "placeholders": {
+      "appliance": {
+        "type": "String"
+      },
+      "recipes": {
+        "type": "String"
+      }
+    }
+  },
+  "comidasTab": "{tab, select, plan{Plan} recipes{Recetas} other{Diario}}",
+  "@comidasTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "bannerExpiring": "{count, plural, =1{Caduca pronto} other{Caducan pronto}}",
+  "@bannerExpiring": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bannerIdeas": "Ideas",
+  "bannerHide": "Ocultar hasta mañana",
+  "loading": "Cargando",
+  "mascot": "Mascota",
+  "voiceStep": "Paso {n}.",
+  "@voiceStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "voiceTime": "Tiempo. {what}.",
+  "@voiceTime": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "voiceLastStep": "Es el último paso.",
+  "voiceNoTime": "Este paso no tiene tiempo.",
+  "voiceTimer": "Temporizador de {minutes} minutos.",
+  "@voiceTimer": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "voiceNoTimers": "No hay temporizadores.",
+  "voiceStopped": "Parado.",
+  "voiceNoIngredients": "No hay lista de ingredientes.",
+  "unitOne": "{unit, select, unidad{unidad} diente{diente} loncha{loncha} lata{lata} bote{bote} bolsa{bolsa} comida{comida} cucharada{cucharada} cucharadita{cucharadita} other{{unit}}}",
+  "@unitOne": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "unitMany": "{unit, select, unidad{unidades} diente{dientes} loncha{lonchas} lata{latas} bote{botes} bolsa{bolsas} comida{comidas} cucharada{cucharadas} cucharadita{cucharaditas} other{{unit}}}",
+  "@unitMany": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "unitShort": "{unit, select, unidad{ud} cucharada{cda} cucharadita{cdta} other{{unit}}}",
+  "@unitShort": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "unitToTaste": "{unit, select, a_ojo{a ojo} other{al gusto}}",
+  "@unitToTaste": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "aiItemType": "{type, select, hogar{Hogar/Limpieza} other{Comida}}",
+  "@aiItemType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "aiKindShort": "{kind, select, prep{Preparado} dish{Plato listo} other{Ingrediente}}",
+  "@aiKindShort": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  }
 }

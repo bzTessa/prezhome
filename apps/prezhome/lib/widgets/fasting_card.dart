@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 import '../services/plan_prefs.dart';
 import '../theme/app_theme.dart';
@@ -54,13 +55,16 @@ class _FastingCardState extends State<FastingCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  s.fasting ? 'En ayuno' : 'Puedes comer',
+                  s.fasting ? context.l.fastIn : context.l.fastCanEat,
                   style: AppTextStyles.title,
                 ),
                 Text(
                   s.fasting
-                      ? 'Quedan ${h > 0 ? '$h h ' : ''}$m min · Comes a las $time'
-                      : 'Hasta las $time',
+                      ? context.l.fastLeft(
+                          '${h > 0 ? '$h h ' : ''}$m min',
+                          time,
+                        )
+                      : context.l.fastUntil(time),
                   style: TextStyle(color: AppColors.inkMuted),
                 ),
               ],

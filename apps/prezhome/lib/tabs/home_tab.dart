@@ -185,6 +185,13 @@ class HomeTabState extends State<HomeTab> {
           .eq('id', user.id);
     } catch (e) {
       debugPrint('HomeTab._savePrefs error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, context.l.couldNotSave)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
     }
   }
 
@@ -222,7 +229,7 @@ class HomeTabState extends State<HomeTab> {
             (ready is Map ? ready['name'] : null) as String?;
         final item = _PlanItem(
           mealType: e.mealType,
-          title: title ?? 'Receta',
+          title: title ?? appL10n.recipe,
           skipped: e.skipped,
           recipe: recipe,
         );

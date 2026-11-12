@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'l10n/l10n.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,16 +18,8 @@ const _termsUrl =
 const _privacyUrl = String.fromEnvironment('PRIVACY_URL');
 
 /// Nombre de cada periodo para la persona.
-String proPeriodLabel(PackageType type) => switch (type) {
-  PackageType.annual => 'Al año',
-  PackageType.sixMonth => 'Cada 6 meses',
-  PackageType.threeMonth => 'Cada 3 meses',
-  PackageType.twoMonth => 'Cada 2 meses',
-  PackageType.monthly => 'Al mes',
-  PackageType.weekly => 'A la semana',
-  PackageType.lifetime => 'Para siempre',
-  _ => 'Pro',
-};
+String proPeriodLabel(BuildContext context, PackageType type) =>
+    context.l.proPeriod(type.name);
 
 /// Pasar a Pro: qué da (cupos de `plan_quotas`), opciones de pago y
 /// restaurar compras. Devuelve true al cerrarse si la persona ya tiene Pro.
@@ -59,7 +52,7 @@ class _ProScreenState extends State<ProScreen> {
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Ya tienes Pro')));
+        ).showSnackBar(SnackBar(content: Text(context.l.proAlready)));
         Navigator.of(context).pop(true);
       } else if (notPro.isNotEmpty) {
         ScaffoldMessenger.of(
@@ -94,14 +87,14 @@ class _ProScreenState extends State<ProScreen> {
           final (quotas, packages) = snapshot.data!;
           final free = {
             for (final f in buildPlanUsage('free', quotas, const []))
-              f.label: f.limit,
+              f.feature: f.limit,
           };
           final pro = buildPlanUsage('pro', quotas, const []);
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
               Text(
-                'Más usos cada mes',
+                context.l.proMoreUses,
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 22,
@@ -110,7 +103,7 @@ class _ProScreenState extends State<ProScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Lo demás sigue igual: sin límite y para todo el hogar.',
+                context.l.proRestSame,
                 style: TextStyle(color: AppColors.inkMuted),
               ),
               const SizedBox(height: 20),
@@ -119,16 +112,20 @@ class _ProScreenState extends State<ProScreen> {
                 decoration: AppTheme.tactileDecoration(),
                 child: Column(
                   children: [
-                    _row('', 'Gratis', 'Pro', header: true),
+                    _row('', context.l.proFree, 'Pro', header: true),
                     for (final r in pro)
-                      _row(r.label, '${free[r.label] ?? 0}', '${r.limit}'),
+                      _row(
+                        context.l.planFeature(r.feature),
+                        '${free[r.feature] ?? 0}',
+                        '${r.limit}',
+                      ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
               if (packages.isEmpty)
                 Text(
-                  'Pro estará disponible muy pronto.',
+                  context.l.proSoon,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.inkMuted),
                 )
@@ -138,7 +135,7 @@ class _ProScreenState extends State<ProScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: TactileButton(
                       label:
-                          '${proPeriodLabel(p.packageType)} · '
+                          '${proPeriodLabel(context, p.packageType)} · '
                           '${p.storeProduct.priceString}',
                       color: p.packageType == PackageType.annual
                           ? AppColors.gold
@@ -154,22 +151,22 @@ class _ProScreenState extends State<ProScreen> {
                       ? null
                       : () => _run(
                           ProPurchases.restore,
-                          'No hay compras que restaurar.',
+                          context.l.proNothingToRestore,
                         ),
-                  child: const Text('Restaurar compras'),
+                  child: Text(context.l.proRestore),
                 ),
               const SizedBox(height: 8),
               Text(
-                'Se renueva solo. Puedes cancelar cuando quieras desde la '
-                'tienda.',
+                context.l.proRenews,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _link('Condiciones', _termsUrl),
-                  if (_privacyUrl.isNotEmpty) _link('Privacidad', _privacyUrl),
+                  _link(context.l.proTerms, _termsUrl),
+                  if (_privacyUrl.isNotEmpty)
+                    _link(context.l.proPrivacy, _privacyUrl),
                 ],
               ),
             ],

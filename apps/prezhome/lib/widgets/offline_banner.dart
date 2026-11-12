@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 import '../theme/app_theme.dart';
-
-/// Texto del aviso sin conexión: qué sigue funcionando y qué pasa al volver.
-const String kOfflineExplanation =
-    'Puedes seguir usando la lista de la compra y la despensa: lo que apuntes '
-    'se guarda en el móvil y se envía solo cuando vuelva. Lo demás se '
-    'actualizará entonces.';
 
 /// Aviso fijo arriba del shell cuando el servidor no responde, o cuando hay un
 /// aviso de incidencias publicado. Sin rojos de error: es informativo.
@@ -47,10 +42,7 @@ class OfflineBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!online)
-                    Text(
-                      'Sin conexión ahora mismo',
-                      style: AppTextStyles.label,
-                    ),
+                    Text(context.l.offlineNow, style: AppTextStyles.label),
                   if (notice != null)
                     Padding(
                       padding: EdgeInsets.only(top: online ? 0 : 2),
@@ -65,7 +57,7 @@ class OfflineBanner extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        kOfflineExplanation,
+                        context.l.offlineExplain,
                         style: AppTextStyles.bodyMuted,
                       ),
                     ),

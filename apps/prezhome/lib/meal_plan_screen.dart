@@ -20,6 +20,7 @@ import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
 import 'services/plan_prefs.dart';
+import 'services/taper_sync.dart';
 import 'services/plan_repeats.dart';
 import 'services/plan_prep.dart';
 import 'services/plan_shopping.dart';
@@ -157,7 +158,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         HouseholdMember(
           name: (p.fullName?.trim().isNotEmpty ?? false)
               ? p.fullName!.trim()
-              : 'Alguien',
+              : appL10n.someone,
           isMe: isMe,
           mealsAtHome: p.mealsAtHome,
         ),
@@ -169,7 +170,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         HouseholdMember(
           name: (myProfile.fullName?.trim().isNotEmpty ?? false)
               ? myProfile.fullName!.trim()
-              : 'Alguien',
+              : appL10n.someone,
           isMe: true,
           mealsAtHome: myProfile.mealsAtHome,
         ),
@@ -473,6 +474,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       if (rows.isNotEmpty) {
         await _fillShoppingFromPlan(data.homeId!, start, end);
       }
+      await _offerRemoveOldTapers(data.homeId!, start, end);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -485,6 +487,43 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     } finally {
       if (mounted) setState(() => _generating = false);
     }
+  }
+
+  /// Al rehacer el plan, los tápers del plan anterior que siguen en la nevera
+  /// ya no se darían por comidos nunca: se pregunta si quitarlos.
+  Future<void> _offerRemoveOldTapers(
+    String homeId,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final old = await TaperSync.orphans(_client, homeId, from, to);
+    if (old.isEmpty || !mounted) return;
+    final remove = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l.planOldTapersTitle),
+        content: Text(
+          ctx.l.planOldTapersBody(
+            old.length,
+            old.map((t) => t.name).join(', '),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(ctx.l.planOldTapersKeep),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(ctx.l.remove),
+          ),
+        ],
+      ),
+    );
+    if (remove != true) return;
+    await _client.from('inventory_items').delete().inFilter('id', [
+      for (final t in old) t.id,
+    ]);
   }
 
   /// Un postre como segundo plato de cada comida de [meals], rotando entre
@@ -679,7 +718,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $err'),
+            content: Text(friendlyError(err)),
             backgroundColor: AppColors.expired,
           ),
         );
@@ -789,7 +828,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         await _toggleSkip(data, e);
         break;
       case 'remove':
-        await _removeEntry(e);
+        await _removeEntry(e, data.recipesById[e.recipeId]?.title);
         break;
       case 'repeat':
         await _repeatEntry(data, e);
@@ -1232,14 +1271,42 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   /// Elimina una comida del plan.
-  Future<void> _removeEntry(MealPlanEntry e) async {
+  Future<void> _removeEntry(MealPlanEntry e, String? title) async {
     if (e.id == null) return;
+    final Map<String, dynamic> row;
     try {
+      // Se guarda la fila entera para poder deshacer el borrado.
+      row = await _client
+          .from('meal_plan_entries')
+          .select()
+          .eq('id', e.id!)
+          .single();
       await _client.from('meal_plan_entries').delete().eq('id', e.id!);
       _reload();
     } catch (err) {
       _showError(err);
+      return;
     }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.l.shopRemovedOne(title ?? context.l.mealType(e.mealType)),
+        ),
+        persist: false,
+        action: SnackBarAction(
+          label: context.l.undo,
+          onPressed: () async {
+            try {
+              await _client.from('meal_plan_entries').insert(row);
+              _reload();
+            } catch (err) {
+              _showError(err);
+            }
+          },
+        ),
+      ),
+    );
   }
 
   /// Añade una comida nueva a un día concreto. Pide tipo de comida (solo entre
@@ -1542,7 +1609,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Error: $err'),
+        content: Text(friendlyError(err)),
         backgroundColor: AppColors.expired,
       ),
     );
@@ -1929,7 +1996,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                       id: x.id ?? '',
                       title: _dishTitle(data, x),
                       onTap: () => _openEntryActions(data, x),
-                      onRemove: () => _removeEntry(x),
+                      onRemove: () => _removeEntry(x, _dishTitle(data, x)),
                     ),
                 ],
                 onAddDish: e == null || e.skipped

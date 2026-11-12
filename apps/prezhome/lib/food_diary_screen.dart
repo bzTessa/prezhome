@@ -175,7 +175,14 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   }
 
   Future<void> _deleteEntry(String id) async {
+    final Map<String, dynamic> row;
     try {
+      // Se guarda la fila entera para poder deshacer el borrado.
+      row = await _client
+          .from('food_log_entries')
+          .select()
+          .eq('id', id)
+          .single();
       await _client.from('food_log_entries').delete().eq('id', id);
     } catch (e) {
       debugPrint('FoodDiary._deleteEntry error: $e');
@@ -187,6 +194,23 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     }
     if (!mounted) return;
     _reload();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(context.l.shopRemovedOne(row['name'] as String? ?? '')),
+        persist: false,
+        action: SnackBarAction(
+          label: context.l.undo,
+          onPressed: () async {
+            try {
+              await _client.from('food_log_entries').insert(row);
+            } catch (e) {
+              debugPrint('FoodDiary undo error: $e');
+            }
+            if (mounted) _reload();
+          },
+        ),
+      ),
+    );
   }
 
   // --- Añadir comida -------------------------------------------------------

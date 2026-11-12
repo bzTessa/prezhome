@@ -3,34 +3,91 @@ library;
 
 enum CookCommand { next, previous, repeat, startTimer, stopTimer, ingredients }
 
-const _next = {'siguiente', 'sigue', 'continua', 'adelante', 'listo', 'hecho'};
-const _previous = {'anterior', 'atras', 'vuelve'};
-const _repeat = {'repite', 'repetir', 'repiteme'};
-const _timer = {'temporizador', 'cronometro', 'alarma'};
-const _stop = {'para', 'parar', 'paralo', 'deten', 'quita', 'cancela'};
+/// Palabras de cada orden por idioma (sin tildes): siguiente, anterior,
+/// repetir, temporizador, parar e ingredientes.
+const _words = <String, List<Set<String>>>{
+  'es': [
+    {'siguiente', 'sigue', 'continua', 'adelante', 'listo', 'hecho'},
+    {'anterior', 'atras', 'vuelve'},
+    {'repite', 'repetir', 'repiteme'},
+    {'temporizador', 'cronometro', 'alarma'},
+    {'para', 'parar', 'paralo', 'deten', 'quita', 'cancela'},
+    {'ingredientes', 'ingrediente'},
+  ],
+  'en': [
+    {'next', 'continue', 'done', 'ready', 'forward'},
+    {'previous', 'back'},
+    {'repeat', 'again'},
+    {'timer', 'alarm'},
+    {'stop', 'cancel'},
+    {'ingredients', 'ingredient'},
+  ],
+  'de': [
+    {'weiter', 'nachster', 'fertig'},
+    {'zuruck', 'vorherige', 'vorheriger'},
+    {'wiederhole', 'wiederholen', 'nochmal'},
+    {'timer', 'wecker'},
+    {'stopp', 'stop', 'stoppen', 'abbrechen'},
+    {'zutaten', 'zutat'},
+  ],
+  'fr': [
+    {'suivant', 'suivante', 'continue', 'fini'},
+    {'precedent', 'precedente', 'retour'},
+    {'repete', 'repeter', 'encore'},
+    {'minuteur', 'chrono', 'alarme'},
+    {'arrete', 'stop', 'annule'},
+    {'ingredients', 'ingredient'},
+  ],
+  'it': [
+    {'avanti', 'prossimo', 'successivo', 'fatto'},
+    {'indietro', 'precedente'},
+    {'ripeti', 'ancora'},
+    {'timer', 'sveglia'},
+    {'ferma', 'stop', 'annulla'},
+    {'ingredienti', 'ingrediente'},
+  ],
+  'pt': [
+    {'seguinte', 'proximo', 'continua', 'pronto', 'feito'},
+    {'anterior', 'voltar', 'atras'},
+    {'repete', 'repetir'},
+    {'temporizador', 'cronometro', 'alarme'},
+    {'para', 'parar', 'pare', 'cancela'},
+    {'ingredientes', 'ingrediente'},
+  ],
+  'bs': [
+    {'dalje', 'sljedeci', 'gotovo'},
+    {'nazad', 'prethodni'},
+    {'ponovi'},
+    {'tajmer', 'alarm'},
+    {'stani', 'zaustavi', 'stop', 'prekini'},
+    {'sastojci', 'sastojak'},
+  ],
+};
+
+const _from = 'áàâäãéèêëíìîïóòôöõúùûüçćčšžđß';
+const _to = 'aaaaaeeeeiiiiooooouuuucccszds';
 
 /// Traduce lo que ha oído el micrófono a una orden, o null si no hay ninguna.
-/// Mira palabras sueltas (sin tildes), no trozos: "listón" no es "listo".
-CookCommand? parseCookCommand(String heard) {
-  const from = 'áéíóúü';
-  const to = 'aeiouu';
+/// [lang] es el idioma de la app ('es', 'en'...). Mira palabras sueltas (sin
+/// tildes), no trozos: "listón" no es "listo".
+CookCommand? parseCookCommand(String heard, [String lang = 'es']) {
   var s = heard.toLowerCase();
-  for (var i = 0; i < from.length; i++) {
-    s = s.replaceAll(from[i], to[i]);
+  for (var i = 0; i < _from.length; i++) {
+    s = s.replaceAll(_from[i], _to[i]);
   }
+  final [next, previous, repeat, timer, stop, ingredients] =
+      _words[lang] ?? _words['es']!;
   final words = s.split(RegExp(r'[^a-zñ]+')).toSet();
-  if (words.any(_timer.contains)) {
-    return words.any(_stop.contains)
+  if (words.any(timer.contains)) {
+    return words.any(stop.contains)
         ? CookCommand.stopTimer
         : CookCommand.startTimer;
   }
-  if (words.contains('ingredientes') || words.contains('ingrediente')) {
-    return CookCommand.ingredients;
-  }
-  if (words.any(_repeat.contains) || s.contains('otra vez')) {
+  if (words.any(ingredients.contains)) return CookCommand.ingredients;
+  if (words.any(repeat.contains) || s.contains('otra vez')) {
     return CookCommand.repeat;
   }
-  if (words.any(_previous.contains)) return CookCommand.previous;
-  if (words.any(_next.contains)) return CookCommand.next;
+  if (words.any(previous.contains)) return CookCommand.previous;
+  if (words.any(next.contains)) return CookCommand.next;
   return null;
 }

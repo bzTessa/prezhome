@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
+import '../l10n/l10n.dart';
 
 /// Estados de ánimo de la mascota. Cada uno mapea a una imagen.
 /// Si aún no tienes la imagen específica, cae a la imagen por defecto.
@@ -167,7 +168,7 @@ class _MiauCharacterState extends State<MiauCharacter>
     if (!widget.interactive) return body;
     return Semantics(
       button: true,
-      label: 'Mascota',
+      label: context.l.mascot,
       child: GestureDetector(
         onTap: _onTap,
         child: Stack(

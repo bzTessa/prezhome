@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 import '../models/supermarket.dart';
 import '../services/product_search_service.dart';
@@ -120,8 +121,8 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
               ),
               child: Text(
                 storeLabel == null
-                    ? 'Productos del súper'
-                    : 'Productos de $storeLabel',
+                    ? context.l.psStoreTitle
+                    : context.l.psStoreTitleOf(storeLabel),
                 style: TextStyle(
                   fontSize: 22,
                   letterSpacing: -0.4,
@@ -138,10 +139,10 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _search(),
                 decoration: InputDecoration(
-                  hintText: 'Leche, yogur griego, detergente…',
+                  hintText: context.l.psHint,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: IconButton(
-                    tooltip: 'Buscar',
+                    tooltip: context.l.search,
                     icon: const Icon(Icons.arrow_forward_rounded),
                     onPressed: _search,
                   ),
@@ -163,35 +164,19 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
     }
     final r = _result;
     if (r == null) {
-      return _message(
-        Icons.storefront_rounded,
-        'Escribe un producto y pulsa buscar.',
-      );
+      return _message(Icons.storefront_rounded, context.l.psTypeHint);
     }
     if (r.throttled) {
-      return _message(
-        Icons.hourglass_top_rounded,
-        'Demasiadas búsquedas seguidas. Prueba en un minuto.',
-      );
+      return _message(Icons.hourglass_top_rounded, context.l.psThrottled);
     }
     if (r.offline) {
-      return _message(
-        Icons.wifi_off_rounded,
-        'Sin conexión a internet. Puedes añadirlo igualmente.',
-      );
+      return _message(Icons.wifi_off_rounded, context.l.psOffline);
     }
     if (r.failed) {
-      return _message(
-        Icons.cloud_off_rounded,
-        'El buscador de productos no responde ahora. Prueba en un rato o '
-        'añádelo igualmente.',
-      );
+      return _message(Icons.cloud_off_rounded, context.l.psDown);
     }
     if (r.products.isEmpty) {
-      return _message(
-        Icons.search_off_rounded,
-        'No está en el súper. Puedes añadirlo igualmente.',
-      );
+      return _message(Icons.search_off_rounded, context.l.psNotInStore);
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -206,12 +191,12 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text(
               _searchable(widget.supermarketKey!)
-                  ? 'Sin resultados en '
-                        '${Supermarket.labelFor(widget.supermarketKey!)}. '
-                        'Estos son de otros súper.'
-                  : 'Aún no tenemos los productos de '
-                        '${Supermarket.labelFor(widget.supermarketKey!)}. '
-                        'Estos son de otros súper.',
+                  ? context.l.psNoResultsIn(
+                      Supermarket.labelFor(widget.supermarketKey!),
+                    )
+                  : context.l.psNotYet(
+                      Supermarket.labelFor(widget.supermarketKey!),
+                    ),
               style: AppTextStyles.bodyMuted,
             ),
           ),
@@ -220,7 +205,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.md),
             child: Text(
-              'Datos de Open Food Facts.',
+              context.l.psOffData,
               textAlign: TextAlign.center,
               style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
             ),
@@ -271,7 +256,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
             minimumSize: const Size.fromHeight(48),
           ),
           child: Text(
-            q.isEmpty ? 'Cerrar' : 'Añadir "$q" sin elegir producto',
+            q.isEmpty ? context.l.close : context.l.psAddAsIs(q),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

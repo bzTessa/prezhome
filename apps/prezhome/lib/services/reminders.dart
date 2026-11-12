@@ -11,6 +11,7 @@ import '../models/task.dart';
 import 'calendar_sync.dart';
 import 'file_local_store.dart';
 import 'streak.dart';
+import '../l10n/l10n.dart';
 
 /// [kind] es una clave de [Reminders.kinds]: decide el canal del aviso y a
 /// qué pestaña lleva al tocarlo.
@@ -25,11 +26,8 @@ typedef Reminder = ({DateTime at, String title, String body, String kind});
 /// (y no se entera de lo que añada otra persona del hogar hasta abrirla); si
 /// hace falta, pasar a push remoto (FCM/APNs) desde Supabase.
 class Reminders {
-  static const kinds = {
-    'tasks': 'Tareas con hora',
-    'expiry': 'Productos que caducan',
-    'streak': 'Racha de casa al día',
-  };
+  /// Nombre de cada uno: l10n.remKind.
+  static const kinds = ['tasks', 'expiry', 'streak'];
 
   /// Tipo del aviso que la persona acaba de tocar; el shell lo consume para
   /// abrir la pestaña que toca y lo vuelve a poner a null.
@@ -97,7 +95,7 @@ class Reminders {
   static NotificationDetails _details(Reminder r) => NotificationDetails(
     android: AndroidNotificationDetails(
       r.kind,
-      kinds[r.kind]!,
+      appL10n.remKind(r.kind),
       color: _brand,
       // El texto entero al desplegar, no cortado en una línea.
       styleInformation: BigTextStyleInformation(r.body),
@@ -231,11 +229,11 @@ class Reminders {
       out.add((
         at: at,
         title: titles.length == 1
-            ? 'Toca: ${titles.first}'
-            : 'Tocan ${titles.length} tareas',
+            ? appL10n.remTaskOne(titles.first)
+            : appL10n.remTaskMany(titles.length),
         body: titles.length == 1
-            ? 'Cuando la acabes, táchala para sumar puntos.'
-            : '${_list(titles)}. Táchalas al acabar para sumar puntos.',
+            ? appL10n.remTaskOneBody
+            : appL10n.remTaskManyBody(_list(titles)),
         kind: 'tasks',
       ));
     });
@@ -251,11 +249,11 @@ class Reminders {
       out.add((
         at: DateTime(d.year, d.month, d.day - 1, 10),
         title: names.length == 1
-            ? 'Mañana caduca: ${names.first}'
-            : 'Mañana caducan ${names.length} productos',
+            ? appL10n.remExpiryOne(names.first)
+            : appL10n.remExpiryMany(names.length),
         body:
             '${names.length == 1 ? '' : '${_list(names)}. '}'
-            'Cocina hoy con ello o congela lo que no vayas a usar.',
+            '${appL10n.remExpiryBody}',
         kind: 'expiry',
       ));
     });
@@ -266,22 +264,10 @@ class Reminders {
       final next = streak.doneToday ? streak.days : streak.days + 1;
       final texts = [
         Streak.milestones.contains(next)
-            ? (
-                'Hoy llegas a $next días',
-                'Tacha una tarea o apunta una comida y lo celebras.',
-              )
-            : (
-                'Llevas ${streak.days} días con la casa al día',
-                'Tacha una tarea o apunta una comida para no perder la racha.',
-              ),
-        (
-          '¿Cómo va la casa hoy?',
-          'Un gesto basta para sumar un día más a tu racha.',
-        ),
-        (
-          'Tu racha sigue viva',
-          'Apunta lo que has comido o tacha una tarea antes de dormir.',
-        ),
+            ? (appL10n.remStreakMilestone(next), appL10n.remStreakMilestoneBody)
+            : (appL10n.remStreakDays(streak.days), appL10n.remStreakDaysBody),
+        (appL10n.remHowIsHome, appL10n.remHowIsHomeBody),
+        (appL10n.remStreakAlive, appL10n.remStreakAliveBody),
       ];
       for (var i = streak.doneToday ? 1 : 0; i < 3; i++) {
         out.add((
@@ -303,8 +289,11 @@ class Reminders {
   static String _list(List<String> names) {
     final shown = names.take(4).toList();
     final rest = names.length - shown.length;
-    if (rest > 0) return '${shown.join(', ')} y $rest más';
+    if (rest > 0) return appL10n.listMore(shown.join(', '), rest);
     if (shown.length == 1) return shown.first;
-    return '${shown.sublist(0, shown.length - 1).join(', ')} y ${shown.last}';
+    return appL10n.listAnd(
+      shown.sublist(0, shown.length - 1).join(', '),
+      shown.last,
+    );
   }
 }
