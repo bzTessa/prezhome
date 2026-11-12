@@ -3774,6 +3774,35 @@ class AppLocalizationsBs extends AppLocalizations {
   String get hhSettings => 'Domaćinstvo i postavke';
 
   @override
+  String get modeTitle => 'Kako koristiš PrezHome';
+
+  @override
+  String get modeHint =>
+      'Odaberi šta želiš vidjeti. Možeš promijeniti kad god hoćeš.';
+
+  @override
+  String get modeCustomHint =>
+      'Podesio si ga po svom. Odaberi način da se vratiš na jedan od ovih.';
+
+  @override
+  String get modeEssential => 'Osnovno';
+
+  @override
+  String get modeEssentialSub => 'Kupovina, ostava i šta jesti';
+
+  @override
+  String get modeKitchen => 'Kuhinja';
+
+  @override
+  String get modeKitchenSub => 'Osnovno, plus kuhanje unaprijed i kalorije';
+
+  @override
+  String get modeComplete => 'Potpuno';
+
+  @override
+  String get modeCompleteSub => 'Sve: zadaci naizmjenično, bodovi i kuhanje';
+
+  @override
   String get hhAppearance => 'Izgled';
 
   @override
