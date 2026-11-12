@@ -99,9 +99,18 @@ void main() {
       ),
     );
     expect(tester.takeException(), isNull);
+    // Cada toque se ve al momento; la lista recibe un solo cambio al parar.
     await tester.tap(find.bySemanticsLabel('Más'));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Más'));
+    await tester.pump();
+    expect(find.text('2 kg'), findsOneWidget);
+    expect(changes, isEmpty);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(changes, [2]);
     await tester.tap(find.bySemanticsLabel('Menos'));
-    expect(changes, [1.5, 0.5]);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(changes, [2, 1.5]);
   });
 
   testWidgets('marcar una fila anima el check sin errores', (tester) async {

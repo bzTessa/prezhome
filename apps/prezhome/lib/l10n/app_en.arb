@@ -167,6 +167,7 @@
   "couldNotUndo": "Couldn't undo",
   "shopToCart": "To cart",
   "shopFromPlan": "From this week's plan",
+  "shopPackNeed": "for {need}",
   "changePhoto": "Change photo",
   "shopEmptyTitle": "Your list is empty",
   "shopEmptyHint": "Type what you need above or bring in the plan.",

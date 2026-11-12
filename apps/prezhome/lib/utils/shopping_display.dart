@@ -143,7 +143,7 @@ String _fmtNum(num n) {
 /// Etiqueta CORTA de cantidad para la pastilla, o cadena vacía si no procede.
 /// Ej: (300,'g') -> "300 g"; (4,'unidad') -> "4 ud"; (2,'diente') -> "2 dientes";
 /// (null,'al gusto') -> "al gusto".
-String shoppingQtyLabel(double? quantity, String? unit) {
+String shoppingQtyLabel(double? quantity, String? unit, {double? packSize}) {
   final u = (unit ?? '').trim();
   if (quantity == null) {
     // Solo expresión suelta (al gusto / a ojo).
@@ -153,10 +153,70 @@ String shoppingQtyLabel(double? quantity, String? unit) {
     }
     return '';
   }
+  final packs = shoppingPacks(quantity, unit, packSize);
+  if (isMeasureUnit(u)) {
+    final key = _unitKey(u)!;
+    if (packs != null) return '$packs × ${_measure(packSize!, key)}';
+    return _measure(quantity, key);
+  }
   final short = _shortUnit(u, quantity);
   final num q = quantity;
   if (short.isEmpty) return _fmtNum(q);
   return '${_fmtNum(q)} $short';
+}
+
+/// Peso o volumen legible: 200 ml, 2,7 kg, 1,5 L (a partir de 1000 g/ml se
+/// pasa a kg/L).
+String _measure(double q, String key) {
+  String n(double v) {
+    final s = (v * 100).round() / 100;
+    return s % 1 == 0
+        ? s.toInt().toString()
+        : s.toString().replaceAll('.', ',');
+  }
+
+  return switch (key) {
+    'g' when q >= 1000 => '${n(q / 1000)} kg',
+    'ml' when q >= 1000 => '${n(q / 1000)} L',
+    'l' => '${n(q)} L',
+    _ => '${n(q)} $key',
+  };
+}
+
+/// ¿Va [unit] a peso o volumen (g, kg, ml, L)?
+bool isMeasureUnit(String? unit) =>
+    const {'g', 'kg', 'ml', 'l'}.contains(_unitKey(unit ?? ''));
+
+/// Envases que hay que comprar (redondeando hacia arriba) si se conoce el
+/// tamaño del envase y la cantidad va a peso o volumen; si no, null.
+int? shoppingPacks(double? quantity, String? unit, double? packSize) {
+  if (quantity == null || packSize == null || packSize <= 0) return null;
+  if (!isMeasureUnit(unit)) return null;
+  // Tolerancia para no comprar un envase de más por decimales (399,999 ml).
+  final packs = (quantity / packSize - 1e-6).ceil();
+  return packs < 1 ? 1 : packs;
+}
+
+/// Tamaño del envase [raw] del catálogo ("0.2 l", "500 g") expresado en
+/// [unit], la unidad de la línea de la compra. Null si no se entiende o no
+/// es la misma magnitud (un envase en litros para algo que va en gramos).
+double? packSizeIn(({double quantity, String unit})? pack, String? unit) {
+  if (pack == null) return null;
+  final key = _unitKey(unit ?? '');
+  final inBase = switch (pack.unit) {
+    'kg' => (pack.quantity * 1000, 'g'),
+    'g' => (pack.quantity, 'g'),
+    'ml' => (pack.quantity, 'ml'),
+    _ => (pack.quantity * 1000, 'ml'),
+  };
+  final size = switch (key) {
+    'g' when inBase.$2 == 'g' => inBase.$1,
+    'kg' when inBase.$2 == 'g' => inBase.$1 / 1000,
+    'ml' when inBase.$2 == 'ml' => inBase.$1,
+    'l' when inBase.$2 == 'ml' => inBase.$1 / 1000,
+    _ => null,
+  };
+  return size == null || size <= 0 ? null : size;
 }
 
 /// Etiqueta LARGA de cantidad para la fila del inventario de la despensa.
@@ -186,6 +246,7 @@ String inventoryQtyLabel(double? quantity, String? unit) {
   }
   // Expresión suelta sin unidad real (al gusto / a ojo): solo el número.
   if (key.isEmpty) return _fmtNum(q);
+  if (isMeasureUnit(u)) return _measure(quantity, key);
   final forms = _unitForms[key];
   if (forms == null) return _fmtNum(q);
   return '${_fmtNum(q)} ${_unitWord(key, q != 1)}';
@@ -207,9 +268,21 @@ String shoppingCleanName(String name) {
 }
 
 /// Cantidad siguiente al pulsar + ([up]) o − en la pastilla de la compra: de
-/// 100 en 100 en g y ml, de medio en medio en kg y L, y de uno en uno en lo
+/// envase en envase si se conoce [packSize]; si no, de 100 en 100 en g y ml, de medio en medio en kg y L, y de uno en uno en lo
 /// demás. Devuelve null si bajaría de un paso (quitar es otra acción).
-double? shoppingQtyNext(double? quantity, String? unit, {required bool up}) {
+double? shoppingQtyNext(
+  double? quantity,
+  String? unit, {
+  required bool up,
+  double? packSize,
+}) {
+  // Con envase conocido, el paso es un envase entero.
+  final packs = shoppingPacks(quantity, unit, packSize);
+  if (packs != null) {
+    final next = packs + (up ? 1 : -1);
+    if (next < 1) return null;
+    return (next * packSize! * 1000).round() / 1000;
+  }
   final step = switch (_unitKey(unit ?? '')) {
     'g' || 'ml' => 100.0,
     'kg' || 'l' => 0.5,

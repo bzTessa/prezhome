@@ -33,6 +33,11 @@ class ShoppingListItem {
   /// libre [category] para compatibilidad con items antiguos.
   final String? categoryId;
 
+  /// Tamaño del envase del súper en la misma unidad que [unit] (200 para una
+  /// nata de 200 ml). Con él la cantidad se cuenta en envases. Null si no se
+  /// sabe o el producto va suelto.
+  final double? packSize;
+
   ShoppingListItem({
     this.id,
     required this.homeId,
@@ -47,6 +52,7 @@ class ShoppingListItem {
     this.imageUrl,
     this.listId,
     this.categoryId,
+    this.packSize,
   });
 
   // Devuelve el valor como String si no es null ni vacío; si no, null. Trata
@@ -74,6 +80,7 @@ class ShoppingListItem {
       imageUrl: _nonEmptyString(map['image_url']),
       listId: map['list_id'] as String?,
       categoryId: map['category_id'] as String?,
+      packSize: (map['pack_size'] as num?)?.toDouble(),
     );
   }
 
@@ -99,6 +106,8 @@ class ShoppingListItem {
       'image_url': imageUrl,
       'list_id': listId,
       'category_id': categoryId,
+      // Solo si se sabe: así el alta no depende de la columna nueva.
+      if (packSize != null) 'pack_size': packSize,
     };
   }
 
@@ -123,7 +132,18 @@ class ShoppingListItem {
       'image_url': imageUrl,
       'list_id': listId,
       'category_id': categoryId,
+      if (packSize != null) 'pack_size': packSize,
     };
+  }
+
+  /// Lo que se compra de verdad: envases enteros si se conoce [packSize]
+  /// (350 ml de nata con briks de 200 ml son 400 ml), si no [quantity].
+  double? get boughtQuantity {
+    final q = quantity;
+    final p = packSize;
+    if (q == null || p == null || p <= 0) return q;
+    final packs = (q / p - 1e-6).ceil();
+    return (packs < 1 ? 1 : packs) * p;
   }
 
   /// Alias de [toCacheMap] para serializar a JSON (misma forma completa).

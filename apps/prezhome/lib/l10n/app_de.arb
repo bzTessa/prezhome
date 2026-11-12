@@ -167,6 +167,7 @@
   "couldNotUndo": "Rückgängig machen fehlgeschlagen",
   "shopToCart": "In den Wagen",
   "shopFromPlan": "Aus dem Wochenplan",
+  "shopPackNeed": "für {need}",
   "changePhoto": "Foto ändern",
   "shopEmptyTitle": "Deine Liste ist leer",
   "shopEmptyHint": "Schreib oben, was du brauchst, oder übernimm den Plan.",

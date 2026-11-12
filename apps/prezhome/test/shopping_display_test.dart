@@ -92,4 +92,27 @@ void main() {
       expect(shoppingQtyNext(null, null, up: false), isNull);
     });
   });
+
+  group('envases del súper', () {
+    test('cuenta en envases redondeando hacia arriba', () {
+      expect(shoppingQtyLabel(350, 'ml', packSize: 200), '2 × 200 ml');
+      expect(shoppingQtyLabel(400, 'ml', packSize: 200), '2 × 200 ml');
+      expect(shoppingQtyLabel(1500, 'g', packSize: 1000), '2 × 1 kg');
+    });
+    test('+ y − van de envase en envase', () {
+      expect(shoppingQtyNext(350, 'ml', up: true, packSize: 200), 600);
+      expect(shoppingQtyNext(350, 'ml', up: false, packSize: 200), 200);
+      expect(shoppingQtyNext(200, 'ml', up: false, packSize: 200), isNull);
+    });
+    test('mucho peso se lee en kg o L', () {
+      expect(shoppingQtyLabel(2700, 'g'), '2,7 kg');
+      expect(inventoryQtyLabel(1200, 'ml'), '1,2 L');
+    });
+    test('tamaño del catálogo en la unidad de la línea', () {
+      expect(packSizeIn((quantity: 0.2, unit: 'litros'), 'ml'), 200);
+      expect(packSizeIn((quantity: 0.5, unit: 'kg'), 'g'), 500);
+      expect(packSizeIn((quantity: 500, unit: 'g'), 'ml'), isNull);
+      expect(packSizeIn((quantity: 200, unit: 'ml'), 'unidad'), isNull);
+    });
+  });
 }

@@ -58,6 +58,17 @@ void main() {
   });
 
   group('shoppingLines', () {
+    test('fruta y verdura en g pasa a piezas y se junta con las ud', () {
+      final lines = shoppingLines(const [
+        PlanNeed(name: 'Pimiento rojo', quantity: 100, unit: 'g'),
+        PlanNeed(name: 'Pimiento rojo', quantity: 1, unit: 'unidad'),
+        PlanNeed(name: 'Tomate frito', quantity: 200, unit: 'g'),
+      ]);
+      expect(lines, hasLength(2));
+      final pimiento = lines.firstWhere((l) => l.name == 'Pimiento rojo');
+      expect(pimiento.qty, 2);
+    });
+
     test('junta duplicados tras pasar a cantidades de súper', () {
       final lines = shoppingLines(const [
         PlanNeed(name: 'Pimienta negra', quantity: 1, unit: 'cucharadita'),

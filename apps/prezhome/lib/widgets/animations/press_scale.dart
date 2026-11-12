@@ -37,7 +37,24 @@ class PressScale extends StatefulWidget {
   State<PressScale> createState() => _PressScaleState();
 }
 
+/// Zona dentro de un [PressScale] que no lo hunde al tocarla, p. ej. la
+/// pastilla − / + de una tarjeta: pulsar + no debe encoger la tarjeta entera.
+class PressScaleExclude extends StatelessWidget {
+  const PressScaleExclude({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Listener(
+    // Los Listener reciben el toque del más interno al más externo: este marca
+    // el puntero antes de que lo vea el PressScale de fuera.
+    onPointerDown: (e) => _PressScaleState._excluded = e.pointer,
+    child: child,
+  );
+}
+
 class _PressScaleState extends State<PressScale> {
+  static int? _excluded;
   bool _pressed = false;
 
   void _setPressed(bool value) {
@@ -60,7 +77,9 @@ class _PressScaleState extends State<PressScale> {
       button: onTap != null,
       child: Listener(
         behavior: widget.behavior,
-        onPointerDown: (_) => _setPressed(true),
+        onPointerDown: (e) {
+          if (e.pointer != _excluded) _setPressed(true);
+        },
         onPointerUp: (_) => _setPressed(false),
         onPointerCancel: (_) => _setPressed(false),
         child: GestureDetector(

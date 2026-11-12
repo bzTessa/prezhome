@@ -167,6 +167,7 @@
   "couldNotUndo": "Poništavanje nije uspjelo",
   "shopToCart": "U korpu",
   "shopFromPlan": "Iz sedmičnog plana",
+  "shopPackNeed": "za {need}",
   "changePhoto": "Promijeni fotografiju",
   "shopEmptyTitle": "Tvoja lista je prazna",
   "shopEmptyHint": "Upiši gore šta ti treba ili preuzmi iz plana.",

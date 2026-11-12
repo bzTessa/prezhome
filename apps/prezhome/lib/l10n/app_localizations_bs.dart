@@ -699,6 +699,11 @@ class AppLocalizationsBs extends AppLocalizations {
   String get shopFromPlan => 'Iz sedmičnog plana';
 
   @override
+  String shopPackNeed(String need) {
+    return 'za $need';
+  }
+
+  @override
   String get changePhoto => 'Promijeni fotografiju';
 
   @override

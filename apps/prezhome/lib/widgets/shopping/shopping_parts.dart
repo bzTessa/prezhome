@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
@@ -519,6 +522,7 @@ class ShoppingItemTile extends StatelessWidget {
     this.quantity,
     this.unit,
     this.onQuantityChanged,
+    this.packSize,
   });
 
   final String name;
@@ -536,6 +540,10 @@ class ShoppingItemTile extends StatelessWidget {
   final double? quantity;
   final String? unit;
   final ValueChanged<double>? onQuantityChanged;
+
+  /// Envase del súper (ver [ShoppingListItem.packSize]): − / + van de envase
+  /// en envase.
+  final double? packSize;
 
   @override
   Widget build(BuildContext context) {
@@ -618,16 +626,12 @@ class ShoppingItemTile extends StatelessWidget {
                   ),
                   if (onQuantityChanged != null && !checked) ...[
                     const SizedBox(width: AppSpacing.sm),
-                    QuantityStepper(
-                      label: qty.isEmpty ? '1' : qty,
-                      onMinus:
-                          shoppingQtyNext(quantity, unit, up: false) == null
-                          ? null
-                          : () => onQuantityChanged!(
-                              shoppingQtyNext(quantity, unit, up: false)!,
-                            ),
-                      onPlus: () => onQuantityChanged!(
-                        shoppingQtyNext(quantity, unit, up: true)!,
+                    PressScaleExclude(
+                      child: _LiveQuantityStepper(
+                        quantity: quantity,
+                        unit: unit,
+                        packSize: packSize,
+                        onCommit: onQuantityChanged!,
                       ),
                     ),
                   ] else if (qty.isNotEmpty) ...[
@@ -688,6 +692,88 @@ class _CheckCircle extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
+    );
+  }
+}
+
+/// Pastilla − / + de una fila de la compra que cambia el número AL INSTANTE
+/// por su cuenta y avisa a la lista una sola vez, cuando se deja de tocar.
+/// Antes cada toque repintaba la lista entera y, si se tocaba rápido, el
+/// siguiente toque partía de la cantidad vieja.
+class _LiveQuantityStepper extends StatefulWidget {
+  const _LiveQuantityStepper({
+    required this.quantity,
+    required this.unit,
+    required this.packSize,
+    required this.onCommit,
+  });
+
+  final double? quantity;
+  final String? unit;
+  final double? packSize;
+  final ValueChanged<double> onCommit;
+
+  @override
+  State<_LiveQuantityStepper> createState() => _LiveQuantityStepperState();
+}
+
+class _LiveQuantityStepperState extends State<_LiveQuantityStepper> {
+  static const _settle = Duration(milliseconds: 450);
+  late double? _value = widget.quantity;
+  Timer? _timer;
+
+  @override
+  void didUpdateWidget(_LiveQuantityStepper old) {
+    super.didUpdateWidget(old);
+    // Mientras se toca manda lo local; luego, lo que diga la lista.
+    if (!(_timer?.isActive ?? false)) _value = widget.quantity;
+  }
+
+  @override
+  void dispose() {
+    if (_timer?.isActive ?? false) {
+      _timer!.cancel();
+      final v = _value;
+      final commit = widget.onCommit;
+      // Fuera del desmontaje: la lista no puede repintarse en mitad de él.
+      if (v != null) scheduleMicrotask(() => commit(v));
+    }
+    super.dispose();
+  }
+
+  void _step(bool up) {
+    final next = shoppingQtyNext(
+      _value,
+      widget.unit,
+      up: up,
+      packSize: widget.packSize,
+    );
+    if (next == null) return;
+    HapticFeedback.selectionClick();
+    setState(() => _value = next);
+    _timer?.cancel();
+    _timer = Timer(_settle, () => widget.onCommit(next));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final label = shoppingQtyLabel(
+      _value,
+      widget.unit,
+      packSize: widget.packSize,
+    );
+    final canDown =
+        shoppingQtyNext(
+          _value,
+          widget.unit,
+          up: false,
+          packSize: widget.packSize,
+        ) !=
+        null;
+    return QuantityStepper(
+      label: label.isEmpty ? '1' : label,
+      onMinus: canDown ? () => _step(false) : null,
+      onPlus: () => _step(true),
     );
   }
 }

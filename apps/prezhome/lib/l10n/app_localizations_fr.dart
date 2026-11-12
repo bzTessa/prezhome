@@ -707,6 +707,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shopFromPlan => 'Du planning de la semaine';
 
   @override
+  String shopPackNeed(String need) {
+    return 'pour $need';
+  }
+
+  @override
   String get changePhoto => 'Changer la photo';
 
   @override

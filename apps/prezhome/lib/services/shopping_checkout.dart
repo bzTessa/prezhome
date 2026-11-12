@@ -152,7 +152,7 @@ class ShoppingCheckout {
       }
     }
 
-    final addQty = item.quantity ?? 1;
+    final addQty = item.boughtQuantity ?? 1;
     final now = DateTime.now().millisecondsSinceEpoch;
     if (foundId != null) {
       await _inventory.applyLocalWrite(
