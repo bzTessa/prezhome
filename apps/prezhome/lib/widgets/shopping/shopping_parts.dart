@@ -32,6 +32,8 @@ class ShoppingSummaryHeader extends StatelessWidget {
     this.unpriced = 0,
     this.storeLabel,
     this.onTapStore,
+    this.inStore = false,
+    this.onToggleStore,
   });
 
   final String listName;
@@ -52,6 +54,11 @@ class ShoppingSummaryHeader extends StatelessWidget {
   /// muestra un selector debajo del nombre de la lista.
   final String? storeLabel;
   final VoidCallback? onTapStore;
+
+  /// Modo tienda: lista a pantalla, sin añadir ni sugerencias, y la
+  /// pantalla no se apaga mientras compras.
+  final bool inStore;
+  final VoidCallback? onToggleStore;
 
   @override
   Widget build(BuildContext context) {
@@ -88,12 +95,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
                                 listName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  letterSpacing: -0.4,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
-                                ),
+                                style: AppTextStyles.headline,
                               ),
                             ),
                             Icon(
@@ -171,6 +173,31 @@ class ShoppingSummaryHeader extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: CartProgressBar(progress: progress),
+            ),
+          ],
+          if (onToggleStore != null && (total > 0 || inStore)) ...[
+            const SizedBox(height: AppSpacing.md),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: inStore
+                  ? OutlinedButton.icon(
+                      onPressed: onToggleStore,
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      label: Text(context.l.shopStoreModeOff),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                      ),
+                    )
+                  : FilledButton.icon(
+                      onPressed: onToggleStore,
+                      icon: const Icon(Icons.storefront_rounded, size: 18),
+                      label: Text(context.l.shopStoreModeOn),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        backgroundColor: AppColors.terracotta,
+                        foregroundColor: AppColors.onBrand,
+                      ),
+                    ),
             ),
           ],
         ],

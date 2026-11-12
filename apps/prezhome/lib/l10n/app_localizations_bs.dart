@@ -572,6 +572,12 @@ class AppLocalizationsBs extends AppLocalizations {
   String get shopPickStore => 'Izaberi supermarket';
 
   @override
+  String get shopStoreModeOn => 'U trgovini sam';
+
+  @override
+  String get shopStoreModeOff => 'Izađi iz načina trgovine';
+
+  @override
   String get shopAddFromPlan => 'Dodaj sedmični plan';
 
   @override
@@ -897,6 +903,36 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get panWhatToCook => 'Šta da skuham s ovim?';
+
+  @override
+  String panReviewTitle(int position, int total) {
+    return 'Brza provjera · $position od $total';
+  }
+
+  @override
+  String panReviewAsk(String name) {
+    return 'Još je dobro: $name?';
+  }
+
+  @override
+  String panReviewExpiredAgo(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days dana',
+      one: '1 dan',
+    );
+    return 'Istekao prije $_temp0';
+  }
+
+  @override
+  String get panReviewOk => 'Još dobro';
+
+  @override
+  String get panReviewUsed => 'Potrošeno';
+
+  @override
+  String get panReviewThrown => 'U smeće';
 
   @override
   String get panExpiringHeader => 'Istekli i pred istekom';

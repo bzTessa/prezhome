@@ -574,6 +574,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shopPickStore => 'Choisir un supermarché';
 
   @override
+  String get shopStoreModeOn => 'Je suis au magasin';
+
+  @override
+  String get shopStoreModeOff => 'Quitter le mode magasin';
+
+  @override
   String get shopAddFromPlan => 'Ajouter le planning de la semaine';
 
   @override
@@ -902,6 +908,36 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get panWhatToCook => 'Qu\'est-ce que je cuisine avec ça ?';
+
+  @override
+  String panReviewTitle(int position, int total) {
+    return 'Vérification rapide · $position sur $total';
+  }
+
+  @override
+  String panReviewAsk(String name) {
+    return 'Encore bon : $name ?';
+  }
+
+  @override
+  String panReviewExpiredAgo(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days jours',
+      one: '1 jour',
+    );
+    return 'Périmé depuis $_temp0';
+  }
+
+  @override
+  String get panReviewOk => 'Encore bon';
+
+  @override
+  String get panReviewUsed => 'Terminé';
+
+  @override
+  String get panReviewThrown => 'À la poubelle';
 
   @override
   String get panExpiringHeader => 'Périmés et bientôt périmés';

@@ -49,6 +49,7 @@ import 'utils/debouncer.dart';
 import 'utils/friendly_error.dart';
 import 'utils/money.dart';
 import 'l10n/l10n.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 /// Lista de la compra del hogar (compartida por RLS).
 ///
@@ -66,6 +67,17 @@ class ShoppingListScreen extends StatefulWidget {
 }
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
+  /// Modo tienda (ver [ShoppingSummaryHeader.inStore]).
+  bool _inStore = false;
+
+  void _toggleStore() {
+    HapticFeedback.selectionClick();
+    setState(() => _inStore = !_inStore);
+    (_inStore ? WakelockPlus.enable() : WakelockPlus.disable()).catchError(
+      (_) {},
+    );
+  }
+
   final SupabaseClient _client = Supabase.instance.client;
 
   // Repositorios offline-first COMPARTIDOS (singletons): esta pantalla y su
@@ -606,6 +618,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   void dispose() {
+    if (_inStore) WakelockPlus.disable().catchError((_) {});
     _realtimeDebounce?.cancel();
     _converge.cancel();
     final channel = _channel;
@@ -1420,17 +1433,20 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     ? null
                     : Supermarket.labelFor(_superKeys.first),
                 onTapStore: _pickSupermarket,
+                inStore: _inStore,
+                onToggleStore: _toggleStore,
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-            SliverToBoxAdapter(
-              child: ShoppingQuickAddBar(
-                onSubmit: _quickAdd,
-                onMore: _openAddItem,
-                onSearch: _searchProduct,
+            if (!_inStore)
+              SliverToBoxAdapter(
+                child: ShoppingQuickAddBar(
+                  onSubmit: _quickAdd,
+                  onMore: _openAddItem,
+                  onSearch: _searchProduct,
+                ),
               ),
-            ),
-            if (_view.showSuggestions)
+            if (_view.showSuggestions && !_inStore)
               // Con toda la lista (también el carrito): si no, al marcar un
               // producto reaparecía como sugerencia y la tira de arriba
               // cambiaba de tamaño, empujando toda la lista.
