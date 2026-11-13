@@ -82,15 +82,7 @@ class KitchenZonesGrid extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(
-              context.l.kzMyKitchen,
-              style: TextStyle(
-                fontSize: 26,
-                letterSpacing: -0.6,
-                fontWeight: FontWeight.w900,
-                color: AppColors.ink,
-              ),
-            ),
+            Text(context.l.kzMyKitchen, style: AppTextStyles.display),
             const SizedBox(width: AppSpacing.sm),
             Text(
               '$total productos',

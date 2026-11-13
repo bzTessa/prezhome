@@ -99,12 +99,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                   Text(
                     context.l.homeLastStep,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      letterSpacing: -0.6,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
-                    ),
+                    style: AppTextStyles.display,
                   ),
                   const SizedBox(height: 10),
                   Text(

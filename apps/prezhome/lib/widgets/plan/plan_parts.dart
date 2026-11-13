@@ -207,8 +207,8 @@ class MealSlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = mealStyle(mealType);
     final empty = title == null;
-    // Hueco con receta: tarjeta táctil (trazo y sombra dura). Vacío: plano
-    // y tenue, para que se vea que falta algo.
+    // Hueco con receta: tarjeta con sombra suave. Vacío: plano y tenue, para
+    // que se vea que falta algo.
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: DecoratedBox(
@@ -225,12 +225,7 @@ class MealSlotCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: empty
-                      ? s.fg.withValues(alpha: 0.35)
-                      : AppColors.stroke,
-                  width: 1.5,
-                ),
+                border: empty ? null : AppElevation.border,
               ),
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(

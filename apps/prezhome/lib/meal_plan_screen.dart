@@ -2023,15 +2023,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text(
-                _dayLabel(date),
-                style: TextStyle(
-                  fontSize: 22,
-                  letterSpacing: -0.4,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.ink,
-                ),
-              ),
+              Text(_dayLabel(date), style: AppTextStyles.headline),
               if (_isBusy(date)) ...[const SizedBox(width: 8), _busyBadge()],
               if (sel == todayIndex) ...[
                 const SizedBox(width: 8),

@@ -1252,15 +1252,7 @@ class _SectionTitle extends StatelessWidget {
     padding: const EdgeInsets.only(left: AppSpacing.xs, bottom: AppSpacing.sm),
     child: Row(
       children: [
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 18,
-            letterSpacing: -0.3,
-            fontWeight: FontWeight.w800,
-            color: AppColors.ink,
-          ),
-        ),
+        Text(text, style: AppTextStyles.headline.copyWith(fontSize: 20)),
         if (count case final c?) ...[
           const SizedBox(width: AppSpacing.sm),
           _Pill(text: '$c', bg: AppColors.line, fg: AppColors.inkMuted),
@@ -1363,15 +1355,7 @@ class _TodayHero extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  context.l.today,
-                  style: TextStyle(
-                    fontSize: 22,
-                    letterSpacing: -0.4,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.ink,
-                  ),
-                ),
+                Text(context.l.today, style: AppTextStyles.headline),
                 const SizedBox(height: 2),
                 Text(
                   left == 0

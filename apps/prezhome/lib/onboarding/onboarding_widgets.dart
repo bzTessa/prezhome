@@ -139,13 +139,7 @@ class QuestionScaffold extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 28,
-                letterSpacing: -0.6,
-                fontWeight: FontWeight.w800,
-                height: 1.15,
-                color: AppColors.ink,
-              ),
+              style: AppTextStyles.display,
             ),
             if (subtitle != null) ...[
               const SizedBox(height: 10),

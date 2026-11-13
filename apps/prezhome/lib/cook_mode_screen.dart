@@ -260,12 +260,7 @@ class _CookModeScreenState extends State<CookModeScreen> {
                     Expanded(
                       child: Text(
                         context.l.ingredients,
-                        style: TextStyle(
-                          fontSize: 22,
-                          letterSpacing: -0.4,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.ink,
-                        ),
+                        style: AppTextStyles.headline,
                       ),
                     ),
                     Text(
