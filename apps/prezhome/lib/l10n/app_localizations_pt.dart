@@ -4864,6 +4864,16 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get tskCatchUp => 'Pôr-me em dia';
+
+  @override
+  String get tskCatchUpExplain =>
+      'As tarefas que se repetem passam para a próxima vez e as pontuais para hoje. Não ficam feitas nem dão pontos.';
+
+  @override
+  String get tskCaughtUp => 'Pronto, estás em dia';
+
+  @override
   String get captureTitle => 'Apontar';
 
   @override

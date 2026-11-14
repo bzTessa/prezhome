@@ -7476,6 +7476,24 @@ abstract class AppLocalizations {
   /// **'Sin encontrar: {names}'**
   String shopCompareMissing(String names);
 
+  /// No description provided for @tskCatchUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Ponerme al día'**
+  String get tskCatchUp;
+
+  /// No description provided for @tskCatchUpExplain.
+  ///
+  /// In es, this message translates to:
+  /// **'Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.'**
+  String get tskCatchUpExplain;
+
+  /// No description provided for @tskCaughtUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo, estás al día'**
+  String get tskCaughtUp;
+
   /// No description provided for @captureTitle.
   ///
   /// In es, this message translates to:

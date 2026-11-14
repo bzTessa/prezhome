@@ -4852,6 +4852,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tskCatchUp => 'Catch up';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Repeating tasks jump to their next time and one-off tasks move to today. They aren\'t marked done and earn no points.';
+
+  @override
+  String get tskCaughtUp => 'Done, you\'re caught up';
+
+  @override
   String get captureTitle => 'Jot down';
 
   @override
