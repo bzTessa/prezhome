@@ -4802,4 +4802,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String shopInStoreAt(String store) {
     return 'Du bist bei $store';
   }
+
+  @override
+  String get planCookNow => 'Jetzt kochen';
+
+  @override
+  String get planEaten => 'Gegessen';
+
+  @override
+  String get rdToShopping => 'Auf die Liste';
+
+  @override
+  String get rdInList => 'Auf der Liste';
 }

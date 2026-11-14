@@ -4735,4 +4735,16 @@ class AppLocalizationsBs extends AppLocalizations {
   String shopInStoreAt(String store) {
     return 'Ti si u $store';
   }
+
+  @override
+  String get planCookNow => 'Vrijeme za kuhanje';
+
+  @override
+  String get planEaten => 'Pojedeno';
+
+  @override
+  String get rdToShopping => 'U kupovinu';
+
+  @override
+  String get rdInList => 'Na listi';
 }

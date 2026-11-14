@@ -7367,6 +7367,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Estás en {store}'**
   String shopInStoreAt(String store);
+
+  /// No description provided for @planCookNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca cocinar'**
+  String get planCookNow;
+
+  /// No description provided for @planEaten.
+  ///
+  /// In es, this message translates to:
+  /// **'Comido'**
+  String get planEaten;
+
+  /// No description provided for @rdToShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'A la compra'**
+  String get rdToShopping;
+
+  /// No description provided for @rdInList.
+  ///
+  /// In es, this message translates to:
+  /// **'En la lista'**
+  String get rdInList;
 }
 
 class _AppLocalizationsDelegate

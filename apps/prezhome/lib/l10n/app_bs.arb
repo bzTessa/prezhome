@@ -1210,5 +1210,9 @@
   "tskYouShort": "Ti",
   "shopInStore": "Način prodavnice",
   "shopInStoreAt": "Ti si u {store}",
-  "shopFinish": "Završi kupovinu"
+  "shopFinish": "Završi kupovinu",
+  "planCookNow": "Vrijeme za kuhanje",
+  "planEaten": "Pojedeno",
+  "rdToShopping": "U kupovinu",
+  "rdInList": "Na listi"
 }
