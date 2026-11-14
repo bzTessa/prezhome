@@ -4924,4 +4924,75 @@ class AppLocalizationsBs extends AppLocalizations {
   String hhInviteMessage(String code) {
     return 'Pridruži se našem domu u PrezHome! Tako dijelimo plan obroka, listu za kupovinu i zadatke.\n\n1. Instaliraj PrezHome i napravi račun.\n2. Kopiraj ovu poruku i dodirni \"Pozvan/a sam u dom\": kod će se sam upisati.\n\nKod: $code';
   }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'Za sutra izvadi iz zamrzivača: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'Večeras u frižider i sutra će biti spremno';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zakašnjelih zadataka',
+      one: '1 zakašnjeli zadatak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Rasporedit ćemo ih u narednim danima, dva dnevno';
+
+  @override
+  String get homeCatchUp => 'Sustigni';
+
+  @override
+  String homeCaughtUp(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zadataka raspoređeno',
+      one: '1 zadatak raspoređen',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days dana',
+      one: '1 dan',
+    );
+    return '$_temp0 na $_temp1';
+  }
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Sutra · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Imaš sve kod kuće';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Za današnji ručak',
+      'other': 'Za današnju večeru',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'Sljedeća sedmica je prazna';
+
+  @override
+  String get homeNextWeekSub =>
+      'Popunit ću je onim što vam se najviše svidjelo i pripremiti listu.';
+
+  @override
+  String get homeNextWeekGo => 'Pripremi je';
 }

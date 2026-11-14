@@ -1259,5 +1259,17 @@
   "shopShareFooter": "Made with PrezHome",
   "shopShareCopied": "List copied: paste it wherever you like",
   "hhSendInvite": "Send invite",
-  "hhInviteMessage": "Join our home on PrezHome! We'll share the meal plan, the shopping list and the chores.\n\n1. Install PrezHome and create your account.\n2. Copy this message and tap \"I've been invited to a home\": the code fills in by itself.\n\nCode: {code}"
+  "hhInviteMessage": "Join our home on PrezHome! We'll share the meal plan, the shopping list and the chores.\n\n1. Install PrezHome and create your account.\n2. Copy this message and tap \"I've been invited to a home\": the code fills in by itself.\n\nCode: {code}",
+  "homeDefrostTomorrow": "For tomorrow, take out of the freezer: {names}",
+  "homeDefrostTomorrowSub": "Into the fridge tonight and it'll be ready tomorrow",
+  "homeOverdue": "{count, plural, =1{1 overdue task} other{{count} overdue tasks}}",
+  "homeOverdueSub": "We'll spread them over the next few days, two a day",
+  "homeCatchUp": "Catch up",
+  "homeCaughtUp": "{count, plural, =1{1 task} other{{count} tasks}} spread over {days, plural, =1{1 day} other{{days} days}}",
+  "homeTomorrowTag": "Tomorrow · {meal}",
+  "homeYouHaveAll": "You have everything at home",
+  "homePutFor": "{type, select, lunch{Have it for lunch} other{Have it for dinner}}",
+  "homeNextWeekEmpty": "Next week is empty",
+  "homeNextWeekSub": "I'll fill it with what you liked most and leave the list ready.",
+  "homeNextWeekGo": "Plan it"
 }

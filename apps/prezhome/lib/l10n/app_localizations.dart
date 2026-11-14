@@ -7667,6 +7667,78 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'¡Únete a nuestra casa en PrezHome! Así compartimos el plan de comidas, la lista de la compra y las tareas.\n\n1. Instala PrezHome y crea tu cuenta.\n2. Copia este mensaje y toca \"Me han invitado a un hogar\": el código se pondrá solo.\n\nCódigo: {code}'**
   String hhInviteMessage(String code);
+
+  /// No description provided for @homeDefrostTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Para mañana, saca del congelador: {names}'**
+  String homeDefrostTomorrow(String names);
+
+  /// No description provided for @homeDefrostTomorrowSub.
+  ///
+  /// In es, this message translates to:
+  /// **'A la nevera esta noche y mañana estará listo'**
+  String get homeDefrostTomorrowSub;
+
+  /// No description provided for @homeOverdue.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 tarea atrasada} other{{count} tareas atrasadas}}'**
+  String homeOverdue(int count);
+
+  /// No description provided for @homeOverdueSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Las repartimos en los próximos días, dos al día'**
+  String get homeOverdueSub;
+
+  /// No description provided for @homeCatchUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Ponerme al día'**
+  String get homeCatchUp;
+
+  /// No description provided for @homeCaughtUp.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 tarea} other{{count} tareas}} repartidas en {days, plural, =1{1 día} other{{days} días}}'**
+  String homeCaughtUp(int count, int days);
+
+  /// No description provided for @homeTomorrowTag.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana · {meal}'**
+  String homeTomorrowTag(String meal);
+
+  /// No description provided for @homeYouHaveAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes todo en casa'**
+  String get homeYouHaveAll;
+
+  /// No description provided for @homePutFor.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, lunch{Para comer hoy} other{Para cenar hoy}}'**
+  String homePutFor(String type);
+
+  /// No description provided for @homeNextWeekEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'La semana que viene está vacía'**
+  String get homeNextWeekEmpty;
+
+  /// No description provided for @homeNextWeekSub.
+  ///
+  /// In es, this message translates to:
+  /// **'La preparo con lo que más os ha gustado y te dejo la lista hecha.'**
+  String get homeNextWeekSub;
+
+  /// No description provided for @homeNextWeekGo.
+  ///
+  /// In es, this message translates to:
+  /// **'Prepararla'**
+  String get homeNextWeekGo;
 }
 
 class _AppLocalizationsDelegate

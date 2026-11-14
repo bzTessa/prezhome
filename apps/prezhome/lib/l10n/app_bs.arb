@@ -1259,5 +1259,17 @@
   "shopShareFooter": "Napravljeno u PrezHome",
   "shopShareCopied": "Lista kopirana: zalijepi je gdje želiš",
   "hhSendInvite": "Pošalji pozivnicu",
-  "hhInviteMessage": "Pridruži se našem domu u PrezHome! Tako dijelimo plan obroka, listu za kupovinu i zadatke.\n\n1. Instaliraj PrezHome i napravi račun.\n2. Kopiraj ovu poruku i dodirni \"Pozvan/a sam u dom\": kod će se sam upisati.\n\nKod: {code}"
+  "hhInviteMessage": "Pridruži se našem domu u PrezHome! Tako dijelimo plan obroka, listu za kupovinu i zadatke.\n\n1. Instaliraj PrezHome i napravi račun.\n2. Kopiraj ovu poruku i dodirni \"Pozvan/a sam u dom\": kod će se sam upisati.\n\nKod: {code}",
+  "homeDefrostTomorrow": "Za sutra izvadi iz zamrzivača: {names}",
+  "homeDefrostTomorrowSub": "Večeras u frižider i sutra će biti spremno",
+  "homeOverdue": "{count, plural, =1{1 zakašnjeli zadatak} other{{count} zakašnjelih zadataka}}",
+  "homeOverdueSub": "Rasporedit ćemo ih u narednim danima, dva dnevno",
+  "homeCatchUp": "Sustigni",
+  "homeCaughtUp": "{count, plural, =1{1 zadatak raspoređen} other{{count} zadataka raspoređeno}} na {days, plural, =1{1 dan} other{{days} dana}}",
+  "homeTomorrowTag": "Sutra · {meal}",
+  "homeYouHaveAll": "Imaš sve kod kuće",
+  "homePutFor": "{type, select, lunch{Za današnji ručak} other{Za današnju večeru}}",
+  "homeNextWeekEmpty": "Sljedeća sedmica je prazna",
+  "homeNextWeekSub": "Popunit ću je onim što vam se najviše svidjelo i pripremiti listu.",
+  "homeNextWeekGo": "Pripremi je"
 }

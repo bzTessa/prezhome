@@ -4989,4 +4989,75 @@ class AppLocalizationsPt extends AppLocalizations {
   String hhInviteMessage(String code) {
     return 'Junta-te à nossa casa no PrezHome! Assim partilhamos o plano de refeições, a lista de compras e as tarefas.\n\n1. Instala o PrezHome e cria a tua conta.\n2. Copia esta mensagem e toca em \"Fui convidado para uma casa\": o código aparece sozinho.\n\nCódigo: $code';
   }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'Para amanhã, tira do congelador: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'Para o frigorífico esta noite e amanhã estará pronto';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tarefas atrasadas',
+      one: '1 tarefa atrasada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Repartimo-las pelos próximos dias, duas por dia';
+
+  @override
+  String get homeCatchUp => 'Pôr-me em dia';
+
+  @override
+  String homeCaughtUp(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tarefas repartidas',
+      one: '1 tarefa repartida',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days dias',
+      one: '1 dia',
+    );
+    return '$_temp0 em $_temp1';
+  }
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Amanhã · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Tens tudo em casa';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Para o almoço de hoje',
+      'other': 'Para o jantar de hoje',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'A próxima semana está vazia';
+
+  @override
+  String get homeNextWeekSub =>
+      'Preparo-a com o que mais gostaram e deixo a lista feita.';
+
+  @override
+  String get homeNextWeekGo => 'Prepará-la';
 }

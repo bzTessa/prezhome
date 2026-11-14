@@ -4977,4 +4977,75 @@ class AppLocalizationsEn extends AppLocalizations {
   String hhInviteMessage(String code) {
     return 'Join our home on PrezHome! We\'ll share the meal plan, the shopping list and the chores.\n\n1. Install PrezHome and create your account.\n2. Copy this message and tap \"I\'ve been invited to a home\": the code fills in by itself.\n\nCode: $code';
   }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'For tomorrow, take out of the freezer: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'Into the fridge tonight and it\'ll be ready tomorrow';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count overdue tasks',
+      one: '1 overdue task',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'We\'ll spread them over the next few days, two a day';
+
+  @override
+  String get homeCatchUp => 'Catch up';
+
+  @override
+  String homeCaughtUp(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks',
+      one: '1 task',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+    );
+    return '$_temp0 spread over $_temp1';
+  }
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Tomorrow · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'You have everything at home';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Have it for lunch',
+      'other': 'Have it for dinner',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'Next week is empty';
+
+  @override
+  String get homeNextWeekSub =>
+      'I\'ll fill it with what you liked most and leave the list ready.';
+
+  @override
+  String get homeNextWeekGo => 'Plan it';
 }

@@ -4987,4 +4987,75 @@ class AppLocalizationsEs extends AppLocalizations {
   String hhInviteMessage(String code) {
     return '¡Únete a nuestra casa en PrezHome! Así compartimos el plan de comidas, la lista de la compra y las tareas.\n\n1. Instala PrezHome y crea tu cuenta.\n2. Copia este mensaje y toca \"Me han invitado a un hogar\": el código se pondrá solo.\n\nCódigo: $code';
   }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'Para mañana, saca del congelador: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'A la nevera esta noche y mañana estará listo';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tareas atrasadas',
+      one: '1 tarea atrasada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Las repartimos en los próximos días, dos al día';
+
+  @override
+  String get homeCatchUp => 'Ponerme al día';
+
+  @override
+  String homeCaughtUp(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tareas',
+      one: '1 tarea',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días',
+      one: '1 día',
+    );
+    return '$_temp0 repartidas en $_temp1';
+  }
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Mañana · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Tienes todo en casa';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Para comer hoy',
+      'other': 'Para cenar hoy',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'La semana que viene está vacía';
+
+  @override
+  String get homeNextWeekSub =>
+      'La preparo con lo que más os ha gustado y te dejo la lista hecha.';
+
+  @override
+  String get homeNextWeekGo => 'Prepararla';
 }
