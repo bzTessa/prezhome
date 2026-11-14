@@ -191,6 +191,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (códigos de 8 caracteres, 7 días, 10 usos; RPC `create_home_invite`,
   `join_home_with_code`, `remove_home_member`, `leave_home`).
 - Edge Functions: `supabase/functions/` (validan JWT).
+- Catálogos de súper: `scripts/*_sync.py` → `supermarket_products`, cada lunes
+  (`.github/workflows/open-prices.yml`). Lidl (`lidl_sync.py`, 5 países) lee
+  las fichas del sitemap con código 11/12/60/66; el resto es bazar, packs
+  online o tarjetas regalo y no se importa.
 
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.

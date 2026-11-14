@@ -5,9 +5,12 @@ la web de Lidl de ese país y guarda la tienda "lidl_<país>".
 
 Lidl no vende comida online, pero su web tiene ficha pública (con precio de
 tienda) de buena parte de lo que hay en tienda. robots.txt prohíbe su
-buscador, no las fichas: se leen las del sitemap de productos cuyo código
-empieza por 11 (alimentación), unas 900, y de cada una el JSON-LD (nombre,
-marca, precio, foto) y el formato ("Aprox.220 g"). Igual que
+buscador, no las fichas: se leen las del sitemap de productos de
+supermercado y de cada una el JSON-LD (nombre, marca, precio, foto) y el
+formato ("Aprox.220 g"). El código dice qué es: 11 alimentación, 12
+temporada (Deluxe, Navidad), 60 y 66 básicos de Italia y Portugal (pasta,
+huevos, detergente). Se dejan fuera el bazar (10, 85), los packs solo online
+(80) y las tarjetas regalo (30). Igual que
 mercadona_sync.py, lo lanza cada semana .github/workflows/open-prices.yml.
 Uso local sin escribir:
   python scripts/lidl_sync.py --dry-run
@@ -31,6 +34,8 @@ COUNTRIES = {"es": "es", "fr": "fr", "it": "it", "de": "de", "pt": "pt"}
 HEADERS = {"User-Agent": "Mozilla/5.0 (PrezHome; prezhomeapp@gmail.com)"}
 MIN_PRODUCTS = 100
 WORKERS = 4
+# Prefijos de código de producto que se venden en el súper (ver arriba).
+SUPERMARKET_CODES = "11|12|60|66"
 
 
 def _get(url: str) -> bytes:
@@ -51,8 +56,11 @@ def store_key(country: str) -> str:
 
 
 def product_urls(sitemap: str) -> list[str]:
-    """Fichas de alimentación (código p11…), sin repetir."""
-    urls = re.findall(r"<loc>(https://www\.lidl\.[a-z]+/p/[^<]+/p11\d+)</loc>", sitemap)
+    """Fichas de supermercado (ver SUPERMARKET_CODES), sin repetir."""
+    urls = re.findall(
+        rf"<loc>(https://www\.lidl\.[a-z]+/p/[^<]+/p(?:{SUPERMARKET_CODES})\d+)</loc>",
+        sitemap,
+    )
     return list(dict.fromkeys(urls))
 
 
@@ -130,7 +138,17 @@ def _self_check() -> None:
     assert product_urls(
         f"<loc>{url}</loc><loc>{url}</loc>"
         "<loc>https://www.lidl.es/p/silvercrest-espumador/p100401586</loc>"
-    ) == [url]
+        "<loc>https://www.lidl.es/p/deluxe-picana-de-pato/p12178745</loc>"
+        "<loc>https://www.lidl.it/p/detersivo-lavatrice/p66000161</loc>"
+        "<loc>https://www.lidl.it/p/spaghetti/p6006216</loc>"
+        "<loc>https://www.lidl.de/p/lidl-geschenkkarte/p300000712</loc>"
+        "<loc>https://www.lidl.fr/p/livarno-ensemble-de-jardin/p800012224</loc>"
+    ) == [
+        url,
+        "https://www.lidl.es/p/deluxe-picana-de-pato/p12178745",
+        "https://www.lidl.it/p/detersivo-lavatrice/p66000161",
+        "https://www.lidl.it/p/spaghetti/p6006216",
+    ]
 
 
 def main() -> None:
