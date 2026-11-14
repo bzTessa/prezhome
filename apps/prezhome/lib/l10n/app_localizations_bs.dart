@@ -4926,6 +4926,57 @@ class AppLocalizationsBs extends AppLocalizations {
   }
 
   @override
+  String homeDefrostTomorrow(String names) {
+    return 'Za sutra izvadi iz zamrzivača: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'Večeras u frižider i sutra će biti spremno';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zakašnjelih zadataka',
+      one: '1 zakašnjeli zadatak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Ponavljajući prelaze na sljedeći put, a jednokratni na danas';
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Sutra · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Imaš sve kod kuće';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Za današnji ručak',
+      'other': 'Za današnju večeru',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'Sljedeća sedmica je prazna';
+
+  @override
+  String get homeNextWeekSub =>
+      'Popunit ću je onim što vam se najviše svidjelo i pripremiti listu.';
+
+  @override
+  String get homeNextWeekGo => 'Pripremi je';
+
+  @override
   String get winsTitle => 'Tvoj mjesec kod kuće';
 
   @override

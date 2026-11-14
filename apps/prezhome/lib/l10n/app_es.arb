@@ -3094,6 +3094,44 @@
       }
     }
   },
+  "homeDefrostTomorrow": "Para mañana, saca del congelador: {names}",
+  "@homeDefrostTomorrow": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "homeDefrostTomorrowSub": "A la nevera esta noche y mañana estará listo",
+  "homeOverdue": "{count, plural, =1{1 tarea atrasada} other{{count} tareas atrasadas}}",
+  "@homeOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeOverdueSub": "Las que se repiten pasan a su próxima vez y las puntuales, a hoy",
+  "homeTomorrowTag": "Mañana · {meal}",
+  "@homeTomorrowTag": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "homeYouHaveAll": "Tienes todo en casa",
+  "homePutFor": "{type, select, lunch{Para comer hoy} other{Para cenar hoy}}",
+  "@homePutFor": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNextWeekEmpty": "La semana que viene está vacía",
+  "homeNextWeekSub": "La preparo con lo que más os ha gustado y te dejo la lista hecha.",
+  "homeNextWeekGo": "Prepararla",
   "winsTitle": "Tu mes en casa",
   "winsRescued": "aprovechados antes de caducar",
   "winsThrown": "a la basura",

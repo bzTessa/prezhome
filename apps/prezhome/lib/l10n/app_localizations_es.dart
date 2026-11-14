@@ -4989,6 +4989,57 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String homeDefrostTomorrow(String names) {
+    return 'Para mañana, saca del congelador: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'A la nevera esta noche y mañana estará listo';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tareas atrasadas',
+      one: '1 tarea atrasada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Las que se repiten pasan a su próxima vez y las puntuales, a hoy';
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Mañana · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Tienes todo en casa';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Para comer hoy',
+      'other': 'Para cenar hoy',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'La semana que viene está vacía';
+
+  @override
+  String get homeNextWeekSub =>
+      'La preparo con lo que más os ha gustado y te dejo la lista hecha.';
+
+  @override
+  String get homeNextWeekGo => 'Prepararla';
+
+  @override
   String get winsTitle => 'Tu mes en casa';
 
   @override
