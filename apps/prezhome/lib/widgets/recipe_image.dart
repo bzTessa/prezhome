@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../theme/app_theme.dart';
 import 'animations/app_transitions.dart';
+import 'dish_illustration.dart';
 
 /// Muestra la foto de la receta si existe; si no, un placeholder cozy con un
 /// icono grande según el tipo de plato. Reutilizable en tarjetas y detalle.
@@ -86,59 +87,24 @@ class RecipeImage extends StatelessWidget {
   }
 
   Widget _placeholder({bool loading = false}) {
-    // Gradiente cálido crema -> madera para que el placeholder se sienta
-    // "cozy" y no un bloque plano. El emoji por tipo de plato da identidad.
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.cream,
-            Color.lerp(AppColors.cream, AppColors.wood, 0.4)!,
-            AppColors.wood,
-          ],
-        ),
-      ),
-      child: Center(
-        child: loading
-            ? SizedBox(
-                width: 26,
-                height: 26,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation(AppColors.woodDark),
-                ),
-              )
-            : _iconBadge(),
-      ),
-    );
-  }
-
-  Widget _iconBadge() {
-    // Tamaño del icono proporcional a la altura, con un círculo crema
-    // translúcido detrás para que destaque sobre el gradiente.
-    final badgeSize = (height * 0.52).clamp(44.0, 120.0);
-    return Container(
-      width: badgeSize,
-      height: badgeSize,
-      decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.55),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.softShadow,
-            blurRadius: 8,
-            offset: Offset(0, 3),
+    // Sin foto: un plato dibujado según el tipo de receta. Mientras carga
+    // la foto, el mismo fondo con un indicador encima.
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DishIllustration(title: recipe.title, mealTypes: recipe.mealTypes),
+        if (loading)
+          Center(
+            child: SizedBox(
+              width: 26,
+              height: 26,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation(AppColors.woodDark),
+              ),
+            ),
           ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        iconFor(recipe),
-        size: badgeSize * 0.5,
-        color: AppColors.woodDark,
-      ),
+      ],
     );
   }
 }
