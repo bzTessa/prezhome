@@ -35,6 +35,7 @@ import 'widgets/animations/press_scale.dart';
 import 'widgets/miau_character.dart';
 import 'widgets/tactile_button.dart';
 import 'widgets/plan/plan_parts.dart';
+import 'utils/meal_states.dart';
 import 'utils/recipe_browse.dart';
 import 'widgets/recipe_category_chips.dart';
 import 'widgets/recipe_image.dart';
@@ -1916,6 +1917,17 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final byType = {for (final t in dishes.keys) t: dishes[t]!.first};
     final prefs = PlanPrefs.current.value;
     final types = _slotTypes(byType);
+    // Solo hoy: qué comidas ya pasaron y cuál toca cocinar ahora.
+    final slotStates = sel == todayIndex
+        ? mealSlotStates([
+            for (final t in types)
+              (
+                type: t,
+                time: prefs.timeOf(t),
+                filled: byType[t] != null && !byType[t]!.skipped,
+              ),
+          ], now)
+        : const <String, MealSlotState>{};
     final prepPlan = data.isMealPrep ? _buildMealPrepPlan(data) : null;
     final agenda = prepPlan == null
         ? const <PrepEvent>[]
@@ -2067,10 +2079,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           for (final t in types)
             () {
               final e = byType[t];
+              final state = slotStates[t] ?? MealSlotState.normal;
               final recipe = e == null ? null : data.recipesById[e.recipeId];
               final ready = e == null ? null : data.readyById[e.readyMealId];
               return MealSlotCard(
                 mealType: t,
+                state: state,
                 time: prefs.timeOf(t),
                 inFast: prefs.inFast(t),
                 title: e == null ? null : _dishTitle(data, e),

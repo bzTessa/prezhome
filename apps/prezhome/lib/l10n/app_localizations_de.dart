@@ -4784,6 +4784,39 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hhCustomizeHomeSub => 'Karten und Kurzbefehle auf Heute';
 
   @override
+  String get tskWeekShare => 'Verteilung der Woche';
+
+  @override
+  String get tskWeekShareEmpty =>
+      'Diese Woche hat noch niemand Aufgaben erledigt.';
+
+  @override
+  String get tskYourTurn => 'Du bist dran';
+
+  @override
+  String get tskYouShort => 'Du';
+
+  @override
+  String get shopInStore => 'Ladenmodus';
+
+  @override
+  String shopInStoreAt(String store) {
+    return 'Du bist bei $store';
+  }
+
+  @override
+  String get planCookNow => 'Jetzt kochen';
+
+  @override
+  String get planEaten => 'Gegessen';
+
+  @override
+  String get rdToShopping => 'Auf die Liste';
+
+  @override
+  String get rdInList => 'Auf der Liste';
+
+  @override
   String get onbFoodTitle => 'Gibt es etwas, das bei euch niemand essen darf?';
 
   @override

@@ -726,7 +726,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get categories => 'Categorie';
 
   @override
-  String get shopFinish => 'Termina la spesa';
+  String get shopFinish => 'Finisci la spesa';
 
   @override
   String shopFinishCount(int count) {
@@ -4780,6 +4780,39 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get hhCustomizeHomeSub => 'Schede e scorciatoie di Oggi';
+
+  @override
+  String get tskWeekShare => 'Divisione della settimana';
+
+  @override
+  String get tskWeekShareEmpty =>
+      'Nessuno ha ancora fatto faccende questa settimana.';
+
+  @override
+  String get tskYourTurn => 'Tocca a te';
+
+  @override
+  String get tskYouShort => 'Tu';
+
+  @override
+  String get shopInStore => 'Modalità negozio';
+
+  @override
+  String shopInStoreAt(String store) {
+    return 'Sei da $store';
+  }
+
+  @override
+  String get planCookNow => 'Da cucinare';
+
+  @override
+  String get planEaten => 'Mangiato';
+
+  @override
+  String get rdToShopping => 'Alla spesa';
+
+  @override
+  String get rdInList => 'In lista';
 
   @override
   String get onbFoodTitle => 'C\'è qualcosa che in casa non si può mangiare?';

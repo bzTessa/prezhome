@@ -6,6 +6,7 @@ import '../../l10n/l10n.dart';
 import '../../services/meal_prep_planner.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/meal_states.dart';
 
 /// Piezas visuales del plan semanal de comidas.
 
@@ -175,9 +176,13 @@ class MealSlotCard extends StatelessWidget {
     this.inFast = false,
     this.extras = const [],
     this.onAddDish,
+    this.state = MealSlotState.normal,
   });
 
   final String mealType;
+
+  /// Hoy: comida ya hecha o la siguiente que toca cocinar.
+  final MealSlotState state;
 
   /// Otros platos de la comida (postre, segundo...), debajo del principal.
   final List<
@@ -217,7 +222,11 @@ class MealSlotCard extends StatelessWidget {
           boxShadow: empty ? AppElevation.level0 : AppElevation.level1,
         ),
         child: Material(
-          color: empty ? s.bg.withValues(alpha: 0.55) : AppColors.card,
+          color: empty
+              ? s.bg.withValues(alpha: 0.55)
+              : state == MealSlotState.next
+              ? AppColors.goldBg
+              : AppColors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -250,6 +259,15 @@ class MealSlotCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (state == MealSlotState.next && !empty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: _StateChip(
+                                  text: context.l.planCookNow,
+                                  bg: AppColors.ink,
+                                  fg: AppColors.card,
+                                ),
+                              ),
                             Row(
                               children: [
                                 Icon(s.icon, size: 14, color: s.fg),
@@ -306,6 +324,16 @@ class MealSlotCard extends StatelessWidget {
                               ),
                             ),
                             if (!empty && detail != null) detail!,
+                            if (state == MealSlotState.done && !empty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: _StateChip(
+                                  text: context.l.planEaten,
+                                  icon: Icons.check_rounded,
+                                  bg: AppColors.sageBg,
+                                  fg: AppColors.sage,
+                                ),
+                              ),
                             if (leftover)
                               Padding(
                                 padding: EdgeInsets.only(top: 2),
@@ -654,3 +682,44 @@ class _BatchRow extends StatelessWidget {
 String _weekdayAbbr(BuildContext context, DateTime d) => DateFormat.E(
   Localizations.localeOf(context).toString(),
 ).format(d).replaceAll('.', '').toUpperCase();
+
+/// Etiqueta pequeña del estado de una comida ("Toca cocinar", "Comido").
+class _StateChip extends StatelessWidget {
+  const _StateChip({
+    required this.text,
+    required this.bg,
+    required this.fg,
+    this.icon,
+  });
+
+  final String text;
+  final Color bg;
+  final Color fg;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 4),
+        ],
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: fg,
+          ),
+        ),
+      ],
+    ),
+  );
+}
