@@ -2968,6 +2968,44 @@
   "planEaten": "Comido",
   "rdToShopping": "A la compra",
   "rdInList": "En la lista",
+  "shopCompare": "Comparar súpers",
+  "shopCompareTitle": "¿Dónde sale más barata?",
+  "shopCompareCheapest": "Lo más barato",
+  "shopCompareFound": "{found} de {total} productos",
+  "@shopCompareFound": {
+    "placeholders": {
+      "found": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "shopCompareCommon": "Comparado con los {count} productos que hay en todos",
+  "@shopCompareCommon": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopComparePartial": "Con pocos productos",
+  "shopCompareFromTickets": "Precio de tickets",
+  "shopCompareSetMain": "Comprar aquí",
+  "shopCompareIsMain": "Tu súper",
+  "shopCompareNote": "Precios de la web de cada súper (se actualizan cada lunes) y de tickets escaneados. En tienda pueden cambiar.",
+  "shopCompareEmpty": "No hemos encontrado tus productos en ningún súper.",
+  "shopCompareError": "No se ha podido comparar.",
+  "shopCompareRetry": "Reintentar",
+  "shopCompareMissing": "Sin encontrar: {names}",
+  "@shopCompareMissing": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "onbFoodTitle": "¿Hay algo que no se pueda comer en casa?",
   "onbFoodHint": "El plan de comidas nunca lo propondrá. Lo puedes cambiar en tu perfil.",
   "onbFoodNone": "Comemos de todo",

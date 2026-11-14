@@ -4817,6 +4817,56 @@ class AppLocalizationsDe extends AppLocalizations {
   String get rdInList => 'Auf der Liste';
 
   @override
+  String get shopCompare => 'Märkte vergleichen';
+
+  @override
+  String get shopCompareTitle => 'Wo ist es am günstigsten?';
+
+  @override
+  String get shopCompareCheapest => 'Am günstigsten';
+
+  @override
+  String shopCompareFound(int found, int total) {
+    return '$found von $total Produkten';
+  }
+
+  @override
+  String shopCompareCommon(int count) {
+    return 'Verglichen mit den $count Produkten, die überall da sind';
+  }
+
+  @override
+  String get shopComparePartial => 'Wenige Produkte';
+
+  @override
+  String get shopCompareFromTickets => 'Preis vom Kassenbon';
+
+  @override
+  String get shopCompareSetMain => 'Hier einkaufen';
+
+  @override
+  String get shopCompareIsMain => 'Dein Markt';
+
+  @override
+  String get shopCompareNote =>
+      'Preise von der Website jedes Markts (jeden Montag aktualisiert) und von gescannten Kassenbons. Im Laden können sie abweichen.';
+
+  @override
+  String get shopCompareEmpty =>
+      'Deine Produkte wurden in keinem Markt gefunden.';
+
+  @override
+  String get shopCompareError => 'Vergleich nicht möglich.';
+
+  @override
+  String get shopCompareRetry => 'Erneut versuchen';
+
+  @override
+  String shopCompareMissing(String names) {
+    return 'Nicht gefunden: $names';
+  }
+
+  @override
   String get onbFoodTitle => 'Gibt es etwas, das bei euch niemand essen darf?';
 
   @override

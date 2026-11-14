@@ -4835,6 +4835,56 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rdInList => 'Dans la liste';
 
   @override
+  String get shopCompare => 'Comparer les magasins';
+
+  @override
+  String get shopCompareTitle => 'Où est-ce le moins cher ?';
+
+  @override
+  String get shopCompareCheapest => 'Le moins cher';
+
+  @override
+  String shopCompareFound(int found, int total) {
+    return '$found sur $total produits';
+  }
+
+  @override
+  String shopCompareCommon(int count) {
+    return 'Comparé sur les $count produits présents partout';
+  }
+
+  @override
+  String get shopComparePartial => 'Peu de produits';
+
+  @override
+  String get shopCompareFromTickets => 'Prix des tickets';
+
+  @override
+  String get shopCompareSetMain => 'Acheter ici';
+
+  @override
+  String get shopCompareIsMain => 'Votre magasin';
+
+  @override
+  String get shopCompareNote =>
+      'Prix du site de chaque magasin (mis à jour chaque lundi) et des tickets scannés. En magasin, ils peuvent changer.';
+
+  @override
+  String get shopCompareEmpty =>
+      'Vos produits sont introuvables dans les magasins.';
+
+  @override
+  String get shopCompareError => 'Comparaison impossible.';
+
+  @override
+  String get shopCompareRetry => 'Réessayer';
+
+  @override
+  String shopCompareMissing(String names) {
+    return 'Introuvables : $names';
+  }
+
+  @override
   String get onbFoodTitle =>
       'Y a-t-il quelque chose qu\'on ne peut pas manger à la maison ?';
 

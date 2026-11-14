@@ -35,6 +35,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
     this.inStore = false,
     this.onToggleStore,
     this.onShare,
+    this.onCompare,
   });
 
   /// Mandar lo que falta por WhatsApp u otra app (null = nada que mandar).
@@ -63,6 +64,9 @@ class ShoppingSummaryHeader extends StatelessWidget {
   /// pantalla no se apaga mientras compras.
   final bool inStore;
   final VoidCallback? onToggleStore;
+
+  /// Abre "¿Dónde sale más barata?" (comparar la lista entre súpers).
+  final VoidCallback? onCompare;
 
   @override
   Widget build(BuildContext context) {
@@ -111,16 +115,41 @@ class ShoppingSummaryHeader extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (onTapStore != null)
-                      TextButton.icon(
-                        onPressed: onTapStore,
-                        icon: const Icon(Icons.storefront_outlined, size: 18),
-                        label: Text(storeLabel ?? context.l.shopPickStore),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.woodDark,
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                        ),
+                    if (onTapStore != null || onCompare != null)
+                      Wrap(
+                        spacing: AppSpacing.md,
+                        children: [
+                          if (onTapStore != null)
+                            TextButton.icon(
+                              onPressed: onTapStore,
+                              icon: const Icon(
+                                Icons.storefront_outlined,
+                                size: 18,
+                              ),
+                              label: Text(
+                                storeLabel ?? context.l.shopPickStore,
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.woodDark,
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                              ),
+                            ),
+                          if (onCompare != null && pending > 0)
+                            TextButton.icon(
+                              onPressed: onCompare,
+                              icon: const Icon(
+                                Icons.compare_arrows_rounded,
+                                size: 18,
+                              ),
+                              label: Text(context.l.shopCompare),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.terracottaText,
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                              ),
+                            ),
+                        ],
                       ),
                   ],
                 ),

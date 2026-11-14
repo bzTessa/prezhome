@@ -24,6 +24,7 @@ import 'services/shopping_checkout.dart';
 import 'shopping_lists_overview_screen.dart';
 import 'services/count_prefs.dart';
 import 'services/product_search_service.dart';
+import 'services/store_comparison.dart';
 import 'utils/offline_actions.dart';
 import 'utils/realtime_sync.dart';
 import 'utils/shopping_categories.dart';
@@ -45,6 +46,7 @@ import 'widgets/pending_sync_indicator.dart';
 import 'widgets/product_photo_menu.dart';
 import 'widgets/product_search_sheet.dart';
 import 'widgets/shopping/shopping_parts.dart';
+import 'widgets/shopping/store_comparison_sheet.dart';
 import 'widgets/tactile_button.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'utils/debouncer.dart';
@@ -1440,6 +1442,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 onTapStore: _pickSupermarket,
                 inStore: _inStore,
                 onToggleStore: _toggleStore,
+                onCompare: _inStore ? null : () => _compareStores(porComprar),
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
@@ -1695,6 +1698,50 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
+  /// "¿Dónde sale más barata?": la lista pendiente en cada súper del país,
+  /// con los catálogos y los precios de los tickets.
+  Future<void> _compareStores(List<ShoppingListItem> items) async {
+    if (items.isEmpty) return;
+    final list = items.take(StoreComparisonService.maxItems).toList();
+    final service = StoreComparisonService(_client);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (ctx) => StoreComparisonSheet(
+        itemNames: [for (final i in list) i.name],
+        currentStore: _superKeys.isEmpty ? null : _superKeys.first,
+        load: () => service.compare([
+          for (final i in list)
+            (name: i.name, quantity: i.quantity, unit: i.unit),
+        ], catalogSearchOrder(null)),
+        onPickStore: (key) async {
+          Navigator.of(ctx).pop();
+          await _setPrimaryStore(key);
+        },
+      ),
+    );
+  }
+
+  /// Guarda [key] como súper principal del hogar.
+  Future<void> _setPrimaryStore(String key) async {
+    final homeId = _superHomeId;
+    if (homeId == null) return;
+    try {
+      final next = await HomeSupermarkets(
+        _client,
+      ).setPrimary(homeId, _superKeys, key);
+      if (mounted) setState(() => _superKeys = next);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.shopStoreSaveError)));
+    }
+  }
+
   /// Elige dónde se compra. Se guarda como súper principal del hogar: lo
   /// usan también la IA al crear recetas y "Descubrir".
   Future<void> _pickSupermarket() async {
@@ -1733,19 +1780,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
       ),
     );
-    final homeId = _superHomeId;
-    if (picked == null || picked == current || homeId == null) return;
-    try {
-      final next = await HomeSupermarkets(
-        _client,
-      ).setPrimary(homeId, _superKeys, picked);
-      if (mounted) setState(() => _superKeys = next);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l.shopStoreSaveError)));
-    }
+    if (picked == null || picked == current) return;
+    await _setPrimaryStore(picked);
   }
 
   // ---- Vista: preferencias y opciones -------------------------------------
