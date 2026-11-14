@@ -1214,5 +1214,14 @@
   "planCookNow": "Da cucinare",
   "planEaten": "Mangiato",
   "rdToShopping": "Alla spesa",
-  "rdInList": "In lista"
+  "rdInList": "In lista",
+  "captureTitle": "Annota",
+  "captureToShopping": "Spesa",
+  "captureToPantry": "Dispensa",
+  "captureToTask": "Faccenda",
+  "captureHintShopping": "Latte, pane e uova",
+  "captureHintPantry": "Quello che hai appena comprato",
+  "captureHintTask": "Chiamare l'idraulico",
+  "captureSave": "Annota",
+  "captureDone": "{count, plural, =1{Annotato} other{{count} annotati}}"
 }

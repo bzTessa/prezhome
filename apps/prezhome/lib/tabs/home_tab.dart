@@ -30,6 +30,7 @@ import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
+import '../widgets/quick_capture_sheet.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/fasting_card.dart';
 import '../widgets/skeleton.dart';
@@ -555,6 +556,15 @@ class HomeTabState extends State<HomeTab> {
     ];
     return Scaffold(
       backgroundColor: AppColors.cream,
+      // Un solo botón para apuntar algo a la compra, la despensa o tareas.
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab-capture',
+        onPressed: () async {
+          if (await showQuickCapture(context)) _loadDashboard();
+        },
+        icon: const Icon(Icons.add_rounded),
+        label: Text(context.l.captureTitle),
+      ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

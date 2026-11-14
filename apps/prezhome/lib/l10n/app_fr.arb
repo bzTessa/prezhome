@@ -1214,5 +1214,14 @@
   "planCookNow": "À cuisiner",
   "planEaten": "Mangé",
   "rdToShopping": "À la liste",
-  "rdInList": "Dans la liste"
+  "rdInList": "Dans la liste",
+  "captureTitle": "Noter",
+  "captureToShopping": "Courses",
+  "captureToPantry": "Garde-manger",
+  "captureToTask": "Tâche",
+  "captureHintShopping": "Lait, pain et œufs",
+  "captureHintPantry": "Ce que tu viens d'acheter",
+  "captureHintTask": "Appeler le plombier",
+  "captureSave": "Noter",
+  "captureDone": "{count, plural, =1{Noté} other{{count} notés}}"
 }

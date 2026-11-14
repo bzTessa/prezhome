@@ -4747,4 +4747,39 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get rdInList => 'Na listi';
+
+  @override
+  String get captureTitle => 'Zabilježi';
+
+  @override
+  String get captureToShopping => 'Kupovina';
+
+  @override
+  String get captureToPantry => 'Ostava';
+
+  @override
+  String get captureToTask => 'Zadatak';
+
+  @override
+  String get captureHintShopping => 'Mlijeko, hljeb i jaja';
+
+  @override
+  String get captureHintPantry => 'Ono što si upravo kupio';
+
+  @override
+  String get captureHintTask => 'Pozvati vodoinstalatera';
+
+  @override
+  String get captureSave => 'Zabilježi';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zabilježeno',
+      one: 'Zabilježeno',
+    );
+    return '$_temp0';
+  }
 }

@@ -4812,4 +4812,39 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get rdInList => 'Na lista';
+
+  @override
+  String get captureTitle => 'Apontar';
+
+  @override
+  String get captureToShopping => 'Compras';
+
+  @override
+  String get captureToPantry => 'Despensa';
+
+  @override
+  String get captureToTask => 'Tarefa';
+
+  @override
+  String get captureHintShopping => 'Leite, pão e ovos';
+
+  @override
+  String get captureHintPantry => 'O que acabaste de comprar';
+
+  @override
+  String get captureHintTask => 'Ligar ao canalizador';
+
+  @override
+  String get captureSave => 'Apontar';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count apontados',
+      one: 'Apontado',
+    );
+    return '$_temp0';
+  }
 }

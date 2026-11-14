@@ -1214,5 +1214,14 @@
   "planCookNow": "Time to cook",
   "planEaten": "Eaten",
   "rdToShopping": "Add to list",
-  "rdInList": "On the list"
+  "rdInList": "On the list",
+  "captureTitle": "Jot down",
+  "captureToShopping": "Shopping",
+  "captureToPantry": "Pantry",
+  "captureToTask": "Task",
+  "captureHintShopping": "Milk, bread and eggs",
+  "captureHintPantry": "What you just bought",
+  "captureHintTask": "Call the plumber",
+  "captureSave": "Save",
+  "captureDone": "{count, plural, =1{Saved} other{{count} saved}}"
 }

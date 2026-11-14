@@ -2935,5 +2935,15 @@
   "planCookNow": "Toca cocinar",
   "planEaten": "Comido",
   "rdToShopping": "A la compra",
-  "rdInList": "En la lista"
+  "rdInList": "En la lista",
+  "captureTitle": "Apuntar",
+  "captureToShopping": "Compra",
+  "captureToPantry": "Despensa",
+  "captureToTask": "Tarea",
+  "captureHintShopping": "Leche, pan y huevos",
+  "captureHintPantry": "Lo que acabas de comprar",
+  "captureHintTask": "Llamar al fontanero",
+  "captureSave": "Apuntar",
+  "captureDone": "{count, plural, =1{Apuntado} other{{count} apuntados}}",
+  "@captureDone": {"placeholders": {"count": {"type": "int"}}}
 }

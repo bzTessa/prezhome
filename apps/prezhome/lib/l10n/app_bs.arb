@@ -1214,5 +1214,14 @@
   "planCookNow": "Vrijeme za kuhanje",
   "planEaten": "Pojedeno",
   "rdToShopping": "U kupovinu",
-  "rdInList": "Na listi"
+  "rdInList": "Na listi",
+  "captureTitle": "Zabilježi",
+  "captureToShopping": "Kupovina",
+  "captureToPantry": "Ostava",
+  "captureToTask": "Zadatak",
+  "captureHintShopping": "Mlijeko, hljeb i jaja",
+  "captureHintPantry": "Ono što si upravo kupio",
+  "captureHintTask": "Pozvati vodoinstalatera",
+  "captureSave": "Zabilježi",
+  "captureDone": "{count, plural, =1{Zabilježeno} other{{count} zabilježeno}}"
 }

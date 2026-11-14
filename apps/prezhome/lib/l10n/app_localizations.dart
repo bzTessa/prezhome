@@ -7391,6 +7391,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'En la lista'**
   String get rdInList;
+
+  /// No description provided for @captureTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar'**
+  String get captureTitle;
+
+  /// No description provided for @captureToShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra'**
+  String get captureToShopping;
+
+  /// No description provided for @captureToPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Despensa'**
+  String get captureToPantry;
+
+  /// No description provided for @captureToTask.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarea'**
+  String get captureToTask;
+
+  /// No description provided for @captureHintShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'Leche, pan y huevos'**
+  String get captureHintShopping;
+
+  /// No description provided for @captureHintPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que acabas de comprar'**
+  String get captureHintPantry;
+
+  /// No description provided for @captureHintTask.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamar al fontanero'**
+  String get captureHintTask;
+
+  /// No description provided for @captureSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar'**
+  String get captureSave;
+
+  /// No description provided for @captureDone.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Apuntado} other{{count} apuntados}}'**
+  String captureDone(int count);
 }
 
 class _AppLocalizationsDelegate

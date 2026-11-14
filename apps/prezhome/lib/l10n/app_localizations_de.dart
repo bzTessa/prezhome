@@ -4814,4 +4814,39 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rdInList => 'Auf der Liste';
+
+  @override
+  String get captureTitle => 'Notieren';
+
+  @override
+  String get captureToShopping => 'Einkauf';
+
+  @override
+  String get captureToPantry => 'Vorrat';
+
+  @override
+  String get captureToTask => 'Aufgabe';
+
+  @override
+  String get captureHintShopping => 'Milch, Brot und Eier';
+
+  @override
+  String get captureHintPantry => 'Was du gerade gekauft hast';
+
+  @override
+  String get captureHintTask => 'Klempner anrufen';
+
+  @override
+  String get captureSave => 'Notieren';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notiert',
+      one: 'Notiert',
+    );
+    return '$_temp0';
+  }
 }
