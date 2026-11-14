@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../l10n/l10n.dart';
 
 import '../models/supermarket.dart';
@@ -266,6 +267,27 @@ class _ProductTile extends StatelessWidget {
 
   final SupermarketProduct product;
 
+  /// "2,15 € aprox.", "1,49 € aprox. · 1,19 € con Lidl Plus" o, si aún no
+  /// está a la venta, "6,99 € desde el 20 nov".
+  static String? _priceLabel(BuildContext context, SupermarketProduct p) {
+    final price = p.price;
+    final member = p.memberPrice;
+    if (price == null && member == null) return null;
+    final from = p.upcomingPriceFrom(DateTime.now());
+    final date = from == null
+        ? null
+        : DateFormat.MMMd(
+            Localizations.localeOf(context).toString(),
+          ).format(from.toLocal());
+    return [
+      if (price != null)
+        date == null
+            ? '${money(price)} aprox.'
+            : '${money(price)} ${context.l.psPriceFrom(date)}',
+      if (member != null) context.l.psMemberPrice(money(member)),
+    ].join(' · ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = product;
@@ -321,7 +343,7 @@ class _ProductTile extends StatelessWidget {
                           if (p.store != null) Supermarket.labelFor(p.store!),
                           ?p.brand,
                           ?p.quantity,
-                          if (p.price != null) '${money(p.price!)} aprox.',
+                          ?_priceLabel(context, p),
                         ].join(' · '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

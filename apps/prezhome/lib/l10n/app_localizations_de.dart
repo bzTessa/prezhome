@@ -4313,6 +4313,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get psOffData => 'Daten von Open Food Facts.';
 
   @override
+  String psMemberPrice(String price) {
+    return '$price mit Lidl Plus';
+  }
+
+  @override
+  String psPriceFrom(String date) {
+    return 'ab $date';
+  }
+
+  @override
   String psAddAsIs(String q) {
     return '\"$q\" ohne Produkt hinzufügen';
   }

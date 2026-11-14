@@ -1112,6 +1112,8 @@
   "psNoResultsIn": "No results in {store}. These are from other supermarkets.",
   "psNotYet": "We don't have {store} products yet. These are from other supermarkets.",
   "psOffData": "Data from Open Food Facts.",
+  "psMemberPrice": "{price} with Lidl Plus",
+  "psPriceFrom": "from {date}",
   "psAddAsIs": "Add \"{q}\" without picking a product",
   "offlineExplain": "You can keep using the shopping list and pantry: what you add is saved on your phone and sent when the connection is back. Everything else will update then.",
   "offlineNow": "Offline right now",

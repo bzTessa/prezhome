@@ -7,6 +7,7 @@ import 'add_inventory_item_screen.dart';
 import 'models/inventory_item.dart';
 import 'services/food_facts_service.dart';
 import 'services/inventory_prefill.dart';
+import 'services/product_search_service.dart';
 import 'theme/app_theme.dart';
 
 /// Pantalla de ESCANEO de código de barras para añadir un producto a la
@@ -69,7 +70,14 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
     ).lookupByBarcode(code);
     if (!mounted) return;
 
-    final prefill = inventoryPrefillFromFoodFacts(facts);
+    var prefill = inventoryPrefillFromFoodFacts(facts);
+    if (prefill == null) {
+      // Lo que OFF no conoce puede estar en el catálogo de un súper (Lidl
+      // publica el código de barras de sus productos).
+      final product = await catalogProductByEan(code);
+      if (!mounted) return;
+      if (product != null) prefill = inventoryPrefillFromCatalog(product);
+    }
     if (prefill != null) {
       // OFF encontró el producto: abrimos el formulario precargado. El item
       // construido burbujea hasta InventoryScreen vía pushReplacement (que

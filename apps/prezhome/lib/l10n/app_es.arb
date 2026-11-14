@@ -2569,6 +2569,22 @@
     }
   },
   "psOffData": "Datos de Open Food Facts.",
+  "psMemberPrice": "{price} con Lidl Plus",
+  "@psMemberPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "psPriceFrom": "desde el {date}",
+  "@psPriceFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "psAddAsIs": "Añadir \"{q}\" sin elegir producto",
   "@psAddAsIs": {
     "placeholders": {
