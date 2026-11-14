@@ -150,6 +150,16 @@ def store_price(data: dict) -> dict | None:
     return min(upcoming, key=lambda u: u["starts_at"]) if upcoming else None
 
 
+def light_image(data: dict, image: str | None) -> str | None:
+    """La misma foto en el tamaño "small" (380 px, ~55 KB): la del JSON-LD es
+    la "medium" (~200-500 KB), demasiado para una lista en el móvil."""
+    images = [i for i in ((data.get("media") or {}).get("imageMap") or {}).values()
+              if isinstance(i, dict)]
+    same = next((i for i in images if image and image in (
+        i.get("mediumUrl"), i.get("largeUrl"), i.get("smallUrl"))), None)
+    return (same or {}).get("smallUrl") or image
+
+
 def shelf_ean(eans) -> str | None:
     """Código de barras del envase. Los de 13 cifras que empiezan por 2 son de
     peso variable (cambian con cada pieza): no sirven para escanear."""
@@ -200,7 +210,7 @@ def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
         "ean": shelf_ean(data.get("eans")),
         "unit_price": None,
         "unit": None,
-        "image_url": images[0] if isinstance(images, list) else images,
+        "image_url": light_image(data, images[0] if isinstance(images, list) else images),
         "category": category.strip() or None,
         "updated_at": now,
     }
@@ -281,6 +291,11 @@ def _self_check() -> None:
     }
     row = to_row(url, page + nuxt(product), "t")
     assert row["price"] == 2.99 and row["category"] == "Café, té y cacao"
+    assert row["image_url"] == "https://www.lidl.es/assets/a.png"  # sin media, la de siempre
+    product["media"] = {"imageMap": {"7": {
+        "mediumUrl": "https://www.lidl.es/assets/a.png",
+        "smallUrl": "https://www.lidl.es/assets/a-small.png"}}}
+    assert to_row(url, page + nuxt(product), "t")["image_url"].endswith("a-small.png")
     product["regionsPrices"] = {"1": {"futurePrices": [{"price": later}, {"price": soon}]}}
     row = to_row(url, page.replace("Aprox.220 g", "") + nuxt(product), "t")
     assert row["price"] == 6.99 and row["size"] == "500 g"

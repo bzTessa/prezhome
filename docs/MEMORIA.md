@@ -199,7 +199,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   defecto; si aún no está a la venta, el próximo precio con `price_starts_at`);
   sin precio se conserva el último conocido. El buscador de productos enseña
   "con Lidl Plus" y "desde el…"; el escáner busca por `ean` en los catálogos si
-  OFF no conoce el código.
+  OFF no conoce el código. Foto: la "small" (380 px) de `media.imageMap`.
 
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
