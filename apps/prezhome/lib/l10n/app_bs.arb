@@ -1230,5 +1230,14 @@
   "shopCompareMissing": "Nije pronađeno: {names}",
   "tskCatchUp": "Sustigni",
   "tskCatchUpExplain": "Zadaci koji se ponavljaju prelaze na sljedeći put, a jednokratni na danas. Ne označavaju se kao urađeni i ne donose bodove.",
-  "tskCaughtUp": "Gotovo, sve je ažurno"
+  "tskCaughtUp": "Gotovo, sve je ažurno",
+  "captureTitle": "Zabilježi",
+  "captureToShopping": "Kupovina",
+  "captureToPantry": "Ostava",
+  "captureToTask": "Zadatak",
+  "captureHintShopping": "Mlijeko, hljeb i jaja",
+  "captureHintPantry": "Ono što si upravo kupio",
+  "captureHintTask": "Pozvati vodoinstalatera",
+  "captureSave": "Zabilježi",
+  "captureDone": "{count, plural, =1{Zabilježeno} other{{count} zabilježeno}}"
 }

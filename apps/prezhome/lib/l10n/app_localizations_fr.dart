@@ -4892,4 +4892,39 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tskCaughtUp => 'C\'est fait, tu es à jour';
+
+  @override
+  String get captureTitle => 'Noter';
+
+  @override
+  String get captureToShopping => 'Courses';
+
+  @override
+  String get captureToPantry => 'Garde-manger';
+
+  @override
+  String get captureToTask => 'Tâche';
+
+  @override
+  String get captureHintShopping => 'Lait, pain et œufs';
+
+  @override
+  String get captureHintPantry => 'Ce que tu viens d\'acheter';
+
+  @override
+  String get captureHintTask => 'Appeler le plombier';
+
+  @override
+  String get captureSave => 'Noter';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notés',
+      one: 'Noté',
+    );
+    return '$_temp0';
+  }
 }

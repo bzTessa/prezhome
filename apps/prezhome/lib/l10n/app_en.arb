@@ -1230,5 +1230,14 @@
   "shopCompareMissing": "Not found: {names}",
   "tskCatchUp": "Catch up",
   "tskCatchUpExplain": "Repeating tasks jump to their next time and one-off tasks move to today. They aren't marked done and earn no points.",
-  "tskCaughtUp": "Done, you're caught up"
+  "tskCaughtUp": "Done, you're caught up",
+  "captureTitle": "Jot down",
+  "captureToShopping": "Shopping",
+  "captureToPantry": "Pantry",
+  "captureToTask": "Task",
+  "captureHintShopping": "Milk, bread and eggs",
+  "captureHintPantry": "What you just bought",
+  "captureHintTask": "Call the plumber",
+  "captureSave": "Save",
+  "captureDone": "{count, plural, =1{Saved} other{{count} saved}}"
 }

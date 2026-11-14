@@ -1230,5 +1230,14 @@
   "shopCompareMissing": "Não encontrados: {names}",
   "tskCatchUp": "Pôr-me em dia",
   "tskCatchUpExplain": "As tarefas que se repetem passam para a próxima vez e as pontuais para hoje. Não ficam feitas nem dão pontos.",
-  "tskCaughtUp": "Pronto, estás em dia"
+  "tskCaughtUp": "Pronto, estás em dia",
+  "captureTitle": "Apontar",
+  "captureToShopping": "Compras",
+  "captureToPantry": "Despensa",
+  "captureToTask": "Tarefa",
+  "captureHintShopping": "Leite, pão e ovos",
+  "captureHintPantry": "O que acabaste de comprar",
+  "captureHintTask": "Ligar ao canalizador",
+  "captureSave": "Apontar",
+  "captureDone": "{count, plural, =1{Apontado} other{{count} apontados}}"
 }

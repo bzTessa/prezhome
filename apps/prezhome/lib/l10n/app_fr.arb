@@ -1230,5 +1230,14 @@
   "shopCompareMissing": "Introuvables : {names}",
   "tskCatchUp": "Me remettre à jour",
   "tskCatchUpExplain": "Les tâches répétées passent à leur prochaine fois et les ponctuelles à aujourd'hui. Elles ne sont pas marquées comme faites et ne donnent pas de points.",
-  "tskCaughtUp": "C'est fait, tu es à jour"
+  "tskCaughtUp": "C'est fait, tu es à jour",
+  "captureTitle": "Noter",
+  "captureToShopping": "Courses",
+  "captureToPantry": "Garde-manger",
+  "captureToTask": "Tâche",
+  "captureHintShopping": "Lait, pain et œufs",
+  "captureHintPantry": "Ce que tu viens d'acheter",
+  "captureHintTask": "Appeler le plombier",
+  "captureSave": "Noter",
+  "captureDone": "{count, plural, =1{Noté} other{{count} notés}}"
 }

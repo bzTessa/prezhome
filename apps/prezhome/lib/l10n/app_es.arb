@@ -3008,5 +3008,15 @@
   },
   "tskCatchUp": "Ponerme al día",
   "tskCatchUpExplain": "Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.",
-  "tskCaughtUp": "Listo, estás al día"
+  "tskCaughtUp": "Listo, estás al día",
+  "captureTitle": "Apuntar",
+  "captureToShopping": "Compra",
+  "captureToPantry": "Despensa",
+  "captureToTask": "Tarea",
+  "captureHintShopping": "Leche, pan y huevos",
+  "captureHintPantry": "Lo que acabas de comprar",
+  "captureHintTask": "Llamar al fontanero",
+  "captureSave": "Apuntar",
+  "captureDone": "{count, plural, =1{Apuntado} other{{count} apuntados}}",
+  "@captureDone": {"placeholders": {"count": {"type": "int"}}}
 }

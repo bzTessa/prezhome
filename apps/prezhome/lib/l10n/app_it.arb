@@ -1230,5 +1230,14 @@
   "shopCompareMissing": "Non trovati: {names}",
   "tskCatchUp": "Mettermi in pari",
   "tskCatchUpExplain": "Le faccende ripetute passano alla prossima volta e quelle singole a oggi. Non vengono segnate come fatte e non danno punti.",
-  "tskCaughtUp": "Fatto, sei in pari"
+  "tskCaughtUp": "Fatto, sei in pari",
+  "captureTitle": "Annota",
+  "captureToShopping": "Spesa",
+  "captureToPantry": "Dispensa",
+  "captureToTask": "Faccenda",
+  "captureHintShopping": "Latte, pane e uova",
+  "captureHintPantry": "Quello che hai appena comprato",
+  "captureHintTask": "Chiamare l'idraulico",
+  "captureSave": "Annota",
+  "captureDone": "{count, plural, =1{Annotato} other{{count} annotati}}"
 }

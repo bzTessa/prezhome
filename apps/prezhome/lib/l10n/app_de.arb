@@ -1230,5 +1230,14 @@
   "shopCompareMissing": "Nicht gefunden: {names}",
   "tskCatchUp": "Aufholen",
   "tskCatchUpExplain": "Wiederkehrende Aufgaben springen zum nächsten Termin, einmalige auf heute. Sie werden nicht als erledigt markiert und bringen keine Punkte.",
-  "tskCaughtUp": "Fertig, du bist auf dem Laufenden"
+  "tskCaughtUp": "Fertig, du bist auf dem Laufenden",
+  "captureTitle": "Notieren",
+  "captureToShopping": "Einkauf",
+  "captureToPantry": "Vorrat",
+  "captureToTask": "Aufgabe",
+  "captureHintShopping": "Milch, Brot und Eier",
+  "captureHintPantry": "Was du gerade gekauft hast",
+  "captureHintTask": "Klempner anrufen",
+  "captureSave": "Notieren",
+  "captureDone": "{count, plural, =1{Notiert} other{{count} notiert}}"
 }

@@ -4870,4 +4870,39 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tskCaughtUp => 'Listo, estás al día';
+
+  @override
+  String get captureTitle => 'Apuntar';
+
+  @override
+  String get captureToShopping => 'Compra';
+
+  @override
+  String get captureToPantry => 'Despensa';
+
+  @override
+  String get captureToTask => 'Tarea';
+
+  @override
+  String get captureHintShopping => 'Leche, pan y huevos';
+
+  @override
+  String get captureHintPantry => 'Lo que acabas de comprar';
+
+  @override
+  String get captureHintTask => 'Llamar al fontanero';
+
+  @override
+  String get captureSave => 'Apuntar';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count apuntados',
+      one: 'Apuntado',
+    );
+    return '$_temp0';
+  }
 }
