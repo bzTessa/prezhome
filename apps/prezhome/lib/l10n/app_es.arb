@@ -585,9 +585,30 @@
   "panReviewOk": "Sigue bien",
   "panReviewUsed": "Se acabó",
   "panReviewThrown": "A la basura",
-  "@panReviewTitle": {"placeholders": {"position": {"type": "int"}, "total": {"type": "int"}}},
-  "@panReviewAsk": {"placeholders": {"name": {"type": "String"}}},
-  "@panReviewExpiredAgo": {"placeholders": {"days": {"type": "int"}}},
+  "@panReviewTitle": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@panReviewAsk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@panReviewExpiredAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "panExpiringHeader": "Caducados y a punto de caducar",
   "panNothingHere": "Aquí no hay nada.",
   "kitchenZone": "{zone, select, nevera{Nevera} congelador{Congelador} despensa{Despensa} bebidas{Bebidas} especias{Condimentos} limpieza{Limpieza} hogar{Varios} other{{zone}}}",
@@ -1341,7 +1362,13 @@
   "tskRotates": "Por turnos",
   "tskRotatesHint": "Al hacerla, le toca a la siguiente persona",
   "tskTurnOf": "Turno de {name}",
-  "@tskTurnOf": {"placeholders": {"name": {"type": "String"}}},
+  "@tskTurnOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "tskForToday": "Para hoy",
   "tskUpcoming": "Próximos días",
   "tskPoolEmpty": "Nada en la bolsa. Todo tiene dueño.",
@@ -2930,12 +2957,55 @@
   "tskYouShort": "Tú",
   "shopInStore": "Modo tienda",
   "shopInStoreAt": "Estás en {store}",
-  "shopFinish": "Terminar compra",
-  "@shopInStoreAt": {"placeholders": {"store": {"type": "String"}}},
+  "@shopInStoreAt": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
   "planCookNow": "Toca cocinar",
   "planEaten": "Comido",
   "rdToShopping": "A la compra",
   "rdInList": "En la lista",
+  "shopCompare": "Comparar súpers",
+  "shopCompareTitle": "¿Dónde sale más barata?",
+  "shopCompareCheapest": "Lo más barato",
+  "shopCompareFound": "{found} de {total} productos",
+  "@shopCompareFound": {
+    "placeholders": {
+      "found": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "shopCompareCommon": "Comparado con los {count} productos que hay en todos",
+  "@shopCompareCommon": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopComparePartial": "Con pocos productos",
+  "shopCompareFromTickets": "Precio de tickets",
+  "shopCompareSetMain": "Comprar aquí",
+  "shopCompareIsMain": "Tu súper",
+  "shopCompareNote": "Precios de la web de cada súper (se actualizan cada lunes) y de tickets escaneados. En tienda pueden cambiar.",
+  "shopCompareEmpty": "No hemos encontrado tus productos en ningún súper.",
+  "shopCompareError": "No se ha podido comparar.",
+  "shopCompareRetry": "Reintentar",
+  "shopCompareMissing": "Sin encontrar: {names}",
+  "@shopCompareMissing": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "tskCatchUp": "Ponerme al día",
   "tskCatchUpExplain": "Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.",
   "tskCaughtUp": "Listo, estás al día"

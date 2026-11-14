@@ -195,6 +195,15 @@ class Supermarket {
         key.contains(q.replaceAll(' ', ''));
   }
 
+  /// Súper de la clave [key] ("lidl_fr" es Lidl), o null si no se conoce.
+  static Supermarket? byKey(String key) {
+    for (final s in [...all, ..._abroad.values.expand((l) => l)]) {
+      if (s.key == key) return s;
+    }
+    final chain = RegExp(r'^(.+)_[a-z]{2}$').firstMatch(key)?.group(1);
+    return chain == null ? null : byKey(chain);
+  }
+
   /// Devuelve la etiqueta visible de una clave, o la propia clave capitalizada
   /// si no está en el catálogo (tolerante a datos antiguos o manuales).
   static String labelFor(String key) {

@@ -7392,6 +7392,90 @@ abstract class AppLocalizations {
   /// **'En la lista'**
   String get rdInList;
 
+  /// No description provided for @shopCompare.
+  ///
+  /// In es, this message translates to:
+  /// **'Comparar súpers'**
+  String get shopCompare;
+
+  /// No description provided for @shopCompareTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Dónde sale más barata?'**
+  String get shopCompareTitle;
+
+  /// No description provided for @shopCompareCheapest.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo más barato'**
+  String get shopCompareCheapest;
+
+  /// No description provided for @shopCompareFound.
+  ///
+  /// In es, this message translates to:
+  /// **'{found} de {total} productos'**
+  String shopCompareFound(int found, int total);
+
+  /// No description provided for @shopCompareCommon.
+  ///
+  /// In es, this message translates to:
+  /// **'Comparado con los {count} productos que hay en todos'**
+  String shopCompareCommon(int count);
+
+  /// No description provided for @shopComparePartial.
+  ///
+  /// In es, this message translates to:
+  /// **'Con pocos productos'**
+  String get shopComparePartial;
+
+  /// No description provided for @shopCompareFromTickets.
+  ///
+  /// In es, this message translates to:
+  /// **'Precio de tickets'**
+  String get shopCompareFromTickets;
+
+  /// No description provided for @shopCompareSetMain.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprar aquí'**
+  String get shopCompareSetMain;
+
+  /// No description provided for @shopCompareIsMain.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu súper'**
+  String get shopCompareIsMain;
+
+  /// No description provided for @shopCompareNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Precios de la web de cada súper (se actualizan cada lunes) y de tickets escaneados. En tienda pueden cambiar.'**
+  String get shopCompareNote;
+
+  /// No description provided for @shopCompareEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hemos encontrado tus productos en ningún súper.'**
+  String get shopCompareEmpty;
+
+  /// No description provided for @shopCompareError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se ha podido comparar.'**
+  String get shopCompareError;
+
+  /// No description provided for @shopCompareRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get shopCompareRetry;
+
+  /// No description provided for @shopCompareMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin encontrar: {names}'**
+  String shopCompareMissing(String names);
+
   /// No description provided for @tskCatchUp.
   ///
   /// In es, this message translates to:
