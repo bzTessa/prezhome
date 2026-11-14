@@ -1790,7 +1790,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final text = shoppingShareText(
       title: context.l.shopShareTitle(_activeListName),
       groups: [
-        for (final (name, list) in groups) (name, [for (final i in list) line(i)]),
+        for (final (name, list) in groups)
+          (name, [for (final i in list) line(i)]),
       ],
       footer: context.l.shopShareFooter,
     );

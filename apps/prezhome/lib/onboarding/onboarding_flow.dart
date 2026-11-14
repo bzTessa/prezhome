@@ -761,7 +761,6 @@ class _ResultPage extends StatelessWidget {
   }
 }
 
-
 /// Alergias de casa y, si acaso, dieta vegetariana o vegana. El plan nunca
 /// propondrá lo que choque con esto.
 class _FoodLimitsPicker extends StatelessWidget {
@@ -794,9 +793,7 @@ class _FoodLimitsPicker extends StatelessWidget {
         child: Material(
           color: on ? AppColors.terracotta : AppColors.card,
           shape: StadiumBorder(
-            side: BorderSide(
-              color: on ? AppColors.terracotta : AppColors.line,
-            ),
+            side: BorderSide(color: on ? AppColors.terracotta : AppColors.line),
           ),
           child: InkWell(
             customBorder: const StadiumBorder(),
@@ -807,7 +804,11 @@ class _FoodLimitsPicker extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (on) ...[
-                    const Icon(Icons.check_rounded, size: 18, color: Colors.white),
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 6),
                   ],
                   Text(

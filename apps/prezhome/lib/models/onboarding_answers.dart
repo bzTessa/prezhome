@@ -206,7 +206,9 @@ class OnboardingAnswers {
             : const [],
         foodLimits: {
           for (final f
-              in (m['food_limits'] is List ? m['food_limits'] as List : const []))
+              in (m['food_limits'] is List
+                  ? m['food_limits'] as List
+                  : const []))
             if (allergyOptions.contains(f) || dietOptions.contains(f))
               f as String,
         },

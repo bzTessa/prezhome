@@ -28,8 +28,9 @@ bool looksLikeInviteCode(String raw) =>
 /// WhatsApp que se copió entero), escrito "ABCD-EFGH". Null si no hay.
 String? inviteCodeIn(String? text) {
   if (text == null) return null;
-  final m = RegExp(r'\b([A-HJ-NP-Z2-9]{4})-([A-HJ-NP-Z2-9]{4})\b')
-      .firstMatch(text.toUpperCase());
+  final m = RegExp(
+    r'\b([A-HJ-NP-Z2-9]{4})-([A-HJ-NP-Z2-9]{4})\b',
+  ).firstMatch(text.toUpperCase());
   return m == null ? null : '${m.group(1)}${m.group(2)}';
 }
 

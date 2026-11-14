@@ -12,10 +12,12 @@ String shoppingShareText({
     if (items.isEmpty) continue;
     b.write('\n\n');
     if (named && section.trim().isNotEmpty) b.writeln('_${section.trim()}_');
-    b.write([
-      for (final (name, qty) in items)
-        qty.trim().isEmpty ? '- $name' : '- $name · ${qty.trim()}',
-    ].join('\n'));
+    b.write(
+      [
+        for (final (name, qty) in items)
+          qty.trim().isEmpty ? '- $name' : '- $name · ${qty.trim()}',
+      ].join('\n'),
+    );
   }
   if (footer.isNotEmpty) b.write('\n\n$footer');
   return b.toString();
