@@ -4749,6 +4749,56 @@ class AppLocalizationsBs extends AppLocalizations {
   String get rdInList => 'Na listi';
 
   @override
+  String get shopCompare => 'Uporedi prodavnice';
+
+  @override
+  String get shopCompareTitle => 'Gdje je najjeftinije?';
+
+  @override
+  String get shopCompareCheapest => 'Najjeftinije';
+
+  @override
+  String shopCompareFound(int found, int total) {
+    return '$found od $total proizvoda';
+  }
+
+  @override
+  String shopCompareCommon(int count) {
+    return 'Upoređeno na $count proizvoda koje imaju sve prodavnice';
+  }
+
+  @override
+  String get shopComparePartial => 'Malo proizvoda';
+
+  @override
+  String get shopCompareFromTickets => 'Cijena s računa';
+
+  @override
+  String get shopCompareSetMain => 'Kupuj ovdje';
+
+  @override
+  String get shopCompareIsMain => 'Tvoja prodavnica';
+
+  @override
+  String get shopCompareNote =>
+      'Cijene sa stranice svake prodavnice (ažuriraju se ponedjeljkom) i sa skeniranih računa. U prodavnici se mogu razlikovati.';
+
+  @override
+  String get shopCompareEmpty =>
+      'Tvoje proizvode nismo našli ni u jednoj prodavnici.';
+
+  @override
+  String get shopCompareError => 'Poređenje nije uspjelo.';
+
+  @override
+  String get shopCompareRetry => 'Pokušaj ponovo';
+
+  @override
+  String shopCompareMissing(String names) {
+    return 'Nije pronađeno: $names';
+  }
+
+  @override
   String get captureTitle => 'Zabilježi';
 
   @override

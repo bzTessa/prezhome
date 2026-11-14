@@ -464,6 +464,18 @@ const freshCategories = [
   'Fleisch, Wurst & Fisch',
 ];
 
+/// Palabras con las que se busca [query] en el catálogo: sin tildes, sin
+/// relleno y sin plural ("tomates" → "tomat"), para que encaje con
+/// `name_normalized` con un simple "contiene".
+List<String> catalogSearchWords(String query) => [
+  for (final w in _words(query))
+    w.length > 4 && w.endsWith('es')
+        ? w.substring(0, w.length - 2)
+        : w.length > 3 && w.endsWith('s')
+        ? w.substring(0, w.length - 1)
+        : w,
+];
+
 typedef CatalogSearch =
     Future<List<SupermarketProduct>> Function(
       String query,
@@ -478,14 +490,7 @@ Future<List<SupermarketProduct>> searchCatalog(
   String store, {
   bool freshOnly = false,
 }) async {
-  final words = [
-    for (final w in _words(query))
-      w.length > 4 && w.endsWith('es')
-          ? w.substring(0, w.length - 2)
-          : w.length > 3 && w.endsWith('s')
-          ? w.substring(0, w.length - 1)
-          : w,
-  ];
+  final words = catalogSearchWords(query);
   if (words.isEmpty) return const [];
   Future<List<Map<String, dynamic>>> fetch({required bool prefix}) {
     var q = Supabase.instance.client
