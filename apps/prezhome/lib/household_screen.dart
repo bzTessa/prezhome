@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -158,7 +159,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   }
 
   Future<void> _joinHome() async {
-    final controller = TextEditingController();
+    final controller = TextEditingController(text: await _clipboardCode());
+    if (!mounted) return;
     final code = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -927,6 +929,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 4),
+            FilledButton.icon(
+              onPressed: () => _sendInvite(invite.code),
+              icon: const Icon(Icons.ios_share_rounded, size: 20),
+              label: Text(context.l.hhSendInvite),
+            ),
+            const SizedBox(height: 8),
             Text(
               context.l.hhValidUntil(
                 DateFormat.MMMMd(
@@ -947,6 +956,37 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         ],
       ),
     );
+  }
+
+  /// Código copiado del mensaje de invitación, listo para pegar solo.
+  Future<String> _clipboardCode() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final code = inviteCodeIn(data?.text);
+      return code == null ? '' : formatInviteCode(code);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Mensaje listo para WhatsApp con el código. Quien lo recibe solo tiene
+  /// que copiarlo: la app encuentra el código al ir a unirse.
+  Future<void> _sendInvite(String code) async {
+    final box = context.findRenderObject() as RenderBox?;
+    final text = context.l.hhInviteMessage(formatInviteCode(code));
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          sharePositionOrigin: box == null
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (mounted) _snack(context.l.hhCodeCopied);
+    }
   }
 
   Widget _supermarketsCard(_HouseholdData data) {

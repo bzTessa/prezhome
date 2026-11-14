@@ -2666,7 +2666,7 @@
   "errRecipeImport": "No pude importar la receta de ese enlace",
   "someone": "Alguien",
   "reward": "Recompensa",
-  "remKind": "{kind, select, tasks{Tareas con hora} expiry{Productos que caducan} other{Racha de casa al día}}",
+  "remKind": "{kind, select, tasks{Tareas con hora} kitchen{Congelador y cocina} expiry{Productos que caducan} other{Racha de casa al día}}",
   "@remKind": {
     "placeholders": {
       "kind": {
@@ -3018,5 +3018,80 @@
   "captureHintTask": "Llamar al fontanero",
   "captureSave": "Apuntar",
   "captureDone": "{count, plural, =1{Apuntado} other{{count} apuntados}}",
-  "@captureDone": {"placeholders": {"count": {"type": "int"}}}
+  "@captureDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onbFoodTitle": "¿Hay algo que no se pueda comer en casa?",
+  "onbFoodHint": "El plan de comidas nunca lo propondrá. Lo puedes cambiar en tu perfil.",
+  "onbFoodNone": "Comemos de todo",
+  "onbFoodAllergies": "ALERGIAS O INTOLERANCIAS",
+  "onbFoodDiet": "DIETA",
+  "onbFoodVeg": "Vegetariana",
+  "onbFoodVegan": "Vegana",
+  "rdAllergyWarn": "Lleva {allergen} y alguien en casa no puede tomarlo.",
+  "@rdAllergyWarn": {
+    "placeholders": {
+      "allergen": {
+        "type": "String"
+      }
+    }
+  },
+  "rdDietWarn": "No encaja con la dieta de casa ({diet, select, vegana{vegana} pescetariana{pescetariana} other{vegetariana}}).",
+  "@rdDietWarn": {
+    "placeholders": {
+      "diet": {
+        "type": "String"
+      }
+    }
+  },
+  "remDefrostOne": "Saca {name} del congelador",
+  "@remDefrostOne": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remDefrostMany": "Saca {count} platos del congelador",
+  "@remDefrostMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remDefrostBody": "Déjalo en la nevera esta noche y mañana estará listo.",
+  "remBatchTomorrow": "Mañana toca cocinar en lote",
+  "remBatchTomorrowBody": "{servings} raciones. Mira si tienes todo antes de dormir.",
+  "@remBatchTomorrowBody": {
+    "placeholders": {
+      "servings": {
+        "type": "int"
+      }
+    }
+  },
+  "shopShareList": "Mandar la lista",
+  "shopShareTitle": "Lista de la compra: {name}",
+  "@shopShareTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shopShareFooter": "Hecha con PrezHome",
+  "shopShareCopied": "Lista copiada: pégala donde quieras",
+  "hhSendInvite": "Mandar invitación",
+  "hhInviteMessage": "¡Únete a nuestra casa en PrezHome! Así compartimos el plan de comidas, la lista de la compra y las tareas.\n\n1. Instala PrezHome y crea tu cuenta.\n2. Copia este mensaje y toca \"Me han invitado a un hogar\": el código se pondrá solo.\n\nCódigo: {code}",
+  "@hhInviteMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  }
 }

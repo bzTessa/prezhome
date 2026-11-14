@@ -9,6 +9,7 @@ import 'utils/money.dart';
 
 import 'add_recipe_screen.dart';
 import 'cook_mode_screen.dart';
+import 'services/home_food_restrictions.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/recipe_share.dart';
 import 'services/price_memory.dart';
@@ -91,6 +92,65 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _loadProfile();
     _loadCost();
     _loadPantry();
+    _loadRestrictions();
+  }
+
+  /// Alergia o dieta de casa con la que choca la receta (null si ninguna).
+  String? _blocker;
+
+  Future<void> _loadRestrictions() async {
+    try {
+      final limits = await HomeFoodRestrictions.load(_client);
+      if (limits.isEmpty) return;
+      final ings = await _ingredientsFuture;
+      final b = limits.blockerIn([_recipe.title, for (final i in ings) i.name]);
+      if (mounted) setState(() => _blocker = b);
+    } catch (_) {
+      // Sin aviso si falla.
+    }
+  }
+
+  Widget _blockerBanner(String b) {
+    final isDiet = const {'vegetariana', 'vegana', 'pescetariana'}.contains(b);
+    final text = isDiet
+        ? context.l.rdDietWarn(b)
+        : context.l.rdAllergyWarn(
+            const {
+                  'gluten',
+                  'lactosa',
+                  'huevo',
+                  'frutos secos',
+                  'marisco',
+                  'soja',
+                  'pescado',
+                }.contains(b)
+                ? context.l.pwAllergy(b.replaceAll(' ', ''))
+                : b,
+          );
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.expiredBg,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: AppColors.expired),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Calcula el coste estimado de la receta: precio real de los tickets si lo
@@ -617,6 +677,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         style: AppTextStyles.bodyMuted.copyWith(height: 1.35),
                       ),
                     ],
+                    if (_blocker != null) _blockerBanner(_blocker!),
                     const SizedBox(height: 18),
                     _statsRow(r),
                     const SizedBox(height: 14),

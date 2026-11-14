@@ -4391,6 +4391,7 @@ class AppLocalizationsBs extends AppLocalizations {
   String remKind(String kind) {
     String _temp0 = intl.Intl.selectLogic(kind, {
       'tasks': 'Zadaci sa vremenom',
+      'kitchen': 'Zamrzivač i kuhanje',
       'expiry': 'Proizvodi kojima ističe rok',
       'other': 'Niz za dom',
     });
@@ -4841,5 +4842,86 @@ class AppLocalizationsBs extends AppLocalizations {
       one: 'Zabilježeno',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get onbFoodTitle => 'Ima li nešto što se kod kuće ne smije jesti?';
+
+  @override
+  String get onbFoodHint =>
+      'Plan obroka to nikad neće predložiti. Možeš to promijeniti u profilu.';
+
+  @override
+  String get onbFoodNone => 'Jedemo sve';
+
+  @override
+  String get onbFoodAllergies => 'ALERGIJE ILI NETOLERANCIJE';
+
+  @override
+  String get onbFoodDiet => 'PREHRANA';
+
+  @override
+  String get onbFoodVeg => 'Vegetarijanska';
+
+  @override
+  String get onbFoodVegan => 'Veganska';
+
+  @override
+  String rdAllergyWarn(String allergen) {
+    return 'Sadrži $allergen, a neko kod kuće to ne smije jesti.';
+  }
+
+  @override
+  String rdDietWarn(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'vegana': 'veganska',
+      'pescetariana': 'peskatarijanska',
+      'other': 'vegetarijanska',
+    });
+    return 'Ne odgovara prehrani u kući ($_temp0).';
+  }
+
+  @override
+  String remDefrostOne(String name) {
+    return 'Izvadi $name iz zamrzivača';
+  }
+
+  @override
+  String remDefrostMany(int count) {
+    return 'Izvadi $count jela iz zamrzivača';
+  }
+
+  @override
+  String get remDefrostBody =>
+      'Ostavi ga večeras u frižideru i sutra će biti spremno.';
+
+  @override
+  String get remBatchTomorrow => 'Sutra je dan za kuhanje unaprijed';
+
+  @override
+  String remBatchTomorrowBody(int servings) {
+    return '$servings porcija. Provjeri imaš li sve prije spavanja.';
+  }
+
+  @override
+  String get shopShareList => 'Pošalji listu';
+
+  @override
+  String shopShareTitle(String name) {
+    return 'Lista za kupovinu: $name';
+  }
+
+  @override
+  String get shopShareFooter => 'Napravljeno u PrezHome';
+
+  @override
+  String get shopShareCopied => 'Lista kopirana: zalijepi je gdje želiš';
+
+  @override
+  String get hhSendInvite => 'Pošalji pozivnicu';
+
+  @override
+  String hhInviteMessage(String code) {
+    return 'Pridruži se našem domu u PrezHome! Tako dijelimo plan obroka, listu za kupovinu i zadatke.\n\n1. Instaliraj PrezHome i napravi račun.\n2. Kopiraj ovu poruku i dodirni \"Pozvan/a sam u dom\": kod će se sam upisati.\n\nKod: $code';
   }
 }

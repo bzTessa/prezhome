@@ -44,6 +44,14 @@ void main() {
     await _tapText(tester, 'Cada día');
     await _tapText(tester, 'Continuar');
 
+    expect(
+      find.text('¿Hay algo que no se pueda comer en casa?'),
+      findsOneWidget,
+    );
+    expect(find.text('Comemos de todo'), findsOneWidget);
+    await _tapText(tester, 'Gluten (celiaquía)');
+    await _tapText(tester, 'Continuar (1)');
+
     expect(find.text('¿Dónde compras?'), findsOneWidget);
     await _tapText(tester, 'Mercadona');
     await _tapText(tester, 'Ver mi hogar');

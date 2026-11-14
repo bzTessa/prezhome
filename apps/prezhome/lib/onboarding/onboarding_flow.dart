@@ -37,7 +37,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   late int _page = widget.initialPage;
   late OnboardingAnswers _a = widget.initialAnswers;
 
-  static const int _questions = 4;
+  static const int _questions = 5;
 
   void _next() => setState(() => _page++);
   void _back() => setState(() => _page = (_page - 1).clamp(0, _page));
@@ -159,8 +159,26 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         );
       case 4:
         return QuestionScaffold(
-          section: context.l.onbSectionShopping,
+          section: context.l.onbSectionKitchen,
           step: 4,
+          total: _questions,
+          title: context.l.onbFoodTitle,
+          illustration: 'assets/images/onb_hogar.png',
+          subtitle: context.l.onbFoodHint,
+          onBack: _back,
+          onContinue: _next,
+          continueLabel: _a.foodLimits.isEmpty
+              ? context.l.onbFoodNone
+              : context.l.onbContinueCount(_a.foodLimits.length),
+          child: _FoodLimitsPicker(
+            selected: _a.foodLimits,
+            onChanged: (v) => setState(() => _a = _a.copyWith(foodLimits: v)),
+          ),
+        );
+      case 5:
+        return QuestionScaffold(
+          section: context.l.onbSectionShopping,
+          step: 5,
           total: _questions,
           title: context.l.onbShopTitle,
           illustration: 'assets/images/onb_compra.png',
@@ -739,6 +757,115 @@ class _ResultPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Alergias de casa y, si acaso, dieta vegetariana o vegana. El plan nunca
+/// propondrá lo que choque con esto.
+class _FoodLimitsPicker extends StatelessWidget {
+  const _FoodLimitsPicker({required this.selected, required this.onChanged});
+
+  final Set<String> selected;
+  final ValueChanged<Set<String>> onChanged;
+
+  static String _cap(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  void _toggle(String key) {
+    final next = {...selected};
+    if (!next.remove(key)) {
+      next.add(key);
+      // Vegana ya incluye vegetariana: solo una de las dos.
+      if (key == 'vegana') next.remove('vegetariana');
+      if (key == 'vegetariana') next.remove('vegana');
+    }
+    onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget chip(String key, String label) {
+      final on = selected.contains(key);
+      return Semantics(
+        button: true,
+        selected: on,
+        child: Material(
+          color: on ? AppColors.terracotta : AppColors.card,
+          shape: StadiumBorder(
+            side: BorderSide(color: on ? AppColors.terracotta : AppColors.line),
+          ),
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            onTap: () => _toggle(key),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (on) ...[
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: on ? Colors.white : AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.l.onbFoodAllergies,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.inkMuted,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final a in OnboardingAnswers.allergyOptions)
+              chip(a, _cap(context.l.pwAllergy(a.replaceAll(' ', '')))),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text(
+          context.l.onbFoodDiet,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.inkMuted,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            chip('vegetariana', context.l.onbFoodVeg),
+            chip('vegana', context.l.onbFoodVegan),
+          ],
+        ),
+      ],
     );
   }
 }
