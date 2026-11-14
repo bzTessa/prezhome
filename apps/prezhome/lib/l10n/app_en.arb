@@ -1259,5 +1259,14 @@
   "shopShareFooter": "Made with PrezHome",
   "shopShareCopied": "List copied: paste it wherever you like",
   "hhSendInvite": "Send invite",
-  "hhInviteMessage": "Join our home on PrezHome! We'll share the meal plan, the shopping list and the chores.\n\n1. Install PrezHome and create your account.\n2. Copy this message and tap \"I've been invited to a home\": the code fills in by itself.\n\nCode: {code}"
+  "hhInviteMessage": "Join our home on PrezHome! We'll share the meal plan, the shopping list and the chores.\n\n1. Install PrezHome and create your account.\n2. Copy this message and tap \"I've been invited to a home\": the code fills in by itself.\n\nCode: {code}",
+  "winsTitle": "Your month at home",
+  "winsRescued": "used before they expired",
+  "winsThrown": "thrown away",
+  "winsMeals": "meals at home",
+  "winsTasks": "chores done",
+  "winsThrownLess": "{count, plural, =1{1 fewer product thrown away than last month} other{{count} fewer products thrown away than last month}}",
+  "winsEmpty": "Once you use the pantry, the plan and chores, you'll see this month's progress here.",
+  "proHeadline": "More help with what takes most of your time",
+  "proHeadlineSub": "Read more receipts, get more recipes from links and photos and more ideas every month. One subscription covers the whole household."
 }

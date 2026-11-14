@@ -1259,5 +1259,14 @@
   "shopShareFooter": "Napravljeno u PrezHome",
   "shopShareCopied": "Lista kopirana: zalijepi je gdje želiš",
   "hhSendInvite": "Pošalji pozivnicu",
-  "hhInviteMessage": "Pridruži se našem domu u PrezHome! Tako dijelimo plan obroka, listu za kupovinu i zadatke.\n\n1. Instaliraj PrezHome i napravi račun.\n2. Kopiraj ovu poruku i dodirni \"Pozvan/a sam u dom\": kod će se sam upisati.\n\nKod: {code}"
+  "hhInviteMessage": "Pridruži se našem domu u PrezHome! Tako dijelimo plan obroka, listu za kupovinu i zadatke.\n\n1. Instaliraj PrezHome i napravi račun.\n2. Kopiraj ovu poruku i dodirni \"Pozvan/a sam u dom\": kod će se sam upisati.\n\nKod: {code}",
+  "winsTitle": "Tvoj mjesec kod kuće",
+  "winsRescued": "iskorišteno prije isteka",
+  "winsThrown": "bačeno",
+  "winsMeals": "obroka kod kuće",
+  "winsTasks": "urađenih zadataka",
+  "winsThrownLess": "{count, plural, =1{1 proizvod manje bačen nego prošli mjesec} other{{count} proizvoda manje bačeno nego prošli mjesec}}",
+  "winsEmpty": "Kad koristiš ostavu, plan i zadatke, ovdje ćeš vidjeti svoj mjesec.",
+  "proHeadline": "Više pomoći za ono što ti oduzima najviše vremena",
+  "proHeadlineSub": "Čita više računa, izvlači više recepata iz linkova i fotografija i predlaže više ideja svaki mjesec. Jedna pretplata vrijedi za cijelo domaćinstvo."
 }

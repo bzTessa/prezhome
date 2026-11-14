@@ -1259,5 +1259,14 @@
   "shopShareFooter": "Feita com PrezHome",
   "shopShareCopied": "Lista copiada: cola-a onde quiseres",
   "hhSendInvite": "Enviar convite",
-  "hhInviteMessage": "Junta-te à nossa casa no PrezHome! Assim partilhamos o plano de refeições, a lista de compras e as tarefas.\n\n1. Instala o PrezHome e cria a tua conta.\n2. Copia esta mensagem e toca em \"Fui convidado para uma casa\": o código aparece sozinho.\n\nCódigo: {code}"
+  "hhInviteMessage": "Junta-te à nossa casa no PrezHome! Assim partilhamos o plano de refeições, a lista de compras e as tarefas.\n\n1. Instala o PrezHome e cria a tua conta.\n2. Copia esta mensagem e toca em \"Fui convidado para uma casa\": o código aparece sozinho.\n\nCódigo: {code}",
+  "winsTitle": "O teu mês em casa",
+  "winsRescued": "aproveitados antes de expirar",
+  "winsThrown": "para o lixo",
+  "winsMeals": "refeições em casa",
+  "winsTasks": "tarefas feitas",
+  "winsThrownLess": "{count, plural, =1{Menos 1 produto no lixo do que no mês passado} other{Menos {count} produtos no lixo do que no mês passado}}",
+  "winsEmpty": "Quando usares a despensa, o plano e as tarefas, verás aqui o que levas este mês.",
+  "proHeadline": "Mais ajuda no que te tira mais tempo",
+  "proHeadlineSub": "Lê mais talões, tira mais receitas de links e fotos e propõe mais ideias cada mês. Uma subscrição serve para toda a casa."
 }

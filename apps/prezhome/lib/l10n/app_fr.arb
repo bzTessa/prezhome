@@ -1259,5 +1259,14 @@
   "shopShareFooter": "Faite avec PrezHome",
   "shopShareCopied": "Liste copiée : colle-la où tu veux",
   "hhSendInvite": "Envoyer l'invitation",
-  "hhInviteMessage": "Rejoins notre maison sur PrezHome ! On partagera le planning des repas, la liste de courses et les tâches.\n\n1. Installe PrezHome et crée ton compte.\n2. Copie ce message et touche « On m'a invité dans un foyer » : le code se remplit tout seul.\n\nCode : {code}"
+  "hhInviteMessage": "Rejoins notre maison sur PrezHome ! On partagera le planning des repas, la liste de courses et les tâches.\n\n1. Installe PrezHome et crée ton compte.\n2. Copie ce message et touche « On m'a invité dans un foyer » : le code se remplit tout seul.\n\nCode : {code}",
+  "winsTitle": "Votre mois à la maison",
+  "winsRescued": "utilisés avant péremption",
+  "winsThrown": "jetés",
+  "winsMeals": "repas à la maison",
+  "winsTasks": "tâches faites",
+  "winsThrownLess": "{count, plural, =1{1 produit jeté de moins que le mois dernier} other{{count} produits jetés de moins que le mois dernier}}",
+  "winsEmpty": "Quand vous utiliserez le garde-manger, le plan et les tâches, vous verrez ici votre mois.",
+  "proHeadline": "Plus d'aide pour ce qui vous prend le plus de temps",
+  "proHeadlineSub": "Plus de tickets lus, plus de recettes depuis des liens et des photos, plus d'idées chaque mois. Un abonnement pour tout le foyer."
 }

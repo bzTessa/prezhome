@@ -8,6 +8,7 @@ import 'utils/money.dart';
 import 'economy_screen.dart';
 import 'product_stats_screen.dart';
 import 'scan_ticket_screen.dart';
+import 'services/month_wins.dart';
 import 'services/spend_forecast.dart';
 import 'services/home_people.dart';
 import 'theme/app_motion.dart';
@@ -18,6 +19,7 @@ import 'widgets/animations/animated_counter.dart';
 import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/list_skeleton.dart';
+import 'widgets/month_wins_card.dart';
 import 'l10n/l10n.dart';
 
 /// "Tus datos": gráficas de gasto (con previsión), compra, despensa, comidas
@@ -45,6 +47,7 @@ class _StatsData {
   final int mealsOut;
   final List<(String, double)> tasksByPerson;
   final List<(String, double)> tasksByWeek;
+  final MonthWins wins;
 
   _StatsData({
     required this.budget,
@@ -60,6 +63,7 @@ class _StatsData {
     required this.mealsOut,
     required this.tasksByPerson,
     required this.tasksByWeek,
+    this.wins = const MonthWins(),
   });
 
   double get spent => months.last.$2;
@@ -110,6 +114,7 @@ class _StatsScreenState extends State<StatsScreen> {
     ];
     final since = weeks.first.isBefore(monthStart) ? weeks.first : monthStart;
 
+    final winsFuture = MonthWins.load(_client, now: now);
     final results = await Future.wait<dynamic>([
       _client
           .from('budgets')
@@ -252,6 +257,7 @@ class _StatsScreenState extends State<StatsScreen> {
     }
 
     return _StatsData(
+      wins: await winsFuture,
       budget: budget,
       months: months,
       forecast: forecast,
@@ -329,6 +335,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
   List<Widget> _sections(_StatsData d) => [
     _spendHero(d),
+    if (!d.wins.isEmpty) MonthWinsCard(wins: d.wins),
     _card(
       title: context.l.stSpendByMonth,
       icon: Icons.bar_chart_rounded,

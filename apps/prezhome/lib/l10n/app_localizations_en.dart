@@ -4977,4 +4977,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String hhInviteMessage(String code) {
     return 'Join our home on PrezHome! We\'ll share the meal plan, the shopping list and the chores.\n\n1. Install PrezHome and create your account.\n2. Copy this message and tap \"I\'ve been invited to a home\": the code fills in by itself.\n\nCode: $code';
   }
+
+  @override
+  String get winsTitle => 'Your month at home';
+
+  @override
+  String get winsRescued => 'used before they expired';
+
+  @override
+  String get winsThrown => 'thrown away';
+
+  @override
+  String get winsMeals => 'meals at home';
+
+  @override
+  String get winsTasks => 'chores done';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fewer products thrown away than last month',
+      one: '1 fewer product thrown away than last month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Once you use the pantry, the plan and chores, you\'ll see this month\'s progress here.';
+
+  @override
+  String get proHeadline => 'More help with what takes most of your time';
+
+  @override
+  String get proHeadlineSub =>
+      'Read more receipts, get more recipes from links and photos and more ideas every month. One subscription covers the whole household.';
 }

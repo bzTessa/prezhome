@@ -4991,4 +4991,42 @@ class AppLocalizationsDe extends AppLocalizations {
   String hhInviteMessage(String code) {
     return 'Komm in unser Zuhause bei PrezHome! So teilen wir Essensplan, Einkaufsliste und Aufgaben.\n\n1. Installiere PrezHome und erstelle dein Konto.\n2. Kopiere diese Nachricht und tippe auf „Ich wurde in ein Zuhause eingeladen“: Der Code wird automatisch eingetragen.\n\nCode: $code';
   }
+
+  @override
+  String get winsTitle => 'Dein Monat zu Hause';
+
+  @override
+  String get winsRescued => 'vor dem Ablauf verbraucht';
+
+  @override
+  String get winsThrown => 'weggeworfen';
+
+  @override
+  String get winsMeals => 'Mahlzeiten zu Hause';
+
+  @override
+  String get winsTasks => 'erledigte Aufgaben';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Produkte weniger weggeworfen als letzten Monat',
+      one: '1 Produkt weniger weggeworfen als letzten Monat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Sobald du Vorrat, Plan und Aufgaben nutzt, siehst du hier deinen Monat.';
+
+  @override
+  String get proHeadline =>
+      'Mehr Hilfe bei dem, was dich am meisten Zeit kostet';
+
+  @override
+  String get proHeadlineSub =>
+      'Mehr Kassenbons, mehr Rezepte aus Links und Fotos und mehr Ideen jeden Monat. Ein Abo gilt für den ganzen Haushalt.';
 }
