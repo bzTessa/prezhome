@@ -24,6 +24,16 @@ String formatInviteCode(String code) {
 bool looksLikeInviteCode(String raw) =>
     RegExp(r'^[A-HJ-NP-Z2-9]{8}$').hasMatch(normalizeInviteCode(raw));
 
+/// El código de invitación dentro de un texto cualquiera (el mensaje de
+/// WhatsApp que se copió entero), escrito "ABCD-EFGH". Null si no hay.
+String? inviteCodeIn(String? text) {
+  if (text == null) return null;
+  final m = RegExp(
+    r'\b([A-HJ-NP-Z2-9]{4})-([A-HJ-NP-Z2-9]{4})\b',
+  ).firstMatch(text.toUpperCase());
+  return m == null ? null : '${m.group(1)}${m.group(2)}';
+}
+
 /// Invitaciones y miembros del hogar. Todo pasa por funciones del servidor
 /// que comprueban permisos (el código caduca a los 7 días y admite 10 usos).
 class HomeInvites {

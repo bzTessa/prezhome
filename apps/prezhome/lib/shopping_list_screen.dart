@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/shopping_list_item.dart';
@@ -31,6 +32,7 @@ import 'utils/shopping_celebration.dart';
 import 'utils/practical_quantity.dart';
 import 'utils/shopping_display.dart';
 import 'utils/shopping_quick_add.dart';
+import 'utils/shopping_share.dart';
 import 'scan_ticket_screen.dart';
 import 'widgets/animations/celebrate.dart';
 import 'widgets/animations/confetti.dart';
@@ -1431,6 +1433,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 onTapList: _openListsOverview,
                 onGenerate: _generarDesdePlan,
                 onOptions: _openViewOptions,
+                onShare: porComprar.isEmpty
+                    ? null
+                    : () => _shareList(porComprar),
                 storeLabel: _superKeys.isEmpty
                     ? null
                     : Supermarket.labelFor(_superKeys.first),
@@ -1801,6 +1806,49 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   /// Hoja de opciones: cómo se ve la lista y accesos a listas y categorías.
+  /// Manda lo que falta por comprar como texto (WhatsApp, Telegram...),
+  /// por pasillos en el orden del hogar.
+  Future<void> _shareList(List<ShoppingListItem> items) async {
+    final box = context.findRenderObject() as RenderBox?;
+    (String, String) line(ShoppingListItem i) => (
+      shoppingCleanName(i.name),
+      shoppingQtyLabel(i.quantity, i.unit, packSize: i.packSize),
+    );
+    final List<(String, List<ShoppingListItem>)> groups = _categories.isEmpty
+        ? [('', items)]
+        : groupByHomeCategories(
+            items,
+            [for (final c in _categories) (id: c.id, name: c.name)],
+            categoryIdOf: (i) => i.categoryId,
+            categoryNameOf: (i) => i.category,
+            nameOf: (i) => i.name,
+          );
+    final text = shoppingShareText(
+      title: context.l.shopShareTitle(_activeListName),
+      groups: [
+        for (final (name, list) in groups)
+          (name, [for (final i in list) line(i)]),
+      ],
+      footer: context.l.shopShareFooter,
+    );
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          sharePositionOrigin: box == null
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.shopShareCopied)));
+    }
+  }
+
   Future<void> _openViewOptions() async {
     await showModalBottomSheet<void>(
       context: context,

@@ -11,6 +11,7 @@ import '../discover_recipes_screen.dart';
 import '../food_diary_screen.dart';
 import '../household_screen.dart';
 import '../main_shell.dart';
+import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
 import '../scan_ticket_screen.dart';
 import '../shopping_list_screen.dart';
@@ -21,6 +22,7 @@ import '../models/meal_plan_entry.dart';
 import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
+import '../services/home_food_restrictions.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
 import '../services/plan_repeats.dart';
@@ -30,6 +32,7 @@ import '../services/plan_prefs.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
+import '../widgets/quick_capture_sheet.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/fasting_card.dart';
 import '../widgets/skeleton.dart';
@@ -41,8 +44,10 @@ import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
 import '../widgets/animations/staggered_entrance.dart';
 import '../utils/day_brief.dart';
+import '../utils/task_share.dart' show catchUpDates;
 import '../utils/friendly_error.dart';
-import '../utils/pantry_ideas.dart' show formatEuros;
+import '../utils/pantry_ideas.dart' show formatEuros, pantryNamesForIdeas;
+import '../utils/recipe_browse.dart' show readyToCook;
 import '../utils/ticket_date.dart';
 import '../l10n/l10n.dart';
 
@@ -78,6 +83,16 @@ class HomeTabState extends State<HomeTab> {
 
   // Comidas planificadas para HOY (mismo patrón de consulta que el plan).
   List<_PlanItem> _todayItems = [];
+
+  // Y para mañana: por la noche, Hoy enseña lo de mañana.
+  List<_PlanItem> _tomorrowItems = [];
+
+  // ¿La semana que viene ya tiene algo planificado? (null = no se sabe).
+  bool? _nextWeekPlanned;
+
+  // Sin plan para hoy: una receta que se puede hacer ya con lo de casa.
+  Recipe? _suggestion;
+  int _householdSize = 1;
 
   // Resumen de tareas pendientes del hogar (is_done == false).
   List<HomeTask> _pendingTasks = [];
@@ -207,16 +222,20 @@ class HomeTabState extends State<HomeTab> {
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
 
-      final todayKey = DateTime.now().toIso8601String().split('T').first;
+      final now = DateTime.now();
+      String key(DateTime d) => d.toIso8601String().split('T').first;
+      final todayKey = key(now);
+      final tomorrowKey = key(DateTime(now.year, now.month, now.day + 1));
       final res = await _client
           .from('meal_plan_entries')
           .select(
-            'plan_date, meal_type, skipped, position, recipes(*), ready_meals(name)',
+            'plan_date, meal_type, skipped, from_freezer, position, recipes(*), ready_meals(name)',
           )
           .eq('home_id', homeId)
-          .eq('plan_date', todayKey);
+          .inFilter('plan_date', [todayKey, tomorrowKey]);
 
       final items = <_PlanItem>[];
+      final tomorrow = <_PlanItem>[];
       final position = <_PlanItem, int>{}; // plato principal antes que postre
       for (final row in (res as List)) {
         final e = MealPlanEntry.fromMap(row);
@@ -238,23 +257,188 @@ class HomeTabState extends State<HomeTab> {
           fromFreezer: e.fromFreezer,
           recipe: recipe,
         );
-        items.add(item);
+        (row['plan_date'] == tomorrowKey ? tomorrow : items).add(item);
         position[item] = e.position;
       }
-      items.sort((a, b) {
+      int byOrder(_PlanItem a, _PlanItem b) {
         final byMeal = _mealOrder
             .indexOf(a.mealType)
             .compareTo(_mealOrder.indexOf(b.mealType));
         return byMeal != 0 ? byMeal : position[a]!.compareTo(position[b]!);
-      });
-      if (mounted) {
-        setState(() => _todayItems = items);
       }
+
+      items.sort(byOrder);
+      tomorrow.sort(byOrder);
+
+      // Desde el viernes, ¿hay algo en la semana que viene?
+      bool? nextWeek;
+      if (now.weekday >= DateTime.friday) {
+        final monday = DateTime(now.year, now.month, now.day + 8 - now.weekday);
+        final next = await _client
+            .from('meal_plan_entries')
+            .select('id')
+            .eq('home_id', homeId)
+            .gte('plan_date', key(monday))
+            .lt('plan_date', key(monday.add(const Duration(days: 7))))
+            .limit(1);
+        nextWeek = (next as List).isNotEmpty;
+      }
+      if (mounted) {
+        setState(() {
+          _todayItems = items;
+          _tomorrowItems = tomorrow;
+          _nextWeekPlanned = nextWeek;
+        });
+      }
+      if (items.isEmpty) unawaited(_loadSuggestion(homeId));
     } catch (e) {
       // No rompemos la UI (el resumen se ve sin plan), pero dejamos traza del
       // error para no confundir un fallo de carga con un dia sin plan.
       debugPrint('HomeTab._loadTodayPlan error: $e');
     }
+  }
+
+  /// Una receta para hoy que se puede hacer ya con lo que hay en casa, del
+  /// tipo de comida que toca y sin nada que alguien no pueda comer. Las
+  /// favoritas primero; si no, la que menos ingredientes pide.
+  Future<void> _loadSuggestion(String homeId) async {
+    try {
+      final recRes = await _client
+          .from('recipes')
+          .select('*, recipe_ingredients(name)')
+          .eq('home_id', homeId);
+      final recipes = [for (final m in recRes as List) Recipe.fromMap(m)];
+      if (recipes.isEmpty) return;
+      final invRes = await _client
+          .from('inventory_items')
+          .select()
+          .eq('home_id', homeId);
+      final pantry = pantryNamesForIdeas([
+        for (final r in invRes as List)
+          InventoryItem.fromMap(Map<String, dynamic>.from(r)),
+      ], max: 1000);
+      final limits = await HomeFoodRestrictions.load(_client);
+      final meal = _suggestionMeal;
+      final ready =
+          limits
+              .safeRecipes(readyToCook(recipes, pantry))
+              .where((r) => r.mealTypes.isEmpty || r.mealTypes.contains(meal))
+              .toList()
+            ..sort((a, b) {
+              if (a.isFavorite != b.isFavorite) return a.isFavorite ? -1 : 1;
+              return a.ingredientNames.length.compareTo(
+                b.ingredientNames.length,
+              );
+            });
+      final people = await _client
+          .from('profiles')
+          .select('id')
+          .eq('home_id', homeId);
+      if (!mounted) return;
+      setState(() {
+        _suggestion = ready.isEmpty ? null : ready.first;
+        _householdSize = (people as List).length.clamp(1, 12);
+      });
+    } catch (e) {
+      debugPrint('HomeTab._loadSuggestion error: $e');
+    }
+  }
+
+  /// Comida o cena según la hora, para la propuesta de un toque.
+  String get _suggestionMeal => DateTime.now().hour < 16 ? 'lunch' : 'dinner';
+
+  /// Pone la receta propuesta en el plan de hoy.
+  Future<void> _acceptSuggestion(Recipe r) async {
+    final meal = _suggestionMeal;
+    try {
+      await _client
+          .from('meal_plan_entries')
+          .insert(
+            MealPlanEntry(
+              homeId: r.homeId,
+              date: DateTime.now(),
+              mealType: meal,
+              recipeId: r.id,
+              servings: _householdSize,
+            ).toMap(),
+          );
+      HapticFeedback.selectionClick();
+      setState(() => _suggestion = null);
+      await _loadTodayPlan();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
+    }
+  }
+
+  /// Por la noche (una hora después de la cena, y nunca antes de las 19:00)
+  /// lo que importa es mañana.
+  bool get _evening {
+    final now = DateTime.now();
+    final minutes = now.hour * 60 + now.minute;
+    final dinner = PlanPrefs.current.value.minutesOf('dinner');
+    final from = (dinner + 60).clamp(19 * 60, 22 * 60);
+    return minutes >= from;
+  }
+
+  /// "Ponerme al día" (igual que en Tareas): las que se repiten saltan a su
+  /// próxima vez y las puntuales pasan a hoy, sin puntos. Se puede deshacer.
+  Future<void> _catchUp(List<HomeTask> overdue) async {
+    String key(DateTime d) => d.toIso8601String().split('T').first;
+    final dates = catchUpDates(overdue, DateTime.now());
+    try {
+      for (final t in overdue) {
+        final d = dates[t.id];
+        if (d == null) continue;
+        await _client
+            .from('tasks')
+            .update({'due_date': key(d), 'next_due': key(d)})
+            .eq('id', t.id);
+      }
+      HapticFeedback.selectionClick();
+      await _loadTasksSummary();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l.tskCaughtUp),
+          action: SnackBarAction(
+            label: context.l.undo,
+            onPressed: () async {
+              for (final t in overdue) {
+                final old = t.nextDue ?? t.dueDate;
+                await _client
+                    .from('tasks')
+                    .update({
+                      'due_date': t.dueDate == null ? null : key(t.dueDate!),
+                      'next_due': old == null ? null : key(old),
+                    })
+                    .eq('id', t.id);
+              }
+              await _loadTasksSummary();
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
+    }
+  }
+
+  /// Desde el viernes, si la semana que viene está vacía, se prepara de un
+  /// toque (el plan aprende de lo que gustó).
+  void _prepareNextWeek() {
+    final now = DateTime.now();
+    MealPlanScreen.generateWeek.value = DateTime(
+      now.year,
+      now.month,
+      now.day + 8 - now.weekday,
+    );
+    _openMealPlan();
   }
 
   /// Carga las tareas pendientes del hogar (mismo patrón de consulta que
@@ -555,6 +739,15 @@ class HomeTabState extends State<HomeTab> {
     ];
     return Scaffold(
       backgroundColor: AppColors.cream,
+      // Un solo botón para apuntar algo a la compra, la despensa o tareas.
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab-capture',
+        onPressed: () async {
+          if (await showQuickCapture(context)) _loadDashboard();
+        },
+        icon: const Icon(Icons.add_rounded),
+        label: Text(context.l.captureTitle),
+      ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -592,6 +785,10 @@ class HomeTabState extends State<HomeTab> {
                 if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
                   StaggeredEntrance(index: 1, child: _todayMealHero()),
                   const SizedBox(height: AppSpacing.lg),
+                  if (_nextWeekPlanned == false) ...[
+                    StaggeredEntrance(index: 2, child: _nextWeekCard()),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                 ],
 
                 // De un vistazo: caducidades, tareas y compra. Tocar lleva a
@@ -734,6 +931,9 @@ class HomeTabState extends State<HomeTab> {
   /// La comida que toca ahora según la hora (desayuno por la mañana, comida a
   /// mediodía…). Si ya pasó todo, la última del día.
   _PlanItem? _nextMeal() {
+    if (_showingTomorrow) {
+      return _tomorrowItems.firstWhere((i) => !i.skipped);
+    }
     final active = _todayItems.where((i) => !i.skipped).toList();
     if (active.isEmpty) return null;
     final h = DateTime.now().hour;
@@ -755,11 +955,18 @@ class HomeTabState extends State<HomeTab> {
   /// Tarjeta grande "Hoy comemos": foto de la receta que toca y, debajo, el
   /// resto de comidas del día. Sin plan, invita a planificar o a cocinar con
   /// lo que hay en casa.
+  /// Por la noche, con algo planificado para mañana, la tarjeta es de mañana.
+  bool get _showingTomorrow =>
+      _evening && _tomorrowItems.any((i) => !i.skipped);
+
   Widget _todayMealHero() {
     final next = _nextMeal();
     if (next == null) return _emptyMealHero();
     final style = mealStyle(next.mealType);
-    final others = _todayItems.where((i) => !identical(i, next)).toList();
+    final tomorrow = _showingTomorrow;
+    final others = (tomorrow ? _tomorrowItems : _todayItems)
+        .where((i) => !identical(i, next))
+        .toList();
     return Container(
       // El relleno deja ver el borde por encima de la foto.
       padding: const EdgeInsets.all(1.5),
@@ -816,8 +1023,13 @@ class HomeTabState extends State<HomeTab> {
                           Icon(style.icon, size: 14, color: style.fg),
                           const SizedBox(width: 4),
                           Text(
-                            context.l
-                                .homeTodayTag(context.l.mealType(next.mealType))
+                            (tomorrow
+                                    ? context.l.homeTomorrowTag(
+                                        context.l.mealType(next.mealType),
+                                      )
+                                    : context.l.homeTodayTag(
+                                        context.l.mealType(next.mealType),
+                                      ))
                                 .toUpperCase(),
                             style: TextStyle(
                               fontSize: 12,
@@ -904,6 +1116,95 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
+  /// "Puedes hacer X: tienes todo en casa" y un botón para ponerla.
+  Widget _suggestionRow(Recipe r) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: RecipeImage(recipe: r, height: 56, radius: 0),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.titleSmall,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  context.l.homeYouHaveAll,
+                  style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                ),
+                const SizedBox(height: 6),
+                FilledButton(
+                  onPressed: () => _acceptSuggestion(r),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.terracotta,
+                    foregroundColor: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  child: Text(context.l.homePutFor(_suggestionMeal)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Desde el viernes, si la semana que viene está vacía.
+  Widget _nextWeekCard() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        color: AppColors.sageBg,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event_note_rounded, size: 32, color: AppColors.sage),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.l.homeNextWeekEmpty, style: AppTextStyles.title),
+                const SizedBox(height: 2),
+                Text(context.l.homeNextWeekSub, style: AppTextStyles.bodyMuted),
+                const SizedBox(height: AppSpacing.sm),
+                FilledButton.icon(
+                  onPressed: _prepareNextWeek,
+                  icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: Text(context.l.homeNextWeekGo),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.ink,
+                    foregroundColor: AppColors.cream,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _emptyMealHero() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -931,6 +1232,10 @@ class HomeTabState extends State<HomeTab> {
           ),
           const SizedBox(height: 4),
           Text(context.l.homeNothingPlanned, style: AppTextStyles.bodyMuted),
+          if (_suggestion case final r?) ...[
+            const SizedBox(height: AppSpacing.lg),
+            _suggestionRow(r),
+          ],
           const SizedBox(height: AppSpacing.lg),
           Wrap(
             spacing: AppSpacing.sm,
@@ -976,10 +1281,19 @@ class HomeTabState extends State<HomeTab> {
         _prefs.visibleCards.contains(DashboardCard.tasks);
     return buildDayBrief(
       today: DateTime.now(),
-      defrost: [
-        for (final i in _todayItems)
-          if (i.fromFreezer && !i.skipped) i.title,
-      ],
+      // Por la noche, lo de hoy ya no se puede descongelar: lo de mañana sí.
+      defrost: _evening
+          ? const []
+          : [
+              for (final i in _todayItems)
+                if (i.fromFreezer && !i.skipped) i.title,
+            ],
+      defrostTomorrow: _evening
+          ? [
+              for (final i in _tomorrowItems)
+                if (i.fromFreezer && !i.skipped) i.title,
+            ]
+          : const [],
       expiring: _expiringNames,
       expired: _expired,
       tasks: tasksOn ? _todayTasks : const [],
@@ -1082,6 +1396,18 @@ class HomeTabState extends State<HomeTab> {
         context.l.homeDefrost(line.names.join(', ')),
         null,
         _openMealPlan,
+      ),
+      DayLineKind.defrostTomorrow => (
+        Icons.ac_unit_rounded,
+        context.l.homeDefrostTomorrow(line.names.join(', ')),
+        context.l.homeDefrostTomorrowSub,
+        _openMealPlan,
+      ),
+      DayLineKind.overdue => (
+        Icons.event_repeat_rounded,
+        context.l.homeOverdue(line.count),
+        context.l.homeOverdueSub,
+        () => _catchUp(line.tasks),
       ),
       DayLineKind.expiring => (
         Icons.hourglass_bottom_rounded,
@@ -1186,12 +1512,16 @@ class HomeTabState extends State<HomeTab> {
                       icon: Icon(
                         isTask
                             ? Icons.check_rounded
+                            : line.kind == DayLineKind.overdue
+                            ? Icons.event_available_rounded
                             : Icons.arrow_forward_rounded,
                         size: 20,
                       ),
                       label: Text(
                         isTask
                             ? context.l.homeNextDone
+                            : line.kind == DayLineKind.overdue
+                            ? context.l.tskCatchUp
                             : context.l.homeNextOpen,
                       ),
                       style: FilledButton.styleFrom(
@@ -1232,6 +1562,18 @@ class HomeTabState extends State<HomeTab> {
         color: AppColors.frost,
         text: context.l.homeDefrost(line.names.join(', ')),
         onTap: _openMealPlan,
+      ),
+      DayLineKind.defrostTomorrow => _dayAction(
+        icon: Icons.ac_unit_rounded,
+        color: AppColors.frost,
+        text: context.l.homeDefrostTomorrow(line.names.join(', ')),
+        onTap: _openMealPlan,
+      ),
+      DayLineKind.overdue => _dayAction(
+        icon: Icons.event_repeat_rounded,
+        color: AppColors.soon,
+        text: '${context.l.homeOverdue(line.count)} · ${context.l.tskCatchUp}',
+        onTap: () => _catchUp(line.tasks),
       ),
       DayLineKind.expiring => _dayAction(
         icon: Icons.hourglass_bottom_rounded,

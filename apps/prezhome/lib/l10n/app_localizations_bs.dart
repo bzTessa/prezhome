@@ -4391,6 +4391,7 @@ class AppLocalizationsBs extends AppLocalizations {
   String remKind(String kind) {
     String _temp0 = intl.Intl.selectLogic(kind, {
       'tasks': 'Zadaci sa vremenom',
+      'kitchen': 'Zamrzivač i kuhanje',
       'expiry': 'Proizvodi kojima ističe rok',
       'other': 'Niz za dom',
     });
@@ -4797,4 +4798,218 @@ class AppLocalizationsBs extends AppLocalizations {
   String shopCompareMissing(String names) {
     return 'Nije pronađeno: $names';
   }
+
+  @override
+  String get tskCatchUp => 'Sustigni';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Zadaci koji se ponavljaju prelaze na sljedeći put, a jednokratni na danas. Ne označavaju se kao urađeni i ne donose bodove.';
+
+  @override
+  String get tskCaughtUp => 'Gotovo, sve je ažurno';
+
+  @override
+  String get captureTitle => 'Zabilježi';
+
+  @override
+  String get captureToShopping => 'Kupovina';
+
+  @override
+  String get captureToPantry => 'Ostava';
+
+  @override
+  String get captureToTask => 'Zadatak';
+
+  @override
+  String get captureHintShopping => 'Mlijeko, hljeb i jaja';
+
+  @override
+  String get captureHintPantry => 'Ono što si upravo kupio';
+
+  @override
+  String get captureHintTask => 'Pozvati vodoinstalatera';
+
+  @override
+  String get captureSave => 'Zabilježi';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zabilježeno',
+      one: 'Zabilježeno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get onbFoodTitle => 'Ima li nešto što se kod kuće ne smije jesti?';
+
+  @override
+  String get onbFoodHint =>
+      'Plan obroka to nikad neće predložiti. Možeš to promijeniti u profilu.';
+
+  @override
+  String get onbFoodNone => 'Jedemo sve';
+
+  @override
+  String get onbFoodAllergies => 'ALERGIJE ILI NETOLERANCIJE';
+
+  @override
+  String get onbFoodDiet => 'PREHRANA';
+
+  @override
+  String get onbFoodVeg => 'Vegetarijanska';
+
+  @override
+  String get onbFoodVegan => 'Veganska';
+
+  @override
+  String rdAllergyWarn(String allergen) {
+    return 'Sadrži $allergen, a neko kod kuće to ne smije jesti.';
+  }
+
+  @override
+  String rdDietWarn(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'vegana': 'veganska',
+      'pescetariana': 'peskatarijanska',
+      'other': 'vegetarijanska',
+    });
+    return 'Ne odgovara prehrani u kući ($_temp0).';
+  }
+
+  @override
+  String remDefrostOne(String name) {
+    return 'Izvadi $name iz zamrzivača';
+  }
+
+  @override
+  String remDefrostMany(int count) {
+    return 'Izvadi $count jela iz zamrzivača';
+  }
+
+  @override
+  String get remDefrostBody =>
+      'Ostavi ga večeras u frižideru i sutra će biti spremno.';
+
+  @override
+  String get remBatchTomorrow => 'Sutra je dan za kuhanje unaprijed';
+
+  @override
+  String remBatchTomorrowBody(int servings) {
+    return '$servings porcija. Provjeri imaš li sve prije spavanja.';
+  }
+
+  @override
+  String get shopShareList => 'Pošalji listu';
+
+  @override
+  String shopShareTitle(String name) {
+    return 'Lista za kupovinu: $name';
+  }
+
+  @override
+  String get shopShareFooter => 'Napravljeno u PrezHome';
+
+  @override
+  String get shopShareCopied => 'Lista kopirana: zalijepi je gdje želiš';
+
+  @override
+  String get hhSendInvite => 'Pošalji pozivnicu';
+
+  @override
+  String hhInviteMessage(String code) {
+    return 'Pridruži se našem domu u PrezHome! Tako dijelimo plan obroka, listu za kupovinu i zadatke.\n\n1. Instaliraj PrezHome i napravi račun.\n2. Kopiraj ovu poruku i dodirni \"Pozvan/a sam u dom\": kod će se sam upisati.\n\nKod: $code';
+  }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'Za sutra izvadi iz zamrzivača: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'Večeras u frižider i sutra će biti spremno';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zakašnjelih zadataka',
+      one: '1 zakašnjeli zadatak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Ponavljajući prelaze na sljedeći put, a jednokratni na danas';
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Sutra · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Imaš sve kod kuće';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Za današnji ručak',
+      'other': 'Za današnju večeru',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'Sljedeća sedmica je prazna';
+
+  @override
+  String get homeNextWeekSub =>
+      'Popunit ću je onim što vam se najviše svidjelo i pripremiti listu.';
+
+  @override
+  String get homeNextWeekGo => 'Pripremi je';
+
+  @override
+  String get winsTitle => 'Tvoj mjesec kod kuće';
+
+  @override
+  String get winsRescued => 'iskorišteno prije isteka';
+
+  @override
+  String get winsThrown => 'bačeno';
+
+  @override
+  String get winsMeals => 'obroka kod kuće';
+
+  @override
+  String get winsTasks => 'urađenih zadataka';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count proizvoda manje bačeno nego prošli mjesec',
+      one: '1 proizvod manje bačen nego prošli mjesec',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Kad koristiš ostavu, plan i zadatke, ovdje ćeš vidjeti svoj mjesec.';
+
+  @override
+  String get proHeadline => 'Više pomoći za ono što ti oduzima najviše vremena';
+
+  @override
+  String get proHeadlineSub =>
+      'Čita više računa, izvlači više recepata iz linkova i fotografija i predlaže više ideja svaki mjesec. Jedna pretplata vrijedi za cijelo domaćinstvo.';
 }

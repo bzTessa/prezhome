@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_shell.dart';
@@ -29,6 +30,21 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
       await _client.rpc('create_home_and_join');
       await HomeCountry.load(_client);
     });
+  }
+
+  /// Abre el campo del código y, si el mensaje de invitación está copiado,
+  /// lo rellena solo.
+  Future<void> _startJoining() async {
+    setState(() => _joining = true);
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final code = inviteCodeIn(data?.text);
+      if (code != null && mounted && _homeIdController.text.isEmpty) {
+        setState(() => _homeIdController.text = formatInviteCode(code));
+      }
+    } catch (_) {
+      // Sin portapapeles se escribe a mano.
+    }
   }
 
   Future<void> _joinHome() async {
@@ -121,9 +137,7 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                   const SizedBox(height: 12),
                   if (!_joining)
                     TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => setState(() => _joining = true),
+                      onPressed: _isLoading ? null : _startJoining,
                       child: Text(
                         context.l.homeInvited,
                         style: TextStyle(

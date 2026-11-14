@@ -7,9 +7,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../models/inventory_item.dart';
+import '../models/meal_plan_entry.dart';
+import '../models/nutrition_profile.dart';
+import '../models/recipe.dart';
 import '../models/task.dart';
 import 'calendar_sync.dart';
 import 'file_local_store.dart';
+import 'plan_prefs.dart';
+import 'plan_prep.dart';
 import 'streak.dart';
 import '../l10n/l10n.dart';
 
@@ -18,7 +23,8 @@ import '../l10n/l10n.dart';
 typedef Reminder = ({DateTime at, String title, String body, String kind});
 
 /// Avisos del móvil programados en el propio dispositivo, sin servidor:
-/// tareas con hora, productos que caducan y la racha. Cada vez que la app
+/// tareas con hora, lo que hay que sacar del congelador o cocinar mañana,
+/// productos que caducan y la racha. Cada vez que la app
 /// pasa a segundo plano se borran y se vuelven a programar los de los
 /// próximos días con lo último que hay en la base de datos.
 ///
@@ -27,7 +33,7 @@ typedef Reminder = ({DateTime at, String title, String body, String kind});
 /// hace falta, pasar a push remoto (FCM/APNs) desde Supabase.
 class Reminders {
   /// Nombre de cada uno: l10n.remKind.
-  static const kinds = ['tasks', 'expiry', 'streak'];
+  static const kinds = ['tasks', 'kitchen', 'expiry', 'streak'];
 
   /// Tipo del aviso que la persona acaba de tocar; el shell lo consume para
   /// abrir la pestaña que toca y lo vuelve a poner a null.
@@ -171,7 +177,7 @@ class Reminders {
     final skip = off.value;
     final profile = await client
         .from('profiles')
-        .select('home_id')
+        .select()
         .eq('id', uid)
         .maybeSingle();
     final homeId = profile?['home_id'] as String?;
@@ -205,8 +211,82 @@ class Reminders {
           .lte('expiration_date', day(today.add(const Duration(days: _days))));
       items = [for (final r in res as List) InventoryItem.fromMap(r)];
     }
+    var defrost = <DateTime, List<String>>{};
+    var cookDays = <DateTime, int>{};
+    if (!skip.contains('kitchen')) {
+      (defrost, cookDays) = await _kitchen(
+        client,
+        homeId,
+        today,
+        batch: NutritionProfile.fromMap(profile!).isMealPrep,
+      );
+    }
     final streak = skip.contains('streak') ? null : await Streak.load(client);
-    return plan(tasks: tasks, items: items, streak: streak, now: now);
+    return plan(
+      tasks: tasks,
+      items: items,
+      streak: streak,
+      now: now,
+      defrost: defrost,
+      cookDays: cookDays,
+    );
+  }
+
+  /// Platos del plan que salen del congelador cada día de la semana que
+  /// viene y, cocinando en lote, los días de cocina con sus raciones.
+  static Future<(Map<DateTime, List<String>>, Map<DateTime, int>)> _kitchen(
+    SupabaseClient client,
+    String homeId,
+    DateTime today, {
+    required bool batch,
+  }) async {
+    String day(DateTime d) => d.toIso8601String().split('T').first;
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final res = await client
+        .from('meal_plan_entries')
+        .select('*, recipes(*)')
+        .eq('home_id', homeId)
+        .gte('plan_date', day(monday))
+        .lt('plan_date', day(monday.add(const Duration(days: 14))));
+    final entries = <MealPlanEntry>[];
+    final recipes = <String, Recipe>{};
+    for (final row in res as List) {
+      entries.add(MealPlanEntry.fromMap(row));
+      final rec = row['recipes'];
+      if (rec is Map<String, dynamic>) {
+        try {
+          final r = Recipe.fromMap(rec);
+          recipes[r.id] = r;
+        } catch (_) {}
+      }
+    }
+    final defrost = <DateTime, List<String>>{};
+    for (final e in entries) {
+      final title = recipes[e.recipeId]?.title;
+      if (!e.fromFreezer || e.skipped || title == null) continue;
+      final d = DateTime(e.date.year, e.date.month, e.date.day);
+      if (!d.isAfter(today)) continue;
+      final names = defrost[d] ??= [];
+      if (!names.contains(title)) names.add(title);
+    }
+    final cookDays = <DateTime, int>{};
+    if (batch) {
+      final prefs = PlanPrefs.current.value;
+      for (final week in [monday, monday.add(const Duration(days: 7))]) {
+        final prep = prepPlanForWeek(
+          entries: entries,
+          recipesById: recipes,
+          weekStart: week,
+          energyLevel: prefs.energy,
+          dayLoads: prefs.dayLoads,
+        );
+        for (final c in prep.cookingDays) {
+          final d = DateTime(c.date.year, c.date.month, c.date.day);
+          if (d.isAfter(today)) cookDays[d] = c.totalServings;
+        }
+      }
+    }
+    return (defrost, cookDays);
   }
 
   /// Los avisos de los próximos días, del más cercano al más lejano.
@@ -215,6 +295,8 @@ class Reminders {
     required List<InventoryItem> items,
     required Streak? streak,
     required DateTime now,
+    Map<DateTime, List<String>> defrost = const {},
+    Map<DateTime, int> cookDays = const {},
   }) {
     final today = DateTime(now.year, now.month, now.day);
     final until = today.add(const Duration(days: _days));
@@ -255,6 +337,29 @@ class Reminders {
             '${names.length == 1 ? '' : '${_list(names)}. '}'
             '${appL10n.remExpiryBody}',
         kind: 'expiry',
+      ));
+    });
+
+    // La noche antes, que es cuando hay que hacerlo: sacar del congelador a
+    // las 21:30 y cocinar en lote a las 20:30 (para mirar si falta algo).
+    defrost.forEach((d, names) {
+      out.add((
+        at: DateTime(d.year, d.month, d.day - 1, 21, 30),
+        title: names.length == 1
+            ? appL10n.remDefrostOne(names.first)
+            : appL10n.remDefrostMany(names.length),
+        body:
+            '${names.length == 1 ? '' : '${_list(names)}. '}'
+            '${appL10n.remDefrostBody}',
+        kind: 'kitchen',
+      ));
+    });
+    cookDays.forEach((d, servings) {
+      out.add((
+        at: DateTime(d.year, d.month, d.day - 1, 20, 30),
+        title: appL10n.remBatchTomorrow,
+        body: appL10n.remBatchTomorrowBody(servings),
+        kind: 'kitchen',
       ));
     });
 

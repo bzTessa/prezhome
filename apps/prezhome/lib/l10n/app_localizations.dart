@@ -6993,7 +6993,7 @@ abstract class AppLocalizations {
   /// No description provided for @remKind.
   ///
   /// In es, this message translates to:
-  /// **'{kind, select, tasks{Tareas con hora} expiry{Productos que caducan} other{Racha de casa al día}}'**
+  /// **'{kind, select, tasks{Tareas con hora} kitchen{Congelador y cocina} expiry{Productos que caducan} other{Racha de casa al día}}'**
   String remKind(String kind);
 
   /// No description provided for @remTaskOne.
@@ -7475,6 +7475,312 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin encontrar: {names}'**
   String shopCompareMissing(String names);
+
+  /// No description provided for @tskCatchUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Ponerme al día'**
+  String get tskCatchUp;
+
+  /// No description provided for @tskCatchUpExplain.
+  ///
+  /// In es, this message translates to:
+  /// **'Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.'**
+  String get tskCatchUpExplain;
+
+  /// No description provided for @tskCaughtUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo, estás al día'**
+  String get tskCaughtUp;
+
+  /// No description provided for @captureTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar'**
+  String get captureTitle;
+
+  /// No description provided for @captureToShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra'**
+  String get captureToShopping;
+
+  /// No description provided for @captureToPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Despensa'**
+  String get captureToPantry;
+
+  /// No description provided for @captureToTask.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarea'**
+  String get captureToTask;
+
+  /// No description provided for @captureHintShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'Leche, pan y huevos'**
+  String get captureHintShopping;
+
+  /// No description provided for @captureHintPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que acabas de comprar'**
+  String get captureHintPantry;
+
+  /// No description provided for @captureHintTask.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamar al fontanero'**
+  String get captureHintTask;
+
+  /// No description provided for @captureSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar'**
+  String get captureSave;
+
+  /// No description provided for @captureDone.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Apuntado} other{{count} apuntados}}'**
+  String captureDone(int count);
+
+  /// No description provided for @onbFoodTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Hay algo que no se pueda comer en casa?'**
+  String get onbFoodTitle;
+
+  /// No description provided for @onbFoodHint.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan de comidas nunca lo propondrá. Lo puedes cambiar en tu perfil.'**
+  String get onbFoodHint;
+
+  /// No description provided for @onbFoodNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Comemos de todo'**
+  String get onbFoodNone;
+
+  /// No description provided for @onbFoodAllergies.
+  ///
+  /// In es, this message translates to:
+  /// **'ALERGIAS O INTOLERANCIAS'**
+  String get onbFoodAllergies;
+
+  /// No description provided for @onbFoodDiet.
+  ///
+  /// In es, this message translates to:
+  /// **'DIETA'**
+  String get onbFoodDiet;
+
+  /// No description provided for @onbFoodVeg.
+  ///
+  /// In es, this message translates to:
+  /// **'Vegetariana'**
+  String get onbFoodVeg;
+
+  /// No description provided for @onbFoodVegan.
+  ///
+  /// In es, this message translates to:
+  /// **'Vegana'**
+  String get onbFoodVegan;
+
+  /// No description provided for @rdAllergyWarn.
+  ///
+  /// In es, this message translates to:
+  /// **'Lleva {allergen} y alguien en casa no puede tomarlo.'**
+  String rdAllergyWarn(String allergen);
+
+  /// No description provided for @rdDietWarn.
+  ///
+  /// In es, this message translates to:
+  /// **'No encaja con la dieta de casa ({diet, select, vegana{vegana} pescetariana{pescetariana} other{vegetariana}}).'**
+  String rdDietWarn(String diet);
+
+  /// No description provided for @remDefrostOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Saca {name} del congelador'**
+  String remDefrostOne(String name);
+
+  /// No description provided for @remDefrostMany.
+  ///
+  /// In es, this message translates to:
+  /// **'Saca {count} platos del congelador'**
+  String remDefrostMany(int count);
+
+  /// No description provided for @remDefrostBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Déjalo en la nevera esta noche y mañana estará listo.'**
+  String get remDefrostBody;
+
+  /// No description provided for @remBatchTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana toca cocinar en lote'**
+  String get remBatchTomorrow;
+
+  /// No description provided for @remBatchTomorrowBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{servings} raciones. Mira si tienes todo antes de dormir.'**
+  String remBatchTomorrowBody(int servings);
+
+  /// No description provided for @shopShareList.
+  ///
+  /// In es, this message translates to:
+  /// **'Mandar la lista'**
+  String get shopShareList;
+
+  /// No description provided for @shopShareTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista de la compra: {name}'**
+  String shopShareTitle(String name);
+
+  /// No description provided for @shopShareFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecha con PrezHome'**
+  String get shopShareFooter;
+
+  /// No description provided for @shopShareCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista copiada: pégala donde quieras'**
+  String get shopShareCopied;
+
+  /// No description provided for @hhSendInvite.
+  ///
+  /// In es, this message translates to:
+  /// **'Mandar invitación'**
+  String get hhSendInvite;
+
+  /// No description provided for @hhInviteMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Únete a nuestra casa en PrezHome! Así compartimos el plan de comidas, la lista de la compra y las tareas.\n\n1. Instala PrezHome y crea tu cuenta.\n2. Copia este mensaje y toca \"Me han invitado a un hogar\": el código se pondrá solo.\n\nCódigo: {code}'**
+  String hhInviteMessage(String code);
+
+  /// No description provided for @homeDefrostTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Para mañana, saca del congelador: {names}'**
+  String homeDefrostTomorrow(String names);
+
+  /// No description provided for @homeDefrostTomorrowSub.
+  ///
+  /// In es, this message translates to:
+  /// **'A la nevera esta noche y mañana estará listo'**
+  String get homeDefrostTomorrowSub;
+
+  /// No description provided for @homeOverdue.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 tarea atrasada} other{{count} tareas atrasadas}}'**
+  String homeOverdue(int count);
+
+  /// No description provided for @homeOverdueSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Las que se repiten pasan a su próxima vez y las puntuales, a hoy'**
+  String get homeOverdueSub;
+
+  /// No description provided for @homeTomorrowTag.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana · {meal}'**
+  String homeTomorrowTag(String meal);
+
+  /// No description provided for @homeYouHaveAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes todo en casa'**
+  String get homeYouHaveAll;
+
+  /// No description provided for @homePutFor.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, lunch{Para comer hoy} other{Para cenar hoy}}'**
+  String homePutFor(String type);
+
+  /// No description provided for @homeNextWeekEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'La semana que viene está vacía'**
+  String get homeNextWeekEmpty;
+
+  /// No description provided for @homeNextWeekSub.
+  ///
+  /// In es, this message translates to:
+  /// **'La preparo con lo que más os ha gustado y te dejo la lista hecha.'**
+  String get homeNextWeekSub;
+
+  /// No description provided for @homeNextWeekGo.
+  ///
+  /// In es, this message translates to:
+  /// **'Prepararla'**
+  String get homeNextWeekGo;
+
+  /// No description provided for @winsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu mes en casa'**
+  String get winsTitle;
+
+  /// No description provided for @winsRescued.
+  ///
+  /// In es, this message translates to:
+  /// **'aprovechados antes de caducar'**
+  String get winsRescued;
+
+  /// No description provided for @winsThrown.
+  ///
+  /// In es, this message translates to:
+  /// **'a la basura'**
+  String get winsThrown;
+
+  /// No description provided for @winsMeals.
+  ///
+  /// In es, this message translates to:
+  /// **'comidas en casa'**
+  String get winsMeals;
+
+  /// No description provided for @winsTasks.
+  ///
+  /// In es, this message translates to:
+  /// **'tareas hechas'**
+  String get winsTasks;
+
+  /// No description provided for @winsThrownLess.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 producto menos a la basura que el mes pasado} other{{count} productos menos a la basura que el mes pasado}}'**
+  String winsThrownLess(int count);
+
+  /// No description provided for @winsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando uses la despensa, el plan y las tareas, aquí verás lo que llevas este mes.'**
+  String get winsEmpty;
+
+  /// No description provided for @proHeadline.
+  ///
+  /// In es, this message translates to:
+  /// **'Más ayuda para lo que más tiempo te quita'**
+  String get proHeadline;
+
+  /// No description provided for @proHeadlineSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar.'**
+  String get proHeadlineSub;
 }
 
 class _AppLocalizationsDelegate

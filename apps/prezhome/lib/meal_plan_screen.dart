@@ -17,6 +17,7 @@ import 'month_calendar_screen.dart';
 import 'services/calendar_sync.dart';
 import 'services/household_servings.dart';
 import 'services/leftovers.dart';
+import 'services/home_food_restrictions.dart';
 import 'services/meal_planner.dart';
 import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
@@ -51,6 +52,10 @@ class MealPlanScreen extends StatefulWidget {
 
   /// Dentro de la pestaña Comidas: sin barra propia.
   final bool embedded;
+
+  /// Lunes de una semana que hay que preparar (lo pide Inicio con "Preparar
+  /// la semana que viene"): el plan va a esa semana y la genera.
+  static final generateWeek = ValueNotifier<DateTime?>(null);
 
   @override
   State<MealPlanScreen> createState() => _MealPlanScreenState();
@@ -107,6 +112,24 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   void initState() {
     super.initState();
     _future = _load();
+    MealPlanScreen.generateWeek.addListener(_onGenerateWeek);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onGenerateWeek());
+  }
+
+  @override
+  void dispose() {
+    MealPlanScreen.generateWeek.removeListener(_onGenerateWeek);
+    super.dispose();
+  }
+
+  Future<void> _onGenerateWeek() async {
+    final monday = MealPlanScreen.generateWeek.value;
+    if (monday == null || !mounted || _generating) return;
+    MealPlanScreen.generateWeek.value = null;
+    _goToDay(monday);
+    final data = await _future;
+    if (!mounted || data.homeId == null) return;
+    await _generatePlan(data, _weekStart, 7);
   }
 
   void _reload() {
@@ -369,8 +392,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
       final frozenRecipeIds = freezerQueue.map((f) => f.recipeId).toSet();
 
-      // Solo recetas que se pueden hacer con los aparatos que tiene.
-      final cookable = data.recipes
+      // Solo recetas que se pueden hacer con los aparatos que tiene y que
+      // nadie de casa tenga prohibidas (alergias, dieta) ni, si hay donde
+      // elegir, que no le gusten.
+      final limits = await HomeFoodRestrictions.load(_client);
+      final allowed = limits.safeRecipes(data.recipes);
+      final cookable = allowed
           .where((r) => data.prefs.canCook(r.appliance))
           .toList();
       final hints = await PlanHints.load(_client, data.homeId!);
@@ -396,7 +423,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         startDate: start,
         days: days,
         mealTypes: PlanPrefs.current.value.planned(data.activeMeals),
-        recipes: cookable.isEmpty ? data.recipes : cookable,
+        recipes: cookable.isEmpty ? allowed : cookable,
         scoreByRecipe: scores,
         frozenRecipeIds: frozenRecipeIds,
         energyLevel: _energyLevel,

@@ -93,4 +93,29 @@ void main() {
       DateTime(2026, 10, 24, 20),
     ]);
   });
+
+  test('la noche antes: sacar del congelador y cocinar en lote', () {
+    final list = Reminders.plan(
+      tasks: const [],
+      items: const [],
+      streak: null,
+      now: now,
+      defrost: {
+        DateTime(2026, 10, 23): ['Lentejas'],
+        DateTime(2026, 10, 25): ['Pisto', 'Albóndigas'],
+      },
+      cookDays: {DateTime(2026, 10, 24): 8},
+    );
+    expect(list.every((r) => r.kind == 'kitchen'), isTrue);
+    expect(list.map((r) => r.at), [
+      DateTime(2026, 10, 22, 21, 30),
+      DateTime(2026, 10, 23, 20, 30),
+      DateTime(2026, 10, 24, 21, 30),
+    ]);
+    expect(list[0].title, 'Saca Lentejas del congelador');
+    expect(list[1].title, 'Mañana toca cocinar en lote');
+    expect(list[1].body, contains('8 raciones'));
+    expect(list[2].title, 'Saca 2 platos del congelador');
+    expect(list[2].body, startsWith('Pisto y Albóndigas.'));
+  });
 }

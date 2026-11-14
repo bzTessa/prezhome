@@ -4453,6 +4453,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String remKind(String kind) {
     String _temp0 = intl.Intl.selectLogic(kind, {
       'tasks': 'Tareas con hora',
+      'kitchen': 'Congelador y cocina',
       'expiry': 'Productos que caducan',
       'other': 'Racha de casa al día',
     });
@@ -4860,4 +4861,218 @@ class AppLocalizationsEs extends AppLocalizations {
   String shopCompareMissing(String names) {
     return 'Sin encontrar: $names';
   }
+
+  @override
+  String get tskCatchUp => 'Ponerme al día';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.';
+
+  @override
+  String get tskCaughtUp => 'Listo, estás al día';
+
+  @override
+  String get captureTitle => 'Apuntar';
+
+  @override
+  String get captureToShopping => 'Compra';
+
+  @override
+  String get captureToPantry => 'Despensa';
+
+  @override
+  String get captureToTask => 'Tarea';
+
+  @override
+  String get captureHintShopping => 'Leche, pan y huevos';
+
+  @override
+  String get captureHintPantry => 'Lo que acabas de comprar';
+
+  @override
+  String get captureHintTask => 'Llamar al fontanero';
+
+  @override
+  String get captureSave => 'Apuntar';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count apuntados',
+      one: 'Apuntado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get onbFoodTitle => '¿Hay algo que no se pueda comer en casa?';
+
+  @override
+  String get onbFoodHint =>
+      'El plan de comidas nunca lo propondrá. Lo puedes cambiar en tu perfil.';
+
+  @override
+  String get onbFoodNone => 'Comemos de todo';
+
+  @override
+  String get onbFoodAllergies => 'ALERGIAS O INTOLERANCIAS';
+
+  @override
+  String get onbFoodDiet => 'DIETA';
+
+  @override
+  String get onbFoodVeg => 'Vegetariana';
+
+  @override
+  String get onbFoodVegan => 'Vegana';
+
+  @override
+  String rdAllergyWarn(String allergen) {
+    return 'Lleva $allergen y alguien en casa no puede tomarlo.';
+  }
+
+  @override
+  String rdDietWarn(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'vegana': 'vegana',
+      'pescetariana': 'pescetariana',
+      'other': 'vegetariana',
+    });
+    return 'No encaja con la dieta de casa ($_temp0).';
+  }
+
+  @override
+  String remDefrostOne(String name) {
+    return 'Saca $name del congelador';
+  }
+
+  @override
+  String remDefrostMany(int count) {
+    return 'Saca $count platos del congelador';
+  }
+
+  @override
+  String get remDefrostBody =>
+      'Déjalo en la nevera esta noche y mañana estará listo.';
+
+  @override
+  String get remBatchTomorrow => 'Mañana toca cocinar en lote';
+
+  @override
+  String remBatchTomorrowBody(int servings) {
+    return '$servings raciones. Mira si tienes todo antes de dormir.';
+  }
+
+  @override
+  String get shopShareList => 'Mandar la lista';
+
+  @override
+  String shopShareTitle(String name) {
+    return 'Lista de la compra: $name';
+  }
+
+  @override
+  String get shopShareFooter => 'Hecha con PrezHome';
+
+  @override
+  String get shopShareCopied => 'Lista copiada: pégala donde quieras';
+
+  @override
+  String get hhSendInvite => 'Mandar invitación';
+
+  @override
+  String hhInviteMessage(String code) {
+    return '¡Únete a nuestra casa en PrezHome! Así compartimos el plan de comidas, la lista de la compra y las tareas.\n\n1. Instala PrezHome y crea tu cuenta.\n2. Copia este mensaje y toca \"Me han invitado a un hogar\": el código se pondrá solo.\n\nCódigo: $code';
+  }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'Para mañana, saca del congelador: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'A la nevera esta noche y mañana estará listo';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tareas atrasadas',
+      one: '1 tarea atrasada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Las que se repiten pasan a su próxima vez y las puntuales, a hoy';
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Mañana · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Tienes todo en casa';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Para comer hoy',
+      'other': 'Para cenar hoy',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'La semana que viene está vacía';
+
+  @override
+  String get homeNextWeekSub =>
+      'La preparo con lo que más os ha gustado y te dejo la lista hecha.';
+
+  @override
+  String get homeNextWeekGo => 'Prepararla';
+
+  @override
+  String get winsTitle => 'Tu mes en casa';
+
+  @override
+  String get winsRescued => 'aprovechados antes de caducar';
+
+  @override
+  String get winsThrown => 'a la basura';
+
+  @override
+  String get winsMeals => 'comidas en casa';
+
+  @override
+  String get winsTasks => 'tareas hechas';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos menos a la basura que el mes pasado',
+      one: '1 producto menos a la basura que el mes pasado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Cuando uses la despensa, el plan y las tareas, aquí verás lo que llevas este mes.';
+
+  @override
+  String get proHeadline => 'Más ayuda para lo que más tiempo te quita';
+
+  @override
+  String get proHeadlineSub =>
+      'Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar.';
 }

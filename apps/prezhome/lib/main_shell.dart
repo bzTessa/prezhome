@@ -386,6 +386,7 @@ class MainShellState extends State<MainShell> {
     final tab = switch (kind) {
       'tasks' => TabId.tareas,
       'expiry' => TabId.despensa,
+      'kitchen' => TabId.comidas,
       _ => TabId.inicio,
     };
     WidgetsBinding.instance.addPostFrameCallback((_) {

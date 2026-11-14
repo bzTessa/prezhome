@@ -6,11 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'plan_usage_screen.dart';
+import 'services/month_wins.dart';
 import 'services/pro_purchases.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/tactile_button.dart';
 import 'widgets/list_skeleton.dart';
+import 'widgets/month_wins_card.dart';
 
 /// Condiciones de uso estándar de Apple para suscripciones (EULA).
 const _termsUrl =
@@ -21,8 +23,8 @@ const _privacyUrl = String.fromEnvironment('PRIVACY_URL');
 String proPeriodLabel(BuildContext context, PackageType type) =>
     context.l.proPeriod(type.name);
 
-/// Pasar a Pro: qué da (cupos de `plan_quotas`), opciones de pago y
-/// restaurar compras. Devuelve true al cerrarse si la persona ya tiene Pro.
+/// Pasar a Pro: lo que la app ya hace por la casa este mes, qué da Pro (cupos
+/// de `plan_quotas`), opciones de pago y restaurar compras. Devuelve true al cerrarse si la persona ya tiene Pro.
 class ProScreen extends StatefulWidget {
   const ProScreen({super.key});
 
@@ -31,16 +33,18 @@ class ProScreen extends StatefulWidget {
 }
 
 class _ProScreenState extends State<ProScreen> {
-  late final Future<(List<Map<String, dynamic>>, List<Package>)> _future =
-      _load();
+  late final Future<(List<Map<String, dynamic>>, List<Package>, MonthWins)>
+  _future = _load();
   bool _busy = false;
 
-  Future<(List<Map<String, dynamic>>, List<Package>)> _load() async {
-    final quotas = await Supabase.instance.client.from('plan_quotas').select();
+  Future<(List<Map<String, dynamic>>, List<Package>, MonthWins)> _load() async {
+    final client = Supabase.instance.client;
+    final winsFuture = MonthWins.load(client);
+    final quotas = await client.from('plan_quotas').select();
     final packages = ProPurchases.available
         ? await ProPurchases.packages()
         : const <Package>[];
-    return (quotas, packages);
+    return (quotas, packages, await winsFuture);
   }
 
   Future<void> _run(Future<bool> Function() action, String notPro) async {
@@ -84,7 +88,7 @@ class _ProScreenState extends State<ProScreen> {
           if (snapshot.hasError) {
             return Center(child: Text(friendlyError(snapshot.error)));
           }
-          final (quotas, packages) = snapshot.data!;
+          final (quotas, packages, wins) = snapshot.data!;
           final free = {
             for (final f in buildPlanUsage('free', quotas, const []))
               f.feature: f.limit,
@@ -94,19 +98,32 @@ class _ProScreenState extends State<ProScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               Text(
-                context.l.proMoreUses,
+                context.l.proHeadline,
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 22,
                   color: AppColors.ink,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
-                context.l.proRestSame,
-                style: TextStyle(color: AppColors.inkMuted),
+                context.l.proHeadlineSub,
+                style: TextStyle(color: AppColors.inkMuted, height: 1.35),
               ),
-              const SizedBox(height: 20),
+              if (!wins.isEmpty) ...[
+                const SizedBox(height: 20),
+                MonthWinsCard(wins: wins),
+              ],
+              const SizedBox(height: 24),
+              Text(
+                context.l.proMoreUses,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: AppTheme.tactileDecoration(),
@@ -121,6 +138,11 @@ class _ProScreenState extends State<ProScreen> {
                       ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                context.l.proRestSame,
+                style: TextStyle(color: AppColors.inkMuted),
               ),
               const SizedBox(height: 24),
               if (packages.isEmpty)

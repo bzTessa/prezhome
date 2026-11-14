@@ -4455,6 +4455,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String remKind(String kind) {
     String _temp0 = intl.Intl.selectLogic(kind, {
       'tasks': 'Aufgaben mit Uhrzeit',
+      'kitchen': 'Gefrierfach und Kochen',
       'expiry': 'Ablaufende Produkte',
       'other': 'Haushalts-Serie',
     });
@@ -4864,4 +4865,219 @@ class AppLocalizationsDe extends AppLocalizations {
   String shopCompareMissing(String names) {
     return 'Nicht gefunden: $names';
   }
+
+  @override
+  String get tskCatchUp => 'Aufholen';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Wiederkehrende Aufgaben springen zum nächsten Termin, einmalige auf heute. Sie werden nicht als erledigt markiert und bringen keine Punkte.';
+
+  @override
+  String get tskCaughtUp => 'Fertig, du bist auf dem Laufenden';
+
+  @override
+  String get captureTitle => 'Notieren';
+
+  @override
+  String get captureToShopping => 'Einkauf';
+
+  @override
+  String get captureToPantry => 'Vorrat';
+
+  @override
+  String get captureToTask => 'Aufgabe';
+
+  @override
+  String get captureHintShopping => 'Milch, Brot und Eier';
+
+  @override
+  String get captureHintPantry => 'Was du gerade gekauft hast';
+
+  @override
+  String get captureHintTask => 'Klempner anrufen';
+
+  @override
+  String get captureSave => 'Notieren';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notiert',
+      one: 'Notiert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get onbFoodTitle => 'Gibt es etwas, das bei euch niemand essen darf?';
+
+  @override
+  String get onbFoodHint =>
+      'Der Essensplan schlägt es nie vor. Du kannst es in deinem Profil ändern.';
+
+  @override
+  String get onbFoodNone => 'Wir essen alles';
+
+  @override
+  String get onbFoodAllergies => 'ALLERGIEN ODER UNVERTRÄGLICHKEITEN';
+
+  @override
+  String get onbFoodDiet => 'ERNÄHRUNG';
+
+  @override
+  String get onbFoodVeg => 'Vegetarisch';
+
+  @override
+  String get onbFoodVegan => 'Vegan';
+
+  @override
+  String rdAllergyWarn(String allergen) {
+    return 'Enthält $allergen, und jemand bei euch verträgt das nicht.';
+  }
+
+  @override
+  String rdDietWarn(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'vegana': 'vegan',
+      'pescetariana': 'pescetarisch',
+      'other': 'vegetarisch',
+    });
+    return 'Passt nicht zur Ernährung bei euch ($_temp0).';
+  }
+
+  @override
+  String remDefrostOne(String name) {
+    return 'Nimm $name aus dem Gefrierfach';
+  }
+
+  @override
+  String remDefrostMany(int count) {
+    return 'Nimm $count Gerichte aus dem Gefrierfach';
+  }
+
+  @override
+  String get remDefrostBody =>
+      'Stell es heute Abend in den Kühlschrank, dann ist es morgen fertig.';
+
+  @override
+  String get remBatchTomorrow => 'Morgen wird vorgekocht';
+
+  @override
+  String remBatchTomorrowBody(int servings) {
+    return '$servings Portionen. Schau vor dem Schlafen, ob alles da ist.';
+  }
+
+  @override
+  String get shopShareList => 'Liste senden';
+
+  @override
+  String shopShareTitle(String name) {
+    return 'Einkaufsliste: $name';
+  }
+
+  @override
+  String get shopShareFooter => 'Erstellt mit PrezHome';
+
+  @override
+  String get shopShareCopied => 'Liste kopiert: füge sie ein, wo du willst';
+
+  @override
+  String get hhSendInvite => 'Einladung senden';
+
+  @override
+  String hhInviteMessage(String code) {
+    return 'Komm in unser Zuhause bei PrezHome! So teilen wir Essensplan, Einkaufsliste und Aufgaben.\n\n1. Installiere PrezHome und erstelle dein Konto.\n2. Kopiere diese Nachricht und tippe auf „Ich wurde in ein Zuhause eingeladen“: Der Code wird automatisch eingetragen.\n\nCode: $code';
+  }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'Für morgen aus dem Gefrierfach nehmen: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'Heute Abend in den Kühlschrank, morgen ist es fertig';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count überfällige Aufgaben',
+      one: '1 überfällige Aufgabe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Wiederkehrende rücken auf ihren nächsten Termin, einmalige auf heute';
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Morgen · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Du hast alles zu Hause';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Heute zum Mittagessen',
+      'other': 'Heute zum Abendessen',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'Die nächste Woche ist leer';
+
+  @override
+  String get homeNextWeekSub =>
+      'Ich fülle sie mit dem, was euch am besten geschmeckt hat, und mache die Liste fertig.';
+
+  @override
+  String get homeNextWeekGo => 'Planen';
+
+  @override
+  String get winsTitle => 'Dein Monat zu Hause';
+
+  @override
+  String get winsRescued => 'vor dem Ablauf verbraucht';
+
+  @override
+  String get winsThrown => 'weggeworfen';
+
+  @override
+  String get winsMeals => 'Mahlzeiten zu Hause';
+
+  @override
+  String get winsTasks => 'erledigte Aufgaben';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Produkte weniger weggeworfen als letzten Monat',
+      one: '1 Produkt weniger weggeworfen als letzten Monat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Sobald du Vorrat, Plan und Aufgaben nutzt, siehst du hier deinen Monat.';
+
+  @override
+  String get proHeadline =>
+      'Mehr Hilfe bei dem, was dich am meisten Zeit kostet';
+
+  @override
+  String get proHeadlineSub =>
+      'Mehr Kassenbons, mehr Rezepte aus Links und Fotos und mehr Ideen jeden Monat. Ein Abo gilt für den ganzen Haushalt.';
 }
