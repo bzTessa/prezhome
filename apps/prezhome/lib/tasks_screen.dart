@@ -27,6 +27,7 @@ import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'utils/task_kinds.dart';
 import 'utils/task_rotation.dart';
+import 'utils/task_share.dart';
 import 'l10n/l10n.dart';
 
 class TasksScreen extends StatefulWidget {
@@ -233,10 +234,12 @@ class _TasksScreenState extends State<TasksScreen> {
     // Puntos por usuario
     final pointsRes = await _client
         .from('task_points')
-        .select('user_id, points')
+        .select('user_id, points, created_at')
         .eq('home_id', homeId);
+    final pointRows = (pointsRes as List).cast<Map<String, dynamic>>();
+    final weekScores = pointsSince(pointRows, startOfWeek(DateTime.now()));
     final scores = <String, int>{};
-    for (final row in (pointsRes as List)) {
+    for (final row in pointRows) {
       final uid = row['user_id'] as String;
       scores[uid] = (scores[uid] ?? 0) + (row['points'] as int);
     }
@@ -247,6 +250,7 @@ class _TasksScreenState extends State<TasksScreen> {
       tasks: tasks,
       listTasks: tasks,
       scores: scores,
+      weekScores: weekScores,
       currentUserId: user.id,
       pointsEnabled: pointsEnabled,
     );
@@ -715,12 +719,38 @@ class _TasksScreenState extends State<TasksScreen> {
                   selected: _filterUser,
                   onSelected: (id) => setState(() => _filterUser = id),
                 ),
+              if (showWho && data.pointsEnabled && _filterUser == null) ...[
+                const SizedBox(height: AppSpacing.md),
+                _WeekShare(
+                  members: data.members,
+                  points: data.weekScores,
+                  currentUserId: data.currentUserId,
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               if (today.isEmpty)
                 _TareasCelebracion(
                   visible: true,
                   nothingToday: upcoming.isNotEmpty,
                 )
+              else if (showWho && _filterUser == null)
+                // Todas: una sección por persona, empezando por ti.
+                for (final (gi, g) in groupByPerson(
+                  today,
+                  data.currentUserId,
+                  data.members,
+                ).indexed) ...[
+                  if (gi > 0) const SizedBox(height: AppSpacing.lg),
+                  _SectionTitle(
+                    g.key == null
+                        ? context.l.tskAnyone
+                        : g.key == data.currentUserId
+                        ? context.l.tskYourTurn
+                        : data.members[g.key]!,
+                    count: g.value.length,
+                  ),
+                  grid(g.value),
+                ]
               else ...[
                 _SectionTitle(context.l.tskForToday, count: today.length),
                 grid(today),
@@ -1005,6 +1035,9 @@ class _TasksData {
   // decide cuales se muestran).
   final List<HomeTask> listTasks;
   final Map<String, int> scores;
+
+  /// Puntos de cada persona desde el lunes, para el reparto de la semana.
+  final Map<String, int> weekScores;
   final String? currentUserId;
 
   /// "Modo Puntos" activado: controla si se muestran el marcador y la gráfica.
@@ -1015,6 +1048,7 @@ class _TasksData {
     this.tasks = const [],
     this.listTasks = const [],
     this.scores = const {},
+    this.weekScores = const {},
     this.currentUserId,
     this.pointsEnabled = true,
   });
@@ -1147,6 +1181,102 @@ class _Scoreboard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Reparto de la semana: una barra partida con los puntos de cada persona
+/// desde el lunes, para ver de un vistazo si el trabajo está repartido.
+class _WeekShare extends StatelessWidget {
+  const _WeekShare({
+    required this.members,
+    required this.points,
+    required this.currentUserId,
+  });
+
+  final Map<String, String> members;
+  final Map<String, int> points;
+  final String? currentUserId;
+
+  @override
+  Widget build(BuildContext context) {
+    final people = members.entries.toList()
+      ..sort((a, b) => (points[b.key] ?? 0).compareTo(points[a.key] ?? 0));
+    final total = people.fold<int>(0, (n, e) => n + (points[e.key] ?? 0));
+    String name(MapEntry<String, String> e) =>
+        e.key == currentUserId ? context.l.tskYouShort : e.value;
+
+    return Container(
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.l.tskWeekShare, style: AppTextStyles.bodyStrong),
+          const SizedBox(height: AppSpacing.sm),
+          if (total == 0)
+            Text(context.l.tskWeekShareEmpty, style: AppTextStyles.bodyMuted)
+          else ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: SizedBox(
+                height: 10,
+                child: Row(
+                  children: [
+                    for (final (i, e) in people.indexed)
+                      if ((points[e.key] ?? 0) > 0)
+                        Expanded(
+                          flex: points[e.key]!,
+                          child: Container(
+                            margin: EdgeInsets.only(left: i == 0 ? 0 : 2),
+                            color: personColor(e.value),
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.xs,
+              children: [
+                for (final e in people)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: personColor(e.value),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${name(e)} · ${points[e.key] ?? 0}',
+                        style: AppTextStyles.bodyMuted,
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Color estable de cada persona (el mismo nombre, siempre el mismo color).
+Color personColor(String name) {
+  final colors = [
+    AppColors.terracotta,
+    AppColors.gold,
+    AppColors.sage,
+    AppColors.lilac,
+    AppColors.frost,
+  ];
+  return colors[name.hashCode.abs() % colors.length];
 }
 
 /// Inicial de la persona en un círculo de color estable (el mismo nombre,

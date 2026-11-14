@@ -4768,4 +4768,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hhCustomizeHomeSub => 'Cards and shortcuts on Today';
+
+  @override
+  String get tskWeekShare => 'This week\'s share';
+
+  @override
+  String get tskWeekShareEmpty => 'Nobody has done any tasks this week yet.';
+
+  @override
+  String get tskYourTurn => 'Your turn';
+
+  @override
+  String get tskYouShort => 'You';
+
+  @override
+  String get shopInStore => 'Store mode';
+
+  @override
+  String shopInStoreAt(String store) {
+    return 'You\'re at $store';
+  }
 }

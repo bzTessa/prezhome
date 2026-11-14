@@ -1203,5 +1203,12 @@
   "aiKindShort": "{kind, select, prep{Preparato} dish{Piatto pronto} other{Ingrediente}}",
   "settingsTitle": "Impostazioni",
   "hhSettingsSub": "Modalità d'uso, aspetto, avvisi e paese",
-  "hhCustomizeHomeSub": "Schede e scorciatoie di Oggi"
+  "hhCustomizeHomeSub": "Schede e scorciatoie di Oggi",
+  "tskWeekShare": "Divisione della settimana",
+  "tskWeekShareEmpty": "Nessuno ha ancora fatto faccende questa settimana.",
+  "tskYourTurn": "Tocca a te",
+  "tskYouShort": "Tu",
+  "shopInStore": "Modalità negozio",
+  "shopInStoreAt": "Sei da {store}",
+  "shopFinish": "Finisci la spesa"
 }

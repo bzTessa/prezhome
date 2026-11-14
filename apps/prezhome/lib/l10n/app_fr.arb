@@ -1203,5 +1203,12 @@
   "aiKindShort": "{kind, select, prep{Préparé} dish{Plat prêt} other{Ingrédient}}",
   "settingsTitle": "Réglages",
   "hhSettingsSub": "Mode d'utilisation, apparence, alertes et pays",
-  "hhCustomizeHomeSub": "Cartes et raccourcis d'Aujourd'hui"
+  "hhCustomizeHomeSub": "Cartes et raccourcis d'Aujourd'hui",
+  "tskWeekShare": "Répartition de la semaine",
+  "tskWeekShareEmpty": "Personne n'a encore fait de tâche cette semaine.",
+  "tskYourTurn": "À toi",
+  "tskYouShort": "Toi",
+  "shopInStore": "Mode magasin",
+  "shopInStoreAt": "Tu es chez {store}",
+  "shopFinish": "Terminer les courses"
 }

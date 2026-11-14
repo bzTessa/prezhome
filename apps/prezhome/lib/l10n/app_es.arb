@@ -2923,5 +2923,13 @@
   },
   "settingsTitle": "Ajustes",
   "hhSettingsSub": "Modo de uso, apariencia, avisos y país",
-  "hhCustomizeHomeSub": "Tarjetas y atajos que ves en Hoy"
+  "hhCustomizeHomeSub": "Tarjetas y atajos que ves en Hoy",
+  "tskWeekShare": "Reparto de la semana",
+  "tskWeekShareEmpty": "Aún nadie ha hecho tareas esta semana.",
+  "tskYourTurn": "Te toca a ti",
+  "tskYouShort": "Tú",
+  "shopInStore": "Modo tienda",
+  "shopInStoreAt": "Estás en {store}",
+  "shopFinish": "Terminar compra",
+  "@shopInStoreAt": {"placeholders": {"store": {"type": "String"}}}
 }

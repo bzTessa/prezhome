@@ -1203,5 +1203,12 @@
   "aiKindShort": "{kind, select, prep{Preparado} dish{Prato pronto} other{Ingrediente}}",
   "settingsTitle": "Definições",
   "hhSettingsSub": "Modo de uso, aparência, avisos e país",
-  "hhCustomizeHomeSub": "Cartões e atalhos de Hoje"
+  "hhCustomizeHomeSub": "Cartões e atalhos de Hoje",
+  "tskWeekShare": "Divisão da semana",
+  "tskWeekShareEmpty": "Ainda ninguém fez tarefas esta semana.",
+  "tskYourTurn": "É a tua vez",
+  "tskYouShort": "Tu",
+  "shopInStore": "Modo loja",
+  "shopInStoreAt": "Estás no {store}",
+  "shopFinish": "Terminar compra"
 }

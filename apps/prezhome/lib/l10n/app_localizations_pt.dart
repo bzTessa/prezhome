@@ -724,7 +724,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get categories => 'Categorias';
 
   @override
-  String get shopFinish => 'Terminar compras';
+  String get shopFinish => 'Terminar compra';
 
   @override
   String shopFinishCount(int count) {
@@ -4780,4 +4780,24 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get hhCustomizeHomeSub => 'Cartões e atalhos de Hoje';
+
+  @override
+  String get tskWeekShare => 'Divisão da semana';
+
+  @override
+  String get tskWeekShareEmpty => 'Ainda ninguém fez tarefas esta semana.';
+
+  @override
+  String get tskYourTurn => 'É a tua vez';
+
+  @override
+  String get tskYouShort => 'Tu';
+
+  @override
+  String get shopInStore => 'Modo loja';
+
+  @override
+  String shopInStoreAt(String store) {
+    return 'Estás no $store';
+  }
 }
