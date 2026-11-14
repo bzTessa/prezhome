@@ -66,6 +66,57 @@ def product_urls(sitemap: str) -> list[str]:
     return list(dict.fromkeys(urls))
 
 
+def page_data(page: str) -> dict:
+    """Ficha completa que la web lleva dentro (__NUXT_DATA__, formato devalue:
+    una lista plana donde cada objeto apunta a sus valores por índice)."""
+    m = re.search(r'<script[^>]*id="__NUXT_DATA__"[^>]*>(.*?)</script>', page, re.S)
+    if not m:
+        return {}
+    try:
+        flat = json.loads(m.group(1))
+    except ValueError:
+        return {}
+
+    def resolve(i: int, depth: int = 0):
+        v = flat[i]
+        if depth > 12:
+            return None
+        if isinstance(v, dict):
+            return {k: resolve(j, depth + 1) if isinstance(j, int) else j for k, j in v.items()}
+        if isinstance(v, list):
+            if v and v[0] in ("Reactive", "ShallowReactive", "Ref", "ShallowRef"):
+                return resolve(v[1], depth)
+            return [resolve(j, depth + 1) if isinstance(j, int) else j for j in v]
+        return v
+
+    for i, v in enumerate(flat):
+        if isinstance(v, dict) and "regionsPrices" in v and "productId" in v:
+            data = resolve(i)
+            return data if isinstance(data, dict) else {}
+    return {}
+
+
+def store_price(data: dict) -> dict | None:
+    """Precio de tienda de la zona por defecto: el de esta semana o, si el
+    producto aún no está a la venta, el próximo (lleva su fecha)."""
+    regions = data.get("regionsPrices") or {}
+    if not isinstance(regions, dict) or not regions:
+        return None
+    default = next((r.get("regionPriceId") for r in (data.get("regionsV2") or {}).values()
+                    if isinstance(r, dict) and r.get("isDefault")), None)
+    ordered = [regions[default]] if default in regions else []
+    ordered += [r for k, r in sorted(regions.items()) if k != default]
+    ordered = [r for r in ordered if isinstance(r, dict)]
+    for r in ordered:
+        current = r.get("currentPrice") or {}
+        if current.get("price"):
+            return current
+    upcoming = [f.get("price") or {} for r in ordered for f in (r.get("futurePrices") or [])
+                if isinstance(f, dict)]
+    upcoming = [p for p in upcoming if p.get("price")]
+    return min(upcoming, key=lambda p: p.get("startDate") or "") if upcoming else None
+
+
 def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
     """Fila de supermarket_products para una ficha de producto, o None."""
     product = None
@@ -87,6 +138,11 @@ def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
     images = product.get("image") or [None]
     size = re.search(r'ods-price__footer.*?class="block-text"[^>]*>([^<]+)</span>', page, re.S)
     size = html.unescape(size.group(1)).replace("Aprox.", "").strip(" -") or None if size else None
+    data = page_data(page)
+    price = store_price(data)
+    if not size and price:
+        size = ((price.get("packaging") or {}).get("text") or "").strip() or None
+    category = ((data.get("keyfacts") or {}).get("wonCategoryPrimary") or "").split("/")[-1]
     full = " ".join(p for p in (name.strip(" -"), brand, size) if p)
     return {
         "store": store,
@@ -95,11 +151,11 @@ def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
         "name_normalized": normalize(full),
         "brand": brand,
         "size": size,
-        "price": offers[0].get("price"),
+        "price": price["price"] if price else offers[0].get("price"),
         "unit_price": None,
         "unit": None,
         "image_url": images[0] if isinstance(images, list) else images,
-        "category": None,
+        "category": category.strip() or None,
         "updated_at": now,
     }
 
@@ -151,6 +207,37 @@ def _self_check() -> None:
     assert row["brand"] == "Realvalle" and row["size"] == "220 g"
     assert row["image_url"] == "https://www.lidl.es/assets/a.png"
     assert to_row(url, "<html></html>", "t") is None
+    assert row["category"] is None  # sin __NUXT_DATA__ sigue valiendo el JSON-LD
+    def nuxt(obj: dict) -> str:
+        flat: list = [None]
+        def put(v) -> int:
+            if isinstance(v, dict):
+                i = len(flat); flat.append(None)
+                flat[i] = {k: put(x) for k, x in v.items()}
+                return i
+            if isinstance(v, list):
+                i = len(flat); flat.append(None)
+                flat[i] = [put(x) for x in v]
+                return i
+            flat.append(v)
+            return len(flat) - 1
+        flat[0] = ["Reactive", put(obj)]
+        return f'<script type="application/json" id="__NUXT_DATA__">{json.dumps(flat)}</script>'
+    soon = {"price": 6.99, "startDate": "2026-11-19T23:00Z", "packaging": {"text": "500 g"}}
+    later = {"price": 7.49, "startDate": "2026-12-01T23:00Z"}
+    product = {
+        "productId": 1,
+        "keyfacts": {"wonCategoryPrimary": "Mundos/Comida/Café, té y cacao"},
+        "regionsV2": {"1": {"regionPriceId": "2", "isDefault": False},
+                      "9": {"regionPriceId": "1", "isDefault": True}},
+        "regionsPrices": {"2": {"currentPrice": {"price": 3.39}},
+                          "1": {"currentPrice": {"price": 2.99}}},
+    }
+    row = to_row(url, page + nuxt(product), "t")
+    assert row["price"] == 2.99 and row["category"] == "Café, té y cacao"
+    product["regionsPrices"] = {"1": {"futurePrices": [{"price": later}, {"price": soon}]}}
+    row = to_row(url, page.replace("Aprox.220 g", "") + nuxt(product), "t")
+    assert row["price"] == 6.99 and row["size"] == "500 g"
     assert to_row(url, page.replace("REALVALLE", "-"), "t", "lidl_fr")["brand"] is None
     assert store_key("fr") == "lidl_fr" and store_key("es") == "lidl"
     batches = upsert_batches([row, dict(row, price=None, product_id="2")])

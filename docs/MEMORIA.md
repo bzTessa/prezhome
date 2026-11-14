@@ -194,8 +194,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Catálogos de súper: `scripts/*_sync.py` → `supermarket_products`, cada lunes
   (`.github/workflows/open-prices.yml`). Lidl (`lidl_sync.py`, 5 países) lee
   las fichas del sitemap con código 11/12/60/66; el resto es bazar, packs
-  online o tarjetas regalo y no se importa. Ficha sin precio (no está a la venta
-  esa semana) = se conserva el último precio conocido.
+  online o tarjetas regalo y no se importa. Precio y categoría salen del
+  `__NUXT_DATA__` de la ficha (zona por defecto; si aún no está a la venta, el
+  próximo precio); sin precio se conserva el último conocido. La ficha trae
+  también EAN, precio Lidl Plus y precio por zona (aún no se guardan).
 
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
