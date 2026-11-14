@@ -26,7 +26,18 @@ import 'utils/friendly_error.dart';
 import 'widgets/list_skeleton.dart';
 
 class HouseholdScreen extends StatefulWidget {
-  const HouseholdScreen({super.key});
+  const HouseholdScreen({
+    super.key,
+    this.settingsOnly = false,
+    this.onCustomizeHome,
+  });
+
+  /// Muestra solo Ajustes (modo de uso, apariencia, avisos...), sin los datos
+  /// del hogar.
+  final bool settingsOnly;
+
+  /// Si se da, Ajustes empieza con "Personalizar Inicio".
+  final VoidCallback? onCustomizeHome;
 
   @override
   State<HouseholdScreen> createState() => _HouseholdScreenState();
@@ -468,12 +479,17 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
       backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: Text(
-          context.l.hhMyHome,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          widget.settingsOnly ? context.l.settingsTitle : context.l.hhMyHome,
         ),
         backgroundColor: AppColors.cream,
         elevation: 0,
         actions: [
+          if (!widget.settingsOnly)
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: context.l.settingsTitle,
+              onPressed: _openSettings,
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: context.l.hhSignOut,
@@ -496,7 +512,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             );
           }
           final data = snapshot.data!;
-          return data.homeId == null ? _buildNoHome() : _buildHome(data);
+          if (data.homeId == null) return _buildNoHome();
+          return widget.settingsOnly ? _buildSettings(data) : _buildHome(data);
         },
       ),
     );
@@ -702,15 +719,47 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        // Accesos agrupados en Hogar/Ajustes: economía del hogar, perfil
-        // nutricional y cuestionario guiado. Economía dejó de ser una pestaña
-        // propia y vive ahora aquí.
+        _card(
+          child: _settingTile(
+            icon: Icons.settings_outlined,
+            title: context.l.settingsTitle,
+            subtitle: context.l.hhSettingsSub,
+            onTap: _openSettings,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const HouseholdScreen(settingsOnly: true),
+      ),
+    );
+    if (mounted) _reload();
+  }
+
+  /// Ajustes: modo de uso, apariencia, avisos, país y accesos a economía,
+  /// plan y perfil nutricional.
+  Widget _buildSettings(_HouseholdData data) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        if (widget.onCustomizeHome case final customize?)
+          _card(
+            child: _settingTile(
+              icon: Icons.tune_rounded,
+              title: context.l.homeCustomize,
+              subtitle: context.l.hhCustomizeHomeSub,
+              onTap: customize,
+            ),
+          ),
+        const SizedBox(height: 16),
         _card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(context.l.hhSettings, style: AppTextStyles.headline),
-              const SizedBox(height: 12),
               UsageModePicker(onChanged: _reload),
               const SizedBox(height: 20),
               Text(

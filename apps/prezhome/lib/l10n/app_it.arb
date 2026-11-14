@@ -1200,5 +1200,8 @@
   "unitShort": "{unit, select, unidad{pz} cucharada{cucch.} cucharadita{cucchiaino} other{{unit}}}",
   "unitToTaste": "{unit, select, a_ojo{a occhio} other{q.b.}}",
   "aiItemType": "{type, select, hogar{Casa/Pulizia} other{Cibo}}",
-  "aiKindShort": "{kind, select, prep{Preparato} dish{Piatto pronto} other{Ingrediente}}"
+  "aiKindShort": "{kind, select, prep{Preparato} dish{Piatto pronto} other{Ingrediente}}",
+  "settingsTitle": "Impostazioni",
+  "hhSettingsSub": "Modalità d'uso, aspetto, avvisi e paese",
+  "hhCustomizeHomeSub": "Schede e scorciatoie di Oggi"
 }

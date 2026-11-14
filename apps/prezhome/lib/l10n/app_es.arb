@@ -2920,5 +2920,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "settingsTitle": "Ajustes",
+  "hhSettingsSub": "Modo de uso, apariencia, avisos y país",
+  "hhCustomizeHomeSub": "Tarjetas y atajos que ves en Hoy"
 }

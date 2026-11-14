@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -4770,4 +4769,13 @@ class AppLocalizationsEs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get settingsTitle => 'Ajustes';
+
+  @override
+  String get hhSettingsSub => 'Modo de uso, apariencia, avisos y país';
+
+  @override
+  String get hhCustomizeHomeSub => 'Tarjetas y atajos que ves en Hoy';
 }

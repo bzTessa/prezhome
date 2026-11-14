@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -4772,4 +4771,13 @@ class AppLocalizationsPt extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get settingsTitle => 'Definições';
+
+  @override
+  String get hhSettingsSub => 'Modo de uso, aparência, avisos e país';
+
+  @override
+  String get hhCustomizeHomeSub => 'Cartões e atalhos de Hoje';
 }

@@ -1200,5 +1200,8 @@
   "unitShort": "{unit, select, unidad{un.} cucharada{c. sopa} cucharadita{c. chá} other{{unit}}}",
   "unitToTaste": "{unit, select, a_ojo{a olho} other{a gosto}}",
   "aiItemType": "{type, select, hogar{Casa/Limpeza} other{Comida}}",
-  "aiKindShort": "{kind, select, prep{Preparado} dish{Prato pronto} other{Ingrediente}}"
+  "aiKindShort": "{kind, select, prep{Preparado} dish{Prato pronto} other{Ingrediente}}",
+  "settingsTitle": "Definições",
+  "hhSettingsSub": "Modo de uso, aparência, avisos e país",
+  "hhCustomizeHomeSub": "Cartões e atalhos de Hoje"
 }

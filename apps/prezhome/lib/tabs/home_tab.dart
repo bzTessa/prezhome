@@ -658,9 +658,9 @@ class HomeTabState extends State<HomeTab> {
           ),
         ),
         _roundButton(
-          icon: Icons.tune_rounded,
-          tooltip: context.l.homeCustomize,
-          onTap: _openCustomize,
+          icon: Icons.settings_outlined,
+          tooltip: context.l.settingsTitle,
+          onTap: _openSettings,
         ),
         const SizedBox(width: AppSpacing.sm),
         _roundButton(
@@ -705,6 +705,19 @@ class HomeTabState extends State<HomeTab> {
     await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const StatsScreen()));
+    if (mounted) _loadDashboard();
+  }
+
+  /// Ajustes de la app; desde ahí también se personaliza Hoy.
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => HouseholdScreen(
+          settingsOnly: true,
+          onCustomizeHome: _openCustomize,
+        ),
+      ),
+    );
     if (mounted) _loadDashboard();
   }
 
