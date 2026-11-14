@@ -5038,4 +5038,41 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get homeNextWeekGo => 'Prepararla';
+
+  @override
+  String get winsTitle => 'Tu mes en casa';
+
+  @override
+  String get winsRescued => 'aprovechados antes de caducar';
+
+  @override
+  String get winsThrown => 'a la basura';
+
+  @override
+  String get winsMeals => 'comidas en casa';
+
+  @override
+  String get winsTasks => 'tareas hechas';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos menos a la basura que el mes pasado',
+      one: '1 producto menos a la basura que el mes pasado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Cuando uses la despensa, el plan y las tareas, aquí verás lo que llevas este mes.';
+
+  @override
+  String get proHeadline => 'Más ayuda para lo que más tiempo te quita';
+
+  @override
+  String get proHeadlineSub =>
+      'Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar.';
 }

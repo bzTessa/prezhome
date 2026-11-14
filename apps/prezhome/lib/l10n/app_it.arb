@@ -1269,5 +1269,14 @@
   "homePutFor": "{type, select, lunch{Per pranzo oggi} other{Per cena oggi}}",
   "homeNextWeekEmpty": "La prossima settimana è vuota",
   "homeNextWeekSub": "La preparo con ciò che vi è piaciuto di più e ti lascio la lista pronta.",
-  "homeNextWeekGo": "Prepararla"
+  "homeNextWeekGo": "Prepararla",
+  "winsTitle": "Il tuo mese a casa",
+  "winsRescued": "usati prima della scadenza",
+  "winsThrown": "buttati via",
+  "winsMeals": "pasti a casa",
+  "winsTasks": "faccende fatte",
+  "winsThrownLess": "{count, plural, =1{1 prodotto buttato in meno del mese scorso} other{{count} prodotti buttati in meno del mese scorso}}",
+  "winsEmpty": "Quando userai dispensa, piano e faccende, qui vedrai com'è andato il mese.",
+  "proHeadline": "Più aiuto per ciò che ti ruba più tempo",
+  "proHeadlineSub": "Legge più scontrini, ricava più ricette da link e foto e propone più idee ogni mese. Un abbonamento vale per tutta la casa."
 }

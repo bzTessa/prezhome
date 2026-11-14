@@ -903,6 +903,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
           onThrown: () {
             HapticFeedback.mediumImpact();
             setState(() => _reviewed.add(item.id));
+            // Queda apuntado para el resumen del mes (lo tirado).
+            _logConsumed(item, item.quantity, DateTime.now(), reason: 'tirado');
             _deleteItem(item);
           },
         ),
@@ -1622,14 +1624,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  /// Apunta en el historial lo consumido. Devuelve su id (null si no hay red).
+  /// Apunta en el historial lo consumido (o tirado, con [reason]). Devuelve su id (null si no hay red).
   // shortcut: el historial necesita conexión (no pasa por la cola offline);
   // meterlo en OfflineProvider si hace falta apuntarlo sin red.
   Future<String?> _logConsumed(
     InventoryItem item,
     double used,
-    DateTime day,
-  ) async {
+    DateTime day, {
+    String reason = 'consumido',
+  }) async {
     try {
       final homeId = item.homeId.isNotEmpty ? item.homeId : await _homeId();
       final row = await Supabase.instance.client
@@ -1639,7 +1642,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
             'name': item.name,
             'quantity': used,
             'unit': item.unit,
-            'reason': 'consumido',
+            'reason': reason,
+            // Gastado a punto de caducar: cuenta como aprovechado.
+            'rescued':
+                reason == 'consumido' &&
+                item.expiryStatus == ExpiryStatus.pronto,
             'used_on': day.toIso8601String().split('T').first,
           })
           .select('id')
@@ -1905,9 +1912,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           (r['quantity'] as num?)?.toDouble(),
                           r['unit'] as String?,
                         ),
-                        r['reason'] == 'receta'
-                            ? context.l.panWhenCooking
-                            : context.l.panConsumed,
+                        switch (r['reason']) {
+                          'receta' => context.l.panWhenCooking,
+                          'tirado' => context.l.panReviewThrown,
+                          _ => context.l.panConsumed,
+                        },
                       ].where((t) => t.isNotEmpty).join(' · '),
                     ),
                     trailing: Text(

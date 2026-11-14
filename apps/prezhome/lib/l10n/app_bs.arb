@@ -1269,5 +1269,14 @@
   "homePutFor": "{type, select, lunch{Za današnji ručak} other{Za današnju večeru}}",
   "homeNextWeekEmpty": "Sljedeća sedmica je prazna",
   "homeNextWeekSub": "Popunit ću je onim što vam se najviše svidjelo i pripremiti listu.",
-  "homeNextWeekGo": "Pripremi je"
+  "homeNextWeekGo": "Pripremi je",
+  "winsTitle": "Tvoj mjesec kod kuće",
+  "winsRescued": "iskorišteno prije isteka",
+  "winsThrown": "bačeno",
+  "winsMeals": "obroka kod kuće",
+  "winsTasks": "urađenih zadataka",
+  "winsThrownLess": "{count, plural, =1{1 proizvod manje bačen nego prošli mjesec} other{{count} proizvoda manje bačeno nego prošli mjesec}}",
+  "winsEmpty": "Kad koristiš ostavu, plan i zadatke, ovdje ćeš vidjeti svoj mjesec.",
+  "proHeadline": "Više pomoći za ono što ti oduzima najviše vremena",
+  "proHeadlineSub": "Čita više računa, izvlači više recepata iz linkova i fotografija i predlaže više ideja svaki mjesec. Jedna pretplata vrijedi za cijelo domaćinstvo."
 }

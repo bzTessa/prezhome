@@ -7727,6 +7727,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Prepararla'**
   String get homeNextWeekGo;
+
+  /// No description provided for @winsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu mes en casa'**
+  String get winsTitle;
+
+  /// No description provided for @winsRescued.
+  ///
+  /// In es, this message translates to:
+  /// **'aprovechados antes de caducar'**
+  String get winsRescued;
+
+  /// No description provided for @winsThrown.
+  ///
+  /// In es, this message translates to:
+  /// **'a la basura'**
+  String get winsThrown;
+
+  /// No description provided for @winsMeals.
+  ///
+  /// In es, this message translates to:
+  /// **'comidas en casa'**
+  String get winsMeals;
+
+  /// No description provided for @winsTasks.
+  ///
+  /// In es, this message translates to:
+  /// **'tareas hechas'**
+  String get winsTasks;
+
+  /// No description provided for @winsThrownLess.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 producto menos a la basura que el mes pasado} other{{count} productos menos a la basura que el mes pasado}}'**
+  String winsThrownLess(int count);
+
+  /// No description provided for @winsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando uses la despensa, el plan y las tareas, aquí verás lo que llevas este mes.'**
+  String get winsEmpty;
+
+  /// No description provided for @proHeadline.
+  ///
+  /// In es, this message translates to:
+  /// **'Más ayuda para lo que más tiempo te quita'**
+  String get proHeadline;
+
+  /// No description provided for @proHeadlineSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar.'**
+  String get proHeadlineSub;
 }
 
 class _AppLocalizationsDelegate

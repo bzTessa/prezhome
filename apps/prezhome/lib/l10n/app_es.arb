@@ -3131,5 +3131,21 @@
   },
   "homeNextWeekEmpty": "La semana que viene está vacía",
   "homeNextWeekSub": "La preparo con lo que más os ha gustado y te dejo la lista hecha.",
-  "homeNextWeekGo": "Prepararla"
+  "homeNextWeekGo": "Prepararla",
+  "winsTitle": "Tu mes en casa",
+  "winsRescued": "aprovechados antes de caducar",
+  "winsThrown": "a la basura",
+  "winsMeals": "comidas en casa",
+  "winsTasks": "tareas hechas",
+  "winsThrownLess": "{count, plural, =1{1 producto menos a la basura que el mes pasado} other{{count} productos menos a la basura que el mes pasado}}",
+  "@winsThrownLess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "winsEmpty": "Cuando uses la despensa, el plan y las tareas, aquí verás lo que llevas este mes.",
+  "proHeadline": "Más ayuda para lo que más tiempo te quita",
+  "proHeadlineSub": "Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar."
 }

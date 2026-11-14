@@ -4975,4 +4975,41 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get homeNextWeekGo => 'Pripremi je';
+
+  @override
+  String get winsTitle => 'Tvoj mjesec kod kuće';
+
+  @override
+  String get winsRescued => 'iskorišteno prije isteka';
+
+  @override
+  String get winsThrown => 'bačeno';
+
+  @override
+  String get winsMeals => 'obroka kod kuće';
+
+  @override
+  String get winsTasks => 'urađenih zadataka';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count proizvoda manje bačeno nego prošli mjesec',
+      one: '1 proizvod manje bačen nego prošli mjesec',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Kad koristiš ostavu, plan i zadatke, ovdje ćeš vidjeti svoj mjesec.';
+
+  @override
+  String get proHeadline => 'Više pomoći za ono što ti oduzima najviše vremena';
+
+  @override
+  String get proHeadlineSub =>
+      'Čita više računa, izvlači više recepata iz linkova i fotografija i predlaže više ideja svaki mjesec. Jedna pretplata vrijedi za cijelo domaćinstvo.';
 }

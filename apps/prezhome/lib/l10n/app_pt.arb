@@ -1269,5 +1269,14 @@
   "homePutFor": "{type, select, lunch{Para o almoço de hoje} other{Para o jantar de hoje}}",
   "homeNextWeekEmpty": "A próxima semana está vazia",
   "homeNextWeekSub": "Preparo-a com o que mais gostaram e deixo a lista feita.",
-  "homeNextWeekGo": "Prepará-la"
+  "homeNextWeekGo": "Prepará-la",
+  "winsTitle": "O teu mês em casa",
+  "winsRescued": "aproveitados antes de expirar",
+  "winsThrown": "para o lixo",
+  "winsMeals": "refeições em casa",
+  "winsTasks": "tarefas feitas",
+  "winsThrownLess": "{count, plural, =1{Menos 1 produto no lixo do que no mês passado} other{Menos {count} produtos no lixo do que no mês passado}}",
+  "winsEmpty": "Quando usares a despensa, o plano e as tarefas, verás aqui o que levas este mês.",
+  "proHeadline": "Mais ajuda no que te tira mais tempo",
+  "proHeadlineSub": "Lê mais talões, tira mais receitas de links e fotos e propõe mais ideias cada mês. Uma subscrição serve para toda a casa."
 }

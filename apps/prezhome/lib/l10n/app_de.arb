@@ -1269,5 +1269,14 @@
   "homePutFor": "{type, select, lunch{Heute zum Mittagessen} other{Heute zum Abendessen}}",
   "homeNextWeekEmpty": "Die nächste Woche ist leer",
   "homeNextWeekSub": "Ich fülle sie mit dem, was euch am besten geschmeckt hat, und mache die Liste fertig.",
-  "homeNextWeekGo": "Planen"
+  "homeNextWeekGo": "Planen",
+  "winsTitle": "Dein Monat zu Hause",
+  "winsRescued": "vor dem Ablauf verbraucht",
+  "winsThrown": "weggeworfen",
+  "winsMeals": "Mahlzeiten zu Hause",
+  "winsTasks": "erledigte Aufgaben",
+  "winsThrownLess": "{count, plural, =1{1 Produkt weniger weggeworfen als letzten Monat} other{{count} Produkte weniger weggeworfen als letzten Monat}}",
+  "winsEmpty": "Sobald du Vorrat, Plan und Aufgaben nutzt, siehst du hier deinen Monat.",
+  "proHeadline": "Mehr Hilfe bei dem, was dich am meisten Zeit kostet",
+  "proHeadlineSub": "Mehr Kassenbons, mehr Rezepte aus Links und Fotos und mehr Ideen jeden Monat. Ein Abo gilt für den ganzen Haushalt."
 }

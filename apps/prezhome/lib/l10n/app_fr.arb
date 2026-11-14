@@ -1269,5 +1269,14 @@
   "homePutFor": "{type, select, lunch{Pour le déjeuner} other{Pour le dîner}}",
   "homeNextWeekEmpty": "La semaine prochaine est vide",
   "homeNextWeekSub": "Je la prépare avec ce que vous avez préféré et la liste sera prête.",
-  "homeNextWeekGo": "La préparer"
+  "homeNextWeekGo": "La préparer",
+  "winsTitle": "Votre mois à la maison",
+  "winsRescued": "utilisés avant péremption",
+  "winsThrown": "jetés",
+  "winsMeals": "repas à la maison",
+  "winsTasks": "tâches faites",
+  "winsThrownLess": "{count, plural, =1{1 produit jeté de moins que le mois dernier} other{{count} produits jetés de moins que le mois dernier}}",
+  "winsEmpty": "Quand vous utiliserez le garde-manger, le plan et les tâches, vous verrez ici votre mois.",
+  "proHeadline": "Plus d'aide pour ce qui vous prend le plus de temps",
+  "proHeadlineSub": "Plus de tickets lus, plus de recettes depuis des liens et des photos, plus d'idées chaque mois. Un abonnement pour tout le foyer."
 }

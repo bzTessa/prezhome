@@ -5028,4 +5028,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeNextWeekGo => 'Plan it';
+
+  @override
+  String get winsTitle => 'Your month at home';
+
+  @override
+  String get winsRescued => 'used before they expired';
+
+  @override
+  String get winsThrown => 'thrown away';
+
+  @override
+  String get winsMeals => 'meals at home';
+
+  @override
+  String get winsTasks => 'chores done';
+
+  @override
+  String winsThrownLess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fewer products thrown away than last month',
+      one: '1 fewer product thrown away than last month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get winsEmpty =>
+      'Once you use the pantry, the plan and chores, you\'ll see this month\'s progress here.';
+
+  @override
+  String get proHeadline => 'More help with what takes most of your time';
+
+  @override
+  String get proHeadlineSub =>
+      'Read more receipts, get more recipes from links and photos and more ideas every month. One subscription covers the whole household.';
 }
