@@ -15,6 +15,8 @@ class SupermarketProduct {
     this.quantity,
     this.imageUrl,
     this.price,
+    this.memberPrice,
+    this.priceStartsAt,
   });
 
   final String code;
@@ -27,6 +29,18 @@ class SupermarketProduct {
 
   /// Precio orientativo en la tienda online (solo productos de catálogo).
   final double? price;
+
+  /// Precio con la tarjeta del súper (Lidl Plus), si es más barato.
+  final double? memberPrice;
+
+  /// Desde cuándo vale [price], si el producto aún no está a la venta.
+  final DateTime? priceStartsAt;
+
+  /// [priceStartsAt] solo si todavía no ha llegado.
+  DateTime? upcomingPriceFrom(DateTime now) {
+    final from = priceStartsAt;
+    return from != null && from.isAfter(now) ? from : null;
+  }
 
   /// Nombre con la marca, para la lista ("Leche semidesnatada · Hacendado").
   String get displayName {
@@ -476,6 +490,40 @@ List<String> catalogSearchWords(String query) => [
         : w,
 ];
 
+const _catalogColumns =
+    'product_id,name,brand,size,price,image_url,member_price,price_starts_at';
+
+/// Producto de supermarket_products de [store] a partir de su fila.
+SupermarketProduct catalogProductFromRow(
+  String store,
+  Map<String, dynamic> r,
+) => SupermarketProduct(
+  code: '$store:${r['product_id']}',
+  name: r['name'] as String,
+  brand: r['brand'] as String?,
+  quantity: r['size'] as String?,
+  imageUrl: r['image_url'] as String?,
+  price: (r['price'] as num?)?.toDouble(),
+  memberPrice: (r['member_price'] as num?)?.toDouble(),
+  priceStartsAt: DateTime.tryParse(r['price_starts_at'] as String? ?? ''),
+);
+
+/// Producto de algún catálogo con ese código de barras, o null (también si
+/// falla la red).
+Future<SupermarketProduct?> catalogProductByEan(String ean) async {
+  try {
+    final rows = await Supabase.instance.client
+        .from('supermarket_products')
+        .select('store,$_catalogColumns')
+        .eq('ean', ean)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    return catalogProductFromRow(rows.first['store'] as String, rows.first);
+  } catch (_) {
+    return null;
+  }
+}
+
 typedef CatalogSearch =
     Future<List<SupermarketProduct>> Function(
       String query,
@@ -495,7 +543,7 @@ Future<List<SupermarketProduct>> searchCatalog(
   Future<List<Map<String, dynamic>>> fetch({required bool prefix}) {
     var q = Supabase.instance.client
         .from('supermarket_products')
-        .select('product_id,name,brand,size,price,image_url')
+        .select(_catalogColumns)
         .eq('store', store);
     if (freshOnly) q = q.inFilter('category', freshCategories);
     for (final w in words) {
@@ -513,17 +561,7 @@ Future<List<SupermarketProduct>> searchCatalog(
     for (final r in [...both[0], ...both[1]])
       if (seen.add(r['product_id'])) r,
   ];
-  return [
-    for (final r in rows)
-      SupermarketProduct(
-        code: '$store:${r['product_id']}',
-        name: r['name'] as String,
-        brand: r['brand'] as String?,
-        quantity: r['size'] as String?,
-        imageUrl: r['image_url'] as String?,
-        price: (r['price'] as num?)?.toDouble(),
-      ),
-  ];
+  return [for (final r in rows) catalogProductFromRow(store, r)];
 }
 
 /// Busca productos de súper: primero en los catálogos oficiales y luego en

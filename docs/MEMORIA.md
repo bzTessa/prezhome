@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0059.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0090.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -194,10 +194,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Catálogos de súper: `scripts/*_sync.py` → `supermarket_products`, cada lunes
   (`.github/workflows/open-prices.yml`). Lidl (`lidl_sync.py`, 5 países) lee
   las fichas del sitemap con código 11/12/60/66; el resto es bazar, packs
-  online o tarjetas regalo y no se importa. Precio y categoría salen del
-  `__NUXT_DATA__` de la ficha (zona por defecto; si aún no está a la venta, el
-  próximo precio); sin precio se conserva el último conocido. La ficha trae
-  también EAN, precio Lidl Plus y precio por zona (aún no se guardan).
+  online o tarjetas regalo y no se importa. Precio, categoría, EAN y precio Lidl
+  Plus (`member_price`) salen del `__NUXT_DATA__` de la ficha (zona por
+  defecto; si aún no está a la venta, el próximo precio con `price_starts_at`);
+  sin precio se conserva el último conocido. El buscador de productos enseña
+  "con Lidl Plus" y "desde el…"; el escáner busca por `ean` en los catálogos si
+  OFF no conoce el código.
 
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.

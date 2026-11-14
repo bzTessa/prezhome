@@ -1,4 +1,5 @@
 import 'food_facts_service.dart';
+import 'product_search_service.dart';
 import 'shelf_life.dart';
 
 /// Valores precargables para la pantalla de alta de inventario. Es una bolsa
@@ -58,6 +59,32 @@ InventoryPrefill? inventoryPrefillFromFoodFacts(FoodFacts facts) {
     quantity: facts.packageQuantity,
     unit: _normalizeUnit(facts.packageUnit),
     category: category,
+    location: location,
+  );
+}
+
+/// Precarga desde un producto del catálogo de un súper (código de barras que
+/// Open Food Facts no conoce). El nombre va sin el formato del final ("Café
+/// natural Marcilla 500 g" → "Café natural Marcilla"), que pasa a cantidad.
+InventoryPrefill inventoryPrefillFromCatalog(SupermarketProduct product) {
+  var name = product.name.trim();
+  final size = product.quantity?.trim();
+  if (size != null && size.isNotEmpty && name.endsWith(size)) {
+    name = name.substring(0, name.length - size.length).trim();
+  }
+  final pack = parsePackageQuantity(size);
+  final (quantity, unit) = switch (pack?.unit) {
+    'kg' => (pack!.quantity * 1000, 'g'),
+    'litros' => (pack!.quantity * 1000, 'ml'),
+    'g' || 'ml' => (pack!.quantity, pack.unit),
+    _ => (null, 'unidades'),
+  };
+  final location = ShelfLife.suggestLocation(name);
+  return InventoryPrefill(
+    name: name,
+    quantity: quantity,
+    unit: unit,
+    category: location,
     location: location,
   );
 }

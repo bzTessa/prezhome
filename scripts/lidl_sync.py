@@ -96,9 +96,35 @@ def page_data(page: str) -> dict:
     return {}
 
 
+def _amount(price: dict | None) -> float | None:
+    value = (price or {}).get("price")
+    return value if isinstance(value, (int, float)) and value > 0 else None
+
+
+def _offer(regular: dict | None, member: dict | None) -> dict | None:
+    """Precio normal y con Lidl Plus de un mismo momento. Si solo hay precio
+    Lidl Plus, el normal es el tachado."""
+    regular = regular or {}
+    member = ((member or {}).get("price")) or {}
+    price = _amount(regular)
+    member_price = _amount(member)
+    if price is None and member_price is not None:
+        deleted = (member.get("discount") or {}).get("deletedPrice")
+        price = deleted if isinstance(deleted, (int, float)) and deleted > 0 else None
+    if price is None and member_price is None:
+        return None
+    return {
+        "price": price,
+        "member_price": member_price if member_price and (price is None or member_price < price) else None,
+        "starts_at": regular.get("startDate") or member.get("startDate"),
+        "size": ((regular.get("packaging") or member.get("packaging") or {}).get("text") or "").strip() or None,
+    }
+
+
 def store_price(data: dict) -> dict | None:
     """Precio de tienda de la zona por defecto: el de esta semana o, si el
-    producto aún no está a la venta, el próximo (lleva su fecha)."""
+    producto aún no está a la venta, el próximo con su fecha de inicio
+    (starts_at; None si ya está a la venta)."""
     regions = data.get("regionsPrices") or {}
     if not isinstance(regions, dict) or not regions:
         return None
@@ -108,13 +134,30 @@ def store_price(data: dict) -> dict | None:
     ordered += [r for k, r in sorted(regions.items()) if k != default]
     ordered = [r for r in ordered if isinstance(r, dict)]
     for r in ordered:
-        current = r.get("currentPrice") or {}
-        if current.get("price"):
-            return current
-    upcoming = [f.get("price") or {} for r in ordered for f in (r.get("futurePrices") or [])
-                if isinstance(f, dict)]
-    upcoming = [p for p in upcoming if p.get("price")]
-    return min(upcoming, key=lambda p: p.get("startDate") or "") if upcoming else None
+        now = _offer(r.get("currentPrice"), r.get("currentLidlPlusPrice"))
+        if now:
+            return dict(now, starts_at=None)
+    upcoming = []
+    for r in ordered:
+        member = {((f.get("price") or {}).get("startDate")): f
+                  for f in (r.get("futureLidlPlusPrices") or []) if isinstance(f, dict)}
+        for f in r.get("futurePrices") or []:
+            if isinstance(f, dict):
+                start = (f.get("price") or {}).get("startDate")
+                upcoming.append(_offer(f.get("price"), member.pop(start, None)))
+        upcoming += [_offer(None, f) for f in member.values()]
+    upcoming = [u for u in upcoming if u and u["starts_at"]]
+    return min(upcoming, key=lambda u: u["starts_at"]) if upcoming else None
+
+
+def shelf_ean(eans) -> str | None:
+    """Código de barras del envase. Los de 13 cifras que empiezan por 2 son de
+    peso variable (cambian con cada pieza): no sirven para escanear."""
+    for ean in eans or []:
+        ean = str(ean).strip()
+        if ean.isdigit() and not (len(ean) == 13 and ean.startswith("2")):
+            return ean
+    return None
 
 
 def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
@@ -141,7 +184,7 @@ def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
     data = page_data(page)
     price = store_price(data)
     if not size and price:
-        size = ((price.get("packaging") or {}).get("text") or "").strip() or None
+        size = price["size"]
     category = ((data.get("keyfacts") or {}).get("wonCategoryPrimary") or "").split("/")[-1]
     full = " ".join(p for p in (name.strip(" -"), brand, size) if p)
     return {
@@ -152,6 +195,9 @@ def to_row(url: str, page: str, now: str, store: str = "lidl") -> dict | None:
         "brand": brand,
         "size": size,
         "price": price["price"] if price else offers[0].get("price"),
+        "member_price": price["member_price"] if price else None,
+        "price_starts_at": price["starts_at"] if price else None,
+        "ean": shelf_ean(data.get("eans")),
         "unit_price": None,
         "unit": None,
         "image_url": images[0] if isinstance(images, list) else images,
@@ -238,6 +284,15 @@ def _self_check() -> None:
     product["regionsPrices"] = {"1": {"futurePrices": [{"price": later}, {"price": soon}]}}
     row = to_row(url, page.replace("Aprox.220 g", "") + nuxt(product), "t")
     assert row["price"] == 6.99 and row["size"] == "500 g"
+    assert row["price_starts_at"] == "2026-11-19T23:00Z" and row["member_price"] is None
+    product["eans"] = ["4335619482951"]
+    product["regionsPrices"] = {"1": {"currentLidlPlusPrice": {"price": {
+        "price": 1.19, "discount": {"deletedPrice": 1.49}}}}}
+    row = to_row(url, page + nuxt(product), "t")
+    assert (row["price"], row["member_price"]) == (1.49, 1.19)
+    assert row["ean"] == "4335619482951" and row["price_starts_at"] is None
+    assert shelf_ean(["2269780000000", "20099763"]) == "20099763"
+    assert shelf_ean(["2269780000000"]) is None
     assert to_row(url, page.replace("REALVALLE", "-"), "t", "lidl_fr")["brand"] is None
     assert store_key("fr") == "lidl_fr" and store_key("es") == "lidl"
     batches = upsert_batches([row, dict(row, price=None, product_id="2")])

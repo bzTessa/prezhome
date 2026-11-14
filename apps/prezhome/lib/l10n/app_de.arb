@@ -1112,6 +1112,8 @@
   "psNoResultsIn": "Keine Treffer bei {store}. Diese sind aus anderen Supermärkten.",
   "psNotYet": "Wir haben die Produkte von {store} noch nicht. Diese sind aus anderen Supermärkten.",
   "psOffData": "Daten von Open Food Facts.",
+  "psMemberPrice": "{price} mit Lidl Plus",
+  "psPriceFrom": "ab {date}",
   "psAddAsIs": "\"{q}\" ohne Produkt hinzufügen",
   "offlineExplain": "Einkaufsliste und Vorrat funktionieren weiter: Was du einträgst, wird auf dem Handy gespeichert und gesendet, sobald die Verbindung zurück ist. Der Rest wird dann aktualisiert.",
   "offlineNow": "Gerade offline",

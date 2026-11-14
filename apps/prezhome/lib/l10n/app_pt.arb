@@ -1112,6 +1112,8 @@
   "psNoResultsIn": "Sem resultados no {store}. Estes são de outros supermercados.",
   "psNotYet": "Ainda não temos os produtos do {store}. Estes são de outros supermercados.",
   "psOffData": "Dados do Open Food Facts.",
+  "psMemberPrice": "{price} com Lidl Plus",
+  "psPriceFrom": "a partir de {date}",
   "psAddAsIs": "Adicionar \"{q}\" sem escolher produto",
   "offlineExplain": "Podes continuar a usar a lista de compras e a despensa: o que apontares fica guardado no telemóvel e é enviado quando a ligação voltar. O resto atualiza-se nessa altura.",
   "offlineNow": "Sem ligação neste momento",

@@ -1112,6 +1112,8 @@
   "psNoResultsIn": "Nema rezultata u {store}. Ovi su iz drugih marketa.",
   "psNotYet": "Još nemamo proizvode iz {store}. Ovi su iz drugih marketa.",
   "psOffData": "Podaci sa Open Food Facts.",
+  "psMemberPrice": "{price} uz Lidl Plus",
+  "psPriceFrom": "od {date}",
   "psAddAsIs": "Dodaj \"{q}\" bez odabira proizvoda",
   "offlineExplain": "Možeš i dalje koristiti listu za kupovinu i ostavu: ono što upišeš čuva se na telefonu i šalje kad se veza vrati. Ostalo će se tada ažurirati.",
   "offlineNow": "Trenutno bez veze",

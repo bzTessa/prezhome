@@ -6780,6 +6780,18 @@ abstract class AppLocalizations {
   /// **'Datos de Open Food Facts.'**
   String get psOffData;
 
+  /// No description provided for @psMemberPrice.
+  ///
+  /// In es, this message translates to:
+  /// **'{price} con Lidl Plus'**
+  String psMemberPrice(String price);
+
+  /// No description provided for @psPriceFrom.
+  ///
+  /// In es, this message translates to:
+  /// **'desde el {date}'**
+  String psPriceFrom(String date);
+
   /// No description provided for @psAddAsIs.
   ///
   /// In es, this message translates to:
