@@ -4853,6 +4853,51 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tskCatchUp => 'Catch up';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Repeating tasks jump to their next time and one-off tasks move to today. They aren\'t marked done and earn no points.';
+
+  @override
+  String get tskCaughtUp => 'Done, you\'re caught up';
+
+  @override
+  String get captureTitle => 'Jot down';
+
+  @override
+  String get captureToShopping => 'Shopping';
+
+  @override
+  String get captureToPantry => 'Pantry';
+
+  @override
+  String get captureToTask => 'Task';
+
+  @override
+  String get captureHintShopping => 'Milk, bread and eggs';
+
+  @override
+  String get captureHintPantry => 'What you just bought';
+
+  @override
+  String get captureHintTask => 'Call the plumber';
+
+  @override
+  String get captureSave => 'Save';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saved',
+      one: 'Saved',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get onbFoodTitle => 'Is there anything someone at home can\'t eat?';
 
   @override

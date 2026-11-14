@@ -7476,6 +7476,78 @@ abstract class AppLocalizations {
   /// **'Sin encontrar: {names}'**
   String shopCompareMissing(String names);
 
+  /// No description provided for @tskCatchUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Ponerme al día'**
+  String get tskCatchUp;
+
+  /// No description provided for @tskCatchUpExplain.
+  ///
+  /// In es, this message translates to:
+  /// **'Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.'**
+  String get tskCatchUpExplain;
+
+  /// No description provided for @tskCaughtUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo, estás al día'**
+  String get tskCaughtUp;
+
+  /// No description provided for @captureTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar'**
+  String get captureTitle;
+
+  /// No description provided for @captureToShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra'**
+  String get captureToShopping;
+
+  /// No description provided for @captureToPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Despensa'**
+  String get captureToPantry;
+
+  /// No description provided for @captureToTask.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarea'**
+  String get captureToTask;
+
+  /// No description provided for @captureHintShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'Leche, pan y huevos'**
+  String get captureHintShopping;
+
+  /// No description provided for @captureHintPantry.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que acabas de comprar'**
+  String get captureHintPantry;
+
+  /// No description provided for @captureHintTask.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamar al fontanero'**
+  String get captureHintTask;
+
+  /// No description provided for @captureSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar'**
+  String get captureSave;
+
+  /// No description provided for @captureDone.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Apuntado} other{{count} apuntados}}'**
+  String captureDone(int count);
+
   /// No description provided for @onbFoodTitle.
   ///
   /// In es, this message translates to:

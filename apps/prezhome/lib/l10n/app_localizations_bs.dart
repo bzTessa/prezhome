@@ -4800,6 +4800,51 @@ class AppLocalizationsBs extends AppLocalizations {
   }
 
   @override
+  String get tskCatchUp => 'Sustigni';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Zadaci koji se ponavljaju prelaze na sljedeći put, a jednokratni na danas. Ne označavaju se kao urađeni i ne donose bodove.';
+
+  @override
+  String get tskCaughtUp => 'Gotovo, sve je ažurno';
+
+  @override
+  String get captureTitle => 'Zabilježi';
+
+  @override
+  String get captureToShopping => 'Kupovina';
+
+  @override
+  String get captureToPantry => 'Ostava';
+
+  @override
+  String get captureToTask => 'Zadatak';
+
+  @override
+  String get captureHintShopping => 'Mlijeko, hljeb i jaja';
+
+  @override
+  String get captureHintPantry => 'Ono što si upravo kupio';
+
+  @override
+  String get captureHintTask => 'Pozvati vodoinstalatera';
+
+  @override
+  String get captureSave => 'Zabilježi';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zabilježeno',
+      one: 'Zabilježeno',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get onbFoodTitle => 'Ima li nešto što se kod kuće ne smije jesti?';
 
   @override

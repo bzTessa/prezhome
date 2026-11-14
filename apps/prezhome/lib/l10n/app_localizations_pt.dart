@@ -4865,6 +4865,51 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get tskCatchUp => 'Pôr-me em dia';
+
+  @override
+  String get tskCatchUpExplain =>
+      'As tarefas que se repetem passam para a próxima vez e as pontuais para hoje. Não ficam feitas nem dão pontos.';
+
+  @override
+  String get tskCaughtUp => 'Pronto, estás em dia';
+
+  @override
+  String get captureTitle => 'Apontar';
+
+  @override
+  String get captureToShopping => 'Compras';
+
+  @override
+  String get captureToPantry => 'Despensa';
+
+  @override
+  String get captureToTask => 'Tarefa';
+
+  @override
+  String get captureHintShopping => 'Leite, pão e ovos';
+
+  @override
+  String get captureHintPantry => 'O que acabaste de comprar';
+
+  @override
+  String get captureHintTask => 'Ligar ao canalizador';
+
+  @override
+  String get captureSave => 'Apontar';
+
+  @override
+  String captureDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count apontados',
+      one: 'Apontado',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get onbFoodTitle => 'Há algo que não se possa comer em casa?';
 
   @override
