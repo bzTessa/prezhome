@@ -1203,5 +1203,19 @@
   "aiKindShort": "{kind, select, prep{Pripremljeno} dish{Gotovo jelo} other{Sastojak}}",
   "settingsTitle": "Postavke",
   "hhSettingsSub": "Način korištenja, izgled, obavijesti i država",
-  "hhCustomizeHomeSub": "Kartice i prečice na Danas"
+  "hhCustomizeHomeSub": "Kartice i prečice na Danas",
+  "shopCompare": "Uporedi prodavnice",
+  "shopCompareTitle": "Gdje je najjeftinije?",
+  "shopCompareCheapest": "Najjeftinije",
+  "shopCompareFound": "{found} od {total} proizvoda",
+  "shopCompareCommon": "Upoređeno na {count} proizvoda koje imaju sve prodavnice",
+  "shopComparePartial": "Malo proizvoda",
+  "shopCompareFromTickets": "Cijena s računa",
+  "shopCompareSetMain": "Kupuj ovdje",
+  "shopCompareIsMain": "Tvoja prodavnica",
+  "shopCompareNote": "Cijene sa stranice svake prodavnice (ažuriraju se ponedjeljkom) i sa skeniranih računa. U prodavnici se mogu razlikovati.",
+  "shopCompareEmpty": "Tvoje proizvode nismo našli ni u jednoj prodavnici.",
+  "shopCompareError": "Poređenje nije uspjelo.",
+  "shopCompareRetry": "Pokušaj ponovo",
+  "shopCompareMissing": "Nije pronađeno: {names}"
 }

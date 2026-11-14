@@ -1203,5 +1203,19 @@
   "aiKindShort": "{kind, select, prep{Preparado} dish{Prato pronto} other{Ingrediente}}",
   "settingsTitle": "Definições",
   "hhSettingsSub": "Modo de uso, aparência, avisos e país",
-  "hhCustomizeHomeSub": "Cartões e atalhos de Hoje"
+  "hhCustomizeHomeSub": "Cartões e atalhos de Hoje",
+  "shopCompare": "Comparar supermercados",
+  "shopCompareTitle": "Onde fica mais barato?",
+  "shopCompareCheapest": "O mais barato",
+  "shopCompareFound": "{found} de {total} produtos",
+  "shopCompareCommon": "Comparado com os {count} produtos que existem em todos",
+  "shopComparePartial": "Com poucos produtos",
+  "shopCompareFromTickets": "Preço de talões",
+  "shopCompareSetMain": "Comprar aqui",
+  "shopCompareIsMain": "O teu supermercado",
+  "shopCompareNote": "Preços do site de cada supermercado (atualizados à segunda-feira) e de talões digitalizados. Na loja podem mudar.",
+  "shopCompareEmpty": "Não encontrámos os teus produtos em nenhum supermercado.",
+  "shopCompareError": "Não foi possível comparar.",
+  "shopCompareRetry": "Tentar de novo",
+  "shopCompareMissing": "Não encontrados: {names}"
 }

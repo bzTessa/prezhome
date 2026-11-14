@@ -1203,5 +1203,19 @@
   "aiKindShort": "{kind, select, prep{Vorbereitet} dish{Fertiges Gericht} other{Zutat}}",
   "settingsTitle": "Einstellungen",
   "hhSettingsSub": "Nutzungsmodus, Aussehen, Hinweise und Land",
-  "hhCustomizeHomeSub": "Karten und Kurzbefehle auf Heute"
+  "hhCustomizeHomeSub": "Karten und Kurzbefehle auf Heute",
+  "shopCompare": "Märkte vergleichen",
+  "shopCompareTitle": "Wo ist es am günstigsten?",
+  "shopCompareCheapest": "Am günstigsten",
+  "shopCompareFound": "{found} von {total} Produkten",
+  "shopCompareCommon": "Verglichen mit den {count} Produkten, die überall da sind",
+  "shopComparePartial": "Wenige Produkte",
+  "shopCompareFromTickets": "Preis vom Kassenbon",
+  "shopCompareSetMain": "Hier einkaufen",
+  "shopCompareIsMain": "Dein Markt",
+  "shopCompareNote": "Preise von der Website jedes Markts (jeden Montag aktualisiert) und von gescannten Kassenbons. Im Laden können sie abweichen.",
+  "shopCompareEmpty": "Deine Produkte wurden in keinem Markt gefunden.",
+  "shopCompareError": "Vergleich nicht möglich.",
+  "shopCompareRetry": "Erneut versuchen",
+  "shopCompareMissing": "Nicht gefunden: {names}"
 }

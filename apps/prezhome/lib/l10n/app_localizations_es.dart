@@ -4778,4 +4778,54 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get hhCustomizeHomeSub => 'Tarjetas y atajos que ves en Hoy';
+
+  @override
+  String get shopCompare => 'Comparar súpers';
+
+  @override
+  String get shopCompareTitle => '¿Dónde sale más barata?';
+
+  @override
+  String get shopCompareCheapest => 'Lo más barato';
+
+  @override
+  String shopCompareFound(int found, int total) {
+    return '$found de $total productos';
+  }
+
+  @override
+  String shopCompareCommon(int count) {
+    return 'Comparado con los $count productos que hay en todos';
+  }
+
+  @override
+  String get shopComparePartial => 'Con pocos productos';
+
+  @override
+  String get shopCompareFromTickets => 'Precio de tickets';
+
+  @override
+  String get shopCompareSetMain => 'Comprar aquí';
+
+  @override
+  String get shopCompareIsMain => 'Tu súper';
+
+  @override
+  String get shopCompareNote =>
+      'Precios de la web de cada súper (se actualizan cada lunes) y de tickets escaneados. En tienda pueden cambiar.';
+
+  @override
+  String get shopCompareEmpty =>
+      'No hemos encontrado tus productos en ningún súper.';
+
+  @override
+  String get shopCompareError => 'No se ha podido comparar.';
+
+  @override
+  String get shopCompareRetry => 'Reintentar';
+
+  @override
+  String shopCompareMissing(String names) {
+    return 'Sin encontrar: $names';
+  }
 }

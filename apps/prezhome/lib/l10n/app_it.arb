@@ -1203,5 +1203,19 @@
   "aiKindShort": "{kind, select, prep{Preparato} dish{Piatto pronto} other{Ingrediente}}",
   "settingsTitle": "Impostazioni",
   "hhSettingsSub": "Modalità d'uso, aspetto, avvisi e paese",
-  "hhCustomizeHomeSub": "Schede e scorciatoie di Oggi"
+  "hhCustomizeHomeSub": "Schede e scorciatoie di Oggi",
+  "shopCompare": "Confronta supermercati",
+  "shopCompareTitle": "Dove costa meno?",
+  "shopCompareCheapest": "Il più economico",
+  "shopCompareFound": "{found} di {total} prodotti",
+  "shopCompareCommon": "Confronto sui {count} prodotti presenti ovunque",
+  "shopComparePartial": "Pochi prodotti",
+  "shopCompareFromTickets": "Prezzo da scontrini",
+  "shopCompareSetMain": "Compra qui",
+  "shopCompareIsMain": "Il tuo supermercato",
+  "shopCompareNote": "Prezzi dal sito di ogni supermercato (aggiornati ogni lunedì) e dagli scontrini scansionati. In negozio possono cambiare.",
+  "shopCompareEmpty": "Non abbiamo trovato i tuoi prodotti in nessun supermercato.",
+  "shopCompareError": "Impossibile confrontare.",
+  "shopCompareRetry": "Riprova",
+  "shopCompareMissing": "Non trovati: {names}"
 }

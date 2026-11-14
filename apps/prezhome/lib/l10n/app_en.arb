@@ -1203,5 +1203,19 @@
   "aiKindShort": "{kind, select, prep{Prepared} dish{Ready dish} other{Ingredient}}",
   "settingsTitle": "Settings",
   "hhSettingsSub": "Usage mode, appearance, alerts and country",
-  "hhCustomizeHomeSub": "Cards and shortcuts on Today"
+  "hhCustomizeHomeSub": "Cards and shortcuts on Today",
+  "shopCompare": "Compare stores",
+  "shopCompareTitle": "Where is it cheapest?",
+  "shopCompareCheapest": "Cheapest",
+  "shopCompareFound": "{found} of {total} products",
+  "shopCompareCommon": "Compared on the {count} products every store has",
+  "shopComparePartial": "Few products",
+  "shopCompareFromTickets": "Receipt price",
+  "shopCompareSetMain": "Shop here",
+  "shopCompareIsMain": "Your store",
+  "shopCompareNote": "Prices from each store's website (updated every Monday) and from scanned receipts. In-store prices may differ.",
+  "shopCompareEmpty": "We couldn't find your products in any store.",
+  "shopCompareError": "Couldn't compare.",
+  "shopCompareRetry": "Try again",
+  "shopCompareMissing": "Not found: {names}"
 }
