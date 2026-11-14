@@ -5010,27 +5010,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get homeOverdueSub =>
-      'Las repartimos en los próximos días, dos al día';
-
-  @override
-  String get homeCatchUp => 'Ponerme al día';
-
-  @override
-  String homeCaughtUp(int count, int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count tareas',
-      one: '1 tarea',
-    );
-    String _temp1 = intl.Intl.pluralLogic(
-      days,
-      locale: localeName,
-      other: '$days días',
-      one: '1 día',
-    );
-    return '$_temp0 repartidas en $_temp1';
-  }
+      'Las que se repiten pasan a su próxima vez y las puntuales, a hoy';
 
   @override
   String homeTomorrowTag(String meal) {

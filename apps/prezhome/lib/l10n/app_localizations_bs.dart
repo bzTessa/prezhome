@@ -4947,27 +4947,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get homeOverdueSub =>
-      'Rasporedit ćemo ih u narednim danima, dva dnevno';
-
-  @override
-  String get homeCatchUp => 'Sustigni';
-
-  @override
-  String homeCaughtUp(int count, int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count zadataka raspoređeno',
-      one: '1 zadatak raspoređen',
-    );
-    String _temp1 = intl.Intl.pluralLogic(
-      days,
-      locale: localeName,
-      other: '$days dana',
-      one: '1 dan',
-    );
-    return '$_temp0 na $_temp1';
-  }
+      'Ponavljajući prelaze na sljedeći put, a jednokratni na danas';
 
   @override
   String homeTomorrowTag(String meal) {

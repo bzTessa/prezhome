@@ -3111,19 +3111,7 @@
       }
     }
   },
-  "homeOverdueSub": "Las repartimos en los próximos días, dos al día",
-  "homeCatchUp": "Ponerme al día",
-  "homeCaughtUp": "{count, plural, =1{1 tarea} other{{count} tareas}} repartidas en {days, plural, =1{1 día} other{{days} días}}",
-  "@homeCaughtUp": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "days": {
-        "type": "int"
-      }
-    }
-  },
+  "homeOverdueSub": "Las que se repiten pasan a su próxima vez y las puntuales, a hoy",
   "homeTomorrowTag": "Mañana · {meal}",
   "@homeTomorrowTag": {
     "placeholders": {

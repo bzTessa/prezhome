@@ -7689,20 +7689,8 @@ abstract class AppLocalizations {
   /// No description provided for @homeOverdueSub.
   ///
   /// In es, this message translates to:
-  /// **'Las repartimos en los próximos días, dos al día'**
+  /// **'Las que se repiten pasan a su próxima vez y las puntuales, a hoy'**
   String get homeOverdueSub;
-
-  /// No description provided for @homeCatchUp.
-  ///
-  /// In es, this message translates to:
-  /// **'Ponerme al día'**
-  String get homeCatchUp;
-
-  /// No description provided for @homeCaughtUp.
-  ///
-  /// In es, this message translates to:
-  /// **'{count, plural, =1{1 tarea} other{{count} tareas}} repartidas en {days, plural, =1{1 día} other{{days} días}}'**
-  String homeCaughtUp(int count, int days);
 
   /// No description provided for @homeTomorrowTag.
   ///

@@ -44,6 +44,7 @@ import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
 import '../widgets/animations/staggered_entrance.dart';
 import '../utils/day_brief.dart';
+import '../utils/task_share.dart' show catchUpDates;
 import '../utils/friendly_error.dart';
 import '../utils/pantry_ideas.dart' show formatEuros, pantryNamesForIdeas;
 import '../utils/recipe_browse.dart' show readyToCook;
@@ -382,11 +383,11 @@ class HomeTabState extends State<HomeTab> {
     return minutes >= from;
   }
 
-  /// "Ponerme al día": reparte las tareas atrasadas en los próximos días, dos
-  /// por día, y deja deshacerlo.
+  /// "Ponerme al día" (igual que en Tareas): las que se repiten saltan a su
+  /// próxima vez y las puntuales pasan a hoy, sin puntos. Se puede deshacer.
   Future<void> _catchUp(List<HomeTask> overdue) async {
     String key(DateTime d) => d.toIso8601String().split('T').first;
-    final dates = spreadOverdue(overdue, DateTime.now());
+    final dates = catchUpDates(overdue, DateTime.now());
     try {
       for (final t in overdue) {
         final d = dates[t.id];
@@ -399,10 +400,9 @@ class HomeTabState extends State<HomeTab> {
       HapticFeedback.selectionClick();
       await _loadTasksSummary();
       if (!mounted) return;
-      final days = dates.values.map(key).toSet().length;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.l.homeCaughtUp(overdue.length, days)),
+          content: Text(context.l.tskCaughtUp),
           action: SnackBarAction(
             label: context.l.undo,
             onPressed: () async {
@@ -1521,7 +1521,7 @@ class HomeTabState extends State<HomeTab> {
                         isTask
                             ? context.l.homeNextDone
                             : line.kind == DayLineKind.overdue
-                            ? context.l.homeCatchUp
+                            ? context.l.tskCatchUp
                             : context.l.homeNextOpen,
                       ),
                       style: FilledButton.styleFrom(
@@ -1572,7 +1572,7 @@ class HomeTabState extends State<HomeTab> {
       DayLineKind.overdue => _dayAction(
         icon: Icons.event_repeat_rounded,
         color: AppColors.soon,
-        text: '${context.l.homeOverdue(line.count)} · ${context.l.homeCatchUp}',
+        text: '${context.l.homeOverdue(line.count)} · ${context.l.tskCatchUp}',
         onTap: () => _catchUp(line.tasks),
       ),
       DayLineKind.expiring => _dayAction(

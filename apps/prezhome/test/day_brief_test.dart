@@ -78,19 +78,6 @@ void main() {
     expect(lines.single.names, ['Pisto']);
   });
 
-  test('ponerse al día reparte las atrasadas, las más antiguas primero', () {
-    final dates = spreadOverdue([
-      _task('c', DateTime(2026, 11, 10)),
-      _task('a', DateTime(2026, 10, 1)),
-      _task('b', DateTime(2026, 11, 1)),
-    ], today);
-    expect(dates, {
-      'a': DateTime(2026, 11, 12),
-      'b': DateTime(2026, 11, 12),
-      'c': DateTime(2026, 11, 13),
-    });
-  });
-
   test('limita las tareas de hoy a tres con "y N más"', () {
     final lines = buildDayBrief(
       today: today,

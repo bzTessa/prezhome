@@ -98,24 +98,3 @@ List<DayLine> buildDayBrief({
     if (shopping > 0) DayLine(DayLineKind.shopping, count: shopping),
   ];
 }
-
-/// "Ponerme al día": nuevas fechas para las tareas atrasadas, repartidas
-/// [perDay] por día desde hoy, las más antiguas primero. Las que se repiten
-/// siguen su ritmo desde que se hagan.
-Map<String, DateTime> spreadOverdue(
-  List<HomeTask> overdue,
-  DateTime today, {
-  int perDay = 2,
-}) {
-  final sorted = [...overdue]
-    ..sort((a, b) {
-      final da = a.nextDue ?? a.dueDate ?? today;
-      final db = b.nextDue ?? b.dueDate ?? today;
-      return da.compareTo(db);
-    });
-  final t0 = _day(today);
-  return {
-    for (final (i, t) in sorted.indexed)
-      t.id: DateTime(t0.year, t0.month, t0.day + i ~/ perDay),
-  };
-}
