@@ -825,11 +825,7 @@ class HomeTabState extends State<HomeTab> {
                       next.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        letterSpacing: -0.4,
-                        height: 1.15,
-                        fontWeight: FontWeight.w900,
+                      style: AppTextStyles.headline.copyWith(
                         color: Colors.white,
                       ),
                     ),
@@ -910,12 +906,7 @@ class HomeTabState extends State<HomeTab> {
               Expanded(
                 child: Text(
                   context.l.homeWhatToEat,
-                  style: TextStyle(
-                    fontSize: 22,
-                    letterSpacing: -0.4,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.ink,
-                  ),
+                  style: AppTextStyles.headline,
                 ),
               ),
               const MiauCharacter(
@@ -1192,7 +1183,7 @@ class HomeTabState extends State<HomeTab> {
                       ),
                       style: FilledButton.styleFrom(
                         backgroundColor: onBrand,
-                        foregroundColor: AppColors.terracottaPressed,
+                        foregroundColor: AppColors.card,
                         minimumSize: const Size(64, 48),
                       ),
                     ),
@@ -1762,7 +1753,8 @@ class _CustomizeDashboardScreenState extends State<_CustomizeDashboardScreen> {
                   decoration: AppTheme.cardDecoration(radius: 14),
                   child: SwitchListTile(
                     value: !_hidden.contains(card),
-                    activeThumbColor: AppColors.woodDark,
+                    // Deja sitio al asa de arrastre, que se pinta encima a la derecha.
+                    contentPadding: const EdgeInsets.only(left: 16, right: 44),
                     secondary: Icon(card.icon, color: AppColors.woodDark),
                     title: Text(
                       context.l.dashCard(card.id),

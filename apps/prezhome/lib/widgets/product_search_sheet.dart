@@ -123,12 +123,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
                 storeLabel == null
                     ? context.l.psStoreTitle
                     : context.l.psStoreTitleOf(storeLabel),
-                style: TextStyle(
-                  fontSize: 22,
-                  letterSpacing: -0.4,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.ink,
-                ),
+                style: AppTextStyles.headline,
               ),
             ),
             Padding(

@@ -604,13 +604,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   children: [
                     Text(
                       r.title,
-                      style: TextStyle(
-                        fontSize: 26,
-                        letterSpacing: -0.4,
-                        height: 1.15,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.ink,
-                      ),
+                      style: AppTextStyles.display.copyWith(fontSize: 26),
                     ),
                     if (r.description != null &&
                         r.description!.trim().isNotEmpty) ...[
