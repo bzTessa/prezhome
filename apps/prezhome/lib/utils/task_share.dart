@@ -27,11 +27,7 @@ List<MapEntry<String?, List<HomeTask>>> groupByPerson(
   String? me,
   Map<String, String> members,
 ) {
-  final order = <String?>[
-    ?me,
-    ...members.keys.where((id) => id != me),
-    null,
-  ];
+  final order = <String?>[?me, ...members.keys.where((id) => id != me), null];
   final groups = <String?, List<HomeTask>>{for (final id in order) id: []};
   for (final t in tasks) {
     final key = members.containsKey(t.assignedTo) ? t.assignedTo : null;
