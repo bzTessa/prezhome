@@ -2931,5 +2931,9 @@
   "shopInStore": "Modo tienda",
   "shopInStoreAt": "Estás en {store}",
   "shopFinish": "Terminar compra",
-  "@shopInStoreAt": {"placeholders": {"store": {"type": "String"}}}
+  "@shopInStoreAt": {"placeholders": {"store": {"type": "String"}}},
+  "planCookNow": "Toca cocinar",
+  "planEaten": "Comido",
+  "rdToShopping": "A la compra",
+  "rdInList": "En la lista"
 }

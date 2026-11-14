@@ -4800,4 +4800,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String shopInStoreAt(String store) {
     return 'Estás no $store';
   }
+
+  @override
+  String get planCookNow => 'Hora de cozinhar';
+
+  @override
+  String get planEaten => 'Comido';
+
+  @override
+  String get rdToShopping => 'Para a lista';
+
+  @override
+  String get rdInList => 'Na lista';
 }

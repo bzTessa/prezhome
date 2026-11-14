@@ -4800,4 +4800,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String shopInStoreAt(String store) {
     return 'Sei da $store';
   }
+
+  @override
+  String get planCookNow => 'Da cucinare';
+
+  @override
+  String get planEaten => 'Mangiato';
+
+  @override
+  String get rdToShopping => 'Alla spesa';
+
+  @override
+  String get rdInList => 'In lista';
 }

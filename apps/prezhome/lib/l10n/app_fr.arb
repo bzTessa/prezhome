@@ -1210,5 +1210,9 @@
   "tskYouShort": "Toi",
   "shopInStore": "Mode magasin",
   "shopInStoreAt": "Tu es chez {store}",
-  "shopFinish": "Terminer les courses"
+  "shopFinish": "Terminer les courses",
+  "planCookNow": "À cuisiner",
+  "planEaten": "Mangé",
+  "rdToShopping": "À la liste",
+  "rdInList": "Dans la liste"
 }

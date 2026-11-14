@@ -63,6 +63,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final Set<int> _doneSteps = {};
   // Nombres de la despensa, para marcar lo que ya hay en casa.
   List<String> _pantry = [];
+
+  /// Ingredientes que faltaban y ya se han mandado a la lista de la compra.
+  final Set<String> _inList = {};
   bool _addingMissing = false;
 
   int get _recipeServings => _recipe.servings < 1 ? 1 : _recipe.servings;
@@ -1137,20 +1140,22 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ),
             ),
-            if (inPantry != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: inPantry ? AppColors.sageBg : AppColors.terracottaBg,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  inPantry ? context.l.rdAtHome : context.l.rdLacking,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: inPantry ? AppColors.sage : AppColors.terracotta,
-                  ),
+            if (inPantry == true)
+              _pill(context.l.rdAtHome, AppColors.sageBg, AppColors.sage)
+            else if (inPantry == false && _inList.contains(ing.name.trim()))
+              _pill(context.l.rdInList, AppColors.line, AppColors.inkMuted)
+            else if (inPantry == false)
+              // Lo que falta se manda a la compra con un toque.
+              InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: _addingMissing
+                    ? null
+                    : () => _addMissing([ing.name.trim()]),
+                child: _pill(
+                  context.l.rdToShopping,
+                  AppColors.terracottaBg,
+                  AppColors.terracotta,
+                  icon: Icons.add_rounded,
                 ),
               ),
           ],
@@ -1158,6 +1163,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ),
     );
   }
+
+  Widget _pill(String text, Color bg, Color fg, {IconData? icon}) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) Icon(icon, size: 14, color: fg),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: fg,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _stepsTab(List<String> steps) {
     if (steps.isEmpty) {
@@ -1416,6 +1443,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ).toInsertMap(),
       ]);
       if (!mounted) return;
+      setState(() => _inList.addAll(missing));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l.rdAddedMissing(missing.length))),
       );
