@@ -4812,4 +4812,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get rdInList => 'In lista';
+
+  @override
+  String get tskCatchUp => 'Mettermi in pari';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Le faccende ripetute passano alla prossima volta e quelle singole a oggi. Non vengono segnate come fatte e non danno punti.';
+
+  @override
+  String get tskCaughtUp => 'Fatto, sei in pari';
 }

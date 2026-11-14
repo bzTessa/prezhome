@@ -1214,5 +1214,8 @@
   "planCookNow": "À cuisiner",
   "planEaten": "Mangé",
   "rdToShopping": "À la liste",
-  "rdInList": "Dans la liste"
+  "rdInList": "Dans la liste",
+  "tskCatchUp": "Me remettre à jour",
+  "tskCatchUpExplain": "Les tâches répétées passent à leur prochaine fois et les ponctuelles à aujourd'hui. Elles ne sont pas marquées comme faites et ne donnent pas de points.",
+  "tskCaughtUp": "C'est fait, tu es à jour"
 }

@@ -29,4 +29,24 @@ void main() {
     expect(groups.map((g) => g.key), ['yo', 'm', null]);
     expect(groups.last.value.map((x) => x.id), ['2', '4']);
   });
+
+  test('ponerme al día: puntuales a hoy y recurrentes a su próxima vez', () {
+    final now = DateTime(2026, 11, 14, 10); // sábado
+    final dates = catchUpDates([
+      HomeTask(id: 'once', homeId: 'h', title: 'x'),
+      HomeTask(id: 'daily', homeId: 'h', title: 'x', recurrence: 'daily'),
+      HomeTask(id: 'weekly', homeId: 'h', title: 'x', recurrence: 'weekly'),
+      HomeTask(
+        id: 'mon',
+        homeId: 'h',
+        title: 'x',
+        recurrence: 'custom_weekdays',
+        weekdays: const [1],
+      ),
+    ], now);
+    expect(dates['once'], DateTime(2026, 11, 14));
+    expect(dates['daily'], DateTime(2026, 11, 14));
+    expect(dates['weekly'], DateTime(2026, 11, 20));
+    expect(dates['mon'], DateTime(2026, 11, 16));
+  });
 }

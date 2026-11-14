@@ -1214,5 +1214,8 @@
   "planCookNow": "Da cucinare",
   "planEaten": "Mangiato",
   "rdToShopping": "Alla spesa",
-  "rdInList": "In lista"
+  "rdInList": "In lista",
+  "tskCatchUp": "Mettermi in pari",
+  "tskCatchUpExplain": "Le faccende ripetute passano alla prossima volta e quelle singole a oggi. Non vengono segnate come fatte e non danno punti.",
+  "tskCaughtUp": "Fatto, sei in pari"
 }

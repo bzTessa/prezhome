@@ -38,3 +38,17 @@ List<MapEntry<String?, List<HomeTask>>> groupByPerson(
       if (groups[id]!.isNotEmpty) MapEntry(id, groups[id]!),
   ];
 }
+
+/// "Ponerme al día": nueva fecha para cada tarea atrasada, sin marcarla como
+/// hecha ni dar puntos. Las que se repiten saltan a su próxima vez desde hoy
+/// (una diaria vuelve a hoy) y las puntuales pasan a hoy.
+Map<String, DateTime> catchUpDates(List<HomeTask> overdue, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+  return {
+    for (final t in overdue)
+      t.id: t.recurrence == 'once'
+          ? today
+          : (t.computeNextDue(yesterday) ?? today),
+  };
+}

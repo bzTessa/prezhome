@@ -1214,5 +1214,8 @@
   "planCookNow": "Vrijeme za kuhanje",
   "planEaten": "Pojedeno",
   "rdToShopping": "U kupovinu",
-  "rdInList": "Na listi"
+  "rdInList": "Na listi",
+  "tskCatchUp": "Sustigni",
+  "tskCatchUpExplain": "Zadaci koji se ponavljaju prelaze na sljedeći put, a jednokratni na danas. Ne označavaju se kao urađeni i ne donose bodove.",
+  "tskCaughtUp": "Gotovo, sve je ažurno"
 }

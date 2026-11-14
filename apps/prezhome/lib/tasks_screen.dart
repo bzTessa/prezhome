@@ -490,6 +490,53 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
+  /// "Ponerme al día": tras confirmar, cada atrasada pasa a su próxima vez
+  /// (o a hoy si es puntual) sin marcarla como hecha ni dar puntos.
+  Future<void> _catchUp(List<HomeTask> overdue) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.l.tskCatchUp),
+        content: Text(context.l.tskCatchUpExplain),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(context.l.tskCatchUp),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    HapticFeedback.mediumImpact();
+    try {
+      final dates = catchUpDates(overdue, DateTime.now());
+      for (final e in dates.entries) {
+        final key = e.value.toIso8601String().split('T').first;
+        await _client
+            .from('tasks')
+            .update({'due_date': key, 'next_due': key})
+            .eq('id', e.key);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l.tskCaughtUp)));
+      _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
   /// Aplaza una tarea [days] días desde hoy (due_date y next_due).
   Future<void> _postpone(HomeTask task, int days) async {
     HapticFeedback.selectionClick();
@@ -725,6 +772,13 @@ class _TasksScreenState extends State<TasksScreen> {
                   members: data.members,
                   points: data.weekScores,
                   currentUserId: data.currentUserId,
+                ),
+              ],
+              if (overdue >= 2) ...[
+                const SizedBox(height: AppSpacing.md),
+                _CatchUpCard(
+                  count: overdue,
+                  onTap: () => _catchUp(today.where(_isOverdue).toList()),
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),
@@ -1181,6 +1235,46 @@ class _Scoreboard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Aviso de atrasadas con el botón "Ponerme al día".
+class _CatchUpCard extends StatelessWidget {
+  const _CatchUpCard({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+    decoration: BoxDecoration(
+      color: AppColors.terracottaBg,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+    ),
+    child: Row(
+      children: [
+        Icon(Icons.history_rounded, color: AppColors.terracottaText),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            context.l.tskOverdueCount(count),
+            style: AppTextStyles.bodyStrong.copyWith(
+              color: AppColors.terracottaText,
+            ),
+          ),
+        ),
+        FilledButton(
+          onPressed: onTap,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.terracotta,
+            foregroundColor: AppColors.onBrand,
+            visualDensity: VisualDensity.compact,
+          ),
+          child: Text(context.l.tskCatchUp),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Reparto de la semana: una barra partida con los puntos de cada persona

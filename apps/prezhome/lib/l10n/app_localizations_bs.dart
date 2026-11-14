@@ -4747,4 +4747,14 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get rdInList => 'Na listi';
+
+  @override
+  String get tskCatchUp => 'Sustigni';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Zadaci koji se ponavljaju prelaze na sljedeći put, a jednokratni na danas. Ne označavaju se kao urađeni i ne donose bodove.';
+
+  @override
+  String get tskCaughtUp => 'Gotovo, sve je ažurno';
 }

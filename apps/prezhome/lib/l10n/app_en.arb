@@ -1214,5 +1214,8 @@
   "planCookNow": "Time to cook",
   "planEaten": "Eaten",
   "rdToShopping": "Add to list",
-  "rdInList": "On the list"
+  "rdInList": "On the list",
+  "tskCatchUp": "Catch up",
+  "tskCatchUpExplain": "Repeating tasks jump to their next time and one-off tasks move to today. They aren't marked done and earn no points.",
+  "tskCaughtUp": "Done, you're caught up"
 }

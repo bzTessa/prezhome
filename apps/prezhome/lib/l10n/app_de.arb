@@ -1214,5 +1214,8 @@
   "planCookNow": "Jetzt kochen",
   "planEaten": "Gegessen",
   "rdToShopping": "Auf die Liste",
-  "rdInList": "Auf der Liste"
+  "rdInList": "Auf der Liste",
+  "tskCatchUp": "Aufholen",
+  "tskCatchUpExplain": "Wiederkehrende Aufgaben springen zum nächsten Termin, einmalige auf heute. Sie werden nicht als erledigt markiert und bringen keine Punkte.",
+  "tskCaughtUp": "Fertig, du bist auf dem Laufenden"
 }

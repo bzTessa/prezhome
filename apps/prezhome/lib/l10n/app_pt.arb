@@ -1214,5 +1214,8 @@
   "planCookNow": "Hora de cozinhar",
   "planEaten": "Comido",
   "rdToShopping": "Para a lista",
-  "rdInList": "Na lista"
+  "rdInList": "Na lista",
+  "tskCatchUp": "Pôr-me em dia",
+  "tskCatchUpExplain": "As tarefas que se repetem passam para a próxima vez e as pontuais para hoje. Não ficam feitas nem dão pontos.",
+  "tskCaughtUp": "Pronto, estás em dia"
 }

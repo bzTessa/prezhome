@@ -4832,4 +4832,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rdInList => 'Dans la liste';
+
+  @override
+  String get tskCatchUp => 'Me remettre à jour';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Les tâches répétées passent à leur prochaine fois et les ponctuelles à aujourd\'hui. Elles ne sont pas marquées comme faites et ne donnent pas de points.';
+
+  @override
+  String get tskCaughtUp => 'C\'est fait, tu es à jour';
 }
