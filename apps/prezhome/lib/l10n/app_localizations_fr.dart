@@ -4882,4 +4882,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String shopCompareMissing(String names) {
     return 'Introuvables : $names';
   }
+
+  @override
+  String get tskCatchUp => 'Me remettre à jour';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Les tâches répétées passent à leur prochaine fois et les ponctuelles à aujourd\'hui. Elles ne sont pas marquées comme faites et ne donnent pas de points.';
+
+  @override
+  String get tskCaughtUp => 'C\'est fait, tu es à jour';
 }

@@ -1227,5 +1227,8 @@
   "shopCompareEmpty": "Tvoje proizvode nismo našli ni u jednoj prodavnici.",
   "shopCompareError": "Poređenje nije uspjelo.",
   "shopCompareRetry": "Pokušaj ponovo",
-  "shopCompareMissing": "Nije pronađeno: {names}"
+  "shopCompareMissing": "Nije pronađeno: {names}",
+  "tskCatchUp": "Sustigni",
+  "tskCatchUpExplain": "Zadaci koji se ponavljaju prelaze na sljedeći put, a jednokratni na danas. Ne označavaju se kao urađeni i ne donose bodove.",
+  "tskCaughtUp": "Gotovo, sve je ažurno"
 }

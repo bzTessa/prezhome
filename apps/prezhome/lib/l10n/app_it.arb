@@ -1227,5 +1227,8 @@
   "shopCompareEmpty": "Non abbiamo trovato i tuoi prodotti in nessun supermercato.",
   "shopCompareError": "Impossibile confrontare.",
   "shopCompareRetry": "Riprova",
-  "shopCompareMissing": "Non trovati: {names}"
+  "shopCompareMissing": "Non trovati: {names}",
+  "tskCatchUp": "Mettermi in pari",
+  "tskCatchUpExplain": "Le faccende ripetute passano alla prossima volta e quelle singole a oggi. Non vengono segnate come fatte e non danno punti.",
+  "tskCaughtUp": "Fatto, sei in pari"
 }

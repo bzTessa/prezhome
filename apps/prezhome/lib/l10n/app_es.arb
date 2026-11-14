@@ -3005,5 +3005,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tskCatchUp": "Ponerme al día",
+  "tskCatchUpExplain": "Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.",
+  "tskCaughtUp": "Listo, estás al día"
 }

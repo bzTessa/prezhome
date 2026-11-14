@@ -4860,4 +4860,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String shopCompareMissing(String names) {
     return 'Sin encontrar: $names';
   }
+
+  @override
+  String get tskCatchUp => 'Ponerme al día';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.';
+
+  @override
+  String get tskCaughtUp => 'Listo, estás al día';
 }

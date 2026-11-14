@@ -4864,4 +4864,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String shopCompareMissing(String names) {
     return 'Nicht gefunden: $names';
   }
+
+  @override
+  String get tskCatchUp => 'Aufholen';
+
+  @override
+  String get tskCatchUpExplain =>
+      'Wiederkehrende Aufgaben springen zum nächsten Termin, einmalige auf heute. Sie werden nicht als erledigt markiert und bringen keine Punkte.';
+
+  @override
+  String get tskCaughtUp => 'Fertig, du bist auf dem Laufenden';
 }

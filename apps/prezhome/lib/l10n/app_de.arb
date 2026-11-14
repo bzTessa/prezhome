@@ -1227,5 +1227,8 @@
   "shopCompareEmpty": "Deine Produkte wurden in keinem Markt gefunden.",
   "shopCompareError": "Vergleich nicht möglich.",
   "shopCompareRetry": "Erneut versuchen",
-  "shopCompareMissing": "Nicht gefunden: {names}"
+  "shopCompareMissing": "Nicht gefunden: {names}",
+  "tskCatchUp": "Aufholen",
+  "tskCatchUpExplain": "Wiederkehrende Aufgaben springen zum nächsten Termin, einmalige auf heute. Sie werden nicht als erledigt markiert und bringen keine Punkte.",
+  "tskCaughtUp": "Fertig, du bist auf dem Laufenden"
 }
