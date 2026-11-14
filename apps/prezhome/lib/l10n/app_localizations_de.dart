@@ -4991,4 +4991,55 @@ class AppLocalizationsDe extends AppLocalizations {
   String hhInviteMessage(String code) {
     return 'Komm in unser Zuhause bei PrezHome! So teilen wir Essensplan, Einkaufsliste und Aufgaben.\n\n1. Installiere PrezHome und erstelle dein Konto.\n2. Kopiere diese Nachricht und tippe auf „Ich wurde in ein Zuhause eingeladen“: Der Code wird automatisch eingetragen.\n\nCode: $code';
   }
+
+  @override
+  String homeDefrostTomorrow(String names) {
+    return 'Für morgen aus dem Gefrierfach nehmen: $names';
+  }
+
+  @override
+  String get homeDefrostTomorrowSub =>
+      'Heute Abend in den Kühlschrank, morgen ist es fertig';
+
+  @override
+  String homeOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count überfällige Aufgaben',
+      one: '1 überfällige Aufgabe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeOverdueSub =>
+      'Wiederkehrende rücken auf ihren nächsten Termin, einmalige auf heute';
+
+  @override
+  String homeTomorrowTag(String meal) {
+    return 'Morgen · $meal';
+  }
+
+  @override
+  String get homeYouHaveAll => 'Du hast alles zu Hause';
+
+  @override
+  String homePutFor(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'lunch': 'Heute zum Mittagessen',
+      'other': 'Heute zum Abendessen',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get homeNextWeekEmpty => 'Die nächste Woche ist leer';
+
+  @override
+  String get homeNextWeekSub =>
+      'Ich fülle sie mit dem, was euch am besten geschmeckt hat, und mache die Liste fertig.';
+
+  @override
+  String get homeNextWeekGo => 'Planen';
 }

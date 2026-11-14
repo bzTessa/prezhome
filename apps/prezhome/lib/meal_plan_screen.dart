@@ -53,6 +53,10 @@ class MealPlanScreen extends StatefulWidget {
   /// Dentro de la pestaña Comidas: sin barra propia.
   final bool embedded;
 
+  /// Lunes de una semana que hay que preparar (lo pide Inicio con "Preparar
+  /// la semana que viene"): el plan va a esa semana y la genera.
+  static final generateWeek = ValueNotifier<DateTime?>(null);
+
   @override
   State<MealPlanScreen> createState() => _MealPlanScreenState();
 }
@@ -108,6 +112,24 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   void initState() {
     super.initState();
     _future = _load();
+    MealPlanScreen.generateWeek.addListener(_onGenerateWeek);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onGenerateWeek());
+  }
+
+  @override
+  void dispose() {
+    MealPlanScreen.generateWeek.removeListener(_onGenerateWeek);
+    super.dispose();
+  }
+
+  Future<void> _onGenerateWeek() async {
+    final monday = MealPlanScreen.generateWeek.value;
+    if (monday == null || !mounted || _generating) return;
+    MealPlanScreen.generateWeek.value = null;
+    _goToDay(monday);
+    final data = await _future;
+    if (!mounted || data.homeId == null) return;
+    await _generatePlan(data, _weekStart, 7);
   }
 
   void _reload() {

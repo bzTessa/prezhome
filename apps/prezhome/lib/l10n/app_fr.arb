@@ -1259,5 +1259,15 @@
   "shopShareFooter": "Faite avec PrezHome",
   "shopShareCopied": "Liste copiée : colle-la où tu veux",
   "hhSendInvite": "Envoyer l'invitation",
-  "hhInviteMessage": "Rejoins notre maison sur PrezHome ! On partagera le planning des repas, la liste de courses et les tâches.\n\n1. Installe PrezHome et crée ton compte.\n2. Copie ce message et touche « On m'a invité dans un foyer » : le code se remplit tout seul.\n\nCode : {code}"
+  "hhInviteMessage": "Rejoins notre maison sur PrezHome ! On partagera le planning des repas, la liste de courses et les tâches.\n\n1. Installe PrezHome et crée ton compte.\n2. Copie ce message et touche « On m'a invité dans un foyer » : le code se remplit tout seul.\n\nCode : {code}",
+  "homeDefrostTomorrow": "Pour demain, sors du congélateur : {names}",
+  "homeDefrostTomorrowSub": "Au frigo ce soir, il sera prêt demain",
+  "homeOverdue": "{count, plural, =1{1 tâche en retard} other{{count} tâches en retard}}",
+  "homeOverdueSub": "Les récurrentes passent à leur prochaine fois et les ponctuelles à aujourd'hui",
+  "homeTomorrowTag": "Demain · {meal}",
+  "homeYouHaveAll": "Tu as tout à la maison",
+  "homePutFor": "{type, select, lunch{Pour le déjeuner} other{Pour le dîner}}",
+  "homeNextWeekEmpty": "La semaine prochaine est vide",
+  "homeNextWeekSub": "Je la prépare avec ce que vous avez préféré et la liste sera prête.",
+  "homeNextWeekGo": "La préparer"
 }
