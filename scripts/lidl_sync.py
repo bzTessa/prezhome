@@ -10,7 +10,9 @@ supermercado y de cada una el JSON-LD (nombre, marca, precio, foto) y el
 formato ("Aprox.220 g"). El código dice qué es: 11 alimentación, 12
 temporada (Deluxe, Navidad), 60 y 66 básicos de Italia y Portugal (pasta,
 huevos, detergente). Se dejan fuera el bazar (10, 85), los packs solo online
-(80) y las tarjetas regalo (30). Igual que
+(80) y las tarjetas regalo (30). Casi la mitad de las fichas salen sin precio
+las semanas en que no están a la venta: entonces se conserva el último precio
+conocido en vez de borrarlo. Igual que
 mercadona_sync.py, lo lanza cada semana .github/workflows/open-prices.yml.
 Uso local sin escribir:
   python scripts/lidl_sync.py --dry-run
@@ -26,7 +28,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
-from mercadona_sync import save
+from mercadona_sync import _rest
 from open_prices_sync import normalize
 
 # país -> idioma de su web
@@ -117,6 +119,23 @@ def collect(now: str, country: str) -> list[dict]:
     return list({r["product_id"]: r for r in rows if r}.values())
 
 
+def upsert_batches(rows: list[dict]) -> list[list[dict]]:
+    """Lotes para guardar: las filas sin precio van sin la columna price,
+    así el upsert deja el último precio conocido."""
+    priced = [r for r in rows if r["price"] is not None]
+    unpriced = [{k: v for k, v in r.items() if k != "price"}
+                for r in rows if r["price"] is None]
+    return [g[i:i + 500] for g in (priced, unpriced) for i in range(0, len(g), 500)]
+
+
+def save(rows: list[dict], now: str, store: str) -> None:
+    for batch in upsert_batches(rows):
+        _rest("POST", "supermarket_products?on_conflict=store,product_id", batch)
+    # Lo que ya no tiene ficha no se vende.
+    stamp = now.replace("+", "%2B")
+    _rest("DELETE", f"supermarket_products?store=eq.{store}&updated_at=lt.{stamp}")
+
+
 def _self_check() -> None:
     page = (
         '<script type="application/ld+json">{"@type":"Product","sku":"11000881",'
@@ -134,6 +153,8 @@ def _self_check() -> None:
     assert to_row(url, "<html></html>", "t") is None
     assert to_row(url, page.replace("REALVALLE", "-"), "t", "lidl_fr")["brand"] is None
     assert store_key("fr") == "lidl_fr" and store_key("es") == "lidl"
+    batches = upsert_batches([row, dict(row, price=None, product_id="2")])
+    assert batches[0] == [row] and "price" not in batches[1][0]
     assert sitemap_url("it").endswith("lidl.it/p/export/IT/it/product_sitemap.xml.gz")
     assert product_urls(
         f"<loc>{url}</loc><loc>{url}</loc>"
