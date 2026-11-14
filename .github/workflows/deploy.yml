@@ -71,7 +71,7 @@ jobs:
 
       # Aplica en el proyecto remoto todas las migraciones pendientes.
       - name: Desplegar migraciones
-        run: supabase db push
+        run: supabase db push --remote
 
   deploy-functions:
     name: Desplegar funciones (Edge Functions) en Supabase
