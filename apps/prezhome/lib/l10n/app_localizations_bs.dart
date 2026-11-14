@@ -4717,6 +4717,38 @@ class AppLocalizationsBs extends AppLocalizations {
   String get hhCustomizeHomeSub => 'Kartice i prečice na Danas';
 
   @override
+  String get tskWeekShare => 'Podjela sedmice';
+
+  @override
+  String get tskWeekShareEmpty => 'Ove sedmice još niko nije uradio zadatke.';
+
+  @override
+  String get tskYourTurn => 'Tvoj red';
+
+  @override
+  String get tskYouShort => 'Ti';
+
+  @override
+  String get shopInStore => 'Način prodavnice';
+
+  @override
+  String shopInStoreAt(String store) {
+    return 'Ti si u $store';
+  }
+
+  @override
+  String get planCookNow => 'Vrijeme za kuhanje';
+
+  @override
+  String get planEaten => 'Pojedeno';
+
+  @override
+  String get rdToShopping => 'U kupovinu';
+
+  @override
+  String get rdInList => 'Na listi';
+
+  @override
   String get shopCompare => 'Uporedi prodavnice';
 
   @override

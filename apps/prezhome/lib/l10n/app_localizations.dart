@@ -7332,6 +7332,66 @@ abstract class AppLocalizations {
   /// **'Tarjetas y atajos que ves en Hoy'**
   String get hhCustomizeHomeSub;
 
+  /// No description provided for @tskWeekShare.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparto de la semana'**
+  String get tskWeekShare;
+
+  /// No description provided for @tskWeekShareEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún nadie ha hecho tareas esta semana.'**
+  String get tskWeekShareEmpty;
+
+  /// No description provided for @tskYourTurn.
+  ///
+  /// In es, this message translates to:
+  /// **'Te toca a ti'**
+  String get tskYourTurn;
+
+  /// No description provided for @tskYouShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Tú'**
+  String get tskYouShort;
+
+  /// No description provided for @shopInStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo tienda'**
+  String get shopInStore;
+
+  /// No description provided for @shopInStoreAt.
+  ///
+  /// In es, this message translates to:
+  /// **'Estás en {store}'**
+  String shopInStoreAt(String store);
+
+  /// No description provided for @planCookNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca cocinar'**
+  String get planCookNow;
+
+  /// No description provided for @planEaten.
+  ///
+  /// In es, this message translates to:
+  /// **'Comido'**
+  String get planEaten;
+
+  /// No description provided for @rdToShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'A la compra'**
+  String get rdToShopping;
+
+  /// No description provided for @rdInList.
+  ///
+  /// In es, this message translates to:
+  /// **'En la lista'**
+  String get rdInList;
+
   /// No description provided for @shopCompare.
   ///
   /// In es, this message translates to:
