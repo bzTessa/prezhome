@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -4707,4 +4706,13 @@ class AppLocalizationsBs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get settingsTitle => 'Postavke';
+
+  @override
+  String get hhSettingsSub => 'Način korištenja, izgled, obavijesti i država';
+
+  @override
+  String get hhCustomizeHomeSub => 'Kartice i prečice na Danas';
 }

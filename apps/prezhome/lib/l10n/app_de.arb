@@ -1200,5 +1200,8 @@
   "unitShort": "{unit, select, unidad{Stk} cucharada{EL} cucharadita{TL} other{{unit}}}",
   "unitToTaste": "{unit, select, a_ojo{nach Augenmaß} other{nach Geschmack}}",
   "aiItemType": "{type, select, hogar{Haushalt/Putzen} other{Lebensmittel}}",
-  "aiKindShort": "{kind, select, prep{Vorbereitet} dish{Fertiges Gericht} other{Zutat}}"
+  "aiKindShort": "{kind, select, prep{Vorbereitet} dish{Fertiges Gericht} other{Zutat}}",
+  "settingsTitle": "Einstellungen",
+  "hhSettingsSub": "Nutzungsmodus, Aussehen, Hinweise und Land",
+  "hhCustomizeHomeSub": "Karten und Kurzbefehle auf Heute"
 }

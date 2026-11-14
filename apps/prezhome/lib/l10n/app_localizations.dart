@@ -7313,6 +7313,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{kind, select, prep{Preparado} dish{Plato listo} other{Ingrediente}}'**
   String aiKindShort(String kind);
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes'**
+  String get settingsTitle;
+
+  /// No description provided for @hhSettingsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo de uso, apariencia, avisos y país'**
+  String get hhSettingsSub;
+
+  /// No description provided for @hhCustomizeHomeSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjetas y atajos que ves en Hoy'**
+  String get hhCustomizeHomeSub;
 }
 
 class _AppLocalizationsDelegate

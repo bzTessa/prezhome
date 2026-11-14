@@ -1200,5 +1200,8 @@
   "unitShort": "{unit, select, unidad{pc} cucharada{tbsp} cucharadita{tsp} other{{unit}}}",
   "unitToTaste": "{unit, select, a_ojo{by eye} other{to taste}}",
   "aiItemType": "{type, select, hogar{Home/Cleaning} other{Food}}",
-  "aiKindShort": "{kind, select, prep{Prepared} dish{Ready dish} other{Ingredient}}"
+  "aiKindShort": "{kind, select, prep{Prepared} dish{Ready dish} other{Ingredient}}",
+  "settingsTitle": "Settings",
+  "hhSettingsSub": "Usage mode, appearance, alerts and country",
+  "hhCustomizeHomeSub": "Cards and shortcuts on Today"
 }

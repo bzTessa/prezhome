@@ -1200,5 +1200,8 @@
   "unitShort": "{unit, select, unidad{u.} cucharada{c. s.} cucharadita{c. c.} other{{unit}}}",
   "unitToTaste": "{unit, select, a_ojo{à l'œil} other{selon le goût}}",
   "aiItemType": "{type, select, hogar{Maison/Ménage} other{Alimentation}}",
-  "aiKindShort": "{kind, select, prep{Préparé} dish{Plat prêt} other{Ingrédient}}"
+  "aiKindShort": "{kind, select, prep{Préparé} dish{Plat prêt} other{Ingrédient}}",
+  "settingsTitle": "Réglages",
+  "hhSettingsSub": "Mode d'utilisation, apparence, alertes et pays",
+  "hhCustomizeHomeSub": "Cartes et raccourcis d'Aujourd'hui"
 }

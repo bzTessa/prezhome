@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -4760,4 +4759,13 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get hhSettingsSub => 'Usage mode, appearance, alerts and country';
+
+  @override
+  String get hhCustomizeHomeSub => 'Cards and shortcuts on Today';
 }
