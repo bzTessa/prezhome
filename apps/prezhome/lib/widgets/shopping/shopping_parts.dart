@@ -34,7 +34,11 @@ class ShoppingSummaryHeader extends StatelessWidget {
     this.onTapStore,
     this.inStore = false,
     this.onToggleStore,
+    this.onShare,
   });
+
+  /// Mandar lo que falta por WhatsApp u otra app (null = nada que mandar).
+  final VoidCallback? onShare;
 
   final String listName;
   final int pending;
@@ -131,6 +135,13 @@ class ShoppingSummaryHeader extends StatelessWidget {
                     : const Icon(Icons.event_note_rounded),
                 color: AppColors.woodDark,
               ),
+              if (onShare != null)
+                IconButton(
+                  tooltip: context.l.shopShareList,
+                  onPressed: onShare,
+                  icon: const Icon(Icons.ios_share_rounded),
+                  color: AppColors.woodDark,
+                ),
               IconButton(
                 tooltip: context.l.shopListOptions,
                 onPressed: onOptions,

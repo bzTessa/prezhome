@@ -55,6 +55,7 @@ class OnboardingAnswers {
     this.goals = const {},
     this.cooking,
     this.supermarkets = const [],
+    this.foodLimits = const {},
   });
 
   final int people;
@@ -64,6 +65,37 @@ class OnboardingAnswers {
   /// Claves de `Supermarket` en el orden elegido (el primero es el principal).
   final List<String> supermarkets;
 
+  /// Lo que no se puede comer en casa: alergias ([allergyOptions]) y, si
+  /// acaso, 'vegetariana' o 'vegana'. Vacío = de todo.
+  final Set<String> foodLimits;
+
+  /// Alergias que se ofrecen (mismas claves que el perfil).
+  static const allergyOptions = [
+    'gluten',
+    'lactosa',
+    'huevo',
+    'frutos secos',
+    'marisco',
+    'pescado',
+    'soja',
+  ];
+
+  /// Dietas que se ofrecen, de menos a más estricta.
+  static const dietOptions = ['vegetariana', 'vegana'];
+
+  /// Alergias elegidas.
+  List<String> get allergies => [
+    for (final a in allergyOptions)
+      if (foodLimits.contains(a)) a,
+  ];
+
+  /// Dieta elegida (la más estricta) o null.
+  String? get diet => foodLimits.contains('vegana')
+      ? 'vegana'
+      : foodLimits.contains('vegetariana')
+      ? 'vegetariana'
+      : null;
+
   static const String storageKey = 'onboarding_answers';
 
   OnboardingAnswers copyWith({
@@ -71,11 +103,13 @@ class OnboardingAnswers {
     Set<HomeGoal>? goals,
     CookingHabit? cooking,
     List<String>? supermarkets,
+    Set<String>? foodLimits,
   }) => OnboardingAnswers(
     people: people ?? this.people,
     goals: goals ?? this.goals,
     cooking: cooking ?? this.cooking,
     supermarkets: supermarkets ?? this.supermarkets,
+    foodLimits: foodLimits ?? this.foodLimits,
   );
 
   // ---- Perfil de hogar ------------------------------------------------------
@@ -144,6 +178,7 @@ class OnboardingAnswers {
     'goals': goals.map((g) => g.id).toList(),
     'cooking': cooking?.id,
     'supermarkets': supermarkets,
+    'food_limits': foodLimits.toList(),
   });
 
   /// Tolerante: null si no hay datos o están corruptos.
@@ -169,6 +204,12 @@ class OnboardingAnswers {
         supermarkets: (m['supermarkets'] is List)
             ? (m['supermarkets'] as List).map((e) => e.toString()).toList()
             : const [],
+        foodLimits: {
+          for (final f
+              in (m['food_limits'] is List ? m['food_limits'] as List : const []))
+            if (allergyOptions.contains(f) || dietOptions.contains(f))
+              f as String,
+        },
       );
     } catch (_) {
       return null;

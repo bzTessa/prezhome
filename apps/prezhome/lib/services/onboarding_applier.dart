@@ -36,7 +36,7 @@ class OnboardingApplier {
       if (user == null) return false;
       final row = await client
           .from('profiles')
-          .select('home_id, dashboard_prefs')
+          .select('home_id, dashboard_prefs, diet, allergies')
           .eq('id', user.id)
           .maybeSingle();
       final homeId = row?['home_id'] as String?;
@@ -48,7 +48,19 @@ class OnboardingApplier {
           : DashboardPrefs.defaults();
       await client
           .from('profiles')
-          .update({'dashboard_prefs': answers.applyTo(base).toJson()})
+          .update({
+            'dashboard_prefs': answers.applyTo(base).toJson(),
+            // Lo que no se puede comer, sin pisar lo que ya tuviera el perfil.
+            if (answers.allergies.isNotEmpty)
+              'allergies': {
+                ...((row?['allergies'] as List?) ?? const []).map(
+                  (e) => e.toString(),
+                ),
+                ...answers.allergies,
+              }.toList(),
+            if (answers.diet != null && row?['diet'] == null)
+              'diet': answers.diet,
+          })
           .eq('id', user.id);
 
       if (answers.supermarkets.isNotEmpty) {

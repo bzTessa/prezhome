@@ -6993,7 +6993,7 @@ abstract class AppLocalizations {
   /// No description provided for @remKind.
   ///
   /// In es, this message translates to:
-  /// **'{kind, select, tasks{Tareas con hora} expiry{Productos que caducan} other{Racha de casa al día}}'**
+  /// **'{kind, select, tasks{Tareas con hora} kitchen{Congelador y cocina} expiry{Productos que caducan} other{Racha de casa al día}}'**
   String remKind(String kind);
 
   /// No description provided for @remTaskOne.
@@ -7331,6 +7331,126 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Tarjetas y atajos que ves en Hoy'**
   String get hhCustomizeHomeSub;
+
+  /// No description provided for @onbFoodTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Hay algo que no se pueda comer en casa?'**
+  String get onbFoodTitle;
+
+  /// No description provided for @onbFoodHint.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan de comidas nunca lo propondrá. Lo puedes cambiar en tu perfil.'**
+  String get onbFoodHint;
+
+  /// No description provided for @onbFoodNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Comemos de todo'**
+  String get onbFoodNone;
+
+  /// No description provided for @onbFoodAllergies.
+  ///
+  /// In es, this message translates to:
+  /// **'ALERGIAS O INTOLERANCIAS'**
+  String get onbFoodAllergies;
+
+  /// No description provided for @onbFoodDiet.
+  ///
+  /// In es, this message translates to:
+  /// **'DIETA'**
+  String get onbFoodDiet;
+
+  /// No description provided for @onbFoodVeg.
+  ///
+  /// In es, this message translates to:
+  /// **'Vegetariana'**
+  String get onbFoodVeg;
+
+  /// No description provided for @onbFoodVegan.
+  ///
+  /// In es, this message translates to:
+  /// **'Vegana'**
+  String get onbFoodVegan;
+
+  /// No description provided for @rdAllergyWarn.
+  ///
+  /// In es, this message translates to:
+  /// **'Lleva {allergen} y alguien en casa no puede tomarlo.'**
+  String rdAllergyWarn(String allergen);
+
+  /// No description provided for @rdDietWarn.
+  ///
+  /// In es, this message translates to:
+  /// **'No encaja con la dieta de casa ({diet, select, vegana{vegana} pescetariana{pescetariana} other{vegetariana}}).'**
+  String rdDietWarn(String diet);
+
+  /// No description provided for @remDefrostOne.
+  ///
+  /// In es, this message translates to:
+  /// **'Saca {name} del congelador'**
+  String remDefrostOne(String name);
+
+  /// No description provided for @remDefrostMany.
+  ///
+  /// In es, this message translates to:
+  /// **'Saca {count} platos del congelador'**
+  String remDefrostMany(int count);
+
+  /// No description provided for @remDefrostBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Déjalo en la nevera esta noche y mañana estará listo.'**
+  String get remDefrostBody;
+
+  /// No description provided for @remBatchTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana toca cocinar en lote'**
+  String get remBatchTomorrow;
+
+  /// No description provided for @remBatchTomorrowBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{servings} raciones. Mira si tienes todo antes de dormir.'**
+  String remBatchTomorrowBody(int servings);
+
+  /// No description provided for @shopShareList.
+  ///
+  /// In es, this message translates to:
+  /// **'Mandar la lista'**
+  String get shopShareList;
+
+  /// No description provided for @shopShareTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista de la compra: {name}'**
+  String shopShareTitle(String name);
+
+  /// No description provided for @shopShareFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecha con PrezHome'**
+  String get shopShareFooter;
+
+  /// No description provided for @shopShareCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista copiada: pégala donde quieras'**
+  String get shopShareCopied;
+
+  /// No description provided for @hhSendInvite.
+  ///
+  /// In es, this message translates to:
+  /// **'Mandar invitación'**
+  String get hhSendInvite;
+
+  /// No description provided for @hhInviteMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Únete a nuestra casa en PrezHome! Así compartimos el plan de comidas, la lista de la compra y las tareas.\n\n1. Instala PrezHome y crea tu cuenta.\n2. Copia este mensaje y toca \"Me han invitado a un hogar\": el código se pondrá solo.\n\nCódigo: {code}'**
+  String hhInviteMessage(String code);
 }
 
 class _AppLocalizationsDelegate

@@ -4455,6 +4455,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String remKind(String kind) {
     String _temp0 = intl.Intl.selectLogic(kind, {
       'tasks': 'Tarefas com hora',
+      'kitchen': 'Congelador e cozinha',
       'expiry': 'Produtos a expirar',
       'other': 'Sequência da casa',
     });
@@ -4780,4 +4781,85 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get hhCustomizeHomeSub => 'Cartões e atalhos de Hoje';
+
+  @override
+  String get onbFoodTitle => 'Há algo que não se possa comer em casa?';
+
+  @override
+  String get onbFoodHint =>
+      'O plano de refeições nunca o vai propor. Podes mudar isto no teu perfil.';
+
+  @override
+  String get onbFoodNone => 'Comemos de tudo';
+
+  @override
+  String get onbFoodAllergies => 'ALERGIAS OU INTOLERÂNCIAS';
+
+  @override
+  String get onbFoodDiet => 'DIETA';
+
+  @override
+  String get onbFoodVeg => 'Vegetariana';
+
+  @override
+  String get onbFoodVegan => 'Vegana';
+
+  @override
+  String rdAllergyWarn(String allergen) {
+    return 'Leva $allergen e alguém em casa não pode comê-lo.';
+  }
+
+  @override
+  String rdDietWarn(String diet) {
+    String _temp0 = intl.Intl.selectLogic(diet, {
+      'vegana': 'vegana',
+      'pescetariana': 'pescetariana',
+      'other': 'vegetariana',
+    });
+    return 'Não encaixa na dieta de casa ($_temp0).';
+  }
+
+  @override
+  String remDefrostOne(String name) {
+    return 'Tira $name do congelador';
+  }
+
+  @override
+  String remDefrostMany(int count) {
+    return 'Tira $count pratos do congelador';
+  }
+
+  @override
+  String get remDefrostBody =>
+      'Deixa-o no frigorífico esta noite e amanhã estará pronto.';
+
+  @override
+  String get remBatchTomorrow => 'Amanhã é dia de cozinhar em lote';
+
+  @override
+  String remBatchTomorrowBody(int servings) {
+    return '$servings doses. Vê se tens tudo antes de dormir.';
+  }
+
+  @override
+  String get shopShareList => 'Enviar a lista';
+
+  @override
+  String shopShareTitle(String name) {
+    return 'Lista de compras: $name';
+  }
+
+  @override
+  String get shopShareFooter => 'Feita com PrezHome';
+
+  @override
+  String get shopShareCopied => 'Lista copiada: cola-a onde quiseres';
+
+  @override
+  String get hhSendInvite => 'Enviar convite';
+
+  @override
+  String hhInviteMessage(String code) {
+    return 'Junta-te à nossa casa no PrezHome! Assim partilhamos o plano de refeições, a lista de compras e as tarefas.\n\n1. Instala o PrezHome e cria a tua conta.\n2. Copia esta mensagem e toca em \"Fui convidado para uma casa\": o código aparece sozinho.\n\nCódigo: $code';
+  }
 }

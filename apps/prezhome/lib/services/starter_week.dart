@@ -6,6 +6,7 @@ import '../data/starter_recipes.dart';
 import '../models/ingredient.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/recipe.dart';
+import 'home_food_restrictions.dart';
 import 'meal_planner.dart';
 import 'plan_shopping.dart';
 
@@ -59,11 +60,20 @@ class StarterWeek {
 
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day);
+    // Sin lo que alguien de casa no puede o no quiere comer.
+    final limits = await HomeFoodRestrictions.load(client);
     final plan = MealPlanner().generate(
       startDate: start,
       days: 7,
       mealTypes: const ['lunch', 'dinner'],
-      recipes: recipes,
+      recipes: limits.pick(
+        recipes,
+        (r) => [
+          r.title,
+          for (final (name, _, _) in byTitle[r.title]!.ingredients) name,
+        ],
+        minLiked: 8,
+      ),
     );
     final rows = [
       for (final day in plan.entries)
