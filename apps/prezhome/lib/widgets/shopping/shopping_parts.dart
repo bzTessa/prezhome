@@ -64,6 +64,7 @@ class ShoppingSummaryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = pending + done;
     final progress = total == 0 ? 0.0 : done / total;
+    if (inStore) return _storeHeader(context, total, progress);
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 4, 14),
       decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
@@ -200,6 +201,80 @@ class ShoppingSummaryHeader extends StatelessWidget {
                     ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+extension on ShoppingSummaryHeader {
+  /// Cabecera del modo tienda: dónde estás, cuánto llevas en el carro y un
+  /// botón grande para terminar.
+  Widget _storeHeader(BuildContext context, int total, double progress) {
+    return Container(
+      padding: AppSpacing.cardPadding,
+      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.storefront_rounded,
+                size: 16,
+                color: AppColors.woodDark,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                (storeLabel == null
+                        ? context.l.shopInStore
+                        : context.l.shopInStoreAt(storeLabel!))
+                    .toUpperCase(),
+                style: AppTextStyles.label.copyWith(color: AppColors.woodDark),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Text(
+                  listName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.display,
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$done / $total',
+                    style: AppTextStyles.numeric(AppTextStyles.headline),
+                  ),
+                  if (estimate != null)
+                    Text(
+                      '≈ ${money(estimate!)}',
+                      style: AppTextStyles.bodyMuted,
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          CartProgressBar(progress: progress),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton.icon(
+            onPressed: onToggleStore,
+            icon: const Icon(Icons.check_rounded, size: 20),
+            label: Text(context.l.shopFinish),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              backgroundColor: AppColors.terracotta,
+              foregroundColor: AppColors.onBrand,
+            ),
+          ),
         ],
       ),
     );

@@ -1203,5 +1203,12 @@
   "aiKindShort": "{kind, select, prep{Vorbereitet} dish{Fertiges Gericht} other{Zutat}}",
   "settingsTitle": "Einstellungen",
   "hhSettingsSub": "Nutzungsmodus, Aussehen, Hinweise und Land",
-  "hhCustomizeHomeSub": "Karten und Kurzbefehle auf Heute"
+  "hhCustomizeHomeSub": "Karten und Kurzbefehle auf Heute",
+  "tskWeekShare": "Verteilung der Woche",
+  "tskWeekShareEmpty": "Diese Woche hat noch niemand Aufgaben erledigt.",
+  "tskYourTurn": "Du bist dran",
+  "tskYouShort": "Du",
+  "shopInStore": "Ladenmodus",
+  "shopInStoreAt": "Du bist bei {store}",
+  "shopFinish": "Einkauf beenden"
 }
