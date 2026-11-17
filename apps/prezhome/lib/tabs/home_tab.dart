@@ -740,13 +740,15 @@ class HomeTabState extends State<HomeTab> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       // Un solo botón para apuntar algo a la compra, la despensa o tareas.
-      floatingActionButton: FloatingActionButton.extended(
+      // Redondo y sin texto: el ancho tapaba lo de debajo (caducidades,
+      // calorías).
+      floatingActionButton: FloatingActionButton(
         heroTag: 'fab-capture',
+        tooltip: context.l.captureTitle,
         onPressed: () async {
           if (await showQuickCapture(context)) _loadDashboard();
         },
-        icon: const Icon(Icons.add_rounded),
-        label: Text(context.l.captureTitle),
+        child: const Icon(Icons.add_rounded),
       ),
       body: SafeArea(
         bottom: false,
