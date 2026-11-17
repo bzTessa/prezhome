@@ -665,6 +665,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Como en el concepto: una línea pequeña con el tipo,
+                    // el tiempo y las calorías encima del título, en vez de
+                    // las tres baldosas.
+                    if (_kicker(r) case final k?) ...[
+                      Text(
+                        k.toUpperCase(),
+                        style: AppTextStyles.label.copyWith(
+                          color: AppColors.terracottaText,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
                     Text(
                       r.title,
                       style: AppTextStyles.display.copyWith(fontSize: 26),
@@ -678,8 +690,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ),
                     ],
                     if (_blocker != null) _blockerBanner(_blocker!),
-                    const SizedBox(height: 18),
-                    _statsRow(r),
                     const SizedBox(height: 14),
                     _tagsWrap(r),
                     if (r.videoUrl != null &&
@@ -800,82 +810,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   /// Tres datos clave de un vistazo: tiempo, calorías y coste por ración.
-  Widget _statsRow(Recipe r) {
-    final tiles = <Widget>[
-      _stat(
-        Icons.schedule_rounded,
-        r.totalTimeMinutes == null ? '—' : '${r.totalTimeMinutes}',
-        context.l.rdMinutes,
-        AppColors.frost,
-        AppColors.frostBg,
-      ),
-      _stat(
-        Icons.local_fire_department_rounded,
-        r.calories == null ? '—' : '${r.calories}',
-        context.l.rdKcalServing,
-        AppColors.terracotta,
-        AppColors.terracottaBg,
-      ),
-      if (_cost != null)
-        _stat(
-          Icons.euro_rounded,
-          money(_cost!.perServing),
-          context.l.rdPerServingShort,
-          AppColors.sage,
-          AppColors.sageBg,
-        )
-      else
-        _stat(
-          Icons.restaurant_rounded,
-          '${r.servings}',
-          context.l.rdServingWord(r.servings),
-          AppColors.peach,
-          AppColors.peachBg,
-        ),
+  /// "35 min · 560 kcal · 2,10 € por ración" (lo que se sepa).
+  String? _kicker(Recipe r) {
+    final parts = [
+      if (r.totalTimeMinutes case final m?) '$m min',
+      if (r.calories case final c?) '$c kcal',
+      if (_cost case final c?)
+        '${money(c.perServing)} ${context.l.rdPerServingShort}',
     ];
-    return Row(
-      children: [
-        for (var i = 0; i < tiles.length; i++) ...[
-          if (i > 0) const SizedBox(width: 10),
-          Expanded(child: tiles[i]),
-        ],
-      ],
-    );
-  }
-
-  Widget _stat(IconData icon, String value, String label, Color fg, Color bg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: fg, size: 20),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontFeatures: const [FontFeature.tabularFigures()],
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: fg,
-            ),
-          ),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkMuted,
-            ),
-          ),
-        ],
-      ),
-    );
+    return parts.isEmpty ? null : parts.join(' · ');
   }
 
   Widget _tagsWrap(Recipe r) {
