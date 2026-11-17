@@ -1485,7 +1485,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               // Con toda la lista (también el carrito): si no, al marcar un
               // producto reaparecía como sugerencia y la tira de arriba
               // cambiaba de tamaño, empujando toda la lista.
-              SliverToBoxAdapter(child: _suggestions(items)),
+              // Llegan un poco después que la lista: crecen con suavidad en
+              // vez de empujarlo todo de golpe.
+              SliverToBoxAdapter(
+                child: AnimatedSize(
+                  duration: AppMotion.normal,
+                  curve: AppMotion.easeOut,
+                  alignment: Alignment.topCenter,
+                  child: _suggestions(items),
+                ),
+              ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             if (shouldShowPendingIndicator(_pendingCount))
               SliverToBoxAdapter(
