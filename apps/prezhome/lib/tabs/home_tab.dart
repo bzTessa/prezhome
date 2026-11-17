@@ -29,6 +29,7 @@ import '../services/plan_repeats.dart';
 import '../services/recipe_photo_audit.dart';
 import '../services/taper_sync.dart';
 import '../services/plan_prefs.dart';
+import '../utils/meal_states.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
@@ -96,6 +97,9 @@ class HomeTabState extends State<HomeTab> {
 
   // Resumen de tareas pendientes del hogar (is_done == false).
   List<HomeTask> _pendingTasks = [];
+
+  /// Tareas hechas hoy (puntuales o recurrentes), para tacharlas en Tu día.
+  List<HomeTask> _doneTodayTasks = [];
 
   // Resumen de economía del mes en curso.
   double _monthSpent = 0;
@@ -475,9 +479,21 @@ class HomeTabState extends State<HomeTab> {
         return da.compareTo(db);
       });
 
+      final now = DateTime.now();
+      final midnight = DateTime(now.year, now.month, now.day).toUtc();
+      final doneRes = await _client
+          .from('tasks')
+          .select()
+          .eq('home_id', homeId)
+          .gte('last_completed_at', midnight.toIso8601String());
+      final doneToday = (doneRes as List)
+          .map((m) => HomeTask.fromMap(m))
+          .toList();
+
       if (mounted) {
         setState(() {
           _pendingTasks = pending;
+          _doneTodayTasks = doneToday;
         });
       }
     } catch (e) {
@@ -782,9 +798,13 @@ class HomeTabState extends State<HomeTab> {
                 ),
 
                 // Lo primero: qué se come hoy, con la foto de la receta.
+                // Con plan, las comidas van en Tu día; sin plan, la tarjeta
+                // para planificar.
                 if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
-                  StaggeredEntrance(index: 1, child: _todayMealHero()),
-                  const SizedBox(height: AppSpacing.lg),
+                  if (_todayItems.isEmpty) ...[
+                    StaggeredEntrance(index: 1, child: _todayMealHero()),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                   if (_nextWeekPlanned == false) ...[
                     StaggeredEntrance(index: 2, child: _nextWeekCard()),
                     const SizedBox(height: AppSpacing.lg),
@@ -793,7 +813,10 @@ class HomeTabState extends State<HomeTab> {
 
                 // De un vistazo: caducidades, tareas y compra. Tocar lleva a
                 // su pestaña.
-                if (restLines.isNotEmpty || next == null) ...[
+                if (restLines.isNotEmpty ||
+                    next == null ||
+                    _todayItems.isNotEmpty ||
+                    _doneTodayTasks.isNotEmpty) ...[
                   StaggeredEntrance(index: 2, child: _dayCard(restLines)),
                   const SizedBox(height: AppSpacing.lg),
                 ],
@@ -1314,7 +1337,7 @@ class HomeTabState extends State<HomeTab> {
   }
 
   Widget _dayCard(List<DayLine> lines) {
-    if (lines.isEmpty) {
+    if (lines.isEmpty && _todayItems.isEmpty && _doneTodayTasks.isEmpty) {
       return Semantics(
         label: '${context.l.homeAllDone}. ${context.l.homeAllDoneSub}',
         excludeSemantics: true,
@@ -1350,6 +1373,10 @@ class HomeTabState extends State<HomeTab> {
         ),
       );
     }
+    final meals = _todayMeals();
+    final mealsDone = meals.where((m) => m.done).length;
+    final done = mealsDone + _doneTodayTasks.length;
+    final total = done + (meals.length - mealsDone) + _todayTasks.length;
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -1361,15 +1388,128 @@ class HomeTabState extends State<HomeTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardLabel(
-            icon: Icons.wb_sunny_outlined,
-            color: AppColors.gold,
-            text: context.l.homeYourDay,
+          Row(
+            children: [
+              Expanded(
+                child: _cardLabel(
+                  icon: Icons.wb_sunny_outlined,
+                  color: AppColors.gold,
+                  text: context.l.homeYourDay,
+                ),
+              ),
+              if (total > 0)
+                Text(
+                  context.l.homeDoneOf(done, total),
+                  style: AppTextStyles.labelMuted,
+                ),
+            ],
           ),
           const SizedBox(height: AppSpacing.xs),
+          // Como en el concepto: las comidas de hoy con su hora, tachadas
+          // cuando ya pasaron, y lo hecho hoy también tachado.
+          for (final m in meals) _mealDayRow(m),
+          for (final t in _doneTodayTasks) _doneTaskRow(t),
           for (final line in lines) _dayLine(line),
         ],
       ),
+    );
+  }
+
+  /// Comidas de hoy con su hora y si ya pasaron (una hora después).
+  List<({_PlanItem item, String? time, bool done, bool next})> _todayMeals() {
+    final prefs = PlanPrefs.current.value;
+    final items = [
+      for (final i in _todayItems)
+        if (!i.skipped) i,
+    ];
+    // Un plato por comida para el estado; los demás heredan el de su comida.
+    final states = mealSlotStates([
+      for (final type in {for (final i in items) i.mealType})
+        (type: type, time: prefs.timeOf(type), filled: true),
+    ], DateTime.now());
+    return [
+      for (final i in items)
+        (
+          item: i,
+          time: prefs.timeOf(i.mealType),
+          done: states[i.mealType] == MealSlotState.done,
+          next: states[i.mealType] == MealSlotState.next,
+        ),
+    ];
+  }
+
+  Widget _mealDayRow(({_PlanItem item, String? time, bool done, bool next}) m) {
+    return InkWell(
+      onTap: _openMealPlan,
+      borderRadius: AppRadius.smRadius,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Row(
+          children: [
+            _dayCheck(done: m.done, highlight: m.next),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                '${context.l.mealType(m.item.mealType)}: ${m.item.title}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.titleSmall.copyWith(
+                  decoration: m.done ? TextDecoration.lineThrough : null,
+                  color: m.done ? AppColors.inkMuted : null,
+                ),
+              ),
+            ),
+            if (m.time case final t?) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Text(t, style: AppTextStyles.labelMuted),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _doneTaskRow(HomeTask t) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 44),
+      child: Row(
+        children: [
+          _dayCheck(done: true),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              t.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.titleSmall.copyWith(
+                decoration: TextDecoration.lineThrough,
+                color: AppColors.inkMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Círculo de "Tu día": vacío, hecho (verde con ✓) o lo que toca ahora.
+  Widget _dayCheck({required bool done, bool highlight = false}) {
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: done ? AppColors.done : Colors.transparent,
+        border: done
+            ? null
+            : Border.all(
+                color: highlight ? AppColors.terracotta : AppColors.inkMuted,
+                width: 2,
+              ),
+      ),
+      child: done
+          ? Icon(Icons.check_rounded, size: 18, color: AppColors.cream)
+          : null,
     );
   }
 

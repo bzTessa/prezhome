@@ -97,7 +97,7 @@
   "homeNextOpen": "Otvori",
   "homeDefrost": "Izvadi iz zamrzivača: {names}",
   "homeExpiringLine": "Uskoro ističe: {names}",
-  "homeExpiredLine": "{count, plural, =1{1 proizvod je istekao: provjeri ga} few{{count} proizvoda su istekla: provjeri ih} other{{count} proizvoda je isteklo: provjeri ih}}",
+  "homeExpiredLine": "{count, plural, =1{1 proizvod je istekao} few{{count} proizvoda su istekla} other{{count} proizvoda je isteklo}}",
   "homeMoreTasks": "{count, plural, =1{i još 1 zadatak} few{i još {count} zadatka} other{i još {count} zadataka}}",
   "homeShoppingLine": "{count, plural, =1{1 proizvod na spisku za kupovinu} few{{count} proizvoda na spisku za kupovinu} other{{count} proizvoda na spisku za kupovinu}}",
   "homeAllDone": "Kuća je u redu",
@@ -1281,5 +1281,6 @@
   "winsEmpty": "Kad koristiš ostavu, plan i zadatke, ovdje ćeš vidjeti svoj mjesec.",
   "proHeadline": "Više pomoći za ono što ti oduzima najviše vremena",
   "proHeadlineSub": "Čita više računa, izvlači više recepata iz linkova i fotografija i predlaže više ideja svaki mjesec. Jedna pretplata vrijedi za cijelo domaćinstvo.",
-  "pantryShelf": "{shelf, select, preparados{Jela i gotova hrana} verduraFruta{Voće i povrće} carnePescado{Meso i riba} lacteos{Mliječni proizvodi i jaja} bebidas{Pića} panCereales{Hljeb, tjestenina i riža} conservas{Konzerve} dulces{Slatkiši i grickalice} otros{Ostalo} other{{shelf}}}"
+  "pantryShelf": "{shelf, select, preparados{Jela i gotova hrana} verduraFruta{Voće i povrće} carnePescado{Meso i riba} lacteos{Mliječni proizvodi i jaja} bebidas{Pića} panCereales{Hljeb, tjestenina i riža} conservas{Konzerve} dulces{Slatkiši i grickalice} otros{Ostalo} other{{shelf}}}",
+  "homeDoneOf": "{done} od {total} gotovo"
 }
