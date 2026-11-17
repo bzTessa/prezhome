@@ -1530,10 +1530,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
               ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
-            if (shouldShowPendingIndicator(_pendingCount))
-              SliverToBoxAdapter(
-                child: PendingSyncIndicator(pendingCount: _pendingCount),
-              ),
             // Caja simple y no SliverFillRemaining: el hueco que queda cambia
             // al abrir el teclado.
             if (items.isEmpty) SliverToBoxAdapter(child: _emptyState()),
@@ -1572,6 +1568,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 bottom: 16,
                 child: _checkoutBar(comprados, visible: showBar),
               ),
+              // Encima de la lista, no dentro: si no, al aparecer empujaba
+              // todas las filas y el siguiente toque caía en otra.
+              if (shouldShowPendingIndicator(_pendingCount))
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: showBar ? 96 : 16,
+                  child: IgnorePointer(
+                    child: PendingSyncIndicator(pendingCount: _pendingCount),
+                  ),
+                ),
               if (_finishConfetti)
                 Positioned.fill(
                   child: ConfettiBurst(
