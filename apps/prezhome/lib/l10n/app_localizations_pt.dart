@@ -5121,4 +5121,16 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get shopPackSizeHint =>
       'Por exemplo, 570 g. A lista contará embalagens inteiras e a despensa tirará só o que cada receita gasta.';
+
+  @override
+  String get shopLeaveStore => 'Sair do modo loja';
+
+  @override
+  String shopAllBoughtAsk(int count) {
+    return 'Marcar os $count produtos como comprados?';
+  }
+
+  @override
+  String get shopAllBoughtAskHint =>
+      'Passam para o carrinho e para a despensa.';
 }

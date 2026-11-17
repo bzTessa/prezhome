@@ -5142,4 +5142,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get shopPackSizeHint =>
       'Par exemple, 570 g. La liste comptera des emballages entiers et le garde-manger ne retirera que ce que chaque recette utilise.';
+
+  @override
+  String get shopLeaveStore => 'Quitter le mode magasin';
+
+  @override
+  String shopAllBoughtAsk(int count) {
+    return 'Marquer les $count produits comme achetés ?';
+  }
+
+  @override
+  String get shopAllBoughtAskHint =>
+      'Ils passeront au panier et au garde-manger.';
 }

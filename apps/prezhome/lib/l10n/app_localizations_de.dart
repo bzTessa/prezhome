@@ -5124,4 +5124,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get shopPackSizeHint =>
       'Zum Beispiel 570 g. Die Einkaufsliste zählt ganze Packungen und der Vorrat zieht nur ab, was jedes Rezept verbraucht.';
+
+  @override
+  String get shopLeaveStore => 'Ladenmodus beenden';
+
+  @override
+  String shopAllBoughtAsk(int count) {
+    return 'Alle $count Produkte als gekauft markieren?';
+  }
+
+  @override
+  String get shopAllBoughtAskHint =>
+      'Sie wandern in den Wagen und in die Vorratskammer.';
 }

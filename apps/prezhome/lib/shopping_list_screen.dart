@@ -76,12 +76,28 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   /// Modo tienda (ver [ShoppingSummaryHeader.inStore]).
   bool _inStore = false;
 
+  static const _inStoreKey = 'shop_in_store';
+
   void _toggleStore() {
     HapticFeedback.selectionClick();
-    setState(() => _inStore = !_inStore);
-    (_inStore ? WakelockPlus.enable() : WakelockPlus.disable()).catchError(
-      (_) {},
-    );
+    _setInStore(!_inStore);
+  }
+
+  /// Entra o sale del modo tienda y lo recuerda: si el sistema cierra la app
+  /// en mitad de la compra, al volver sigue en la tienda.
+  void _setInStore(bool value) {
+    setState(() => _inStore = value);
+    (value ? WakelockPlus.enable() : WakelockPlus.disable()).catchError((_) {});
+    OfflineProvider.instance.store
+        .write(_inStoreKey, value ? '1' : '')
+        .catchError((_) {});
+  }
+
+  Future<void> _loadInStore() async {
+    try {
+      final raw = await OfflineProvider.instance.store.read(_inStoreKey);
+      if (mounted && raw == '1' && !_inStore) _setInStore(true);
+    } catch (_) {}
   }
 
   final SupabaseClient _client = Supabase.instance.client;
@@ -215,6 +231,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     _loadListsAndCategories();
     _loadViewPrefs();
     _loadSupermarkets();
+    _loadInStore();
   }
 
   /// Siguiente número de secuencia para encolar/identificar ops de forma
@@ -791,6 +808,29 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     try {
       final homeId = await _homeId();
       await ShoppingCheckout().setBought(item, value, homeId: homeId);
+      // Un toque sin querer se arregla al momento.
+      if (value && mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                '${shoppingCleanName(item.name)} · ${context.l.shopToCart}',
+              ),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: context.l.undo,
+                onPressed: () => _toggleChecked(
+                  ShoppingListItem.fromMap({
+                    ...item.toCacheMap(),
+                    'checked': true,
+                  }),
+                  false,
+                ),
+              ),
+            ),
+          );
+      }
       // El cambio ya se ve; la convergencia de fondo se agrupa para que marcar
       // varios seguidos sea fluido (no un reload de la lista entera por toque).
       _scheduleConverge();
@@ -813,6 +853,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         .where((i) => !i.checked && i.listId == _activeListId)
         .length;
     if (pending == 0) return;
+    // Sin deshacer: se pregunta antes, que está a un toque de la lista.
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l.shopAllBoughtAsk(pending)),
+        content: Text(ctx.l.shopAllBoughtAskHint),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(ctx.l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.l.shopAllBought),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     HapticFeedback.mediumImpact();
     setState(() {
       _shown = [
@@ -1444,152 +1503,161 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: widget.embedded
-          ? null
-          : AppBar(title: Text(context.l.shopListTitle)),
-      body: FadeFutureBuilder<List<ShoppingListItem>>(
-        future: _itemsFuture,
-        builder: (context, snapshot) {
-          // Al refrescar se sigue viendo la lista anterior (sin parpadeo).
-          if (!snapshot.hasData &&
-              snapshot.connectionState == ConnectionState.waiting) {
-            return const ShoppingSkeleton();
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text(friendlyError(snapshot.error)));
-          }
+    // En la tienda, "atrás" sale del modo tienda en vez de cerrar la app.
+    return PopScope(
+      canPop: !_inStore,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _inStore) _toggleStore();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        appBar: widget.embedded
+            ? null
+            : AppBar(title: Text(context.l.shopListTitle)),
+        body: FadeFutureBuilder<List<ShoppingListItem>>(
+          future: _itemsFuture,
+          builder: (context, snapshot) {
+            // Al refrescar se sigue viendo la lista anterior (sin parpadeo).
+            if (!snapshot.hasData &&
+                snapshot.connectionState == ConnectionState.waiting) {
+              return const ShoppingSkeleton();
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text(friendlyError(snapshot.error)));
+            }
 
-          final all = snapshot.data ?? [];
-          if (all.isEmpty && !_remoteTried) return const ShoppingSkeleton();
-          // Filtramos por la LISTA ACTIVA: list_id null = Lista principal.
-          final items = all.where((i) => i.listId == _activeListId).toList();
-          bool settling(ShoppingListItem i) => _settling.contains(i.id);
-          final pendientes = items
-              .where((i) => !i.checked || settling(i))
-              .toList();
-          final comprados = items
-              .where((i) => i.checked && !settling(i))
-              .toList();
+            final all = snapshot.data ?? [];
+            if (all.isEmpty && !_remoteTried) return const ShoppingSkeleton();
+            // Filtramos por la LISTA ACTIVA: list_id null = Lista principal.
+            final items = all.where((i) => i.listId == _activeListId).toList();
+            bool settling(ShoppingListItem i) => _settling.contains(i.id);
+            final pendientes = items
+                .where((i) => !i.checked || settling(i))
+                .toList();
+            final comprados = items
+                .where((i) => i.checked && !settling(i))
+                .toList();
 
-          // Compra terminada: hay items y todos están marcados. Mostramos a
-          // Miau celebrando (rebote + confeti al vaciar). La detección de la
-          // transición ya se hizo al resolver el fetch (gate puro); aquí solo
-          // se CONSUME, para no repetir el confeti en cada rebuild.
-          final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
-          final porComprar = pendientes.where((i) => !i.checked).toList();
-          final celebrar = _celebrationGate.consume();
-          final est = _estimate(porComprar);
+            // Compra terminada: hay items y todos están marcados. Mostramos a
+            // Miau celebrando (rebote + confeti al vaciar). La detección de la
+            // transición ya se hizo al resolver el fetch (gate puro); aquí solo
+            // se CONSUME, para no repetir el confeti en cada rebuild.
+            final compraTerminada = pendientes.isEmpty && comprados.isNotEmpty;
+            final porComprar = pendientes.where((i) => !i.checked).toList();
+            final celebrar = _celebrationGate.consume();
+            final est = _estimate(porComprar);
 
-          final slivers = <Widget>[
-            SliverToBoxAdapter(
-              child: ShoppingSummaryHeader(
-                listName: _activeListName,
-                pending: pendientes.length,
-                done: comprados.length,
-                estimate: est?.total,
-                unpriced: est == null ? 0 : est.totalItems - est.priced,
-                generating: _generating,
-                onTapList: _openListsOverview,
-                onGenerate: _generarDesdePlan,
-                onOptions: _openViewOptions,
-                onShare: porComprar.isEmpty
-                    ? null
-                    : () => _shareList(porComprar),
-                storeLabel: _superKeys.isEmpty
-                    ? null
-                    : Supermarket.labelFor(_superKeys.first),
-                onTapStore: _pickSupermarket,
-                inStore: _inStore,
-                onToggleStore: _toggleStore,
-                onCompare: _inStore ? null : () => _compareStores(porComprar),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-            if (!_inStore)
+            final slivers = <Widget>[
               SliverToBoxAdapter(
-                child: ShoppingQuickAddBar(
-                  onSubmit: _quickAdd,
-                  onMore: _openAddItem,
-                  onSearch: _searchProduct,
+                child: ShoppingSummaryHeader(
+                  listName: _activeListName,
+                  pending: pendientes.length,
+                  done: comprados.length,
+                  estimate: est?.total,
+                  unpriced: est == null ? 0 : est.totalItems - est.priced,
+                  generating: _generating,
+                  onTapList: _openListsOverview,
+                  onGenerate: _generarDesdePlan,
+                  onOptions: _openViewOptions,
+                  onShare: porComprar.isEmpty
+                      ? null
+                      : () => _shareList(porComprar),
+                  storeLabel: _superKeys.isEmpty
+                      ? null
+                      : Supermarket.labelFor(_superKeys.first),
+                  onTapStore: _pickSupermarket,
+                  inStore: _inStore,
+                  onToggleStore: _toggleStore,
+                  onCompare: _inStore ? null : () => _compareStores(porComprar),
                 ),
               ),
-            if (_view.showSuggestions && !_inStore)
-              // Con toda la lista (también el carrito): si no, al marcar un
-              // producto reaparecía como sugerencia y la tira de arriba
-              // cambiaba de tamaño, empujando toda la lista.
-              // Llegan un poco después que la lista: crecen con suavidad en
-              // vez de empujarlo todo de golpe.
-              SliverToBoxAdapter(
-                child: AnimatedSize(
-                  duration: AppMotion.normal,
-                  curve: AppMotion.easeOut,
-                  alignment: Alignment.topCenter,
-                  child: _suggestions(items),
-                ),
-              ),
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
-            // Caja simple y no SliverFillRemaining: el hueco que queda cambia
-            // al abrir el teclado.
-            if (items.isEmpty) SliverToBoxAdapter(child: _emptyState()),
-            if (compraTerminada)
-              SliverToBoxAdapter(child: _CompraCelebracion(celebrar: celebrar)),
-            ..._buildPendientesSlivers(pendientes),
-            if (comprados.isNotEmpty)
-              SliverToBoxAdapter(child: _cartCard(comprados)),
-          ];
-
-          // Con el teclado abierto la barra se esconde: si no, flota encima
-          // de la lista y tapa media pantalla.
-          final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-          final showBar = comprados.isNotEmpty && !keyboardOpen;
-          return Stack(
-            children: [
-              CustomScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                slivers: [
-                  SliverPadding(
-                    // Abajo deja sitio a la barra de terminar la compra.
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      16,
-                      16,
-                      comprados.isNotEmpty ? 128 : 32,
-                    ),
-                    sliver: SliverMainAxisGroup(slivers: slivers),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+              if (!_inStore)
+                SliverToBoxAdapter(
+                  child: ShoppingQuickAddBar(
+                    onSubmit: _quickAdd,
+                    onMore: _openAddItem,
+                    onSearch: _searchProduct,
                   ),
-                ],
-              ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 16,
-                child: _checkoutBar(comprados, visible: showBar),
-              ),
-              // Encima de la lista, no dentro: si no, al aparecer empujaba
-              // todas las filas y el siguiente toque caía en otra.
-              if (shouldShowPendingIndicator(_pendingCount))
+                ),
+              if (_view.showSuggestions && !_inStore)
+                // Con toda la lista (también el carrito): si no, al marcar un
+                // producto reaparecía como sugerencia y la tira de arriba
+                // cambiaba de tamaño, empujando toda la lista.
+                // Llegan un poco después que la lista: crecen con suavidad en
+                // vez de empujarlo todo de golpe.
+                SliverToBoxAdapter(
+                  child: AnimatedSize(
+                    duration: AppMotion.normal,
+                    curve: AppMotion.easeOut,
+                    alignment: Alignment.topCenter,
+                    child: _suggestions(items),
+                  ),
+                ),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
+              // Caja simple y no SliverFillRemaining: el hueco que queda cambia
+              // al abrir el teclado.
+              if (items.isEmpty) SliverToBoxAdapter(child: _emptyState()),
+              if (compraTerminada)
+                SliverToBoxAdapter(
+                  child: _CompraCelebracion(celebrar: celebrar),
+                ),
+              ..._buildPendientesSlivers(pendientes),
+              if (comprados.isNotEmpty)
+                SliverToBoxAdapter(child: _cartCard(comprados)),
+            ];
+
+            // Con el teclado abierto la barra se esconde: si no, flota encima
+            // de la lista y tapa media pantalla.
+            final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+            final showBar = comprados.isNotEmpty && !keyboardOpen;
+            return Stack(
+              children: [
+                CustomScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  slivers: [
+                    SliverPadding(
+                      // Abajo deja sitio a la barra de terminar la compra.
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        comprados.isNotEmpty ? 128 : 32,
+                      ),
+                      sliver: SliverMainAxisGroup(slivers: slivers),
+                    ),
+                  ],
+                ),
                 Positioned(
                   left: 16,
                   right: 16,
-                  bottom: showBar ? 96 : 16,
-                  child: IgnorePointer(
-                    child: PendingSyncIndicator(pendingCount: _pendingCount),
-                  ),
+                  bottom: 16,
+                  child: _checkoutBar(comprados, visible: showBar),
                 ),
-              if (_finishConfetti)
-                Positioned.fill(
-                  child: ConfettiBurst(
-                    onCompleted: () {
-                      if (mounted) setState(() => _finishConfetti = false);
-                    },
+                // Encima de la lista, no dentro: si no, al aparecer empujaba
+                // todas las filas y el siguiente toque caía en otra.
+                if (shouldShowPendingIndicator(_pendingCount))
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: showBar ? 96 : 16,
+                    child: IgnorePointer(
+                      child: PendingSyncIndicator(pendingCount: _pendingCount),
+                    ),
                   ),
-                ),
-            ],
-          );
-        },
+                if (_finishConfetti)
+                  Positioned.fill(
+                    child: ConfettiBurst(
+                      onCompleted: () {
+                        if (mounted) setState(() => _finishConfetti = false);
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

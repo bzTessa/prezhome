@@ -5109,4 +5109,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shopPackSizeHint =>
       'For example, 570 g. The shopping list will count whole packs and the pantry will subtract only what each recipe uses.';
+
+  @override
+  String get shopLeaveStore => 'Leave store mode';
+
+  @override
+  String shopAllBoughtAsk(int count) {
+    return 'Mark all $count items as bought?';
+  }
+
+  @override
+  String get shopAllBoughtAskHint =>
+      'They will move to the cart and the pantry.';
 }

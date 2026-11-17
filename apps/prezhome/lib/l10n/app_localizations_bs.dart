@@ -5056,4 +5056,15 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get shopPackSizeHint =>
       'Na primjer, 570 g. Lista za kupovinu će brojati cijela pakovanja, a ostava će oduzeti samo ono što svaki recept potroši.';
+
+  @override
+  String get shopLeaveStore => 'Izađi iz načina prodavnice';
+
+  @override
+  String shopAllBoughtAsk(int count) {
+    return 'Označiti svih $count proizvoda kao kupljene?';
+  }
+
+  @override
+  String get shopAllBoughtAskHint => 'Prebacit će se u korpu i ostavu.';
 }

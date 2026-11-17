@@ -5119,4 +5119,15 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get shopPackSizeHint =>
       'Per esempio, 570 g. La lista conterà confezioni intere e la dispensa sottrarrà solo quello che usa ogni ricetta.';
+
+  @override
+  String get shopLeaveStore => 'Esci dalla modalità negozio';
+
+  @override
+  String shopAllBoughtAsk(int count) {
+    return 'Segnare tutti i $count prodotti come comprati?';
+  }
+
+  @override
+  String get shopAllBoughtAskHint => 'Passeranno al carrello e alla dispensa.';
 }

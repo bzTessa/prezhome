@@ -231,14 +231,27 @@ extension on ShoppingSummaryHeader {
             children: [
               Icon(Icons.place_outlined, size: 16, color: AppColors.woodDark),
               const SizedBox(width: 6),
-              Text(
-                (storeLabel == null
-                        ? context.l.shopInStore
-                        : context.l.shopInStoreAt(storeLabel!))
-                    .toUpperCase(),
-                style: AppTextStyles.label.copyWith(
-                  color: AppColors.terracottaText,
+              Expanded(
+                child: Text(
+                  (storeLabel == null
+                          ? context.l.shopInStore
+                          : context.l.shopInStoreAt(storeLabel!))
+                      .toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.label.copyWith(
+                    color: AppColors.terracottaText,
+                  ),
                 ),
+              ),
+              // Salir sin terminar la compra; terminarla va en la barra de
+              // abajo ("Terminar compra (N)").
+              IconButton(
+                onPressed: onToggleStore,
+                tooltip: context.l.shopLeaveStore,
+                icon: const Icon(Icons.close_rounded),
+                color: AppColors.ink,
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),
@@ -272,17 +285,6 @@ extension on ShoppingSummaryHeader {
           ),
           const SizedBox(height: AppSpacing.md),
           CartProgressBar(progress: progress),
-          const SizedBox(height: AppSpacing.md),
-          FilledButton.icon(
-            onPressed: onToggleStore,
-            icon: const Icon(Icons.check_rounded, size: 20),
-            label: Text(context.l.shopFinish),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              backgroundColor: AppColors.terracotta,
-              foregroundColor: AppColors.onBrand,
-            ),
-          ),
         ],
       ),
     );
