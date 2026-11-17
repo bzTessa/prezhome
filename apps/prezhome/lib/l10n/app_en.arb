@@ -1285,5 +1285,8 @@
   "homeDoneOf": "{done} of {total} done",
   "shopPackSizeEdit": "Pack size…",
   "shopPackSizeTitle": "How much is in each pack of {name}?",
-  "shopPackSizeHint": "For example, 570 g. The shopping list will count whole packs and the pantry will subtract only what each recipe uses."
+  "shopPackSizeHint": "For example, 570 g. The shopping list will count whole packs and the pantry will subtract only what each recipe uses.",
+  "shopLeaveStore": "Leave store mode",
+  "shopAllBoughtAsk": "Mark all {count} items as bought?",
+  "shopAllBoughtAskHint": "They will move to the cart and the pantry."
 }

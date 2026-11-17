@@ -7823,6 +7823,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Por ejemplo, 570 g. La compra contará envases enteros y la despensa restará solo lo que gaste cada receta.'**
   String get shopPackSizeHint;
+
+  /// No description provided for @shopLeaveStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Salir del modo tienda'**
+  String get shopLeaveStore;
+
+  /// No description provided for @shopAllBoughtAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Marcar los {count} productos como comprados?'**
+  String shopAllBoughtAsk(int count);
+
+  /// No description provided for @shopAllBoughtAskHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasarán al carrito y a la despensa.'**
+  String get shopAllBoughtAskHint;
 }
 
 class _AppLocalizationsDelegate

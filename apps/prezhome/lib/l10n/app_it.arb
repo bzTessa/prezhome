@@ -1285,5 +1285,8 @@
   "homeDoneOf": "{done} di {total} fatto",
   "shopPackSizeEdit": "Contenuto di ogni confezione…",
   "shopPackSizeTitle": "Quanto contiene ogni confezione di {name}?",
-  "shopPackSizeHint": "Per esempio, 570 g. La lista conterà confezioni intere e la dispensa sottrarrà solo quello che usa ogni ricetta."
+  "shopPackSizeHint": "Per esempio, 570 g. La lista conterà confezioni intere e la dispensa sottrarrà solo quello che usa ogni ricetta.",
+  "shopLeaveStore": "Esci dalla modalità negozio",
+  "shopAllBoughtAsk": "Segnare tutti i {count} prodotti come comprati?",
+  "shopAllBoughtAskHint": "Passeranno al carrello e alla dispensa."
 }
