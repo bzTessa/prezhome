@@ -728,7 +728,10 @@ class _TasksScreenState extends State<TasksScreen> {
           Widget tile(HomeTask t) => _TaskTile(
             key: ValueKey(t.id),
             task: t,
-            who: who(t),
+            // Agrupadas por persona, su nombre ya está en el título.
+            who: _filterUser == null && t.assignedTo != null && !t.rotates
+                ? null
+                : who(t),
             overdue: _isOverdue(t),
             completing: _completing.contains(t.id),
             points: data.pointsEnabled ? t.points : null,
@@ -739,22 +742,17 @@ class _TasksScreenState extends State<TasksScreen> {
                 : null,
           );
 
-          Widget grid(List<HomeTask> tasks) => LayoutBuilder(
-            builder: (context, c) {
-              final w = (c.maxWidth - AppSpacing.md) / 2;
-              return Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.md,
-                children: [
-                  for (final (i, t) in tasks.indexed)
-                    SizedBox(
-                      key: ValueKey(t.id),
-                      width: w,
-                      child: StaggeredEntrance(index: i, child: tile(t)),
-                    ),
-                ],
-              );
-            },
+          // Filas, una debajo de otra, como en el concepto.
+          Widget grid(List<HomeTask> tasks) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (i, t) in tasks.indexed)
+                Padding(
+                  key: ValueKey(t.id),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: StaggeredEntrance(index: i, child: tile(t)),
+                ),
+            ],
           );
 
           final List<Widget> section = switch (view) {
@@ -802,6 +800,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         ? context.l.tskYourTurn
                         : data.members[g.key]!,
                     count: g.value.length,
+                    avatar: g.key == null ? null : data.members[g.key],
                   ),
                   grid(g.value),
                 ]
@@ -1467,15 +1466,22 @@ class _KindBadge extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text, {this.count});
+  const _SectionTitle(this.text, {this.count, this.avatar});
   final String text;
   final int? count;
+
+  /// Nombre de la persona: pone su inicial en un círculo delante.
+  final String? avatar;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(left: AppSpacing.xs, bottom: AppSpacing.sm),
     child: Row(
       children: [
+        if (avatar case final a?) ...[
+          _Avatar(name: a, size: 26),
+          const SizedBox(width: 2),
+        ],
         Text(text, style: AppTextStyles.headline.copyWith(fontSize: 20)),
         if (count case final c?) ...[
           const SizedBox(width: AppSpacing.sm),
@@ -1535,71 +1541,42 @@ class _TodayHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = done + left;
-    final progress = total == 0 ? 1.0 : done / total;
-    final reduce = AppMotion.reduceMotionOf(context);
-    return Container(
-      padding: AppSpacing.cardPadding,
-      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
+    final now = DateTime.now();
+    final monday = DateTime(now.year, now.month, now.day - (now.weekday - 1));
+    final sunday = monday.add(const Duration(days: 6));
+    final locale = Localizations.localeOf(context).toString();
+    String day(DateTime d) => DateFormat.MMMd(locale).format(d);
+    // Una línea: la semana y cómo va hoy. Sin anillo, como en el concepto.
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSpacing.xs),
       child: Row(
         children: [
-          SizedBox.square(
-            dimension: 72,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(end: progress),
-              duration: AppMotion.effectiveDuration(
-                const Duration(milliseconds: 500),
-                reduceMotion: reduce,
-              ),
-              curve: AppMotion.springCurve(AppMotion.fluidDefault),
-              builder: (context, v, _) => Stack(
-                fit: StackFit.expand,
-                children: [
-                  CircularProgressIndicator(
-                    value: v,
-                    strokeWidth: 8,
-                    strokeCap: StrokeCap.round,
-                    backgroundColor: AppColors.line,
-                    color: AppColors.done,
-                  ),
-                  Center(
-                    child: AnimatedCounter(
-                      value: done.toDouble(),
-                      formatter: (v) => '${v.round()}/$total',
-                      style: AppTextStyles.numeric(
-                        AppTextStyles.bodyStrong,
-                      ).copyWith(fontSize: 16, fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(context.l.today, style: AppTextStyles.headline),
-                const SizedBox(height: 2),
-                Text(
-                  left == 0
-                      ? (total == 0
-                            ? context.l.tskNothingToday
-                            : context.l.tskAllDone)
-                      : context.l.tskLeft(left),
-                  style: AppTextStyles.bodyMuted,
-                ),
-                if (overdue > 0) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  _Pill(
-                    text: context.l.tskOverdueCount(overdue),
-                    bg: AppColors.expiredBg,
-                    fg: AppColors.expired,
-                  ),
-                ],
-              ],
+            child: Text(
+              '${day(monday)} – ${day(sunday)}'.toUpperCase(),
+              style: AppTextStyles.label.copyWith(
+                color: AppColors.terracottaText,
+              ),
             ),
           ),
+          Text(
+            left == 0
+                ? (total == 0
+                      ? context.l.tskNothingToday
+                      : context.l.tskAllDone)
+                : '${context.l.today} $done/$total',
+            style: AppTextStyles.bodyMuted.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (overdue > 0) ...[
+            const SizedBox(width: AppSpacing.sm),
+            _Pill(
+              text: context.l.tskOverdueCount(overdue),
+              bg: AppColors.expiredBg,
+              fg: AppColors.expired,
+            ),
+          ],
         ],
       ),
     );
@@ -1656,7 +1633,6 @@ class _TaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kind = taskKindFor(task.title);
-    final (_, fg) = kind.colors;
     final meta = [
       if (task.recurrence != 'once') taskRepeatLabel(context, task),
       ?who,
@@ -1685,107 +1661,81 @@ class _TaskTile extends StatelessWidget {
           duration: AppMotion.base,
           curve: AppMotion.easeOut,
           child: Container(
-            // El relleno deja el borde por encima de la franja de color.
-            padding: const EdgeInsets.all(1.5),
-            decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.lg - 1.5),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Franja de color, como el lomo del calendario.
-                  Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: fg,
-                      border: Border(bottom: BorderSide(color: AppColors.line)),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: AppTheme.tactileDecoration(radius: AppRadius.md),
+            child: Row(
+              children: [
+                Semantics(
+                  button: true,
+                  label: context.l.tskMarkDone(task.title),
+                  child: PressScale(
+                    onTap: completing ? null : onDone,
+                    pressedScale: 0.85,
+                    child: AnimatedContainer(
+                      duration: AppMotion.base,
+                      curve: AppMotion.easeOutBack,
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: completing ? AppColors.done : AppColors.paper,
+                        border: Border.all(
+                          color: completing ? AppColors.done : AppColors.stroke,
+                          width: 1.8,
+                        ),
+                      ),
+                      child: completing
+                          ? Icon(
+                              Icons.check_rounded,
+                              color: AppColors.cream,
+                              size: 20,
+                            )
+                          : null,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _KindBadge(kind: kind),
-                            const Spacer(),
-                            Semantics(
-                              button: true,
-                              label: context.l.tskMarkDone(task.title),
-                              child: PressScale(
-                                onTap: completing ? null : onDone,
-                                pressedScale: 0.85,
-                                child: AnimatedContainer(
-                                  duration: AppMotion.base,
-                                  curve: AppMotion.easeOutBack,
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: completing
-                                        ? AppColors.done
-                                        : AppColors.paper,
-                                    border: Border.all(
-                                      color: AppColors.stroke,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: AnimatedScale(
-                                    scale: completing ? 1.15 : 1,
-                                    duration: AppMotion.base,
-                                    curve: AppMotion.easeOutBack,
-                                    child: Icon(
-                                      Icons.check_rounded,
-                                      color: completing
-                                          ? AppColors.cream
-                                          : AppColors.done,
-                                      size: 24,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          task.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.2,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink,
-                          ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        overdue
+                            ? [
+                                context.l.tskOverdue,
+                                if (meta.isNotEmpty) meta,
+                              ].join(' · ')
+                            : meta.isEmpty
+                            ? context.l.taskKind(kind.name)
+                            : meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMuted.copyWith(
+                          fontSize: 12,
+                          color: overdue ? AppColors.expired : null,
+                          fontWeight: overdue ? FontWeight.w700 : null,
                         ),
-                        const SizedBox(height: AppSpacing.xs),
-                        if (overdue)
-                          _Pill(
-                            text: context.l.tskOverdue,
-                            bg: AppColors.expiredBg,
-                            fg: AppColors.expired,
-                          )
-                        else
-                          Text(
-                            meta.isEmpty ? context.l.taskKind(kind.name) : meta,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.bodyMuted.copyWith(
-                              fontSize: 12,
-                            ),
-                          ),
-                        if (points case final p? when p > 0) ...[
-                          const SizedBox(height: AppSpacing.sm),
-                          _PointsBadge(points: p),
-                        ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
+                if (points case final p? when p > 0) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  _PointsBadge(points: p),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -1801,19 +1751,16 @@ class _PointsBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(6, 3, 10, 3),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
       color: AppColors.goldBg,
       borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: AppColors.gold, width: 1.5),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.star_rounded, size: 16, color: AppColors.gold),
-        const SizedBox(width: 3),
         Text(
-          context.l.tskPts(points),
+          '+$points',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w800,
