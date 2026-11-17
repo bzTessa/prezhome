@@ -1280,5 +1280,6 @@
   "winsThrownLess": "{count, plural, =1{1 prodotto buttato in meno del mese scorso} other{{count} prodotti buttati in meno del mese scorso}}",
   "winsEmpty": "Quando userai dispensa, piano e faccende, qui vedrai com'è andato il mese.",
   "proHeadline": "Più aiuto per ciò che ti ruba più tempo",
-  "proHeadlineSub": "Legge più scontrini, ricava più ricette da link e foto e propone più idee ogni mese. Un abbonamento vale per tutta la casa."
+  "proHeadlineSub": "Legge più scontrini, ricava più ricette da link e foto e propone più idee ogni mese. Un abbonamento vale per tutta la casa.",
+  "pantryShelf": "{shelf, select, preparados{Piatti e preparati} verduraFruta{Frutta e verdura} carnePescado{Carne e pesce} lacteos{Latticini e uova} bebidas{Bevande} panCereales{Pane, pasta e riso} conservas{Conserve} dulces{Dolci e snack} otros{Altro} other{{shelf}}}"
 }

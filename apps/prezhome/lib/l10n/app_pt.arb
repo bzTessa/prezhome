@@ -1280,5 +1280,6 @@
   "winsThrownLess": "{count, plural, =1{Menos 1 produto no lixo do que no mês passado} other{Menos {count} produtos no lixo do que no mês passado}}",
   "winsEmpty": "Quando usares a despensa, o plano e as tarefas, verás aqui o que levas este mês.",
   "proHeadline": "Mais ajuda no que te tira mais tempo",
-  "proHeadlineSub": "Lê mais talões, tira mais receitas de links e fotos e propõe mais ideias cada mês. Uma subscrição serve para toda a casa."
+  "proHeadlineSub": "Lê mais talões, tira mais receitas de links e fotos e propõe mais ideias cada mês. Uma subscrição serve para toda a casa.",
+  "pantryShelf": "{shelf, select, preparados{Pratos e preparados} verduraFruta{Fruta e legumes} carnePescado{Carne e peixe} lacteos{Laticínios e ovos} bebidas{Bebidas} panCereales{Pão, massa e arroz} conservas{Conservas} dulces{Doces e snacks} otros{Outros} other{{shelf}}}"
 }

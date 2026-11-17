@@ -10,7 +10,6 @@ enum KitchenZone {
   nevera('Nevera', 'Nevera'),
   congelador('Congelador', 'Congelador'),
   despensa('Despensa', 'Despensa'),
-  bebidas('Bebidas', 'Bebidas'),
   especias('Especias', 'Condimentos'),
   limpieza('Limpieza', 'Limpieza'),
   hogar('Hogar', 'Varios');
@@ -33,15 +32,11 @@ enum KitchenZone {
       KitchenZone.nevera => !home && i.category == 'Nevera',
       KitchenZone.congelador => !home && i.category == 'Congelador',
       KitchenZone.especias => !home && i.category == 'Especias',
-      KitchenZone.bebidas => !home && i.category == 'Bebidas',
       KitchenZone.despensa =>
         !home &&
-            !const {
-              'Nevera',
-              'Congelador',
-              'Especias',
-              'Bebidas',
-            }.contains(i.category),
+            // Las bebidas ya no son zona aparte: lo guardado como 'Bebidas'
+            // sale aquí, en su estante.
+            !const {'Nevera', 'Congelador', 'Especias'}.contains(i.category),
     };
   }
 
@@ -57,6 +52,40 @@ enum KitchenZone {
     }
     return null;
   }
+}
+
+/// Estante dentro de una zona (nevera, despensa, congelador): agrupa lo que
+/// hay por tipo para encontrarlo de un vistazo.
+enum PantryShelf {
+  preparados,
+  verduraFruta,
+  carnePescado,
+  lacteos,
+  bebidas,
+  panCereales,
+  conservas,
+  dulces,
+  otros,
+}
+
+/// Estante de [i]: los tápers y platos van con los preparados; el resto,
+/// por el tipo de alimento. Lo guardado en la antigua zona 'Bebidas', con las
+/// bebidas.
+PantryShelf shelfOf(InventoryItem i) {
+  if (i.kind == 'dish' || i.recipeId != null) return PantryShelf.preparados;
+  final cat = CategoryIcons.categoryFor(i.name, itemType: i.itemType);
+  return switch (cat) {
+    FoodCategory.preparados => PantryShelf.preparados,
+    FoodCategory.verdura || FoodCategory.fruta => PantryShelf.verduraFruta,
+    FoodCategory.carne || FoodCategory.pescado => PantryShelf.carnePescado,
+    FoodCategory.lacteos => PantryShelf.lacteos,
+    FoodCategory.bebidas => PantryShelf.bebidas,
+    FoodCategory.panaderia || FoodCategory.cereales => PantryShelf.panCereales,
+    FoodCategory.conservas => PantryShelf.conservas,
+    FoodCategory.dulces => PantryShelf.dulces,
+    _ when i.category == 'Bebidas' => PantryShelf.bebidas,
+    _ => PantryShelf.otros,
+  };
 }
 
 class ZoneSummary {

@@ -7793,6 +7793,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar.'**
   String get proHeadlineSub;
+
+  /// No description provided for @pantryShelf.
+  ///
+  /// In es, this message translates to:
+  /// **'{shelf, select, preparados{Platos y preparados} verduraFruta{Verdura y fruta} carnePescado{Carne y pescado} lacteos{Lácteos y huevos} bebidas{Bebidas} panCereales{Pan, pasta y arroz} conservas{Conservas} dulces{Dulces y picoteo} otros{Otros} other{{shelf}}}'**
+  String pantryShelf(String shelf);
 }
 
 class _AppLocalizationsDelegate

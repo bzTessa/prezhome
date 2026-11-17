@@ -34,8 +34,6 @@ import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
-import 'widgets/kitchen/pantry_review_card.dart';
-import 'theme/app_motion.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'discover_recipes_screen.dart';
 import 'l10n/l10n.dart';
@@ -62,8 +60,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   // Contador monótono para encolar/identificar ops de forma estable.
   int _opSeq = 0;
 
-  // Zona que se ve: filterKey de [KitchenZone], 'revisar' (lo que caduca, de
-  // todas las zonas) o null hasta que se elige (primera zona con productos).
+  // Zona que se ve: filterKey de [KitchenZone], o null hasta que se elige
+  // (primera zona con productos).
   String? _sectionFilter;
 
   StreamSubscription<void>? _changesSub;
@@ -837,103 +835,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  /// Productos del repaso rápido a los que ya se ha respondido (o que se
-  /// han dejado para luego) en esta sesión.
-  final Set<String> _reviewed = {};
-
-  /// Caducados con fecha, para el repaso rápido (el más antiguo primero).
-  List<InventoryItem> _toReview(List<InventoryItem> items) {
-    final list = [
-      for (final i in items)
-        if (_tracksExpiry(i) &&
-            i.expirationDate != null &&
-            i.expiryStatus == ExpiryStatus.caducado)
-          i,
-    ]..sort((a, b) => a.expirationDate!.compareTo(b.expirationDate!));
-    return list;
-  }
-
-  /// "Sigue bien": le da tres días más y sale del repaso.
-  Future<void> _stillGood(InventoryItem item) async {
-    final now = DateTime.now();
-    final next = DateTime(now.year, now.month, now.day + 3);
-    setState(() => _reviewed.add(item.id));
-    try {
-      await _repo.applyLocalWrite(
-        buildUpdateOp(
-          table: kInventoryTable,
-          id: item.id,
-          changes: {'expiration_date': next.toIso8601String().split('T').first},
-          nowMillis: now.millisecondsSinceEpoch,
-          seq: _nextSeq(),
-        ),
-      );
-      await _reload();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(friendlyError(e, context.l.couldNotUpdate)),
-            backgroundColor: AppColors.expired,
-          ),
-        );
-      }
-    }
-  }
-
-  Widget _reviewCard(List<InventoryItem> items) {
-    final all = _toReview(items);
-    final pending = all.where((i) => !_reviewed.contains(i.id)).toList();
-    if (pending.isEmpty) return const SizedBox.shrink();
-    final item = pending.first;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-      child: AnimatedSwitcher(
-        duration: AppMotion.normal,
-        child: PantryReviewCard(
-          key: ValueKey(item.id),
-          item: item,
-          position: all.length - pending.length + 1,
-          total: all.length,
-          onStillGood: () => _stillGood(item),
-          onUsedUp: () {
-            setState(() => _reviewed.add(item.id));
-            _consume(item);
-          },
-          onThrown: () {
-            HapticFeedback.mediumImpact();
-            setState(() => _reviewed.add(item.id));
-            // Queda apuntado para el resumen del mes (lo tirado).
-            _logConsumed(item, item.quantity, DateTime.now(), reason: 'tirado');
-            _deleteItem(item);
-          },
-        ),
-      ),
-    );
-  }
-
   static bool _tracksExpiry(InventoryItem i) =>
       i.itemType == 'comida' && i.category != 'Especias';
-
-  static bool _isUrgent(InventoryItem i) =>
-      _tracksExpiry(i) &&
-      (i.expiryStatus == ExpiryStatus.caducado ||
-          i.expiryStatus == ExpiryStatus.pronto);
 
   /// Mi cocina: las zonas hacen de pestañas y debajo va SOLO la zona elegida,
   /// en filas compactas. Así nada sale dos veces.
   Widget _buildKitchen(List<InventoryItem> items) {
     final zones = summarizeZones(items);
-    final review = _sectionFilter == 'revisar';
-    final zone = review
-        ? null
-        : KitchenZone.byFilterKey(_sectionFilter ?? '') ??
-              zones
-                  .firstWhere((z) => z.count > 0, orElse: () => zones.first)
-                  .zone;
-    final shown = items
-        .where((i) => review ? _isUrgent(i) : zone!.matches(i))
-        .toList();
+    final zone =
+        KitchenZone.byFilterKey(_sectionFilter ?? '') ??
+        zones.firstWhere((z) => z.count > 0, orElse: () => zones.first).zone;
+    final shown = items.where(zone.matches).toList();
     final alphabetical =
         zone == KitchenZone.especias ||
         zone == KitchenZone.limpieza ||
@@ -980,13 +892,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
         112,
       ),
       children: [
-        _reviewCard(items),
         KitchenZonesGrid(
           zones: zones,
           selected: zone,
           onSelect: (z) {
             HapticFeedback.selectionClick();
-            setState(() => _sectionFilter = z?.filterKey ?? 'revisar');
+            setState(() => _sectionFilter = z.filterKey);
           },
           trailing: _cleanupMenu(items, zone),
         ),
@@ -1011,9 +922,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.sm),
           child: Text(
-            review
-                ? context.l.panExpiringHeader
-                : '${context.l.kitchenZone(zone!.name)} · ${shown.length}',
+            '${context.l.kitchenZone(zone.name)} · ${shown.length}',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -1033,7 +942,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         else
           for (final (gi, g) in _groups(
             shown,
-            byExpiry: !alphabetical,
+            byShelf: !alphabetical,
           ).indexed) ...[
             if (g.label != null)
               Padding(
@@ -1063,7 +972,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       for (var k = 0; k < g.items.length; k++) ...[
                         if (k > 0)
                           Divider(height: 1, indent: 76, color: AppColors.line),
-                        _itemRow(g.items[k], showZone: review),
+                        _itemRow(g.items[k], showZone: false),
                       ],
                     ],
                   ),
@@ -1076,31 +985,25 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  /// Parte la lista por cuándo caduca (ya viene ordenada) para verla de un
-  /// vistazo: caducado, esta semana, más adelante y sin fecha. Con un solo
-  /// grupo no se pone título.
+  /// Parte la zona en estantes (preparados, verdura y fruta, carne y
+  /// pescado, bebidas…) para encontrar las cosas de un vistazo. Dentro de
+  /// cada estante sigue el orden por caducidad. Con un solo estante no se
+  /// pone título.
   List<({String? label, Color? color, List<InventoryItem> items})> _groups(
     List<InventoryItem> items, {
-    required bool byExpiry,
+    required bool byShelf,
   }) {
-    if (!byExpiry) return [(label: null, color: null, items: items)];
-    final buckets = <String, List<InventoryItem>>{};
+    if (!byShelf) return [(label: null, color: null, items: items)];
+    final buckets = <PantryShelf, List<InventoryItem>>{};
     for (final i in items) {
-      final d = _tracksExpiry(i) ? i.daysUntilExpiry : null;
-      final key = switch (d) {
-        null => 'none',
-        < 0 => 'expired',
-        <= 7 => 'week',
-        _ => 'later',
-      };
-      buckets.putIfAbsent(key, () => []).add(i);
+      buckets.putIfAbsent(shelfOf(i), () => []).add(i);
     }
     final groups = [
-      for (final k in ['expired', 'week', 'later', 'none'])
+      for (final k in PantryShelf.values)
         if (buckets[k] case final list?)
           (
-            label: context.l.expiryGroup(k),
-            color: k == 'expired' ? AppColors.expired : null,
+            label: context.l.pantryShelf(k.name),
+            color: null as Color?,
             items: list,
           ),
     ];

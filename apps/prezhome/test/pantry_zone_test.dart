@@ -21,7 +21,7 @@ void main() {
       );
       expect(
         ShelfLife.pantryZoneFor(name: 'Vino blanco', category: 'Bebidas'),
-        'Bebidas',
+        'Despensa',
       );
       expect(
         ShelfLife.pantryZoneFor(name: 'Guisantes', category: 'Congelados'),

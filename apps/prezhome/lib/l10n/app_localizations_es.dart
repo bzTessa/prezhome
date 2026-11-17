@@ -5085,4 +5085,21 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get proHeadlineSub =>
       'Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar.';
+
+  @override
+  String pantryShelf(String shelf) {
+    String _temp0 = intl.Intl.selectLogic(shelf, {
+      'preparados': 'Platos y preparados',
+      'verduraFruta': 'Verdura y fruta',
+      'carnePescado': 'Carne y pescado',
+      'lacteos': 'Lácteos y huevos',
+      'bebidas': 'Bebidas',
+      'panCereales': 'Pan, pasta y arroz',
+      'conservas': 'Conservas',
+      'dulces': 'Dulces y picoteo',
+      'otros': 'Otros',
+      'other': '$shelf',
+    });
+    return '$_temp0';
+  }
 }

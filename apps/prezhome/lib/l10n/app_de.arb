@@ -1280,5 +1280,6 @@
   "winsThrownLess": "{count, plural, =1{1 Produkt weniger weggeworfen als letzten Monat} other{{count} Produkte weniger weggeworfen als letzten Monat}}",
   "winsEmpty": "Sobald du Vorrat, Plan und Aufgaben nutzt, siehst du hier deinen Monat.",
   "proHeadline": "Mehr Hilfe bei dem, was dich am meisten Zeit kostet",
-  "proHeadlineSub": "Mehr Kassenbons, mehr Rezepte aus Links und Fotos und mehr Ideen jeden Monat. Ein Abo gilt für den ganzen Haushalt."
+  "proHeadlineSub": "Mehr Kassenbons, mehr Rezepte aus Links und Fotos und mehr Ideen jeden Monat. Ein Abo gilt für den ganzen Haushalt.",
+  "pantryShelf": "{shelf, select, preparados{Gerichte und Fertiges} verduraFruta{Obst und Gemüse} carnePescado{Fleisch und Fisch} lacteos{Milchprodukte und Eier} bebidas{Getränke} panCereales{Brot, Nudeln und Reis} conservas{Konserven} dulces{Süßes und Snacks} otros{Sonstiges} other{{shelf}}}"
 }
