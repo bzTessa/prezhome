@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -269,15 +270,20 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       // (p. ej. los artículos que pasaron de la compra a la despensa offline).
       await _inventoryRepo.tryDrain();
       final items = _rowsToItems(rows);
+      final pricesBefore = _pricesKey();
       await _loadPrices();
       if (!mounted) return;
       _registerCelebration(items);
       final pending = _repo.pendingCount + _inventoryRepo.pendingCount;
-      setState(() {
-        _shown = items;
-        _itemsFuture = Future.value(items);
-        _pendingCount = pending;
-      });
+      if (!_sameItems(_shown, items) ||
+          pending != _pendingCount ||
+          _pricesKey() != pricesBefore) {
+        setState(() {
+          _shown = items;
+          _itemsFuture = Future.value(items);
+          _pendingCount = pending;
+        });
+      }
       _upgradePhotosOnce(items);
       _fillPacks();
     } catch (_) {
@@ -644,11 +650,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final pending = _repo.pendingCount + _inventoryRepo.pendingCount;
     if (!mounted) return;
     _registerCelebration(items);
-    setState(() {
-      _shown = items;
-      _itemsFuture = Future.value(items);
-      _pendingCount = pending;
-    });
+    // Si nada cambió (lo normal tras un cambio que ya se pintó), no se
+    // repinta la lista entera: eso daba tirones al subir y bajar cantidades.
+    if (!_sameItems(_shown, items) || pending != _pendingCount) {
+      setState(() {
+        _shown = items;
+        _itemsFuture = Future.value(items);
+        _pendingCount = pending;
+      });
+    }
     // Convergencia con el servidor y drenado en segundo plano.
     _refreshFromRemote();
   }
@@ -677,6 +687,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final homeId = profile['home_id'] as String?;
     if (homeId == null) throw 'El usuario no esta asignado a ningun hogar.';
     return homeId;
+  }
+
+  /// Huella de los precios recordados, para saber si cambiaron.
+  String _pricesKey() => [
+    for (final e in _prices.entries)
+      '${e.key}:${e.value.lastUnitPrice}:${e.value.avgUnitPrice}',
+  ].join('|');
+
+  /// ¿Las dos listas pintan lo mismo? Compara fila a fila lo que se guarda.
+  static bool _sameItems(List<ShoppingListItem>? a, List<ShoppingListItem> b) {
+    if (a == null || a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (jsonEncode(a[i].toCacheMap()) != jsonEncode(b[i].toCacheMap())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /// Pinta al momento la lista con [changes] aplicados a [item].
@@ -1492,7 +1519,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               // Con toda la lista (también el carrito): si no, al marcar un
               // producto reaparecía como sugerencia y la tira de arriba
               // cambiaba de tamaño, empujando toda la lista.
-              SliverToBoxAdapter(child: _suggestions(items)),
+              // Llegan un poco después que la lista: crecen con suavidad en
+              // vez de empujarlo todo de golpe.
+              SliverToBoxAdapter(
+                child: AnimatedSize(
+                  duration: AppMotion.normal,
+                  curve: AppMotion.easeOut,
+                  alignment: Alignment.topCenter,
+                  child: _suggestions(items),
+                ),
+              ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             if (shouldShowPendingIndicator(_pendingCount))
               SliverToBoxAdapter(
@@ -1508,7 +1544,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               SliverToBoxAdapter(child: _cartCard(comprados)),
           ];
 
-          final showBar = comprados.isNotEmpty;
+          // Con el teclado abierto la barra se esconde: si no, flota encima
+          // de la lista y tapa media pantalla.
+          final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+          final showBar = comprados.isNotEmpty && !keyboardOpen;
           return Stack(
             children: [
               CustomScrollView(
@@ -1521,7 +1560,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       16,
                       16,
                       16,
-                      showBar ? 104 : 32,
+                      comprados.isNotEmpty ? 128 : 32,
                     ),
                     sliver: SliverMainAxisGroup(slivers: slivers),
                   ),
@@ -2494,7 +2533,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final subtitle = [
       if (item.source == 'auto') context.l.shopFromPlan,
       ?need,
-      ?_linePrice(item),
+      // Sin cortes dentro del precio: "≈ 0,25 €" no se parte en dos líneas.
+      ?_linePrice(item)?.replaceAll(' ', '\u00A0'),
     ].join(' · ');
     return SwipeAction(
       key: ValueKey(item.id ?? item.name + item.hashCode.toString()),
