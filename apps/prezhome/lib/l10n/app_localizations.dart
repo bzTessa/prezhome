@@ -693,7 +693,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeExpiredLine.
   ///
   /// In es, this message translates to:
-  /// **'{count, plural, =1{1 producto caducado: revísalo} other{{count} productos caducados: revísalos}}'**
+  /// **'{count, plural, =1{1 producto caducado} other{{count} productos caducados}}'**
   String homeExpiredLine(int count);
 
   /// No description provided for @homeMoreTasks.
@@ -7799,6 +7799,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{shelf, select, preparados{Platos y preparados} verduraFruta{Verdura y fruta} carnePescado{Carne y pescado} lacteos{Lácteos y huevos} bebidas{Bebidas} panCereales{Pan, pasta y arroz} conservas{Conservas} dulces{Dulces y picoteo} otros{Otros} other{{shelf}}}'**
   String pantryShelf(String shelf);
+
+  /// No description provided for @homeDoneOf.
+  ///
+  /// In es, this message translates to:
+  /// **'{done} de {total} hecho'**
+  String homeDoneOf(int done, int total);
 
   /// No description provided for @shopPackSizeEdit.
   ///

@@ -231,7 +231,7 @@
       }
     }
   },
-  "homeExpiredLine": "{count, plural, =1{1 producto caducado: revísalo} other{{count} productos caducados: revísalos}}",
+  "homeExpiredLine": "{count, plural, =1{1 producto caducado} other{{count} productos caducados}}",
   "@homeExpiredLine": {
     "placeholders": {
       "count": {
@@ -3169,6 +3169,17 @@
     "placeholders": {
       "shelf": {
         "type": "String"
+      }
+    }
+  },
+  "homeDoneOf": "{done} de {total} hecho",
+  "@homeDoneOf": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
       }
     }
   },

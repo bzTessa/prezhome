@@ -97,7 +97,7 @@
   "homeNextOpen": "Ver",
   "homeDefrost": "Tirar do congelador: {names}",
   "homeExpiringLine": "A caducar em breve: {names}",
-  "homeExpiredLine": "{count, plural, =1{1 produto fora de prazo: verifica-o} other{{count} produtos fora de prazo: verifica-os}}",
+  "homeExpiredLine": "{count, plural, =1{1 produto fora de prazo} other{{count} produtos fora de prazo}}",
   "homeMoreTasks": "{count, plural, =1{e mais 1 tarefa} other{e mais {count} tarefas}}",
   "homeShoppingLine": "{count, plural, =1{1 produto na lista de compras} other{{count} produtos na lista de compras}}",
   "homeAllDone": "A casa está em dia",
@@ -1282,6 +1282,7 @@
   "proHeadline": "Mais ajuda no que te tira mais tempo",
   "proHeadlineSub": "Lê mais talões, tira mais receitas de links e fotos e propõe mais ideias cada mês. Uma subscrição serve para toda a casa.",
   "pantryShelf": "{shelf, select, preparados{Pratos e preparados} verduraFruta{Fruta e legumes} carnePescado{Carne e peixe} lacteos{Laticínios e ovos} bebidas{Bebidas} panCereales{Pão, massa e arroz} conservas{Conservas} dulces{Doces e snacks} otros{Outros} other{{shelf}}}",
+  "homeDoneOf": "{done} de {total} feito",
   "shopPackSizeEdit": "Conteúdo de cada embalagem…",
   "shopPackSizeTitle": "Quanto traz cada embalagem de {name}?",
   "shopPackSizeHint": "Por exemplo, 570 g. A lista contará embalagens inteiras e a despensa tirará só o que cada receita gasta."

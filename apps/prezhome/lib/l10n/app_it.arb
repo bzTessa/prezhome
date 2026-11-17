@@ -97,7 +97,7 @@
   "homeNextOpen": "Apri",
   "homeDefrost": "Da togliere dal freezer: {names}",
   "homeExpiringLine": "In scadenza: {names}",
-  "homeExpiredLine": "{count, plural, =1{1 prodotto scaduto: controllalo} other{{count} prodotti scaduti: controllali}}",
+  "homeExpiredLine": "{count, plural, =1{1 prodotto scaduto} other{{count} prodotti scaduti}}",
   "homeMoreTasks": "{count, plural, =1{e 1 altra faccenda} other{e altre {count} faccende}}",
   "homeShoppingLine": "{count, plural, =1{1 prodotto nella lista della spesa} other{{count} prodotti nella lista della spesa}}",
   "homeAllDone": "La casa è in ordine",
@@ -1282,6 +1282,7 @@
   "proHeadline": "Più aiuto per ciò che ti ruba più tempo",
   "proHeadlineSub": "Legge più scontrini, ricava più ricette da link e foto e propone più idee ogni mese. Un abbonamento vale per tutta la casa.",
   "pantryShelf": "{shelf, select, preparados{Piatti e preparati} verduraFruta{Frutta e verdura} carnePescado{Carne e pesce} lacteos{Latticini e uova} bebidas{Bevande} panCereales{Pane, pasta e riso} conservas{Conserve} dulces{Dolci e snack} otros{Altro} other{{shelf}}}",
+  "homeDoneOf": "{done} di {total} fatto",
   "shopPackSizeEdit": "Contenuto di ogni confezione…",
   "shopPackSizeTitle": "Quanto contiene ogni confezione di {name}?",
   "shopPackSizeHint": "Per esempio, 570 g. La lista conterà confezioni intere e la dispensa sottrarrà solo quello che usa ogni ricetta."

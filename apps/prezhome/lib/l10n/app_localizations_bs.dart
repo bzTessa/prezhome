@@ -436,9 +436,9 @@ class AppLocalizationsBs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count proizvoda je isteklo: provjeri ih',
-      few: '$count proizvoda su istekla: provjeri ih',
-      one: '1 proizvod je istekao: provjeri ga',
+      other: '$count proizvoda je isteklo',
+      few: '$count proizvoda su istekla',
+      one: '1 proizvod je istekao',
     );
     return '$_temp0';
   }
@@ -5038,6 +5038,11 @@ class AppLocalizationsBs extends AppLocalizations {
       'other': '$shelf',
     });
     return '$_temp0';
+  }
+
+  @override
+  String homeDoneOf(int done, int total) {
+    return '$done od $total gotovo';
   }
 
   @override
