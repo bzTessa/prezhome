@@ -813,21 +813,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
             );
           }
 
-          return Column(
+          return Stack(
             children: [
-              // Indicador discreto de "cambios por sincronizar": aparece solo
-              // con cola no vacía y desaparece al drenar.
+              Positioned.fill(child: _buildKitchen(items)),
+              // Indicador discreto de "cambios por sincronizar", encima de la
+              // lista para no empujarla al aparecer y desaparecer.
               if (shouldShowPendingIndicator(_pendingCount))
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.xs,
-                    AppSpacing.lg,
-                    0,
+                Positioned(
+                  left: AppSpacing.lg,
+                  right: AppSpacing.lg,
+                  bottom: 16,
+                  child: IgnorePointer(
+                    child: PendingSyncIndicator(pendingCount: _pendingCount),
                   ),
-                  child: PendingSyncIndicator(pendingCount: _pendingCount),
                 ),
-              Expanded(child: _buildKitchen(items)),
             ],
           );
         },
