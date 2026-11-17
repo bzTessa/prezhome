@@ -951,8 +951,10 @@ class _QuantityStepperState extends State<QuantityStepper> {
         children: [
           _button(Icons.remove_rounded, context.l.less, widget.onMinus, false),
           ClipRect(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 26),
+            // Ancho fijo: si cambiara con el texto ("900 ml" / "1,1 L"), el
+            // botón − se movería bajo el dedo entre toque y toque.
+            child: SizedBox(
+              width: MediaQuery.textScalerOf(context).scale(58),
               child: AnimatedSwitcher(
                 duration: AppMotion.effectiveDuration(
                   AppMotion.normal,
@@ -971,15 +973,19 @@ class _QuantityStepperState extends State<QuantityStepper> {
                     child: FadeTransition(opacity: anim, child: child),
                   );
                 },
-                child: Text(
-                  widget.label,
+                child: FittedBox(
                   key: ValueKey(widget.label),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    widget.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
               ),

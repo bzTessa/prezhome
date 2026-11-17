@@ -212,6 +212,8 @@ class MealSlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = mealStyle(mealType);
     final empty = title == null;
+    // La comida que toca cocinar ahora: tarjeta grande con el plato.
+    final hero = state == MealSlotState.next && !empty && !skipped;
     // Hueco con receta: tarjeta con sombra suave. Vacío: plano y tenue, para
     // que se vea que falta algo.
     return Padding(
@@ -222,11 +224,7 @@ class MealSlotCard extends StatelessWidget {
           boxShadow: empty ? AppElevation.level0 : AppElevation.level1,
         ),
         child: Material(
-          color: empty
-              ? s.bg.withValues(alpha: 0.55)
-              : state == MealSlotState.next
-              ? AppColors.goldBg
-              : AppColors.card,
+          color: empty ? s.bg.withValues(alpha: 0.55) : AppColors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -240,156 +238,159 @@ class MealSlotCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      if (!empty && image != null)
-                        Opacity(opacity: skipped ? 0.4 : 1, child: image!)
-                      else
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: empty ? AppColors.card : s.bg,
-                            borderRadius: BorderRadius.circular(16),
+                  if (hero)
+                    _hero(context)
+                  else
+                    Row(
+                      children: [
+                        if (!empty && image != null)
+                          Opacity(opacity: skipped ? 0.4 : 1, child: image!)
+                        else
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: empty ? AppColors.card : s.bg,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(s.icon, color: s.fg, size: 28),
                           ),
-                          child: Icon(s.icon, color: s.fg, size: 28),
-                        ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (state == MealSlotState.next && !empty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: _StateChip(
-                                  text: context.l.planCookNow,
-                                  bg: AppColors.ink,
-                                  fg: AppColors.card,
-                                ),
-                              ),
-                            Row(
-                              children: [
-                                Icon(s.icon, size: 14, color: s.fg),
-                                const SizedBox(width: 4),
-                                Text(
-                                  context.l.mealType(mealType).toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.6,
-                                    color: s.fg,
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (state == MealSlotState.next && !empty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: _StateChip(
+                                    text: context.l.planCookNow,
+                                    bg: AppColors.ink,
+                                    fg: AppColors.card,
                                   ),
                                 ),
-                                if (time != null) ...[
-                                  const SizedBox(width: 6),
+                              Row(
+                                children: [
+                                  Icon(s.icon, size: 14, color: s.fg),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    inFast
-                                        ? context.l.ppFastTime(time!)
-                                        : time!,
+                                    context.l.mealType(mealType).toUpperCase(),
                                     style: TextStyle(
                                       fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.inkMuted,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
+                                      color: s.fg,
                                     ),
                                   ),
-                                ],
-                                if (skipped) ...[
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    context.l.ppEatOut,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.inkMuted,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              empty ? context.l.mealAdd(mealType) : title!,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: empty
-                                    ? AppColors.inkMuted
-                                    : AppColors.ink,
-                                decoration: skipped
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                              ),
-                            ),
-                            if (!empty && detail != null) detail!,
-                            if (state == MealSlotState.done && !empty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: _StateChip(
-                                  text: context.l.planEaten,
-                                  icon: Icons.check_rounded,
-                                  bg: AppColors.sageBg,
-                                  fg: AppColors.sage,
-                                ),
-                              ),
-                            if (leftover)
-                              Padding(
-                                padding: EdgeInsets.only(top: 2),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.replay_rounded,
-                                      size: 13,
-                                      color: AppColors.woodDark,
-                                    ),
-                                    SizedBox(width: 4),
+                                  if (time != null) ...[
+                                    const SizedBox(width: 6),
                                     Text(
-                                      context.l.planLeftover,
+                                      inFast
+                                          ? context.l.ppFastTime(time!)
+                                          : time!,
                                       style: TextStyle(
                                         fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.inkMuted,
+                                      ),
+                                    ),
+                                  ],
+                                  if (skipped) ...[
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      context.l.ppEatOut,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.inkMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                empty ? context.l.mealAdd(mealType) : title!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: empty
+                                      ? AppColors.inkMuted
+                                      : AppColors.ink,
+                                  decoration: skipped
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                              ),
+                              if (!empty && detail != null) detail!,
+                              if (state == MealSlotState.done && !empty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: _StateChip(
+                                    text: context.l.planEaten,
+                                    icon: Icons.check_rounded,
+                                    bg: AppColors.sageBg,
+                                    fg: AppColors.sage,
+                                  ),
+                                ),
+                              if (leftover)
+                                Padding(
+                                  padding: EdgeInsets.only(top: 2),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.replay_rounded,
+                                        size: 13,
                                         color: AppColors.woodDark,
-                                        fontWeight: FontWeight.w600,
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(width: 4),
+                                      Text(
+                                        context.l.planLeftover,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.woodDark,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            if (fromFreezer)
-                              Padding(
-                                padding: EdgeInsets.only(top: 2),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.ac_unit_rounded,
-                                      size: 13,
-                                      color: AppColors.frost,
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      context.l.ppFromFreezer,
-                                      style: TextStyle(
-                                        fontSize: 12,
+                              if (fromFreezer)
+                                Padding(
+                                  padding: EdgeInsets.only(top: 2),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.ac_unit_rounded,
+                                        size: 13,
                                         color: AppColors.frost,
-                                        fontWeight: FontWeight.w600,
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(width: 4),
+                                      Text(
+                                        context.l.ppFromFreezer,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.frost,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      Icon(
-                        empty
-                            ? Icons.add_circle_rounded
-                            : Icons.more_horiz_rounded,
-                        color: empty ? s.fg : AppColors.inkMuted,
-                        size: empty ? 28 : 22,
-                      ),
-                    ],
-                  ),
+                        Icon(
+                          empty
+                              ? Icons.add_circle_rounded
+                              : Icons.more_horiz_rounded,
+                          color: empty ? s.fg : AppColors.inkMuted,
+                          size: empty ? 28 : 22,
+                        ),
+                      ],
+                    ),
                   for (final x in extras)
                     Dismissible(
                       key: ValueKey(x.id),
@@ -457,6 +458,96 @@ class MealSlotCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Cabecera dorada con "Toca cocinar", la hora y el plato en grande;
+  /// debajo, el título y los detalles.
+  Widget _hero(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 132,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.goldBg,
+                AppColors.gold.withValues(alpha: 0.55),
+              ],
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 12,
+                top: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _StateChip(
+                      text: context.l.planCookNow,
+                      bg: AppColors.ink,
+                      fg: AppColors.card,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      [
+                        context.l.mealType(mealType).toUpperCase(),
+                        if (time != null)
+                          inFast ? context.l.ppFastTime(time!) : time!,
+                      ].join(' · '),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        color: AppColors.ink.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (image != null)
+                Positioned(right: 12, top: 6, bottom: 6, child: image!),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            Icon(Icons.more_horiz_rounded, color: AppColors.inkMuted, size: 22),
+          ],
+        ),
+        ?detail,
+        if (leftover || fromFreezer)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              leftover ? context.l.planLeftover : context.l.ppFromFreezer,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: leftover ? AppColors.woodDark : AppColors.frost,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

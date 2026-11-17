@@ -2104,6 +2104,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               final state = slotStates[t] ?? MealSlotState.normal;
               final recipe = e == null ? null : data.recipesById[e.recipeId];
               final ready = e == null ? null : data.readyById[e.readyMealId];
+              // La que toca cocinar va en grande, con el plato a la vista.
+              final big = state == MealSlotState.next;
               return MealSlotCard(
                 mealType: t,
                 state: state,
@@ -2113,16 +2115,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 image: recipe != null
                     ? RecipeImage(
                         recipe: recipe,
-                        width: 64,
-                        height: 64,
-                        radius: 18,
+                        width: big ? 120 : 64,
+                        height: big ? 120 : 64,
+                        radius: big ? 60 : 18,
                       )
                     : ready != null
                     ? FoodImage(
                         name: ready.name,
                         imageUrl: ready.imageUrl,
-                        size: 64,
-                        radius: 18,
+                        size: big ? 120 : 64,
+                        radius: big ? 60 : 18,
                       )
                     : null,
                 detail: e == null
