@@ -61,7 +61,18 @@ void main() {
     expect(byZone[KitchenZone.limpieza]!.count, 2);
     expect(byZone[KitchenZone.hogar]!.count, 2);
     expect(byZone[KitchenZone.despensa]!.count, 1);
-    expect(byZone[KitchenZone.bebidas]!.count, 0);
+  });
+
+  test('las bebidas van a la despensa y cada cosa a su estante', () {
+    final cola = _item('Coca-Cola', 'Bebidas');
+    expect(KitchenZone.despensa.matches(cola), isTrue);
+    expect(shelfOf(cola), PantryShelf.bebidas);
+    expect(
+      shelfOf(_item('Pechuga de pollo', 'Nevera')),
+      PantryShelf.carnePescado,
+    );
+    expect(shelfOf(_item('Lechuga', 'Nevera')), PantryShelf.verduraFruta);
+    expect(shelfOf(_item('Yogur natural', 'Nevera')), PantryShelf.lacteos);
   });
 
   testWidgets(
@@ -86,10 +97,8 @@ void main() {
       );
       expect(find.text('9 productos'), findsOneWidget);
       // Las zonas vacías también se ven, para poder añadir en ellas.
-      expect(find.text('Bebidas'), findsOneWidget);
-      expect(find.text('Vacía'), findsWidgets);
-      // La zona y la tarjeta "Revisar" (lo urgente de todas).
-      expect(find.text('1 caducado'), findsNWidgets(2));
+      expect(find.text('Bebidas'), findsNothing);
+      expect(find.text('Revisar'), findsNothing);
 
       await tester.tap(find.text('Congelador'));
       expect(picked, KitchenZone.congelador);

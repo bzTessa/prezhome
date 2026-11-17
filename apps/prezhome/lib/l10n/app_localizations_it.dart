@@ -5085,4 +5085,21 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get proHeadlineSub =>
       'Legge più scontrini, ricava più ricette da link e foto e propone più idee ogni mese. Un abbonamento vale per tutta la casa.';
+
+  @override
+  String pantryShelf(String shelf) {
+    String _temp0 = intl.Intl.selectLogic(shelf, {
+      'preparados': 'Piatti e preparati',
+      'verduraFruta': 'Frutta e verdura',
+      'carnePescado': 'Carne e pesce',
+      'lacteos': 'Latticini e uova',
+      'bebidas': 'Bevande',
+      'panCereales': 'Pane, pasta e riso',
+      'conservas': 'Conserve',
+      'dulces': 'Dolci e snack',
+      'otros': 'Altro',
+      'other': '$shelf',
+    });
+    return '$_temp0';
+  }
 }

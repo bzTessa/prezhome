@@ -3163,5 +3163,13 @@
   },
   "winsEmpty": "Cuando uses la despensa, el plan y las tareas, aquí verás lo que llevas este mes.",
   "proHeadline": "Más ayuda para lo que más tiempo te quita",
-  "proHeadlineSub": "Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar."
+  "proHeadlineSub": "Lee más tiques, saca más recetas de enlaces y fotos y te propone más ideas cada mes. Una suscripción vale para todo el hogar.",
+  "pantryShelf": "{shelf, select, preparados{Platos y preparados} verduraFruta{Verdura y fruta} carnePescado{Carne y pescado} lacteos{Lácteos y huevos} bebidas{Bebidas} panCereales{Pan, pasta y arroz} conservas{Conservas} dulces{Dulces y picoteo} otros{Otros} other{{shelf}}}",
+  "@pantryShelf": {
+    "placeholders": {
+      "shelf": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -5090,4 +5090,21 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get proHeadlineSub =>
       'Mehr Kassenbons, mehr Rezepte aus Links und Fotos und mehr Ideen jeden Monat. Ein Abo gilt für den ganzen Haushalt.';
+
+  @override
+  String pantryShelf(String shelf) {
+    String _temp0 = intl.Intl.selectLogic(shelf, {
+      'preparados': 'Gerichte und Fertiges',
+      'verduraFruta': 'Obst und Gemüse',
+      'carnePescado': 'Fleisch und Fisch',
+      'lacteos': 'Milchprodukte und Eier',
+      'bebidas': 'Getränke',
+      'panCereales': 'Brot, Nudeln und Reis',
+      'conservas': 'Konserven',
+      'dulces': 'Süßes und Snacks',
+      'otros': 'Sonstiges',
+      'other': '$shelf',
+    });
+    return '$_temp0';
+  }
 }

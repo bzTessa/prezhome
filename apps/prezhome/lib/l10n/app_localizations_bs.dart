@@ -5022,4 +5022,21 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get proHeadlineSub =>
       'Čita više računa, izvlači više recepata iz linkova i fotografija i predlaže više ideja svaki mjesec. Jedna pretplata vrijedi za cijelo domaćinstvo.';
+
+  @override
+  String pantryShelf(String shelf) {
+    String _temp0 = intl.Intl.selectLogic(shelf, {
+      'preparados': 'Jela i gotova hrana',
+      'verduraFruta': 'Voće i povrće',
+      'carnePescado': 'Meso i riba',
+      'lacteos': 'Mliječni proizvodi i jaja',
+      'bebidas': 'Pića',
+      'panCereales': 'Hljeb, tjestenina i riža',
+      'conservas': 'Konzerve',
+      'dulces': 'Slatkiši i grickalice',
+      'otros': 'Ostalo',
+      'other': '$shelf',
+    });
+    return '$_temp0';
+  }
 }

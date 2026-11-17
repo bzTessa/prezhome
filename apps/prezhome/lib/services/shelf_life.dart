@@ -249,7 +249,7 @@ class ShelfLife {
     FoodCategory.carne: 'Nevera',
     FoodCategory.pescado: 'Nevera',
     FoodCategory.lacteos: 'Nevera',
-    FoodCategory.bebidas: 'Bebidas',
+    FoodCategory.bebidas: 'Despensa',
     FoodCategory.panaderia: 'Despensa',
     FoodCategory.cereales: 'Despensa',
     FoodCategory.preparados: 'Nevera',
@@ -295,6 +295,9 @@ class ShelfLife {
     String itemType = 'comida',
     String? category,
   }) {
+    // 'Bebidas' ya no es zona: las bebidas van a la despensa (y a la nevera
+    // si se mueven allí).
+    if (category == 'Bebidas') return 'Despensa';
     if (category != null && pantryZones.contains(category)) return category;
     final cat = CategoryIcons.categoryFor(name, itemType: itemType);
     // Lo de casa nunca va con la comida, aunque se apuntara como comida.
@@ -302,7 +305,7 @@ class ShelfLife {
     final aisle = CategoryIcons.normalize(category ?? '');
     if (aisle.contains('higiene')) return 'Hogar';
     if (aisle.contains('limpieza')) return 'Limpieza';
-    if (aisle.contains('bebida')) return 'Bebidas';
+    if (aisle.contains('bebida')) return 'Despensa';
     if (aisle.contains('especia') || aisle.contains('condiment')) {
       return 'Especias';
     }

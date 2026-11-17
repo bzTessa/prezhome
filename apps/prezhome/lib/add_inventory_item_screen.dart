@@ -68,7 +68,6 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
     'Nevera',
     'Congelador',
     'Especias',
-    'Bebidas',
   ];
   static const List<String> _homeCategories = ['Limpieza', 'Hogar'];
 
