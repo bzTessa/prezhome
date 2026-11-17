@@ -149,7 +149,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('3 por comprar · 1 en el carro'), findsOneWidget);
+    expect(find.text('1/4'), findsOneWidget);
     expect(find.text('≈ 12,40\u00A0€ · 2 sin precio'), findsOneWidget);
     expect(find.byType(CartProgressBar), findsOneWidget);
   });
@@ -175,7 +175,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('3 to buy · 1 in the cart'), findsOneWidget);
+    expect(find.byTooltip('List options'), findsOneWidget);
   });
 
   testWidgets('sin foto, las tarjetas son solo texto y más bajas', (

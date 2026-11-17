@@ -9,7 +9,6 @@ import '../../utils/shopping_display.dart';
 import '../animations/animated_counter.dart';
 import '../animations/press_scale.dart';
 import '../animations/spring_value.dart';
-import '../miau_character.dart';
 import '../../utils/money.dart';
 import '../../l10n/l10n.dart';
 
@@ -73,126 +72,79 @@ class ShoppingSummaryHeader extends StatelessWidget {
     final total = pending + done;
     final progress = total == 0 ? 0.0 : done / total;
     if (inStore) return _storeHeader(context, total, progress);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 4, 14),
-      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const MiauCharacter(
-                mood: MiauMood.shopping,
-                size: 56,
-                float: false,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    // Cabecera ligera, sin tarjeta, como en el concepto: súper arriba en
+    // pequeño, la lista en grande con lo que llevas y el precio a la derecha,
+    // una barra fina y una fila de acciones.
+    final iconStyle = IconButton.styleFrom(
+      foregroundColor: AppColors.woodDark,
+      visualDensity: VisualDensity.compact,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (onTapStore != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InkWell(
+              onTap: onTapStore,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    InkWell(
-                      onTap: onTapList,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                listName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTextStyles.headline,
-                              ),
-                            ),
-                            Icon(
-                              Icons.expand_more_rounded,
-                              color: AppColors.inkMuted,
-                            ),
-                          ],
-                        ),
+                    Icon(
+                      Icons.place_outlined,
+                      size: 14,
+                      color: AppColors.terracottaText,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      (storeLabel ?? context.l.shopPickStore).toUpperCase(),
+                      style: AppTextStyles.label.copyWith(
+                        color: AppColors.terracottaText,
                       ),
                     ),
-                    if (onTapStore != null || onCompare != null)
-                      Wrap(
-                        spacing: AppSpacing.md,
-                        children: [
-                          if (onTapStore != null)
-                            TextButton.icon(
-                              onPressed: onTapStore,
-                              icon: const Icon(
-                                Icons.storefront_outlined,
-                                size: 18,
-                              ),
-                              label: Text(
-                                storeLabel ?? context.l.shopPickStore,
-                              ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.woodDark,
-                                visualDensity: VisualDensity.compact,
-                                padding: EdgeInsets.zero,
-                              ),
-                            ),
-                          if (onCompare != null && pending > 0)
-                            TextButton.icon(
-                              onPressed: onCompare,
-                              icon: const Icon(
-                                Icons.compare_arrows_rounded,
-                                size: 18,
-                              ),
-                              label: Text(context.l.shopCompare),
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.terracottaText,
-                                visualDensity: VisualDensity.compact,
-                                padding: EdgeInsets.zero,
-                              ),
-                            ),
-                        ],
-                      ),
+                    Icon(
+                      Icons.expand_more_rounded,
+                      size: 16,
+                      color: AppColors.terracottaText,
+                    ),
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: context.l.shopAddFromPlan,
-                onPressed: generating ? null : onGenerate,
-                icon: generating
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.event_note_rounded),
-                color: AppColors.woodDark,
-              ),
-              if (onShare != null)
-                IconButton(
-                  tooltip: context.l.shopShareList,
-                  onPressed: onShare,
-                  icon: const Icon(Icons.ios_share_rounded),
-                  color: AppColors.woodDark,
-                ),
-              IconButton(
-                tooltip: context.l.shopListOptions,
-                onPressed: onOptions,
-                icon: const Icon(Icons.tune_rounded),
-                color: AppColors.woodDark,
-              ),
-            ],
+            ),
           ),
-          if (total > 0) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      pending == 0
-                          ? context.l.shopAllInCart
-                          : context.l.shopPending(pending, done),
-                      style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: onTapList,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        listName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.display,
+                      ),
                     ),
+                    Icon(Icons.expand_more_rounded, color: AppColors.inkMuted),
+                  ],
+                ),
+              ),
+            ),
+            if (total > 0)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$done/$total',
+                    style: AppTextStyles.numeric(AppTextStyles.headline),
                   ),
                   if (estimate != null)
                     AnimatedCounter(
@@ -200,49 +152,68 @@ class ShoppingSummaryHeader extends StatelessWidget {
                       formatter: (v) =>
                           '≈ ${money(v)}'
                           '${unpriced > 0 ? context.l.shopUnpriced(unpriced) : ''}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
+                      style: AppTextStyles.bodyMuted.copyWith(
+                        fontSize: 12,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                 ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: CartProgressBar(progress: progress),
-            ),
           ],
-          if (onToggleStore != null && (total > 0 || inStore)) ...[
-            const SizedBox(height: AppSpacing.md),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: inStore
-                  ? OutlinedButton.icon(
-                      onPressed: onToggleStore,
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: Text(context.l.shopStoreModeOff),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(44),
-                      ),
-                    )
-                  : FilledButton.icon(
-                      onPressed: onToggleStore,
-                      icon: const Icon(Icons.storefront_rounded, size: 18),
-                      label: Text(context.l.shopStoreModeOn),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(44),
-                        backgroundColor: AppColors.terracotta,
-                        foregroundColor: AppColors.onBrand,
-                      ),
-                    ),
-            ),
-          ],
+        ),
+        if (total > 0) ...[
+          const SizedBox(height: AppSpacing.sm),
+          CartProgressBar(progress: progress),
         ],
-      ),
+        const SizedBox(height: AppSpacing.xs),
+        Row(
+          children: [
+            IconButton(
+              tooltip: context.l.shopAddFromPlan,
+              onPressed: generating ? null : onGenerate,
+              style: iconStyle,
+              icon: generating
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.event_note_rounded),
+            ),
+            if (onShare != null)
+              IconButton(
+                tooltip: context.l.shopShareList,
+                onPressed: onShare,
+                style: iconStyle,
+                icon: const Icon(Icons.ios_share_rounded),
+              ),
+            if (onCompare != null && pending > 0)
+              IconButton(
+                tooltip: context.l.shopCompare,
+                onPressed: onCompare,
+                style: iconStyle,
+                icon: const Icon(Icons.compare_arrows_rounded),
+              ),
+            IconButton(
+              tooltip: context.l.shopListOptions,
+              onPressed: onOptions,
+              style: iconStyle,
+              icon: const Icon(Icons.tune_rounded),
+            ),
+            const Spacer(),
+            if (onToggleStore != null && total > 0)
+              FilledButton.icon(
+                onPressed: onToggleStore,
+                icon: const Icon(Icons.storefront_rounded, size: 18),
+                label: Text(context.l.shopStoreModeOn),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.terracotta,
+                  foregroundColor: AppColors.onBrand,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -251,26 +222,23 @@ extension on ShoppingSummaryHeader {
   /// Cabecera del modo tienda: dónde estás, cuánto llevas en el carro y un
   /// botón grande para terminar.
   Widget _storeHeader(BuildContext context, int total, double progress) {
-    return Container(
-      padding: AppSpacing.cardPadding,
-      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.storefront_rounded,
-                size: 16,
-                color: AppColors.woodDark,
-              ),
+              Icon(Icons.place_outlined, size: 16, color: AppColors.woodDark),
               const SizedBox(width: 6),
               Text(
                 (storeLabel == null
                         ? context.l.shopInStore
                         : context.l.shopInStoreAt(storeLabel!))
                     .toUpperCase(),
-                style: AppTextStyles.label.copyWith(color: AppColors.woodDark),
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.terracottaText,
+                ),
               ),
             ],
           ),
