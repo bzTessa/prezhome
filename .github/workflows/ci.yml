@@ -70,6 +70,7 @@ jobs:
         with:
           name: dependency-map
           path: apps/prezhome/docs/architecture/dependency-map.md
+          retention-days: 1
 
   # Paquetes compartidos del monorepo (packages/). Hoy: prez_ui.
   paquetes:
