@@ -5109,4 +5109,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String homeDoneOf(int done, int total) {
     return '$done de $total feito';
   }
+
+  @override
+  String get shopPackSizeEdit => 'Conteúdo de cada embalagem…';
+
+  @override
+  String shopPackSizeTitle(String name) {
+    return 'Quanto traz cada embalagem de $name?';
+  }
+
+  @override
+  String get shopPackSizeHint =>
+      'Por exemplo, 570 g. A lista contará embalagens inteiras e a despensa tirará só o que cada receita gasta.';
 }

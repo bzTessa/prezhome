@@ -1282,5 +1282,8 @@
   "proHeadline": "Più aiuto per ciò che ti ruba più tempo",
   "proHeadlineSub": "Legge più scontrini, ricava più ricette da link e foto e propone più idee ogni mese. Un abbonamento vale per tutta la casa.",
   "pantryShelf": "{shelf, select, preparados{Piatti e preparati} verduraFruta{Frutta e verdura} carnePescado{Carne e pesce} lacteos{Latticini e uova} bebidas{Bevande} panCereales{Pane, pasta e riso} conservas{Conserve} dulces{Dolci e snack} otros{Altro} other{{shelf}}}",
-  "homeDoneOf": "{done} di {total} fatto"
+  "homeDoneOf": "{done} di {total} fatto",
+  "shopPackSizeEdit": "Contenuto di ogni confezione…",
+  "shopPackSizeTitle": "Quanto contiene ogni confezione di {name}?",
+  "shopPackSizeHint": "Per esempio, 570 g. La lista conterà confezioni intere e la dispensa sottrarrà solo quello che usa ogni ricetta."
 }

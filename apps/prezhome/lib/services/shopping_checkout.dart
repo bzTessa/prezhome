@@ -6,6 +6,7 @@ import '../utils/offline_actions.dart';
 import '../widgets/food_category_icon.dart';
 import 'offline_provider.dart';
 import 'offline_repository.dart';
+import 'pantry_usage.dart';
 import 'shelf_life.dart';
 
 /// ¿Es [title] la tarea de hacer la compra? ("Hacer la compra", "Compra
@@ -139,27 +140,44 @@ class ShoppingCheckout {
     // Lo de limpieza o higiene apuntado como comida se guarda como de casa.
     final isHome =
         item.itemType == 'hogar' || zone == 'Limpieza' || zone == 'Hogar';
+    final addQty = item.boughtQuantity ?? 1;
+    final addUnit = item.unit ?? 'unidades';
     final existing = await _inventory.readCached();
     String? foundId;
-    double foundQty = 0;
+    ({double quantity, String unit})? merged;
+    String? foundUnit;
     for (final m in existing) {
       final rowIsHome = (m['item_type'] ?? 'comida').toString() == 'hogar';
       if (rowIsHome != isHome) continue;
-      if (CategoryIcons.normalize((m['name'] ?? '').toString()) == nKey) {
+      if (CategoryIcons.normalize((m['name'] ?? '').toString()) != nKey) {
+        continue;
+      }
+      // Se suma en la medida de la despensa (1 bote + 570 g = 2 botes, no
+      // "571 botes"). Si no se puede, va en otra fila.
+      foundUnit = (m['unit'] ?? 'unidades').toString();
+      merged = mergePantryQuantity(
+        (m['quantity'] as num?)?.toDouble() ?? 0,
+        foundUnit,
+        addQty,
+        addUnit,
+        packSize: item.packSize,
+      );
+      if (merged != null) {
         foundId = m['id'] as String?;
-        foundQty = (m['quantity'] as num?)?.toDouble() ?? 0;
         break;
       }
     }
 
-    final addQty = item.boughtQuantity ?? 1;
     final now = DateTime.now().millisecondsSinceEpoch;
-    if (foundId != null) {
+    if (foundId != null && merged != null) {
       await _inventory.applyLocalWrite(
         buildUpdateOp(
           table: kInventoryTable,
           id: foundId,
-          changes: {'quantity': foundQty + addQty},
+          changes: {
+            'quantity': merged.quantity,
+            if (merged.unit != foundUnit) 'unit': merged.unit,
+          },
           nowMillis: now,
           seq: _nextSeq(),
         ),
@@ -175,7 +193,7 @@ class ShoppingCheckout {
       category: zone,
       itemType: isHome ? 'hogar' : 'comida',
       quantity: addQty,
-      unit: item.unit ?? 'unidades',
+      unit: addUnit,
       kind: 'ingredient',
       expirationDate: isHome ? null : ShelfLife.estimateDate(item.name, zone),
       imageUrl: item.imageUrl,

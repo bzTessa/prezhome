@@ -55,6 +55,45 @@ void main() {
     expect(uses.single.left, 1);
   });
 
+  test('con el peso del bote resta solo lo usado y pasa a gramos', () {
+    final uses = pantryUsesFor(
+      [Ingredient(name: 'garbanzos cocidos', quantity: 200, unit: 'g')],
+      [_item('1', 'Garbanzos', 1, 'botes', category: 'Despensa')],
+      packSizes: {'1': (size: 570, unit: 'g')},
+    );
+    expect(uses.single.left, closeTo(370, 1e-9));
+    expect(uses.single.unitOut, 'g');
+    expect(uses.single.used, closeTo(200, 1e-9));
+  });
+
+  test('dos recetas del mismo bote restan en proporción', () {
+    final uses = pantryUsesFor(
+      [
+        Ingredient(name: 'garbanzos', quantity: 200, unit: 'g'),
+        Ingredient(name: 'garbanzos', quantity: 0.3, unit: 'kg'),
+      ],
+      [_item('1', 'Garbanzos', 2, 'botes', category: 'Despensa')],
+      packSizes: {'1': (size: 570, unit: 'g')},
+    );
+    expect(uses.single.left, closeTo(640, 1e-9));
+  });
+
+  test('suma lo comprado en la medida de la despensa', () {
+    expect(mergePantryQuantity(370, 'g', 0.57, 'kg'), (
+      quantity: 940.0,
+      unit: 'g',
+    ));
+    expect(mergePantryQuantity(1, 'botes', 570, 'g', packSize: 570), (
+      quantity: 2.0,
+      unit: 'botes',
+    ));
+    expect(mergePantryQuantity(1, 'botes', 400, 'g'), (
+      quantity: 2.0,
+      unit: 'botes',
+    ));
+    expect(mergePantryQuantity(370, 'g', 1, 'botes'), isNull);
+  });
+
   test('no toca básicos, especias, siempre en casa ni lo que no casa', () {
     final uses = pantryUsesFor(
       [

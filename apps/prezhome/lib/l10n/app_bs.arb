@@ -1282,5 +1282,8 @@
   "proHeadline": "Više pomoći za ono što ti oduzima najviše vremena",
   "proHeadlineSub": "Čita više računa, izvlači više recepata iz linkova i fotografija i predlaže više ideja svaki mjesec. Jedna pretplata vrijedi za cijelo domaćinstvo.",
   "pantryShelf": "{shelf, select, preparados{Jela i gotova hrana} verduraFruta{Voće i povrće} carnePescado{Meso i riba} lacteos{Mliječni proizvodi i jaja} bebidas{Pića} panCereales{Hljeb, tjestenina i riža} conservas{Konzerve} dulces{Slatkiši i grickalice} otros{Ostalo} other{{shelf}}}",
-  "homeDoneOf": "{done} od {total} gotovo"
+  "homeDoneOf": "{done} od {total} gotovo",
+  "shopPackSizeEdit": "Veličina pakovanja…",
+  "shopPackSizeTitle": "Koliko ima u svakom pakovanju: {name}?",
+  "shopPackSizeHint": "Na primjer, 570 g. Lista za kupovinu će brojati cijela pakovanja, a ostava će oduzeti samo ono što svaki recept potroši."
 }

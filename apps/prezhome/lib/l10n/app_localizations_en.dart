@@ -5097,4 +5097,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String homeDoneOf(int done, int total) {
     return '$done of $total done';
   }
+
+  @override
+  String get shopPackSizeEdit => 'Pack size…';
+
+  @override
+  String shopPackSizeTitle(String name) {
+    return 'How much is in each pack of $name?';
+  }
+
+  @override
+  String get shopPackSizeHint =>
+      'For example, 570 g. The shopping list will count whole packs and the pantry will subtract only what each recipe uses.';
 }

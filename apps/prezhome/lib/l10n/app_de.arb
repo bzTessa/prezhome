@@ -1282,5 +1282,8 @@
   "proHeadline": "Mehr Hilfe bei dem, was dich am meisten Zeit kostet",
   "proHeadlineSub": "Mehr Kassenbons, mehr Rezepte aus Links und Fotos und mehr Ideen jeden Monat. Ein Abo gilt für den ganzen Haushalt.",
   "pantryShelf": "{shelf, select, preparados{Gerichte und Fertiges} verduraFruta{Obst und Gemüse} carnePescado{Fleisch und Fisch} lacteos{Milchprodukte und Eier} bebidas{Getränke} panCereales{Brot, Nudeln und Reis} conservas{Konserven} dulces{Süßes und Snacks} otros{Sonstiges} other{{shelf}}}",
-  "homeDoneOf": "{done} von {total} erledigt"
+  "homeDoneOf": "{done} von {total} erledigt",
+  "shopPackSizeEdit": "Packungsgröße…",
+  "shopPackSizeTitle": "Wie viel enthält jede Packung {name}?",
+  "shopPackSizeHint": "Zum Beispiel 570 g. Die Einkaufsliste zählt ganze Packungen und der Vorrat zieht nur ab, was jedes Rezept verbraucht."
 }

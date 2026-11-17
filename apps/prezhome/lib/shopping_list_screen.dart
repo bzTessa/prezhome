@@ -45,6 +45,7 @@ import 'widgets/food_image.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'widgets/product_photo_menu.dart';
 import 'widgets/product_search_sheet.dart';
+import 'widgets/shopping/pack_size_dialog.dart';
 import 'widgets/shopping/shopping_parts.dart';
 import 'widgets/shopping/store_comparison_sheet.dart';
 import 'widgets/tactile_button.dart';
@@ -840,6 +841,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             ...productPhotoTiles(ctx, name: item.name, imageUrl: item.imageUrl),
             ..._countTiles(ctx, item),
+            if (isMeasureUnit(item.unit) && !isCondiment(item.name))
+              ListTile(
+                leading: Icon(
+                  Icons.inventory_2_outlined,
+                  color: AppColors.inkMuted,
+                ),
+                title: Text(ctx.l.shopPackSizeEdit),
+                onTap: () => Navigator.of(ctx).pop('packsize'),
+              ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: Text(context.l.shopRemoveFromList),
@@ -867,7 +877,30 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         await _setCountMode(item, CountMode.piece);
       case 'count:weight':
         await _setCountMode(item, CountMode.weight);
+      case 'packsize':
+        await _editPackSize(item);
     }
+  }
+
+  /// "Lo que trae cada envase": el hogar corrige el envase del catálogo (o
+  /// pone uno si el súper no lo tiene) y la fila pasa a contar envases.
+  Future<void> _editPackSize(ShoppingListItem item) async {
+    final pack = await askPackSize(
+      context,
+      name: shoppingCleanName(item.name),
+      current: CountPrefs.customPackOf(item.name),
+    );
+    if (pack == null || !mounted) return;
+    try {
+      await CountPrefs(_client).savePack(await _homeId(), item.name, pack);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyError(e, context.l.couldNotUpdate))),
+      );
+      return;
+    }
+    await _setCountMode(item, CountMode.pack);
   }
 
   /// "Contar en: envases / piezas / peso", solo con las formas que tienen
@@ -879,7 +912,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         isMeasureUnit(item.unit) || (canPiece && isPieceUnit(item.unit));
     final canPack =
         canWeight &&
-        catalogKeyFor(_superKeys.isEmpty ? null : _superKeys.first) != null;
+        (catalogKeyFor(_superKeys.isEmpty ? null : _superKeys.first) != null ||
+            CountPrefs.customPackOf(item.name) != null);
     final options = [
       if (canPack) (CountMode.pack, ctx.l.shopCountPack),
       if (canPiece) (CountMode.piece, ctx.l.shopCountPiece),

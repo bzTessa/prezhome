@@ -7805,6 +7805,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{done} de {total} hecho'**
   String homeDoneOf(int done, int total);
+
+  /// No description provided for @shopPackSizeEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que trae cada envase…'**
+  String get shopPackSizeEdit;
+
+  /// No description provided for @shopPackSizeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto trae cada envase de {name}?'**
+  String shopPackSizeTitle(String name);
+
+  /// No description provided for @shopPackSizeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Por ejemplo, 570 g. La compra contará envases enteros y la despensa restará solo lo que gaste cada receta.'**
+  String get shopPackSizeHint;
 }
 
 class _AppLocalizationsDelegate

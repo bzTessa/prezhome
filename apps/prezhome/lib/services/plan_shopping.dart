@@ -12,6 +12,7 @@ import '../widgets/food_category_icon.dart';
 import 'count_prefs.dart';
 import 'food_photo_service.dart';
 import 'meal_prep_planner.dart';
+import 'pantry_usage.dart';
 import 'price_memory.dart';
 import 'product_photo_resolver.dart';
 import 'product_search_service.dart';
@@ -43,8 +44,8 @@ class PlanNeed {
 }
 
 /// Lógica PURA: suma los ingredientes del plan por nombre y unidad, quita los
-/// básicos "siempre en casa" y descuenta lo que ya hay cuando la unidad
-/// coincide. Ante la duda se compra (mejor de más que quedarse corto).
+/// básicos "siempre en casa" y descuenta lo que ya hay cuando la medida
+/// es la misma (g y kg, ml y L). Ante la duda se compra (mejor de más que quedarse corto).
 List<PlanNeed> planShoppingNeeds(
   List<Ingredient> ingredients,
   List<PantryStock> pantry,
@@ -81,11 +82,12 @@ List<PlanNeed> planShoppingNeeds(
     final k = CategoryIcons.normalize(item.name);
     if (staples.contains(k)) continue;
     final inv = stock[k];
-    final sameUnit =
-        (item.unit ?? '').trim().toLowerCase() ==
-        (inv?.unit ?? '').trim().toLowerCase();
-    if (inv != null && item.qty != null && inv.quantity != null && sameUnit) {
-      final left = item.qty! - inv.quantity!;
+    // Lo de casa en la medida de la receta: 0,4 kg cubren 200 g.
+    final inHand = inv?.quantity == null
+        ? null
+        : convertMeasure(inv!.quantity!, inv.unit, item.unit);
+    if (item.qty != null && inHand != null) {
+      final left = item.qty! - inHand;
       if (left <= 0) continue;
       needs.add(PlanNeed(name: item.name, quantity: left, unit: item.unit));
     } else {
@@ -338,7 +340,8 @@ class PlanShoppingService {
     Map<String, CountMode> modes = const {},
     void Function()? onFound,
   }) async {
-    if (catalogKeyFor(supermarketKey) == null) return 0;
+    final hasCatalog = catalogKeyFor(supermarketKey) != null;
+    if (!hasCatalog && CountPrefs.customPacks.isEmpty) return 0;
     var found = 0;
     for (final item in items.take(40)) {
       final id = item.id;
@@ -351,6 +354,7 @@ class PlanShoppingService {
           (mode == null && looseProduceGrams(item.name) != null)) {
         continue;
       }
+      if (!hasCatalog && CountPrefs.customPackOf(item.name) == null) continue;
       try {
         final pack = await packSizeFor(
           item.name,
@@ -371,13 +375,15 @@ class PlanShoppingService {
     return found;
   }
 
-  /// Tamaño del envase de [name] en el catálogo del súper, en [unit]. Null si
-  /// el súper no tiene catálogo, no está el producto o no tiene tamaño.
+  /// Tamaño del envase de [name] en [unit]: el que puso el hogar o, si no,
+  /// el del catálogo del súper. Null si no se sabe.
   Future<double?> packSizeFor(
     String name,
     String? unit, {
     required String? supermarketKey,
   }) async {
+    final own = CountPrefs.customPackOf(name);
+    if (own != null) return convertMeasure(own.size, own.unit, unit);
     final store = catalogKeyFor(supermarketKey);
     if (store == null) return null;
     final best = bestCatalogMatch(name, await searchCatalog(name, store));
