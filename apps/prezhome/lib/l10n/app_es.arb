@@ -3171,5 +3171,9 @@
         "type": "String"
       }
     }
-  }
+  },
+  "shopPackSizeEdit": "Lo que trae cada envase…",
+  "shopPackSizeTitle": "¿Cuánto trae cada envase de {name}?",
+  "shopPackSizeHint": "Por ejemplo, 570 g. La compra contará envases enteros y la despensa restará solo lo que gaste cada receta.",
+  "@shopPackSizeTitle": {"placeholders": {"name": {"type": "String"}}}
 }

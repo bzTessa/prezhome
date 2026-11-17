@@ -5102,4 +5102,16 @@ class AppLocalizationsIt extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopPackSizeEdit => 'Contenuto di ogni confezione…';
+
+  @override
+  String shopPackSizeTitle(String name) {
+    return 'Quanto contiene ogni confezione di $name?';
+  }
+
+  @override
+  String get shopPackSizeHint =>
+      'Per esempio, 570 g. La lista conterà confezioni intere e la dispensa sottrarrà solo quello che usa ogni ricetta.';
 }

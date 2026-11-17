@@ -5107,4 +5107,16 @@ class AppLocalizationsDe extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopPackSizeEdit => 'Packungsgröße…';
+
+  @override
+  String shopPackSizeTitle(String name) {
+    return 'Wie viel enthält jede Packung $name?';
+  }
+
+  @override
+  String get shopPackSizeHint =>
+      'Zum Beispiel 570 g. Die Einkaufsliste zählt ganze Packungen und der Vorrat zieht nur ab, was jedes Rezept verbraucht.';
 }

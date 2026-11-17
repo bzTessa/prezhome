@@ -1281,5 +1281,8 @@
   "winsEmpty": "Quand vous utiliserez le garde-manger, le plan et les tâches, vous verrez ici votre mois.",
   "proHeadline": "Plus d'aide pour ce qui vous prend le plus de temps",
   "proHeadlineSub": "Plus de tickets lus, plus de recettes depuis des liens et des photos, plus d'idées chaque mois. Un abonnement pour tout le foyer.",
-  "pantryShelf": "{shelf, select, preparados{Plats et préparés} verduraFruta{Fruits et légumes} carnePescado{Viande et poisson} lacteos{Laitages et œufs} bebidas{Boissons} panCereales{Pain, pâtes et riz} conservas{Conserves} dulces{Sucreries et snacks} otros{Autres} other{{shelf}}}"
+  "pantryShelf": "{shelf, select, preparados{Plats et préparés} verduraFruta{Fruits et légumes} carnePescado{Viande et poisson} lacteos{Laitages et œufs} bebidas{Boissons} panCereales{Pain, pâtes et riz} conservas{Conserves} dulces{Sucreries et snacks} otros{Autres} other{{shelf}}}",
+  "shopPackSizeEdit": "Contenu de chaque emballage…",
+  "shopPackSizeTitle": "Combien contient chaque emballage de {name} ?",
+  "shopPackSizeHint": "Par exemple, 570 g. La liste comptera des emballages entiers et le garde-manger ne retirera que ce que chaque recette utilise."
 }

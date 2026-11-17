@@ -1281,5 +1281,8 @@
   "winsEmpty": "Once you use the pantry, the plan and chores, you'll see this month's progress here.",
   "proHeadline": "More help with what takes most of your time",
   "proHeadlineSub": "Read more receipts, get more recipes from links and photos and more ideas every month. One subscription covers the whole household.",
-  "pantryShelf": "{shelf, select, preparados{Meals and prepared} verduraFruta{Fruit and veg} carnePescado{Meat and fish} lacteos{Dairy and eggs} bebidas{Drinks} panCereales{Bread, pasta and rice} conservas{Tins and jars} dulces{Sweets and snacks} otros{Other} other{{shelf}}}"
+  "pantryShelf": "{shelf, select, preparados{Meals and prepared} verduraFruta{Fruit and veg} carnePescado{Meat and fish} lacteos{Dairy and eggs} bebidas{Drinks} panCereales{Bread, pasta and rice} conservas{Tins and jars} dulces{Sweets and snacks} otros{Other} other{{shelf}}}",
+  "shopPackSizeEdit": "Pack size…",
+  "shopPackSizeTitle": "How much is in each pack of {name}?",
+  "shopPackSizeHint": "For example, 570 g. The shopping list will count whole packs and the pantry will subtract only what each recipe uses."
 }

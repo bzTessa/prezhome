@@ -41,6 +41,18 @@ void main() {
       expect(needs.single.quantity, 200);
     });
 
+    test('compara g con kg: lo que queda del bote ya cubre la receta', () {
+      final needs = planShoppingNeeds(
+        [ing('Garbanzos', 200, 'g'), ing('Arroz', 500, 'g')],
+        const [
+          PantryStock(name: 'Garbanzos', quantity: 0.37, unit: 'kg'),
+          PantryStock(name: 'Arroz', quantity: 0.2, unit: 'kg'),
+        ],
+      );
+      expect(needs.single.name, 'Arroz');
+      expect(needs.single.quantity, closeTo(300, 1e-9));
+    });
+
     test('con unidades distintas no descuenta (mejor de más)', () {
       final needs = planShoppingNeeds(
         [ing('Tomate', 3, 'unidad')],

@@ -5125,4 +5125,16 @@ class AppLocalizationsFr extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopPackSizeEdit => 'Contenu de chaque emballage…';
+
+  @override
+  String shopPackSizeTitle(String name) {
+    return 'Combien contient chaque emballage de $name ?';
+  }
+
+  @override
+  String get shopPackSizeHint =>
+      'Par exemple, 570 g. La liste comptera des emballages entiers et le garde-manger ne retirera que ce que chaque recette utilise.';
 }

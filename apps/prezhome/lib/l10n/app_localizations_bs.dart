@@ -5039,4 +5039,16 @@ class AppLocalizationsBs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopPackSizeEdit => 'Veličina pakovanja…';
+
+  @override
+  String shopPackSizeTitle(String name) {
+    return 'Koliko ima u svakom pakovanju: $name?';
+  }
+
+  @override
+  String get shopPackSizeHint =>
+      'Na primjer, 570 g. Lista za kupovinu će brojati cijela pakovanja, a ostava će oduzeti samo ono što svaki recept potroši.';
 }

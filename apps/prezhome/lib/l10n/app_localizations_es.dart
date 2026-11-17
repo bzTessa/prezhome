@@ -5102,4 +5102,16 @@ class AppLocalizationsEs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get shopPackSizeEdit => 'Lo que trae cada envase…';
+
+  @override
+  String shopPackSizeTitle(String name) {
+    return '¿Cuánto trae cada envase de $name?';
+  }
+
+  @override
+  String get shopPackSizeHint =>
+      'Por ejemplo, 570 g. La compra contará envases enteros y la despensa restará solo lo que gaste cada receta.';
 }

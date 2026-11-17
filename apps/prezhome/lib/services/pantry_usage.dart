@@ -7,17 +7,27 @@ import '../models/meal_plan_entry.dart';
 import '../utils/offline_actions.dart';
 import '../utils/pantry_ideas.dart';
 import '../utils/practical_quantity.dart';
+import 'count_prefs.dart';
 import 'offline_provider.dart';
 import 'plan_prefs.dart';
+import 'plan_shopping.dart';
 
 /// Cuánto se gasta de un producto de la despensa.
 class PantryUse {
-  const PantryUse(this.item, this.used);
+  const PantryUse(this.item, this.used, {this.total, this.unit});
 
   final InventoryItem item;
   final double used;
 
-  double get left => (item.quantity - used).clamp(0, double.infinity);
+  /// Si la despensa contaba envases ("1 bote") y la receta pide gramos, la
+  /// fila pasa a contarse en [unit] ("g") con [total] = envases × peso.
+  final double? total;
+  final String? unit;
+
+  String get unitOut => unit ?? item.unit;
+
+  double get left =>
+      ((total ?? item.quantity) - used).clamp(0, double.infinity);
 }
 
 const _toBase = <String, (String, double)>{
@@ -42,7 +52,8 @@ const _toBase = <String, (String, double)>{
   'piezas': ('ud', 1),
 };
 
-/// Envases: si la receta pide otra medida, se gasta uno.
+/// Envases: si la receta pide otra medida y no se sabe lo que trae, se gasta
+/// uno.
 const _packs = {
   'ud',
   'uds',
@@ -58,18 +69,46 @@ const _packs = {
   'paquete',
 };
 
+/// Unidad base ('g', 'ml' o 'ud') de [unit], o null si no es una medida.
+String? measureBase(String? unit) =>
+    _toBase[(unit ?? '').trim().toLowerCase()]?.$1;
+
+/// ¿[unit] cuenta envases (botes, latas, paquetes, unidades)?
+bool isPackUnit(String? unit) =>
+    _packs.contains((unit ?? '').trim().toLowerCase());
+
+/// [qty] en [from] pasado a [to] cuando son la misma magnitud (g y kg, ml y
+/// L, unidades). Null si no se puede.
+double? convertMeasure(double qty, String? from, String? to) {
+  final a = (from ?? '').trim().toLowerCase();
+  final b = (to ?? '').trim().toLowerCase();
+  if (a == b) return qty;
+  final f = _toBase[a];
+  final t = _toBase[b];
+  if (f != null && t != null && f.$1 == t.$1) return qty * f.$2 / t.$2;
+  return null;
+}
+
 /// Lógica PURA: qué se gasta de [pantry] al cocinar [ingredients] (ya
 /// multiplicados por [factor] raciones). No toca básicos, condimentos ni lo
 /// marcado "siempre en casa". Cada ingrediente sale del producto que antes
-/// caduca. Misma medida (g/kg, ml/l, unidades) se resta; si no se puede
-/// convertir y el producto va por envases, se gasta un envase.
+/// caduca. Misma medida (g/kg, ml/l, unidades) se resta. Si la despensa
+/// cuenta envases y la receta pide peso, con lo que trae cada envase
+/// ([packSizes], por id del producto) se resta solo lo usado y la fila pasa
+/// a gramos ("1 bote" de 570 g − 200 g = 370 g); sin ese dato se gasta un
+/// envase.
 List<PantryUse> pantryUsesFor(
   List<Ingredient> ingredients,
   List<InventoryItem> pantry, {
   double factor = 1,
+  Map<String, PackMeasure> packSizes = const {},
 }) {
   final used = <String, double>{};
+  final total = <String, double>{};
+  final unitOf = <String, String>{};
   final byId = {for (final p in pantry) p.id: p};
+  double have(InventoryItem p) =>
+      (total[p.id] ?? p.quantity) - (used[p.id] ?? 0);
   for (final ing in ingredients) {
     final q = ing.quantity;
     if (q == null || q <= 0) continue;
@@ -82,7 +121,7 @@ List<PantryUse> pantryUsesFor(
                   !p.isStaple &&
                   p.category != 'Especias' &&
                   p.kind == 'ingredient' &&
-                  p.quantity - (used[p.id] ?? 0) > 0 &&
+                  have(p) > 0 &&
                   pantryNameMatches(ing.name, p.name),
             )
             .toList()
@@ -94,25 +133,59 @@ List<PantryUse> pantryUsesFor(
           });
     if (candidates.isEmpty) continue;
     final item = candidates.first;
-    final amount = _amountIn(q * factor, ing.unit, item.unit);
+    final unit = unitOf[item.id] ?? item.unit;
+    var amount = convertMeasure(q * factor, ing.unit, unit);
+    if (amount == null && isPackUnit(unit)) {
+      final pack = packSizes[item.id];
+      final inPack = pack == null
+          ? null
+          : convertMeasure(q * factor, ing.unit, pack.unit);
+      if (pack != null && pack.size > 0 && inPack != null) {
+        // De envases a peso: lo ya gastado también.
+        total[item.id] = item.quantity * pack.size;
+        used[item.id] = (used[item.id] ?? 0) * pack.size;
+        unitOf[item.id] = pack.unit;
+        amount = inPack;
+      } else {
+        // shortcut: sin saber lo que trae el envase, se gasta uno entero.
+        amount = 1;
+      }
+    }
     if (amount == null) continue;
-    final left = item.quantity - (used[item.id] ?? 0);
+    final left = have(item);
     used[item.id] = (used[item.id] ?? 0) + amount.clamp(0, left);
   }
   return [
     for (final e in used.entries)
-      if (e.value > 0) PantryUse(byId[e.key]!, e.value),
+      if (e.value > 0)
+        PantryUse(
+          byId[e.key]!,
+          e.value,
+          total: total[e.key],
+          unit: unitOf[e.key],
+        ),
   ];
 }
 
-/// [qty] en [from] pasado a [to]. Null si no hay forma razonable.
-double? _amountIn(double qty, String? from, String to) {
-  final f = _toBase[(from ?? 'ud').trim().toLowerCase()];
-  final t = _toBase[to.trim().toLowerCase()];
-  if (f != null && t != null && f.$1 == t.$1) return qty * f.$2 / t.$2;
-  // shortcut: un envase por ingrediente sin medida convertible; afinar si
-  // se guarda el peso de cada envase.
-  if (_packs.contains(to.trim().toLowerCase())) return 1;
+/// Lógica PURA: suma [add] [addUnit] comprado a lo que ya hay en la despensa
+/// ([have] [haveUnit]). Convierte g/kg y ml/L; si la despensa cuenta envases
+/// y se compró a peso, lo pasa a envases con [packSize] (en [addUnit]) o
+/// suma uno. Null si no se puede sumar sin inventar (mejor otra fila).
+({double quantity, String unit})? mergePantryQuantity(
+  double have,
+  String haveUnit,
+  double add,
+  String? addUnit, {
+  double? packSize,
+}) {
+  final same = convertMeasure(add, addUnit, haveUnit);
+  if (same != null) return (quantity: have + same, unit: haveUnit);
+  if (isPackUnit(haveUnit) && measureBase(addUnit) != null) {
+    final packs = packSize != null && packSize > 0
+        ? (add / packSize - 1e-6).ceil().clamp(1, 1 << 20).toDouble()
+        : 1.0;
+    return (quantity: have + packs, unit: haveUnit);
+  }
   return null;
 }
 
@@ -193,6 +266,12 @@ class PantryUsage {
           if ((r['name'] ?? '').toString().trim().isNotEmpty)
             InventoryItem.fromMap(r),
       ];
+      final packSizes = await _packSizes(
+        client,
+        homeId,
+        pantry,
+        ingsByRecipe.values.expand((l) => l),
+      );
       var seq = 0;
       for (final e in due) {
         // Reclamar la comida: si otro móvil ya la descontó, no vuelve nada.
@@ -214,6 +293,7 @@ class PantryUsage {
           ingsByRecipe[e.recipeId] ?? const [],
           pantry,
           factor: factor,
+          packSizes: packSizes,
         );
         if (uses.isEmpty) continue;
         final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -229,21 +309,25 @@ class PantryUsage {
                 : buildUpdateOp(
                     table: kInventoryTable,
                     id: u.item.id,
-                    changes: {'quantity': u.left},
+                    changes: {
+                      'quantity': u.left,
+                      if (u.unit != null) 'unit': u.unit,
+                    },
                     nowMillis: nowMs,
                     seq: seq++,
                   ),
           );
         }
-        final left = {for (final u in uses) u.item.id: u.left};
+        final after = {for (final u in uses) u.item.id: u};
         pantry = [
           for (final p in pantry)
-            if (!left.containsKey(p.id))
+            if (!after.containsKey(p.id))
               p
-            else if (left[p.id]! > 0)
+            else if (after[p.id]!.left > 0)
               InventoryItem.fromMap({
                 ...p.toCacheMap(),
-                'quantity': left[p.id],
+                'quantity': after[p.id]!.left,
+                'unit': after[p.id]!.unitOut,
               }),
         ];
         await client.from('pantry_log').insert([
@@ -252,7 +336,7 @@ class PantryUsage {
               'home_id': homeId,
               'name': u.item.name,
               'quantity': u.used,
-              'unit': u.item.unit,
+              'unit': u.unitOut,
               'reason': 'receta',
               'recipe_id': e.recipeId,
               'used_on': day(e.date),
@@ -264,5 +348,60 @@ class PantryUsage {
       debugPrint('PantryUsage.syncPlan error: $e');
     }
     return done;
+  }
+
+  /// Lo que trae cada envase de lo que la despensa cuenta en envases y las
+  /// recetas piden a peso: el envase que puso el hogar o, si no, el del
+  /// catálogo del súper de casa. Por id del producto. No lanza.
+  static Future<Map<String, PackMeasure>> _packSizes(
+    SupabaseClient client,
+    String homeId,
+    List<InventoryItem> pantry,
+    Iterable<Ingredient> ingredients,
+  ) async {
+    final out = <String, PackMeasure>{};
+    try {
+      await CountPrefs(client).load(homeId);
+      String? store;
+      try {
+        final home = await client
+            .from('homes')
+            .select('supermarkets')
+            .eq('id', homeId)
+            .maybeSingle();
+        final raw = home?['supermarkets'];
+        if (raw is List && raw.isNotEmpty) store = raw.first.toString();
+      } catch (_) {}
+      final shop = PlanShoppingService(client);
+      var lookups = 0;
+      for (final p in pantry) {
+        if (!isPackUnit(p.unit) || p.kind != 'ingredient') continue;
+        String? base;
+        for (final ing in ingredients) {
+          final b = measureBase(ing.unit);
+          if ((b == 'g' || b == 'ml') && pantryNameMatches(ing.name, p.name)) {
+            base = b;
+            break;
+          }
+        }
+        if (base == null) continue;
+        final own = CountPrefs.customPackOf(p.name);
+        if (own != null) {
+          out[p.id] = own;
+          continue;
+        }
+        // Pocas búsquedas por pasada: el catálogo va por red.
+        if (store == null || lookups++ >= 12) continue;
+        final size = await shop.packSizeFor(
+          p.name,
+          base,
+          supermarketKey: store,
+        );
+        if (size != null && size > 0) out[p.id] = (size: size, unit: base);
+      }
+    } catch (e) {
+      debugPrint('PantryUsage._packSizes error: $e');
+    }
+    return out;
   }
 }
