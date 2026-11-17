@@ -317,6 +317,16 @@ class MainShellState extends State<MainShell> {
     return home >= 0 ? home : 0;
   }
 
+  /// Deslizar rápido a la izquierda: siguiente pestaña; a la derecha: la
+  /// anterior.
+  void _onSwipeTabs(DragEndDetails d) {
+    final v = d.primaryVelocity ?? 0;
+    if (v.abs() < 500) return;
+    final next = _index + (v < 0 ? 1 : -1);
+    if (next < 0 || next >= _tabs.length) return;
+    _onDestinationSelected(next);
+  }
+
   void _onDestinationSelected(int i) {
     setState(() => _index = i);
     // Al volver a Inicio, refrescar la vista activa para reflejar cambios
@@ -405,7 +415,11 @@ class MainShellState extends State<MainShell> {
         _index == _indexOf(TabId.comidas);
     // Ordenador (web): menú lateral y contenido centrado en vez de la barra
     // inferior de móvil.
-    final wide = MediaQuery.sizeOf(context).width >= 900;
+    // Solo en pantallas grandes de verdad: un móvil en horizontal también
+    // pasa de 900 de ancho y no debe cambiar a menú lateral (rompía la
+    // pantalla y, al girar, se perdía lo que se estaba escribiendo).
+    final size = MediaQuery.sizeOf(context);
+    final wide = size.width >= 900 && size.shortestSide >= 600;
     final navItems = [
       for (final t in _tabs)
         FloatingNavItem(
@@ -454,23 +468,29 @@ class MainShellState extends State<MainShell> {
               child: MediaQuery.removePadding(
                 context: context,
                 removeTop: showTop,
-                child: IndexedStack(
-                  index: _index,
-                  children: [
-                    for (var i = 0; i < _tabs.length; i++)
-                      // Cada pestaña se construye la primera vez que se abre
-                      // (no todas a la vez al arrancar) y, ya abierta, se
-                      // conserva viva; las ocultas no animan (TickerMode).
-                      TickerMode(
-                        enabled: i == _index,
-                        child: _opened.contains(_tabs[i].id)
-                            ? FadeInOnActivate(
-                                active: i == _index,
-                                child: _tabs[i].page,
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                  ],
+                // Deslizar a los lados cambia de pestaña. Lo que ya se desliza
+                // por dentro (filas, pestañas de Comida) tiene preferencia.
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onHorizontalDragEnd: wide ? null : _onSwipeTabs,
+                  child: IndexedStack(
+                    index: _index,
+                    children: [
+                      for (var i = 0; i < _tabs.length; i++)
+                        // Cada pestaña se construye la primera vez que se abre
+                        // (no todas a la vez al arrancar) y, ya abierta, se
+                        // conserva viva; las ocultas no animan (TickerMode).
+                        TickerMode(
+                          enabled: i == _index,
+                          child: _opened.contains(_tabs[i].id)
+                              ? FadeInOnActivate(
+                                  active: i == _index,
+                                  child: _tabs[i].page,
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -503,8 +523,9 @@ class MainShellState extends State<MainShell> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: body,
-      // Barra flotante compartida (packages/prez_ui): píldora con todas las
-      // pestañas con icono y texto; la activa va tintada.
+      // Barra flotante compartida (packages/prez_ui): solo iconos; la activa
+      // se agranda con su nombre y deslizar el dedo por la barra cambia de
+      // pestaña.
       bottomNavigationBar: SafeArea(
         top: false,
         minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -512,7 +533,6 @@ class MainShellState extends State<MainShell> {
           items: navItems,
           selectedIndex: _index,
           onSelected: _onDestinationSelected,
-          showAllLabels: true,
           // Píldora sin borde con sombra suave; la pestaña activa se desliza
           // con muelle. Sin translucidez: el contenido no pasa por debajo.
           backgroundColor: AppColors.card,
