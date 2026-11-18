@@ -29,6 +29,83 @@ class ShelfLife {
   /// InventoryItem.defaultFreezerDays.
   static const int defaultFreezerDays = 90;
 
+  /// Productos envasados de larga vida que, cerrados, aguantan mucho más que
+  /// el alimento fresco del que salen ("tomate frito" no es tomate; la nata
+  /// y la leche de brik son UHT). Se miran ANTES que [_byFood], por frase en
+  /// el nombre y en este orden. Cada entrada: (frase, (despensa, nevera,
+  /// congelador), zona natural). Los días de la despensa son con el envase
+  /// cerrado; los de la nevera, una vez abierto (moverlo a la nevera al
+  /// abrirlo acorta la fecha).
+  static const List<(String, (int?, int?, int?), String)> _packaged = [
+    // Lo fresco de verdad va antes que su versión de brik.
+    ('leche fresca', (null, 7, null), 'Nevera'),
+    ('nata fresca', (null, 7, null), 'Nevera'),
+    ('zumo exprimido', (null, 5, null), 'Nevera'),
+    ('zumo refrigerado', (null, 10, null), 'Nevera'),
+    ('gazpacho', (null, 30, null), 'Nevera'),
+    // Salsas y tomate envasado.
+    ('tomate frito', (365, 5, null), 'Despensa'),
+    ('tomate triturado', (540, 5, null), 'Despensa'),
+    ('tomate natural', (540, 5, null), 'Despensa'),
+    ('tomate entero', (540, 5, null), 'Despensa'),
+    ('tomate concentrado', (540, 7, null), 'Despensa'),
+    ('salsa de tomate', (365, 5, null), 'Despensa'),
+    ('bechamel', (240, 4, null), 'Despensa'),
+    ('pesto', (365, 7, null), 'Despensa'),
+    ('caldo', (365, 4, 90), 'Despensa'),
+    ('pure de patata', (365, null, null), 'Despensa'),
+    // Lácteos UHT y bebidas vegetales.
+    ('leche condensada', (365, 7, null), 'Despensa'),
+    ('leche evaporada', (365, 4, null), 'Despensa'),
+    ('leche de coco', (540, 4, null), 'Despensa'),
+    ('leche en polvo', (365, null, null), 'Despensa'),
+    ('leche', (150, 5, null), 'Despensa'),
+    ('nata', (150, 5, null), 'Despensa'),
+    ('bebida de', (240, 5, null), 'Despensa'),
+    ('bebida vegetal', (240, 5, null), 'Despensa'),
+    ('zumo', (240, 5, null), 'Despensa'),
+    ('nectar', (240, 5, null), 'Despensa'),
+    // Conservas: atún en lata no es atún fresco.
+    ('en lata', (1095, 3, null), 'Despensa'),
+    ('conserva', (1095, 3, null), 'Despensa'),
+    ('en aceite', (1095, 3, null), 'Despensa'),
+    ('al natural', (1095, 3, null), 'Despensa'),
+    ('escabeche', (1095, 3, null), 'Despensa'),
+    ('atun claro', (1095, 3, null), 'Despensa'),
+    ('maiz dulce', (1095, 3, null), 'Despensa'),
+    ('cocidos', (730, 4, null), 'Despensa'),
+    ('cocidas', (730, 4, null), 'Despensa'),
+    ('pan rallado', (180, null, null), 'Despensa'),
+    ('pan tostado', (120, null, null), 'Despensa'),
+  ];
+
+  /// ¿Aparece [phrase] como palabras enteras (o en plural) en [normalized]?
+  static bool _hasPhrase(String normalized, String phrase) => RegExp(
+    '(^|[^a-z0-9])${RegExp.escape(phrase)}(s|es)?(\$|[^a-z0-9])',
+  ).hasMatch(normalized);
+
+  /// Palabras genéricas que solo cuentan como envasado si el nombre empieza
+  /// por ellas: "Leche entera" es de brik, "Yogur de leche de cabra" no.
+  static const _startOnly = {
+    'leche',
+    'nata',
+    'zumo',
+    'nectar',
+    'bebida de',
+    'bebida vegetal',
+    'caldo',
+  };
+
+  static (String, (int?, int?, int?), String)? _packagedFor(String name) {
+    final n = CategoryIcons.normalize(name.trim());
+    for (final e in _packaged) {
+      if (!_hasPhrase(n, e.$1)) continue;
+      if (_startOnly.contains(e.$1) && !n.startsWith(e.$1)) continue;
+      return e;
+    }
+    return null;
+  }
+
   /// Vida útil típica (días) de alimentos concretos por ubicación.
   /// Las claves son palabras tal cual las normaliza [CategoryIcons.normalize]
   /// (minúsculas, sin acentos). Se comparan como prefijo de palabra, igual que
@@ -162,30 +239,62 @@ class ShelfLife {
   /// Devuelve la vida útil estimada en DÍAS para [name] en la ubicación
   /// [category] ('Despensa' | 'Nevera' | 'Congelador' | 'Especias'), o null si
   /// no se puede estimar (especias, o combinación sin valor típico).
+  /// Lo que el hogar enseñó corrigiendo fechas a mano (ver
+  /// ShelfLifeMemory), por [learnedKey]. Manda sobre las tablas.
+  static Map<String, int> learned = const {};
+
+  static String normalizedName(String name) =>
+      CategoryIcons.normalize(name.trim()).replaceAll(RegExp(r'\s+'), ' ');
+
+  static String learnedKey(String normalizedName, String zone) =>
+      '$normalizedName|$zone';
+
   static int? estimateDays(String name, String category) {
     // Las especias no tienen fecha de caducidad relevante.
     if (category == 'Especias') return null;
+
+    final mine = learned[learnedKey(normalizedName(name), category)];
+    if (mine != null) return mine;
 
     final tokens = CategoryIcons.normalize(
       name,
     ).split(RegExp(r'[^a-z0-9]+')).where((t) => t.isNotEmpty).toList();
     final idx = _locationIndex(category);
 
+    // 0. Envasados de larga vida (tomate frito, nata UHT, conservas…).
+    final packaged = _packagedFor(name);
+    if (packaged != null) {
+      final days = _pick(packaged.$2, idx);
+      if (days != null) return days;
+      if (category == 'Congelador') return defaultFreezerDays;
+      // En la nevera sin dato: el de la despensa, que es de cerrado.
+      return packaged.$2.$1 ?? packaged.$2.$2;
+    }
+
     // 1. Match por alimento concreto (prefijo de palabra, >=4 letras para
-    //    evitar falsos positivos de palabras muy cortas).
+    //    evitar falsos positivos de palabras muy cortas). Manda la palabra
+    //    que sale antes en el nombre: "Yogur de leche" es yogur, no leche.
+    final normalized = CategoryIcons.normalize(name);
+    (int?, int?, int?)? food;
+    var foodAt = 1 << 30;
     for (final entry in _byFood.entries) {
       final kw = entry.key;
-      final parts = kw.split(' ');
-      final matches = parts.length == 1
-          ? tokens.any((t) => t == kw || (kw.length >= 4 && t.startsWith(kw)))
-          : CategoryIcons.normalize(name).contains(kw);
-      if (matches) {
-        final days = _pick(entry.value, idx);
-        if (days != null) return days;
-        // Si el alimento no tiene valor en esta ubicación, seguimos a la
-        // categoría (p.ej. congelar algo que la tabla concreta marca null).
-        break;
+      final at = kw.contains(' ')
+          ? (normalized.contains(kw) ? -1 : null)
+          : tokens.indexWhere(
+              (t) => t == kw || (kw.length >= 4 && t.startsWith(kw)),
+            );
+      if (at == null || at < 0 && !kw.contains(' ')) continue;
+      if (at < foodAt) {
+        foodAt = at;
+        food = entry.value;
       }
+    }
+    if (food != null) {
+      // Si el alimento no tiene valor en esta ubicación, seguimos a la
+      // categoría (p.ej. congelar algo que la tabla concreta marca null).
+      final days = _pick(food, idx);
+      if (days != null) return days;
     }
 
     // 2. Caer a la categoría del alimento.
@@ -326,6 +435,11 @@ class ShelfLife {
 
     // "congelad(o/a/os)" en el nombre -> congelador.
     if (tokens.any((t) => t.startsWith('congelad'))) return 'Congelador';
+
+    // 0. Envasados: la leche y la nata de brik, el tomate frito o las
+    //    conservas se guardan cerrados en la despensa.
+    final packaged = _packagedFor(name);
+    if (packaged != null) return packaged.$3;
 
     // 1. Regla por alimento concreto.
     for (final entry in _locationByFood.entries) {

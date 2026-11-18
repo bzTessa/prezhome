@@ -12,6 +12,7 @@ import 'services/product_photo_resolver.dart';
 import 'services/product_search_service.dart';
 import 'services/inventory_prefill.dart';
 import 'services/shelf_life.dart';
+import 'services/shelf_life_memory.dart';
 import 'theme/app_theme.dart';
 import 'utils/quick_items.dart';
 import 'widgets/food_category_icon.dart';
@@ -62,6 +63,10 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
   // estimación automática. Al escribir el nombre o cambiar de ubicación, si la
   // fecha sigue siendo automática, la recalculamos.
   bool _expirationManual = false;
+
+  /// Eligió la fecha en el calendario: al guardar se recuerda la duración
+  /// para ese producto (ShelfLifeMemory).
+  bool _expirationPicked = false;
 
   static const List<String> _foodCategories = [
     'Despensa',
@@ -149,6 +154,15 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
       }
     }
     _nameController.addListener(_recalcEstimatedExpiry);
+    // Lo que el hogar ya corrigió a mano manda sobre la tabla: al cargarlo se
+    // recalcula la fecha propuesta.
+    try {
+      ShelfLifeMemory.ensureLoaded(Supabase.instance.client).then((_) {
+        if (mounted && !_expirationManual) _recalcEstimatedExpiry();
+      });
+    } catch (_) {
+      // Sin Supabase (tests): solo la tabla.
+    }
     // Si hubo precarga con nombre, calculamos la fecha estimada inicial sin
     // setState (estamos aún en initState): el listener solo reacciona a cambios
     // de texto posteriores, no al valor inicial del controlador.
@@ -343,6 +357,31 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
         isStaple: isFood && _isStaple,
         imageUrl: imageUrl,
       );
+
+      final expiryPicked = _expirationDate;
+      if (_expirationPicked &&
+          isFood &&
+          expiryPicked != null &&
+          homeId != null &&
+          name.isNotEmpty &&
+          _selectedCategory != 'Congelador') {
+        final days = learnedShelfDays(
+          picked: expiryPicked,
+          previous: editing?.expirationDate,
+          estimatedDays: editing == null
+              ? null
+              : ShelfLife.estimateDays(editing.name, editing.category),
+          today: DateTime.now(),
+        );
+        if (days != null) {
+          await ShelfLifeMemory(Supabase.instance.client).remember(
+            homeId: homeId,
+            name: name,
+            zone: _selectedCategory,
+            days: days,
+          );
+        }
+      }
 
       // OFFLINE-FIRST: ya NO escribimos aquí en Supabase. Devolvemos el item
       // construido a InventoryScreen, que aplica la op (insert/update) de forma
@@ -797,6 +836,7 @@ class _AddInventoryItemScreenState extends State<AddInventoryItemScreen> {
                     setState(() {
                       _expirationDate = picked;
                       _expirationManual = true; // la usuaria la fijó a mano
+                      _expirationPicked = true; // y se recuerda al guardar
                     });
                   }
                 },

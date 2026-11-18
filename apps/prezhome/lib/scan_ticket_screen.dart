@@ -9,6 +9,7 @@ import 'utils/money.dart';
 import 'models/inventory_item.dart';
 import 'services/price_memory.dart';
 import 'services/shelf_life.dart';
+import 'services/shelf_life_memory.dart';
 import 'services/shopping_checkout.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
@@ -460,6 +461,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           name: name,
           category: entry.value['aisle'] as String,
         );
+        await ShelfLifeMemory.ensureLoaded(_client);
         final isHome = location == 'Limpieza' || location == 'Hogar';
         final item = InventoryItem(
           id: '',

@@ -8,6 +8,7 @@ import 'offline_provider.dart';
 import 'offline_repository.dart';
 import 'pantry_usage.dart';
 import 'shelf_life.dart';
+import 'shelf_life_memory.dart';
 
 /// ¿Es [title] la tarea de hacer la compra? ("Hacer la compra", "Compra
 /// semanal"…). Al completarla se da por comprada toda la lista.
@@ -185,6 +186,7 @@ class ShoppingCheckout {
       return;
     }
 
+    if (!isHome) await ShelfLifeMemory.ensureLoaded(_client);
     final localId = newLocalId(nowMillis: now, seq: _nextSeq());
     final inv = InventoryItem(
       id: localId,
