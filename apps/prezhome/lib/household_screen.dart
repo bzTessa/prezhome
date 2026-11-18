@@ -485,19 +485,9 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         ),
         backgroundColor: AppColors.cream,
         elevation: 0,
-        actions: [
-          if (!widget.settingsOnly)
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              tooltip: context.l.settingsTitle,
-              onPressed: _openSettings,
-            ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: context.l.hhSignOut,
-            onPressed: _logout,
-          ),
-        ],
+        // Sin iconos arriba: Ajustes ya tiene su fila en Mi hogar, y cerrar
+        // sesión va con texto al final de Ajustes (un icono suelto arriba se
+        // pulsaba sin querer).
       ),
       body: FutureBuilder<_HouseholdData>(
         future: _future,
@@ -878,6 +868,14 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           ),
         ),
         const SizedBox(height: 8),
+        Center(
+          child: TextButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout_rounded, size: 18),
+            label: Text(context.l.hhSignOut),
+            style: TextButton.styleFrom(foregroundColor: AppColors.ink),
+          ),
+        ),
         Center(child: _deleteAccountButton()),
       ],
     );

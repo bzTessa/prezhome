@@ -849,7 +849,7 @@ class HomeTabState extends State<HomeTab> {
                     const SizedBox(height: AppSpacing.md),
                   ],
 
-                  if (_prefs.quick.isNotEmpty) ...[
+                  if (_shortcuts.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
                     StaggeredEntrance(index: 5, child: _quickAccessRow()),
                     const SizedBox(height: AppSpacing.lg),
@@ -1803,6 +1803,16 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
+  /// Atajos que no repiten nada: la compra y el plan ya son pestañas de la
+  /// barra, y añadir a la despensa ya está en el botón + (Apuntar).
+  List<QuickAction> get _shortcuts => [
+    for (final q in _prefs.quick)
+      if (q != QuickAction.shopping &&
+          q != QuickAction.mealPlan &&
+          q != QuickAction.addInventory)
+        q,
+  ];
+
   /// Atajos elegidos por el usuario como pastillas compactas (icono +
   /// texto) que caben en una o dos líneas, con feedback táctil (PressScale).
   Widget _quickAccessRow() {
@@ -1818,7 +1828,7 @@ class HomeTabState extends State<HomeTab> {
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
-          children: [for (final q in _prefs.quick) _quickAccessButton(q)],
+          children: [for (final q in _shortcuts) _quickAccessButton(q)],
         ),
       ],
     );
