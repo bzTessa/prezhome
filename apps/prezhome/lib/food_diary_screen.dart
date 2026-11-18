@@ -16,6 +16,7 @@ import 'utils/friendly_error.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'l10n/l10n.dart';
+import 'widgets/hide_fab_on_scroll.dart';
 
 /// Diario de consumo personal del día: muestra lo que la persona ha comido
 /// un día concreto, el total de kcal frente a su objetivo del perfil, y
@@ -623,53 +624,59 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: widget.embedded ? null : AppBar(title: Text(context.l.diaTitle)),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fab-food-diary',
-        onPressed: _openAddChooser,
-        icon: const Icon(Icons.add),
-        label: Text(
-          context.l.diaAddMeal,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+    return HideFabOnScroll(
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        appBar: widget.embedded
+            ? null
+            : AppBar(title: Text(context.l.diaTitle)),
+        floatingActionButton: HideFabOnScroll.fab(
+          FloatingActionButton.extended(
+            heroTag: 'fab-food-diary',
+            onPressed: _openAddChooser,
+            icon: const Icon(Icons.add),
+            label: Text(
+              context.l.diaAddMeal,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
-      ),
-      body: FadeFutureBuilder<_DiaryData>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const DiarySkeleton();
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text(friendlyError(snapshot.error)));
-          }
-          final data = snapshot.data!;
+        body: FadeFutureBuilder<_DiaryData>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const DiarySkeleton();
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text(friendlyError(snapshot.error)));
+            }
+            final data = snapshot.data!;
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-            children: [
-              _dayNavigator(),
-              const SizedBox(height: 12),
-              _summaryCard(data),
-              _askedCard(),
-              if (data.last7Days.any((d) => d.calories > 0)) ...[
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+              children: [
+                _dayNavigator(),
+                const SizedBox(height: 12),
+                _summaryCard(data),
+                _askedCard(),
+                if (data.last7Days.any((d) => d.calories > 0)) ...[
+                  const SizedBox(height: 16),
+                  _caloriesChartCard(data),
+                ],
+                if (data.entries.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _macrosCard(data),
+                ],
                 const SizedBox(height: 16),
-                _caloriesChartCard(data),
+                if (data.entries.isEmpty)
+                  _empty()
+                else
+                  ..._buildGroups(data.entries),
+                if (data.prefs.trackCalories) _askSwitch(data.prefs),
               ],
-              if (data.entries.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _macrosCard(data),
-              ],
-              const SizedBox(height: 16),
-              if (data.entries.isEmpty)
-                _empty()
-              else
-                ..._buildGroups(data.entries),
-              if (data.prefs.trackCalories) _askSwitch(data.prefs),
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

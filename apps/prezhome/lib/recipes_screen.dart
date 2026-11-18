@@ -19,6 +19,7 @@ import 'widgets/skeleton.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'utils/friendly_error.dart';
 import 'l10n/l10n.dart';
+import 'widgets/hide_fab_on_scroll.dart';
 
 class RecipesScreen extends StatefulWidget {
   /// Cuando va dentro de una pestaña con su propio AppBar, lo ocultamos.
@@ -368,128 +369,133 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: widget.embedded
-          ? null
-          : AppBar(
-              title: Text(
-                context.l.recTitle,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+    return HideFabOnScroll(
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        appBar: widget.embedded
+            ? null
+            : AppBar(
+                title: Text(
+                  context.l.recTitle,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                backgroundColor: AppColors.cream,
+                elevation: 0,
               ),
-              backgroundColor: AppColors.cream,
-              elevation: 0,
+        floatingActionButton: HideFabOnScroll.fab(
+          FloatingActionButton.extended(
+            heroTag: 'fab-recipes',
+            onPressed: _openAdd,
+            icon: const Icon(Icons.add),
+            label: Text(
+              context.l.recNew,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fab-recipes',
-        onPressed: _openAdd,
-        icon: const Icon(Icons.add),
-        label: Text(
-          context.l.recNew,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
-      body: FadeFutureBuilder<_RecipesData>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData &&
-              snapshot.connectionState == ConnectionState.waiting) {
-            return const RecipesSkeleton();
-          }
-          if (snapshot.hasError) {
-            return _ErrorState(
-              message: friendlyError(snapshot.error, context.l.recLoadError),
-              onRetry: _reload,
-            );
-          }
-          final data = snapshot.data!;
-          _pantry = data.pantry;
-          final allRecipes = data.recipes;
-          final perMeal = data.profile?.caloriesPerMeal;
+        body: FadeFutureBuilder<_RecipesData>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData &&
+                snapshot.connectionState == ConnectionState.waiting) {
+              return const RecipesSkeleton();
+            }
+            if (snapshot.hasError) {
+              return _ErrorState(
+                message: friendlyError(snapshot.error, context.l.recLoadError),
+                onRetry: _reload,
+              );
+            }
+            final data = snapshot.data!;
+            _pantry = data.pantry;
+            final allRecipes = data.recipes;
+            final perMeal = data.profile?.caloriesPerMeal;
 
-          if (allRecipes.isEmpty) {
-            return EmptyState(
-              image: 'assets/images/vacio_recetas.png',
-              title: context.l.recEmptyTitle,
-              message: context.l.recEmptyHint,
-              actionLabel: context.l.recNew,
-              onAction: _openAdd,
-              secondaryLabel: context.l.recIdeas,
-              onSecondary: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
-                ),
-              ),
-            );
-          }
-
-          final browsing = _query.trim().isNotEmpty || _category != null;
-          final found = browsing
-              ? browseRecipes(
-                  allRecipes,
-                  query: _query,
-                  category: _category,
-                  sort: _sort,
-                )
-              : const <Recipe>[];
-
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: _SearchBar(
-                  controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _query = v),
-                  onClear: () => setState(() {
-                    _searchCtrl.clear();
-                    _query = '';
-                  }),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-                  child: RecipeCategoryChips(
-                    recipes: allRecipes,
-                    selected: _category,
-                    onSelected: (c) => setState(() => _category = c),
+            if (allRecipes.isEmpty) {
+              return EmptyState(
+                image: 'assets/images/vacio_recetas.png',
+                title: context.l.recEmptyTitle,
+                message: context.l.recEmptyHint,
+                actionLabel: context.l.recNew,
+                onAction: _openAdd,
+                secondaryLabel: context.l.recIdeas,
+                onSecondary: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const DiscoverRecipesScreen(pantryMode: true),
                   ),
                 ),
-              ),
-              if (browsing)
-                SliverToBoxAdapter(
-                  child: _ResultsBar(
-                    count: found.length,
+              );
+            }
+
+            final browsing = _query.trim().isNotEmpty || _category != null;
+            final found = browsing
+                ? browseRecipes(
+                    allRecipes,
+                    query: _query,
+                    category: _category,
                     sort: _sort,
-                    onSort: (s) => setState(() => _sort = s),
+                  )
+                : const <Recipe>[];
+
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _SearchBar(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _query = v),
                     onClear: () => setState(() {
                       _searchCtrl.clear();
                       _query = '';
-                      _category = null;
                     }),
                   ),
                 ),
-              if (!browsing) ...[
                 SliverToBoxAdapter(
-                  child: _PantryBanner(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const DiscoverRecipesScreen(pantryMode: true),
-                      ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                    child: RecipeCategoryChips(
+                      recipes: allRecipes,
+                      selected: _category,
+                      onSelected: (c) => setState(() => _category = c),
                     ),
                   ),
                 ),
-                ..._sections(allRecipes, perMeal),
-              ] else if (found.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: _NoSearchResults(query: _query.trim()),
-                )
-              else
-                _grid(found, perMeal, bottom: 120),
-            ],
-          );
-        },
+                if (browsing)
+                  SliverToBoxAdapter(
+                    child: _ResultsBar(
+                      count: found.length,
+                      sort: _sort,
+                      onSort: (s) => setState(() => _sort = s),
+                      onClear: () => setState(() {
+                        _searchCtrl.clear();
+                        _query = '';
+                        _category = null;
+                      }),
+                    ),
+                  ),
+                if (!browsing) ...[
+                  SliverToBoxAdapter(
+                    child: _PantryBanner(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const DiscoverRecipesScreen(pantryMode: true),
+                        ),
+                      ),
+                    ),
+                  ),
+                  ..._sections(allRecipes, perMeal),
+                ] else if (found.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _NoSearchResults(query: _query.trim()),
+                  )
+                else
+                  _grid(found, perMeal, bottom: 120),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -327,6 +327,14 @@ class MainShellState extends State<MainShell> {
     _onDestinationSelected(next);
   }
 
+  /// Pasa a la pestaña de al lado (+1 / -1). Lo usa Comida cuando se desliza
+  /// más allá de su primera o última sub-pestaña.
+  void stepTab(int delta) {
+    final next = _index + delta;
+    if (next < 0 || next >= _tabs.length) return;
+    _onDestinationSelected(next);
+  }
+
   void _onDestinationSelected(int i) {
     setState(() => _index = i);
     // Al volver a Inicio, refrescar la vista activa para reflejar cambios
