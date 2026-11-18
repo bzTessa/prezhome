@@ -239,9 +239,22 @@ class ShelfLife {
   /// Devuelve la vida útil estimada en DÍAS para [name] en la ubicación
   /// [category] ('Despensa' | 'Nevera' | 'Congelador' | 'Especias'), o null si
   /// no se puede estimar (especias, o combinación sin valor típico).
+  /// Lo que el hogar enseñó corrigiendo fechas a mano (ver
+  /// ShelfLifeMemory), por [learnedKey]. Manda sobre las tablas.
+  static Map<String, int> learned = const {};
+
+  static String normalizedName(String name) =>
+      CategoryIcons.normalize(name.trim()).replaceAll(RegExp(r'\s+'), ' ');
+
+  static String learnedKey(String normalizedName, String zone) =>
+      '$normalizedName|$zone';
+
   static int? estimateDays(String name, String category) {
     // Las especias no tienen fecha de caducidad relevante.
     if (category == 'Especias') return null;
+
+    final mine = learned[learnedKey(normalizedName(name), category)];
+    if (mine != null) return mine;
 
     final tokens = CategoryIcons.normalize(
       name,
