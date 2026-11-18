@@ -51,6 +51,7 @@ import '../utils/pantry_ideas.dart' show formatEuros, pantryNamesForIdeas;
 import '../utils/recipe_browse.dart' show readyToCook;
 import '../utils/ticket_date.dart';
 import '../l10n/l10n.dart';
+import '../widgets/hide_fab_on_scroll.dart';
 
 /// Pestaña de Inicio: dashboard con el resumen del día del hogar (comidas de
 /// hoy, calorías, tareas y gasto). El plan semanal/mensual vive ahora en la
@@ -716,7 +717,10 @@ class HomeTabState extends State<HomeTab> {
           .from('shopping_list_items')
           .select('id')
           .eq('home_id', homeId)
-          .eq('checked', false);
+          .eq('checked', false)
+          // La lista principal, la que abre Compra: si no, sumaba también las
+          // otras listas y no cuadraba con lo que se ve allí.
+          .isFilter('list_id', null);
       if (mounted) setState(() => _pendingShopping = (shopRes as List).length);
     } catch (e) {
       debugPrint('HomeTab._loadPendingShopping error: $e');
@@ -753,99 +757,106 @@ class HomeTabState extends State<HomeTab> {
       for (final l in allLines)
         if (!identical(l, next)) l,
     ];
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      // Un solo botón para apuntar algo a la compra, la despensa o tareas.
-      // Redondo y sin texto: el ancho tapaba lo de debajo (caducidades,
-      // calorías).
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'fab-capture',
-        tooltip: context.l.captureTitle,
-        onPressed: () async {
-          if (await showQuickCapture(context)) _loadDashboard();
-        },
-        child: const Icon(Icons.add_rounded),
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          color: AppColors.woodDark,
-          onRefresh: _loadDashboard,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.lg,
-              AppSpacing.xl,
-              AppSpacing.xxxl * 2,
-            ),
-            children: [
-              StaggeredEntrance(index: 0, child: _header()),
-              const SizedBox(height: AppSpacing.xl),
+    return HideFabOnScroll(
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        // Un solo botón para apuntar algo a la compra, la despensa o tareas.
+        // Redondo y sin texto: el ancho tapaba lo de debajo (caducidades,
+        // calorías).
+        floatingActionButton: HideFabOnScroll.fab(
+          FloatingActionButton(
+            heroTag: 'fab-capture',
+            tooltip: context.l.captureTitle,
+            onPressed: () async {
+              if (await showQuickCapture(context)) _loadDashboard();
+            },
+            child: const Icon(Icons.add_rounded),
+          ),
+        ),
+        body: SafeArea(
+          bottom: false,
+          child: RefreshIndicator(
+            color: AppColors.woodDark,
+            onRefresh: _loadDashboard,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.xxxl * 2,
+              ),
+              children: [
+                StaggeredEntrance(index: 0, child: _header()),
+                const SizedBox(height: AppSpacing.xl),
 
-              if (!_loaded)
-                const HomeSkeleton()
-              else ...[
-                if (next != null) ...[
-                  StaggeredEntrance(index: 1, child: _nextUpCard(next)),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
-                ValueListenableBuilder(
-                  valueListenable: PlanPrefs.current,
-                  builder: (_, p, _) => p.fastHours == null
-                      ? const SizedBox.shrink()
-                      : const Padding(
-                          padding: EdgeInsets.only(bottom: AppSpacing.lg),
-                          child: FastingCard(),
-                        ),
-                ),
-
-                // Lo primero: qué se come hoy, con la foto de la receta.
-                // Con plan, las comidas van en Tu día; sin plan, la tarjeta
-                // para planificar.
-                if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
-                  if (_todayItems.isEmpty) ...[
-                    StaggeredEntrance(index: 1, child: _todayMealHero()),
+                if (!_loaded)
+                  const HomeSkeleton()
+                else ...[
+                  if (next != null) ...[
+                    StaggeredEntrance(index: 1, child: _nextUpCard(next)),
                     const SizedBox(height: AppSpacing.lg),
                   ],
-                  if (_nextWeekPlanned == false) ...[
-                    StaggeredEntrance(index: 2, child: _nextWeekCard()),
+                  ValueListenableBuilder(
+                    valueListenable: PlanPrefs.current,
+                    builder: (_, p, _) => p.fastHours == null
+                        ? const SizedBox.shrink()
+                        : const Padding(
+                            padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                            child: FastingCard(),
+                          ),
+                  ),
+
+                  // Lo primero: qué se come hoy, con la foto de la receta.
+                  // Con plan, las comidas van en Tu día; sin plan, la tarjeta
+                  // para planificar.
+                  if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
+                    if (_todayItems.isEmpty) ...[
+                      StaggeredEntrance(index: 1, child: _todayMealHero()),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    if (_nextWeekPlanned == false) ...[
+                      StaggeredEntrance(index: 2, child: _nextWeekCard()),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                  ],
+
+                  // De un vistazo: caducidades, tareas y compra. Tocar lleva a
+                  // su pestaña.
+                  if (restLines.isNotEmpty ||
+                      next == null ||
+                      _todayItems.isNotEmpty ||
+                      _doneTodayTasks.isNotEmpty) ...[
+                    StaggeredEntrance(index: 2, child: _dayCard(restLines)),
                     const SizedBox(height: AppSpacing.lg),
                   ],
-                ],
 
-                // De un vistazo: caducidades, tareas y compra. Tocar lleva a
-                // su pestaña.
-                if (restLines.isNotEmpty ||
-                    next == null ||
-                    _todayItems.isNotEmpty ||
-                    _doneTodayTasks.isNotEmpty) ...[
-                  StaggeredEntrance(index: 2, child: _dayCard(restLines)),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
-
-                StaggeredEntrance(index: 3, child: StreakCard(key: _streakKey)),
-                const SizedBox(height: AppSpacing.md),
-
-                if (_prefs.visibleCards.contains(DashboardCard.calories) &&
-                    (!_profileComplete ||
-                        _targetCalories == null ||
-                        _targetCalories! <= 0)) ...[
-                  StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
+                  StaggeredEntrance(
+                    index: 3,
+                    child: StreakCard(key: _streakKey),
+                  ),
                   const SizedBox(height: AppSpacing.md),
-                ],
 
-                if (numbers.isNotEmpty) ...[
-                  StaggeredEntrance(index: 4, child: _numbersCard(numbers)),
-                  const SizedBox(height: AppSpacing.md),
-                ],
+                  if (_prefs.visibleCards.contains(DashboardCard.calories) &&
+                      (!_profileComplete ||
+                          _targetCalories == null ||
+                          _targetCalories! <= 0)) ...[
+                    StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
 
-                if (_prefs.quick.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  StaggeredEntrance(index: 5, child: _quickAccessRow()),
-                  const SizedBox(height: AppSpacing.lg),
+                  if (numbers.isNotEmpty) ...[
+                    StaggeredEntrance(index: 4, child: _numbersCard(numbers)),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
+                  if (_prefs.quick.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    StaggeredEntrance(index: 5, child: _quickAccessRow()),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                 ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -1378,7 +1389,10 @@ class HomeTabState extends State<HomeTab> {
     final meals = _todayMeals();
     final mealsDone = meals.where((m) => m.done).length;
     final done = mealsDone + _doneTodayTasks.length;
-    final total = done + (meals.length - mealsDone) + _todayTasks.length;
+    // Solo lo que se ve y se puede marcar en la tarjeta: las tareas que no
+    // caben ("+N más") o atrasadas van en su propia línea y no cuentan.
+    final shownTasks = lines.where((l) => l.kind == DayLineKind.task).length;
+    final total = done + (meals.length - mealsDone) + shownTasks;
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -1461,7 +1475,18 @@ class HomeTabState extends State<HomeTab> {
                 ),
               ),
             ),
-            if (m.time case final t?) ...[
+            // La siguiente comida lleva el círculo en terracota; el texto dice
+            // por qué ("Toca cocinar"), si no el color no se entiende.
+            if (m.next && !m.done) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                context.l.planCookNow,
+                style: AppTextStyles.labelMuted.copyWith(
+                  color: AppColors.terracottaText,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ] else if (m.time case final t?) ...[
               const SizedBox(width: AppSpacing.sm),
               Text(t, style: AppTextStyles.labelMuted),
             ],

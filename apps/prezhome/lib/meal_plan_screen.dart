@@ -45,6 +45,7 @@ import 'utils/money.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'l10n/l10n.dart';
+import 'widgets/hide_fab_on_scroll.dart';
 
 /// Planificador semanal de comidas (v1).
 class MealPlanScreen extends StatefulWidget {
@@ -1800,59 +1801,67 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: widget.embedded ? null : AppBar(title: Text(context.l.planTitle)),
-      body: FadeFutureBuilder<_PlanData>(
-        future: _future,
-        builder: (context, snapshot) {
-          final loading = snapshot.connectionState == ConnectionState.waiting;
-          // Al cambiar de semana se queda lo anterior con una barrita, sin
-          // parpadeo de pantalla en blanco.
-          if (loading && !snapshot.hasData) {
-            return const PlanSkeleton();
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text(friendlyError(snapshot.error)));
-          }
-          final data = snapshot.data!;
-          if (data.homeId == null) {
-            return Center(child: Text(context.l.planNoHome));
-          }
-          if (data.recipes.isEmpty) {
-            return _needRecipes();
-          }
-          return Stack(
-            children: [
-              _buildPlan(data, loading: loading),
-              if (loading) const LinearProgressIndicator(minHeight: 2),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FutureBuilder<_PlanData>(
-        future: _future,
-        builder: (context, snap) {
-          final data = snap.data;
-          if (data == null || data.homeId == null || data.recipes.isEmpty) {
-            return const SizedBox.shrink();
-          }
-          return FloatingActionButton.extended(
-            heroTag: 'fab-meal-plan',
-            onPressed: _generating ? null : () => _askPlanRange(data),
-            icon: _generating
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.event_available_rounded),
-            label: Text(
-              data.entries.isEmpty ? context.l.planMake : context.l.planRemake,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          );
-        },
+    return HideFabOnScroll(
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        appBar: widget.embedded
+            ? null
+            : AppBar(title: Text(context.l.planTitle)),
+        body: FadeFutureBuilder<_PlanData>(
+          future: _future,
+          builder: (context, snapshot) {
+            final loading = snapshot.connectionState == ConnectionState.waiting;
+            // Al cambiar de semana se queda lo anterior con una barrita, sin
+            // parpadeo de pantalla en blanco.
+            if (loading && !snapshot.hasData) {
+              return const PlanSkeleton();
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text(friendlyError(snapshot.error)));
+            }
+            final data = snapshot.data!;
+            if (data.homeId == null) {
+              return Center(child: Text(context.l.planNoHome));
+            }
+            if (data.recipes.isEmpty) {
+              return _needRecipes();
+            }
+            return Stack(
+              children: [
+                _buildPlan(data, loading: loading),
+                if (loading) const LinearProgressIndicator(minHeight: 2),
+              ],
+            );
+          },
+        ),
+        floatingActionButton: HideFabOnScroll.fab(
+          FutureBuilder<_PlanData>(
+            future: _future,
+            builder: (context, snap) {
+              final data = snap.data;
+              if (data == null || data.homeId == null || data.recipes.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return FloatingActionButton.extended(
+                heroTag: 'fab-meal-plan',
+                onPressed: _generating ? null : () => _askPlanRange(data),
+                icon: _generating
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.event_available_rounded),
+                label: Text(
+                  data.entries.isEmpty
+                      ? context.l.planMake
+                      : context.l.planRemake,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -2684,7 +2693,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 child: Padding(
                   padding: EdgeInsets.only(right: i < 2 ? 8 : 0),
                   child: ChoiceChip(
-                    label: Text(labels[i]),
+                    // Sin el ✓: en un tercio de ancho cortaba "Normal".
+                    showCheckmark: false,
+                    label: SizedBox(
+                      width: double.infinity,
+                      child: Text(labels[i], textAlign: TextAlign.center),
+                    ),
                     selected: selected,
                     backgroundColor: AppColors.cream,
                     onSelected: (_) async {

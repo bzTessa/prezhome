@@ -37,6 +37,7 @@ import 'widgets/kitchen/kitchen_zones_grid.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'discover_recipes_screen.dart';
 import 'l10n/l10n.dart';
+import 'widgets/hide_fab_on_scroll.dart';
 
 class InventoryScreen extends StatefulWidget {
   final bool embedded;
@@ -763,73 +764,77 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      appBar: widget.embedded
-          ? null
-          : AppBar(
-              title: Text(
-                context.l.panTitle,
-                style: TextStyle(
-                  color: AppColors.ink,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              backgroundColor: AppColors.cream,
-              elevation: 0,
-              iconTheme: IconThemeData(color: AppColors.ink),
-            ),
-      // Un solo botón: las formas de añadir van en una hoja (antes eran dos
-      // botones flotantes apilados que tapaban la lista).
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'fab-inventory',
-        onPressed: _openAddOptions,
-        tooltip: context.l.panAddTooltip,
-        child: const Icon(Icons.add_rounded, size: 30),
-      ),
-      body: FadeFutureBuilder<List<InventoryItem>>(
-        future: _itemsFuture,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData &&
-              snapshot.connectionState == ConnectionState.waiting) {
-            return const PantrySkeleton();
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                friendlyError(snapshot.error, context.l.panLoadError),
-              ),
-            );
-          }
-
-          final items = snapshot.data ?? [];
-          if (items.isEmpty) {
-            return EmptyState(
-              image: 'assets/images/vacio_despensa.png',
-              title: context.l.panEmptyTitle,
-              message: context.l.panEmptyHint,
-              actionLabel: context.l.panAddProduct,
-              onAction: _openAddOptions,
-            );
-          }
-
-          return Stack(
-            children: [
-              Positioned.fill(child: _buildKitchen(items)),
-              // Indicador discreto de "cambios por sincronizar", encima de la
-              // lista para no empujarla al aparecer y desaparecer.
-              if (shouldShowPendingIndicator(_pendingCount))
-                Positioned(
-                  left: AppSpacing.lg,
-                  right: AppSpacing.lg,
-                  bottom: 16,
-                  child: IgnorePointer(
-                    child: PendingSyncIndicator(pendingCount: _pendingCount),
+    return HideFabOnScroll(
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        appBar: widget.embedded
+            ? null
+            : AppBar(
+                title: Text(
+                  context.l.panTitle,
+                  style: TextStyle(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-            ],
-          );
-        },
+                backgroundColor: AppColors.cream,
+                elevation: 0,
+                iconTheme: IconThemeData(color: AppColors.ink),
+              ),
+        // Un solo botón: las formas de añadir van en una hoja (antes eran dos
+        // botones flotantes apilados que tapaban la lista).
+        floatingActionButton: HideFabOnScroll.fab(
+          FloatingActionButton(
+            heroTag: 'fab-inventory',
+            onPressed: _openAddOptions,
+            tooltip: context.l.panAddTooltip,
+            child: const Icon(Icons.add_rounded, size: 30),
+          ),
+        ),
+        body: FadeFutureBuilder<List<InventoryItem>>(
+          future: _itemsFuture,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData &&
+                snapshot.connectionState == ConnectionState.waiting) {
+              return const PantrySkeleton();
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  friendlyError(snapshot.error, context.l.panLoadError),
+                ),
+              );
+            }
+
+            final items = snapshot.data ?? [];
+            if (items.isEmpty) {
+              return EmptyState(
+                image: 'assets/images/vacio_despensa.png',
+                title: context.l.panEmptyTitle,
+                message: context.l.panEmptyHint,
+                actionLabel: context.l.panAddProduct,
+                onAction: _openAddOptions,
+              );
+            }
+
+            return Stack(
+              children: [
+                Positioned.fill(child: _buildKitchen(items)),
+                // Indicador discreto de "cambios por sincronizar", encima de la
+                // lista para no empujarla al aparecer y desaparecer.
+                if (shouldShowPendingIndicator(_pendingCount))
+                  Positioned(
+                    left: AppSpacing.lg,
+                    right: AppSpacing.lg,
+                    bottom: 16,
+                    child: IgnorePointer(
+                      child: PendingSyncIndicator(pendingCount: _pendingCount),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

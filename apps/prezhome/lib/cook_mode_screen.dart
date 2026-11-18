@@ -540,7 +540,11 @@ class _CookModeScreenState extends State<CookModeScreen> {
             ),
           const SizedBox(height: AppSpacing.xl),
           Text(
-            step.text,
+            // Número y unidad juntos: "200 °C" o "50 min" no se parten.
+            step.text.replaceAllMapped(
+              RegExp(r'(\d) (?=[°ºa-zA-Z%])'),
+              (m) => '${m[1]}\u00A0',
+            ),
             style: TextStyle(
               fontSize: 30,
               letterSpacing: -0.5,

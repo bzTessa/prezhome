@@ -67,10 +67,17 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   /// Ingredientes que faltaban y ya se han mandado a la lista de la compra.
   final Set<String> _inList = {};
+  List<String> _shoppingNames = const [];
   bool _addingMissing = false;
 
   int get _recipeServings => _recipe.servings < 1 ? 1 : _recipe.servings;
-  int get _servingsNow => _servings ?? _recipeServings;
+
+  /// Se abre con las raciones que come tu hogar (si se saben); el conversor
+  /// deja volver a las de la receta.
+  int get _servingsNow =>
+      _servings ??
+      _householdServings(_recipe)?.round().clamp(1, 99) ??
+      _recipeServings;
 
   /// Los ingredientes se guardan para las raciones de la receta: se escalan
   /// por raciones elegidas / raciones guardadas (×1 = tal cual se guardó).
@@ -92,6 +99,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     _loadProfile();
     _loadCost();
     _loadPantry();
+    _loadShopping();
     _loadRestrictions();
   }
 
@@ -1045,7 +1053,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         if (_servingsNow != _recipeServings)
           ActionChip(
             label: Text(context.l.rdOriginal(_servingsText(_recipeServings))),
-            onPressed: () => setState(() => _servings = null),
+            onPressed: () => setState(() => _servings = _recipeServings),
           ),
         if (perMeal != null && perMeal >= 1 && perMeal != _servingsNow)
           ActionChip(
@@ -1059,6 +1067,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   /// "Tienes 5 de 8 en casa" + atajo para mandar lo que falta a la compra.
   Widget _pantrySummary(int haveCount, List<String> missing) {
     final total = haveCount + missing.length;
+    final toAdd = [
+      for (final m in missing)
+        if (!_isInList(m)) m,
+    ];
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1080,11 +1092,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               ),
             ),
           ),
-          if (missing.isNotEmpty)
+          // Solo lo que falta y aún no está en la lista de la compra.
+          if (toAdd.isNotEmpty)
             TextButton.icon(
-              onPressed: _addingMissing ? null : () => _addMissing(missing),
+              onPressed: _addingMissing ? null : () => _addMissing(toAdd),
               icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-              label: Text(context.l.rdMissing(missing.length)),
+              label: Text(context.l.rdMissing(toAdd.length)),
               style: TextButton.styleFrom(foregroundColor: AppColors.sage),
             ),
         ],
@@ -1146,7 +1159,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             if (inPantry == true)
               _pill(context.l.rdAtHome, AppColors.sageBg, AppColors.sage)
-            else if (inPantry == false && _inList.contains(ing.name.trim()))
+            else if (inPantry == false && _isInList(ing.name))
               _pill(context.l.rdInList, AppColors.line, AppColors.inkMuted)
             else if (inPantry == false)
               // Lo que falta se manda a la compra con un toque.
@@ -1432,6 +1445,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     } catch (_) {
       // Sin despensa no se marca nada.
     }
+  }
+
+  /// Lo que ya está en la lista de la compra: esos ingredientes dicen "En la
+  /// lista" en vez de ofrecer "+ A la compra" otra vez.
+  Future<void> _loadShopping() async {
+    try {
+      final rows = await _client
+          .from('shopping_list_items')
+          .select('name')
+          .eq('home_id', _recipe.homeId)
+          .eq('checked', false);
+      final names = [for (final r in rows as List) '${r['name'] ?? ''}'];
+      if (mounted) setState(() => _shoppingNames = names);
+    } catch (_) {
+      // Sin lista, se ofrece añadir como siempre.
+    }
+  }
+
+  bool _isInList(String ingredient) {
+    final name = ingredient.trim();
+    return _inList.contains(name) ||
+        _shoppingNames.any((s) => pantryNameMatches(name, s));
   }
 
   /// Manda a la lista de la compra los ingredientes que faltan.
