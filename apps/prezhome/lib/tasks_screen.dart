@@ -925,7 +925,8 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                 ),
                 // Marcador de puntos solo con el "Modo Puntos".
-                if (data.pointsEnabled) ...[
+                // Y solo si sois dos o más: con una persona no compara nada.
+                if (data.pointsEnabled && data.members.length > 1) ...[
                   const SizedBox(height: AppSpacing.xl),
                   _Scoreboard(
                     members: data.members,
@@ -1576,7 +1577,9 @@ class _TodayHero extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          if (overdue > 0) ...[
+          // Sin aviso "N atrasadas" si ya sale el de "Ponerme al día" justo
+          // debajo (2 o más): salía dos veces seguidas.
+          if (overdue == 1) ...[
             const SizedBox(width: AppSpacing.sm),
             _Pill(
               text: context.l.tskOverdueCount(overdue),
