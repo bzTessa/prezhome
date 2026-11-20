@@ -1,134 +1,134 @@
 import 'package:flutter/material.dart';
-import '../l10n/l10n.dart';
 
 import '../food_diary_screen.dart';
-import '../main_shell.dart';
+import '../l10n/l10n.dart';
 import '../meal_plan_screen.dart';
 import '../recipes_screen.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animations/app_transitions.dart';
+import '../widgets/segmented_pill.dart';
 
-/// Pestaña "Comidas": agrupa todo lo relacionado con comer en un mismo
-/// lugar, como hacen las apps de planificación de comidas. Tiene tres
-/// sub-tabs: Plan (la semana del hogar, día a día), Recetas (recetario)
-/// y Diario (diario de calorías personal).
-class ComidasTab extends StatelessWidget {
-  const ComidasTab({super.key});
+/// Claves de sub-pestaña visibles en [ComidasTab] según si está activo el
+/// diario de calorías. Lógica pura reutilizable en UI y tests.
+List<String> comidasSubTabKeys(bool showDiary) => [
+  'plan',
+  'recipes',
+  if (showDiary) 'diary',
+];
+
+/// Clampa un índice de sub-pestaña al rango válido actual de [ComidasTab].
+int clampComidasSubTab(int index, {required bool showDiary}) =>
+    index.clamp(0, showDiary ? 2 : 1);
+
+/// Pestaña "Comidas": agrupa Plan semanal, Recetas y (si está activado en las
+/// preferencias de calorías) Diario en la misma pastilla segmentada que
+/// [CompraTab], evitando conflictos de gestos horizontales.
+class ComidasTab extends StatefulWidget {
+  const ComidasTab({
+    super.key,
+    this.initialSubTab = 0,
+    this.showDiary = true,
+    this.tabBuilder,
+  });
+
+  final int initialSubTab;
+  final bool showDiary;
+
+  /// Constructor opcional de cada sub-vista (índice 0=Plan, 1=Recetas, 2=Diario),
+  /// útil para pruebas sin inicializar Supabase.
+  final Widget Function(BuildContext context, int index)? tabBuilder;
+
+  @override
+  State<ComidasTab> createState() => ComidasTabState();
+}
+
+class ComidasTabState extends State<ComidasTab> {
+  late int _subTab = clampComidasSubTab(
+    widget.initialSubTab,
+    showDiary: widget.showDiary,
+  );
+  final Set<int> _opened = {};
+
+  int get currentSubTab => _subTab;
+
+  @override
+  void didUpdateWidget(ComidasTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSubTab != widget.initialSubTab) {
+      showSubTab(widget.initialSubTab);
+    } else if (oldWidget.showDiary != widget.showDiary) {
+      final clamped = clampComidasSubTab(_subTab, showDiary: widget.showDiary);
+      if (clamped != _subTab) {
+        _subTab = clamped;
+        _opened.add(_subTab);
+      }
+    }
+  }
+
+  /// Cambia entre Plan (0), Recetas (1) y Diario (2, si está visible).
+  void showSubTab(int index) {
+    final next = clampComidasSubTab(index, showDiary: widget.showDiary);
+    if (next == _subTab && _opened.contains(next)) return;
+    setState(() {
+      _subTab = next;
+      _opened.add(next);
+    });
+  }
+
+  Widget _buildChild(BuildContext context, int index) {
+    if (widget.tabBuilder != null) return widget.tabBuilder!(context, index);
+    return switch (index) {
+      0 => const MealPlanScreen(embedded: true),
+      1 => const RecipesScreen(embedded: true),
+      _ => const FoodDiaryScreen(embedded: true),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: AppColors.cream,
-        appBar: AppBar(
-          title: Text(context.l.meals),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(52),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              // Selector en pastilla, como en el concepto (antes, una raya
-              // bajo la pestaña activa que se leía como un fallo de dibujo).
-              child: Container(
-                height: 44,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppColors.iconTile,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-                child: TabBar(
-                  indicator: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: AppRadius.pillRadius,
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelColor: AppColors.ink,
-                  unselectedLabelColor: AppColors.inkMuted,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                  splashBorderRadius: AppRadius.pillRadius,
-                  tabs: [
-                    Tab(text: context.l.comidasTab('plan')),
-                    Tab(text: context.l.comidasTab('recipes')),
-                    Tab(text: context.l.comidasTab('diary')),
-                  ],
-                ),
+    final keys = comidasSubTabKeys(widget.showDiary);
+    final safeIndex = clampComidasSubTab(_subTab, showDiary: widget.showDiary);
+    _opened.add(safeIndex);
+
+    return ColoredBox(
+      color: AppColors.cream,
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xs,
+              ),
+              child: SegmentedPill(
+                labels: [for (final k in keys) context.l.comidasTab(k)],
+                selected: safeIndex,
+                onChanged: showSubTab,
               ),
             ),
-          ),
-        ),
-        body: const _SwipeToShell(
-          child: TabBarView(
-            children: [
-              // Cada pantalla trae su propio contenido y botón flotante.
-              MealPlanScreen(embedded: true),
-              _EmbeddedRecipes(),
-              _EmbeddedDiary(),
-            ],
-          ),
+            Expanded(
+              child: IndexedStack(
+                index: safeIndex,
+                children: [
+                  for (var i = 0; i < keys.length; i++)
+                    TickerMode(
+                      enabled: safeIndex == i,
+                      child: _opened.contains(i)
+                          ? FadeInOnActivate(
+                              active: safeIndex == i,
+                              child: _buildChild(context, i),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
-
-/// Deslizar más allá de Plan (a la derecha) o de Diario (a la izquierda) pasa
-/// a la pestaña de al lado de la app: si no, las sub-pestañas se quedaban el
-/// gesto y desde Comida no se podía ir a Hoy ni a Compra deslizando.
-class _SwipeToShell extends StatefulWidget {
-  const _SwipeToShell({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_SwipeToShell> createState() => _SwipeToShellState();
-}
-
-class _SwipeToShellState extends State<_SwipeToShell> {
-  double _over = 0;
-  bool _done = false;
-
-  bool _onNotification(ScrollNotification n) {
-    if (n.metrics.axis != Axis.horizontal || n.depth != 0) return false;
-    if (n is ScrollStartNotification) {
-      _over = 0;
-      _done = false;
-    } else if (n is OverscrollNotification && n.dragDetails != null) {
-      // Android: el borde se nota como overscroll.
-      _over += n.overscroll;
-    } else if (n is ScrollUpdateNotification && n.dragDetails != null) {
-      // iOS: rebota, así que se mira cuánto se pasa del borde.
-      final m = n.metrics;
-      if (m.pixels < m.minScrollExtent) _over = m.pixels - m.minScrollExtent;
-      if (m.pixels > m.maxScrollExtent) _over = m.pixels - m.maxScrollExtent;
-    }
-    if (n is OverscrollNotification || n is ScrollUpdateNotification) {
-      if (!_done && _over.abs() > 48) {
-        _done = true;
-        context.findAncestorStateOfType<MainShellState>()?.stepTab(
-          _over > 0 ? 1 : -1,
-        );
-      }
-    }
-    return false;
-  }
-
-  @override
-  Widget build(BuildContext context) =>
-      NotificationListener<ScrollNotification>(
-        onNotification: _onNotification,
-        child: widget.child,
-      );
-}
-
-// Envolvemos las pantallas existentes para reutilizarlas dentro de las tabs.
-class _EmbeddedRecipes extends StatelessWidget {
-  const _EmbeddedRecipes();
-  @override
-  Widget build(BuildContext context) => const RecipesScreen(embedded: true);
-}
-
-class _EmbeddedDiary extends StatelessWidget {
-  const _EmbeddedDiary();
-  @override
-  Widget build(BuildContext context) => const FoodDiaryScreen(embedded: true);
 }

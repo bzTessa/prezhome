@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/l10n.dart';
 import '../models/recipe.dart';
@@ -47,19 +48,24 @@ const _displayOrder = [
   'freezer',
 ];
 
-/// Categorías del recetario como círculos de color en una fila, al estilo de
-/// las apps de recetas. Tocar una la elige; otra vez la quita.
+/// Categorías del recetario como círculos de color en cuadrícula fija ([Wrap],
+/// sin carrusel). Admite selección única (`selected` + `onSelected`) o
+/// combinable (`selectedSet` + `onToggle`).
 class RecipeCategoryChips extends StatefulWidget {
   const RecipeCategoryChips({
     super.key,
     required this.recipes,
-    required this.selected,
-    required this.onSelected,
+    this.selected,
+    this.onSelected,
+    this.selectedSet,
+    this.onToggle,
   });
 
   final List<Recipe> recipes;
   final String? selected;
-  final ValueChanged<String?> onSelected;
+  final ValueChanged<String?>? onSelected;
+  final Set<String>? selectedSet;
+  final ValueChanged<String>? onToggle;
 
   @override
   State<RecipeCategoryChips> createState() => _RecipeCategoryChipsState();
@@ -72,9 +78,12 @@ class _RecipeCategoryChipsState extends State<RecipeCategoryChips> {
   Widget build(BuildContext context) {
     final counts = recipeCategoryCounts(widget.recipes);
     final keys = _displayOrder.where(counts.containsKey).toList();
+    final activeSet =
+        widget.selectedSet ?? {if (widget.selected != null) widget.selected!};
     final hasMore = keys.length > 5;
-    final open = _more || (hasMore && keys.indexOf(widget.selected ?? '') >= 4);
+    final open = _more || (hasMore && keys.skip(4).any(activeSet.contains));
     final shown = !hasMore || open ? keys : keys.take(4).toList();
+
     return LayoutBuilder(
       builder: (context, c) {
         const gap = 6.0;
@@ -85,8 +94,15 @@ class _RecipeCategoryChipsState extends State<RecipeCategoryChips> {
             category: key,
             label: recipeCategoryLabel(context, key),
             count: counts[key] ?? 0,
-            selected: key == widget.selected,
-            onTap: () => widget.onSelected(key == widget.selected ? null : key),
+            selected: activeSet.contains(key),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              if (widget.onToggle != null) {
+                widget.onToggle!(key);
+              } else {
+                widget.onSelected?.call(key == widget.selected ? null : key);
+              }
+            },
           ),
         );
         return Wrap(
@@ -146,11 +162,12 @@ class _Tile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: selected ? fg : bg,
                   shape: BoxShape.circle,
+                  border: selected ? null : Border.all(color: AppColors.stroke),
                 ),
                 child: Icon(
                   recipeCategoryIcon(category),
                   size: 24,
-                  color: selected ? Colors.white : fg,
+                  color: selected ? AppColors.onTerracotta : fg,
                 ),
               ),
               const SizedBox(height: 6),

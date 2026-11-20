@@ -4,25 +4,19 @@ import 'package:prezhome/models/dashboard_prefs.dart';
 
 void main() {
   group('computeVisibleTabIds (índices por identidad semántica)', () {
-    test('con módulos por defecto están las 5 pestañas en el orden diario', () {
+    test('con módulos por defecto están las 4 pestañas en el orden diario', () {
       final ids = computeVisibleTabIds(DashboardPrefs.defaults());
-      expect(ids, [
-        TabId.inicio,
-        TabId.comidas,
-        TabId.compra,
-        TabId.despensa,
-        TabId.tareas,
-      ]);
+      expect(ids, [TabId.inicio, TabId.comidas, TabId.compra, TabId.tareas]);
     });
 
-    test('con módulos por defecto Inicio arranca y Despensa es válido', () {
+    test('con módulos por defecto Inicio arranca y Compra es válido', () {
       final ids = computeVisibleTabIds(DashboardPrefs.defaults());
       // La app arranca en Inicio.
       expect(ids.indexOf(TabId.inicio), 0);
-      // La navegación 'Caducidades -> Despensa' tiene un índice válido.
-      final despensa = ids.indexOf(TabId.despensa);
-      expect(despensa, isNonNegative);
-      expect(despensa, lessThan(ids.length));
+      // La navegación 'Caducidades -> En casa' pasa por Compra y tiene índice válido.
+      final compra = ids.indexOf(TabId.compra);
+      expect(compra, isNonNegative);
+      expect(compra, lessThan(ids.length));
     });
 
     test('Tareas se ve aunque su módulo esté desactivado', () {

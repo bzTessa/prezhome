@@ -77,7 +77,7 @@ class AppColors {
   static Color get terracottaBg =>
       dark ? const Color(0xFF3A2A22) : const Color(0xFFF6E0D4);
   static Color get terracotta =>
-      dark ? const Color(0xFFE56B43) : const Color(0xFFD85A32);
+      dark ? const Color(0xFFE56B43) : const Color(0xFFC94E28);
 
   /// Terracota para texto pequeño: el de marca no llega a 4,5:1 sobre crema.
   static Color get terracottaText =>
@@ -116,25 +116,30 @@ class AppColors {
   static Color get iconTile =>
       dark ? const Color(0xFF302A24) : const Color(0xFFF2E9D8);
 
-  /// Borde de tarjeta: transparente en claro, línea suave en oscuro.
+  /// Borde de tarjeta: línea cálida fina en claro para recortarla sobre el
+  /// fondo crema, y línea sutil en oscuro.
   static Color get cardEdge =>
-      dark ? const Color(0xFF332D26) : const Color(0x00000000);
+      dark ? const Color(0xFF363029) : const Color(0xFFEAE1CB);
 
   /// Sombra cálida y difusa de las tarjetas.
   static Color get cardShadow =>
       dark ? const Color(0x66000000) : const Color(0x477A5028);
 
-  /// Trazo carbón de bordes y sombras duras (en oscuro, uno que se vea).
+  /// Trazo marrón tinta cálido para botones y elementos destacados del estilo
+  /// táctil (acorde al trazo de la mascota).
   static Color get stroke =>
-      dark ? const Color(0xFF3E362E) : const Color(0xFF1E1E1E);
+      dark ? const Color(0xFF534538) : const Color(0xFF3B2618);
 
   /// Verde de "hecho": producto en el carro, tarea completada.
   static Color get done =>
       dark ? const Color(0xFF5FAF7E) : const Color(0xFF3B8A5A);
 
-  /// Texto sobre los rellenos de marca (terracota, dorado, verde): siempre
-  /// carbón, que contrasta con ellos en claro y en oscuro.
+  /// Texto sobre los rellenos de marca claros (dorado, madera, verde):
+  /// carbón para mantener contraste en claro y oscuro.
   static const Color onBrand = Color(0xFF1E1E1E);
+
+  /// Texto e iconos sobre botones y franjas en terracota: crema cálido.
+  static const Color onTerracotta = Color(0xFFFFFDF7);
 
   /// Lila suave: zona "Hogar" y objetivo de lotes.
   static Color get lilacBg =>
@@ -176,7 +181,7 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.terracotta,
         primary: AppColors.terracotta,
-        onPrimary: AppColors.onBrand,
+        onPrimary: AppColors.onTerracotta,
         secondary: AppColors.gold,
         onSecondary: AppColors.onBrand,
         surface: AppColors.card,
@@ -320,7 +325,7 @@ class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.terracotta,
-        foregroundColor: AppColors.onBrand,
+        foregroundColor: AppColors.onTerracotta,
         elevation: 0,
         focusElevation: 0,
         hoverElevation: 0,
@@ -444,6 +449,19 @@ class AppTheme {
         : shadow >= 6
         ? AppElevation.level2
         : AppElevation.level1,
+  );
+
+  /// Superficie táctil destacada (botones clave, barra inferior, tarjetas hero):
+  /// borde marrón tinta y sombra dura corta.
+  static BoxDecoration heroTactileDecoration({
+    double radius = AppRadius.lg,
+    Color? color,
+    bool pressed = false,
+  }) => BoxDecoration(
+    color: color ?? AppColors.paper,
+    borderRadius: BorderRadius.circular(radius),
+    border: AppElevation.tactileBorder,
+    boxShadow: pressed ? AppElevation.pressed : AppElevation.tactileShadow,
   );
 
   /// Decoración de superficie recomendada de aquí en adelante.

@@ -13,37 +13,27 @@ import 'services/reminders.dart';
 import 'discover_recipes_screen.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/comidas_tab.dart';
-import 'tabs/despensa_tab.dart';
-import 'shopping_list_screen.dart';
+import 'tabs/compra_tab.dart';
 import 'tasks_screen.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
+import 'utils/quick_capture.dart';
 import 'widgets/offline_banner.dart';
 import 'widgets/proactive_suggestions_banner.dart';
+import 'widgets/quick_capture_sheet.dart';
+import 'widgets/tactile_button.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'services/onboarding_applier.dart';
 
 /// Identidad semántica de cada pestaña del shell. Se usa para calcular los
 /// índices por identidad (no por número) de forma que la navegación siga
 /// funcionando aunque alguna pestaña opcional desaparezca.
-enum TabId { comidas, compra, despensa, inicio, tareas }
+enum TabId { comidas, compra, inicio, tareas }
 
-/// Orden FIJO de pestañas candidatas (Hoy, Comida, Compra, Despensa, Tareas)
-/// (todas fijas). La compra tiene pestaña propia (es lo
-/// que más se usa); los ajustes del hogar se abren desde el perfil en Hoy.
-///
-/// Nota Paso 5: batch_prep_timeline_screen añadirá aquí su TabId condicionado a
-/// HomeModule.batchCooking.
+/// Orden FIJO de las 4 pestañas principales: Hoy, Comida, Compra (Lista | En
+/// casa) y Tareas, acompañadas del botón global "+".
 List<TabId> computeVisibleTabIds(DashboardPrefs prefs) {
-  return [
-    TabId.inicio,
-    TabId.comidas,
-    TabId.compra,
-    TabId.despensa,
-    // Tareas siempre visible: al ocultarse con el módulo parecía que se había
-    // borrado la sección.
-    TabId.tareas,
-  ];
+  return [TabId.inicio, TabId.comidas, TabId.compra, TabId.tareas];
 }
 
 /// Descriptor de una pestaña: su identidad semántica, el widget que renderiza
@@ -108,6 +98,9 @@ class MainShellState extends State<MainShell> {
   // Clave para refrescar la pestaña Inicio al volver a ella sin reconstruir
   // las demás pestañas del IndexedStack.
   final GlobalKey<HomeTabState> _homeKey = GlobalKey<HomeTabState>();
+  final GlobalKey<ComidasTabState> _comidasKey = GlobalKey<ComidasTabState>();
+  final GlobalKey<CompraTabState> _compraKey = GlobalKey<CompraTabState>();
+  int _compraInitialSubTab = 0;
 
   // Asistente Proactivo (Paso 8, motor LOCAL sin IA): sugerencias de alimentos
   // a punto de caducar (<= 2 días) para aprovechar en el próximo Batch Cooking.
@@ -228,9 +221,8 @@ class MainShellState extends State<MainShell> {
     }
   }
 
-  /// Construye la lista ordenada de pestañas candidatas en un orden FIJO
-  /// (Hoy, Comida, Compra, Despensa, Tareas). Solo Tareas es condicional:
-  /// se incluye únicamente si el módulo está activado. Páginas y destinos
+  /// Construye la lista ordenada de pestañas en un orden FIJO
+  /// (Hoy, Comidas, Compra [Lista | En casa], Tareas). Páginas y destinos
   /// salen de aquí para no desincronizarse nunca.
   ///
   /// Nota Paso 5: cuando llegue batch_prep_timeline_screen, su entrada de
@@ -248,29 +240,16 @@ class MainShellState extends State<MainShell> {
       case TabId.comidas:
         return _TabDescriptor(
           id: id,
-          page: const ComidasTab(),
+          page: ComidasTab(key: _comidasKey, showDiary: _prefs.trackCalories),
           icon: Icons.restaurant_menu_outlined,
           selectedIcon: Icons.restaurant_menu,
         );
       case TabId.compra:
         return _TabDescriptor(
           id: id,
-          page: ColoredBox(
-            color: AppColors.cream,
-            child: SafeArea(
-              bottom: false,
-              child: ShoppingListScreen(embedded: true),
-            ),
-          ),
+          page: CompraTab(key: _compraKey, initialSubTab: _compraInitialSubTab),
           icon: Icons.shopping_cart_outlined,
           selectedIcon: Icons.shopping_cart,
-        );
-      case TabId.despensa:
-        return _TabDescriptor(
-          id: id,
-          page: const DespensaTab(),
-          icon: Icons.kitchen_outlined,
-          selectedIcon: Icons.kitchen,
         );
       case TabId.inicio:
         return _TabDescriptor(
@@ -278,7 +257,7 @@ class MainShellState extends State<MainShell> {
           page: HomeTab(
             key: _homeKey,
             onNavigateToDespensa: _goToDespensa,
-            onNavigateToShopping: () => goToTab(_indexOf(TabId.compra)),
+            onNavigateToShopping: _goToShopping,
             onNavigateToTasks: () {
               final i = _indexOf(TabId.tareas);
               if (i >= 0) goToTab(i);
@@ -354,11 +333,39 @@ class MainShellState extends State<MainShell> {
     setState(() => _index = index);
   }
 
-  /// Lleva a la pestaña Despensa (sub-tab Inventario por defecto, que es el
-  /// sitio real del inventario). Se inyecta a HomeTab para la tarjeta de
-  /// caducidades. El índice de Despensa se calcula por identidad semántica, así
-  /// que 'Caducidades -> Despensa' sigue funcionando aunque falte Tareas.
-  void _goToDespensa() => goToTab(_indexOf(TabId.despensa));
+  /// Lleva a Compra > En casa (donde vive el inventario del hogar).
+  void _goToDespensa() {
+    _compraInitialSubTab = 1;
+    goToTab(_indexOf(TabId.compra));
+    _compraKey.currentState?.showSubTab(1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _compraKey.currentState?.showSubTab(1);
+    });
+  }
+
+  /// Lleva a Compra > Lista.
+  void _goToShopping() {
+    _compraInitialSubTab = 0;
+    goToTab(_indexOf(TabId.compra));
+    _compraKey.currentState?.showSubTab(0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _compraKey.currentState?.showSubTab(0);
+    });
+  }
+
+  /// Abre la hoja de captura rápida con el destino sugerido según la pestaña.
+  Future<void> _openGlobalCapture() async {
+    final current = _tabs[_index].id;
+    final target = switch (current) {
+      TabId.tareas => CaptureTarget.task,
+      TabId.compra when _compraKey.currentState?.currentSubTab == 1 =>
+        CaptureTarget.pantry,
+      _ => CaptureTarget.shopping,
+    };
+    if (await showQuickCapture(context, initialTarget: target) && mounted) {
+      _homeKey.currentState?.refreshActiveView();
+    }
+  }
 
   /// Refresca la vista activa de la pestaña Inicio. Lo usa HomeSessionScreen
   /// tras cerrarse el cuestionario/wizard, para que el dashboard refleje el
@@ -401,9 +408,14 @@ class MainShellState extends State<MainShell> {
     final kind = Reminders.opened.value;
     if (kind == null) return;
     Reminders.opened.value = null;
+    if (kind == 'expiry') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _goToDespensa();
+      });
+      return;
+    }
     final tab = switch (kind) {
       'tasks' => TabId.tareas,
-      'expiry' => TabId.despensa,
       'kitchen' => TabId.comidas,
       _ => TabId.inicio,
     };
@@ -515,6 +527,7 @@ class MainShellState extends State<MainShell> {
               items: navItems,
               selectedIndex: _index,
               onSelected: _onDestinationSelected,
+              onQuickAdd: _openGlobalCapture,
             ),
             Expanded(
               child: Center(
@@ -531,9 +544,8 @@ class MainShellState extends State<MainShell> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: body,
-      // Barra flotante compartida (packages/prez_ui): solo iconos; la activa
-      // se agranda con su nombre y deslizar el dedo por la barra cambia de
-      // pestaña.
+      // Barra flotante compartida (packages/prez_ui): 4 pestañas + botón "+"
+      // global con el borde y sombra del estilo táctil.
       bottomNavigationBar: SafeArea(
         top: false,
         minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -541,14 +553,19 @@ class MainShellState extends State<MainShell> {
           items: navItems,
           selectedIndex: _index,
           onSelected: _onDestinationSelected,
-          // Píldora sin borde con sombra suave; la pestaña activa se desliza
-          // con muelle. Sin translucidez: el contenido no pasa por debajo.
+          action: FloatingNavAction(
+            icon: Icons.add_rounded,
+            tooltip: context.l.captureTitle,
+            onPressed: _openGlobalCapture,
+          ),
           backgroundColor: AppColors.card,
-          border: AppElevation.border,
+          border: AppElevation.tactileBorder,
           indicatorColor: AppColors.goldBg,
           selectedColor: AppColors.ink,
           unselectedColor: AppColors.inkMuted,
-          shadow: AppElevation.level2,
+          actionColor: AppColors.terracotta,
+          actionForegroundColor: AppColors.onTerracotta,
+          shadow: AppElevation.tactileShadow,
           duration: AppMotion.slow,
           curve: AppMotion.springCurve(AppMotion.fluidDefault),
         ),
@@ -564,11 +581,13 @@ class _SideNav extends StatelessWidget {
     required this.items,
     required this.selectedIndex,
     required this.onSelected,
+    required this.onQuickAdd,
   });
 
   final List<FloatingNavItem> items;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final VoidCallback onQuickAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -616,6 +635,12 @@ class _SideNav extends StatelessWidget {
                     onTap: () => onSelected(i),
                   ),
                 ),
+              const Spacer(),
+              TactileButton(
+                label: context.l.captureTitle,
+                icon: Icons.add_rounded,
+                onPressed: onQuickAdd,
+              ),
             ],
           ),
         ),

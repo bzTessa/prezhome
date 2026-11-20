@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_recipe_chooser.dart';
@@ -77,12 +78,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
-  // Categoría elegida (ver recipeBrowseCategories) y orden de los resultados.
-  String? _category;
+  // Filtros combinables (ver recipeBrowseCategories), "con lo que tengo" y orden.
+  final Set<String> _filters = {};
+  bool _onlyReady = false;
   RecipeSort _sort = RecipeSort.recent;
 
   // Despensa del último fetch: las tarjetas dicen si tienes todo.
   List<String> _pantry = const [];
+
+  void _toggleFilter(String category) {
+    setState(() {
+      if (!_filters.add(category)) _filters.remove(category);
+    });
+  }
 
   @override
   void initState() {
@@ -241,7 +249,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.expired,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onTerracotta,
               elevation: 0,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -273,25 +281,31 @@ class _RecipesScreenState extends State<RecipesScreen> {
     }
   }
 
-  Widget _card(Recipe recipe, int? perMeal) => _RecipeCard(
-    recipe: recipe,
-    caloriesPerMeal: perMeal,
-    missing: missingAtHome(recipe, _pantry),
-    onToggleFavorite: () => _toggleFavorite(recipe),
-    onLongPress: () => _openQuickActions(recipe),
-    onTap: () async {
-      final changed = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipe: recipe)),
+  Widget _card(Recipe recipe, int? perMeal, {required String heroTag}) =>
+      _RecipeCard(
+        recipe: recipe,
+        caloriesPerMeal: perMeal,
+        missing: missingAtHome(recipe, _pantry),
+        heroTag: heroTag,
+        onToggleFavorite: () => _toggleFavorite(recipe),
+        onLongPress: () => _openQuickActions(recipe),
+        onTap: () async {
+          final changed = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(
+              builder: (_) =>
+                  RecipeDetailScreen(recipe: recipe, heroTag: heroTag),
+            ),
+          );
+          if (changed == true) _reload();
+        },
       );
-      if (changed == true) _reload();
-    },
-  );
 
-  /// Recetas en filas compactas (foto pequeña, título y datos), juntas en un
-  /// bloque como en la Despensa: caben unas 6 por pantalla.
+  /// Recetas en filas compactas (foto, título, despensa y favoritos), juntas en
+  /// un bloque como en la Despensa.
   SliverPadding _grid(
     List<Recipe> recipes,
     int? perMeal, {
+    required String scopeKey,
     double bottom = 0,
   }) => SliverPadding(
     padding: EdgeInsets.fromLTRB(16, 0, 16, bottom),
@@ -306,8 +320,12 @@ class _RecipesScreenState extends State<RecipesScreen> {
             children: [
               for (var i = 0; i < recipes.length; i++) ...[
                 if (i > 0)
-                  Divider(height: 1, indent: 88, color: AppColors.line),
-                _card(recipes[i], perMeal),
+                  Divider(height: 1, indent: 100, color: AppColors.line),
+                _card(
+                  recipes[i],
+                  perMeal,
+                  heroTag: 'recipe-photo-$scopeKey-${recipes[i].id}',
+                ),
               ],
             ],
           ),
@@ -316,12 +334,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
     ),
   );
 
-  /// Recetario ordenado por secciones (favoritas, desayunos, comidas...),
+  /// Recetario ordenado por secciones (listas, favoritas, desayunos, comidas...),
   /// cada una con su título y como mucho 4 recetas hasta pulsar "Ver todas".
-  List<Widget> _sections(List<Recipe> recipes, int? perMeal) {
+  List<Widget> _sections(
+    List<Recipe> recipes,
+    List<Recipe> ready,
+    int? perMeal,
+  ) {
     const preview = 4;
     final slivers = <Widget>[];
-    final ready = readyToCook(recipes, _pantry);
     final sections = [
       if (ready.isNotEmpty) MapEntry('ready', ready),
       ...groupRecipesBySection(recipes),
@@ -340,20 +361,30 @@ class _RecipesScreenState extends State<RecipesScreen> {
             ),
           ),
         )
-        ..add(_grid(open ? items : items.take(preview).toList(), perMeal));
+        ..add(
+          _grid(
+            open ? items : items.take(preview).toList(),
+            perMeal,
+            scopeKey: key,
+          ),
+        );
       if (!open) {
         slivers.add(
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: TextButton(
-                // "Ver las N" abre la categoría entera en vez de alargar la
-                // página; "Otras" no es categoría y se despliega aquí.
-                onPressed: () => setState(
-                  () => recipeBrowseCategories.contains(key)
-                      ? _category = key
-                      : _expanded.add(key),
-                ),
+                // "Ver las N" abre el filtro de la categoría entera en vez de
+                // alargar la página; "Otras" no es categoría y se despliega aquí.
+                onPressed: () => setState(() {
+                  if (key == 'ready') {
+                    _onlyReady = true;
+                  } else if (recipeBrowseCategories.contains(key)) {
+                    _filters.add(key);
+                  } else {
+                    _expanded.add(key);
+                  }
+                }),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.woodDark,
                   textStyle: const TextStyle(fontWeight: FontWeight.w800),
@@ -399,17 +430,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 backgroundColor: AppColors.cream,
                 elevation: 0,
               ),
-        floatingActionButton: HideFabOnScroll.fab(
-          FloatingActionButton.extended(
-            heroTag: 'fab-recipes',
-            onPressed: _openAdd,
-            icon: const Icon(Icons.add),
-            label: Text(
-              context.l.recNew,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
+        floatingActionButton: widget.embedded
+            ? null
+            : HideFabOnScroll.fab(
+                FloatingActionButton.extended(
+                  heroTag: 'fab-recipes',
+                  onPressed: _openAdd,
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    context.l.recNew,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
         body: FadeFutureBuilder<_RecipesData>(
           future: _future,
           builder: (context, snapshot) {
@@ -445,12 +478,16 @@ class _RecipesScreenState extends State<RecipesScreen> {
               );
             }
 
-            final browsing = _query.trim().isNotEmpty || _category != null;
+            final ready = readyToCook(allRecipes, _pantry);
+            final browsing =
+                _query.trim().isNotEmpty || _filters.isNotEmpty || _onlyReady;
             final found = browsing
                 ? browseRecipes(
                     allRecipes,
                     query: _query,
-                    category: _category,
+                    categories: _filters,
+                    onlyReady: _onlyReady,
+                    pantry: _pantry,
                     sort: _sort,
                   )
                 : const <Recipe>[];
@@ -465,6 +502,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       _searchCtrl.clear();
                       _query = '';
                     }),
+                    onAdd: widget.embedded ? _openAdd : null,
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -472,11 +510,31 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
                     child: RecipeCategoryChips(
                       recipes: allRecipes,
-                      selected: _category,
-                      onSelected: (c) => setState(() => _category = c),
+                      selectedSet: _filters,
+                      onToggle: _toggleFilter,
                     ),
                   ),
                 ),
+                if (ready.isNotEmpty || _onlyReady)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _ReadyFilterPill(
+                            count: ready.length,
+                            selected: _onlyReady,
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _onlyReady = !_onlyReady);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 if (browsing)
                   SliverToBoxAdapter(
                     child: _ResultsBar(
@@ -486,13 +544,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       onClear: () => setState(() {
                         _searchCtrl.clear();
                         _query = '';
-                        _category = null;
+                        _filters.clear();
+                        _onlyReady = false;
                       }),
                     ),
                   ),
                 if (!browsing) ...[
                   SliverToBoxAdapter(
                     child: _PantryBanner(
+                      readyCount: ready.length,
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) =>
@@ -501,14 +561,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       ),
                     ),
                   ),
-                  ..._sections(allRecipes, perMeal),
+                  ..._sections(allRecipes, ready, perMeal),
                 ] else if (found.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: _NoSearchResults(query: _query.trim()),
                   )
                 else
-                  _grid(found, perMeal, bottom: 120),
+                  _grid(found, perMeal, scopeKey: 'search', bottom: 120),
               ],
             );
           },
@@ -633,57 +693,123 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Pastilla rápida combinable para filtrar por recetas listas con lo de casa.
+class _ReadyFilterPill extends StatelessWidget {
+  const _ReadyFilterPill({
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = '${context.l.recFilterReady} ($count)';
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: selected ? AppColors.sage : AppColors.sageBg,
+        shape: StadiumBorder(
+          side: BorderSide(color: selected ? AppColors.sage : AppColors.stroke),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const StadiumBorder(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  selected ? Icons.check_rounded : Icons.kitchen_rounded,
+                  size: 16,
+                  color: selected ? AppColors.onTerracotta : AppColors.sage,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? AppColors.onTerracotta : AppColors.sage,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Acceso a "¿Qué cocino con lo que tengo?" sobre la rejilla.
 class _PantryBanner extends StatelessWidget {
-  const _PantryBanner({required this.onTap});
+  const _PantryBanner({required this.onTap, this.readyCount = 0});
 
   final VoidCallback onTap;
+  final int readyCount;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-      child: Material(
-        color: AppColors.sageBg,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppColors.card,
-                  child: Icon(Icons.kitchen_rounded, color: AppColors.sage),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.l.recWhatToCook,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        context.l.recPantryIdeas,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                    ],
+      child: Container(
+        decoration:
+            AppTheme.surfaceDecoration(
+              color: AppColors.sageBg,
+              radius: 22,
+            ).copyWith(
+              border: Border.all(color: AppColors.sage.withValues(alpha: 0.28)),
+            ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(22),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.card,
+                    child: Icon(Icons.kitchen_rounded, color: AppColors.sage),
                   ),
-                ),
-                Icon(Icons.chevron_right_rounded, color: AppColors.sage),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l.recWhatToCook,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          readyCount > 0
+                              ? context.l.recPantryReadySubtitle(readyCount)
+                              : context.l.recPantryIdeas,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: AppColors.sage),
+                ],
+              ),
             ),
           ),
         ),
@@ -699,11 +825,12 @@ class _RecipesData {
   _RecipesData({required this.recipes, this.profile, this.pantry = const []});
 }
 
-/// Fila de receta: foto pequeña, título, tiempo y calorías, si hay todo en
-/// casa, y el corazón de favorita.
+/// Fila de receta: foto con Hero opcional, título, metadatos en [Wrap] con
+/// estado en En casa y etiqueta de congelador, y botón de favorita.
 class _RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final int? caloriesPerMeal;
+  final String? heroTag;
   final VoidCallback? onTap;
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onLongPress;
@@ -715,6 +842,7 @@ class _RecipeCard extends StatelessWidget {
     required this.recipe,
     this.caloriesPerMeal,
     this.missing,
+    this.heroTag,
     this.onTap,
     this.onToggleFavorite,
     this.onLongPress,
@@ -726,6 +854,14 @@ class _RecipeCard extends StatelessWidget {
       if (recipe.totalTimeMinutes != null) '${recipe.totalTimeMinutes} min',
       if (recipe.calories != null) '${recipe.calories} kcal',
     ].join(' · ');
+
+    final photo = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.stroke),
+      ),
+      child: RecipeImage(recipe: recipe, width: 72, height: 72, radius: 15),
+    );
 
     return Semantics(
       button: true,
@@ -739,7 +875,10 @@ class _RecipeCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
             child: Row(
               children: [
-                RecipeImage(recipe: recipe, width: 64, height: 64, radius: 14),
+                if (heroTag != null)
+                  Hero(tag: heroTag!, child: photo)
+                else
+                  photo,
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -757,26 +896,44 @@ class _RecipeCard extends StatelessWidget {
                           color: AppColors.ink,
                         ),
                       ),
-                      if (meta.isNotEmpty || (missing ?? 2) <= 1) ...[
-                        const SizedBox(height: 4),
-                        Row(
+                      if (meta.isNotEmpty ||
+                          (missing ?? 2) <= 1 ||
+                          recipe.freezesWell) ...[
+                        const SizedBox(height: 5),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             if (meta.isNotEmpty)
-                              Flexible(
-                                child: Text(
-                                  meta,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.inkMuted,
+                              Text(
+                                meta,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.inkMuted,
+                                ),
+                              ),
+                            if (missing != null && missing! <= 1)
+                              _HomeStockPill(missing: missing!),
+                            if (recipe.freezesWell)
+                              Tooltip(
+                                message: context.l.rdFreezable,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.frostBg,
+                                    borderRadius: AppRadius.pillRadius,
+                                  ),
+                                  child: Icon(
+                                    Icons.ac_unit_rounded,
+                                    size: 13,
+                                    color: AppColors.frost,
                                   ),
                                 ),
                               ),
-                            if (missing != null && missing! <= 1) ...[
-                              if (meta.isNotEmpty) const SizedBox(width: 8),
-                              _HomeStockPill(missing: missing!),
-                            ],
                           ],
                         ),
                       ],
@@ -849,51 +1006,85 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-/// Buscador de recetas: campo de texto cozy con icono de lupa y botón de
-/// limpiar. Filtra en cliente por nombre y descripción.
+/// Buscador de recetas: campo de texto cozy con icono de lupa, botón de
+/// limpiar y acceso compacto a nueva receta cuando la vista va embebida.
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final VoidCallback? onAdd;
 
   const _SearchBar({
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    this.onAdd,
   });
 
   @override
   Widget build(BuildContext context) {
+    final field = TextField(
+      controller: controller,
+      onChanged: onChanged,
+      textInputAction: TextInputAction.search,
+      style: TextStyle(color: AppColors.ink, fontSize: 15),
+      decoration: InputDecoration(
+        hintText: context.l.recSearchHint,
+        hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
+        prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
+        suffixIcon: controller.text.isEmpty
+            ? null
+            : IconButton(
+                icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
+                onPressed: onClear,
+                tooltip: context.l.clear,
+              ),
+        filled: true,
+        fillColor: AppColors.card,
+        contentPadding: const EdgeInsets.symmetric(vertical: 2),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.stroke, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.terracotta, width: 1.8),
+        ),
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        textInputAction: TextInputAction.search,
-        style: TextStyle(color: AppColors.ink, fontSize: 15),
-        decoration: InputDecoration(
-          hintText: context.l.recSearchHint,
-          hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
-          prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
-          suffixIcon: controller.text.isEmpty
-              ? null
-              : IconButton(
-                  icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
-                  onPressed: onClear,
-                  tooltip: context.l.clear,
+      child: Row(
+        children: [
+          Expanded(child: field),
+          if (onAdd != null) ...[
+            const SizedBox(width: 10),
+            Tooltip(
+              message: context.l.recNew,
+              child: Material(
+                color: AppColors.terracotta,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onAdd!();
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(
+                      Icons.add_rounded,
+                      color: AppColors.onTerracotta,
+                      size: 26,
+                    ),
+                  ),
                 ),
-          filled: true,
-          fillColor: AppColors.card,
-          contentPadding: const EdgeInsets.symmetric(vertical: 2),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.wood, width: 1.4),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.woodDark, width: 1.8),
-          ),
-        ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -56,6 +56,7 @@ class OnboardingAnswers {
     this.cooking,
     this.supermarkets = const [],
     this.foodLimits = const {},
+    this.countryCode,
   });
 
   final int people;
@@ -68,6 +69,9 @@ class OnboardingAnswers {
   /// Lo que no se puede comer en casa: alergias ([allergyOptions]) y, si
   /// acaso, 'vegetariana' o 'vegana'. Vacío = de todo.
   final Set<String> foodLimits;
+
+  /// Código ISO del país elegido en el cuestionario (p. ej. 'ES', 'DE').
+  final String? countryCode;
 
   /// Alergias que se ofrecen (mismas claves que el perfil).
   static const allergyOptions = [
@@ -104,12 +108,14 @@ class OnboardingAnswers {
     CookingHabit? cooking,
     List<String>? supermarkets,
     Set<String>? foodLimits,
+    String? countryCode,
   }) => OnboardingAnswers(
     people: people ?? this.people,
     goals: goals ?? this.goals,
     cooking: cooking ?? this.cooking,
     supermarkets: supermarkets ?? this.supermarkets,
     foodLimits: foodLimits ?? this.foodLimits,
+    countryCode: countryCode ?? this.countryCode,
   );
 
   // ---- Perfil de hogar ------------------------------------------------------
@@ -179,6 +185,7 @@ class OnboardingAnswers {
     'cooking': cooking?.id,
     'supermarkets': supermarkets,
     'food_limits': foodLimits.toList(),
+    if (countryCode != null) 'country_code': countryCode,
   });
 
   /// Tolerante: null si no hay datos o están corruptos.
@@ -212,6 +219,7 @@ class OnboardingAnswers {
             if (allergyOptions.contains(f) || dietOptions.contains(f))
               f as String,
         },
+        countryCode: m['country_code'] as String?,
       );
     } catch (_) {
       return null;

@@ -22,6 +22,12 @@ class TactileButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fill = color ?? AppColors.terracotta;
+    final fg = color == null
+        ? AppColors.onTerracotta
+        : (fill.computeLuminance() < 0.4
+              ? AppColors.onTerracotta
+              : AppColors.onBrand);
     return Semantics(
       button: true,
       enabled: onPressed != null,
@@ -35,17 +41,16 @@ class TactileButton extends StatelessWidget {
           child: Container(
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: AppTheme.tactileDecoration(
+            decoration: AppTheme.heroTactileDecoration(
               radius: 999,
-              color: color ?? AppColors.terracotta,
-              borderWidth: 2,
+              color: fill,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 20, color: AppColors.onBrand),
+                  Icon(icon, size: 20, color: fg),
                   const SizedBox(width: 8),
                 ],
                 Flexible(
@@ -57,7 +62,7 @@ class TactileButton extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.onBrand,
+                      color: fg,
                     ),
                   ),
                 ),

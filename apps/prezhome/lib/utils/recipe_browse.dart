@@ -23,6 +23,16 @@ const quickRecipeMinutes = 20;
 /// "Ligeras": esta energía por ración o menos.
 const lightRecipeKcal = 400;
 
+/// Categorías de momento/tipo de plato (entre ellas se combinan con OR).
+const recipeMealTypeFilters = {
+  'breakfast',
+  'lunch',
+  'dinner',
+  'dessert',
+  'snack',
+  'drink',
+};
+
 bool recipeInCategory(Recipe r, String category) => switch (category) {
   'favorites' => r.isFavorite,
   'quick' => switch (r.totalTimeMinutes) {
@@ -60,18 +70,31 @@ bool recipeMatchesQuery(Recipe r, String query) {
 
 enum RecipeSort { recent, az, fastest, lightest }
 
-/// Filtra por texto y categoría y ordena. Con texto, las recetas cuyo nombre
-/// coincide van antes que las que solo coinciden por ingrediente.
+/// Filtra por texto, categorías combinables (OR entre tipos de plato, AND en
+/// atributos como favoritas/rápidas/ligeras/congelables), "con lo que tengo"
+/// y ordena. Con texto, las recetas cuyo nombre coincide van antes que las que
+/// solo coinciden por ingrediente.
 /// [RecipeSort.recent] respeta el orden de entrada (más nuevas primero).
 List<Recipe> browseRecipes(
   List<Recipe> recipes, {
   String query = '',
   String? category,
+  Set<String> categories = const {},
+  bool onlyReady = false,
+  List<String> pantry = const [],
   RecipeSort sort = RecipeSort.recent,
 }) {
+  final active = <String>{?category, ...categories};
+  final mealFilters = active.where(recipeMealTypeFilters.contains).toSet();
+  final attrFilters = active
+      .where((c) => !recipeMealTypeFilters.contains(c))
+      .toSet();
   final found = [
     for (final r in recipes)
-      if ((category == null || recipeInCategory(r, category)) &&
+      if ((mealFilters.isEmpty ||
+              mealFilters.any((c) => recipeInCategory(r, c))) &&
+          attrFilters.every((c) => recipeInCategory(r, c)) &&
+          (!onlyReady || isReadyToCook(r, pantry)) &&
           recipeMatchesQuery(r, query))
         r,
   ];
@@ -120,11 +143,15 @@ int? missingAtHome(Recipe r, List<String> pantry) {
   return split.missing.length;
 }
 
+/// `true` si [r] se puede cocinar ya con [pantry] (sin ingredientes faltantes
+/// y al menos dos ingredientes en casa, para excluir recetas mínimas de "sal y agua").
+bool isReadyToCook(Recipe r, List<String> pantry) =>
+    missingAtHome(r, pantry) == 0 &&
+    splitByPantry(r.ingredientNames, pantry).have.length >= 2;
+
 /// Recetas que se pueden cocinar ya: no falta nada y hay al menos dos
 /// ingredientes en casa (una receta de "sal y agua" no cuenta).
 List<Recipe> readyToCook(List<Recipe> recipes, List<String> pantry) => [
   for (final r in recipes)
-    if (missingAtHome(r, pantry) == 0 &&
-        splitByPantry(r.ingredientNames, pantry).have.length >= 2)
-      r,
+    if (isReadyToCook(r, pantry)) r,
 ];

@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/country.dart';
 import '../models/dashboard_prefs.dart';
 import '../models/onboarding_answers.dart';
+import 'home_country.dart';
 import 'offline_provider.dart';
 import 'starter_week.dart';
 
@@ -62,6 +64,10 @@ class OnboardingApplier {
               'diet': answers.diet,
           })
           .eq('id', user.id);
+
+      if (answers.countryCode != null && answers.countryCode!.isNotEmpty) {
+        await HomeCountry.set(client, homeId, Country.of(answers.countryCode));
+      }
 
       if (answers.supermarkets.isNotEmpty) {
         final home = await client

@@ -1,21 +1,39 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../add_recipe_chooser.dart';
 import '../l10n/l10n.dart';
+import '../models/inventory_item.dart';
 import '../models/shopping_list_item.dart';
 import '../models/task.dart';
+import '../scan_barcode_screen.dart';
+import '../scan_ticket_screen.dart';
+import '../services/offline_provider.dart';
 import '../services/shopping_checkout.dart';
 import '../theme/app_theme.dart';
 import '../utils/friendly_error.dart';
+import '../utils/offline_actions.dart';
 import '../utils/quick_capture.dart';
 import '../utils/shopping_categories.dart';
+import '../utils/shopping_display.dart';
+import 'miau_character.dart';
 import 'segmented_pill.dart';
 
-/// Hoja de "Apuntar": un solo campo para mandar algo a la compra, a la
-/// despensa o a tareas sin cambiar de pantalla. Devuelve true si apuntó algo.
-Future<bool> showQuickCapture(BuildContext context) async {
-  final done = await showModalBottomSheet<bool>(
+enum _QuickCaptureResult { saved, ticket, barcode, recipe }
+
+/// Hoja de "Apuntar": campo rápido (texto o voz) para mandar algo a la compra,
+/// a "En casa" o a tareas, más accesos directos a ticket, código de barras y
+/// receta. Devuelve true si guardó algo.
+Future<bool> showQuickCapture(
+  BuildContext context, {
+  CaptureTarget initialTarget = CaptureTarget.shopping,
+}) async {
+  final result = await showModalBottomSheet<_QuickCaptureResult>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -23,13 +41,69 @@ Future<bool> showQuickCapture(BuildContext context) async {
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
     ),
-    builder: (_) => const _QuickCaptureSheet(),
+    builder: (_) => _QuickCaptureSheet(initialTarget: initialTarget),
   );
-  return done == true;
+  if (!context.mounted || result == null) return false;
+  switch (result) {
+    case _QuickCaptureResult.saved:
+      return true;
+    case _QuickCaptureResult.ticket:
+      final saved = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
+      return saved == true;
+    case _QuickCaptureResult.barcode:
+      final item = await Navigator.of(context).push<InventoryItem>(
+        MaterialPageRoute(builder: (_) => const ScanBarcodeScreen()),
+      );
+      if (item == null) return false;
+      final nowMillis = DateTime.now().millisecondsSinceEpoch;
+      final localId = newLocalId(nowMillis: nowMillis, seq: 0);
+      final withId = InventoryItem(
+        id: localId,
+        homeId: item.homeId,
+        name: item.name,
+        category: item.category,
+        itemType: item.itemType,
+        quantity: item.quantity,
+        unit: item.unit,
+        expirationDate: item.expirationDate,
+        isStaple: item.isStaple,
+        kind: item.kind,
+        recipeId: item.recipeId,
+        servings: item.servings,
+        frozenOn: item.frozenOn,
+        bestBefore: item.bestBefore,
+        imageUrl: item.imageUrl,
+      );
+      await OfflineProvider.instance.inventory.applyLocalWrite(
+        buildInsertOp(
+          table: kInventoryTable,
+          id: localId,
+          payload: withId.toCacheMap(),
+          nowMillis: nowMillis,
+          seq: 0,
+        ),
+      );
+      unawaited(OfflineProvider.instance.inventory.tryDrain());
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l.shopAdded(shoppingCleanName(item.name))),
+          ),
+        );
+      }
+      return true;
+    case _QuickCaptureResult.recipe:
+      final added = await AddRecipeChooser.show(context);
+      return added == true;
+  }
 }
 
 class _QuickCaptureSheet extends StatefulWidget {
-  const _QuickCaptureSheet();
+  const _QuickCaptureSheet({required this.initialTarget});
+
+  final CaptureTarget initialTarget;
 
   @override
   State<_QuickCaptureSheet> createState() => _QuickCaptureSheetState();
@@ -38,13 +112,75 @@ class _QuickCaptureSheet extends StatefulWidget {
 class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
   final _text = TextEditingController();
   final _client = Supabase.instance.client;
-  var _target = CaptureTarget.shopping;
-  var _saving = false;
+  late CaptureTarget _target = widget.initialTarget;
+  bool _saving = false;
+  SpeechToText? _stt;
+  bool _listening = false;
 
   @override
   void dispose() {
+    _stt?.cancel();
     _text.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleVoice() async {
+    HapticFeedback.lightImpact();
+    if (_listening) {
+      await _stt?.stop();
+      if (mounted) setState(() => _listening = false);
+      return;
+    }
+    try {
+      final stt = _stt ??= SpeechToText();
+      final ok = await stt.initialize(
+        onStatus: (s) {
+          if ((s == 'done' || s == 'notListening') && mounted) {
+            setState(() => _listening = false);
+          }
+        },
+        onError: (_) {
+          if (mounted) setState(() => _listening = false);
+        },
+      );
+      if (!ok) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l.cmMicPermission), persist: false),
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _listening = true);
+      final lang = Localizations.localeOf(context).languageCode;
+      final ids = (await stt.locales()).map((l) => l.localeId).toList();
+      final localeId = ids.firstWhere(
+        (id) => id.toLowerCase().startsWith(lang.toLowerCase()),
+        orElse: () => '',
+      );
+      await stt.listen(
+        onResult: (r) {
+          if (!mounted) return;
+          final words = r.recognizedWords.trim();
+          if (words.isEmpty) return;
+          _text.value = TextEditingValue(
+            text: words,
+            selection: TextSelection.collapsed(offset: words.length),
+          );
+          if (r.finalResult && mounted) {
+            setState(() => _listening = false);
+          }
+        },
+        listenOptions: SpeechListenOptions(
+          localeId: localeId.isEmpty ? null : localeId,
+          partialResults: true,
+          listenMode: ListenMode.dictation,
+        ),
+      );
+    } catch (_) {
+      if (mounted) setState(() => _listening = false);
+    }
   }
 
   Future<void> _save() async {
@@ -62,14 +198,28 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
       if (homeId == null) return;
       switch (_target) {
         case CaptureTarget.shopping:
-          await _client.from('shopping_list_items').insert([
-            for (final name in items)
-              ShoppingListItem(
-                homeId: homeId,
-                name: name,
-                category: defaultCategoryFor(name),
-              ).toInsertMap(),
-          ]);
+          final repo = OfflineProvider.instance.shopping;
+          final nowMillis = DateTime.now().millisecondsSinceEpoch;
+          for (var i = 0; i < items.length; i++) {
+            final name = items[i];
+            final localId = newLocalId(nowMillis: nowMillis, seq: i);
+            final entry = ShoppingListItem(
+              id: localId,
+              homeId: homeId,
+              name: name,
+              category: defaultCategoryFor(name),
+            );
+            await repo.applyLocalWrite(
+              buildInsertOp(
+                table: kShoppingTable,
+                id: localId,
+                payload: entry.toCacheMap(),
+                nowMillis: nowMillis,
+                seq: i,
+              ),
+            );
+          }
+          unawaited(repo.tryDrain());
         case CaptureTarget.pantry:
           final checkout = ShoppingCheckout();
           for (final name in items) {
@@ -82,6 +232,7 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
               homeId: homeId,
             );
           }
+          unawaited(OfflineProvider.instance.inventory.tryDrain());
         case CaptureTarget.task:
           await _client
               .from('tasks')
@@ -98,7 +249,7 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       final msg = context.l.captureDone(items.length);
-      Navigator.pop(context, true);
+      Navigator.pop(context, _QuickCaptureResult.saved);
       messenger.showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
@@ -120,47 +271,129 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
       CaptureTarget.pantry => context.l.captureHintPantry,
       CaptureTarget.task => context.l.captureHintTask,
     };
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.xl,
-        AppSpacing.lg,
-        AppSpacing.xl,
-        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(context.l.captureTitle, style: AppTextStyles.headline),
-          const SizedBox(height: AppSpacing.md),
-          SegmentedPill(
-            labels: [
-              context.l.captureToShopping,
-              context.l.captureToPantry,
-              context.l.captureToTask,
-            ],
-            selected: _target.index,
-            onChanged: (i) => setState(() => _target = CaptureTarget.values[i]),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          TextField(
-            controller: _text,
-            autofocus: true,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _save(),
-            decoration: InputDecoration(hintText: hint),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: const Icon(Icons.check_rounded),
-            label: Text(context.l.captureSave),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
+    final mood = switch (_target) {
+      CaptureTarget.shopping => MiauMood.shopping,
+      CaptureTarget.pantry => MiauMood.curious,
+      CaptureTarget.task => MiauMood.greeting,
+    };
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.lg,
+          AppSpacing.xl,
+          MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                MiauCharacter(mood: mood, size: 46, interactive: true),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    context.l.captureTitle,
+                    style: AppTextStyles.headline,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.md),
+            SegmentedPill(
+              labels: [
+                context.l.captureToShopping,
+                context.l.captureToPantry,
+                context.l.captureToTask,
+              ],
+              selected: _target.index,
+              onChanged: (i) =>
+                  setState(() => _target = CaptureTarget.values[i]),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: _text,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _save(),
+              decoration: InputDecoration(
+                hintText: hint,
+                suffixIcon: kIsWeb
+                    ? null
+                    : IconButton(
+                        tooltip: _listening
+                            ? context.l.captureVoiceListening
+                            : context.l.captureVoiceTooltip,
+                        onPressed: _toggleVoice,
+                        icon: Icon(
+                          _listening
+                              ? Icons.mic_rounded
+                              : Icons.mic_none_rounded,
+                          color: _listening
+                              ? AppColors.terracotta
+                              : AppColors.woodDark,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.check_rounded),
+              label: Text(context.l.captureSave),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _quickChip(
+                  icon: Icons.document_scanner_outlined,
+                  label: context.l.captureTicket,
+                  onTap: () =>
+                      Navigator.pop(context, _QuickCaptureResult.ticket),
+                ),
+                _quickChip(
+                  icon: Icons.qr_code_scanner_rounded,
+                  label: context.l.captureBarcode,
+                  onTap: () =>
+                      Navigator.pop(context, _QuickCaptureResult.barcode),
+                ),
+                _quickChip(
+                  icon: Icons.restaurant_menu_rounded,
+                  label: context.l.captureRecipe,
+                  onTap: () =>
+                      Navigator.pop(context, _QuickCaptureResult.recipe),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 17, color: AppColors.woodDark),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 40),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        side: BorderSide(color: AppColors.cardEdge),
+        backgroundColor: AppColors.card,
+        foregroundColor: AppColors.ink,
+        textStyle: AppTextStyles.label.copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }

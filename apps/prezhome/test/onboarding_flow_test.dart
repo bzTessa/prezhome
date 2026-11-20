@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/l10n/l10n.dart';
 import 'package:prezhome/onboarding/onboarding_flow.dart';
+import 'package:prezhome/widgets/miau_character.dart';
 import 'package:prezhome/widgets/tactile_button.dart';
 
 Future<void> _tapText(WidgetTester tester, String text) async {
@@ -58,6 +59,13 @@ void main() {
 
     expect(find.text('Tu perfil de hogar'), findsOneWidget);
     expect(find.text('El Dúo'), findsOneWidget);
+    expect(find.text('Así queda tu hogar'), findsOneWidget);
+    expect(find.text('2 personas'), findsOneWidget);
+    expect(find.text('Mercadona'), findsOneWidget);
+    expect(
+      tester.widget<MiauCharacter>(find.byType(MiauCharacter)).mood,
+      MiauMood.celebrating,
+    );
     expect(find.text('Crear mi cuenta'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -81,4 +89,62 @@ void main() {
     expect(find.text('How many people live with you?'), findsOneWidget);
     expect(find.text('2 people'), findsOneWidget);
   });
+
+  testWidgets(
+    'permite cambiar país de súper, enseña resumen y volver atrás desde el resultado',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        const MaterialApp(home: OnboardingFlow(initialPage: 5)),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Mercadona'), findsOneWidget);
+      await _tapText(tester, 'España');
+      await _tapText(tester, 'Deutschland');
+
+      expect(find.text('REWE'), findsOneWidget);
+      await _tapText(tester, 'REWE');
+      await _tapText(tester, 'Ver mi hogar');
+
+      expect(find.text('Así queda tu hogar'), findsOneWidget);
+      expect(find.text('2 personas'), findsOneWidget);
+      expect(find.text('REWE'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('¿Dónde compras?'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'la bienvenida usa cuadrícula visual sin carrusel deslizante y cambia la pose del gato',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(const MaterialApp(home: OnboardingFlow()));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(PageView), findsNothing);
+      expect(
+        tester.widget<MiauCharacter>(find.byType(MiauCharacter)).mood,
+        MiauMood.greeting,
+      );
+
+      await tester.tap(find.text('Qué comemos'));
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(
+        tester.widget<MiauCharacter>(find.byType(MiauCharacter)).mood,
+        MiauMood.cooking,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

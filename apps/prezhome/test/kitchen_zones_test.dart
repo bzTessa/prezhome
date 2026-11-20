@@ -10,6 +10,9 @@ InventoryItem _item(
   String category, {
   String type = 'comida',
   int? expiresInDays,
+  double quantity = 1,
+  String unit = 'ud',
+  String kind = 'ingredient',
 }) {
   final now = DateTime.now();
   return InventoryItem.fromMap({
@@ -18,8 +21,9 @@ InventoryItem _item(
     'name': name,
     'category': category,
     'item_type': type,
-    'quantity': 1,
-    'unit': 'ud',
+    'quantity': quantity,
+    'unit': unit,
+    'kind': kind,
     'expiration_date': expiresInDays == null
         ? null
         : DateTime(
@@ -105,6 +109,137 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  test('cada zona expone su ilustración zona_*.png', () {
+    for (final z in KitchenZone.values) {
+      expect(z.assetPath, startsWith('assets/images/zona_'));
+      expect(z.assetPath, endsWith('.png'));
+    }
+  });
+
+  test(
+    'isLevelTracked aplica solo a especias, condimentos y hogar en unidades',
+    () {
+      expect(isLevelTracked(_item('Orégano', 'Especias', unit: 'ud')), isTrue);
+      expect(
+        isLevelTracked(_item('Lejía', 'Limpieza', type: 'hogar', unit: 'ud')),
+        isTrue,
+      );
+      expect(
+        isLevelTracked(_item('Estropajos', 'Hogar', type: 'hogar', unit: 'ud')),
+        isTrue,
+      );
+      expect(
+        isLevelTracked(_item('Aceite de oliva', 'Despensa', unit: 'ud')),
+        isTrue,
+      );
+
+      expect(
+        isLevelTracked(
+          _item('Garbanzos', 'Despensa', quantity: 570, unit: 'g'),
+        ),
+        isFalse,
+      );
+      expect(
+        isLevelTracked(_item('Tomates', 'Nevera', quantity: 500, unit: 'g')),
+        isFalse,
+      );
+      expect(
+        isLevelTracked(_item('Leche', 'Nevera', quantity: 1000, unit: 'ml')),
+        isFalse,
+      );
+      expect(
+        isLevelTracked(_item('Manzanas', 'Nevera', quantity: 4, unit: 'ud')),
+        isFalse,
+      );
+      expect(
+        isLevelTracked(_item('Lentejas guisadas', 'Nevera', kind: 'dish')),
+        isFalse,
+      );
+    },
+  );
+
+  test('isPantryItemOpened detecta envases empezados en gramos o ml', () {
+    expect(
+      isPantryItemOpened(
+        _item('Garbanzos', 'Despensa', quantity: 370, unit: 'g'),
+        570,
+      ),
+      isTrue,
+    );
+    expect(
+      isPantryItemOpened(
+        _item('Garbanzos', 'Despensa', quantity: 570, unit: 'g'),
+        570,
+      ),
+      isFalse,
+    );
+    expect(
+      isPantryItemOpened(
+        _item('Garbanzos', 'Despensa', quantity: 1140, unit: 'g'),
+        570,
+      ),
+      isFalse,
+    );
+  });
+
+  test(
+    'urgentPantryItems ordena caducados -> pronto -> tápers nevera -> abiertos',
+    () {
+      final opened = _item('Garbanzos', 'Despensa', quantity: 370, unit: 'g');
+      final sealed = _item('Lentejas', 'Despensa', quantity: 500, unit: 'g');
+      final dish = _item('Pollo asado', 'Nevera', kind: 'dish');
+      final soon = _item('Leche', 'Nevera', expiresInDays: 2);
+      final expired = _item('Yogur', 'Nevera', expiresInDays: -1);
+      final spice = _item('Comino', 'Especias', expiresInDays: -30);
+
+      final ordered = urgentPantryItems([
+        opened,
+        sealed,
+        dish,
+        soon,
+        expired,
+        spice,
+      ], packSizeOf: (i) => i.name == 'Garbanzos' ? 570 : null);
+
+      expect(ordered.map((e) => e.id).toList(), [
+        'Yogur',
+        'Leche',
+        'Pollo asado',
+        'Garbanzos',
+      ]);
+    },
+  );
+
+  testWidgets('KitchenZonesGrid cabe en 320 px con onAdd sin desbordar', (
+    tester,
+  ) async {
+    KitchenZone? picked;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('es'),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              child: KitchenZonesGrid(
+                zones: summarizeZones(items),
+                selected: null,
+                onAdd: () {},
+                onSelect: (z) => picked = z,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('9 productos'), findsOneWidget);
+    await tester.tap(find.text('Congelador'));
+    expect(picked, KitchenZone.congelador);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 void _dupes() {

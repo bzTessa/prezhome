@@ -7839,7 +7839,7 @@ abstract class AppLocalizations {
   /// No description provided for @shopAllBoughtAskHint.
   ///
   /// In es, this message translates to:
-  /// **'Pasarán al carrito y a la despensa.'**
+  /// **'Pasarán al carrito.'**
   String get shopAllBoughtAskHint;
 
   /// No description provided for @panLevelHalf.
@@ -7865,6 +7865,270 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver el día'**
   String get planShowDay;
+
+  /// No description provided for @compraSubList.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista'**
+  String get compraSubList;
+
+  /// No description provided for @compraSubHome.
+  ///
+  /// In es, this message translates to:
+  /// **'En casa'**
+  String get compraSubHome;
+
+  /// No description provided for @shopSaveToHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en casa'**
+  String get shopSaveToHome;
+
+  /// No description provided for @shopSaveToHomeCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en casa ({count})'**
+  String shopSaveToHomeCount(int count);
+
+  /// No description provided for @stkAlreadyInPantryNotice.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya guardaste esta compra en casa hace poco. Por defecto solo guardaremos los precios para no duplicar.'**
+  String get stkAlreadyInPantryNotice;
+
+  /// No description provided for @panSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en casa…'**
+  String get panSearchHint;
+
+  /// No description provided for @panSearchEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No encuentro nada con ese nombre.'**
+  String get panSearchEmpty;
+
+  /// No description provided for @panUseSoonTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Para gastar ya'**
+  String get panUseSoonTitle;
+
+  /// No description provided for @panOpenedBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'Abierto'**
+  String get panOpenedBadge;
+
+  /// No description provided for @panPackLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Envase {size}'**
+  String panPackLabel(String size);
+
+  /// No description provided for @panMoveZone.
+  ///
+  /// In es, this message translates to:
+  /// **'Mover de zona'**
+  String get panMoveZone;
+
+  /// No description provided for @panMovedTo.
+  ///
+  /// In es, this message translates to:
+  /// **'Movido a {zone}'**
+  String panMovedTo(String zone);
+
+  /// No description provided for @panThawToFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'A nevera'**
+  String get panThawToFridge;
+
+  /// No description provided for @captureVoiceTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Dictar por voz'**
+  String get captureVoiceTooltip;
+
+  /// No description provided for @captureVoiceListening.
+  ///
+  /// In es, this message translates to:
+  /// **'Escuchando…'**
+  String get captureVoiceListening;
+
+  /// No description provided for @captureBarcode.
+  ///
+  /// In es, this message translates to:
+  /// **'Código de barras'**
+  String get captureBarcode;
+
+  /// No description provided for @captureTicket.
+  ///
+  /// In es, this message translates to:
+  /// **'Ticket'**
+  String get captureTicket;
+
+  /// No description provided for @captureRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta'**
+  String get captureRecipe;
+
+  /// No description provided for @onbCountryLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'País'**
+  String get onbCountryLabel;
+
+  /// No description provided for @onbPickCountry.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige tu país'**
+  String get onbPickCountry;
+
+  /// No description provided for @onbSummaryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Así queda tu hogar'**
+  String get onbSummaryTitle;
+
+  /// No description provided for @recFilterReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Con lo que tengo'**
+  String get recFilterReady;
+
+  /// No description provided for @recPantryReadySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Puedes hacer 1 receta tuya ahora mismo} other{Puedes hacer {count} recetas tuyas ahora mismo}}'**
+  String recPantryReadySubtitle(int count);
+
+  /// No description provided for @rdCookedIt.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya lo cociné'**
+  String get rdCookedIt;
+
+  /// No description provided for @rdCookedShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho'**
+  String get rdCookedShort;
+
+  /// No description provided for @pcTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Buen provecho!'**
+  String get pcTitle;
+
+  /// No description provided for @pcDeductTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Descontar de En casa'**
+  String get pcDeductTitle;
+
+  /// No description provided for @pcDeductSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Se actualizará 1 ingrediente} other{Se actualizarán {count} ingredientes}}'**
+  String pcDeductSubtitle(int count);
+
+  /// No description provided for @pcNoIngredients.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay ingredientes que descontar en En casa.'**
+  String get pcNoIngredients;
+
+  /// No description provided for @pcMoreItems.
+  ///
+  /// In es, this message translates to:
+  /// **'y {count} más'**
+  String pcMoreItems(int count);
+
+  /// No description provided for @pcLeftoversTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Sobran raciones?'**
+  String get pcLeftoversTitle;
+
+  /// No description provided for @pcLeftoversHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Guárdalas como plato listo en En casa'**
+  String get pcLeftoversHint;
+
+  /// No description provided for @pcFridgeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nevera (táper)'**
+  String get pcFridgeLabel;
+
+  /// No description provided for @pcFridgeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Aguanta ~3 días'**
+  String get pcFridgeHint;
+
+  /// No description provided for @pcFreezerLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Congelador'**
+  String get pcFreezerLabel;
+
+  /// No description provided for @pcFreezerGreat.
+  ///
+  /// In es, this message translates to:
+  /// **'Se congela genial'**
+  String get pcFreezerGreat;
+
+  /// No description provided for @pcFreezerHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo para otro día'**
+  String get pcFreezerHint;
+
+  /// No description provided for @pcServingsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{0} =1{1 ración} other{{count} raciones}}'**
+  String pcServingsCount(int count);
+
+  /// No description provided for @pcConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en En casa'**
+  String get pcConfirm;
+
+  /// No description provided for @pcJustClose.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo'**
+  String get pcJustClose;
+
+  /// No description provided for @pcSummaryDeducted.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ingrediente descontado} other{{count} ingredientes descontados}}'**
+  String pcSummaryDeducted(int count);
+
+  /// No description provided for @pcSummaryFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ración en nevera} other{{count} raciones en nevera}}'**
+  String pcSummaryFridge(int count);
+
+  /// No description provided for @pcSummaryFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ración al congelador} other{{count} raciones al congelador}}'**
+  String pcSummaryFreezer(int count);
+
+  /// No description provided for @pcUndone.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios deshechos'**
+  String get pcUndone;
 }
 
 class _AppLocalizationsDelegate

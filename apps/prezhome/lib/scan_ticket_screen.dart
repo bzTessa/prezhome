@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
@@ -6,24 +7,30 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'utils/money.dart';
 
-import 'models/inventory_item.dart';
+import 'models/shopping_list_item.dart';
+import 'services/count_prefs.dart';
+import 'services/offline_provider.dart';
 import 'services/price_memory.dart';
-import 'services/shelf_life.dart';
-import 'services/shelf_life_memory.dart';
 import 'services/shopping_checkout.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
+import 'utils/shopping_display.dart';
 import 'utils/ticket_date.dart';
+import 'utils/ticket_reconcile.dart';
 import 'widgets/food_category_icon.dart';
+import 'widgets/miau_character.dart';
 import 'l10n/l10n.dart';
 
 /// Escanea un ticket con la cámara/galería, lo procesa con IA y muestra una
 /// pantalla de revisión editable antes de guardar. Aprende las correcciones.
 /// Con [ticketId] edita un ticket ya guardado (fecha, tienda, productos).
 class ScanTicketScreen extends StatefulWidget {
-  const ScanTicketScreen({super.key, this.ticketId});
+  const ScanTicketScreen({super.key, this.ticketId, this.shoppingListId});
 
   final String? ticketId;
+
+  /// Lista de la compra desde la que se abre el escáner (null = principal).
+  final String? shoppingListId;
 
   @override
   State<ScanTicketScreen> createState() => _ScanTicketScreenState();
@@ -42,6 +49,10 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   List<_ItemRow> _items = [];
   bool _hasResult = false;
   bool _addToPantry = true;
+  bool _pantryToggledByUser = false;
+  TicketReconcileResult? _reconcile;
+  Future<void>? _reconcileFuture;
+  bool _autoSkippedPantry = false;
 
   @override
   void initState() {
@@ -243,7 +254,39 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       if (parsed != null) _purchasedAt = plausibleTicketDate(parsed);
       _items = items;
       _hasResult = true;
+      _reconcile = null;
+      _autoSkippedPantry = false;
+      _addToPantry = true;
+      _pantryToggledByUser = false;
     });
+    _reconcileFuture = _reconcileLoadedItems();
+    unawaited(_reconcileFuture);
+  }
+
+  Future<void> _reconcileLoadedItems() async {
+    try {
+      final shoppingRows = await OfflineProvider.instance.shopping.readCached();
+      final listItems = [
+        for (final r in shoppingRows) ShoppingListItem.fromMap(r),
+      ];
+      final recent = await RecentCheckoutStore().load();
+      final result = reconcileTicket(
+        ticketNames: [for (final it in _items) it.name.text.trim()],
+        listItems: listItems,
+        recentCheckouts: recent,
+        now: DateTime.now(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _reconcile = result;
+        if (result.likelyAlreadySavedToPantry && !_pantryToggledByUser) {
+          _addToPantry = false;
+          _autoSkippedPantry = true;
+        }
+      });
+    } catch (_) {
+      // Sin caché local sigue el comportamiento estándar.
+    }
   }
 
   double _num(String v) => double.tryParse(v.trim().replaceAll(',', '.')) ?? 0;
@@ -324,8 +367,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             .upsert(aliasByRaw.values.toList(), onConflict: 'home_id,raw_name');
       }
 
-      // 4. Añadir los productos a la despensa (inventario), si procede.
-      //    Es un paso secundario: si falla, el ticket queda guardado igual.
+      // 4. Esperamos la conciliación por si se guardó muy rápido y añadimos los
+      //    productos a la despensa si procede.
+      try {
+        await _reconcileFuture;
+      } catch (_) {}
       if (_addToPantry) {
         try {
           await _addItemsToPantry(homeId);
@@ -342,13 +388,13 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         }
       }
 
-      // 5. Tachar de la lista lo que trae el ticket. También secundario.
+      // 5. Quitar de la lista y del carrito lo que trae el ticket. Secundario.
       var crossed = 0;
       try {
-        crossed = await ShoppingCheckout().markBoughtFromTicket([
+        crossed = await ShoppingCheckout(client: _client).clearCoveredByTicket([
           for (final it in _items)
             if (it.name.text.trim().isNotEmpty) it.name.text.trim(),
-        ]);
+        ], listId: widget.shoppingListId);
       } catch (e) {
         debugPrint('No se pudo tachar de la lista: $e');
       }
@@ -374,111 +420,84 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
     }
   }
 
-  /// Mete los productos del ticket en el inventario, cada uno en su zona
-  /// según su categoría (helado al congelador, lejía a limpieza…).
-  /// Deduplica contra el inventario existente y dentro del propio ticket:
-  /// si el producto ya existe por NOMBRE NORMALIZADO en CUALQUIER ubicación
-  /// (Despensa, Nevera o Congelador), suma la cantidad sobre esa fila en vez
-  /// de crear un duplicado.
+  /// Mete los productos del ticket en "En casa" vía [ShoppingCheckout],
+  /// conservando los gramos/envases de lo que estuviera en la lista o guardado
+  /// en [CountPrefs] y evitando duplicar en la caché offline.
   Future<void> _addItemsToPantry(dynamic homeId) async {
-    // Inventario actual del hogar (RLS ya filtra; el eq es explícito y barato).
-    final existing = await _client
-        .from('inventory_items')
-        .select('id, name, item_type, quantity, created_at')
-        .eq('home_id', homeId);
-
-    // Índice por NOMBRE normalizado -> {id, quantity}, ignorando la ubicación.
-    // Solo cruzamos contra filas de comida (item_type != 'hogar') para no
-    // fusionar un alimento del ticket con un producto de limpieza que
-    // casualmente se llame igual. Si hubiera varias filas con el mismo nombre,
-    // elegimos de forma determinista la más antigua (menor created_at; a
-    // igualdad, menor id) para que el resultado sea estable.
-    final existingByName = <String, Map<String, dynamic>>{};
-    for (final row in (existing as List)) {
-      final map = Map<String, dynamic>.from(row as Map);
-      final itemType = (map['item_type'] ?? 'comida').toString();
-      if (itemType == 'hogar') continue;
-      final name = (map['name'] ?? '').toString();
-      final key = name.trim().toLowerCase();
-      if (key.isEmpty) continue;
-      final id = (map['id'] ?? '').toString();
-      final createdAt = (map['created_at'] ?? '').toString();
-      final candidate = {
-        'id': map['id'],
-        'quantity': (map['quantity'] as num?)?.toDouble() ?? 0,
-        'created_at': createdAt,
-        '_id': id,
-      };
-      final prev = existingByName[key];
-      if (prev == null) {
-        existingByName[key] = candidate;
-      } else {
-        final prevCreated = (prev['created_at'] as String);
-        final prevId = (prev['_id'] as String);
-        final isOlder =
-            createdAt.compareTo(prevCreated) < 0 ||
-            (createdAt == prevCreated && id.compareTo(prevId) < 0);
-        if (isOlder) existingByName[key] = candidate;
-      }
+    final hid = homeId.toString();
+    if ((await OfflineProvider.instance.inventory.readCached()).isEmpty) {
+      try {
+        await OfflineProvider.instance.inventory.refreshFromRemote();
+      } catch (_) {}
     }
-
-    // Acumulamos las cantidades del ticket por nombre normalizado para no
-    // duplicar dentro del propio lote (un ticket puede repetir el producto).
-    final ticketByName = <String, Map<String, dynamic>>{};
-    for (final it in _items) {
+    try {
+      await CountPrefs(_client).load(hid);
+    } catch (_) {}
+    final checkout = ShoppingCheckout(client: _client);
+    final toAdd = <ShoppingListItem>[];
+    final addedNames = <String>[];
+    for (var i = 0; i < _items.length; i++) {
+      // Si este producto concreto ya se había guardado desde la lista hace
+      // poco, lo saltamos salvo que la persona encendiera el switch a mano.
+      if (!_pantryToggledByUser &&
+          (_reconcile?.alreadyInPantryIndices.contains(i) ?? false)) {
+        continue;
+      }
+      final it = _items[i];
       final name = it.name.text.trim();
       if (name.isEmpty) continue;
       final qtyRaw = _num(it.quantity.text);
       final qty = qtyRaw > 0 ? qtyRaw : 1.0;
-      final key = name.trim().toLowerCase();
-      final acc = ticketByName[key];
-      if (acc == null) {
-        ticketByName[key] = {
-          'name': name,
-          'quantity': qty,
-          'aisle': it.category.label,
-        };
-      } else {
-        acc['quantity'] = (acc['quantity'] as double) + qty;
+      final candidate = _reconcile?.matchedListItems[i];
+      final matched =
+          candidate != null &&
+              ticketCovers(name, shoppingCleanName(candidate.name))
+          ? candidate
+          : null;
+      var unit = 'unidades';
+      var finalQty = qty;
+      double? packSize;
+      String? imageUrl;
+      var itemType =
+          it.category == FoodCategory.limpieza ||
+              it.category == FoodCategory.hogar
+          ? 'hogar'
+          : 'comida';
+      if (matched != null) {
+        imageUrl = matched.imageUrl;
+        itemType = matched.itemType;
+        if (matched.packSize != null && matched.packSize! > 0) {
+          unit = matched.unit ?? 'unidades';
+          packSize = matched.packSize;
+          finalQty = qty * matched.packSize!;
+        } else if (qty == 1 && matched.quantity != null) {
+          unit = matched.unit ?? 'unidades';
+          finalQty = matched.quantity!;
+        } else if (matched.unit != null && !isMeasureUnit(matched.unit)) {
+          unit = matched.unit!;
+        }
       }
-    }
-
-    for (final entry in ticketByName.entries) {
-      final name = entry.value['name'] as String;
-      final qty = entry.value['quantity'] as double;
-      final found = existingByName[entry.key];
-      if (found != null) {
-        final newQty = (found['quantity'] as double) + qty;
-        await _client
-            .from('inventory_items')
-            .update({'quantity': newQty})
-            .eq('id', found['id']);
-      } else {
-        // Ubicación lógica según el producto (nevera/despensa/condimentos) y
-        // caducidad estimada para esa ubicación. La usuaria puede ajustarla
-        // luego desde el inventario (ahora los productos son editables).
-        final location = ShelfLife.pantryZoneFor(
+      toAdd.add(
+        ShoppingListItem(
+          homeId: hid,
           name: name,
-          category: entry.value['aisle'] as String,
-        );
-        await ShelfLifeMemory.ensureLoaded(_client);
-        final isHome = location == 'Limpieza' || location == 'Hogar';
-        final item = InventoryItem(
-          id: '',
-          homeId: homeId,
-          name: name,
-          category: location,
-          itemType: isHome ? 'hogar' : 'comida',
-          quantity: qty,
-          unit: 'unidades',
-          kind: 'ingredient',
-          expirationDate: isHome
-              ? null
-              : ShelfLife.estimateDate(name, location),
-        );
-        await _client.from('inventory_items').insert(item.toMap());
-      }
+          quantity: finalQty,
+          unit: unit,
+          itemType: itemType,
+          category: it.category.label,
+          imageUrl: imageUrl,
+          packSize: packSize,
+        ),
+      );
+      addedNames.add(name);
     }
+    for (final item in toAdd) {
+      await checkout.addToPantry(item, homeId: hid);
+    }
+    if (addedNames.isNotEmpty) {
+      await RecentCheckoutStore().record(addedNames);
+    }
+    unawaited(OfflineProvider.instance.inventory.tryDrain(force: true));
   }
 
   @override
@@ -514,7 +533,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 72, color: AppColors.wood),
+            const MiauCharacter(
+              mood: MiauMood.shopping,
+              size: 116,
+              interactive: true,
+            ),
             const SizedBox(height: 16),
             Text(
               context.l.stkStartTitle,
@@ -601,6 +624,37 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
+                    if (widget.ticketId == null && _autoSkippedPantry) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.goldBg,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: AppElevation.border,
+                        ),
+                        child: Row(
+                          children: [
+                            const MiauCharacter(
+                              mood: MiauMood.curious,
+                              size: 40,
+                              float: false,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                context.l.stkAlreadyInPantryNotice,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     if (widget.ticketId == null)
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
@@ -610,6 +664,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
                         activeThumbColor: AppColors.wood,
                         onChanged: (val) {
                           setState(() {
+                            _pantryToggledByUser = true;
                             _addToPantry = val;
                           });
                         },

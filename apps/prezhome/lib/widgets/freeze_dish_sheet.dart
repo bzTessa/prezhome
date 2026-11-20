@@ -93,3 +93,30 @@ InventoryItem frozenDishItem(Recipe recipe, int servings, {String? homeId}) {
     imageUrl: recipe.imageUrl,
   );
 }
+
+/// Plato listo recién cocinado para guardar en la nevera (táper).
+/// Caducidad segura por defecto: 3 días.
+InventoryItem fridgeDishItem(
+  Recipe recipe,
+  int servings, {
+  String? homeId,
+  int days = 3,
+  DateTime? now,
+}) {
+  final today = now ?? DateTime.now();
+  final expiry = DateTime(today.year, today.month, today.day + days);
+  return InventoryItem(
+    id: '',
+    homeId: homeId ?? recipe.homeId,
+    name: recipe.title,
+    category: 'Nevera',
+    quantity: 1,
+    unit: 'comidas',
+    kind: 'dish',
+    recipeId: recipe.id,
+    servings: servings.toDouble(),
+    expirationDate: expiry,
+    bestBefore: expiry,
+    imageUrl: recipe.imageUrl,
+  );
+}

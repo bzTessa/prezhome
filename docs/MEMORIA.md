@@ -41,11 +41,18 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Eliminar pide confirmación ("¿Eliminar…?"); vaciar/quitar en bloque, además,
   deshacer. Los avisos con acción llevan `persist: false`. Háptica en acciones.
 - Trabajar con autonomía y entregar en PR; respuestas en español.
+- Sin carruseles horizontales de deslizar; priorizar cuadrículas y
+  composiciones visuales con las ilustraciones propias (`zona_*`, `onb_*`,
+  `miau_*`).
 
 ## Mapa del código (`apps/prezhome/lib`)
-- Inicio ya no tiene "Hoy toca" (Tessa lo quitó; borrado `smart_reminders`).
+- Inicio ya no tiene "Hoy toca" (Tessa lo quitó; borrado `smart_reminders`) ni
+  FAB flotante redundante (`+` global vive en la barra inferior).
 - Navegación: `main_shell.dart` + barra `packages/prez_ui/lib/src/floating_nav_bar.dart`
-  (se desliza el dedo para cambiar). Pestañas en `tabs/`.
+  con 4 pestañas (`Hoy · Comidas · Compra [Lista | En casa] · Tareas`) + botón
+  circular `+` global (`quick_capture_sheet.dart` con gato por contexto, voz y
+  accesos a ticket/código/receta). Pestañas en `tabs/` (`compra_tab.dart`;
+  borrado `despensa_tab.dart`).
 - Diseño: `theme/` (`AppColors`, `AppTextStyles` Plus Jakarta Sans,
   `AppRadius`, `AppSpacing`, `AppMotion`). Modo oscuro: `AppColors` son
   getters claro/oscuro según `AppColors.dark`, que fija `main.dart` según
@@ -53,20 +60,48 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Hogar y ajustes; sin sesión, siempre claro) (no usar `const` con `AppColors`; nada de `Colors.white`
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
-- Estilo táctil (reglas en `.kiro/steering/design-system.md`): tarjetas con
-  trazo carbón y sombra dura (`AppElevation`, `surfaceDecoration`,
-  `tactileDecoration`), radios 20/14/10. El nombre de la mascota no sale en
-  ningún texto. `MiauCharacter` respira, salta al cambiar de pose e
-  `interactive:` reacciona al toque (solo transformaciones, PNG estáticos).
+- Estilo Cozy Editorial + acentos táctiles: tarjetas en reposo con borde arena
+  (`AppColors.cardEdge`) y sombra suave (`AppElevation.level1`); trazo carbón y
+  sombra dura (`AppColors.stroke`, `AppElevation.tactileBorder`/`tactileShadow`,
+  `AppTheme.heroTactileDecoration`, `TactileButton`, `FloatingNavBar`)
+  reservados a CTAs clave y radios 20/14/10, con `AppColors.onTerracotta` para
+  contraste crema sobre terracota.
+- El nombre de la mascota no sale en ningún texto ni se muestran iconos
+  `auto_awesome`. `MiauCharacter` tiene coreografía por `mood` (aleteos/bote/
+  inclinación), saltito con anticipación y efectos ambientales en `CustomPaint`
+  (Zz, vapor, confeti geométrico, ondas de pensar, lágrima) más 3 corazones al
+  tocar (`interactive:`), respetando `AppMotion.reduceMotionOf` y `float: false`.
+  `utils/miau_mood_resolver.dart` decide el humor en la cabecera de `Hoy`
+  (`home_tab.dart`), en `CookModeScreen` (cocinando → celebrando al final,
+  con `float: false`) y en `onboarding/onboarding_flow.dart`.
+- Onboarding (`onboarding/onboarding_flow.dart`, `onboarding_widgets.dart`,
+  `models/onboarding_answers.dart`, `services/onboarding_applier.dart`,
+  `home_onboarding_screen.dart`): bienvenida visual 2×2 (sin carrusel
+  horizontal) con gato sincronizado, selector de país (`countryCode`) y logos
+  `SupermarketBadge` en paso 5, gato reactivo en cada paso, transición
+  direccional, tarjeta resumen "Así queda tu hogar" en el resultado y gato
+  curioso al introducir código en `HomeOnboardingScreen`.
 - Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
   poses `miau_*` (`MiauMood`),
   `vacio_*` (EmptyState `image:`), `zona_<etiqueta>` (Mi cocina), `onb_*`.
 - Offline: `services/offline_repository.dart` (+ `offline_merge.dart`,
   `supabase_remote_sender.dart`, `offline_provider.dart`). Ids locales
   `local-`. Errores permanentes (`PermanentSyncError`) se descartan.
-- Compra: `shopping_list_screen.dart`, `services/shopping_checkout.dart`
-  (comprado → despensa por zona, "Todo comprado", tarea "compra" completada
-  marca la lista), `services/plan_shopping.dart` (lista desde el plan).
+- Compra y "En casa" (Mi cocina): `shopping_list_screen.dart`, `scan_ticket_screen.dart`,
+  `services/shopping_checkout.dart` (`setInCart`, `checkoutToPantryWithReceipt`,
+  `undoCheckout`, `clearCoveredByTicket`, `RecentCheckoutStore`) y
+  `utils/ticket_reconcile.dart`. Tachar en el súper mueve al carrito; "Guardar
+  en casa" pasa una vez a despensa con deshacer real (`undoCheckout`); lo que
+  ya estaba tachado antes de este flujo (ya sumado entonces) no se vuelve a
+  sumar (`LegacyCartStore`),
+  conservando gramos/ml y `packSize` (`CountPrefs`); escanear el ticket espera
+  la conciliación, evita duplicados incluso parciales, hereda envases y limpia
+  en esa lista (solo en sentido ticket → lista) lo cubierto. En `Mi cocina` (`inventory_screen.dart`,
+  `utils/kitchen_zones.dart`, `widgets/kitchen/kitchen_zones_grid.dart`):
+  cuadrícula 3×2 con `assets/images/zona_*.png`, buscador entre zonas, "Para
+  gastar ya", insignia "Abierto" + `Envase`, 1 toque `A nevera`, "Mover de zona"
+  y `isLevelTracked` solo en especias/condimentos/hogar en unidades.
+  `services/plan_shopping.dart` genera la lista desde el plan.
 - Iconos de producto: `widgets/product_icons.dart` (palabra clave → nombre de
   icono). Nada de iconos de Microsoft (Tessa no los quiere): solo sus dibujos,
   apuntados en `_own` (`assets/icons/products/`). Lo genérico ("cebollas",
@@ -121,8 +156,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (`defaultCategoryFor`) y la zona de la despensa salen de ahí.
 - Plan de comidas: un solo plan semanal, `meal_plan_screen.dart` (semana con
   flechas; vive en Comidas > Plan; Hoy lleva ahí con `onNavigateToPlan`, no abre
-  otra copia; vista Día/Semana con `SegmentedPill`; sin deslizar de día porque
-  Comidas es un `TabBarView`). Iconos junto a Día/Semana: calendario del mes
+  otra copia; vista Día/Semana con `SegmentedPill`). La pestaña `ComidasTab`
+  (`tabs/comidas_tab.dart`) usa `SegmentedPill` + `IndexedStack` perezoso (como
+  `CompraTab`) y oculta `Diario` cuando `DashboardPrefs.trackCalories` es
+  `false`. Iconos junto a Día/Semana: calendario del mes
   (`month_calendar_screen.dart`, único, con comidas, tareas y cocina en lote;
   se desliza de mes y "Ver en el plan" devuelve el día con `pop<DateTime>`) y
   ajustes (`services/plan_prefs.dart`, en el dispositivo: ocultar
@@ -155,10 +192,20 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   grupo legumbre/pescado/huevo/carne y límite de repeticiones),
   `meal_prep_*` (`prepAgenda`: compra, día de cocina con tápers nevera/congelador,
   qué sacar la víspera), `services/plan_prep.dart` (lo comparten plan y mes).
-  Raciones por comida editables en "Quién come". Recetas: `recipes_screen.dart`,
+  Raciones por comida editables en "Quién come". Recetas: `recipes_screen.dart`
+  (`utils/recipe_browse.dart`, `widgets/recipe_category_chips.dart`, filtros
+  combinables `categories` + `onlyReady` "Con lo que tengo" sin carrusel, `Hero`
+  por sección y botón `+` junto al buscador cuando va embebida),
   `recipe_detail_screen.dart`, `cook_mode_screen.dart` (paso a paso con
   `CookStep`, varios temporizadores, pantalla encendida, manos libres por voz:
   `services/hands_free.dart` + `utils/cook_voice.dart`), `utils/recipe_steps.dart`.
+  Cierre post-cocina: tras `CookModeScreen` o "Ya lo cociné",
+  `widgets/post_cook_sheet.dart` (`MiauCharacter` celebrando con `float: false`)
+  + `PantryUsage.completeCook`/`undoCompleteCook` (`services/pantry_usage.dart`)
+  + `fridgeDishItem` (`widgets/freeze_dish_sheet.dart`) descuentan de En casa y
+  reparten sobras entre Nevera (+3 días) y Congelador con `Deshacer`. Si
+  descuenta, marca esa receta en el plan (`claimPlannedMeals`, hace 6 días a
+  mañana) para que `syncPlan` no la descuente otra vez.
   Tanda: `batch_prep_timeline_screen.dart` ("Lo que necesitas" con los
   ingredientes por raciones, `batchIngredientLines`; cada receta se prepara
   antes de ir a su aparato; acaba con el reparto en tápers del `PrepBatch`).
@@ -204,3 +251,4 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
 - Ofrecido, sin decidir: precios con Open Prices.
+- Bloque 4 pendiente: mejorar importación de recetas desde vídeos/webs (`instagram.com/share/...`, JSON-LD `schema.org/Recipe`, portada `og:image`, OCR) y adaptar supermercados internacionales, países, idiomas y multipacks/unidades imperiales en Compra.

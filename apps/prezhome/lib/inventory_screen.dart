@@ -17,9 +17,12 @@ import 'services/pantry_usage.dart';
 import 'services/product_photo_resolver.dart';
 import 'services/proactive_suggestions_service.dart';
 import 'services/taper_sync.dart';
+import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
+import 'widgets/food_category_icon.dart';
 import 'widgets/list_skeleton.dart';
+import 'widgets/miau_character.dart';
 import 'widgets/skeleton.dart';
 import 'utils/debouncer.dart';
 import 'utils/offline_actions.dart';
@@ -34,7 +37,6 @@ import 'utils/shopping_display.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
-import 'utils/practical_quantity.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'discover_recipes_screen.dart';
@@ -66,6 +68,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   // Zona que se ve: filterKey de [KitchenZone], o null hasta que se elige
   // (primera zona con productos).
   String? _sectionFilter;
+
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
   StreamSubscription<void>? _changesSub;
 
@@ -110,6 +115,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void dispose() {
     _changesSub?.cancel();
     _converge.cancel();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -793,16 +799,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 elevation: 0,
                 iconTheme: IconThemeData(color: AppColors.ink),
               ),
-        // Un solo botón: las formas de añadir van en una hoja (antes eran dos
-        // botones flotantes apilados que tapaban la lista).
-        floatingActionButton: HideFabOnScroll.fab(
-          FloatingActionButton(
-            heroTag: 'fab-inventory',
-            onPressed: _openAddOptions,
-            tooltip: context.l.panAddTooltip,
-            child: const Icon(Icons.add_rounded, size: 30),
-          ),
-        ),
+        // En modo embebido (Compra > En casa), el "+" vive en cabecera y en la
+        // barra inferior global para no solapar botones flotantes.
+        floatingActionButton: widget.embedded
+            ? null
+            : HideFabOnScroll.fab(
+                FloatingActionButton(
+                  heroTag: 'fab-inventory',
+                  onPressed: _openAddOptions,
+                  tooltip: context.l.panAddTooltip,
+                  child: const Icon(Icons.add_rounded, size: 30),
+                ),
+              ),
         body: FadeFutureBuilder<List<InventoryItem>>(
           future: _itemsFuture,
           builder: (context, snapshot) {
@@ -821,7 +829,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             final items = snapshot.data ?? [];
             if (items.isEmpty) {
               return EmptyState(
-                image: 'assets/images/vacio_despensa.png',
+                mood: MiauMood.curious,
                 title: context.l.panEmptyTitle,
                 message: context.l.panEmptyHint,
                 actionLabel: context.l.panAddProduct,
@@ -854,13 +862,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
   static bool _tracksExpiry(InventoryItem i) =>
       i.itemType == 'comida' && i.category != 'Especias';
 
-  /// Mi cocina: las zonas hacen de pestañas y debajo va SOLO la zona elegida,
-  /// en filas compactas. Así nada sale dos veces.
+  /// Mi cocina: cuadrícula de zonas con ilustraciones propias, buscador global
+  /// en casa, bloque prioritario "Para gastar ya" y debajo solo la zona
+  /// elegida.
   Widget _buildKitchen(List<InventoryItem> items) {
     final zones = summarizeZones(items);
     final zone =
         KitchenZone.byFilterKey(_sectionFilter ?? '') ??
         zones.firstWhere((z) => z.count > 0, orElse: () => zones.first).zone;
+    final query = _searchQuery.trim();
+    final searching = query.isNotEmpty;
     final shown = items.where(zone.matches).toList();
     final alphabetical =
         zone == KitchenZone.especias ||
@@ -900,7 +911,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
         if (list.length > 1) list.first.id: list,
     };
 
+    final normQuery = CategoryIcons.normalize(query);
+    final matches = !searching
+        ? const <InventoryItem>[]
+        : [
+            for (final i in items)
+              if (CategoryIcons.normalize(i.name).contains(normQuery)) i,
+          ];
+    final urgent = searching
+        ? const <InventoryItem>[]
+        : urgentPantryItems(items, packSizeOf: _packOf);
+
     return ListView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.lg,
@@ -910,94 +933,350 @@ class _InventoryScreenState extends State<InventoryScreen> {
       children: [
         KitchenZonesGrid(
           zones: zones,
-          selected: zone,
+          selected: searching ? null : zone,
           onSelect: (z) {
             HapticFeedback.selectionClick();
-            setState(() => _sectionFilter = z.filterKey);
+            setState(() {
+              _searchCtrl.clear();
+              _searchQuery = '';
+              _sectionFilter = z.filterKey;
+            });
           },
+          onAdd: widget.embedded ? _openAddOptions : null,
           trailing: _cleanupMenu(items, zone),
         ),
         const SizedBox(height: AppSpacing.md),
-        // Al revés que el plan: ideas de recetas con lo que ya hay.
-        FilledButton.tonalIcon(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
-            ),
-          ),
-          icon: const Icon(Icons.soup_kitchen_outlined, size: 20),
-          label: Text(context.l.panWhatToCook),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(44),
-            backgroundColor: AppColors.wood.withValues(alpha: 0.35),
-            foregroundColor: AppColors.ink,
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.sm),
-          child: Text(
-            '${context.l.kitchenZone(zone.name)} · ${shown.length}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.inkMuted,
-            ),
-          ),
-        ),
-        if (shown.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Text(
-              context.l.panNothingHere,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.inkMuted),
-            ),
-          )
-        else
-          for (final (gi, g) in _groups(
-            shown,
-            byShelf: !alphabetical,
-          ).indexed) ...[
-            if (g.label != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 0, 6),
-                child: Text(
-                  g.label!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: g.color ?? AppColors.inkMuted,
+        TextField(
+          controller: _searchCtrl,
+          onChanged: (v) => setState(() => _searchQuery = v),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: context.l.panSearchHint,
+            prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
+            suffixIcon: _searchQuery.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: context.l.clear,
+                    icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
+                    onPressed: () {
+                      _searchCtrl.clear();
+                      setState(() => _searchQuery = '');
+                    },
                   ),
-                ),
+            filled: true,
+            fillColor: AppColors.card,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: AppColors.cardEdge),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: AppColors.woodDark, width: 1.5),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (searching) ...[
+          if (matches.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Column(
+                children: [
+                  const MiauCharacter(
+                    mood: MiauMood.curious,
+                    size: 76,
+                    interactive: true,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    context.l.panSearchEmpty,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyMuted,
+                  ),
+                ],
               ),
-            // Al cambiar de zona, los productos entran con un fundido suave.
-            StaggeredEntrance(
-              key: ValueKey('$_sectionFilter-$gi'),
-              index: gi,
-              slideFrom: 8,
-              child: Container(
-                // El relleno deja el borde por encima de las filas opacas.
-                padding: const EdgeInsets.all(1.5),
-                decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.md - 1.5),
-                  child: Column(
-                    children: [
-                      for (var k = 0; k < g.items.length; k++) ...[
-                        if (k > 0)
-                          Divider(height: 1, indent: 76, color: AppColors.line),
-                        _itemRow(g.items[k], showZone: false),
-                      ],
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(1.5),
+              decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.md - 1.5),
+                child: Column(
+                  children: [
+                    for (var k = 0; k < matches.length; k++) ...[
+                      if (k > 0)
+                        Divider(height: 1, indent: 76, color: AppColors.line),
+                      _itemRow(matches[k], showZone: true),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+        ] else ...[
+          if (urgent.isNotEmpty) ...[
+            _urgentCard(urgent),
+            const SizedBox(height: AppSpacing.lg),
+          ] else ...[
+            // Al revés que el plan: ideas de recetas con lo que ya hay.
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+                ),
+              ),
+              icon: const Icon(Icons.soup_kitchen_outlined, size: 20),
+              label: Text(context.l.panWhatToCook),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                backgroundColor: AppColors.wood.withValues(alpha: 0.35),
+                foregroundColor: AppColors.ink,
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
           ],
+          AnimatedSwitcher(
+            duration: AppMotion.effectiveDuration(
+              AppMotion.normal,
+              reduceMotion: AppMotion.reduceMotionOf(context),
+            ),
+            switchInCurve: AppMotion.easeOut,
+            switchOutCurve: AppMotion.easeOut,
+            child: Column(
+              key: ValueKey(zone.filterKey),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 4,
+                    bottom: AppSpacing.sm,
+                  ),
+                  child: Text(
+                    '${context.l.kitchenZone(zone.name)} · ${shown.length}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ),
+                if (shown.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Column(
+                      children: [
+                        const MiauCharacter(
+                          mood: MiauMood.curious,
+                          size: 64,
+                          interactive: true,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          context.l.panNothingHere,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.inkMuted),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  for (final (gi, g) in _groups(
+                    shown,
+                    byShelf: !alphabetical,
+                  ).indexed) ...[
+                    if (g.label != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 4, 0, 6),
+                        child: Text(
+                          g.label!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: g.color ?? AppColors.inkMuted,
+                          ),
+                        ),
+                      ),
+                    // Al cambiar de zona, los productos entran con un fundido suave.
+                    StaggeredEntrance(
+                      key: ValueKey('${zone.filterKey}-$gi'),
+                      index: gi,
+                      slideFrom: 8,
+                      child: Container(
+                        // El relleno deja el borde por encima de las filas opacas.
+                        padding: const EdgeInsets.all(1.5),
+                        decoration: AppTheme.surfaceDecoration(
+                          radius: AppRadius.md,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            AppRadius.md - 1.5,
+                          ),
+                          child: Column(
+                            children: [
+                              for (var k = 0; k < g.items.length; k++) ...[
+                                if (k > 0)
+                                  Divider(
+                                    height: 1,
+                                    indent: 76,
+                                    color: AppColors.line,
+                                  ),
+                                _itemRow(g.items[k], showZone: false),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+              ],
+            ),
+          ),
+        ],
       ],
+    );
+  }
+
+  /// Bloque prioritario "Para gastar ya": caducados, próximos a caducar, tápers
+  /// en nevera y envases abiertos, más acceso directo a ideas de cocina.
+  Widget _urgentCard(List<InventoryItem> urgent) {
+    String badgeFor(InventoryItem item) {
+      final days = item.daysUntilExpiry;
+      if (days != null && days < 0) return context.l.stExpired;
+      if (days == 0) return context.l.panExpiresToday;
+      if (days == 1) return context.l.panExpiresTomorrow;
+      if (days != null && days <= 3) return context.l.panExpiresIn(days);
+      if (item.kind == 'dish') return item.kindLabel;
+      return context.l.panOpenedBadge;
+    }
+
+    Color badgeColor(InventoryItem item) {
+      return switch (item.expiryStatus) {
+        ExpiryStatus.caducado => AppColors.expired,
+        ExpiryStatus.pronto => AppColors.soon,
+        _ => item.kind == 'dish' ? AppColors.sage : AppColors.terracottaText,
+      };
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        color: AppColors.goldBg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.local_fire_department_rounded,
+                size: 18,
+                color: AppColors.terracottaText,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  context.l.panUseSoonTitle.toUpperCase(),
+                  style: AppTextStyles.label.copyWith(
+                    color: AppColors.terracottaText,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: AppRadius.pillRadius,
+                ),
+                child: Text(
+                  '${urgent.length}',
+                  style: AppTextStyles.numeric(AppTextStyles.label),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          for (final item in urgent.take(4))
+            InkWell(
+              onTap: () => _openItemActions(item),
+              borderRadius: AppRadius.smRadius,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: badgeColor(item),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        shoppingCleanName(item.name),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.titleSmall,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      pantryQtyLabel(
+                        item.quantity,
+                        item.unit,
+                        packSize: _packOf(item),
+                        byLevel: isLevelTracked(item),
+                      ),
+                      style: AppTextStyles.labelMuted,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: AppRadius.pillRadius,
+                      ),
+                      child: Text(
+                        badgeFor(item),
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 11,
+                          color: badgeColor(item),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          FilledButton.tonalIcon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
+              ),
+            ),
+            icon: const Icon(Icons.soup_kitchen_outlined, size: 18),
+            label: Text(context.l.panWhatToCook),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(42),
+              backgroundColor: AppColors.card,
+              foregroundColor: AppColors.ink,
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1033,7 +1312,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   /// Fila de producto: foto, nombre, cantidad y, si caduca, cuándo.
   Widget _itemRow(InventoryItem item, {required bool showZone}) {
-    final same = _sameDish[item.id];
+    final same = showZone ? null : _sameDish[item.id];
     final total = same?.fold<double>(0, (t, i) => t + i.quantity);
     final days = _tracksExpiry(item) ? item.daysUntilExpiry : null;
     final (String, Color)? expiry = switch (days) {
@@ -1053,12 +1332,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
             KitchenZone.values.firstWhere((z) => z.matches(item)).name,
           )
         : null;
-    // Todo se cambia con el mismo − / + (envases, piezas o nivel); los
-    // gramos exactos, en "Editar".
-    final byLevel = _byLevel(item);
+    // Semáforo por nivel solo en especias/limpieza/hogar en unidades; el resto
+    // muestra siempre sus gramos, ml o unidades exactas.
+    final byLevel = isLevelTracked(item);
     final pack = _packOf(item);
+    final opened = isPantryItemOpened(item, pack);
+    final packLabel = (pack != null && isMeasureUnit(item.unit))
+        ? context.l.panPackLabel(shoppingQtyLabel(pack, item.unit))
+        : null;
     final subtitle = [
       ?zoneLabel,
+      ?packLabel,
       if (item.isStaple) context.l.panNotBought,
     ].where((t) => t.isNotEmpty).join(' · ');
 
@@ -1126,34 +1410,98 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         ),
                       ),
                     ],
-                    // Caducidad bajo el nombre, en una línea y en el color
-                    // del aviso: no compite por ancho con el − / +.
-                    if (expiry != null) ...[
+                    // Caducidad y estado "Abierto" bajo el nombre, en una línea.
+                    if (expiry != null || opened) ...[
                       const SizedBox(height: 3),
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: expiry.$2,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Flexible(
-                            child: Text(
-                              expiry.$1,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: expiry.$2,
+                          if (opened)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 1.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.soonBg,
+                                borderRadius: AppRadius.pillRadius,
+                              ),
+                              child: Text(
+                                context.l.panOpenedBadge,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.soon,
+                                ),
                               ),
                             ),
-                          ),
+                          if (expiry != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    color: expiry.$2,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(
+                                    expiry.$1,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: expiry.$2,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
+                      ),
+                    ],
+                    if (item.kind == 'dish' &&
+                        item.category == 'Congelador') ...[
+                      const SizedBox(height: 6),
+                      InkWell(
+                        onTap: () => _moveToZone(item, KitchenZone.nevera),
+                        borderRadius: AppRadius.pillRadius,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.frostBg,
+                            borderRadius: AppRadius.pillRadius,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.kitchen_rounded,
+                                size: 14,
+                                color: AppColors.frost,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                context.l.panThawToFridge,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.frost,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -1197,12 +1545,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  /// Lo que no se cuenta (aceite, sal, especias) va por nivel.
-  static bool _byLevel(InventoryItem i) =>
-      i.kind == 'ingredient' &&
-      i.itemType == 'comida' &&
-      (i.category == 'Especias' || isCondiment(i.name));
-
   /// Lo que trae cada envase según el hogar, en la unidad de la fila.
   static double? _packOf(InventoryItem i) {
     final own = CountPrefs.customPackOf(i.name);
@@ -1217,7 +1559,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     required bool up,
     double? pack,
   }) async {
-    final byLevel = _byLevel(item);
+    final byLevel = isLevelTracked(item);
     final next = pantryQtyNext(
       item.quantity,
       item.unit,
@@ -1433,6 +1775,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
               title: Text(context.l.edit),
               onTap: () => Navigator.of(ctx).pop('edit'),
             ),
+            ListTile(
+              leading: Icon(
+                Icons.swap_horiz_rounded,
+                color: AppColors.woodDark,
+              ),
+              title: Text(context.l.panMoveZone),
+              onTap: () => Navigator.of(ctx).pop('move'),
+            ),
             if (item.itemType == 'comida')
               ListTile(
                 leading: Icon(
@@ -1482,6 +1832,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
         MaterialPageRoute(builder: (_) => AddInventoryItemScreen(item: item)),
       );
       if (changed != null) await _applyUpsert(changed, editing: true);
+    } else if (action == 'move') {
+      final target = await _pickZone(item);
+      if (target != null) await _moveToZone(item, target);
     } else if (action == 'staple') {
       await _toggleStaple(item, !item.isStaple);
     } else if (action == 'consumed') {
@@ -1516,6 +1869,92 @@ class _InventoryScreenState extends State<InventoryScreen> {
         HapticFeedback.mediumImpact();
         await _deleteItem(item);
       }
+    }
+  }
+
+  Future<KitchenZone?> _pickZone(InventoryItem item) {
+    final current = KitchenZone.values.firstWhere((z) => z.matches(item));
+    return showModalBottomSheet<KitchenZone>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(context.l.panMoveZone, style: AppTextStyles.title),
+              ),
+              for (final z in KitchenZone.values)
+                ListTile(
+                  leading: Image.asset(
+                    z.assetPath,
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.contain,
+                    cacheWidth: 84,
+                  ),
+                  title: Text(context.l.kitchenZone(z.name)),
+                  trailing: z == current
+                      ? Icon(Icons.check_rounded, color: AppColors.done)
+                      : null,
+                  enabled: z != current,
+                  onTap: () => Navigator.of(ctx).pop(z),
+                ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _moveToZone(InventoryItem item, KitchenZone target) async {
+    HapticFeedback.selectionClick();
+    final isHome =
+        target == KitchenZone.limpieza || target == KitchenZone.hogar;
+    final now = DateTime.now();
+    final tomorrow = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).toIso8601String().split('T').first;
+    final changes = <String, dynamic>{
+      'category': target.filterKey,
+      'item_type': isHome ? 'hogar' : 'comida',
+      if (item.kind == 'dish' && target == KitchenZone.nevera)
+        'best_before': tomorrow,
+    };
+    try {
+      await _repo.applyLocalWrite(
+        buildUpdateOp(
+          table: kInventoryTable,
+          id: item.id,
+          changes: changes,
+          nowMillis: now.millisecondsSinceEpoch,
+          seq: _nextSeq(),
+        ),
+      );
+      await _reload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l.panMovedTo(context.l.kitchenZone(target.name)),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, context.l.couldNotUpdate)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
     }
   }
 

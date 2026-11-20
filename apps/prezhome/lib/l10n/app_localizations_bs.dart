@@ -5066,7 +5066,7 @@ class AppLocalizationsBs extends AppLocalizations {
   }
 
   @override
-  String get shopAllBoughtAskHint => 'Prebacit će se u korpu i ostavu.';
+  String get shopAllBoughtAskHint => 'Prebacit će se u korpu.';
 
   @override
   String get panLevelHalf => 'Pola';
@@ -5079,4 +5079,200 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get planShowDay => 'Prikaži dan';
+
+  @override
+  String get compraSubList => 'Lista';
+
+  @override
+  String get compraSubHome => 'Kod kuće';
+
+  @override
+  String get shopSaveToHome => 'Spremi kod kuće';
+
+  @override
+  String shopSaveToHomeCount(int count) {
+    return 'Spremi kod kuće ($count)';
+  }
+
+  @override
+  String get stkAlreadyInPantryNotice =>
+      'Nedavno si već spremio/la ovu kupovinu kod kuće. Podrazumijevano ćemo spremiti samo cijene da se ne duplira.';
+
+  @override
+  String get panSearchHint => 'Traži kod kuće…';
+
+  @override
+  String get panSearchEmpty => 'Ne nalazim ništa s tim imenom.';
+
+  @override
+  String get panUseSoonTitle => 'Potrošiti uskoro';
+
+  @override
+  String get panOpenedBadge => 'Otvoreno';
+
+  @override
+  String panPackLabel(String size) {
+    return 'Pakovanje $size';
+  }
+
+  @override
+  String get panMoveZone => 'Premjesti zonu';
+
+  @override
+  String panMovedTo(String zone) {
+    return 'Premješteno u $zone';
+  }
+
+  @override
+  String get panThawToFridge => 'U frižider';
+
+  @override
+  String get captureVoiceTooltip => 'Glasovni unos';
+
+  @override
+  String get captureVoiceListening => 'Slušam…';
+
+  @override
+  String get captureBarcode => 'Barkod';
+
+  @override
+  String get captureTicket => 'Račun';
+
+  @override
+  String get captureRecipe => 'Recept';
+
+  @override
+  String get onbCountryLabel => 'Država';
+
+  @override
+  String get onbPickCountry => 'Odaberi državu';
+
+  @override
+  String get onbSummaryTitle => 'Ovako izgleda tvoj dom';
+
+  @override
+  String get recFilterReady => 'Sa onim što imam';
+
+  @override
+  String recPantryReadySubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Možeš odmah napraviti $count svojih recepata',
+      few: 'Možeš odmah napraviti $count svoja recepta',
+      one: 'Možeš odmah napraviti 1 svoj recept',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rdCookedIt => 'Skuhano';
+
+  @override
+  String get rdCookedShort => 'Gotovo';
+
+  @override
+  String get pcTitle => 'Prijatno!';
+
+  @override
+  String get pcDeductTitle => 'Oduzmi iz Kod kuće';
+
+  @override
+  String pcDeductSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sastojaka će biti ažurirano',
+      few: '$count sastojka će biti ažurirana',
+      one: '1 sastojak će biti ažuriran',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pcNoIngredients => 'Nema sastojaka za oduzimanje u Kod kuće.';
+
+  @override
+  String pcMoreItems(int count) {
+    return 'i još $count';
+  }
+
+  @override
+  String get pcLeftoversTitle => 'Ima li ostataka?';
+
+  @override
+  String get pcLeftoversHint => 'Spremi ih kao gotovo jelo u Kod kuće';
+
+  @override
+  String get pcFridgeLabel => 'Frižider (posuda)';
+
+  @override
+  String get pcFridgeHint => 'Traje ~3 dana';
+
+  @override
+  String get pcFreezerLabel => 'Zamrzivač';
+
+  @override
+  String get pcFreezerGreat => 'Odlično za zamrzavanje';
+
+  @override
+  String get pcFreezerHint => 'Spremno za drugi dan';
+
+  @override
+  String pcServingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count porcija',
+      few: '$count porcije',
+      one: '1 porcija',
+      zero: '0',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pcConfirm => 'Spremi u Kod kuće';
+
+  @override
+  String get pcJustClose => 'Gotovo';
+
+  @override
+  String pcSummaryDeducted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sastojaka oduzeto',
+      few: '$count sastojka oduzeta',
+      one: '1 sastojak oduzet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pcSummaryFridge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count porcija u frižideru',
+      few: '$count porcije u frižideru',
+      one: '1 porcija u frižideru',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pcSummaryFreezer(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count porcija u zamrzivaču',
+      few: '$count porcije u zamrzivaču',
+      one: '1 porcija u zamrzivaču',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pcUndone => 'Promjene poništene';
 }

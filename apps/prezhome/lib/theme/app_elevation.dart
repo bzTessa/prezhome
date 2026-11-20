@@ -18,9 +18,18 @@ class AppElevation {
   /// Desplazamiento vertical que baja una pieza al pulsarla.
   static const double restOffset = 3;
 
-  /// Borde de las tarjetas: invisible en claro (manda la sombra suave) y una
-  /// línea discreta en oscuro, donde la sombra apenas se ve.
+  /// Borde de las tarjetas editoriales: arena cálida en claro y línea discreta
+  /// en oscuro.
   static Border get border => Border.all(color: AppColors.cardEdge, width: 1);
+
+  /// Borde táctil para botones clave, barra inferior y tarjetas destacadas.
+  static Border get tactileBorder =>
+      Border.all(color: AppColors.stroke, width: 1.75);
+
+  /// Sombra dura corta del estilo táctil para elementos destacados.
+  static List<BoxShadow> get tactileShadow => <BoxShadow>[
+    BoxShadow(color: AppColors.stroke, offset: const Offset(0, 3)),
+  ];
 
   /// Nivel 0: superficie plana, sin sombra.
   static List<BoxShadow> get level0 => <BoxShadow>[];
