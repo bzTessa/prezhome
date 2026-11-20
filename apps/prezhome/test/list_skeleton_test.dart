@@ -41,20 +41,20 @@ void main() {
     }
   });
 
-  testWidgets('recetas: dos columnas como la rejilla real', (tester) async {
+  testWidgets('recetas: filas con foto pequeña como la lista real', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(_app(const RecipesSkeleton()));
-    final grid = tester.widget<SliverGrid>(find.byType(SliverGrid));
-    expect(grid.gridDelegate, same(recipeGridDelegate));
-    final cards = find.descendant(
-      of: find.byType(SliverGrid),
-      matching: find.byType(Stack),
+    final photos = find.byWidgetPredicate(
+      (w) => w is Bone && w.width == 64 && w.height == 64,
     );
-    final a = tester.getRect(cards.at(0));
-    final b = tester.getRect(cards.at(1));
-    expect(a.top, b.top);
-    expect(a.width, closeTo((390 - 32 - 14) / 2, 0.5));
+    expect(photos, findsNWidgets(6));
+    expect(
+      tester.getRect(photos.at(0)).left,
+      tester.getRect(photos.at(1)).left,
+    );
   });
 }

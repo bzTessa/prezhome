@@ -206,17 +206,8 @@ class PlanSkeleton extends StatelessWidget {
   }
 }
 
-/// Rejilla de recetas, compartida con la pantalla real para que no se
-/// desajusten.
-const recipeGridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
-  maxCrossAxisExtent: 240,
-  crossAxisSpacing: 14,
-  mainAxisSpacing: 14,
-  childAspectRatio: 0.74,
-);
-
-/// Comidas > Recetas: buscador, aviso de despensa, título de sección y la
-/// rejilla de recetas (foto a sangre, corazón y título).
+/// Comidas > Recetas: buscador, aviso de despensa, título de sección y las
+/// filas de recetas (foto pequeña, título y datos).
 class RecipesSkeleton extends StatelessWidget {
   const RecipesSkeleton({super.key});
 
@@ -259,47 +250,26 @@ class RecipesSkeleton extends StatelessWidget {
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-            sliver: SliverGrid.builder(
-              gridDelegate: recipeGridDelegate,
-              itemCount: 6,
-              itemBuilder: (_, i) => _RecipeCardBone(wide: i.isEven),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecipeCardBone extends StatelessWidget {
-  const _RecipeCardBone({required this.wide});
-
-  final bool wide;
-
-  @override
-  Widget build(BuildContext context) {
-    final on = AppColors.card;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.line,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Stack(
-        children: [
-          Positioned(top: 6, right: 6, child: Bone.circle(32, color: on)),
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 12,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Bone(height: 14, color: on),
-                const SizedBox(height: 6),
-                Bone(width: wide ? 90 : 60, height: 14, color: on),
-                const SizedBox(height: 8),
-                Bone(width: 84, height: 10, color: on),
-              ],
+            sliver: SliverToBoxAdapter(
+              child: BoneCard(
+                radius: AppRadius.md,
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < 6; i++)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            const Bone(width: 64, height: 64, radius: 14),
+                            const SizedBox(width: 12),
+                            _lines(i.isEven ? 170 : 130, 90),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
