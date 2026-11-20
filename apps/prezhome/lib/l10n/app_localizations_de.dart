@@ -5136,4 +5136,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get shopAllBoughtAskHint =>
       'Sie wandern in den Wagen und in die Vorratskammer.';
+
+  @override
+  String get panLevelHalf => 'Halb voll';
+
+  @override
+  String get panLevelLow => 'Fast leer';
 }

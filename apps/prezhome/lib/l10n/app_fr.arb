@@ -1288,5 +1288,7 @@
   "shopPackSizeHint": "Par exemple, 570 g. La liste comptera des emballages entiers et le garde-manger ne retirera que ce que chaque recette utilise.",
   "shopLeaveStore": "Quitter le mode magasin",
   "shopAllBoughtAsk": "Marquer les {count} produits comme achetés ?",
-  "shopAllBoughtAskHint": "Ils passeront au panier et au garde-manger."
+  "shopAllBoughtAskHint": "Ils passeront au panier et au garde-manger.",
+  "panLevelHalf": "À moitié",
+  "panLevelLow": "Presque fini"
 }

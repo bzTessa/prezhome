@@ -5121,4 +5121,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shopAllBoughtAskHint =>
       'They will move to the cart and the pantry.';
+
+  @override
+  String get panLevelHalf => 'Half left';
+
+  @override
+  String get panLevelLow => 'Running low';
 }

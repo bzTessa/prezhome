@@ -1288,5 +1288,7 @@
   "shopPackSizeHint": "Por exemplo, 570 g. A lista contará embalagens inteiras e a despensa tirará só o que cada receita gasta.",
   "shopLeaveStore": "Sair do modo loja",
   "shopAllBoughtAsk": "Marcar os {count} produtos como comprados?",
-  "shopAllBoughtAskHint": "Passam para o carrinho e para a despensa."
+  "shopAllBoughtAskHint": "Passam para o carrinho e para a despensa.",
+  "panLevelHalf": "A meio",
+  "panLevelLow": "Quase a acabar"
 }

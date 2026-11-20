@@ -7841,6 +7841,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pasarán al carrito y a la despensa.'**
   String get shopAllBoughtAskHint;
+
+  /// No description provided for @panLevelHalf.
+  ///
+  /// In es, this message translates to:
+  /// **'A medias'**
+  String get panLevelHalf;
+
+  /// No description provided for @panLevelLow.
+  ///
+  /// In es, this message translates to:
+  /// **'Se acaba'**
+  String get panLevelLow;
 }
 
 class _AppLocalizationsDelegate
