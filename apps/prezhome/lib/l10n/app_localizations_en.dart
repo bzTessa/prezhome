@@ -5127,4 +5127,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get panLevelLow => 'Running low';
+
+  @override
+  String get planShowWeek => 'Show the week';
+
+  @override
+  String get planShowDay => 'Show the day';
 }

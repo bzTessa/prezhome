@@ -5073,4 +5073,10 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get panLevelLow => 'Pri kraju';
+
+  @override
+  String get planShowWeek => 'Prikaži sedmicu';
+
+  @override
+  String get planShowDay => 'Prikaži dan';
 }

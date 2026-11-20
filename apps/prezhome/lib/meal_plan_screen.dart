@@ -2019,31 +2019,50 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               onPressed: () => _moveWeek(1),
               icon: const Icon(Icons.chevron_right_rounded),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: SegmentedPill(
-                labels: [context.l.planDay, context.l.planWeek],
-                selected: _weekView ? 1 : 0,
-                onChanged: (i) => setState(() => _weekView = i == 1),
-              ),
-            ),
-            const SizedBox(width: 4),
-            IconButton(
-              tooltip: context.l.planMonthCalendar,
-              icon: Icon(
-                Icons.calendar_month_outlined,
-                color: AppColors.inkMuted,
-              ),
-              onPressed: _openCalendar,
-            ),
-            IconButton(
-              tooltip: context.l.planSettings,
-              icon: Icon(Icons.tune_rounded, color: AppColors.inkMuted),
-              onPressed: () => _openPlanSettings(data),
+            // Lo que se usa poco va al ⋯: la tira de días ya elige el día.
+            PopupMenuButton<String>(
+              tooltip: context.l.moreOptions,
+              icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
+              color: AppColors.card,
+              onSelected: (v) => switch (v) {
+                'week' => setState(() => _weekView = !_weekView),
+                'month' => _openCalendar(),
+                _ => _openPlanSettings(data),
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'week',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      _weekView
+                          ? Icons.view_day_outlined
+                          : Icons.view_week_outlined,
+                    ),
+                    title: Text(
+                      _weekView
+                          ? context.l.planShowDay
+                          : context.l.planShowWeek,
+                    ),
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'month',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_month_outlined),
+                    title: Text(context.l.planMonthCalendar),
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'settings',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.tune_rounded),
+                    title: Text(context.l.planSettings),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

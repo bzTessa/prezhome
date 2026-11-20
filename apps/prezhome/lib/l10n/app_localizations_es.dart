@@ -5136,4 +5136,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get panLevelLow => 'Se acaba';
+
+  @override
+  String get planShowWeek => 'Ver la semana';
+
+  @override
+  String get planShowDay => 'Ver el día';
 }
