@@ -5131,8 +5131,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get shopAllBoughtAskHint =>
-      'Passam para o carrinho e para a despensa.';
+  String get shopAllBoughtAskHint => 'Passam para o carrinho.';
 
   @override
   String get panLevelHalf => 'A meio';
@@ -5145,4 +5144,65 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get planShowDay => 'Ver o dia';
+
+  @override
+  String get compraSubList => 'Lista';
+
+  @override
+  String get compraSubHome => 'Em casa';
+
+  @override
+  String get shopSaveToHome => 'Guardar em casa';
+
+  @override
+  String shopSaveToHomeCount(int count) {
+    return 'Guardar em casa ($count)';
+  }
+
+  @override
+  String get stkAlreadyInPantryNotice =>
+      'Já guardaste esta compra em casa há pouco tempo. Por defeito vamos guardar só os preços para não duplicar.';
+
+  @override
+  String get panSearchHint => 'Procurar em casa…';
+
+  @override
+  String get panSearchEmpty => 'Não encontro nada com esse nome.';
+
+  @override
+  String get panUseSoonTitle => 'Para gastar já';
+
+  @override
+  String get panOpenedBadge => 'Aberto';
+
+  @override
+  String panPackLabel(String size) {
+    return 'Embalagem $size';
+  }
+
+  @override
+  String get panMoveZone => 'Mover de zona';
+
+  @override
+  String panMovedTo(String zone) {
+    return 'Movido para $zone';
+  }
+
+  @override
+  String get panThawToFridge => 'Para o frigorífico';
+
+  @override
+  String get captureVoiceTooltip => 'Ditar por voz';
+
+  @override
+  String get captureVoiceListening => 'A ouvir…';
+
+  @override
+  String get captureBarcode => 'Código de barras';
+
+  @override
+  String get captureTicket => 'Talão';
+
+  @override
+  String get captureRecipe => 'Receita';
 }

@@ -5134,8 +5134,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get shopAllBoughtAskHint =>
-      'Sie wandern in den Wagen und in die Vorratskammer.';
+  String get shopAllBoughtAskHint => 'Sie wandern in den Wagen.';
 
   @override
   String get panLevelHalf => 'Halb voll';
@@ -5148,4 +5147,65 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get planShowDay => 'Tag anzeigen';
+
+  @override
+  String get compraSubList => 'Liste';
+
+  @override
+  String get compraSubHome => 'Zuhause';
+
+  @override
+  String get shopSaveToHome => 'Zuhause speichern';
+
+  @override
+  String shopSaveToHomeCount(int count) {
+    return 'Zuhause speichern ($count)';
+  }
+
+  @override
+  String get stkAlreadyInPantryNotice =>
+      'Du hast diesen Einkauf vor Kurzem schon zuhause gespeichert. Standardmäßig speichern wir nur die Preise, um Duplikate zu vermeiden.';
+
+  @override
+  String get panSearchHint => 'Zuhause suchen…';
+
+  @override
+  String get panSearchEmpty => 'Nichts mit diesem Namen gefunden.';
+
+  @override
+  String get panUseSoonTitle => 'Bald verbrauchen';
+
+  @override
+  String get panOpenedBadge => 'Geöffnet';
+
+  @override
+  String panPackLabel(String size) {
+    return 'Packung $size';
+  }
+
+  @override
+  String get panMoveZone => 'Bereich wechseln';
+
+  @override
+  String panMovedTo(String zone) {
+    return 'Verschoben nach $zone';
+  }
+
+  @override
+  String get panThawToFridge => 'In den Kühlschrank';
+
+  @override
+  String get captureVoiceTooltip => 'Per Sprache eingeben';
+
+  @override
+  String get captureVoiceListening => 'Höre zu…';
+
+  @override
+  String get captureBarcode => 'Barcode';
+
+  @override
+  String get captureTicket => 'Kassenbon';
+
+  @override
+  String get captureRecipe => 'Rezept';
 }

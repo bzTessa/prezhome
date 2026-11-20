@@ -7839,7 +7839,7 @@ abstract class AppLocalizations {
   /// No description provided for @shopAllBoughtAskHint.
   ///
   /// In es, this message translates to:
-  /// **'Pasarán al carrito y a la despensa.'**
+  /// **'Pasarán al carrito.'**
   String get shopAllBoughtAskHint;
 
   /// No description provided for @panLevelHalf.
@@ -7865,6 +7865,114 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver el día'**
   String get planShowDay;
+
+  /// No description provided for @compraSubList.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista'**
+  String get compraSubList;
+
+  /// No description provided for @compraSubHome.
+  ///
+  /// In es, this message translates to:
+  /// **'En casa'**
+  String get compraSubHome;
+
+  /// No description provided for @shopSaveToHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en casa'**
+  String get shopSaveToHome;
+
+  /// No description provided for @shopSaveToHomeCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en casa ({count})'**
+  String shopSaveToHomeCount(int count);
+
+  /// No description provided for @stkAlreadyInPantryNotice.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya guardaste esta compra en casa hace poco. Por defecto solo guardaremos los precios para no duplicar.'**
+  String get stkAlreadyInPantryNotice;
+
+  /// No description provided for @panSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en casa…'**
+  String get panSearchHint;
+
+  /// No description provided for @panSearchEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No encuentro nada con ese nombre.'**
+  String get panSearchEmpty;
+
+  /// No description provided for @panUseSoonTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Para gastar ya'**
+  String get panUseSoonTitle;
+
+  /// No description provided for @panOpenedBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'Abierto'**
+  String get panOpenedBadge;
+
+  /// No description provided for @panPackLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Envase {size}'**
+  String panPackLabel(String size);
+
+  /// No description provided for @panMoveZone.
+  ///
+  /// In es, this message translates to:
+  /// **'Mover de zona'**
+  String get panMoveZone;
+
+  /// No description provided for @panMovedTo.
+  ///
+  /// In es, this message translates to:
+  /// **'Movido a {zone}'**
+  String panMovedTo(String zone);
+
+  /// No description provided for @panThawToFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'A nevera'**
+  String get panThawToFridge;
+
+  /// No description provided for @captureVoiceTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Dictar por voz'**
+  String get captureVoiceTooltip;
+
+  /// No description provided for @captureVoiceListening.
+  ///
+  /// In es, this message translates to:
+  /// **'Escuchando…'**
+  String get captureVoiceListening;
+
+  /// No description provided for @captureBarcode.
+  ///
+  /// In es, this message translates to:
+  /// **'Código de barras'**
+  String get captureBarcode;
+
+  /// No description provided for @captureTicket.
+  ///
+  /// In es, this message translates to:
+  /// **'Ticket'**
+  String get captureTicket;
+
+  /// No description provided for @captureRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Receta'**
+  String get captureRecipe;
 }
 
 class _AppLocalizationsDelegate

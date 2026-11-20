@@ -159,7 +159,7 @@ class _DiscoverRecipesScreenState extends State<DiscoverRecipesScreen> {
   // Tipo de plato: '' = cualquiera; si no, una clave de Recipe.mealTypeLabels.
   String _mealType = '';
   static const Map<String, IconData> _mealTypeIcons = {
-    '': Icons.auto_awesome_outlined,
+    '': Icons.restaurant_menu_rounded,
     'breakfast': Icons.free_breakfast_outlined,
     'lunch': Icons.lunch_dining_outlined,
     'dinner': Icons.dinner_dining_outlined,

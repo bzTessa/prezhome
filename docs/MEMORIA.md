@@ -43,9 +43,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Trabajar con autonomía y entregar en PR; respuestas en español.
 
 ## Mapa del código (`apps/prezhome/lib`)
-- Inicio ya no tiene "Hoy toca" (Tessa lo quitó; borrado `smart_reminders`).
+- Inicio ya no tiene "Hoy toca" (Tessa lo quitó; borrado `smart_reminders`) ni
+  FAB flotante redundante (`+` global vive en la barra inferior).
 - Navegación: `main_shell.dart` + barra `packages/prez_ui/lib/src/floating_nav_bar.dart`
-  (se desliza el dedo para cambiar). Pestañas en `tabs/`.
+  con 4 pestañas (`Hoy · Comidas · Compra [Lista | En casa] · Tareas`) + botón
+  circular `+` global (`quick_capture_sheet.dart` con gato por contexto, voz y
+  accesos a ticket/código/receta). Pestañas en `tabs/` (`compra_tab.dart`;
+  borrado `despensa_tab.dart`).
 - Diseño: `theme/` (`AppColors`, `AppTextStyles` Plus Jakarta Sans,
   `AppRadius`, `AppSpacing`, `AppMotion`). Modo oscuro: `AppColors` son
   getters claro/oscuro según `AppColors.dark`, que fija `main.dart` según
@@ -53,20 +57,33 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Hogar y ajustes; sin sesión, siempre claro) (no usar `const` con `AppColors`; nada de `Colors.white`
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
-- Estilo táctil (reglas en `.kiro/steering/design-system.md`): tarjetas con
-  trazo carbón y sombra dura (`AppElevation`, `surfaceDecoration`,
-  `tactileDecoration`), radios 20/14/10. El nombre de la mascota no sale en
-  ningún texto. `MiauCharacter` respira, salta al cambiar de pose e
-  `interactive:` reacciona al toque (solo transformaciones, PNG estáticos).
+- Estilo Cozy Editorial + acentos táctiles: tarjetas en reposo con borde arena
+  (`AppColors.cardEdge`) y sombra suave (`AppElevation.level1`); trazo carbón y
+  sombra dura (`AppColors.stroke`, `AppElevation.tactileBorder`/`tactileShadow`,
+  `AppTheme.heroTactileDecoration`, `TactileButton`, `FloatingNavBar`)
+  reservados a CTAs clave y radios 20/14/10, con `AppColors.onTerracotta` para
+  contraste crema sobre terracota. El nombre de la mascota no sale en ningún
+  texto ni se muestran iconos `auto_awesome`. `MiauCharacter` respira, salta al
+  cambiar de pose e `interactive:` reacciona al toque (solo transformaciones,
+  PNG estáticos).
 - Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
   poses `miau_*` (`MiauMood`),
   `vacio_*` (EmptyState `image:`), `zona_<etiqueta>` (Mi cocina), `onb_*`.
 - Offline: `services/offline_repository.dart` (+ `offline_merge.dart`,
   `supabase_remote_sender.dart`, `offline_provider.dart`). Ids locales
   `local-`. Errores permanentes (`PermanentSyncError`) se descartan.
-- Compra: `shopping_list_screen.dart`, `services/shopping_checkout.dart`
-  (comprado → despensa por zona, "Todo comprado", tarea "compra" completada
-  marca la lista), `services/plan_shopping.dart` (lista desde el plan).
+- Compra y "En casa" (Mi cocina): `shopping_list_screen.dart`, `scan_ticket_screen.dart`,
+  `services/shopping_checkout.dart` (`setInCart`, `checkoutToPantry`,
+  `clearCoveredByTicket`, `RecentCheckoutStore`) y `utils/ticket_reconcile.dart`.
+  Tachar en el súper mueve al carrito; "Guardar en casa" pasa una vez a despensa
+  conservando gramos/ml y `packSize` (`CountPrefs`); escanear el ticket detecta
+  checkouts recientes (<12 h) para evitar duplicados, hereda envases y limpia de
+  lista/carrito lo cubierto. En `Mi cocina` (`inventory_screen.dart`,
+  `utils/kitchen_zones.dart`, `widgets/kitchen/kitchen_zones_grid.dart`):
+  cuadrícula 3×2 con `assets/images/zona_*.png`, buscador entre zonas, "Para
+  gastar ya", insignia "Abierto" + `Envase`, 1 toque `A nevera`, "Mover de zona"
+  y `isLevelTracked` solo en especias/condimentos/hogar en unidades.
+  `services/plan_shopping.dart` genera la lista desde el plan.
 - Iconos de producto: `widgets/product_icons.dart` (palabra clave → nombre de
   icono). Nada de iconos de Microsoft (Tessa no los quiere): solo sus dibujos,
   apuntados en `_own` (`assets/icons/products/`). Lo genérico ("cebollas",

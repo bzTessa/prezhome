@@ -33,7 +33,6 @@ import '../utils/meal_states.dart';
 import '../services/shopping_checkout.dart';
 import '../services/task_scheduler.dart';
 import '../theme/app_theme.dart';
-import '../widgets/quick_capture_sheet.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/fasting_card.dart';
 import '../widgets/skeleton.dart';
@@ -51,7 +50,6 @@ import '../utils/pantry_ideas.dart' show formatEuros, pantryNamesForIdeas;
 import '../utils/recipe_browse.dart' show readyToCook;
 import '../utils/ticket_date.dart';
 import '../l10n/l10n.dart';
-import '../widgets/hide_fab_on_scroll.dart';
 
 /// Pestaña de Inicio: dashboard con el resumen del día del hogar (comidas de
 /// hoy, calorías, tareas y gasto). El plan semanal/mensual vive ahora en la
@@ -765,104 +763,86 @@ class HomeTabState extends State<HomeTab> {
       for (final l in allLines)
         if (!identical(l, next)) l,
     ];
-    return HideFabOnScroll(
-      child: Scaffold(
-        backgroundColor: AppColors.cream,
-        // Un solo botón para apuntar algo a la compra, la despensa o tareas.
-        // Redondo y sin texto: el ancho tapaba lo de debajo (caducidades,
-        // calorías).
-        floatingActionButton: HideFabOnScroll.fab(
-          FloatingActionButton(
-            heroTag: 'fab-capture',
-            tooltip: context.l.captureTitle,
-            onPressed: () async {
-              if (await showQuickCapture(context)) _loadDashboard();
-            },
-            child: const Icon(Icons.add_rounded),
-          ),
-        ),
-        body: SafeArea(
-          bottom: false,
-          child: RefreshIndicator(
-            color: AppColors.woodDark,
-            onRefresh: _loadDashboard,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.lg,
-                AppSpacing.xl,
-                AppSpacing.xxxl * 2,
-              ),
-              children: [
-                StaggeredEntrance(index: 0, child: _header()),
-                const SizedBox(height: AppSpacing.xl),
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          color: AppColors.woodDark,
+          onRefresh: _loadDashboard,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.lg,
+              AppSpacing.xl,
+              AppSpacing.xxxl * 2,
+            ),
+            children: [
+              StaggeredEntrance(index: 0, child: _header()),
+              const SizedBox(height: AppSpacing.xl),
 
-                if (!_loaded)
-                  const HomeSkeleton()
-                else ...[
-                  if (next != null) ...[
-                    StaggeredEntrance(index: 1, child: _nextUpCard(next)),
+              if (!_loaded)
+                const HomeSkeleton()
+              else ...[
+                if (next != null) ...[
+                  StaggeredEntrance(index: 1, child: _nextUpCard(next)),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                // Lo grande de Hoy: Tu día (comidas, tareas, caducidades y
+                // compra). Tocar lleva a su pestaña.
+                if (restLines.isNotEmpty ||
+                    next == null ||
+                    _todayItems.isNotEmpty ||
+                    _doneTodayTasks.isNotEmpty) ...[
+                  StaggeredEntrance(index: 1, child: _dayCard(restLines)),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                ValueListenableBuilder(
+                  valueListenable: PlanPrefs.current,
+                  builder: (_, p, _) => p.fastHours == null
+                      ? const SizedBox.shrink()
+                      : const Padding(
+                          padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                          child: FastingCard(),
+                        ),
+                ),
+
+                // Con plan, las comidas van en Tu día; sin plan, la tarjeta
+                // para planificar.
+                if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
+                  if (_todayItems.isEmpty) ...[
+                    StaggeredEntrance(index: 1, child: _todayMealHero()),
                     const SizedBox(height: AppSpacing.lg),
                   ],
-                  // Lo grande de Hoy: Tu día (comidas, tareas, caducidades y
-                  // compra). Tocar lleva a su pestaña.
-                  if (restLines.isNotEmpty ||
-                      next == null ||
-                      _todayItems.isNotEmpty ||
-                      _doneTodayTasks.isNotEmpty) ...[
-                    StaggeredEntrance(index: 1, child: _dayCard(restLines)),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
-                  ValueListenableBuilder(
-                    valueListenable: PlanPrefs.current,
-                    builder: (_, p, _) => p.fastHours == null
-                        ? const SizedBox.shrink()
-                        : const Padding(
-                            padding: EdgeInsets.only(bottom: AppSpacing.lg),
-                            child: FastingCard(),
-                          ),
-                  ),
-
-                  // Con plan, las comidas van en Tu día; sin plan, la tarjeta
-                  // para planificar.
-                  if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
-                    if (_todayItems.isEmpty) ...[
-                      StaggeredEntrance(index: 1, child: _todayMealHero()),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
-                    if (_nextWeekPlanned == false) ...[
-                      StaggeredEntrance(index: 2, child: _nextWeekCard()),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
-                  ],
-
-                  StaggeredEntrance(
-                    index: 3,
-                    child: StreakCard(key: _streakKey),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  if (_prefs.visibleCards.contains(DashboardCard.calories) &&
-                      (!_profileComplete ||
-                          _targetCalories == null ||
-                          _targetCalories! <= 0)) ...[
-                    StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-
-                  if (numbers.isNotEmpty) ...[
-                    StaggeredEntrance(index: 4, child: _numbersCard(numbers)),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-
-                  if (_shortcuts.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    StaggeredEntrance(index: 5, child: _quickAccessRow()),
+                  if (_nextWeekPlanned == false) ...[
+                    StaggeredEntrance(index: 2, child: _nextWeekCard()),
                     const SizedBox(height: AppSpacing.lg),
                   ],
                 ],
+
+                StaggeredEntrance(index: 3, child: StreakCard(key: _streakKey)),
+                const SizedBox(height: AppSpacing.md),
+
+                if (_prefs.visibleCards.contains(DashboardCard.calories) &&
+                    (!_profileComplete ||
+                        _targetCalories == null ||
+                        _targetCalories! <= 0)) ...[
+                  StaggeredEntrance(index: 3, child: _calorieGoalPrompt()),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+
+                if (numbers.isNotEmpty) ...[
+                  StaggeredEntrance(index: 4, child: _numbersCard(numbers)),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+
+                if (_shortcuts.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  StaggeredEntrance(index: 5, child: _quickAccessRow()),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -1235,7 +1215,7 @@ class HomeTabState extends State<HomeTab> {
                   onPressed: () => _acceptSuggestion(r),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.terracotta,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onTerracotta,
                     visualDensity: VisualDensity.compact,
                   ),
                   child: Text(context.l.homePutFor(_suggestionMeal)),
@@ -1270,7 +1250,7 @@ class HomeTabState extends State<HomeTab> {
                 const SizedBox(height: AppSpacing.sm),
                 FilledButton.icon(
                   onPressed: _prepareNextWeek,
-                  icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                  icon: const Icon(Icons.calendar_today_rounded, size: 18),
                   label: Text(context.l.homeNextWeekGo),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.ink,
@@ -1645,7 +1625,7 @@ class HomeTabState extends State<HomeTab> {
         widget.onNavigateToTasks,
       ),
     };
-    final onBrand = AppColors.onBrand;
+    final onBrand = AppColors.onTerracotta;
     final isTask = line.kind == DayLineKind.task;
     final doIt = isTask ? () => _completeTaskFromDashboard(line.task!) : open;
     final doLabel = isTask

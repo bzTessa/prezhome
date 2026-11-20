@@ -5066,7 +5066,7 @@ class AppLocalizationsBs extends AppLocalizations {
   }
 
   @override
-  String get shopAllBoughtAskHint => 'Prebacit će se u korpu i ostavu.';
+  String get shopAllBoughtAskHint => 'Prebacit će se u korpu.';
 
   @override
   String get panLevelHalf => 'Pola';
@@ -5079,4 +5079,65 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get planShowDay => 'Prikaži dan';
+
+  @override
+  String get compraSubList => 'Lista';
+
+  @override
+  String get compraSubHome => 'Kod kuće';
+
+  @override
+  String get shopSaveToHome => 'Spremi kod kuće';
+
+  @override
+  String shopSaveToHomeCount(int count) {
+    return 'Spremi kod kuće ($count)';
+  }
+
+  @override
+  String get stkAlreadyInPantryNotice =>
+      'Nedavno si već spremio/la ovu kupovinu kod kuće. Podrazumijevano ćemo spremiti samo cijene da se ne duplira.';
+
+  @override
+  String get panSearchHint => 'Traži kod kuće…';
+
+  @override
+  String get panSearchEmpty => 'Ne nalazim ništa s tim imenom.';
+
+  @override
+  String get panUseSoonTitle => 'Potrošiti uskoro';
+
+  @override
+  String get panOpenedBadge => 'Otvoreno';
+
+  @override
+  String panPackLabel(String size) {
+    return 'Pakovanje $size';
+  }
+
+  @override
+  String get panMoveZone => 'Premjesti zonu';
+
+  @override
+  String panMovedTo(String zone) {
+    return 'Premješteno u $zone';
+  }
+
+  @override
+  String get panThawToFridge => 'U frižider';
+
+  @override
+  String get captureVoiceTooltip => 'Glasovni unos';
+
+  @override
+  String get captureVoiceListening => 'Slušam…';
+
+  @override
+  String get captureBarcode => 'Barkod';
+
+  @override
+  String get captureTicket => 'Račun';
+
+  @override
+  String get captureRecipe => 'Recept';
 }

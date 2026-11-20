@@ -4,6 +4,8 @@ library;
 
 import '../models/inventory_item.dart';
 import '../services/shelf_life.dart';
+import '../utils/practical_quantity.dart';
+import '../utils/shopping_display.dart';
 import '../widgets/food_category_icon.dart';
 
 enum KitchenZone {
@@ -19,6 +21,16 @@ enum KitchenZone {
   /// Clave del filtro de la pantalla de inventario.
   final String filterKey;
   final String label;
+
+  /// Ilustración propia de esta zona en `assets/images/zona_*.png`.
+  String get assetPath => switch (this) {
+    KitchenZone.nevera => 'assets/images/zona_nevera.png',
+    KitchenZone.congelador => 'assets/images/zona_congelador.png',
+    KitchenZone.despensa => 'assets/images/zona_despensa.png',
+    KitchenZone.especias => 'assets/images/zona_condimentos.png',
+    KitchenZone.limpieza => 'assets/images/zona_limpieza.png',
+    KitchenZone.hogar => 'assets/images/zona_varios.png',
+  };
 
   /// ¿Pertenece [i] a esta zona? (misma regla que el filtro del inventario).
   /// Lo de casa se reparte por su zona guardada ('Hogar' = Varios, el cajón
@@ -52,6 +64,70 @@ enum KitchenZone {
     }
     return null;
   }
+}
+
+/// Semáforo por nivel (Lleno / A medias / Se acaba) solo para especias,
+/// condimentos y productos de limpieza/hogar contados en unidades. Nunca
+/// oculta gramos ni volumen en comida o fruta/verdura a peso.
+bool isLevelTracked(InventoryItem i) {
+  if (i.kind != 'ingredient' || isMeasureUnit(i.unit)) return false;
+  return i.itemType == 'hogar' ||
+      i.category == 'Especias' ||
+      i.category == 'Limpieza' ||
+      i.category == 'Hogar' ||
+      isCondiment(i.name);
+}
+
+/// ¿Está [i] abierto a medias? Cierto si tiene un tamaño de envase conocido en
+/// medida y queda menos de un envase entero, o si es un básico por nivel por
+/// debajo de 1.
+bool isPantryItemOpened(InventoryItem i, double? packSize) {
+  if (i.kind != 'ingredient' || i.itemType != 'comida') return false;
+  if (packSize != null &&
+      packSize > 0 &&
+      isMeasureUnit(i.unit) &&
+      i.quantity > 0 &&
+      i.quantity < packSize - 1e-3) {
+    return true;
+  }
+  if (isLevelTracked(i) && i.quantity > 0 && i.quantity < 1) {
+    return true;
+  }
+  return false;
+}
+
+/// Productos de comida que conviene gastar pronto (caducados, caducan en ≤3
+/// días, platos listos en la nevera o envases abiertos), ordenados por
+/// prioridad.
+List<InventoryItem> urgentPantryItems(
+  List<InventoryItem> items, {
+  double? Function(InventoryItem)? packSizeOf,
+}) {
+  int? priority(InventoryItem i) {
+    if (i.itemType != 'comida' || i.category == 'Especias' || i.quantity <= 0) {
+      return null;
+    }
+    if (i.expiryStatus == ExpiryStatus.caducado) return 0;
+    if (i.expiryStatus == ExpiryStatus.pronto) return 1;
+    if (i.kind == 'dish' && i.category == 'Nevera') return 2;
+    if (isPantryItemOpened(i, packSizeOf?.call(i))) return 3;
+    return null;
+  }
+
+  final urgent = <({int rank, InventoryItem item})>[
+    for (final i in items)
+      if (priority(i) case final r?) (rank: r, item: i),
+  ];
+  urgent.sort((a, b) {
+    final byRank = a.rank.compareTo(b.rank);
+    if (byRank != 0) return byRank;
+    final da = a.item.daysUntilExpiry, db = b.item.daysUntilExpiry;
+    if (da != null && db != null && da != db) return da.compareTo(db);
+    if (da != null && db == null) return -1;
+    if (da == null && db != null) return 1;
+    return a.item.name.toLowerCase().compareTo(b.item.name.toLowerCase());
+  });
+  return [for (final u in urgent) u.item];
 }
 
 /// Estante dentro de una zona (nevera, despensa, congelador): agrupa lo que
