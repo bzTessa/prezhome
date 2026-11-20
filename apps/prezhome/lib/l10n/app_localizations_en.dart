@@ -5202,4 +5202,124 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onbSummaryTitle => 'Your home setup';
+
+  @override
+  String get recFilterReady => 'With what I have';
+
+  @override
+  String recPantryReadySubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You can make $count of your recipes right now',
+      one: 'You can make 1 of your recipes right now',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rdCookedIt => 'I cooked it';
+
+  @override
+  String get rdCookedShort => 'Done';
+
+  @override
+  String get pcTitle => 'Enjoy your meal!';
+
+  @override
+  String get pcDeductTitle => 'Deduct from At home';
+
+  @override
+  String pcDeductSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingredients will be updated',
+      one: '1 ingredient will be updated',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pcNoIngredients => 'No ingredients to deduct from At home.';
+
+  @override
+  String pcMoreItems(int count) {
+    return 'and $count more';
+  }
+
+  @override
+  String get pcLeftoversTitle => 'Any leftovers?';
+
+  @override
+  String get pcLeftoversHint => 'Save them as a ready meal in At home';
+
+  @override
+  String get pcFridgeLabel => 'Fridge (container)';
+
+  @override
+  String get pcFridgeHint => 'Keeps ~3 days';
+
+  @override
+  String get pcFreezerLabel => 'Freezer';
+
+  @override
+  String get pcFreezerGreat => 'Freezes great';
+
+  @override
+  String get pcFreezerHint => 'Ready for another day';
+
+  @override
+  String pcServingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count servings',
+      one: '1 serving',
+      zero: '0',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pcConfirm => 'Save to At home';
+
+  @override
+  String get pcJustClose => 'Done';
+
+  @override
+  String pcSummaryDeducted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingredients deducted',
+      one: '1 ingredient deducted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pcSummaryFridge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count servings in fridge',
+      one: '1 serving in fridge',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pcSummaryFreezer(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count servings in freezer',
+      one: '1 serving in freezer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pcUndone => 'Changes undone';
 }

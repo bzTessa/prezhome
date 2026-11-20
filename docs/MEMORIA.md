@@ -154,8 +154,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (`defaultCategoryFor`) y la zona de la despensa salen de ahí.
 - Plan de comidas: un solo plan semanal, `meal_plan_screen.dart` (semana con
   flechas; vive en Comidas > Plan; Hoy lleva ahí con `onNavigateToPlan`, no abre
-  otra copia; vista Día/Semana con `SegmentedPill`; sin deslizar de día porque
-  Comidas es un `TabBarView`). Iconos junto a Día/Semana: calendario del mes
+  otra copia; vista Día/Semana con `SegmentedPill`). La pestaña `ComidasTab`
+  (`tabs/comidas_tab.dart`) usa `SegmentedPill` + `IndexedStack` perezoso (como
+  `CompraTab`) y oculta `Diario` cuando `DashboardPrefs.trackCalories` es
+  `false`. Iconos junto a Día/Semana: calendario del mes
   (`month_calendar_screen.dart`, único, con comidas, tareas y cocina en lote;
   se desliza de mes y "Ver en el plan" devuelve el día con `pop<DateTime>`) y
   ajustes (`services/plan_prefs.dart`, en el dispositivo: ocultar
@@ -188,10 +190,18 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   grupo legumbre/pescado/huevo/carne y límite de repeticiones),
   `meal_prep_*` (`prepAgenda`: compra, día de cocina con tápers nevera/congelador,
   qué sacar la víspera), `services/plan_prep.dart` (lo comparten plan y mes).
-  Raciones por comida editables en "Quién come". Recetas: `recipes_screen.dart`,
+  Raciones por comida editables en "Quién come". Recetas: `recipes_screen.dart`
+  (`utils/recipe_browse.dart`, `widgets/recipe_category_chips.dart`, filtros
+  combinables `categories` + `onlyReady` "Con lo que tengo" sin carrusel, `Hero`
+  por sección y botón `+` junto al buscador cuando va embebida),
   `recipe_detail_screen.dart`, `cook_mode_screen.dart` (paso a paso con
   `CookStep`, varios temporizadores, pantalla encendida, manos libres por voz:
   `services/hands_free.dart` + `utils/cook_voice.dart`), `utils/recipe_steps.dart`.
+  Cierre post-cocina: tras `CookModeScreen` o "Ya lo cociné",
+  `widgets/post_cook_sheet.dart` (`MiauCharacter` celebrando con `float: false`)
+  + `PantryUsage.completeCook`/`undoCompleteCook` (`services/pantry_usage.dart`)
+  + `fridgeDishItem` (`widgets/freeze_dish_sheet.dart`) descuentan de En casa y
+  reparten sobras entre Nevera (+3 días) y Congelador con `Deshacer`.
   Tanda: `batch_prep_timeline_screen.dart` ("Lo que necesitas" con los
   ingredientes por raciones, `batchIngredientLines`; cada receta se prepara
   antes de ir a su aparato; acaba con el reparto en tápers del `PrepBatch`).
@@ -237,3 +247,4 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
 - Ofrecido, sin decidir: precios con Open Prices.
+- Bloque 4 pendiente: mejorar importación de recetas desde vídeos/webs (`instagram.com/share/...`, JSON-LD `schema.org/Recipe`, portada `og:image`, OCR) y adaptar supermercados internacionales, países, idiomas y multipacks/unidades imperiales en Compra.

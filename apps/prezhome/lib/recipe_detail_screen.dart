@@ -10,6 +10,8 @@ import 'utils/money.dart';
 import 'add_recipe_screen.dart';
 import 'cook_mode_screen.dart';
 import 'services/home_food_restrictions.dart';
+import 'services/offline_provider.dart';
+import 'services/pantry_usage.dart';
 import 'services/recipe_photo_service.dart';
 import 'services/recipe_share.dart';
 import 'services/price_memory.dart';
@@ -22,7 +24,7 @@ import 'models/nutrition_profile.dart';
 import 'models/recipe.dart';
 import 'models/shopping_list_item.dart';
 import 'theme/app_theme.dart';
-import 'widgets/freeze_dish_sheet.dart';
+import 'widgets/post_cook_sheet.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
 import 'utils/friendly_error.dart';
@@ -34,7 +36,8 @@ import 'l10n/l10n.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
-  const RecipeDetailScreen({super.key, required this.recipe});
+  final String? heroTag;
+  const RecipeDetailScreen({super.key, required this.recipe, this.heroTag});
 
   @override
   State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
@@ -69,6 +72,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   final Set<String> _inList = {};
   List<String> _shoppingNames = const [];
   bool _addingMissing = false;
+  bool _finishingCook = false;
 
   int get _recipeServings => _recipe.servings < 1 ? 1 : _recipe.servings;
 
@@ -540,35 +544,84 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return counted > 0 ? total : null;
   }
 
-  /// Al terminar de cocinar una receta congelable, ofrece guardar raciones en
-  /// el congelador como plato listo (con su foto), para tirar de él en el plan.
-  Future<void> _offerFreeze() async {
-    final r = _recipe;
-    if (!r.freezesWell) return;
-    final servings = await askFreezeServings(
-      context,
-      recipe: r,
-      initial: _servingsNow,
-    );
-    if (servings == null) return;
+  /// Al terminar de cocinar (desde el modo paso a paso o directamente con
+  /// "Ya lo cociné"), descuenta ingredientes de En casa y guarda tápers.
+  Future<void> _finishCooking() async {
+    if (_finishingCook) return;
+    _finishingCook = true;
     try {
-      await _client
-          .from('inventory_items')
-          .insert(frozenDishItem(r, servings).toMap());
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(context.l.rdSavedFreezer)));
+      final ings = await _ingredientsFuture;
+      final uses = await PantryUsage.previewForRecipe(
+        ingredients: ings,
+        factor: _servingsFactor,
+        client: _client,
+        homeId: _recipe.homeId,
+      );
+      if (!mounted) return;
+      final choice = await showPostCookSheet(
+        context,
+        recipe: _recipe,
+        servingsCooked: _servingsNow,
+        uses: uses,
+      );
+      if (!mounted || choice == null) return;
+      final usesToDeduct = choice.deductPantry ? uses : const <PantryUse>[];
+      if (usesToDeduct.isEmpty &&
+          choice.fridgeServings == 0 &&
+          choice.freezerServings == 0) {
+        return;
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      final result = await PantryUsage.completeCook(
+        recipe: _recipe,
+        usesToDeduct: usesToDeduct,
+        fridgeServings: choice.fridgeServings,
+        freezerServings: choice.freezerServings,
+        client: _client,
+        homeId: _recipe.homeId,
+      );
+      if (!mounted || !result.hasAnyChange) return;
+      _changed = true;
+      HapticFeedback.mediumImpact();
+      await _reloadPantry();
+      if (!mounted) return;
+      final l = context.l;
+      final parts = [
+        if (result.deductedUses.isNotEmpty)
+          l.pcSummaryDeducted(result.deductedUses.length),
+        if (choice.fridgeServings > 0) l.pcSummaryFridge(choice.fridgeServings),
+        if (choice.freezerServings > 0)
+          l.pcSummaryFreezer(choice.freezerServings),
+      ];
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
           SnackBar(
-            content: Text(friendlyError(e, context.l.couldNotSave)),
-            backgroundColor: AppColors.expired,
+            content: Text(parts.join(' · ')),
+            duration: const Duration(seconds: 6),
+            persist: false,
+            action: SnackBarAction(
+              label: l.undo,
+              onPressed: () async {
+                await PantryUsage.undoCompleteCook(result);
+                await _reloadPantry();
+                if (!mounted) return;
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(context.l.pcUndone)));
+              },
+            ),
           ),
         );
-      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, context.l.couldNotSave)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    } finally {
+      _finishingCook = false;
     }
   }
 
@@ -615,7 +668,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.cream,
-        bottomNavigationBar: steps.isEmpty ? null : _cookBar(r, steps),
+        bottomNavigationBar: _cookBar(r, steps),
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -652,7 +705,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
-                    RecipeImage(recipe: r, height: 360, radius: 0),
+                    if (widget.heroTag != null)
+                      Hero(
+                        tag: widget.heroTag!,
+                        child: RecipeImage(recipe: r, height: 360, radius: 0),
+                      )
+                    else
+                      RecipeImage(recipe: r, height: 360, radius: 0),
                     if (_changingPhoto)
                       Container(
                         color: Colors.black26,
@@ -768,6 +827,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           padding: EdgeInsets.zero,
           onSelected: (v) {
             switch (v) {
+              case 'cooked':
+                _finishCooking();
               case 'photo':
                 if (!_changingPhoto) _openPhotoMenu();
               case 'share':
@@ -779,6 +840,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             }
           },
           itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'cooked',
+              child: ListTile(
+                leading: const Icon(Icons.check_circle_outline_rounded),
+                title: Text(context.l.rdCookedIt),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
             PopupMenuItem(
               value: 'photo',
               child: ListTile(
@@ -1388,46 +1457,122 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  /// Barra fija de abajo: el gran botón para cocinar paso a paso.
+  /// Barra fija de abajo: paso a paso + acceso directo "Ya lo cociné".
   Widget _cookBar(Recipe r, List<String> steps) {
     return SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: SizedBox(
-          height: 56,
-          child: FilledButton.icon(
-            onPressed: () async {
-              final ings = await _ingredientsFuture;
-              if (!mounted) return;
-              final done = await Navigator.of(context).push<bool>(
-                MaterialPageRoute(
-                  builder: (_) => CookModeScreen(
-                    title: r.title,
-                    steps: [for (final s in steps) CookStep.fromText(s)],
-                    ingredients: [for (final i in ings) _ingredientLine(i)],
+        child: steps.isEmpty
+            ? SizedBox(
+                height: 56,
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _finishCooking,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.ink,
+                    foregroundColor: AppColors.cream,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  label: Text(context.l.rdCookedIt),
                 ),
-              );
-              if (done == true && mounted) await _offerFreeze();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.ink,
-              foregroundColor: AppColors.cream,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 56,
+                      child: FilledButton.icon(
+                        onPressed: () async {
+                          final ings = await _ingredientsFuture;
+                          if (!mounted) return;
+                          final done = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (_) => CookModeScreen(
+                                title: r.title,
+                                steps: [
+                                  for (final s in steps) CookStep.fromText(s),
+                                ],
+                                ingredients: [
+                                  for (final i in ings) _ingredientLine(i),
+                                ],
+                              ),
+                            ),
+                          );
+                          if (done == true && mounted) await _finishCooking();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.ink,
+                          foregroundColor: AppColors.cream,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        icon: const Icon(Icons.soup_kitchen_rounded),
+                        label: Text(
+                          context.l.rdStartCooking,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Tooltip(
+                    message: context.l.rdCookedIt,
+                    child: SizedBox(
+                      height: 56,
+                      child: OutlinedButton.icon(
+                        onPressed: _finishCooking,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.ink,
+                          backgroundColor: AppColors.card,
+                          side: BorderSide(color: AppColors.stroke, width: 1.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          textStyle: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 20,
+                        ),
+                        label: Text(context.l.rdCookedShort),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              textStyle: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            icon: const Icon(Icons.soup_kitchen_rounded),
-            label: Text(context.l.rdStartCooking),
-          ),
-        ),
       ),
     );
+  }
+
+  /// Refresca la despensa local desde la caché optimista tras cocinar.
+  Future<void> _reloadPantry() async {
+    try {
+      final cached = await OfflineProvider.instance.inventory.readCached();
+      final items = cached.map(InventoryItem.fromMap).toList();
+      if (mounted) {
+        setState(() => _pantry = pantryNamesForIdeas(items, max: 1000));
+      }
+      return;
+    } catch (_) {}
+    await _loadPantry();
   }
 
   /// Despensa del hogar para marcar los ingredientes que ya hay.

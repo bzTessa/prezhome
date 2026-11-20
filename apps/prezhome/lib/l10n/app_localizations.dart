@@ -7991,6 +7991,144 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Así queda tu hogar'**
   String get onbSummaryTitle;
+
+  /// No description provided for @recFilterReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Con lo que tengo'**
+  String get recFilterReady;
+
+  /// No description provided for @recPantryReadySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Puedes hacer 1 receta tuya ahora mismo} other{Puedes hacer {count} recetas tuyas ahora mismo}}'**
+  String recPantryReadySubtitle(int count);
+
+  /// No description provided for @rdCookedIt.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya lo cociné'**
+  String get rdCookedIt;
+
+  /// No description provided for @rdCookedShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho'**
+  String get rdCookedShort;
+
+  /// No description provided for @pcTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Buen provecho!'**
+  String get pcTitle;
+
+  /// No description provided for @pcDeductTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Descontar de En casa'**
+  String get pcDeductTitle;
+
+  /// No description provided for @pcDeductSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Se actualizará 1 ingrediente} other{Se actualizarán {count} ingredientes}}'**
+  String pcDeductSubtitle(int count);
+
+  /// No description provided for @pcNoIngredients.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay ingredientes que descontar en En casa.'**
+  String get pcNoIngredients;
+
+  /// No description provided for @pcMoreItems.
+  ///
+  /// In es, this message translates to:
+  /// **'y {count} más'**
+  String pcMoreItems(int count);
+
+  /// No description provided for @pcLeftoversTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Sobran raciones?'**
+  String get pcLeftoversTitle;
+
+  /// No description provided for @pcLeftoversHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Guárdalas como plato listo en En casa'**
+  String get pcLeftoversHint;
+
+  /// No description provided for @pcFridgeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nevera (táper)'**
+  String get pcFridgeLabel;
+
+  /// No description provided for @pcFridgeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Aguanta ~3 días'**
+  String get pcFridgeHint;
+
+  /// No description provided for @pcFreezerLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Congelador'**
+  String get pcFreezerLabel;
+
+  /// No description provided for @pcFreezerGreat.
+  ///
+  /// In es, this message translates to:
+  /// **'Se congela genial'**
+  String get pcFreezerGreat;
+
+  /// No description provided for @pcFreezerHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo para otro día'**
+  String get pcFreezerHint;
+
+  /// No description provided for @pcServingsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{0} =1{1 ración} other{{count} raciones}}'**
+  String pcServingsCount(int count);
+
+  /// No description provided for @pcConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar en En casa'**
+  String get pcConfirm;
+
+  /// No description provided for @pcJustClose.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo'**
+  String get pcJustClose;
+
+  /// No description provided for @pcSummaryDeducted.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ingrediente descontado} other{{count} ingredientes descontados}}'**
+  String pcSummaryDeducted(int count);
+
+  /// No description provided for @pcSummaryFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ración en nevera} other{{count} raciones en nevera}}'**
+  String pcSummaryFridge(int count);
+
+  /// No description provided for @pcSummaryFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ración al congelador} other{{count} raciones al congelador}}'**
+  String pcSummaryFreezer(int count);
+
+  /// No description provided for @pcUndone.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios deshechos'**
+  String get pcUndone;
 }
 
 class _AppLocalizationsDelegate

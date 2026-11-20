@@ -1,7 +1,46 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/models/ingredient.dart';
 import 'package:prezhome/models/inventory_item.dart';
+import 'package:prezhome/models/recipe.dart';
+import 'package:prezhome/services/local_store.dart';
+import 'package:prezhome/services/offline_provider.dart';
+import 'package:prezhome/services/offline_repository.dart';
 import 'package:prezhome/services/pantry_usage.dart';
+import 'package:prezhome/utils/offline_actions.dart';
+import 'package:prezhome/widgets/freeze_dish_sheet.dart';
+
+class _FakeRemoteSender implements RemoteSender {
+  final Map<String, Map<String, Map<String, dynamic>>> tables = {};
+
+  @override
+  Future<void> sendInsert(String table, Map<String, dynamic> payload) async {
+    final id = payload['id'] as String;
+    tables.putIfAbsent(table, () => {})[id] = Map<String, dynamic>.from(
+      payload,
+    );
+  }
+
+  @override
+  Future<void> sendUpdate(
+    String table,
+    Map<String, dynamic> payload,
+    String id,
+  ) async {
+    final row = tables[table]?[id];
+    if (row != null) row.addAll(payload);
+  }
+
+  @override
+  Future<void> sendDelete(String table, String id) async {
+    tables[table]?.remove(id);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetch(String table) async => [
+    for (final row in (tables[table]?.values ?? const <Map<String, dynamic>>[]))
+      Map<String, dynamic>.from(row),
+  ];
+}
 
 InventoryItem _item(
   String id,
@@ -134,5 +173,126 @@ void main() {
       ],
     );
     expect(uses.single.item.id, 'soon');
+  });
+
+  group('cierre post-cocina (descontar + nevera + congelador + undo)', () {
+    test('fridgeDishItem crea táper de nevera a +3 días', () {
+      final recipe = Recipe(
+        id: 'rec-1',
+        homeId: 'h',
+        title: 'Lentejas caseras',
+        servings: 4,
+      );
+      final dish = fridgeDishItem(recipe, 2, now: DateTime(2026, 5, 10));
+      expect(dish.category, 'Nevera');
+      expect(dish.kind, 'dish');
+      expect(dish.servings, 2.0);
+      expect(dish.expirationDate, DateTime(2026, 5, 13));
+      expect(dish.bestBefore, DateTime(2026, 5, 13));
+    });
+
+    test(
+      'completeCook descuenta, guarda sobras y undoCompleteCook revierte todo',
+      () async {
+        final store = InMemoryLocalStore();
+        final sender = _FakeRemoteSender();
+        final repo = OfflineRepository(
+          table: kInventoryTable,
+          store: store,
+          sender: sender,
+          homeId: 'h',
+          gate: DrainGate(minRetryGapMs: 0, nowMillis: () => 0),
+        );
+
+        final chicken = _item('item-chicken', 'Pechuga de pollo', 1, 'kg');
+        final rice = _item(
+          'item-rice',
+          'Arroz',
+          200,
+          'g',
+          category: 'Despensa',
+        );
+        await repo.applyLocalWrite(
+          buildInsertOp(
+            table: kInventoryTable,
+            id: chicken.id,
+            payload: chicken.toCacheMap(),
+            nowMillis: 1000,
+            seq: 1,
+          ),
+        );
+        await repo.applyLocalWrite(
+          buildInsertOp(
+            table: kInventoryTable,
+            id: rice.id,
+            payload: rice.toCacheMap(),
+            nowMillis: 1001,
+            seq: 2,
+          ),
+        );
+
+        final recipe = Recipe(
+          id: 'rec-pollo',
+          homeId: 'h',
+          title: 'Pollo con arroz',
+          servings: 4,
+          freezable: true,
+        );
+        final ings = [
+          Ingredient(name: 'pollo', quantity: 600, unit: 'g'),
+          Ingredient(name: 'arroz', quantity: 200, unit: 'g'),
+        ];
+
+        final uses = await PantryUsage.previewForRecipe(
+          ingredients: ings,
+          inventoryRepo: repo,
+        );
+        expect(uses, hasLength(2));
+
+        final result = await PantryUsage.completeCook(
+          recipe: recipe,
+          usesToDeduct: uses,
+          fridgeServings: 2,
+          freezerServings: 1,
+          inventoryRepo: repo,
+          now: DateTime(2026, 5, 10, 14),
+        );
+        expect(result.hasAnyChange, isTrue);
+
+        var rows = await repo.readCached();
+        expect(rows.where((r) => r['id'] == 'item-rice'), isEmpty);
+        final chickenAfter = rows.singleWhere((r) => r['id'] == 'item-chicken');
+        expect(
+          (chickenAfter['quantity'] as num).toDouble(),
+          closeTo(0.4, 1e-9),
+        );
+
+        final dishes = rows.where((r) => r['kind'] == 'dish').toList();
+        expect(dishes, hasLength(2));
+        final fridgeDish = dishes.singleWhere((d) => d['category'] == 'Nevera');
+        final freezerDish = dishes.singleWhere(
+          (d) => d['category'] == 'Congelador',
+        );
+        expect((fridgeDish['servings'] as num).toDouble(), 2.0);
+        expect((freezerDish['servings'] as num).toDouble(), 1.0);
+
+        await PantryUsage.undoCompleteCook(result, inventoryRepo: repo);
+
+        rows = await repo.readCached();
+        expect(rows.where((r) => r['kind'] == 'dish'), isEmpty);
+        final chickenRestored = rows.singleWhere(
+          (r) => r['id'] == 'item-chicken',
+        );
+        expect(
+          (chickenRestored['quantity'] as num).toDouble(),
+          closeTo(1.0, 1e-9),
+        );
+        final riceRestored = rows.singleWhere((r) => r['name'] == 'Arroz');
+        expect(
+          (riceRestored['quantity'] as num).toDouble(),
+          closeTo(200.0, 1e-9),
+        );
+      },
+    );
   });
 }

@@ -4,11 +4,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/ingredient.dart';
 import '../models/inventory_item.dart';
 import '../models/meal_plan_entry.dart';
+import '../models/recipe.dart';
 import '../utils/offline_actions.dart';
 import '../utils/pantry_ideas.dart';
 import '../utils/practical_quantity.dart';
+import '../widgets/freeze_dish_sheet.dart';
 import 'count_prefs.dart';
 import 'offline_provider.dart';
+import 'offline_repository.dart';
 import 'plan_prefs.dart';
 import 'plan_shopping.dart';
 
@@ -404,4 +407,242 @@ class PantryUsage {
     }
     return out;
   }
+
+  /// Calcula de antemano qué ingredientes de En casa se descontarían al cocinar
+  /// [ingredients] (escalados por [factor]), usando el repositorio offline-first.
+  static Future<List<PantryUse>> previewForRecipe({
+    required List<Ingredient> ingredients,
+    double factor = 1.0,
+    SupabaseClient? client,
+    String? homeId,
+    OfflineRepository? inventoryRepo,
+  }) async {
+    final repo = inventoryRepo ?? OfflineProvider.instance.inventory;
+    var rows = await repo.readCached();
+    if (rows.isEmpty && client != null) {
+      try {
+        rows = await repo.refreshFromRemote();
+      } catch (_) {}
+    }
+    final pantry = [
+      for (final r in rows)
+        if ((r['name'] ?? '').toString().trim().isNotEmpty)
+          InventoryItem.fromMap(r),
+    ];
+    final Map<String, PackMeasure> packSizes;
+    if (client != null && homeId != null) {
+      packSizes = await _packSizes(client, homeId, pantry, ingredients);
+    } else {
+      packSizes = <String, PackMeasure>{};
+      for (final p in pantry) {
+        if (!isPackUnit(p.unit) || p.kind != 'ingredient') continue;
+        final own = CountPrefs.customPackOf(p.name);
+        if (own != null) packSizes[p.id] = own;
+      }
+    }
+    return pantryUsesFor(
+      ingredients,
+      pantry,
+      factor: factor,
+      packSizes: packSizes,
+    );
+  }
+
+  /// Ejecuta el cierre de cocina: descuenta [usesToDeduct] en En casa y crea
+  /// platos listos para [fridgeServings] (Nevera) y [freezerServings] (Congelador).
+  static Future<PostCookExecutionResult> completeCook({
+    required Recipe recipe,
+    required List<PantryUse> usesToDeduct,
+    int fridgeServings = 0,
+    int freezerServings = 0,
+    OfflineRepository? inventoryRepo,
+    SupabaseClient? client,
+    String? homeId,
+    DateTime? now,
+  }) async {
+    final repo = inventoryRepo ?? OfflineProvider.instance.inventory;
+    final effectiveHomeId = homeId ?? recipe.homeId;
+    final clock = now ?? DateTime.now();
+    final nowMs = clock.millisecondsSinceEpoch;
+    var seq = 0;
+
+    final previousSnapshots = <String, Map<String, dynamic>>{};
+    final deletedIds = <String>{};
+
+    for (final u in usesToDeduct) {
+      previousSnapshots[u.item.id] = u.item.toCacheMap();
+      if (u.left <= 0) {
+        deletedIds.add(u.item.id);
+        await repo.applyLocalWrite(
+          buildDeleteOp(
+            table: kInventoryTable,
+            id: u.item.id,
+            nowMillis: nowMs,
+            seq: seq++,
+          ),
+        );
+      } else {
+        await repo.applyLocalWrite(
+          buildUpdateOp(
+            table: kInventoryTable,
+            id: u.item.id,
+            changes: {'quantity': u.left, if (u.unit != null) 'unit': u.unit},
+            nowMillis: nowMs,
+            seq: seq++,
+          ),
+        );
+      }
+    }
+
+    String? fridgeItemId;
+    if (fridgeServings > 0) {
+      final id = newLocalId(nowMillis: nowMs, seq: seq++);
+      final dish = fridgeDishItem(
+        recipe,
+        fridgeServings,
+        homeId: effectiveHomeId,
+        now: clock,
+      );
+      await repo.applyLocalWrite(
+        buildInsertOp(
+          table: kInventoryTable,
+          id: id,
+          payload: {...dish.toCacheMap(), 'id': id},
+          nowMillis: nowMs,
+          seq: seq++,
+        ),
+      );
+      fridgeItemId = id;
+    }
+
+    String? freezerItemId;
+    if (freezerServings > 0) {
+      final id = newLocalId(nowMillis: nowMs, seq: seq++);
+      final dish = frozenDishItem(
+        recipe,
+        freezerServings,
+        homeId: effectiveHomeId,
+      );
+      await repo.applyLocalWrite(
+        buildInsertOp(
+          table: kInventoryTable,
+          id: id,
+          payload: {...dish.toCacheMap(), 'id': id},
+          nowMillis: nowMs,
+          seq: seq++,
+        ),
+      );
+      freezerItemId = id;
+    }
+
+    if (client != null &&
+        effectiveHomeId.isNotEmpty &&
+        usesToDeduct.isNotEmpty) {
+      final day = clock.toIso8601String().split('T').first;
+      try {
+        await client.from('pantry_log').insert([
+          for (final u in usesToDeduct)
+            {
+              'home_id': effectiveHomeId,
+              'name': u.item.name,
+              'quantity': u.used,
+              'unit': u.unitOut,
+              'reason': 'receta',
+              'recipe_id': recipe.id,
+              'used_on': day,
+            },
+        ]);
+      } catch (_) {
+        // Sin red no bloqueamos el cierre post-cocina.
+      }
+    }
+
+    return PostCookExecutionResult(
+      deductedUses: List.unmodifiable(usesToDeduct),
+      fridgeItemId: fridgeItemId,
+      freezerItemId: freezerItemId,
+      previousSnapshots: previousSnapshots,
+      deletedIds: deletedIds,
+    );
+  }
+
+  /// Revierte en En casa los descuentos y los tápers creados por [completeCook].
+  static Future<void> undoCompleteCook(
+    PostCookExecutionResult result, {
+    OfflineRepository? inventoryRepo,
+  }) async {
+    final repo = inventoryRepo ?? OfflineProvider.instance.inventory;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    var seq = 0;
+
+    if (result.fridgeItemId != null) {
+      await repo.applyLocalWrite(
+        buildDeleteOp(
+          table: kInventoryTable,
+          id: result.fridgeItemId!,
+          nowMillis: nowMs,
+          seq: seq++,
+        ),
+      );
+    }
+    if (result.freezerItemId != null) {
+      await repo.applyLocalWrite(
+        buildDeleteOp(
+          table: kInventoryTable,
+          id: result.freezerItemId!,
+          nowMillis: nowMs,
+          seq: seq++,
+        ),
+      );
+    }
+
+    for (final e in result.previousSnapshots.entries) {
+      if (result.deletedIds.contains(e.key)) {
+        final freshId = newLocalId(nowMillis: nowMs, seq: seq++);
+        await repo.applyLocalWrite(
+          buildInsertOp(
+            table: kInventoryTable,
+            id: freshId,
+            payload: {...e.value, 'id': freshId},
+            nowMillis: nowMs,
+            seq: seq++,
+          ),
+        );
+      } else {
+        await repo.applyLocalWrite(
+          buildUpdateOp(
+            table: kInventoryTable,
+            id: e.key,
+            changes: {
+              'quantity': e.value['quantity'],
+              if (e.value['unit'] != null) 'unit': e.value['unit'],
+            },
+            nowMillis: nowMs,
+            seq: seq++,
+          ),
+        );
+      }
+    }
+  }
+}
+
+/// Resultado de ejecutar [PantryUsage.completeCook] con los snapshots necesarios
+/// para deshacer todos los cambios en En casa.
+class PostCookExecutionResult {
+  final List<PantryUse> deductedUses;
+  final String? fridgeItemId;
+  final String? freezerItemId;
+  final Map<String, Map<String, dynamic>> previousSnapshots;
+  final Set<String> deletedIds;
+
+  const PostCookExecutionResult({
+    required this.deductedUses,
+    required this.fridgeItemId,
+    required this.freezerItemId,
+    required this.previousSnapshots,
+    required this.deletedIds,
+  });
+
+  bool get hasAnyChange =>
+      deductedUses.isNotEmpty || fridgeItemId != null || freezerItemId != null;
 }

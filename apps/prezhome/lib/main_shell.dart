@@ -98,6 +98,7 @@ class MainShellState extends State<MainShell> {
   // Clave para refrescar la pestaña Inicio al volver a ella sin reconstruir
   // las demás pestañas del IndexedStack.
   final GlobalKey<HomeTabState> _homeKey = GlobalKey<HomeTabState>();
+  final GlobalKey<ComidasTabState> _comidasKey = GlobalKey<ComidasTabState>();
   final GlobalKey<CompraTabState> _compraKey = GlobalKey<CompraTabState>();
   int _compraInitialSubTab = 0;
 
@@ -239,7 +240,7 @@ class MainShellState extends State<MainShell> {
       case TabId.comidas:
         return _TabDescriptor(
           id: id,
-          page: const ComidasTab(),
+          page: ComidasTab(key: _comidasKey, showDiary: _prefs.trackCalories),
           icon: Icons.restaurant_menu_outlined,
           selectedIcon: Icons.restaurant_menu,
         );
