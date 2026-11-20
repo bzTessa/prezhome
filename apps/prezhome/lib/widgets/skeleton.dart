@@ -469,7 +469,7 @@ class ShoppingSkeleton extends StatelessWidget {
   }
 }
 
-/// Despensa: título "Mi cocina", rejilla de zonas de tres en fila, botón de
+/// Despensa: título "Mi cocina", fila de chips de zonas, botón de
 /// ideas y la lista de la zona (foto 52 + nombre y cantidad) en un bloque.
 class PantrySkeleton extends StatelessWidget {
   const PantrySkeleton({super.key});
@@ -492,42 +492,18 @@ class PantrySkeleton extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        // Misma cuenta que KitchenZonesGrid: tres por fila.
-        LayoutBuilder(
-          builder: (context, c) {
-            const gap = AppSpacing.sm;
-            final w = (c.maxWidth - gap * 2) / 3;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                for (var i = 0; i < 6; i++)
-                  SizedBox(
-                    width: w,
-                    child: const BoneCard(
-                      radius: AppRadius.md,
-                      padding: EdgeInsets.fromLTRB(10, 8, 10, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Bone(width: 30, height: 30, radius: 8),
-                              Spacer(),
-                              Bone(width: 16, height: 16),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Bone(width: 60, height: 12),
-                          SizedBox(height: 5),
-                          Bone(width: 44, height: 10),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
+        // Misma forma que KitchenZonesGrid: una fila de chips.
+        const SizedBox(
+          height: 44,
+          child: Row(
+            children: [
+              Bone(width: 104, height: 44, radius: 999),
+              SizedBox(width: AppSpacing.sm),
+              Bone(width: 124, height: 44, radius: 999),
+              SizedBox(width: AppSpacing.sm),
+              Bone(width: 104, height: 44, radius: 999),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         const Bone(height: 44, radius: 999),

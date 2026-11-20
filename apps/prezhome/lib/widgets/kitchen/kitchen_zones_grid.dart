@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
-import '../animations/spring_value.dart';
 import '../../l10n/l10n.dart';
 import '../../utils/kitchen_zones.dart';
 
-/// "Mi cocina": rejilla con todas las zonas (nevera, congelador, despensa…)
-/// que funciona como pestañas: debajo solo se ve la zona elegida.
+/// "Mi cocina": fila de chips con todas las zonas (nevera, congelador,
+/// despensa…) que funciona como pestañas: debajo solo se ve la zona elegida.
 class KitchenZonesGrid extends StatelessWidget {
   const KitchenZonesGrid({
     super.key,
@@ -79,43 +78,40 @@ class KitchenZonesGrid extends StatelessWidget {
             ?trailing,
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        // Todas las zonas a la vista, de dos en dos y con su dibujo grande.
-        LayoutBuilder(
-          builder: (context, c) {
-            const gap = AppSpacing.sm;
-            final w = (c.maxWidth - gap) / 2;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                // Las vacías también, para poder entrar y añadir.
-                for (final z in zones)
-                  _ZoneTile(
+        const SizedBox(height: AppSpacing.sm),
+        // Una fila de chips: la lista de la zona queda justo debajo, en la
+        // primera pantalla.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          child: Row(
+            children: [
+              // Las vacías también, para poder entrar y añadir.
+              for (final z in zones)
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: _ZoneChip(
                     summary: z,
-                    width: w,
                     selected: selected == z.zone,
                     onTap: () => onSelect(z.zone),
                   ),
-              ],
-            );
-          },
+                ),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _ZoneTile extends StatelessWidget {
-  const _ZoneTile({
+class _ZoneChip extends StatelessWidget {
+  const _ZoneChip({
     required this.summary,
-    required this.width,
     required this.selected,
     required this.onTap,
   });
 
   final ZoneSummary summary;
-  final double width;
   final bool selected;
   final VoidCallback onTap;
 
@@ -125,114 +121,72 @@ class _ZoneTile extends StatelessWidget {
     final s = KitchenZonesGrid.styleOf(z.zone);
     final label = context.l.kitchenZone(z.zone.name);
     final count = z.count;
+    // Un punto avisa de lo caducado (rojo) o de lo que caduca pronto.
     final alert = z.expired > 0
-        ? (
-            '${z.expired} caducado${z.expired == 1 ? '' : 's'}',
-            AppColors.expired,
-          )
+        ? AppColors.expired
         : z.soon > 0
-        ? ('${z.soon} pronto', AppColors.soon)
+        ? AppColors.soon
         : null;
     final empty = count == 0 && !selected;
+    final fg = selected ? AppColors.card : AppColors.ink;
     return Semantics(
       button: true,
       selected: selected,
       label: '$label: $count productos',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          // Pieza táctil: la elegida queda "hundida" con un muelle.
-          child: SpringValue(
-            value: selected ? 1 : 0,
-            spring: AppMotion.fluidBouncy,
-            builder: (context, p, child) => Transform.translate(
-              offset: Offset(0, AppElevation.restOffset * p),
-              child: child,
+      excludeSemantics: true,
+      child: AnimatedOpacity(
+        duration: AppMotion.fast,
+        opacity: empty ? 0.55 : 1,
+        child: Material(
+          color: selected ? AppColors.ink : AppColors.card,
+          shape: StadiumBorder(
+            side: BorderSide(
+              color: selected ? AppColors.ink : AppColors.line,
+              width: 1.5,
             ),
-            child: AnimatedOpacity(
-              duration: AppMotion.fast,
-              opacity: empty ? 0.6 : 1,
-              child: AnimatedContainer(
-                duration: AppMotion.fast,
-                width: width,
-                height: 118,
-                clipBehavior: Clip.antiAlias,
-                decoration: AppTheme.tactileDecoration(
-                  radius: AppRadius.lg,
-                  color: AppColors.card,
-                  borderWidth: selected ? 2 : 1.5,
-                  shadow: selected ? 0 : AppElevation.restOffset,
-                ),
-                child: Stack(
+          ),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const StadiumBorder(),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 6, 14, 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Mitad de abajo con el color de la zona y su dibujo.
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: 58,
-                      child: ColoredBox(color: s.bg),
-                    ),
-                    Positioned(
-                      right: 8,
-                      bottom: 4,
-                      child: Image.asset(
-                        // assets/images/zona_<1.ª palabra>.png
-                        'assets/images/zona_${z.zone.label.split(' ').first.toLowerCase()}.png',
-                        width: 64,
-                        height: 64,
-                        errorBuilder: (_, _, _) =>
-                            Icon(s.icon, color: s.fg, size: 40),
+                    Icon(s.icon, size: 18, color: selected ? fg : s.fg),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: fg,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.headline.copyWith(
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: count == 0
-                                      ? context.l.kzEmpty
-                                      : alert != null
-                                      ? '$count'
-                                      : '$count producto${count == 1 ? '' : 's'}',
-                                ),
-                                if (alert != null) ...[
-                                  const TextSpan(text: ' · '),
-                                  TextSpan(
-                                    text: alert.$1,
-                                    style: TextStyle(
-                                      color: alert.$2,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.inkMuted,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 6),
+                    Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: selected
+                            ? fg.withValues(alpha: 0.75)
+                            : AppColors.inkMuted,
                       ),
                     ),
+                    if (alert != null) ...[
+                      const SizedBox(width: 5),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: alert,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

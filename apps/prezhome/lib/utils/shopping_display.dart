@@ -292,3 +292,60 @@ double? shoppingQtyNext(
   if (next < step) return null;
   return (next * 100).round() / 100;
 }
+
+/// Niveles de lo que no se cuenta (aceite, sal, especias): por debajo de un
+/// envase, la cantidad guarda cuánto queda del abierto.
+const double pantryLevelHalf = 0.5;
+const double pantryLevelLow = 0.25;
+
+/// Cantidad siguiente al pulsar + ([up]) o − en una fila de la despensa, o
+/// null si baja de lo mínimo (se ha gastado). Todo cambia con el mismo − / +:
+/// lo que se cuenta, de uno en uno; lo que va a peso, de envase en envase si
+/// se sabe lo que trae ([packSize], en [unit]) o de 100 en 100 g; y lo que se
+/// cuenta por nivel ([byLevel]), al bajar de un envase pasa a "A medias" y
+/// luego a "Se acaba".
+double? pantryQtyNext(
+  double quantity,
+  String? unit, {
+  required bool up,
+  double? packSize,
+  bool byLevel = false,
+}) {
+  if (isMeasureUnit(unit)) {
+    if (packSize != null && packSize > 0) {
+      final next = quantity + (up ? packSize : -packSize);
+      return next <= 0 ? null : (next * 1000).round() / 1000;
+    }
+    return shoppingQtyNext(quantity, unit, up: up);
+  }
+  if (byLevel && quantity < 1) {
+    if (up) return quantity < pantryLevelHalf ? pantryLevelHalf : 1;
+    return quantity > pantryLevelLow ? pantryLevelLow : null;
+  }
+  if (up) return quantity + 1;
+  if (byLevel && quantity <= 1) return pantryLevelHalf;
+  final next = quantity - 1;
+  return next <= 0 ? null : next;
+}
+
+/// Lo que dice el − / + de una fila de la despensa: "2 ud", "370 g",
+/// "2 × 400 g" (envases enteros), "A medias" o "Se acaba".
+String pantryQtyLabel(
+  double quantity,
+  String? unit, {
+  double? packSize,
+  bool byLevel = false,
+}) {
+  if (byLevel && !isMeasureUnit(unit) && quantity < 1) {
+    return quantity <= pantryLevelLow
+        ? appL10n.panLevelLow
+        : appL10n.panLevelHalf;
+  }
+  if (packSize != null && packSize > 0 && isMeasureUnit(unit)) {
+    final packs = quantity / packSize;
+    if ((packs - packs.round()).abs() < 1e-3 && packs.round() > 1) {
+      return shoppingQtyLabel(quantity, unit, packSize: packSize);
+    }
+  }
+  return shoppingQtyLabel(quantity, unit);
+}

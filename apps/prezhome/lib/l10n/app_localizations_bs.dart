@@ -5067,4 +5067,10 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get shopAllBoughtAskHint => 'Prebacit će se u korpu i ostavu.';
+
+  @override
+  String get panLevelHalf => 'Pola';
+
+  @override
+  String get panLevelLow => 'Pri kraju';
 }

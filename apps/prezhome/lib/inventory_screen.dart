@@ -9,6 +9,7 @@ import 'models/inventory_item.dart';
 import 'models/recipe.dart';
 import 'models/shopping_list_item.dart';
 import 'scan_barcode_screen.dart';
+import 'services/count_prefs.dart';
 import 'services/home_supermarkets.dart';
 import 'services/offline_provider.dart';
 import 'services/offline_repository.dart';
@@ -33,6 +34,7 @@ import 'utils/shopping_display.dart';
 import 'widgets/pending_sync_indicator.dart';
 import 'utils/friendly_error.dart';
 import 'utils/kitchen_zones.dart';
+import 'utils/practical_quantity.dart';
 import 'widgets/kitchen/kitchen_zones_grid.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'discover_recipes_screen.dart';
@@ -82,6 +84,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     _itemsFuture = _loadFromCache();
     _refreshFromRemote();
     _usePlanIngredients();
+    _loadPacks();
     // Lo comprado en la lista entra por el mismo repositorio: repintamos al
     // momento aunque esta pestaña ya estuviera abierta.
     _changesSub = _repo.changes.listen((_) async {
@@ -92,6 +95,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
         _pendingCount = _repo.pendingCount;
       });
     });
+  }
+
+  /// Lo que trae cada envase según el hogar, para que el − / + vaya de
+  /// envase en envase.
+  Future<void> _loadPacks() async {
+    try {
+      await CountPrefs(Supabase.instance.client).load(await _homeId());
+      if (mounted) setState(() {});
+    } catch (_) {}
   }
 
   @override
@@ -1026,22 +1038,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final days = _tracksExpiry(item) ? item.daysUntilExpiry : null;
     final (String, Color)? expiry = switch (days) {
       null => null,
-      < -1 => (context.l.panExpiredAgo(-days), AppColors.expired),
+      // Corto, para que quepa en una línea junto al − / +.
+      < -1 => (context.l.stExpired, AppColors.expired),
       -1 => (context.l.panExpiredYesterday, AppColors.expired),
       0 => (context.l.panExpiresToday, AppColors.expired),
       1 => (context.l.panExpiresTomorrow, AppColors.soon),
       <= 3 => (context.l.panExpiresIn(days), AppColors.soon),
-      _ => (context.l.panDays(days), AppColors.fresh),
+      // Lo que dura meses no necesita aviso en la fila (está en la ficha).
+      > 60 => null,
+      _ => (context.l.panExpiresIn(days), AppColors.fresh),
     };
     final zoneLabel = showZone
         ? context.l.kitchenZone(
             KitchenZone.values.firstWhere((z) => z.matches(item)).name,
           )
         : null;
-    // Lo contable se cambia con − / + en la fila; el resto, en "Editar".
-    final stepUnit = shoppingQtyNext(1, item.unit, up: true) == 2;
+    // Todo se cambia con el mismo − / + (envases, piezas o nivel); los
+    // gramos exactos, en "Editar".
+    final byLevel = _byLevel(item);
+    final pack = _packOf(item);
     final subtitle = [
-      if (!stepUnit) inventoryQtyLabel(item.quantity, item.unit),
       ?zoneLabel,
       if (item.isStaple) context.l.panNotBought,
     ].where((t) => t.isNotEmpty).join(' · ');
@@ -1110,43 +1126,50 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         ),
                       ),
                     ],
-                    // Insignia de caducidad bajo el nombre: no compite por
-                    // ancho con el − / +.
+                    // Caducidad bajo el nombre, en una línea y en el color
+                    // del aviso: no compite por ancho con el − / +.
                     if (expiry != null) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: expiry.$2.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        child: Text(
-                          expiry.$1,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: expiry.$2,
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: expiry.$2,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              expiry.$1,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: expiry.$2,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
                 ),
               ),
-              if (stepUnit) ...[
-                const SizedBox(width: 8),
-                QuantityStepper(
-                  label: shoppingQtyLabel(total ?? item.quantity, item.unit),
-                  // Bajar del último lo da por consumido hoy (con deshacer).
-                  onMinus: item.quantity <= 1
-                      ? () => _consume(item)
-                      : () => _setQuantity(item, item.quantity - 1),
-                  onPlus: () => _setQuantity(item, item.quantity + 1),
+              const SizedBox(width: 8),
+              QuantityStepper(
+                label: pantryQtyLabel(
+                  total ?? item.quantity,
+                  item.unit,
+                  packSize: pack,
+                  byLevel: byLevel,
                 ),
-              ],
+                onMinus: () => _step(item, up: false, pack: pack),
+                onPlus: () => _step(item, up: true, pack: pack),
+              ),
             ],
           ),
         ),
@@ -1172,6 +1195,45 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
       child: row,
     );
+  }
+
+  /// Lo que no se cuenta (aceite, sal, especias) va por nivel.
+  static bool _byLevel(InventoryItem i) =>
+      i.kind == 'ingredient' &&
+      i.itemType == 'comida' &&
+      (i.category == 'Especias' || isCondiment(i.name));
+
+  /// Lo que trae cada envase según el hogar, en la unidad de la fila.
+  static double? _packOf(InventoryItem i) {
+    final own = CountPrefs.customPackOf(i.name);
+    if (own == null) return null;
+    return packSizeIn((quantity: own.size, unit: own.unit), i.unit);
+  }
+
+  /// − / + de la fila. Bajar del mínimo lo da por consumido hoy (con
+  /// deshacer); llegar a "Se acaba" lo apunta en la compra.
+  Future<void> _step(
+    InventoryItem item, {
+    required bool up,
+    double? pack,
+  }) async {
+    final byLevel = _byLevel(item);
+    final next = pantryQtyNext(
+      item.quantity,
+      item.unit,
+      up: up,
+      packSize: pack,
+      byLevel: byLevel,
+    );
+    if (next == null) return _consume(item);
+    await _setQuantity(item, next);
+    if (byLevel &&
+        !up &&
+        !isMeasureUnit(item.unit) &&
+        next <= pantryLevelLow &&
+        item.quantity > pantryLevelLow) {
+      await _addToShopping(item);
+    }
   }
 
   Future<void> _setQuantity(InventoryItem item, double quantity) async {

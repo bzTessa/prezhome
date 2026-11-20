@@ -1288,5 +1288,7 @@
   "shopPackSizeHint": "Zum Beispiel 570 g. Die Einkaufsliste zählt ganze Packungen und der Vorrat zieht nur ab, was jedes Rezept verbraucht.",
   "shopLeaveStore": "Ladenmodus beenden",
   "shopAllBoughtAsk": "Alle {count} Produkte als gekauft markieren?",
-  "shopAllBoughtAskHint": "Sie wandern in den Wagen und in die Vorratskammer."
+  "shopAllBoughtAskHint": "Sie wandern in den Wagen und in die Vorratskammer.",
+  "panLevelHalf": "Halb voll",
+  "panLevelLow": "Fast leer"
 }
