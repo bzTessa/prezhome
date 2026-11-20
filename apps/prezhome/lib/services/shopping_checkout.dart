@@ -120,6 +120,45 @@ class PantryCheckoutResult {
   int get count => changes.length;
 }
 
+/// Lo que ya estaba tachado al llegar el flujo carrito → "Guardar en casa".
+/// Antes, tachar ya lo sumaba a la despensa, así que esas filas no se vuelven
+/// a sumar al guardarlas. Se apunta una sola vez por dispositivo, antes del
+/// primer cambio en el carrito.
+class LegacyCartStore {
+  LegacyCartStore({LocalStore? store})
+    : _store = store ?? FileLocalStore(folderName: 'settings');
+
+  final LocalStore _store;
+  static const _key = 'legacy_cart_in_pantry';
+  Set<String>? _cache;
+
+  /// Ids de la lista que ya están en la despensa por el flujo antiguo. La
+  /// primera vez los toma de lo tachado en [rows].
+  Future<Set<String>> ids(
+    Future<List<Map<String, dynamic>>> Function() rows,
+  ) async {
+    final cached = _cache;
+    if (cached != null) return cached;
+    try {
+      final raw = await _store.read(_key);
+      if (raw != null) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          return _cache = {for (final e in decoded) e.toString()};
+        }
+      }
+      final legacy = {
+        for (final r in await rows())
+          if (r['checked'] == true && r['id'] != null) r['id'].toString(),
+      };
+      await _store.write(_key, jsonEncode(legacy.toList()));
+      return _cache = legacy;
+    } catch (_) {
+      return _cache = <String>{};
+    }
+  }
+}
+
 /// Separa el carrito (tachar en el súper) del paso real a "En casa", evitando
 /// duplicados al escanear el ticket y conservando gramos/envases del súper.
 /// Funciona sin conexión: todo va por la cola local.
@@ -129,15 +168,21 @@ class ShoppingCheckout {
     OfflineRepository? inventory,
     SupabaseClient? client,
     RecentCheckoutStore? recentCheckouts,
+    LegacyCartStore? legacyCart,
   }) : _shopping = shopping ?? OfflineProvider.instance.shopping,
        _inventory = inventory ?? OfflineProvider.instance.inventory,
        _client = client,
-       _recentCheckouts = recentCheckouts ?? RecentCheckoutStore();
+       _recentCheckouts = recentCheckouts ?? RecentCheckoutStore(),
+       _legacyCart = legacyCart ?? _defaultLegacyCart;
 
   final OfflineRepository _shopping;
   final OfflineRepository _inventory;
   final SupabaseClient? _client;
   final RecentCheckoutStore _recentCheckouts;
+  final LegacyCartStore _legacyCart;
+  static final LegacyCartStore _defaultLegacyCart = LegacyCartStore();
+
+  Future<Set<String>> _legacyIds() => _legacyCart.ids(_shopping.readCached);
 
   static int _seq = 0;
   int _nextSeq() => _seq++;
@@ -154,6 +199,7 @@ class ShoppingCheckout {
   /// Marca o desmarca [item] en el carrito sin tocar todavía la despensa.
   Future<void> setInCart(ShoppingListItem item, bool inCart) async {
     if (item.id == null) return;
+    await _legacyIds();
     await _shopping.applyLocalWrite(
       buildUpdateOp(
         table: kShoppingTable,
@@ -168,6 +214,7 @@ class ShoppingCheckout {
   /// Pasa todos los pendientes de [listId] al carrito (sin guardarlos aún en
   /// "En casa").
   Future<int> markAllInCart({required String homeId, String? listId}) async {
+    await _legacyIds();
     final rows = await _shopping.readCached();
     final pending = [
       for (final r in rows)
@@ -196,7 +243,10 @@ class ShoppingCheckout {
       } catch (_) {}
     }
     final changes = <PantryCheckoutChange>[];
+    final legacy = await _legacyIds();
     for (final item in items) {
+      // Tachado con la versión anterior: ya se sumó a la despensa entonces.
+      if (item.id != null && legacy.contains(item.id)) continue;
       changes.add(await addToPantry(item, homeId: homeId));
     }
     final ts = DateTime.now();

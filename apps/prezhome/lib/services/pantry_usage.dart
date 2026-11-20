@@ -557,7 +557,25 @@ class PantryUsage {
       }
     }
 
+    // Si la receta está en el plan, se marca esa comida como ya descontada
+    // para que [syncPlan] no vuelva a restar los mismos ingredientes.
+    final claimedPlanIds = <String>[];
+    if (client != null &&
+        effectiveHomeId.isNotEmpty &&
+        usesToDeduct.isNotEmpty &&
+        recipe.id.isNotEmpty) {
+      claimedPlanIds.addAll(
+        await claimPlannedMeals(
+          client,
+          homeId: effectiveHomeId,
+          recipeId: recipe.id,
+          now: clock,
+        ),
+      );
+    }
+
     return PostCookExecutionResult(
+      claimedPlanIds: List.unmodifiable(claimedPlanIds),
       deductedUses: List.unmodifiable(usesToDeduct),
       fridgeItemId: fridgeItemId,
       freezerItemId: freezerItemId,
@@ -566,11 +584,53 @@ class PantryUsage {
     );
   }
 
+  /// Marca como descontadas (`pantry_used_at`) las comidas del plan con
+  /// [recipeId] entre hace 6 días (lo que mira [syncPlan]) y mañana. No
+  /// toca las que salen del congelador (esas no descuentan). Devuelve los ids
+  /// marcados. No lanza.
+  static Future<List<String>> claimPlannedMeals(
+    SupabaseClient client, {
+    required String homeId,
+    required String recipeId,
+    DateTime? now,
+  }) async {
+    String day(DateTime d) => d.toIso8601String().split('T').first;
+    final clock = now ?? DateTime.now();
+    try {
+      final rows = await client
+          .from('meal_plan_entries')
+          .update({'pantry_used_at': clock.toUtc().toIso8601String()})
+          .eq('home_id', homeId)
+          .eq('recipe_id', recipeId)
+          .eq('from_freezer', false)
+          .isFilter('pantry_used_at', null)
+          .gte('plan_date', day(clock.subtract(const Duration(days: 6))))
+          .lte('plan_date', day(clock.add(const Duration(days: 1))))
+          .select('id');
+      return [for (final r in rows as List) r['id'] as String];
+    } catch (e) {
+      debugPrint('PantryUsage.claimPlannedMeals error: $e');
+      return const [];
+    }
+  }
+
   /// Revierte en En casa los descuentos y los tápers creados por [completeCook].
+  /// Con [client], devuelve también al plan las comidas que marcó.
   static Future<void> undoCompleteCook(
     PostCookExecutionResult result, {
     OfflineRepository? inventoryRepo,
+    SupabaseClient? client,
   }) async {
+    if (client != null && result.claimedPlanIds.isNotEmpty) {
+      try {
+        await client
+            .from('meal_plan_entries')
+            .update({'pantry_used_at': null})
+            .inFilter('id', result.claimedPlanIds);
+      } catch (e) {
+        debugPrint('PantryUsage.undoCompleteCook plan error: $e');
+      }
+    }
     final repo = inventoryRepo ?? OfflineProvider.instance.inventory;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     var seq = 0;
@@ -635,7 +695,11 @@ class PostCookExecutionResult {
   final Map<String, Map<String, dynamic>> previousSnapshots;
   final Set<String> deletedIds;
 
+  /// Comidas del plan marcadas como ya descontadas al cocinar.
+  final List<String> claimedPlanIds;
+
   const PostCookExecutionResult({
+    this.claimedPlanIds = const [],
     required this.deductedUses,
     required this.fridgeItemId,
     required this.freezerItemId,

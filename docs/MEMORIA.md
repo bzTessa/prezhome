@@ -91,7 +91,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `services/shopping_checkout.dart` (`setInCart`, `checkoutToPantryWithReceipt`,
   `undoCheckout`, `clearCoveredByTicket`, `RecentCheckoutStore`) y
   `utils/ticket_reconcile.dart`. Tachar en el súper mueve al carrito; "Guardar
-  en casa" pasa una vez a despensa con deshacer real (`undoCheckout`)
+  en casa" pasa una vez a despensa con deshacer real (`undoCheckout`); lo que
+  ya estaba tachado antes de este flujo (ya sumado entonces) no se vuelve a
+  sumar (`LegacyCartStore`),
   conservando gramos/ml y `packSize` (`CountPrefs`); escanear el ticket espera
   la conciliación, evita duplicados incluso parciales, hereda envases y limpia
   en esa lista (solo en sentido ticket → lista) lo cubierto. En `Mi cocina` (`inventory_screen.dart`,
@@ -201,7 +203,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `widgets/post_cook_sheet.dart` (`MiauCharacter` celebrando con `float: false`)
   + `PantryUsage.completeCook`/`undoCompleteCook` (`services/pantry_usage.dart`)
   + `fridgeDishItem` (`widgets/freeze_dish_sheet.dart`) descuentan de En casa y
-  reparten sobras entre Nevera (+3 días) y Congelador con `Deshacer`.
+  reparten sobras entre Nevera (+3 días) y Congelador con `Deshacer`. Si
+  descuenta, marca esa receta en el plan (`claimPlannedMeals`, hace 6 días a
+  mañana) para que `syncPlan` no la descuente otra vez.
   Tanda: `batch_prep_timeline_screen.dart` ("Lo que necesitas" con los
   ingredientes por raciones, `batchIngredientLines`; cada receta se prepara
   antes de ir a su aparato; acaba con el reparto en tápers del `PrepBatch`).

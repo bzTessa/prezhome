@@ -81,6 +81,7 @@ void main() {
         shopping: shoppingRepo,
         inventory: inventoryRepo,
         recentCheckouts: recentStore,
+        legacyCart: LegacyCartStore(store: InMemoryLocalStore()),
       );
     });
 
@@ -145,6 +146,32 @@ void main() {
         final recent = await recentStore.load();
         expect(recent, hasLength(1));
         expect(recent.single.names, ['Garbanzos']);
+      },
+    );
+
+    test(
+      'lo tachado con la versión anterior no se suma otra vez al guardar',
+      () async {
+        // Ya estaba en el carrito (y por tanto en la despensa) antes del cambio.
+        final viejo = ShoppingListItem(
+          id: 'old-1',
+          homeId: 'h',
+          name: 'Garbanzos',
+          checked: true,
+        );
+        final nuevo = ShoppingListItem(id: 'new-1', homeId: 'h', name: 'Arroz');
+        await seedShopping(viejo, seq: 1);
+        await seedShopping(nuevo, seq: 2);
+
+        await checkout.setInCart(nuevo, true);
+        final saved = await checkout.checkoutToPantry([
+          viejo,
+          ShoppingListItem.fromMap({...nuevo.toCacheMap(), 'checked': true}),
+        ], homeId: 'h');
+
+        expect(saved, 1);
+        final inventoryRows = await inventoryRepo.readCached();
+        expect(inventoryRows.map((r) => r['name']), ['Arroz']);
       },
     );
 

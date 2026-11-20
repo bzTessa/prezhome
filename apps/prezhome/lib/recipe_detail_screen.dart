@@ -602,7 +602,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             action: SnackBarAction(
               label: l.undo,
               onPressed: () async {
-                await PantryUsage.undoCompleteCook(result);
+                await PantryUsage.undoCompleteCook(result, client: _client);
                 await _reloadPantry();
                 if (!mounted) return;
                 ScaffoldMessenger.of(
