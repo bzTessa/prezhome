@@ -43,7 +43,6 @@ class _TasksScreenState extends State<TasksScreen> {
   late Future<_TasksData> _future;
 
   // Filtro de persona: null = todas; si no, id del miembro (Mías = uid).
-  String? _filterUser;
 
   // Vista elegida en la píldora de arriba.
   _TaskView _view = _TaskView.pending;
@@ -238,7 +237,6 @@ class _TasksScreenState extends State<TasksScreen> {
         .select('user_id, points, created_at')
         .eq('home_id', homeId);
     final pointRows = (pointsRes as List).cast<Map<String, dynamic>>();
-    final weekScores = pointsSince(pointRows, startOfWeek(DateTime.now()));
     final scores = <String, int>{};
     for (final row in pointRows) {
       final uid = row['user_id'] as String;
@@ -251,7 +249,6 @@ class _TasksScreenState extends State<TasksScreen> {
       tasks: tasks,
       listTasks: tasks,
       scores: scores,
-      weekScores: weekScores,
       currentUserId: user.id,
       pointsEnabled: pointsEnabled,
     );
@@ -694,9 +691,7 @@ class _TasksScreenState extends State<TasksScreen> {
               );
             }
 
-            final visible = data.listTasks
-                .where((t) => taskMatchesFilter(t, _filterUser))
-                .toList();
+            final visible = data.listTasks;
             final pending = visible.where((t) => !t.isDone).toList()
               ..sort(_byDue);
             final today = pending.where(_isDueTodayOrOverdue).toList();
@@ -731,9 +726,7 @@ class _TasksScreenState extends State<TasksScreen> {
               key: ValueKey(t.id),
               task: t,
               // Agrupadas por persona, su nombre ya está en el título.
-              who: _filterUser == null && t.assignedTo != null && !t.rotates
-                  ? null
-                  : who(t),
+              who: t.assignedTo != null && !t.rotates ? null : who(t),
               overdue: _isOverdue(t),
               completing: _completing.contains(t.id),
               points: data.pointsEnabled ? t.points : null,
@@ -759,21 +752,6 @@ class _TasksScreenState extends State<TasksScreen> {
 
             final List<Widget> section = switch (view) {
               _TaskView.pending => [
-                if (showWho)
-                  _FilterRow(
-                    members: data.members,
-                    currentUserId: data.currentUserId,
-                    selected: _filterUser,
-                    onSelected: (id) => setState(() => _filterUser = id),
-                  ),
-                if (showWho && data.pointsEnabled && _filterUser == null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  _WeekShare(
-                    members: data.members,
-                    points: data.weekScores,
-                    currentUserId: data.currentUserId,
-                  ),
-                ],
                 if (overdue >= 2) ...[
                   const SizedBox(height: AppSpacing.md),
                   _CatchUpCard(
@@ -787,8 +765,9 @@ class _TasksScreenState extends State<TasksScreen> {
                     visible: true,
                     nothingToday: upcoming.isNotEmpty,
                   )
-                else if (showWho && _filterUser == null)
-                  // Todas: una sección por persona, empezando por ti.
+                else if (showWho)
+                  // Una sección por persona, empezando por ti: ya hace de
+                  // filtro.
                   for (final (gi, g) in groupByPerson(
                     today,
                     data.currentUserId,
@@ -997,44 +976,6 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 }
 
-class _FilterRow extends StatelessWidget {
-  final Map<String, String> members;
-  final String? currentUserId;
-  final String? selected;
-  final ValueChanged<String?> onSelected;
-  const _FilterRow({
-    required this.members,
-    required this.currentUserId,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final others = members.entries.where((e) => e.key != currentUserId);
-    Widget chip(String label, String? id) => ChoiceChip(
-      label: Text(label),
-      selected: selected == id,
-      onSelected: (_) {
-        HapticFeedback.selectionClick();
-        onSelected(id);
-      },
-    );
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md),
-      child: Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.xs,
-        children: [
-          chip(context.l.tskAll, null),
-          if (currentUserId != null) chip(context.l.tskMine, currentUserId),
-          for (final e in others) chip(e.value, e.key),
-        ],
-      ),
-    );
-  }
-}
-
 class _TareasCelebracion extends StatelessWidget {
   final bool visible;
 
@@ -1097,8 +1038,6 @@ class _TasksData {
   final List<HomeTask> listTasks;
   final Map<String, int> scores;
 
-  /// Puntos de cada persona desde el lunes, para el reparto de la semana.
-  final Map<String, int> weekScores;
   final String? currentUserId;
 
   /// "Modo Puntos" activado: controla si se muestran el marcador y la gráfica.
@@ -1109,7 +1048,6 @@ class _TasksData {
     this.tasks = const [],
     this.listTasks = const [],
     this.scores = const {},
-    this.weekScores = const {},
     this.currentUserId,
     this.pointsEnabled = true,
   });
@@ -1282,90 +1220,6 @@ class _CatchUpCard extends StatelessWidget {
       ],
     ),
   );
-}
-
-/// Reparto de la semana: una barra partida con los puntos de cada persona
-/// desde el lunes, para ver de un vistazo si el trabajo está repartido.
-class _WeekShare extends StatelessWidget {
-  const _WeekShare({
-    required this.members,
-    required this.points,
-    required this.currentUserId,
-  });
-
-  final Map<String, String> members;
-  final Map<String, int> points;
-  final String? currentUserId;
-
-  @override
-  Widget build(BuildContext context) {
-    final people = members.entries.toList()
-      ..sort((a, b) => (points[b.key] ?? 0).compareTo(points[a.key] ?? 0));
-    final total = people.fold<int>(0, (n, e) => n + (points[e.key] ?? 0));
-    String name(MapEntry<String, String> e) =>
-        e.key == currentUserId ? context.l.tskYouShort : e.value;
-
-    return Container(
-      padding: AppSpacing.cardPadding,
-      decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(context.l.tskWeekShare, style: AppTextStyles.bodyStrong),
-          const SizedBox(height: AppSpacing.sm),
-          if (total == 0)
-            Text(context.l.tskWeekShareEmpty, style: AppTextStyles.bodyMuted)
-          else ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: SizedBox(
-                height: 10,
-                child: Row(
-                  children: [
-                    for (final (i, e) in people.indexed)
-                      if ((points[e.key] ?? 0) > 0)
-                        Expanded(
-                          flex: points[e.key]!,
-                          child: Container(
-                            margin: EdgeInsets.only(left: i == 0 ? 0 : 2),
-                            color: personColor(e.value),
-                          ),
-                        ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.md,
-              runSpacing: AppSpacing.xs,
-              children: [
-                for (final e in people)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: personColor(e.value),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${name(e)} · ${points[e.key] ?? 0}',
-                        style: AppTextStyles.bodyMuted,
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 /// Color estable de cada persona (el mismo nombre, siempre el mismo color).
@@ -1732,11 +1586,7 @@ class _TaskTile extends StatelessWidget {
                             : meta,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodyMuted.copyWith(
-                          fontSize: 12,
-                          color: overdue ? AppColors.expired : null,
-                          fontWeight: overdue ? FontWeight.w700 : null,
-                        ),
+                        style: AppTextStyles.bodyMuted.copyWith(fontSize: 12),
                       ),
                     ],
                   ),
