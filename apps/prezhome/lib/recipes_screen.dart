@@ -18,6 +18,7 @@ import 'widgets/recipe_image.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/animations/app_transitions.dart';
 import 'utils/friendly_error.dart';
+import 'utils/shopping_display.dart';
 import 'l10n/l10n.dart';
 import 'widgets/hide_fab_on_scroll.dart';
 
@@ -286,16 +287,32 @@ class _RecipesScreenState extends State<RecipesScreen> {
     },
   );
 
+  /// Recetas en filas compactas (foto pequeña, título y datos), juntas en un
+  /// bloque como en la Despensa: caben unas 6 por pantalla.
   SliverPadding _grid(
     List<Recipe> recipes,
     int? perMeal, {
     double bottom = 0,
   }) => SliverPadding(
     padding: EdgeInsets.fromLTRB(16, 0, 16, bottom),
-    sliver: SliverGrid.builder(
-      gridDelegate: recipeGridDelegate,
-      itemCount: recipes.length,
-      itemBuilder: (context, index) => _card(recipes[index], perMeal),
+    sliver: SliverToBoxAdapter(
+      child: Container(
+        // El relleno deja el borde por encima de las filas opacas.
+        padding: const EdgeInsets.all(1.5),
+        decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.md - 1.5),
+          child: Column(
+            children: [
+              for (var i = 0; i < recipes.length; i++) ...[
+                if (i > 0)
+                  Divider(height: 1, indent: 88, color: AppColors.line),
+                _card(recipes[i], perMeal),
+              ],
+            ],
+          ),
+        ),
+      ),
     ),
   );
 
@@ -682,8 +699,8 @@ class _RecipesData {
   _RecipesData({required this.recipes, this.profile, this.pantry = const []});
 }
 
-/// Barra horizontal de chips de filtro sobre la rejilla.
-/// Tarjeta de receta para la rejilla: foto arriba, título y chips clave abajo.
+/// Fila de receta: foto pequeña, título, tiempo y calorías, si hay todo en
+/// casa, y el corazón de favorita.
 class _RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final int? caloriesPerMeal;
@@ -715,94 +732,74 @@ class _RecipeCard extends StatelessWidget {
       label: recipe.title,
       child: Material(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(24),
-        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Foto a sangre: la imagen manda, como en las apps de recetas.
-              LayoutBuilder(
-                builder: (context, c) =>
-                    RecipeImage(recipe: recipe, height: c.maxHeight, radius: 0),
-              ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.7),
-                    ],
-                    stops: const [0.4, 1],
-                  ),
-                ),
-              ),
-              if (missing != null && missing! <= 1)
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: _HomeStockPill(missing: missing!),
-                ),
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Material(
-                  color: AppColors.card.withValues(alpha: 0.92),
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: onToggleFavorite,
-                    child: Padding(
-                      padding: const EdgeInsets.all(7),
-                      child: Icon(
-                        recipe.isFavorite
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        color: recipe.isFavorite
-                            ? AppColors.favorite
-                            : AppColors.ink,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 12,
-                right: 12,
-                bottom: 12,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      recipe.title,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.headline.copyWith(
-                        fontSize: 17,
-                        height: 1.15,
-                        color: Colors.white,
-                      ),
-                    ),
-                    if (meta.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+            child: Row(
+              children: [
+                RecipeImage(recipe: recipe, width: 64, height: 64, radius: 14),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        meta,
+                        // Sin marcas en el título (Hacendado…).
+                        shoppingCleanName(recipe.title),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 15,
+                          height: 1.2,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.85),
+                          color: AppColors.ink,
                         ),
                       ),
+                      if (meta.isNotEmpty || (missing ?? 2) <= 1) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (meta.isNotEmpty)
+                              Flexible(
+                                child: Text(
+                                  meta,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ),
+                              ),
+                            if (missing != null && missing! <= 1) ...[
+                              if (meta.isNotEmpty) const SizedBox(width: 8),
+                              _HomeStockPill(missing: missing!),
+                            ],
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                IconButton(
+                  tooltip: recipe.isFavorite
+                      ? context.l.recUnfavorite
+                      : context.l.recFavorite,
+                  onPressed: onToggleFavorite,
+                  icon: Icon(
+                    recipe.isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: recipe.isFavorite
+                        ? AppColors.favorite
+                        : AppColors.inkMuted,
+                    size: 22,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -935,7 +932,7 @@ class _NoSearchResults extends StatelessWidget {
   }
 }
 
-/// Pastilla sobre la foto: "Tienes todo" o "Falta 1" según la despensa.
+/// Pastilla "Tienes todo" o "Falta 1" según la despensa.
 class _HomeStockPill extends StatelessWidget {
   const _HomeStockPill({required this.missing});
 
