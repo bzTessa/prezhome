@@ -7973,6 +7973,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Receta'**
   String get captureRecipe;
+
+  /// No description provided for @onbCountryLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'País'**
+  String get onbCountryLabel;
+
+  /// No description provided for @onbPickCountry.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige tu país'**
+  String get onbPickCountry;
+
+  /// No description provided for @onbSummaryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Así queda tu hogar'**
+  String get onbSummaryTitle;
 }
 
 class _AppLocalizationsDelegate

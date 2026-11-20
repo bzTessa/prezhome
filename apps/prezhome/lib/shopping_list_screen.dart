@@ -131,6 +131,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _remoteTried = false;
   bool _refreshAgain = false;
   bool _generating = false;
+  bool _finishing = false;
 
   // Nº de cambios pendientes de sincronizar (cola no vacía) para el indicador
   // discreto. Se recalcula tras cada carga/escritura.
@@ -767,14 +768,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   /// Termina la compra: pasa lo del carrito a "En casa" una sola vez,
-  /// celebra y vacía el carrito de la lista.
+  /// celebra y vacía el carrito de la lista con opción de deshacer todo.
   Future<void> _finishShopping(List<ShoppingListItem> comprados) async {
     final targets = comprados.where((i) => i.id != null).toList();
-    if (targets.isEmpty) return;
+    if (targets.isEmpty || _finishing) return;
     HapticFeedback.mediumImpact();
+    setState(() => _finishing = true);
     try {
       final homeId = await _homeId();
-      await ShoppingCheckout().checkoutToPantry(targets, homeId: homeId);
+      final receipt = await ShoppingCheckout().checkoutToPantryWithReceipt(
+        targets,
+        homeId: homeId,
+      );
       final ids = {for (final i in targets) i.id!};
       final current = _shown;
       if (current != null && mounted) {
@@ -809,7 +814,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         ..showSnackBar(
           SnackBar(
             content: Text(context.l.shopSavedToPantry(targets.length)),
+            duration: const Duration(seconds: 6),
             persist: false,
+            action: SnackBarAction(
+              label: context.l.undo,
+              onPressed: () => _undoFinishShopping(targets, receipt),
+            ),
           ),
         );
     } catch (e) {
@@ -820,13 +830,26 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           backgroundColor: AppColors.expired,
         ),
       );
+    } finally {
+      if (mounted) setState(() => _finishing = false);
     }
   }
 
+  Future<void> _undoFinishShopping(
+    List<ShoppingListItem> targets,
+    PantryCheckoutResult receipt,
+  ) async {
+    await ShoppingCheckout().undoCheckout(receipt);
+    await _restore(targets);
+    unawaited(_inventoryRepo.tryDrain(force: true));
+  }
+
   Future<void> _openScanTicket() async {
-    final saved = await Navigator.of(
-      context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const ScanTicketScreen()));
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ScanTicketScreen(shoppingListId: _activeListId),
+      ),
+    );
     if (saved == true && mounted) {
       await _reload();
       unawaited(_inventoryRepo.refreshFromRemote());
@@ -2156,7 +2179,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     ? context.l.shopSaveToHome
                     : context.l.shopSaveToHomeCount(comprados.length),
                 icon: Icons.kitchen_rounded,
-                onPressed: () => _finishShopping(comprados),
+                onPressed: _finishing ? null : () => _finishShopping(comprados),
               ),
             ),
             const SizedBox(width: AppSpacing.md),

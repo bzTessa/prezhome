@@ -46,6 +46,7 @@ import '../widgets/animations/staggered_entrance.dart';
 import '../utils/day_brief.dart';
 import '../utils/task_share.dart' show catchUpDates;
 import '../utils/friendly_error.dart';
+import '../utils/miau_mood_resolver.dart';
 import '../utils/pantry_ideas.dart' show formatEuros, pantryNamesForIdeas;
 import '../utils/recipe_browse.dart' show readyToCook;
 import '../utils/ticket_date.dart';
@@ -849,12 +850,24 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
-  /// Cabecera: fecha, saludo y accesos a personalizar y a tu hogar (miembros,
-  /// supermercados, ajustes), que antes era una pestaña.
+  MiauMood _homeCatMood() => resolveHomeCatMood(
+    hour: DateTime.now().hour,
+    expiredCount: _expired,
+    expiringSoonCount: _expiringNames.length,
+    pendingTasks: _pendingTasks.length,
+    doneTodayTasks: _doneTodayTasks.length,
+    hasMealsToday: _todayItems.isNotEmpty,
+    pendingShopping: _pendingShopping,
+  );
+
+  /// Cabecera: gato reactivo al hogar, fecha, saludo y acceso a Mi hogar y
+  /// Ajustes.
   Widget _header() {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        MiauCharacter(mood: _homeCatMood(), size: 54, interactive: true),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

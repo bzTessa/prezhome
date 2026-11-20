@@ -1310,5 +1310,8 @@
   "captureVoiceListening": "Höre zu…",
   "captureBarcode": "Barcode",
   "captureTicket": "Kassenbon",
-  "captureRecipe": "Rezept"
+  "captureRecipe": "Rezept",
+  "onbCountryLabel": "Land",
+  "onbPickCountry": "Wähle dein Land",
+  "onbSummaryTitle": "So richten wir dein Zuhause ein"
 }

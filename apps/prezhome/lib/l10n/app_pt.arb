@@ -1310,5 +1310,8 @@
   "captureVoiceListening": "A ouvir…",
   "captureBarcode": "Código de barras",
   "captureTicket": "Talão",
-  "captureRecipe": "Receita"
+  "captureRecipe": "Receita",
+  "onbCountryLabel": "País",
+  "onbPickCountry": "Escolhe o teu país",
+  "onbSummaryTitle": "Assim fica a tua casa"
 }

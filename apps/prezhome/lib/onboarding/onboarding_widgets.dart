@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animations/press_scale.dart';
+import '../widgets/miau_character.dart';
 import '../widgets/tactile_button.dart';
-import '../l10n/l10n.dart';
 
 /// Piezas visuales del cuestionario inicial.
 
 /// Botón del cuestionario: el principal es el [TactileButton] terracota de la
-/// app; el secundario, una píldora de papel con trazo carbón a juego.
+/// app; el secundario, una píldora de papel con borde suave editorial.
 class OnboardingButton extends StatelessWidget {
   const OnboardingButton({
     super.key,
@@ -35,7 +38,7 @@ class OnboardingButton extends StatelessWidget {
         minimumSize: const Size.fromHeight(52),
         backgroundColor: AppColors.paper,
         foregroundColor: AppColors.ink,
-        side: BorderSide.none,
+        side: BorderSide(color: AppColors.cardEdge, width: 1.25),
         textStyle: AppTextStyles.title,
       ),
       child: Text(label),
@@ -53,18 +56,20 @@ class StepProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduced = AppMotion.reduceMotionOf(context);
     return Row(
       children: [
         for (var i = 1; i <= total; i++) ...[
           if (i > 1) const SizedBox(width: 6),
           Expanded(
             child: AnimatedContainer(
-              duration: AppMotion.base,
+              duration: AppMotion.effectiveDuration(
+                AppMotion.base,
+                reduceMotion: reduced,
+              ),
               height: 5,
               decoration: BoxDecoration(
-                color: i <= step
-                    ? AppColors.woodDark
-                    : AppColors.wood.withValues(alpha: 0.35),
+                color: i <= step ? AppColors.terracotta : AppColors.line,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -90,6 +95,7 @@ class QuestionScaffold extends StatelessWidget {
     this.subtitle,
     this.continueLabel,
     this.illustration,
+    this.catMood,
   });
 
   final String section;
@@ -104,6 +110,9 @@ class QuestionScaffold extends StatelessWidget {
 
   /// Dibujo opcional encima de la pregunta (assets/images/onb_*.png).
   final String? illustration;
+
+  /// Pose del gato que acompaña la pregunta (en grande si no hay ilustración).
+  final MiauMood? catMood;
 
   @override
   Widget build(BuildContext context) {
@@ -120,20 +129,37 @@ class QuestionScaffold extends StatelessWidget {
                   icon: const Icon(Icons.arrow_back_rounded),
                   tooltip: context.l.back,
                 ),
-                Text(
-                  section,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.inkMuted,
+                Expanded(
+                  child: Text(
+                    section,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.inkMuted,
+                    ),
                   ),
                 ),
+                if (illustration != null && catMood != null)
+                  MiauCharacter(mood: catMood!, size: 40, interactive: true),
               ],
             ),
             const SizedBox(height: 8),
             StepProgress(step: step, total: total),
-            SizedBox(height: illustration == null ? 32 : 12),
+            SizedBox(height: illustration == null && catMood == null ? 32 : 12),
             if (illustration != null) ...[
-              Image.asset(illustration!, height: 110),
+              Image.asset(
+                illustration!,
+                height: 104,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 12),
+            ] else if (catMood != null) ...[
+              Center(
+                child: MiauCharacter(
+                  mood: catMood!,
+                  size: 104,
+                  interactive: true,
+                ),
+              ),
               const SizedBox(height: 12),
             ],
             Text(
@@ -188,94 +214,100 @@ class OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduced = AppMotion.reduceMotionOf(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Semantics(
         selected: selected,
         button: true,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: AnimatedContainer(
-              duration: AppMotion.fast,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: selected
-                    ? color.withValues(alpha: 0.14)
-                    : AppColors.card,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: selected
-                      ? color
-                      : AppColors.wood.withValues(alpha: 0.4),
-                  width: selected ? 2 : 1,
-                ),
-                boxShadow: selected ? null : AppElevation.level1,
+        child: PressScale(
+          pressedScale: 0.98,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          child: AnimatedContainer(
+            duration: AppMotion.effectiveDuration(
+              AppMotion.fast,
+              reduceMotion: reduced,
+            ),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: selected ? color.withValues(alpha: 0.14) : AppColors.card,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: selected ? color : AppColors.cardEdge,
+                width: selected ? 2 : 1,
               ),
-              child: Row(
-                children: [
-                  AnimatedContainer(
-                    duration: AppMotion.fast,
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: selected ? color : color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: selected ? Colors.white : color,
-                      size: 26,
-                    ),
+              boxShadow: selected ? AppElevation.level0 : AppElevation.level1,
+            ),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: AppMotion.effectiveDuration(
+                    AppMotion.fast,
+                    reduceMotion: reduced,
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink,
-                          ),
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: selected ? color : color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: selected ? AppColors.onTerracotta : color,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
                         ),
-                        if (subtitle != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              subtitle!,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.inkMuted,
-                              ),
+                      ),
+                      if (subtitle != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.inkMuted,
                             ),
                           ),
-                      ],
+                        ),
+                    ],
+                  ),
+                ),
+                AnimatedOpacity(
+                  duration: AppMotion.effectiveDuration(
+                    AppMotion.fast,
+                    reduceMotion: reduced,
+                  ),
+                  opacity: selected ? 1 : 0,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: AppColors.onTerracotta,
                     ),
                   ),
-                  AnimatedOpacity(
-                    duration: AppMotion.fast,
-                    opacity: selected ? 1 : 0,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -332,7 +364,9 @@ class LoadMeter extends StatelessWidget {
               Expanded(
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: i <= value ? 1 : 0),
-                  duration: Duration(milliseconds: 250 + i * 60),
+                  duration: AppMotion.reduceMotionOf(context)
+                      ? Duration.zero
+                      : Duration(milliseconds: 250 + i * 60),
                   builder: (context, t, _) => Container(
                     height: 12,
                     decoration: BoxDecoration(

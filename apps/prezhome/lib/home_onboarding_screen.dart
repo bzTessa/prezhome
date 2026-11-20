@@ -6,6 +6,7 @@ import 'main_shell.dart';
 import 'onboarding/onboarding_widgets.dart';
 import 'services/home_country.dart';
 import 'services/home_invites.dart';
+import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/miau_character.dart';
@@ -110,7 +111,11 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const MiauCharacter(mood: MiauMood.greeting, size: 120),
+                  MiauCharacter(
+                    mood: _joining ? MiauMood.curious : MiauMood.greeting,
+                    size: 120,
+                    interactive: true,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     context.l.homeLastStep,
@@ -135,37 +140,48 @@ class _HomeOnboardingScreenState extends State<HomeOnboardingScreen> {
                     onPressed: _isLoading ? null : _createHome,
                   ),
                   const SizedBox(height: 12),
-                  if (!_joining)
-                    TextButton(
-                      onPressed: _isLoading ? null : _startJoining,
-                      child: Text(
-                        context.l.homeInvited,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                    )
-                  else ...[
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _homeIdController,
-                      enabled: !_isLoading,
-                      autofocus: true,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: InputDecoration(
-                        labelText: context.l.homeInviteCode,
-                        hintText: 'ABCD-EFGH',
-                      ),
+                  AnimatedSize(
+                    duration: AppMotion.effectiveDuration(
+                      AppMotion.fast,
+                      reduceMotion: AppMotion.reduceMotionOf(context),
                     ),
-                    const SizedBox(height: 12),
-                    OnboardingButton(
-                      label: context.l.homeJoin,
-                      outlined: true,
-                      onPressed: _isLoading ? null : _joinHome,
-                    ),
-                  ],
+                    curve: Curves.easeOutCubic,
+                    child: !_joining
+                        ? TextButton(
+                            onPressed: _isLoading ? null : _startJoining,
+                            child: Text(
+                              context.l.homeInvited,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _homeIdController,
+                                enabled: !_isLoading,
+                                autofocus: true,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                decoration: InputDecoration(
+                                  labelText: context.l.homeInviteCode,
+                                  hintText: 'ABCD-EFGH',
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              OnboardingButton(
+                                label: context.l.homeJoin,
+                                outlined: true,
+                                onPressed: _isLoading ? null : _joinHome,
+                              ),
+                            ],
+                          ),
+                  ),
                 ],
               ),
             ),

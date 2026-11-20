@@ -25,9 +25,12 @@ import 'l10n/l10n.dart';
 /// pantalla de revisión editable antes de guardar. Aprende las correcciones.
 /// Con [ticketId] edita un ticket ya guardado (fecha, tienda, productos).
 class ScanTicketScreen extends StatefulWidget {
-  const ScanTicketScreen({super.key, this.ticketId});
+  const ScanTicketScreen({super.key, this.ticketId, this.shoppingListId});
 
   final String? ticketId;
+
+  /// Lista de la compra desde la que se abre el escáner (null = principal).
+  final String? shoppingListId;
 
   @override
   State<ScanTicketScreen> createState() => _ScanTicketScreenState();
@@ -48,6 +51,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   bool _addToPantry = true;
   bool _pantryToggledByUser = false;
   TicketReconcileResult? _reconcile;
+  Future<void>? _reconcileFuture;
   bool _autoSkippedPantry = false;
 
   @override
@@ -255,7 +259,8 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       _addToPantry = true;
       _pantryToggledByUser = false;
     });
-    unawaited(_reconcileLoadedItems());
+    _reconcileFuture = _reconcileLoadedItems();
+    unawaited(_reconcileFuture);
   }
 
   Future<void> _reconcileLoadedItems() async {
@@ -362,8 +367,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
             .upsert(aliasByRaw.values.toList(), onConflict: 'home_id,raw_name');
       }
 
-      // 4. Añadir los productos a la despensa (inventario), si procede.
-      //    Es un paso secundario: si falla, el ticket queda guardado igual.
+      // 4. Esperamos la conciliación por si se guardó muy rápido y añadimos los
+      //    productos a la despensa si procede.
+      try {
+        await _reconcileFuture;
+      } catch (_) {}
       if (_addToPantry) {
         try {
           await _addItemsToPantry(homeId);
@@ -386,7 +394,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
         crossed = await ShoppingCheckout(client: _client).clearCoveredByTicket([
           for (final it in _items)
             if (it.name.text.trim().isNotEmpty) it.name.text.trim(),
-        ]);
+        ], listId: widget.shoppingListId);
       } catch (e) {
         debugPrint('No se pudo tachar de la lista: $e');
       }
@@ -417,6 +425,11 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
   /// en [CountPrefs] y evitando duplicar en la caché offline.
   Future<void> _addItemsToPantry(dynamic homeId) async {
     final hid = homeId.toString();
+    if ((await OfflineProvider.instance.inventory.readCached()).isEmpty) {
+      try {
+        await OfflineProvider.instance.inventory.refreshFromRemote();
+      } catch (_) {}
+    }
     try {
       await CountPrefs(_client).load(hid);
     } catch (_) {}
@@ -424,6 +437,12 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
     final toAdd = <ShoppingListItem>[];
     final addedNames = <String>[];
     for (var i = 0; i < _items.length; i++) {
+      // Si este producto concreto ya se había guardado desde la lista hace
+      // poco, lo saltamos salvo que la persona encendiera el switch a mano.
+      if (!_pantryToggledByUser &&
+          (_reconcile?.alreadyInPantryIndices.contains(i) ?? false)) {
+        continue;
+      }
       final it = _items[i];
       final name = it.name.text.trim();
       if (name.isEmpty) continue;
@@ -432,8 +451,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
       final candidate = _reconcile?.matchedListItems[i];
       final matched =
           candidate != null &&
-              (ticketCovers(name, candidate.name) ||
-                  ticketCovers(candidate.name, name))
+              ticketCovers(name, shoppingCleanName(candidate.name))
           ? candidate
           : null;
       var unit = 'unidades';

@@ -99,5 +99,41 @@ void main() {
         expect(res.matchedListItems[0]?.unit, 'g');
       },
     );
+
+    test(
+      'coincide en un solo sentido: Leche no tapa Chocolate con leche y limpia marca',
+      () {
+        final chocolateConLeche = ShoppingListItem(
+          id: 'c1',
+          homeId: 'h',
+          name: 'Chocolate con leche',
+          checked: false,
+        );
+        final garbanzosMarca = ShoppingListItem(
+          id: 'c2',
+          homeId: 'h',
+          name: 'Garbanzos · Hacendado',
+          packSize: 570,
+          unit: 'g',
+          checked: true,
+        );
+
+        final res = reconcileTicket(
+          ticketNames: const ['Leche', 'Garbanzos cocidos'],
+          listItems: [chocolateConLeche, garbanzosMarca],
+          recentCheckouts: [
+            RecentCheckoutRecord(
+              at: now.subtract(const Duration(hours: 1)),
+              names: const ['Chocolate con leche'],
+            ),
+          ],
+          now: now,
+        );
+
+        expect(res.alreadyInPantryIndices, isEmpty);
+        expect(res.matchedListItems[0], isNull);
+        expect(res.matchedListItems[1]?.id, 'c2');
+      },
+    );
   });
 }

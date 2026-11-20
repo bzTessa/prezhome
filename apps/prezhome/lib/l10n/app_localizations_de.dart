@@ -5208,4 +5208,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get captureRecipe => 'Rezept';
+
+  @override
+  String get onbCountryLabel => 'Land';
+
+  @override
+  String get onbPickCountry => 'Wähle dein Land';
+
+  @override
+  String get onbSummaryTitle => 'So richten wir dein Zuhause ein';
 }

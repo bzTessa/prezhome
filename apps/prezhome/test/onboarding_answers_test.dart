@@ -80,12 +80,14 @@ void main() {
         goals: {HomeGoal.comidas, HomeGoal.gastos},
         cooking: CookingHabit.mixto,
         supermarkets: ['mercadona', 'lidl'],
+        countryCode: 'DE',
       );
       final b = OnboardingAnswers.decode(a.encode())!;
       expect(b.people, 3);
       expect(b.goals, {HomeGoal.comidas, HomeGoal.gastos});
       expect(b.cooking, CookingHabit.mixto);
       expect(b.supermarkets, ['mercadona', 'lidl']);
+      expect(b.countryCode, 'DE');
     });
 
     test('datos corruptos o vacíos devuelven null', () {

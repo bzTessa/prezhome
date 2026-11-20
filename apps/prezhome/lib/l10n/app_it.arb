@@ -1310,5 +1310,8 @@
   "captureVoiceListening": "In ascolto…",
   "captureBarcode": "Codice a barre",
   "captureTicket": "Scontrino",
-  "captureRecipe": "Ricetta"
+  "captureRecipe": "Ricetta",
+  "onbCountryLabel": "Paese",
+  "onbPickCountry": "Scegli il tuo paese",
+  "onbSummaryTitle": "Ecco la tua configurazione"
 }

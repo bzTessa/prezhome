@@ -84,7 +84,7 @@ int? learnedShelfDays({
   int? estimatedDays,
   required DateTime today,
 }) {
-  DateTime d(DateTime x) => DateTime(x.year, x.month, x.day);
+  DateTime d(DateTime x) => DateTime.utc(x.year, x.month, x.day);
   if (previous == null || estimatedDays == null) {
     final days = d(picked).difference(d(today)).inDays;
     return days >= 1 ? days : null;

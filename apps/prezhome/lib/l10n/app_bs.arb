@@ -1310,5 +1310,8 @@
   "captureVoiceListening": "Slušam…",
   "captureBarcode": "Barkod",
   "captureTicket": "Račun",
-  "captureRecipe": "Recept"
+  "captureRecipe": "Recept",
+  "onbCountryLabel": "Država",
+  "onbPickCountry": "Odaberi državu",
+  "onbSummaryTitle": "Ovako izgleda tvoj dom"
 }

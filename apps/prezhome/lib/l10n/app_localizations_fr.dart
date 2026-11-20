@@ -5226,4 +5226,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get captureRecipe => 'Recette';
+
+  @override
+  String get onbCountryLabel => 'Pays';
+
+  @override
+  String get onbPickCountry => 'Choisis ton pays';
+
+  @override
+  String get onbSummaryTitle => 'Ta configuration';
 }

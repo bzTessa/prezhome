@@ -1,5 +1,6 @@
 import '../models/shopping_list_item.dart';
 import '../widgets/food_category_icon.dart';
+import 'shopping_display.dart';
 
 /// ¿El producto [ticketName] de un ticket es [listName] de la lista? Cada
 /// palabra de la lista ha de estar en el ticket ("garbanzos" ⊂ "Garbanzos
@@ -107,7 +108,7 @@ TicketReconcileResult reconcileTicket({
     nonEmptyCount++;
 
     final isRecent = recentNames.any(
-      (r) => ticketCovers(tName, r) || ticketCovers(r, tName),
+      (r) => ticketCovers(tName, shoppingCleanName(r)),
     );
     if (isRecent) alreadyInPantry.add(i);
 
@@ -115,13 +116,14 @@ TicketReconcileResult reconcileTicket({
     var bestScore = -1;
     final normTicket = CategoryIcons.normalize(tName);
     for (final item in listItems) {
-      if (!(ticketCovers(tName, item.name) || ticketCovers(item.name, tName))) {
+      final cleanItem = shoppingCleanName(item.name);
+      if (!ticketCovers(tName, cleanItem)) {
         continue;
       }
       var score = 0;
       if (item.checked) score += 100;
       if (item.packSize != null && item.packSize! > 0) score += 20;
-      if (CategoryIcons.normalize(item.name) == normTicket) score += 10;
+      if (CategoryIcons.normalize(cleanItem) == normTicket) score += 10;
       if (score > bestScore) {
         bestScore = score;
         best = item;

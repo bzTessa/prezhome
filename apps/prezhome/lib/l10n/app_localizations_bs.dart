@@ -5140,4 +5140,13 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get captureRecipe => 'Recept';
+
+  @override
+  String get onbCountryLabel => 'Država';
+
+  @override
+  String get onbPickCountry => 'Odaberi državu';
+
+  @override
+  String get onbSummaryTitle => 'Ovako izgleda tvoj dom';
 }

@@ -5193,4 +5193,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get captureRecipe => 'Recipe';
+
+  @override
+  String get onbCountryLabel => 'Country';
+
+  @override
+  String get onbPickCountry => 'Choose your country';
+
+  @override
+  String get onbSummaryTitle => 'Your home setup';
 }

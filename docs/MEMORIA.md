@@ -41,6 +41,9 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Eliminar pide confirmación ("¿Eliminar…?"); vaciar/quitar en bloque, además,
   deshacer. Los avisos con acción llevan `persist: false`. Háptica en acciones.
 - Trabajar con autonomía y entregar en PR; respuestas en español.
+- Sin carruseles horizontales de deslizar; priorizar cuadrículas y
+  composiciones visuales con las ilustraciones propias (`zona_*`, `onb_*`,
+  `miau_*`).
 
 ## Mapa del código (`apps/prezhome/lib`)
 - Inicio ya no tiene "Hoy toca" (Tessa lo quitó; borrado `smart_reminders`) ni
@@ -62,10 +65,22 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   sombra dura (`AppColors.stroke`, `AppElevation.tactileBorder`/`tactileShadow`,
   `AppTheme.heroTactileDecoration`, `TactileButton`, `FloatingNavBar`)
   reservados a CTAs clave y radios 20/14/10, con `AppColors.onTerracotta` para
-  contraste crema sobre terracota. El nombre de la mascota no sale en ningún
-  texto ni se muestran iconos `auto_awesome`. `MiauCharacter` respira, salta al
-  cambiar de pose e `interactive:` reacciona al toque (solo transformaciones,
-  PNG estáticos).
+  contraste crema sobre terracota.
+- El nombre de la mascota no sale en ningún texto ni se muestran iconos
+  `auto_awesome`. `MiauCharacter` tiene coreografía por `mood` (aleteos/bote/
+  inclinación), saltito con anticipación y efectos ambientales en `CustomPaint`
+  (Zz, vapor, confeti geométrico, ondas de pensar, lágrima) más 3 corazones al
+  tocar (`interactive:`), respetando `AppMotion.reduceMotionOf` y `float: false`.
+  `utils/miau_mood_resolver.dart` decide el humor en la cabecera de `Hoy`
+  (`home_tab.dart`), en `CookModeScreen` (cocinando → celebrando al final,
+  con `float: false`) y en `onboarding/onboarding_flow.dart`.
+- Onboarding (`onboarding/onboarding_flow.dart`, `onboarding_widgets.dart`,
+  `models/onboarding_answers.dart`, `services/onboarding_applier.dart`,
+  `home_onboarding_screen.dart`): bienvenida visual 2×2 (sin carrusel
+  horizontal) con gato sincronizado, selector de país (`countryCode`) y logos
+  `SupermarketBadge` en paso 5, gato reactivo en cada paso, transición
+  direccional, tarjeta resumen "Así queda tu hogar" en el resultado y gato
+  curioso al introducir código en `HomeOnboardingScreen`.
 - Ilustraciones (de Tessa, PNG 512 transparentes) en `assets/images/`:
   poses `miau_*` (`MiauMood`),
   `vacio_*` (EmptyState `image:`), `zona_<etiqueta>` (Mi cocina), `onb_*`.
@@ -73,12 +88,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `supabase_remote_sender.dart`, `offline_provider.dart`). Ids locales
   `local-`. Errores permanentes (`PermanentSyncError`) se descartan.
 - Compra y "En casa" (Mi cocina): `shopping_list_screen.dart`, `scan_ticket_screen.dart`,
-  `services/shopping_checkout.dart` (`setInCart`, `checkoutToPantry`,
-  `clearCoveredByTicket`, `RecentCheckoutStore`) y `utils/ticket_reconcile.dart`.
-  Tachar en el súper mueve al carrito; "Guardar en casa" pasa una vez a despensa
-  conservando gramos/ml y `packSize` (`CountPrefs`); escanear el ticket detecta
-  checkouts recientes (<12 h) para evitar duplicados, hereda envases y limpia de
-  lista/carrito lo cubierto. En `Mi cocina` (`inventory_screen.dart`,
+  `services/shopping_checkout.dart` (`setInCart`, `checkoutToPantryWithReceipt`,
+  `undoCheckout`, `clearCoveredByTicket`, `RecentCheckoutStore`) y
+  `utils/ticket_reconcile.dart`. Tachar en el súper mueve al carrito; "Guardar
+  en casa" pasa una vez a despensa con deshacer real (`undoCheckout`)
+  conservando gramos/ml y `packSize` (`CountPrefs`); escanear el ticket espera
+  la conciliación, evita duplicados incluso parciales, hereda envases y limpia
+  en esa lista (solo en sentido ticket → lista) lo cubierto. En `Mi cocina` (`inventory_screen.dart`,
   `utils/kitchen_zones.dart`, `widgets/kitchen/kitchen_zones_grid.dart`):
   cuadrícula 3×2 con `assets/images/zona_*.png`, buscador entre zonas, "Para
   gastar ya", insignia "Abierto" + `Envase`, 1 toque `A nevera`, "Mover de zona"

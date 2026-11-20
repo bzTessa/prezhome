@@ -9,6 +9,7 @@ import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/cook_voice.dart';
 import 'utils/recipe_steps.dart';
+import 'widgets/miau_character.dart';
 import 'l10n/l10n.dart';
 
 /// Un paso del modo cocina. [note] dice para qué receta es o si va mientras
@@ -400,16 +401,28 @@ class _CookModeScreenState extends State<CookModeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            context.l.cmStepOf(_page + 1, _total),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1,
-              color: AppColors.woodDark,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l.cmStepOf(_page + 1, _total),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1,
+                    color: AppColors.woodDark,
+                  ),
+                ),
+              ),
+              MiauCharacter(
+                mood: _isLast ? MiauMood.celebrating : MiauMood.cooking,
+                size: 42,
+                float: false,
+                interactive: true,
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           ClipRRect(
             borderRadius: AppRadius.pillRadius,
             child: TweenAnimationBuilder<double>(
@@ -730,7 +743,9 @@ class _CookModeScreenState extends State<CookModeScreen> {
                   label: Text(_isLast ? context.l.ready : context.l.cmNextStep),
                   style: FilledButton.styleFrom(
                     backgroundColor: _isLast ? AppColors.done : AppColors.ink,
-                    foregroundColor: _isLast ? Colors.white : AppColors.cream,
+                    foregroundColor: _isLast
+                        ? AppColors.onTerracotta
+                        : AppColors.cream,
                     shape: const StadiumBorder(),
                     textStyle: const TextStyle(
                       fontSize: 18,

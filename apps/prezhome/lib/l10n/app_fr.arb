@@ -1310,5 +1310,8 @@
   "captureVoiceListening": "Écoute…",
   "captureBarcode": "Code-barres",
   "captureTicket": "Ticket",
-  "captureRecipe": "Recette"
+  "captureRecipe": "Recette",
+  "onbCountryLabel": "Pays",
+  "onbPickCountry": "Choisis ton pays",
+  "onbSummaryTitle": "Ta configuration"
 }

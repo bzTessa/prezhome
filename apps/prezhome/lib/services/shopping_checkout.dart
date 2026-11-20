@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/inventory_item.dart';
 import '../models/shopping_list_item.dart';
 import '../utils/offline_actions.dart';
+import '../utils/shopping_display.dart';
 import '../utils/ticket_reconcile.dart';
 import '../widgets/food_category_icon.dart';
 import 'count_prefs.dart';
@@ -73,6 +74,50 @@ class RecentCheckoutStore {
       // Best-effort: nunca bloquea terminar la compra o guardar un ticket.
     }
   }
+
+  /// Elimina la entrada exacta registrada en [at] (para "Deshacer" compra).
+  Future<void> removeAt(DateTime at) async {
+    try {
+      final targetIso = at.toUtc().toIso8601String();
+      final current = await load(now: DateTime.now());
+      final updated = [
+        for (final r in current)
+          if (r.at.toUtc().toIso8601String() != targetIso) r,
+      ];
+      await _store.write(
+        _key,
+        jsonEncode([for (final r in updated) r.toJson()]),
+      );
+    } catch (_) {
+      // Best-effort.
+    }
+  }
+}
+
+/// Cambio individual hecho en "En casa" al guardar una compra, para poder
+/// revertirlo con precisión al pulsar "Deshacer".
+class PantryCheckoutChange {
+  const PantryCheckoutChange({
+    required this.inventoryId,
+    required this.created,
+    this.previousQuantity,
+    this.previousUnit,
+  });
+
+  final String inventoryId;
+  final bool created;
+  final double? previousQuantity;
+  final String? previousUnit;
+}
+
+/// Recibo de una operación "Guardar en casa" completo.
+class PantryCheckoutResult {
+  const PantryCheckoutResult({required this.changes, required this.recordAt});
+
+  final List<PantryCheckoutChange> changes;
+  final DateTime recordAt;
+
+  int get count => changes.length;
 }
 
 /// Separa el carrito (tachar en el súper) del paso real a "En casa", evitando
@@ -135,18 +180,70 @@ class ShoppingCheckout {
     return pending.length;
   }
 
+  /// Guarda [items] en "En casa" una sola vez (respetando gramos y envases),
+  /// registra sus nombres en [RecentCheckoutStore] y devuelve el recibo para
+  /// poder deshacer la operación.
+  Future<PantryCheckoutResult> checkoutToPantryWithReceipt(
+    List<ShoppingListItem> items, {
+    required String homeId,
+  }) async {
+    if (items.isEmpty) {
+      return PantryCheckoutResult(changes: const [], recordAt: DateTime.now());
+    }
+    if ((await _inventory.readCached()).isEmpty && _tryClient() != null) {
+      try {
+        await _inventory.refreshFromRemote();
+      } catch (_) {}
+    }
+    final changes = <PantryCheckoutChange>[];
+    for (final item in items) {
+      changes.add(await addToPantry(item, homeId: homeId));
+    }
+    final ts = DateTime.now();
+    await _recentCheckouts.record([for (final i in items) i.name], now: ts);
+    return PantryCheckoutResult(changes: changes, recordAt: ts);
+  }
+
   /// Guarda [items] en "En casa" una sola vez (respetando gramos y envases) y
   /// registra sus nombres en [RecentCheckoutStore]. Devuelve cuántos guardó.
   Future<int> checkoutToPantry(
     List<ShoppingListItem> items, {
     required String homeId,
   }) async {
-    if (items.isEmpty) return 0;
-    for (final item in items) {
-      await addToPantry(item, homeId: homeId);
+    final result = await checkoutToPantryWithReceipt(items, homeId: homeId);
+    return result.count;
+  }
+
+  /// Revierte en "En casa" los cambios de un [checkoutToPantryWithReceipt] y
+  /// quita el registro del histórico de tickets recientes.
+  Future<void> undoCheckout(PantryCheckoutResult receipt) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (final c in receipt.changes.reversed) {
+      if (c.created) {
+        await _inventory.applyLocalWrite(
+          buildDeleteOp(
+            table: kInventoryTable,
+            id: c.inventoryId,
+            nowMillis: now,
+            seq: _nextSeq(),
+          ),
+        );
+      } else {
+        await _inventory.applyLocalWrite(
+          buildUpdateOp(
+            table: kInventoryTable,
+            id: c.inventoryId,
+            changes: {
+              'quantity': c.previousQuantity,
+              if (c.previousUnit != null) 'unit': c.previousUnit,
+            },
+            nowMillis: now,
+            seq: _nextSeq(),
+          ),
+        );
+      }
     }
-    await _recentCheckouts.record([for (final i in items) i.name]);
-    return items.length;
+    await _recentCheckouts.removeAt(receipt.recordAt);
   }
 
   /// Compatibilidad: marca [item] y, si [bought] es `true`, lo guarda en casa.
@@ -184,9 +281,13 @@ class ShoppingCheckout {
     return saved;
   }
 
-  /// Quita de la lista y del carrito los productos cubiertos por [ticketNames].
-  /// No toca la despensa (de eso se encarga el ticket si procede).
-  Future<int> clearCoveredByTicket(List<String> ticketNames) async {
+  /// Quita de la lista y del carrito los productos cubiertos por [ticketNames]
+  /// (en sentido ticket -> lista, para no borrar "Chocolate con leche" cuando
+  /// el ticket dice "Leche"). Si se pasa [listId], limita la limpieza a esa lista.
+  Future<int> clearCoveredByTicket(
+    List<String> ticketNames, {
+    String? listId,
+  }) async {
     final clean = [
       for (final t in ticketNames)
         if (t.trim().isNotEmpty) t.trim(),
@@ -196,11 +297,11 @@ class ShoppingCheckout {
     var n = 0;
     final now = DateTime.now().millisecondsSinceEpoch;
     for (final r in rows) {
+      if (listId != null && r['list_id'] != listId) continue;
       final item = ShoppingListItem.fromMap(r);
       if (item.id == null) continue;
-      final covered = clean.any(
-        (t) => ticketCovers(t, item.name) || ticketCovers(item.name, t),
-      );
+      final cleanName = shoppingCleanName(item.name);
+      final covered = clean.any((t) => ticketCovers(t, cleanName));
       if (!covered) continue;
       await _shopping.applyLocalWrite(
         buildDeleteOp(
@@ -233,7 +334,7 @@ class ShoppingCheckout {
   /// Suma [item] a "En casa". Si ya hay un producto con ese nombre (del mismo
   /// tipo) y medida compatible, suma la cantidad; si llega en envases/unidades
   /// con tamaño de envase guardado en el hogar, lo convierte a gramos o ml.
-  Future<void> addToPantry(
+  Future<PantryCheckoutChange> addToPantry(
     ShoppingListItem item, {
     required String homeId,
   }) async {
@@ -264,6 +365,7 @@ class ShoppingCheckout {
     final existing = await _inventory.readCached();
     String? foundId;
     ({double quantity, String unit})? merged;
+    double? foundPrevQty;
     String? foundUnit;
     for (final m in existing) {
       final rowIsHome = (m['item_type'] ?? 'comida').toString() == 'hogar';
@@ -273,6 +375,7 @@ class ShoppingCheckout {
       }
       // Se suma en la medida de la despensa (1 bote + 570 g = 2 botes, no
       // "571 botes"). Si no se puede, va en otra fila.
+      final prevQty = (m['quantity'] as num?)?.toDouble() ?? 0;
       foundUnit = (m['unit'] ?? 'unidades').toString();
       final effectivePack =
           packSize ??
@@ -280,7 +383,7 @@ class ShoppingCheckout {
               ? convertMeasure(customPack.size, customPack.unit, addUnit)
               : null);
       merged = mergePantryQuantity(
-        (m['quantity'] as num?)?.toDouble() ?? 0,
+        prevQty,
         foundUnit,
         addQty,
         addUnit,
@@ -288,6 +391,7 @@ class ShoppingCheckout {
       );
       if (merged != null) {
         foundId = m['id'] as String?;
+        foundPrevQty = prevQty;
         break;
       }
     }
@@ -306,7 +410,12 @@ class ShoppingCheckout {
           seq: _nextSeq(),
         ),
       );
-      return;
+      return PantryCheckoutChange(
+        inventoryId: foundId,
+        created: false,
+        previousQuantity: foundPrevQty,
+        previousUnit: foundUnit,
+      );
     }
 
     final client = _tryClient();
@@ -333,5 +442,6 @@ class ShoppingCheckout {
         seq: _nextSeq(),
       ),
     );
+    return PantryCheckoutChange(inventoryId: localId, created: true);
   }
 }

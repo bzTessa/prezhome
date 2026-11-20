@@ -1,22 +1,24 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../login_screen.dart';
+import '../models/country.dart';
 import '../models/onboarding_answers.dart';
 import '../models/supermarket.dart';
 import '../services/home_country.dart';
 import '../services/offline_provider.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
+import '../utils/miau_mood_resolver.dart';
+import '../widgets/animations/press_scale.dart';
 import '../widgets/miau_character.dart';
+import '../widgets/supermarket_badge.dart';
 import 'onboarding_widgets.dart';
-import '../l10n/l10n.dart';
 
 /// Primer arranque: bienvenida + cuestionario + perfil de hogar. Las
 /// respuestas se guardan en el dispositivo y se aplican cuando el usuario ya
-/// tiene hogar (ver `OnboardingApplier`). Sustituye a las diapositivas de
-/// bienvenida.
+/// tiene hogar (ver `OnboardingApplier`).
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({
     super.key,
@@ -36,11 +38,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   /// 0 = bienvenida; 1..[_questions] = preguntas; [_questions]+1 = resultado.
   late int _page = widget.initialPage;
   late OnboardingAnswers _a = widget.initialAnswers;
+  bool _goingForward = true;
 
   static const int _questions = 5;
 
-  void _next() => setState(() => _page++);
-  void _back() => setState(() => _page = (_page - 1).clamp(0, _page));
+  void _next() => setState(() {
+    _goingForward = true;
+    _page++;
+  });
+
+  void _back() => setState(() {
+    _goingForward = false;
+    _page = (_page - 1).clamp(0, _page);
+  });
 
   Future<void> _finish({required bool signUp}) async {
     if (signUp) {
@@ -61,16 +71,20 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   @override
   Widget build(BuildContext context) {
+    final reduced = AppMotion.reduceMotionOf(context);
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: AnimatedSwitcher(
-        duration: AppMotion.base,
-        switchInCurve: Curves.easeOut,
+        duration: AppMotion.effectiveDuration(
+          AppMotion.base,
+          reduceMotion: reduced,
+        ),
+        switchInCurve: Curves.easeOutCubic,
         transitionBuilder: (child, anim) => FadeTransition(
           opacity: anim,
           child: SlideTransition(
             position: Tween(
-              begin: const Offset(0.04, 0),
+              begin: Offset(_goingForward ? 0.06 : -0.06, 0),
               end: Offset.zero,
             ).animate(anim),
             child: child,
@@ -95,6 +109,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           total: _questions,
           title: context.l.onbPeopleTitle,
           illustration: 'assets/images/onb_personas.png',
+          catMood: onboardingCatMood(1),
           subtitle: context.l.onbPeopleHint,
           onBack: _back,
           onContinue: _next,
@@ -110,6 +125,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           total: _questions,
           title: context.l.onbGoalsTitle,
           illustration: 'assets/images/onb_cabeza.png',
+          catMood: onboardingCatMood(2, hasSelection: _a.goals.isNotEmpty),
           subtitle: context.l.onbGoalsHint,
           onBack: _back,
           onContinue: _a.goals.isEmpty ? null : _next,
@@ -139,6 +155,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           section: context.l.onbSectionKitchen,
           title: context.l.onbCookingTitle,
           subtitle: context.l.onbCookingHint,
+          catMood: onboardingCatMood(3),
           values: CookingHabit.values,
           selected: _a.cooking,
           label: (v) => context.l.cookingLabel(v.id),
@@ -164,6 +181,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           total: _questions,
           title: context.l.onbFoodTitle,
           illustration: 'assets/images/onb_hogar.png',
+          catMood: onboardingCatMood(4),
           subtitle: context.l.onbFoodHint,
           onBack: _back,
           onContinue: _next,
@@ -176,12 +194,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
         );
       case 5:
+        final countryCode = _a.countryCode ?? HomeCountry.current.value.code;
         return QuestionScaffold(
           section: context.l.onbSectionShopping,
           step: 5,
           total: _questions,
           title: context.l.onbShopTitle,
           illustration: 'assets/images/onb_compra.png',
+          catMood: onboardingCatMood(5),
           subtitle: context.l.onbShopHint,
           onBack: _back,
           onContinue: _next,
@@ -189,13 +209,18 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               ? context.l.onbSkipSeeHome
               : context.l.onbSeeHome,
           child: _SupermarketPicker(
+            countryCode: countryCode,
             selected: _a.supermarkets,
+            onCountryChanged: (c) => setState(
+              () => _a = _a.copyWith(countryCode: c, supermarkets: const []),
+            ),
             onChanged: (v) => setState(() => _a = _a.copyWith(supermarkets: v)),
           ),
         );
       default:
         return _ResultPage(
-          profile: _a.profile,
+          answers: _a,
+          onBack: _back,
           onContinue: () => _finish(signUp: true),
         );
     }
@@ -214,9 +239,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     required Color Function(T) color,
     required void Function(T) onSelect,
     String? illustration,
+    MiauMood? catMood,
   }) {
     return QuestionScaffold(
       illustration: illustration,
+      catMood: catMood,
       section: section,
       step: _page,
       total: _questions,
@@ -254,7 +281,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     HomeGoal.compra => AppColors.sage,
     HomeGoal.despensa => AppColors.peach,
     HomeGoal.tareas => AppColors.frost,
-    HomeGoal.lote => const Color(0xFF7A5C9E),
+    HomeGoal.lote => AppColors.lilac,
     HomeGoal.gastos => AppColors.woodDark,
   };
 }
@@ -272,52 +299,61 @@ class _IntroPage extends StatefulWidget {
 }
 
 class _IntroPageState extends State<_IntroPage> {
-  static final _features = [
-    (Icons.shopping_cart_rounded, 'compra', AppColors.sage),
-    (Icons.restaurant_menu_rounded, 'comidas', AppColors.terracotta),
-    (Icons.kitchen_rounded, 'despensa', AppColors.peach),
-    (Icons.cleaning_services_rounded, 'tareas', AppColors.frost),
-    (Icons.savings_rounded, 'gastos', AppColors.woodDark),
-  ];
-
-  final _controller = PageController(viewportFraction: 0.37, initialPage: 1000);
-  Timer? _timer;
-  int _current = 1000;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(milliseconds: 2200), (_) {
-      if (!_controller.hasClients) return;
-      _controller.nextPage(
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOutCubic,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
+  int _selected = 3;
 
   @override
   Widget build(BuildContext context) {
-    final current = _features[_current % _features.length];
+    final features = [
+      (
+        id: 'comidas',
+        image: 'assets/images/onb_hogar.png',
+        icon: Icons.restaurant_menu_rounded,
+        bg: AppColors.terracottaBg,
+        accent: AppColors.terracotta,
+        mood: MiauMood.cooking,
+      ),
+      (
+        id: 'compra',
+        image: 'assets/images/onb_compra.png',
+        icon: Icons.shopping_cart_rounded,
+        bg: AppColors.sageBg,
+        accent: AppColors.sage,
+        mood: MiauMood.shopping,
+      ),
+      (
+        id: 'despensa',
+        image: 'assets/images/zona_nevera.png',
+        icon: Icons.kitchen_rounded,
+        bg: AppColors.peachBg,
+        accent: AppColors.peach,
+        mood: MiauMood.curious,
+      ),
+      (
+        id: 'tareas',
+        image: 'assets/images/onb_cabeza.png',
+        icon: Icons.cleaning_services_rounded,
+        bg: AppColors.frostBg,
+        accent: AppColors.frost,
+        mood: MiauMood.greeting,
+      ),
+    ];
+    final current = features[_selected];
+    final reduced = AppMotion.reduceMotionOf(context);
     return Stack(
       children: [
-        // Halo de color que cambia con la función destacada.
+        // Halo suave que responde a la zona visual seleccionada.
         Positioned.fill(
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 600),
+            duration: AppMotion.effectiveDuration(
+              const Duration(milliseconds: 450),
+              reduceMotion: reduced,
+            ),
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: const Alignment(0, 0.25),
+                center: const Alignment(0, 0.15),
                 radius: 0.9,
                 colors: [
-                  current.$3.withValues(alpha: 0.22),
+                  current.accent.withValues(alpha: 0.18),
                   AppColors.cream.withValues(alpha: 0),
                 ],
               ),
@@ -325,78 +361,113 @@ class _IntroPageState extends State<_IntroPage> {
           ),
         ),
         SafeArea(
-          child: Center(
-            // En ordenador, columna de ancho de móvil en vez de botones
-            // estirados de lado a lado.
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                child: Column(
-                  children: [
-                    const Spacer(flex: 3),
-                    const MiauCharacter(mood: MiauMood.greeting, size: 120),
-                    Text(
-                      'PrezHome',
-                      style: TextStyle(
-                        fontSize: 46,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.l.onbSlogan,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18, color: AppColors.inkMuted),
-                    ),
-                    const Spacer(),
-                    // A todo el ancho y sin recorte: si no, las sombras de las
-                    // tarjetas quedan cortadas en línea recta.
-                    SizedBox(
-                      height: 190,
-                      child: OverflowBox(
-                        // En ordenador, como mucho 900 px para no salirse del marco.
-                        maxWidth: MediaQuery.sizeOf(
-                          context,
-                        ).width.clamp(0, 900),
-                        child: PageView.builder(
-                          controller: _controller,
-                          clipBehavior: Clip.none,
-                          onPageChanged: (i) => setState(() => _current = i),
-                          itemBuilder: (context, i) {
-                            final f = _features[i % _features.length];
-                            final active = i == _current;
-                            return AnimatedScale(
-                              duration: const Duration(milliseconds: 400),
-                              scale: active ? 1 : 0.82,
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 400),
-                                opacity: active ? 1 : 0.45,
-                                child: _FeaturePill(
-                                  icon: f.$1,
-                                  label: context.l.onbFeature(f.$2),
-                                  color: f.$3,
-                                ),
-                              ),
-                            );
-                          },
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+              child: Center(
+                // En ordenador, columna de ancho de móvil en vez de botones
+                // estirados de lado a lado.
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 520,
+                    minHeight: (constraints.maxHeight - 32).clamp(0.0, 2000.0),
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        const Spacer(),
+                        MiauCharacter(
+                          mood: current.mood,
+                          size: 116,
+                          interactive: true,
                         ),
-                      ),
+                        Text(
+                          'PrezHome',
+                          style: TextStyle(
+                            fontSize: 42,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          context.l.onbSlogan,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                        const Spacer(),
+                        // Composición fija 2x2 visual con ilustraciones, sin
+                        // carruseles horizontales de deslizar.
+                        Column(
+                          children: [
+                            Row(
+                              children: [
+                                for (var i = 0; i < 2; i++) ...[
+                                  if (i > 0) const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _IntroFeatureTile(
+                                      image: features[i].image,
+                                      fallbackIcon: features[i].icon,
+                                      label: context.l.onbFeature(
+                                        features[i].id,
+                                      ),
+                                      bg: features[i].bg,
+                                      accent: features[i].accent,
+                                      selected: _selected == i,
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        setState(() => _selected = i);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                for (var i = 2; i < 4; i++) ...[
+                                  if (i > 2) const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _IntroFeatureTile(
+                                      image: features[i].image,
+                                      fallbackIcon: features[i].icon,
+                                      label: context.l.onbFeature(
+                                        features[i].id,
+                                      ),
+                                      bg: features[i].bg,
+                                      accent: features[i].accent,
+                                      selected: _selected == i,
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        setState(() => _selected = i);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                        const Spacer(flex: 2),
+                        const SizedBox(height: 16),
+                        OnboardingButton(
+                          label: context.l.onbStart,
+                          onPressed: widget.onStart,
+                        ),
+                        const SizedBox(height: 12),
+                        OnboardingButton(
+                          label: context.l.onbHaveAccount,
+                          outlined: true,
+                          onPressed: widget.onLogin,
+                        ),
+                      ],
                     ),
-                    const Spacer(flex: 2),
-                    OnboardingButton(
-                      label: context.l.onbStart,
-                      onPressed: widget.onStart,
-                    ),
-                    const SizedBox(height: 12),
-                    OnboardingButton(
-                      label: context.l.onbHaveAccount,
-                      outlined: true,
-                      onPressed: widget.onLogin,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -407,53 +478,77 @@ class _IntroPageState extends State<_IntroPage> {
   }
 }
 
-class _FeaturePill extends StatelessWidget {
-  const _FeaturePill({
-    required this.icon,
+class _IntroFeatureTile extends StatelessWidget {
+  const _IntroFeatureTile({
+    required this.image,
+    required this.fallbackIcon,
     required this.label,
-    required this.color,
+    required this.bg,
+    required this.accent,
+    required this.selected,
+    required this.onTap,
   });
 
-  final IconData icon;
+  final String image;
+  final IconData fallbackIcon;
   final String label;
-  final Color color;
+  final Color bg;
+  final Color accent;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(80),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.18),
-            blurRadius: 28,
-            offset: const Offset(0, 10),
+    final reduced = AppMotion.reduceMotionOf(context);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      child: PressScale(
+        pressedScale: 0.97,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: AppMotion.effectiveDuration(
+            AppMotion.fast,
+            reduceMotion: reduced,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(icon, color: Colors.white, size: 34),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-              color: color,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? bg : AppColors.card,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: selected ? accent : AppColors.cardEdge,
+              width: selected ? 1.75 : 1,
             ),
+            boxShadow: selected ? AppElevation.level1 : AppElevation.level0,
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                image,
+                height: 44,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) =>
+                    Icon(fallbackIcon, size: 32, color: accent),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -469,15 +564,21 @@ class _PeoplePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduced = AppMotion.reduceMotionOf(context);
     Widget round(IconData icon, VoidCallback? onTap, String tip) => IconButton(
-      onPressed: onTap,
+      onPressed: onTap == null
+          ? null
+          : () {
+              HapticFeedback.selectionClick();
+              onTap();
+            },
       tooltip: tip,
       iconSize: 30,
       style: IconButton.styleFrom(
         backgroundColor: AppColors.card,
         disabledBackgroundColor: AppColors.card.withValues(alpha: 0.5),
         fixedSize: const Size(64, 64),
-        side: BorderSide(color: AppColors.wood.withValues(alpha: 0.6)),
+        side: BorderSide(color: AppColors.cardEdge),
       ),
       icon: Icon(icon, color: AppColors.ink),
     );
@@ -498,7 +599,10 @@ class _PeoplePicker extends StatelessWidget {
               ),
               const SizedBox(width: 24),
               AnimatedSwitcher(
-                duration: AppMotion.fast,
+                duration: AppMotion.effectiveDuration(
+                  AppMotion.fast,
+                  reduceMotion: reduced,
+                ),
                 transitionBuilder: (c, a) =>
                     ScaleTransition(scale: a, child: c),
                 child: Container(
@@ -566,28 +670,139 @@ class _PeoplePicker extends StatelessWidget {
 // ---- Supermercados -----------------------------------------------------------
 
 class _SupermarketPicker extends StatelessWidget {
-  const _SupermarketPicker({required this.selected, required this.onChanged});
+  const _SupermarketPicker({
+    required this.countryCode,
+    required this.selected,
+    required this.onChanged,
+    required this.onCountryChanged,
+  });
 
+  final String countryCode;
   final List<String> selected;
   final ValueChanged<List<String>> onChanged;
+  final ValueChanged<String> onCountryChanged;
+
+  Future<void> _pickCountry(BuildContext context, Country active) async {
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              child: Text(
+                context.l.onbPickCountry,
+                style: AppTextStyles.headline,
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final c in Country.all)
+                    ListTile(
+                      leading: Text(
+                        c.flag,
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      title: Text(
+                        c.name,
+                        style: TextStyle(
+                          fontWeight: c.code == active.code
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      trailing: c.code == active.code
+                          ? Icon(Icons.check_rounded, color: AppColors.sage)
+                          : null,
+                      onTap: () => Navigator.pop(sheetCtx, c.code),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (chosen != null && chosen != active.code) {
+      onCountryChanged(chosen);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      alignment: WrapAlignment.center,
+    final country = Country.of(countryCode);
+    final stores = Supermarket.forCountry(country.code);
+    return Column(
       children: [
-        for (final s in Supermarket.forCountry(HomeCountry.current.value.code))
-          _SuperChip(
-            label: s.label,
-            order: selected.indexOf(s.key),
-            onTap: () {
-              final next = [...selected];
-              if (!next.remove(s.key)) next.add(s.key);
-              onChanged(next);
-            },
+        Center(
+          child: Semantics(
+            button: true,
+            label: '${context.l.onbCountryLabel}: ${country.name}',
+            child: PressScale(
+              pressedScale: 0.97,
+              onTap: () => _pickCountry(context, country),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: AppRadius.pillRadius,
+                  border: Border.all(color: AppColors.cardEdge),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(country.flag, style: const TextStyle(fontSize: 18)),
+                    const SizedBox(width: 8),
+                    Text(
+                      country.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: AppColors.inkMuted,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final s in stores)
+              _SuperChip(
+                supermarket: s,
+                order: selected.indexOf(s.key),
+                onTap: () {
+                  final next = [...selected];
+                  if (!next.remove(s.key)) next.add(s.key);
+                  onChanged(next);
+                },
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -595,12 +810,12 @@ class _SupermarketPicker extends StatelessWidget {
 
 class _SuperChip extends StatelessWidget {
   const _SuperChip({
-    required this.label,
+    required this.supermarket,
     required this.order,
     required this.onTap,
   });
 
-  final String label;
+  final Supermarket supermarket;
 
   /// Posición en la selección (0 = principal) o -1 si no está elegido.
   final int order;
@@ -613,41 +828,47 @@ class _SuperChip extends StatelessWidget {
       selected: selected,
       button: true,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
         borderRadius: BorderRadius.circular(999),
         child: AnimatedContainer(
-          duration: AppMotion.fast,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: AppMotion.effectiveDuration(
+            AppMotion.fast,
+            reduceMotion: AppMotion.reduceMotionOf(context),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: selected ? AppColors.sage : AppColors.card,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
-              color: selected
-                  ? AppColors.sage
-                  : AppColors.wood.withValues(alpha: 0.5),
+              color: selected ? AppColors.sage : AppColors.cardEdge,
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (selected) ...[
-                Icon(
-                  order == 0 ? Icons.star_rounded : Icons.check_rounded,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 6),
-              ],
+              SupermarketBadge(supermarket: supermarket, size: 22),
+              const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  label,
+                  supermarket.label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: selected ? Colors.white : AppColors.ink,
+                    color: selected ? AppColors.onTerracotta : AppColors.ink,
                   ),
                 ),
               ),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  order == 0 ? Icons.star_rounded : Icons.check_rounded,
+                  size: 16,
+                  color: AppColors.onTerracotta,
+                ),
+              ],
             ],
           ),
         ),
@@ -659,9 +880,14 @@ class _SuperChip extends StatelessWidget {
 // ---- Resultado -------------------------------------------------------------------
 
 class _ResultPage extends StatelessWidget {
-  const _ResultPage({required this.profile, required this.onContinue});
+  const _ResultPage({
+    required this.answers,
+    required this.onBack,
+    required this.onContinue,
+  });
 
-  final HouseholdProfile profile;
+  final OnboardingAnswers answers;
+  final VoidCallback onBack;
   final VoidCallback onContinue;
 
   static String _loadLevel(int v) => v >= 7
@@ -672,18 +898,45 @@ class _ResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profile = answers.profile;
+    final primaryStore = answers.supermarkets.isEmpty
+        ? null
+        : Supermarket.byKey(answers.supermarkets.first);
+    final summaryPills = <String>[
+      context.l.onbPeopleCount(answers.people),
+      for (final g in answers.goals) context.l.goalLabel(g.id),
+      if (answers.cooking != null) context.l.cookingLabel(answers.cooking!.id),
+      if (primaryStore != null) primaryStore.label,
+      if (answers.supermarkets.length > 1)
+        '+${answers.supermarkets.length - 1}',
+    ];
+
     // Con letra grande del sistema no cabe en pantalla: se desplaza en vez de
     // desbordarse, y los Spacer siguen centrando cuando sí cabe.
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight - 40),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight - 28),
             child: IntrinsicHeight(
               child: Column(
                 children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: onBack,
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      tooltip: context.l.back,
+                    ),
+                  ),
                   const Spacer(),
+                  const MiauCharacter(
+                    mood: MiauMood.celebrating,
+                    size: 108,
+                    interactive: true,
+                  ),
+                  const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -701,34 +954,80 @@ class _ResultPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   Text(
                     context.l.onbProfileName(profile.kind),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 40,
+                      fontSize: 38,
                       letterSpacing: -0.6,
                       fontWeight: FontWeight.w900,
                       color: AppColors.ink,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(18),
                     decoration: AppTheme.surfaceDecoration(
                       radius: AppRadius.lg,
                     ),
-                    child: Text(
-                      context.l.onbProfileDescription(profile.kind),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 1.45,
-                        color: AppColors.ink,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          context.l.onbProfileDescription(profile.kind),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            height: 1.45,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        if (summaryPills.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          Divider(height: 1, color: AppColors.line),
+                          const SizedBox(height: 12),
+                          Text(
+                            context.l.onbSummaryTitle,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.inkMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (final label in summaryPills)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.iconTile,
+                                    borderRadius: AppRadius.pillRadius,
+                                  ),
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.ink,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
                   LoadMeter(
                     label: context.l.onbLoadToday,
                     value: profile.loadToday,
@@ -737,7 +1036,7 @@ class _ResultPage extends StatelessWidget {
                     ),
                     color: AppColors.terracotta,
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   LoadMeter(
                     label: context.l.onbLoadWithApp,
                     value: profile.loadWithApp,
@@ -747,6 +1046,7 @@ class _ResultPage extends StatelessWidget {
                     color: AppColors.sage,
                   ),
                   const Spacer(flex: 2),
+                  const SizedBox(height: 16),
                   OnboardingButton(
                     label: context.l.onbCreateAccount,
                     onPressed: onContinue,
@@ -773,6 +1073,7 @@ class _FoodLimitsPicker extends StatelessWidget {
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
   void _toggle(String key) {
+    HapticFeedback.selectionClick();
     final next = {...selected};
     if (!next.remove(key)) {
       next.add(key);
@@ -793,7 +1094,9 @@ class _FoodLimitsPicker extends StatelessWidget {
         child: Material(
           color: on ? AppColors.terracotta : AppColors.card,
           shape: StadiumBorder(
-            side: BorderSide(color: on ? AppColors.terracotta : AppColors.line),
+            side: BorderSide(
+              color: on ? AppColors.terracotta : AppColors.cardEdge,
+            ),
           ),
           child: InkWell(
             customBorder: const StadiumBorder(),
@@ -804,10 +1107,10 @@ class _FoodLimitsPicker extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (on) ...[
-                    const Icon(
+                    Icon(
                       Icons.check_rounded,
                       size: 18,
-                      color: Colors.white,
+                      color: AppColors.onTerracotta,
                     ),
                     const SizedBox(width: 6),
                   ],
@@ -816,7 +1119,7 @@ class _FoodLimitsPicker extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: on ? Colors.white : AppColors.ink,
+                      color: on ? AppColors.onTerracotta : AppColors.ink,
                     ),
                   ),
                 ],

@@ -3215,5 +3215,8 @@
   "captureVoiceListening": "Escuchando…",
   "captureBarcode": "Código de barras",
   "captureTicket": "Ticket",
-  "captureRecipe": "Receta"
+  "captureRecipe": "Receta",
+  "onbCountryLabel": "País",
+  "onbPickCountry": "Elige tu país",
+  "onbSummaryTitle": "Así queda tu hogar"
 }
