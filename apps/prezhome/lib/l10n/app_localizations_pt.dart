@@ -5335,4 +5335,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get pcUndone => 'Alterações anuladas';
+
+  @override
+  String get arImportFromPhoto => 'Carregar captura ou foto';
+
+  @override
+  String get arImportPhotoHint =>
+      'Se a receita só aparece no vídeo ou em papel, carrega uma captura.';
 }

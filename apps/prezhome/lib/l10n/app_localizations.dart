@@ -8129,6 +8129,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cambios deshechos'**
   String get pcUndone;
+
+  /// No description provided for @arImportFromPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir captura o foto'**
+  String get arImportFromPhoto;
+
+  /// No description provided for @arImportPhotoHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Si la receta solo sale en el vídeo o en papel, sube una captura.'**
+  String get arImportPhotoHint;
 }
 
 class _AppLocalizationsDelegate

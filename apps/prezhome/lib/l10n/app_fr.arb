@@ -1336,5 +1336,7 @@
   "pcSummaryDeducted": "{count, plural, =1{1 ingrédient déduit} other{{count} ingrédients déduits}}",
   "pcSummaryFridge": "{count, plural, =1{1 portion au frigo} other{{count} portions au frigo}}",
   "pcSummaryFreezer": "{count, plural, =1{1 portion au congélateur} other{{count} portions au congélateur}}",
-  "pcUndone": "Modifications annulées"
+  "pcUndone": "Modifications annulées",
+  "arImportFromPhoto": "Importer une capture ou photo",
+  "arImportPhotoHint": "Si la recette apparaît seulement à l'écran ou sur papier, envoie une capture."
 }

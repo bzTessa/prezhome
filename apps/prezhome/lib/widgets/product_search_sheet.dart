@@ -212,7 +212,7 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
 
   /// Si hay forma de buscar en ese súper (catálogo propio u OFF).
   bool _searchable(String key) =>
-      catalogStores.contains(key) || offStoreTag(key) != null;
+      catalogKeyFor(key) != null || offStoreTag(key) != null;
 
   Widget _message(IconData icon, String text) {
     return Center(

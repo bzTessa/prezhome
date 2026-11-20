@@ -99,6 +99,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   cuadrícula 3×2 con `assets/images/zona_*.png`, buscador entre zonas, "Para
   gastar ya", insignia "Abierto" + `Envase`, 1 toque `A nevera`, "Mover de zona"
   y `isLevelTracked` solo en especias/condimentos/hogar en unidades.
+  Búsqueda y envases internacionales (`services/product_search_service.dart`,
+  `services/plan_shopping.dart`, `widgets/product_search_sheet.dart`):
+  `offStoreTag` cubierto en los 12 países de `Supermarket`, búsqueda y parseo
+  adaptados al idioma (`product_name_${country.lang}`) con caché por país,
+  multipacks (`6 x 125 g` → `750 g`) y medidas imperiales (`oz`, `fl oz`, `lb`,
+  `gal`, `qt`, `pt`) en `parsePackageQuantity`, y tamaño de envase tomando los
+  catálogos del país (`catalogSearchOrder`).
   `services/plan_shopping.dart` genera la lista desde el plan.
 - Iconos de producto: `widgets/product_icons.dart` (palabra clave → nombre de
   icono). Nada de iconos de Microsoft (Tessa no los quiere): solo sus dibujos,
@@ -220,9 +227,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre;
   al guardar tacha de la lista lo comprado con `ticketCovers`). El gasto por
   mes va por la fecha del ticket (`purchased_at`, `utils/ticket_date.dart`).
-- Añadir receta (`add_recipe_chooser.dart`): pegar enlace de vídeo
-  (TikTok/Instagram/YouTube → `import-recipe-link`), escribir el nombre, ideas,
-  a mano, código. Si se cancela el enlace o el nombre, vuelve atrás.
+- Añadir receta (`add_recipe_chooser.dart`, `add_recipe_screen.dart`): pegar
+  enlace de vídeo (TikTok/Instagram —incl. `/share/...` e `instagr.am`— /
+  YouTube / webs con JSON-LD `schema.org/Recipe` vía `link_text.dart`
+  `fetchLinkPreview` → `import-recipe-link`, conservando la portada real) o
+  subir captura/foto (`image_base64`), escribir el nombre, ideas, a mano o
+  código. Si se cancela el enlace o el nombre, vuelve atrás.
 - Tiendas: id `com.prezhome.app` (Android e iOS; deep link del login
   `com.prezhome.app://login-callback`), iOS solo iPhone, firma Android con
   `android/key.properties`. Política en `docs/privacidad.md`; ficha y pasos en
@@ -247,4 +257,3 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
 - Ofrecido, sin decidir: precios con Open Prices.
-- Bloque 4 pendiente: mejorar importación de recetas desde vídeos/webs (`instagram.com/share/...`, JSON-LD `schema.org/Recipe`, portada `og:image`, OCR) y adaptar supermercados internacionales, países, idiomas y multipacks/unidades imperiales en Compra.

@@ -1336,5 +1336,7 @@
   "pcSummaryDeducted": "{count, plural, =1{1 ingrediente scalato} other{{count} ingredienti scalati}}",
   "pcSummaryFridge": "{count, plural, =1{1 porzione in frigo} other{{count} porzioni in frigo}}",
   "pcSummaryFreezer": "{count, plural, =1{1 porzione in freezer} other{{count} porzioni in freezer}}",
-  "pcUndone": "Modifiche annullate"
+  "pcUndone": "Modifiche annullate",
+  "arImportFromPhoto": "Carica screenshot o foto",
+  "arImportPhotoHint": "Se la ricetta appare solo nel video o su carta, carica uno screenshot."
 }

@@ -45,6 +45,10 @@ import { aiLimitMessage, serveAi } from "../_shared/ai_limit.ts";
 import { recipeLocale, recipeLocaleLine } from "../_shared/recipe_locale.ts";
 import { isPublicUrl } from "./url_guard.ts";
 import {
+  extractCoverImage,
+  instagramCaption,
+  instagramEmbedUrl,
+  jsonLdRecipe,
   tiktokDescription,
   tiktokSubtitlesUrl,
   vttText,
@@ -105,8 +109,10 @@ function metaContent(html: string, keys: string[]): string | null {
   return null;
 }
 
-// Intenta el endpoint oEmbed de TikTok/YouTube para sacar título y autor.
-async function fetchOEmbed(url: string): Promise<string | null> {
+// Intenta el endpoint oEmbed de TikTok/YouTube para sacar título, autor y portada.
+async function fetchOEmbed(
+  url: string,
+): Promise<{ text: string | null; thumbnail: string | null }> {
   try {
     const host = new URL(url).host;
     let endpoint: string | null = null;
@@ -115,9 +121,9 @@ async function fetchOEmbed(url: string): Promise<string | null> {
     } else if (host.includes("youtube.com") || host.includes("youtu.be")) {
       endpoint = `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url)}`;
     }
-    if (!endpoint) return null;
+    if (!endpoint) return { text: null, thumbnail: null };
     const res = await fetch(endpoint, { headers: { "User-Agent": BROWSER_UA } });
-    if (!res.ok) return null;
+    if (!res.ok) return { text: null, thumbnail: null };
     const data = await res.json();
     const parts: string[] = [];
     if (typeof data?.title === "string") parts.push(data.title);
@@ -125,9 +131,13 @@ async function fetchOEmbed(url: string): Promise<string | null> {
       parts.push(`por ${data.author_name}`);
     }
     const text = parts.join(" ").trim();
-    return text.length > 0 ? text : null;
+    const thumb = typeof data?.thumbnail_url === "string" &&
+        isPublicUrl(data.thumbnail_url)
+      ? data.thumbnail_url
+      : null;
+    return { text: text.length > 0 ? text : null, thumbnail: thumb };
   } catch (_e) {
-    return null;
+    return { text: null, thumbnail: null };
   }
 }
 
@@ -209,8 +219,8 @@ async function tiktokSpoken(html: string, url: string): Promise<string | null> {
   return text ? `\n\nLo que se dice en el vídeo: ${text}` : null;
 }
 
-// Texto útil de la página: la descripción completa incrustada (TikTok/YouTube)
-// o, si no hay, los metadatos OG/description/title.
+// Texto útil de la página: descripción completa incrustada (TikTok/YouTube),
+// JSON-LD schema.org/Recipe de webs de cocina o metadatos OG/title.
 function pageText(html: string, url: string): string | null {
   try {
     const parts: string[] = [];
@@ -221,6 +231,8 @@ function pageText(html: string, url: string): string | null {
         ? tiktokDescription(html)
         : null);
     if (full) return [ogTitle, full].filter(Boolean).join(". ");
+    const jsonLd = jsonLdRecipe(html);
+    if (jsonLd) return jsonLd.text;
     const ogDesc = metaContent(html, [
       "og:description",
       "twitter:description",
@@ -245,14 +257,22 @@ function buildPrompt(
   url: string,
   video = false,
   loc = recipeLocale({}),
+  fromImage = false,
 ): string {
-  const fuente = video ? "del VÍDEO adjunto y del texto" : "del texto";
-  return `Eres un asistente de cocina. A partir del TEXTO de la descripción de
-un vídeo/post de redes sociales (TikTok/Instagram/YouTube) de una receta, deduce y
-estructura la receta completa. El texto puede venir con emojis, hashtags o
-abreviado.${video
-    ? "\nAdemás tienes el VÍDEO: saca ingredientes, cantidades y pasos de lo que se\nve y se dice en él (y de los textos que aparecen en pantalla)."
-    : ""}
+  const fuente = fromImage
+    ? "de la IMAGEN adjunta (captura o foto)"
+    : video
+    ? "del VÍDEO adjunto y del texto"
+    : "del texto";
+  return `Eres un asistente de cocina. A partir del TEXTO o captura de una
+receta (TikTok/Instagram/YouTube/web o foto), deduce y estructura la receta
+completa. El texto puede venir con emojis, hashtags o abreviado.${
+    fromImage
+      ? "\nAdemás tienes una CAPTURA o FOTO adjunta: lee los ingredientes, cantidades y pasos que aparecen en la imagen."
+      : video
+      ? "\nAdemás tienes el VÍDEO: saca ingredientes, cantidades y pasos de lo que se\nve y se dice en él (y de los textos que aparecen en pantalla)."
+      : ""
+  }
 
 REGLAS DE FIDELIDAD:
 - Los ingredientes y cantidades que vengan ${fuente} se copian TAL CUAL
@@ -426,11 +446,25 @@ serveAi("import_link", async (req, useCredit) => {
     }
     const homeId = profile.home_id as string;
 
-    // 2. Validar la entrada: texto pegado y/o enlace.
+    // 2. Validar la entrada: texto pegado, imagen en base64 y/o enlace.
     const body = await req.json().catch(() => ({}));
     const loc = recipeLocale(body);
     const url = (body?.url ?? "").toString().trim();
     const pasted = (body?.text ?? "").toString().trim().substring(0, 8000);
+    const imageBase64 = typeof body?.image_base64 === "string"
+      ? body.image_base64.trim()
+      : "";
+    if (imageBase64.length > 4_000_000) {
+      return json({ error: "La imagen es demasiado grande" }, 400);
+    }
+    const rawMime = typeof body?.image_mime === "string"
+      ? body.image_mime.trim().toLowerCase()
+      : "";
+    const imageMime =
+      rawMime === "image/png" || rawMime === "image/webp" ||
+        rawMime === "image/jpeg"
+        ? rawMime
+        : "image/jpeg";
     if (url) {
       let parsed: URL;
       try {
@@ -444,35 +478,53 @@ serveAi("import_link", async (req, useCredit) => {
       if (!isPublicUrl(url)) {
         return json({ error: "El enlace no es válido" }, 400);
       }
-    } else if (!pasted) {
+    } else if (!pasted && !imageBase64) {
       return json({ error: "Pega un enlace o el texto de la receta" }, 400);
     }
 
-    // 3. Texto de la receta: el pegado o, si no, el que se pueda leer del
-    // enlace (descripción completa, YouTube API, oEmbed, OG; best-effort).
-    // Antes de gastar crédito.
+    // 3. Texto de la receta y portada: el pegado o lo leído del enlace
+    // (descripción completa, embed Instagram, JSON-LD, YouTube API, oEmbed, OG).
+    // Todo antes de gastar crédito de IA.
     let sourceText = pasted;
+    let sourceImage: string | null = null;
     // El móvil manda el texto que leyó, pero en YouTube el vídeo sigue
     // sirviendo si ese texto no trae la receta.
     let ytId: string | null = url ? youtubeId(url) : null;
-    if (!sourceText) {
+    if (!sourceText && url && !imageBase64) {
       const page = await fetchPage(url);
       ytId = youtubeId(page.url);
+      const embedUrl = instagramEmbedUrl(page.url);
+      let embedCaption: string | null = null;
+      let embedCover: string | null = null;
+      if (embedUrl) {
+        const embedPage = await fetchPage(embedUrl);
+        if (embedPage.html) {
+          embedCaption = instagramCaption(embedPage.html);
+          embedCover = extractCoverImage(embedPage.html, page.url);
+        }
+      }
       const fromApi = ytId ? await fetchYoutubeApi(ytId) : null;
-      const fromPage = page.html ? pageText(page.html, page.url) : null;
+      const fromPage = embedCaption ??
+        (page.html ? pageText(page.html, page.url) : null);
       const said = page.html ? await tiktokSpoken(page.html, page.url) : null;
-      // La API y la descripción completa ya traen el título: oEmbed solo suma
-      // cuando no hay nada mejor.
-      const oembed = fromApi || fromPage ? null : await fetchOEmbed(page.url);
-      sourceText = [fromApi ?? fromPage, oembed, said]
+      const oembed = await fetchOEmbed(page.url);
+      const bestText = fromApi ?? fromPage ?? oembed.text;
+      sourceText = [bestText, said]
         .filter((s): s is string => !!s && s.length > 0)
         .join(". ")
         .trim()
         .substring(0, 12000);
+      const coverCandidate = embedCover ??
+        (page.html ? extractCoverImage(page.html, page.url) : null) ??
+        oembed.thumbnail ??
+        (ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : null);
+      if (coverCandidate && isPublicUrl(coverCandidate)) {
+        sourceImage = coverCandidate;
+      }
     }
 
-    // En YouTube, aunque no haya texto, Gemini puede ver el vídeo.
-    if (sourceText.length < 15 && !ytId) {
+    // En YouTube o cuando llega captura/foto, Gemini puede leer sin texto previo.
+    if (sourceText.length < 15 && !ytId && !imageBase64) {
       if (pasted) {
         return json({ error: "Ese texto es muy corto para ser una receta" }, 400);
       }
@@ -492,13 +544,26 @@ serveAi("import_link", async (req, useCredit) => {
       return json({ error: "No hay modelos de Gemini disponibles." }, 502);
     }
 
-    let result: GeminiResult | null = sourceText.length >= 15
+    let result: GeminiResult | null = imageBase64
+      ? await askGemini(models, geminiKey, [
+        { inline_data: { mime_type: imageMime, data: imageBase64 } },
+        {
+          text: buildPrompt(
+            sourceText || "(receta en la imagen adjunta)",
+            url,
+            false,
+            loc,
+            true,
+          ),
+        },
+      ])
+      : sourceText.length >= 15
       ? await askGemini(models, geminiKey, [
         { text: buildPrompt(sourceText, url, false, loc) },
       ])
       : null;
     // YouTube sin receta escrita: que Gemini vea el vídeo.
-    if (ytId && (!result || hasNoRecipe(result))) {
+    if (!imageBase64 && ytId && (!result || hasNoRecipe(result))) {
       const video = await askGemini(models, geminiKey, [
         { file_data: { file_uri: `https://www.youtube.com/watch?v=${ytId}` } },
         { text: buildPrompt(sourceText || "(sin descripción)", url, true, loc) },
@@ -517,15 +582,20 @@ serveAi("import_link", async (req, useCredit) => {
       return json(
         {
           need_text: true,
-          error: (plato ? `El vídeo de «${plato}» no` : "Ese enlace no") +
-            " trae los ingredientes escritos en la descripción (solo salen " +
-            "en el vídeo). Si están en un comentario o en la web del autor, " +
-            "cópialos y pégalos aquí.",
+          error: imageBase64
+            ? "No encuentro ingredientes claros en esa imagen. Prueba con otra captura donde se vean los ingredientes."
+            : (plato ? `El vídeo de «${plato}» no` : "Ese enlace no") +
+              " trae los ingredientes escritos en la descripción (solo salen " +
+              "en el vídeo). Si están en un comentario o en la web del autor, " +
+              "cópialos y pégalos aquí.",
         },
         422,
       );
     }
 
+    if (sourceImage && !result.recipe.source_image_url) {
+      result.recipe.source_image_url = sourceImage;
+    }
     return json({ recipe: result.recipe });
   } catch (e) {
     console.error(e);

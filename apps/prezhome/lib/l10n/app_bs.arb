@@ -1336,5 +1336,7 @@
   "pcSummaryDeducted": "{count, plural, =1{1 sastojak oduzet} few{{count} sastojka oduzeta} other{{count} sastojaka oduzeto}}",
   "pcSummaryFridge": "{count, plural, =1{1 porcija u frižideru} few{{count} porcije u frižideru} other{{count} porcija u frižideru}}",
   "pcSummaryFreezer": "{count, plural, =1{1 porcija u zamrzivaču} few{{count} porcije u zamrzivaču} other{{count} porcija u zamrzivaču}}",
-  "pcUndone": "Promjene poništene"
+  "pcUndone": "Promjene poništene",
+  "arImportFromPhoto": "Učitaj snimak ekrana ili foto",
+  "arImportPhotoHint": "Ako je recept samo na ekranu ili papiru, učitaj snimak ekrana."
 }

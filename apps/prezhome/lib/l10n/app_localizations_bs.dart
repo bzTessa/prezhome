@@ -5275,4 +5275,11 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get pcUndone => 'Promjene poništene';
+
+  @override
+  String get arImportFromPhoto => 'Učitaj snimak ekrana ili foto';
+
+  @override
+  String get arImportPhotoHint =>
+      'Ako je recept samo na ekranu ili papiru, učitaj snimak ekrana.';
 }
