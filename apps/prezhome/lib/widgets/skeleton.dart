@@ -140,8 +140,7 @@ Widget _list(EdgeInsets padding, List<Widget> children) => Skeleton(
   ),
 );
 
-/// Comidas > Plan (vista día): cabecera de semana, selector Día/Semana, tira
-/// de 7 días, título del día y los huecos de comida (foto 64 + dos líneas).
+/// Comidas > Plan (vista día): cabecera de semana, tira de 7 días, título del día y los huecos de comida (foto 64 + dos líneas).
 class PlanSkeleton extends StatelessWidget {
   const PlanSkeleton({super.key});
 
@@ -158,18 +157,6 @@ class PlanSkeleton extends StatelessWidget {
             Bone(width: 150, height: 16),
           ],
         ),
-      ),
-      const SizedBox(height: 8),
-      const Row(
-        children: [
-          Expanded(child: Bone(height: 46, radius: 999)),
-          // Los dos botones de calendario y ajustes.
-          SizedBox(width: 4 + 12),
-          Bone.circle(24),
-          SizedBox(width: 24),
-          Bone.circle(24),
-          SizedBox(width: 12),
-        ],
       ),
       const SizedBox(height: 12),
       Row(

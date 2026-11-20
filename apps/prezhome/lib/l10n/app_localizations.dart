@@ -7853,6 +7853,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Se acaba'**
   String get panLevelLow;
+
+  /// No description provided for @planShowWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver la semana'**
+  String get planShowWeek;
+
+  /// No description provided for @planShowDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver el día'**
+  String get planShowDay;
 }
 
 class _AppLocalizationsDelegate

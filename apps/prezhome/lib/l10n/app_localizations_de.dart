@@ -5142,4 +5142,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get panLevelLow => 'Fast leer';
+
+  @override
+  String get planShowWeek => 'Woche anzeigen';
+
+  @override
+  String get planShowDay => 'Tag anzeigen';
 }

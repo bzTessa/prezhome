@@ -1290,5 +1290,7 @@
   "shopAllBoughtAsk": "Marcar os {count} produtos como comprados?",
   "shopAllBoughtAskHint": "Passam para o carrinho e para a despensa.",
   "panLevelHalf": "A meio",
-  "panLevelLow": "Quase a acabar"
+  "panLevelLow": "Quase a acabar",
+  "planShowWeek": "Ver a semana",
+  "planShowDay": "Ver o dia"
 }

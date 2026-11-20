@@ -3192,5 +3192,7 @@
   "shopAllBoughtAskHint": "Pasarán al carrito y a la despensa.",
   "@shopAllBoughtAsk": {"placeholders": {"count": {"type": "int"}}},
   "panLevelHalf": "A medias",
-  "panLevelLow": "Se acaba"
+  "panLevelLow": "Se acaba",
+  "planShowWeek": "Ver la semana",
+  "planShowDay": "Ver el día"
 }

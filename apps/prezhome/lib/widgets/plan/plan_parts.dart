@@ -224,7 +224,8 @@ class MealSlotCard extends StatelessWidget {
           boxShadow: empty ? AppElevation.level0 : AppElevation.level1,
         ),
         child: Material(
-          color: empty ? s.bg.withValues(alpha: 0.55) : AppColors.card,
+          // Vacías, todas del mismo tono suave: el color va solo en el icono.
+          color: empty ? AppColors.card.withValues(alpha: 0.5) : AppColors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -232,7 +233,9 @@ class MealSlotCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: empty ? null : AppElevation.border,
+                border: empty
+                    ? Border.all(color: AppColors.line)
+                    : AppElevation.border,
               ),
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
@@ -250,7 +253,7 @@ class MealSlotCard extends StatelessWidget {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: empty ? AppColors.card : s.bg,
+                              color: s.bg,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Icon(s.icon, color: s.fg, size: 28),
