@@ -3190,5 +3190,7 @@
   "shopLeaveStore": "Salir del modo tienda",
   "shopAllBoughtAsk": "¿Marcar los {count} productos como comprados?",
   "shopAllBoughtAskHint": "Pasarán al carrito y a la despensa.",
-  "@shopAllBoughtAsk": {"placeholders": {"count": {"type": "int"}}}
+  "@shopAllBoughtAsk": {"placeholders": {"count": {"type": "int"}}},
+  "panLevelHalf": "A medias",
+  "panLevelLow": "Se acaba"
 }

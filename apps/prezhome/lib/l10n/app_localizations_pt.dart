@@ -5133,4 +5133,10 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get shopAllBoughtAskHint =>
       'Passam para o carrinho e para a despensa.';
+
+  @override
+  String get panLevelHalf => 'A meio';
+
+  @override
+  String get panLevelLow => 'Quase a acabar';
 }

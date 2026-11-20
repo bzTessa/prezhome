@@ -115,4 +115,33 @@ void main() {
       expect(packSizeIn((quantity: 200, unit: 'ml'), 'unidad'), isNull);
     });
   });
+
+  group('despensa: el mismo − / + para todo', () {
+    test('lo que se cuenta va de uno en uno y bajar del último lo gasta', () {
+      expect(pantryQtyNext(2, 'ud', up: false), 1);
+      expect(pantryQtyNext(1, 'ud', up: false), isNull);
+      expect(pantryQtyNext(1, 'ud', up: true), 2);
+    });
+    test('a peso: de envase en envase si se sabe lo que trae', () {
+      expect(pantryQtyNext(800, 'g', up: false, packSize: 400), 400);
+      expect(pantryQtyNext(370, 'g', up: false, packSize: 570), isNull);
+      expect(pantryQtyNext(370, 'g', up: true, packSize: 570), 940);
+      expect(pantryQtyLabel(800, 'g', packSize: 400), '2 × 400 g');
+      expect(pantryQtyLabel(370, 'g', packSize: 570), '370 g');
+    });
+    test('a peso sin envase: de 100 en 100 g', () {
+      expect(pantryQtyNext(300, 'g', up: false), 200);
+      expect(pantryQtyNext(100, 'g', up: false), isNull);
+    });
+    test('por nivel: lleno, a medias, se acaba y gastado', () {
+      expect(pantryQtyNext(1, 'ud', up: false, byLevel: true), 0.5);
+      expect(pantryQtyNext(0.5, 'ud', up: false, byLevel: true), 0.25);
+      expect(pantryQtyNext(0.25, 'ud', up: false, byLevel: true), isNull);
+      expect(pantryQtyNext(0.25, 'ud', up: true, byLevel: true), 0.5);
+      expect(pantryQtyNext(0.5, 'ud', up: true, byLevel: true), 1);
+      expect(pantryQtyLabel(0.5, 'ud', byLevel: true), 'A medias');
+      expect(pantryQtyLabel(0.25, 'ud', byLevel: true), 'Se acaba');
+      expect(pantryQtyLabel(2, 'ud', byLevel: true), '2 ud');
+    });
+  });
 }
