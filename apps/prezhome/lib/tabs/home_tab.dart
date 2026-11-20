@@ -174,6 +174,10 @@ class HomeTabState extends State<HomeTab> {
   // Todas las tarjetas leen la misma fila de perfil: una sola petición en vez
   // de una por tarjeta.
   Future<Map<String, dynamic>?>? _profileFuture;
+
+  /// Inicial del nombre, para el botón de Mi hogar y Ajustes.
+  String? _initial;
+
   Future<Map<String, dynamic>?> _profile() => _profileFuture ??= _client
       .from('profiles')
       .select()
@@ -187,6 +191,10 @@ class HomeTabState extends State<HomeTab> {
       final user = _client.auth.currentUser;
       if (user == null) return;
       final row = await _profile();
+      final name = (row?['full_name'] as String?)?.trim() ?? '';
+      if (name.isNotEmpty && mounted) {
+        setState(() => _initial = name.characters.first.toUpperCase());
+      }
       final raw = row?['dashboard_prefs'];
       final prefs = raw is Map
           ? DashboardPrefs.fromJson(Map<String, dynamic>.from(raw))
@@ -796,6 +804,15 @@ class HomeTabState extends State<HomeTab> {
                     StaggeredEntrance(index: 1, child: _nextUpCard(next)),
                     const SizedBox(height: AppSpacing.lg),
                   ],
+                  // Lo grande de Hoy: Tu día (comidas, tareas, caducidades y
+                  // compra). Tocar lleva a su pestaña.
+                  if (restLines.isNotEmpty ||
+                      next == null ||
+                      _todayItems.isNotEmpty ||
+                      _doneTodayTasks.isNotEmpty) ...[
+                    StaggeredEntrance(index: 1, child: _dayCard(restLines)),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                   ValueListenableBuilder(
                     valueListenable: PlanPrefs.current,
                     builder: (_, p, _) => p.fastHours == null
@@ -806,7 +823,6 @@ class HomeTabState extends State<HomeTab> {
                           ),
                   ),
 
-                  // Lo primero: qué se come hoy, con la foto de la receta.
                   // Con plan, las comidas van en Tu día; sin plan, la tarjeta
                   // para planificar.
                   if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
@@ -818,16 +834,6 @@ class HomeTabState extends State<HomeTab> {
                       StaggeredEntrance(index: 2, child: _nextWeekCard()),
                       const SizedBox(height: AppSpacing.lg),
                     ],
-                  ],
-
-                  // De un vistazo: caducidades, tareas y compra. Tocar lleva a
-                  // su pestaña.
-                  if (restLines.isNotEmpty ||
-                      next == null ||
-                      _todayItems.isNotEmpty ||
-                      _doneTodayTasks.isNotEmpty) ...[
-                    StaggeredEntrance(index: 2, child: _dayCard(restLines)),
-                    const SizedBox(height: AppSpacing.lg),
                   ],
 
                   StaggeredEntrance(
@@ -890,17 +896,14 @@ class HomeTabState extends State<HomeTab> {
             ],
           ),
         ),
+        // Una sola entrada a Mi hogar y Ajustes: tu inicial (la casa se
+        // confundía con la pestaña Hoy).
         _roundButton(
-          icon: Icons.settings_outlined,
-          tooltip: context.l.settingsTitle,
-          onTap: _openSettings,
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        _roundButton(
-          icon: Icons.home_rounded,
-          tooltip: context.l.homeYourHome,
+          icon: Icons.person_rounded,
+          label: _initial,
+          tooltip: '${context.l.homeYourHome} · ${context.l.settingsTitle}',
           filled: true,
-          onTap: _openHousehold,
+          onTap: _openMeMenu,
         ),
       ],
     );
@@ -910,6 +913,7 @@ class HomeTabState extends State<HomeTab> {
     required IconData icon,
     required String tooltip,
     required VoidCallback onTap,
+    String? label,
     bool filled = false,
   }) {
     return Tooltip(
@@ -923,10 +927,21 @@ class HomeTabState extends State<HomeTab> {
           child: SizedBox(
             width: 46,
             height: 46,
-            child: Icon(
-              icon,
-              size: 22,
-              color: filled ? AppColors.cream : AppColors.ink,
+            child: Center(
+              child: label != null
+                  ? Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: filled ? AppColors.cream : AppColors.ink,
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      size: 22,
+                      color: filled ? AppColors.cream : AppColors.ink,
+                    ),
             ),
           ),
         ),
@@ -952,6 +967,35 @@ class HomeTabState extends State<HomeTab> {
       ),
     );
     if (mounted) _loadDashboard();
+  }
+
+  /// Mi hogar y Ajustes, desde tu inicial.
+  Future<void> _openMeMenu() async {
+    final pick = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: Text(context.l.homeYourHome),
+              onTap: () => Navigator.pop(ctx, 'home'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: Text(context.l.settingsTitle),
+              onTap: () => Navigator.pop(ctx, 'settings'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (pick == 'home') await _openHousehold();
+    if (pick == 'settings') await _openSettings();
   }
 
   Future<void> _openHousehold() async {
@@ -1603,117 +1647,80 @@ class HomeTabState extends State<HomeTab> {
     };
     final onBrand = AppColors.onBrand;
     final isTask = line.kind == DayLineKind.task;
-    return Container(
+    final doIt = isTask ? () => _completeTaskFromDashboard(line.task!) : open;
+    final doLabel = isTask
+        ? context.l.homeNextDone
+        : line.kind == DayLineKind.overdue
+        ? context.l.tskCatchUp
+        : context.l.homeNextOpen;
+    // Una franja, no una tarjeta grande: lo grande de Hoy es Tu día.
+    return Material(
+      color: AppColors.terracotta,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.terracotta,
-        borderRadius: BorderRadius.circular(AppRadius.lg + 6),
-        boxShadow: AppElevation.level1,
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -40,
-            top: -50,
-            child: Container(
-              width: 190,
-              height: 190,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: onBrand.withValues(alpha: 0.10),
-              ),
-            ),
-          ),
-          Positioned(
-            right: AppSpacing.xl,
-            top: AppSpacing.xl,
-            child: Icon(icon, size: 56, color: onBrand.withValues(alpha: 0.9)),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l.homeNextUp.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                    color: onBrand.withValues(alpha: 0.85),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Padding(
-                  padding: const EdgeInsets.only(right: 76),
-                  child: Text(
-                    title,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.headline.copyWith(
-                      color: onBrand,
-                      fontSize: 24,
-                      height: 1.15,
-                    ),
-                  ),
-                ),
-                if (sub != null && sub.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    sub,
-                    style: AppTextStyles.body.copyWith(
-                      color: onBrand.withValues(alpha: 0.9),
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.lg),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
+      child: InkWell(
+        onTap: open,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 26, color: onBrand.withValues(alpha: 0.9)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FilledButton.icon(
-                      onPressed: isTask
-                          ? () => _completeTaskFromDashboard(line.task!)
-                          : open,
-                      icon: Icon(
-                        isTask
-                            ? Icons.check_rounded
-                            : line.kind == DayLineKind.overdue
-                            ? Icons.event_available_rounded
-                            : Icons.arrow_forward_rounded,
-                        size: 20,
-                      ),
-                      label: Text(
-                        isTask
-                            ? context.l.homeNextDone
-                            : line.kind == DayLineKind.overdue
-                            ? context.l.tskCatchUp
-                            : context.l.homeNextOpen,
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: onBrand,
-                        foregroundColor: AppColors.card,
-                        minimumSize: const Size(64, 48),
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                        color: onBrand,
                       ),
                     ),
-                    OutlinedButton(
-                      onPressed: () => setState(() => _nextSkips++),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: onBrand,
-                        side: BorderSide(
-                          color: onBrand.withValues(alpha: 0.5),
-                          width: 1.5,
+                    if (sub != null && sub.isNotEmpty)
+                      Text(
+                        sub,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: onBrand.withValues(alpha: 0.85),
                         ),
                       ),
-                      child: Text(context.l.homeNextLater),
-                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: context.l.homeNextLater,
+                onPressed: () => setState(() => _nextSkips++),
+                icon: Icon(
+                  Icons.close_rounded,
+                  color: onBrand.withValues(alpha: 0.8),
+                ),
+              ),
+              IconButton.filled(
+                tooltip: doLabel,
+                onPressed: doIt,
+                style: IconButton.styleFrom(
+                  backgroundColor: onBrand,
+                  foregroundColor: AppColors.terracotta,
+                ),
+                icon: Icon(
+                  isTask
+                      ? Icons.check_rounded
+                      : line.kind == DayLineKind.overdue
+                      ? Icons.event_available_rounded
+                      : Icons.arrow_forward_rounded,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
