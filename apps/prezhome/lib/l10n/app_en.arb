@@ -1338,5 +1338,11 @@
   "pcSummaryFreezer": "{count, plural, =1{1 serving in freezer} other{{count} servings in freezer}}",
   "pcUndone": "Changes undone",
   "arImportFromPhoto": "Upload screenshot or photo",
-  "arImportPhotoHint": "If the recipe only appears on screen or paper, upload a screenshot."
+  "arImportPhotoHint": "If the recipe only appears on screen or paper, upload a screenshot.",
+  "hhPacks": "Usual pack sizes",
+  "hhPacksSub": "What each pack you always buy holds: chickpeas 570 g, milk 1 L. Shopping counts whole packs and At home subtracts what each recipe uses.",
+  "packsEmpty": "No pack sizes saved yet. Add the ones you always buy in the same size.",
+  "packsAdd": "Add pack size",
+  "packsNameHint": "Product (e.g. chickpeas)",
+  "hhPacksShort": "Chickpeas 570 g, milk 1 L…"
 }

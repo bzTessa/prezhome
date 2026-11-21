@@ -3186,11 +3186,23 @@
   "shopPackSizeEdit": "Lo que trae cada envase…",
   "shopPackSizeTitle": "¿Cuánto trae cada envase de {name}?",
   "shopPackSizeHint": "Por ejemplo, 570 g. La compra contará envases enteros y la despensa restará solo lo que gaste cada receta.",
-  "@shopPackSizeTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@shopPackSizeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "shopLeaveStore": "Salir del modo tienda",
   "shopAllBoughtAsk": "¿Marcar los {count} productos como comprados?",
   "shopAllBoughtAskHint": "Pasarán al carrito.",
-  "@shopAllBoughtAsk": {"placeholders": {"count": {"type": "int"}}},
+  "@shopAllBoughtAsk": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "panLevelHalf": "A medias",
   "panLevelLow": "Se acaba",
   "planShowWeek": "Ver la semana",
@@ -3199,17 +3211,35 @@
   "compraSubHome": "En casa",
   "shopSaveToHome": "Guardar en casa",
   "shopSaveToHomeCount": "Guardar en casa ({count})",
-  "@shopSaveToHomeCount": {"placeholders": {"count": {"type": "int"}}},
+  "@shopSaveToHomeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "stkAlreadyInPantryNotice": "Ya guardaste esta compra en casa hace poco. Por defecto solo guardaremos los precios para no duplicar.",
   "panSearchHint": "Buscar en casa…",
   "panSearchEmpty": "No encuentro nada con ese nombre.",
   "panUseSoonTitle": "Para gastar ya",
   "panOpenedBadge": "Abierto",
   "panPackLabel": "Envase {size}",
-  "@panPackLabel": {"placeholders": {"size": {"type": "String"}}},
+  "@panPackLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "panMoveZone": "Mover de zona",
   "panMovedTo": "Movido a {zone}",
-  "@panMovedTo": {"placeholders": {"zone": {"type": "String"}}},
+  "@panMovedTo": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
   "panThawToFridge": "A nevera",
   "captureVoiceTooltip": "Dictar por voz",
   "captureVoiceListening": "Escuchando…",
@@ -3221,16 +3251,34 @@
   "onbSummaryTitle": "Así queda tu hogar",
   "recFilterReady": "Con lo que tengo",
   "recPantryReadySubtitle": "{count, plural, =1{Puedes hacer 1 receta tuya ahora mismo} other{Puedes hacer {count} recetas tuyas ahora mismo}}",
-  "@recPantryReadySubtitle": {"placeholders": {"count": {"type": "int"}}},
+  "@recPantryReadySubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "rdCookedIt": "Ya lo cociné",
   "rdCookedShort": "Hecho",
   "pcTitle": "¡Buen provecho!",
   "pcDeductTitle": "Descontar de En casa",
   "pcDeductSubtitle": "{count, plural, =1{Se actualizará 1 ingrediente} other{Se actualizarán {count} ingredientes}}",
-  "@pcDeductSubtitle": {"placeholders": {"count": {"type": "int"}}},
+  "@pcDeductSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pcNoIngredients": "No hay ingredientes que descontar en En casa.",
   "pcMoreItems": "y {count} más",
-  "@pcMoreItems": {"placeholders": {"count": {"type": "int"}}},
+  "@pcMoreItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pcLeftoversTitle": "¿Sobran raciones?",
   "pcLeftoversHint": "Guárdalas como plato listo en En casa",
   "pcFridgeLabel": "Nevera (táper)",
@@ -3239,16 +3287,46 @@
   "pcFreezerGreat": "Se congela genial",
   "pcFreezerHint": "Listo para otro día",
   "pcServingsCount": "{count, plural, =0{0} =1{1 ración} other{{count} raciones}}",
-  "@pcServingsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@pcServingsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pcConfirm": "Guardar en En casa",
   "pcJustClose": "Listo",
   "pcSummaryDeducted": "{count, plural, =1{1 ingrediente descontado} other{{count} ingredientes descontados}}",
-  "@pcSummaryDeducted": {"placeholders": {"count": {"type": "int"}}},
+  "@pcSummaryDeducted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pcSummaryFridge": "{count, plural, =1{1 ración en nevera} other{{count} raciones en nevera}}",
-  "@pcSummaryFridge": {"placeholders": {"count": {"type": "int"}}},
+  "@pcSummaryFridge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pcSummaryFreezer": "{count, plural, =1{1 ración al congelador} other{{count} raciones al congelador}}",
-  "@pcSummaryFreezer": {"placeholders": {"count": {"type": "int"}}},
+  "@pcSummaryFreezer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pcUndone": "Cambios deshechos",
   "arImportFromPhoto": "Subir captura o foto",
-  "arImportPhotoHint": "Si la receta solo sale en el vídeo o en papel, sube una captura."
+  "arImportPhotoHint": "Si la receta solo sale en el vídeo o en papel, sube una captura.",
+  "hhPacks": "Envases habituales",
+  "hhPacksSub": "Lo que trae cada envase que compras siempre igual: garbanzos 570 g, leche 1 L. La compra cuenta envases enteros y En casa resta lo que gasta cada receta.",
+  "packsEmpty": "Aún no hay envases guardados. Añade los que compras siempre del mismo tamaño.",
+  "packsAdd": "Añadir envase",
+  "packsNameHint": "Producto (p. ej. garbanzos)",
+  "hhPacksShort": "Garbanzos 570 g, leche 1 L…"
 }

@@ -8141,6 +8141,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Si la receta solo sale en el vídeo o en papel, sube una captura.'**
   String get arImportPhotoHint;
+
+  /// No description provided for @hhPacks.
+  ///
+  /// In es, this message translates to:
+  /// **'Envases habituales'**
+  String get hhPacks;
+
+  /// No description provided for @hhPacksSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que trae cada envase que compras siempre igual: garbanzos 570 g, leche 1 L. La compra cuenta envases enteros y En casa resta lo que gasta cada receta.'**
+  String get hhPacksSub;
+
+  /// No description provided for @packsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay envases guardados. Añade los que compras siempre del mismo tamaño.'**
+  String get packsEmpty;
+
+  /// No description provided for @packsAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir envase'**
+  String get packsAdd;
+
+  /// No description provided for @packsNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto (p. ej. garbanzos)'**
+  String get packsNameHint;
+
+  /// No description provided for @hhPacksShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Garbanzos 570 g, leche 1 L…'**
+  String get hhPacksShort;
 }
 
 class _AppLocalizationsDelegate

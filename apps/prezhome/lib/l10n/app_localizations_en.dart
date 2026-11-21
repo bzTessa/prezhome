@@ -5329,4 +5329,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get arImportPhotoHint =>
       'If the recipe only appears on screen or paper, upload a screenshot.';
+
+  @override
+  String get hhPacks => 'Usual pack sizes';
+
+  @override
+  String get hhPacksSub =>
+      'What each pack you always buy holds: chickpeas 570 g, milk 1 L. Shopping counts whole packs and At home subtracts what each recipe uses.';
+
+  @override
+  String get packsEmpty =>
+      'No pack sizes saved yet. Add the ones you always buy in the same size.';
+
+  @override
+  String get packsAdd => 'Add pack size';
+
+  @override
+  String get packsNameHint => 'Product (e.g. chickpeas)';
+
+  @override
+  String get hhPacksShort => 'Chickpeas 570 g, milk 1 L…';
 }

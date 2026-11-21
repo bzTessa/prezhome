@@ -753,7 +753,7 @@ class HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     // Las tareas van dentro de "Tu día"; aquí quedan solo las cifras.
-    final numbers = _prefs.visibleCards
+    final numbers = _prefs.activeCards
         .where(
           (c) => c == DashboardCard.calories || c == DashboardCard.spending,
         )
@@ -810,7 +810,7 @@ class HomeTabState extends State<HomeTab> {
 
                 // Con plan, las comidas van en Tu día; sin plan, la tarjeta
                 // para planificar.
-                if (_prefs.visibleCards.contains(DashboardCard.meals)) ...[
+                if (_prefs.activeCards.contains(DashboardCard.meals)) ...[
                   if (_todayItems.isEmpty) ...[
                     StaggeredEntrance(index: 1, child: _todayMealHero()),
                     const SizedBox(height: AppSpacing.lg),
@@ -824,7 +824,7 @@ class HomeTabState extends State<HomeTab> {
                 StaggeredEntrance(index: 3, child: StreakCard(key: _streakKey)),
                 const SizedBox(height: AppSpacing.md),
 
-                if (_prefs.visibleCards.contains(DashboardCard.calories) &&
+                if (_prefs.activeCards.contains(DashboardCard.calories) &&
                     (!_profileComplete ||
                         _targetCalories == null ||
                         _targetCalories! <= 0)) ...[
@@ -1351,7 +1351,7 @@ class HomeTabState extends State<HomeTab> {
   List<DayLine> _dayLines() {
     final tasksOn =
         _prefs.isModuleEnabled(HomeModule.tasks) &&
-        _prefs.visibleCards.contains(DashboardCard.tasks);
+        _prefs.activeCards.contains(DashboardCard.tasks);
     return buildDayBrief(
       today: DateTime.now(),
       // Por la noche, lo de hoy ya no se puede descongelar: lo de mañana sí.
@@ -1809,7 +1809,9 @@ class HomeTabState extends State<HomeTab> {
     for (final q in _prefs.quick)
       if (q != QuickAction.shopping &&
           q != QuickAction.mealPlan &&
-          q != QuickAction.addInventory)
+          q != QuickAction.addInventory &&
+          // Sin seguimiento de calorías no hay diario al que ir.
+          !(q == QuickAction.diary && !_prefs.trackCalories))
         q,
   ];
 

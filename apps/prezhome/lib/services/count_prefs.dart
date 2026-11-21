@@ -63,6 +63,41 @@ class CountPrefs {
     customPacks = {...customPacks, key(name): pack};
   }
 
+  /// Envases guardados del hogar, por nombre normalizado y en orden.
+  Future<List<({String key, PackMeasure pack})>> packs(String homeId) async {
+    final rows = await _client
+        .from('product_count_prefs')
+        .select('name_normalized, pack_size, pack_unit')
+        .eq('home_id', homeId)
+        .not('pack_size', 'is', null)
+        .order('name_normalized');
+    return [
+      for (final r in rows as List)
+        if ((r['pack_size'] as num?) != null && r['pack_unit'] != null)
+          (
+            key: r['name_normalized'] as String,
+            pack: (
+              size: (r['pack_size'] as num).toDouble(),
+              unit: r['pack_unit'] as String,
+            ),
+          ),
+    ];
+  }
+
+  /// Olvida el envase de [key] (nombre normalizado): el producto vuelve a la
+  /// regla automática.
+  Future<void> removePack(String homeId, String key) async {
+    await _client
+        .from('product_count_prefs')
+        .delete()
+        .eq('home_id', homeId)
+        .eq('name_normalized', key);
+    customPacks = {
+      for (final e in customPacks.entries)
+        if (e.key != key) e.key: e.value,
+    };
+  }
+
   Future<void> save(String homeId, String name, CountMode mode) =>
       _client.from('product_count_prefs').upsert({
         'home_id': homeId,

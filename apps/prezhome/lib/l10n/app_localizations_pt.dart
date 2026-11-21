@@ -5342,4 +5342,24 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get arImportPhotoHint =>
       'Se a receita só aparece no vídeo ou em papel, carrega uma captura.';
+
+  @override
+  String get hhPacks => 'Embalagens habituais';
+
+  @override
+  String get hhPacksSub =>
+      'O que traz cada embalagem que compras sempre igual: grão 570 g, leite 1 L. As compras contam embalagens inteiras e Em casa desconta o que cada receita gasta.';
+
+  @override
+  String get packsEmpty =>
+      'Ainda não há embalagens guardadas. Adiciona as que compras sempre do mesmo tamanho.';
+
+  @override
+  String get packsAdd => 'Adicionar embalagem';
+
+  @override
+  String get packsNameHint => 'Produto (ex. grão)';
+
+  @override
+  String get hhPacksShort => 'Grão 570 g, leite 1 L…';
 }

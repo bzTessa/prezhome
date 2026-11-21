@@ -5363,4 +5363,24 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get arImportPhotoHint =>
       'Si la recette apparaît seulement à l\'écran ou sur papier, envoie une capture.';
+
+  @override
+  String get hhPacks => 'Formats habituels';
+
+  @override
+  String get hhPacksSub =>
+      'Ce que contient chaque paquet que vous achetez toujours pareil : pois chiches 570 g, lait 1 L. Les courses comptent des paquets entiers et À la maison retire ce que chaque recette utilise.';
+
+  @override
+  String get packsEmpty =>
+      'Aucun format enregistré. Ajoutez ceux que vous achetez toujours dans la même taille.';
+
+  @override
+  String get packsAdd => 'Ajouter un format';
+
+  @override
+  String get packsNameHint => 'Produit (ex. pois chiches)';
+
+  @override
+  String get hhPacksShort => 'Pois chiches 570 g, lait 1 L…';
 }

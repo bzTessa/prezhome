@@ -1338,5 +1338,11 @@
   "pcSummaryFreezer": "{count, plural, =1{1 dose no congelador} other{{count} doses no congelador}}",
   "pcUndone": "Alterações anuladas",
   "arImportFromPhoto": "Carregar captura ou foto",
-  "arImportPhotoHint": "Se a receita só aparece no vídeo ou em papel, carrega uma captura."
+  "arImportPhotoHint": "Se a receita só aparece no vídeo ou em papel, carrega uma captura.",
+  "hhPacks": "Embalagens habituais",
+  "hhPacksSub": "O que traz cada embalagem que compras sempre igual: grão 570 g, leite 1 L. As compras contam embalagens inteiras e Em casa desconta o que cada receita gasta.",
+  "packsEmpty": "Ainda não há embalagens guardadas. Adiciona as que compras sempre do mesmo tamanho.",
+  "packsAdd": "Adicionar embalagem",
+  "packsNameHint": "Produto (ex. grão)",
+  "hhPacksShort": "Grão 570 g, leite 1 L…"
 }

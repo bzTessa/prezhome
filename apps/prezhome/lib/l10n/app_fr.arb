@@ -1338,5 +1338,11 @@
   "pcSummaryFreezer": "{count, plural, =1{1 portion au congélateur} other{{count} portions au congélateur}}",
   "pcUndone": "Modifications annulées",
   "arImportFromPhoto": "Importer une capture ou photo",
-  "arImportPhotoHint": "Si la recette apparaît seulement à l'écran ou sur papier, envoie une capture."
+  "arImportPhotoHint": "Si la recette apparaît seulement à l'écran ou sur papier, envoie une capture.",
+  "hhPacks": "Formats habituels",
+  "hhPacksSub": "Ce que contient chaque paquet que vous achetez toujours pareil : pois chiches 570 g, lait 1 L. Les courses comptent des paquets entiers et À la maison retire ce que chaque recette utilise.",
+  "packsEmpty": "Aucun format enregistré. Ajoutez ceux que vous achetez toujours dans la même taille.",
+  "packsAdd": "Ajouter un format",
+  "packsNameHint": "Produit (ex. pois chiches)",
+  "hhPacksShort": "Pois chiches 570 g, lait 1 L…"
 }
