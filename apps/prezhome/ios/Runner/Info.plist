@@ -8,6 +8,8 @@
 	<string>PrezHome pasa tus comidas y tareas a tu calendario y mira tus huecos libres.</string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
 	<string>PrezHome pasa tus comidas y tareas a tu calendario.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PrezHome usa tus fotos para añadir la imagen de una receta o de un producto, o para leer un ticket.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>PrezHome usa la cámara para escanear códigos de barras de productos.</string>
 	<key>NSMicrophoneUsageDescription</key>
