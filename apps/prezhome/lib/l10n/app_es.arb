@@ -3248,5 +3248,7 @@
   "@pcSummaryFridge": {"placeholders": {"count": {"type": "int"}}},
   "pcSummaryFreezer": "{count, plural, =1{1 ración al congelador} other{{count} raciones al congelador}}",
   "@pcSummaryFreezer": {"placeholders": {"count": {"type": "int"}}},
-  "pcUndone": "Cambios deshechos"
+  "pcUndone": "Cambios deshechos",
+  "arImportFromPhoto": "Subir captura o foto",
+  "arImportPhotoHint": "Si la receta solo sale en el vídeo o en papel, sube una captura."
 }
