@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -61,6 +63,8 @@ class _InboxScreenState extends State<InboxScreen> {
       _error(e);
       return;
     }
+    // Ya no es un apunte: su aviso, si lo tenía, se quita.
+    if (n.remindAt != null) unawaited(Reminders.sync(_client));
     HapticFeedback.mediumImpact();
     _reload();
     if (!mounted) return;
@@ -114,6 +118,7 @@ class _InboxScreenState extends State<InboxScreen> {
       _error(e);
       return;
     }
+    if (n.remindAt != null) unawaited(Reminders.sync(_client));
     _reload();
     if (!mounted || homeId == null) return;
     ScaffoldMessenger.of(context)
@@ -126,6 +131,7 @@ class _InboxScreenState extends State<InboxScreen> {
             onPressed: () async {
               try {
                 await Inbox(_client).restore(homeId, n);
+                if (n.remindAt != null) await Reminders.sync(_client);
               } catch (_) {}
               if (mounted) _reload();
             },
