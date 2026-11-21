@@ -3627,6 +3627,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'mascota': 'Pet',
       'cocinar': 'Cooking',
       'pagos': 'Payments',
+      'mantenimiento': 'Maintenance',
       'other': 'Task',
     });
     return '$_temp0';
@@ -5406,4 +5407,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remNoteBody => 'You noted this for now.';
+
+  @override
+  String planEveryMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'Every $months months',
+      one: 'Every month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planEveryYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: 'Every $years years',
+      one: 'Every year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintPreset(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'fridge': 'Clean the fridge',
+      'washer': 'Clean the washing machine',
+      'filters': 'Clean the filters',
+      'oven': 'Clean the oven',
+      'mattress': 'Flip the mattress',
+      'curtains': 'Wash the curtains',
+      'boiler': 'Boiler service',
+      'other': 'Car inspection',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tskMaintTitle => 'Home maintenance';
+
+  @override
+  String get tskMaintHint =>
+      'Things that come up every few months. We\'ll remind you when they\'re due.';
+
+  @override
+  String get tskMaintSuggest => 'Add with one tap';
+
+  @override
+  String tskMaintNext(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get tskMaintAsk => 'When did you last do it?';
+
+  @override
+  String get tskMaintDueNow => 'It\'s due now';
+
+  @override
+  String get tskMaintDueNowSub => 'It\'ll show up in today\'s tasks';
+
+  @override
+  String get tskMaintRecent => 'I did it recently';
+
+  @override
+  String tskMaintRecentSub(String when) {
+    return 'Back $when';
+  }
+
+  @override
+  String get tskMaintAdded => 'Added to maintenance';
+
+  @override
+  String get tskMaintHide => 'Hide suggestions';
 }

@@ -5673,7 +5673,7 @@ abstract class AppLocalizations {
   /// No description provided for @taskKind.
   ///
   /// In es, this message translates to:
-  /// **'{kind, select, bano{Baño} ropa{Ropa} compra{Compra} basura{Basura} platos{Platos} limpieza{Limpieza} plantas{Plantas} cama{Cama} mascota{Mascota} cocinar{Cocinar} pagos{Pagos} other{Tarea}}'**
+  /// **'{kind, select, bano{Baño} ropa{Ropa} compra{Compra} basura{Basura} platos{Platos} limpieza{Limpieza} plantas{Plantas} cama{Cama} mascota{Mascota} cocinar{Cocinar} pagos{Pagos} mantenimiento{Mantenimiento} other{Tarea}}'**
   String taskKind(String kind);
 
   /// No description provided for @taskPreset.
@@ -8267,6 +8267,90 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Lo apuntaste para ahora.'**
   String get remNoteBody;
+
+  /// No description provided for @planEveryMonths.
+  ///
+  /// In es, this message translates to:
+  /// **'{months, plural, =1{Cada mes} other{Cada {months} meses}}'**
+  String planEveryMonths(int months);
+
+  /// No description provided for @planEveryYears.
+  ///
+  /// In es, this message translates to:
+  /// **'{years, plural, =1{Cada año} other{Cada {years} años}}'**
+  String planEveryYears(int years);
+
+  /// No description provided for @maintPreset.
+  ///
+  /// In es, this message translates to:
+  /// **'{preset, select, fridge{Limpiar la nevera} washer{Limpiar la lavadora} filters{Limpiar los filtros} oven{Limpiar el horno} mattress{Girar el colchón} curtains{Lavar las cortinas} boiler{Revisar la caldera} other{Pasar la ITV}}'**
+  String maintPreset(String preset);
+
+  /// No description provided for @tskMaintTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mantenimiento de la casa'**
+  String get tskMaintTitle;
+
+  /// No description provided for @tskMaintHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que toca cada pocos meses. Te lo recordamos cuando llegue.'**
+  String get tskMaintHint;
+
+  /// No description provided for @tskMaintSuggest.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir con un toque'**
+  String get tskMaintSuggest;
+
+  /// No description provided for @tskMaintNext.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca el {date}'**
+  String tskMaintNext(String date);
+
+  /// No description provided for @tskMaintAsk.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuándo lo hiciste por última vez?'**
+  String get tskMaintAsk;
+
+  /// No description provided for @tskMaintDueNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca ya'**
+  String get tskMaintDueNow;
+
+  /// No description provided for @tskMaintDueNowSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Aparecerá hoy en tus tareas'**
+  String get tskMaintDueNowSub;
+
+  /// No description provided for @tskMaintRecent.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo hice hace poco'**
+  String get tskMaintRecent;
+
+  /// No description provided for @tskMaintRecentSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Volverá el {when}'**
+  String tskMaintRecentSub(String when);
+
+  /// No description provided for @tskMaintAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadida a mantenimiento'**
+  String get tskMaintAdded;
+
+  /// No description provided for @tskMaintHide.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar sugerencias'**
+  String get tskMaintHide;
 }
 
 class _AppLocalizationsDelegate
