@@ -1373,5 +1373,9 @@
   "tskMaintRecent": "L'ho fatto da poco",
   "tskMaintRecentSub": "Torna il {when}",
   "tskMaintAdded": "Aggiunta alla manutenzione",
-  "tskMaintHide": "Nascondi suggerimenti"
+  "tskMaintHide": "Nascondi suggerimenti",
+  "pcDiaryTitle": "Segna nel mio diario",
+  "pcDiarySub": "1 porzione · {kcal} kcal, nel pasto di adesso",
+  "pcDiaryOnly": "Segna nel diario",
+  "pcSummaryDiary": "Segnato nel tuo diario"
 }

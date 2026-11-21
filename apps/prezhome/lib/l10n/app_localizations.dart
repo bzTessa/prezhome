@@ -8351,6 +8351,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ocultar sugerencias'**
   String get tskMaintHide;
+
+  /// No description provided for @pcDiaryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar en mi diario'**
+  String get pcDiaryTitle;
+
+  /// No description provided for @pcDiarySub.
+  ///
+  /// In es, this message translates to:
+  /// **'1 ración · {kcal} kcal, en la comida que toca ahora'**
+  String pcDiarySub(int kcal);
+
+  /// No description provided for @pcDiaryOnly.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar en mi diario'**
+  String get pcDiaryOnly;
+
+  /// No description provided for @pcSummaryDiary.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntado en tu diario'**
+  String get pcSummaryDiary;
 }
 
 class _AppLocalizationsDelegate

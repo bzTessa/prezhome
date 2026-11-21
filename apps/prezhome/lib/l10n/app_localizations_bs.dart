@@ -5434,4 +5434,18 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get tskMaintHide => 'Sakrij prijedloge';
+
+  @override
+  String get pcDiaryTitle => 'Upiši u moj dnevnik';
+
+  @override
+  String pcDiarySub(int kcal) {
+    return '1 porcija · $kcal kcal, u trenutni obrok';
+  }
+
+  @override
+  String get pcDiaryOnly => 'Upiši u dnevnik';
+
+  @override
+  String get pcSummaryDiary => 'Upisano u tvoj dnevnik';
 }

@@ -1136,12 +1136,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     var calendarId = prefs.calendarId;
     var busyAware = prefs.busyAware;
     String? calendarName;
-    const modes = ['daily', 'alternate', 'mealprep'];
     final oldMode = data.isMealPrep
         ? 'mealprep'
         : data.isAlternate
         ? 'alternate'
         : 'daily';
+    // "En lote" solo si se usa la cocina en lote (o ya se está en ese modo).
+    final withBatch =
+        data.prefs.isModuleEnabled(HomeModule.batchCooking) ||
+        oldMode == 'mealprep';
+    final modes = ['daily', 'alternate', if (withBatch) 'mealprep'];
     var mode = oldMode;
     final leftover = {...prefs.leftoverMeals};
     const fasts = [null, 12, 14, 16];
@@ -1219,7 +1223,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                         labels: [
                           context.l.planModeDaily,
                           context.l.planModeAlternate,
-                          context.l.planModeBatch,
+                          if (withBatch) context.l.planModeBatch,
                         ],
                         selected: modes.indexOf(mode),
                         onChanged: (i) => setSheet(() => mode = modes[i]),
@@ -2211,7 +2215,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           _mealPrepCard(data, prepPlan!, agenda),
           const SizedBox(height: 12),
         ],
-        if (_plannedRecipes(data).isNotEmpty) _cookModeCard(data),
+        // Cocinar todo de una vez es cosa de la cocina en lote.
+        if (_plannedRecipes(data).isNotEmpty &&
+            (data.isMealPrep ||
+                data.prefs.isModuleEnabled(HomeModule.batchCooking)))
+          _cookModeCard(data),
       ],
     );
   }

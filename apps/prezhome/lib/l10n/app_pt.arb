@@ -1373,5 +1373,9 @@
   "tskMaintRecent": "Fiz há pouco",
   "tskMaintRecentSub": "Volta a {when}",
   "tskMaintAdded": "Adicionada à manutenção",
-  "tskMaintHide": "Ocultar sugestões"
+  "tskMaintHide": "Ocultar sugestões",
+  "pcDiaryTitle": "Registar no meu diário",
+  "pcDiarySub": "1 dose · {kcal} kcal, na refeição de agora",
+  "pcDiaryOnly": "Registar no diário",
+  "pcSummaryDiary": "Registado no teu diário"
 }

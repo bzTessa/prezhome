@@ -5492,4 +5492,18 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get tskMaintHide => 'Nascondi suggerimenti';
+
+  @override
+  String get pcDiaryTitle => 'Segna nel mio diario';
+
+  @override
+  String pcDiarySub(int kcal) {
+    return '1 porzione · $kcal kcal, nel pasto di adesso';
+  }
+
+  @override
+  String get pcDiaryOnly => 'Segna nel diario';
+
+  @override
+  String get pcSummaryDiary => 'Segnato nel tuo diario';
 }
