@@ -340,7 +340,7 @@ class PlanShoppingService {
     Map<String, CountMode> modes = const {},
     void Function()? onFound,
   }) async {
-    final hasCatalog = catalogKeyFor(supermarketKey) != null;
+    final hasCatalog = catalogSearchOrder(supermarketKey).isNotEmpty;
     if (!hasCatalog && CountPrefs.customPacks.isEmpty) return 0;
     var found = 0;
     for (final item in items.take(40)) {
@@ -384,7 +384,9 @@ class PlanShoppingService {
   }) async {
     final own = CountPrefs.customPackOf(name);
     if (own != null) return convertMeasure(own.size, own.unit, unit);
-    final store = catalogKeyFor(supermarketKey);
+    final store =
+        catalogKeyFor(supermarketKey) ??
+        catalogSearchOrder(supermarketKey).firstOrNull;
     if (store == null) return null;
     final best = bestCatalogMatch(name, await searchCatalog(name, store));
     return packSizeIn(parsePackageQuantity(best?.quantity), unit);

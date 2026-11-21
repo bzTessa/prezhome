@@ -89,34 +89,123 @@ String? offStoreTag(String? supermarketKey) => switch (supermarketKey) {
   'consum' => 'consum',
   'elcorteingles' => 'el-corte-ingles',
   'ahorramas' => 'ahorramas',
+  'bonarea' => 'bonarea',
+  'gadis' => 'gadis',
+  'bm' => 'bm',
+  'condis' => 'condis',
+  'caprabo' => 'caprabo',
+  'hiperdino' => 'hiperdino',
+  // Alemania
+  'edeka' => 'edeka',
+  'rewe' => 'rewe',
+  'kaufland' => 'kaufland',
+  'netto' => 'netto',
+  'penny' => 'penny',
+  'globus' => 'globus',
+  // Francia
+  'leclerc' => 'e-leclerc',
+  'intermarche' => 'intermarche',
+  'superu' => 'super-u',
+  'auchan' => 'auchan',
+  'casino' => 'casino',
+  'monoprix' => 'monoprix',
+  'franprix' => 'franprix',
+  // Italia
+  'conad' => 'conad',
+  'coop' => 'coop',
+  'esselunga' => 'esselunga',
+  'eurospin' => 'eurospin',
+  'despar' => 'despar',
+  'pam' => 'pam',
+  'md' => 'md',
+  // Portugal
+  'continente' => 'continente',
+  'pingodoce' => 'pingo-doce',
+  'minipreco' => 'minipreco',
+  // Austria
+  'billa' => 'billa',
+  'spar' => 'spar',
+  'hofer' => 'hofer',
+  'mpreis' => 'mpreis',
+  // Balcanes (BA / HR / RS)
+  'bingo' => 'bingo',
+  'konzum' => 'konzum',
+  'amko' => 'amko',
+  'robot' => 'robot',
+  'mercator' => 'mercator',
+  'hose' => 'hose',
+  'plodine' => 'plodine',
+  'tommy' => 'tommy',
+  'studenac' => 'studenac',
+  'maxi' => 'maxi',
+  'idea' => 'idea',
+  'univerexport' => 'univerexport',
+  'aman' => 'aman',
+  'roda' => 'roda',
+  // Reino Unido
+  'tesco' => 'tesco',
+  'sainsburys' => 'sainsburys',
+  'asda' => 'asda',
+  'morrisons' => 'morrisons',
+  'waitrose' => 'waitrose',
+  'iceland' => 'iceland',
+  'mands' => 'marks-spencer',
+  // Estados Unidos y México
+  'walmart' => 'walmart',
+  'kroger' => 'kroger',
+  'costco' => 'costco',
+  'target' => 'target',
+  'publix' => 'publix',
+  'safeway' => 'safeway',
+  'wholefoods' => 'whole-foods',
+  'traderjoes' => 'trader-joes',
+  'heb' => 'h-e-b',
+  'bodegaaurrera' => 'bodega-aurrera',
+  'soriana' => 'soriana',
+  'chedraui' => 'chedraui',
+  'lacomer' => 'la-comer',
+  'oxxo' => 'oxxo',
   _ => null,
 };
 
 /// URL de búsqueda de OFF (search-a-licious; la antigua cgi/search.pl ya no
 /// responde a apps sin cuenta): productos vendidos en el país del hogar y, si
-/// se indica, en la tienda [storeTag].
+/// se indica, en la tienda [storeTag], pidiendo el idioma del país.
 Uri buildProductSearchUri(String query, {String? storeTag}) {
   final country = HomeCountry.current.value;
   // Fuera la sintaxis de búsqueda (comillas, dos puntos…): solo palabras.
   final words = query.replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ');
   final q = StringBuffer('${words.trim()} countries_tags:"en:${country.off}"');
   if (storeTag != null) q.write(' stores:"$storeTag"');
+  final fields = [
+    'code',
+    'product_name_${country.lang}',
+    'product_name',
+    if (country.lang != 'en') 'product_name_en',
+    if (country.lang != 'es') 'product_name_es',
+    'brands',
+    'quantity',
+    'image_front_small_url',
+    'image_front_url',
+  ].join(',');
   return Uri.https('search.openfoodfacts.org', '/search', {
     'q': q.toString(),
     'langs': country.lang,
     'page_size': '24',
-    'fields':
-        'code,product_name_es,product_name,brands,quantity,'
-        'image_front_small_url,image_front_url',
+    'fields': fields,
   });
 }
 
 /// Convierte la respuesta JSON de OFF (`hits` de la búsqueda o `products`)
-/// en productos. Descarta los que no tienen nombre y los repetidos (mismo
-/// nombre y marca).
-List<SupermarketProduct> parseProductSearch(Map<String, dynamic> json) {
+/// en productos. Prioriza el idioma [lang] (o el del hogar) y deduplica por
+/// nombre y marca.
+List<SupermarketProduct> parseProductSearch(
+  Map<String, dynamic> json, {
+  String? lang,
+}) {
   final raw = json['hits'] ?? json['products'];
   if (raw is! List) return const [];
+  final effectiveLang = lang ?? HomeCountry.current.value.lang;
   String? clean(Object? v) {
     final s = v?.toString().trim();
     return (s == null || s.isEmpty) ? null : s;
@@ -126,7 +215,11 @@ List<SupermarketProduct> parseProductSearch(Map<String, dynamic> json) {
   final out = <SupermarketProduct>[];
   for (final p in raw) {
     if (p is! Map) continue;
-    final name = clean(p['product_name_es']) ?? clean(p['product_name']);
+    final name =
+        clean(p['product_name_$effectiveLang']) ??
+        clean(p['product_name']) ??
+        clean(p['product_name_en']) ??
+        clean(p['product_name_es']);
     if (name == null) continue;
     // OFF da las marcas en lista o separadas por comas: la primera.
     final brands = p['brands'];
@@ -183,6 +276,36 @@ const _filler = {
   'gr',
   'ml',
   'cl',
+  'oz',
+  'lb',
+  'lbs',
+  'fl',
+  'gal',
+  'qt',
+  'pt',
+  // Inglés, francés, alemán, italiano y portugués
+  'of',
+  'the',
+  'with',
+  'and',
+  'in',
+  'for',
+  'without',
+  'du',
+  'des',
+  'les',
+  'avec',
+  'sans',
+  'von',
+  'mit',
+  'und',
+  'der',
+  'die',
+  'das',
+  'di',
+  'senza',
+  'com',
+  'sem',
 };
 
 // Si el producto las lleva y la búsqueda no, es otra cosa: "arroz blanco
@@ -257,6 +380,44 @@ const _transformed = {
   'kebab',
   'burger',
   'mix',
+  // Transformados multilingües (EN/DE/FR/IT/PT)
+  'cooked',
+  'fried',
+  'sauce',
+  'soup',
+  'broth',
+  'cookies',
+  'biscuit',
+  'cake',
+  'flour',
+  'jam',
+  'juice',
+  'vinegar',
+  'breaded',
+  'smoked',
+  'roasted',
+  'gekochte',
+  'gebraten',
+  'sosse',
+  'suppe',
+  'mehl',
+  'essig',
+  'saft',
+  'marmelade',
+  'cuit',
+  'frit',
+  'soupe',
+  'farine',
+  'vinaigre',
+  'confiture',
+  'jus',
+  'cotto',
+  'fritto',
+  'zuppa',
+  'aceto',
+  'succo',
+  'cozido',
+  'farinha',
 };
 
 List<String> _words(String s) {
@@ -274,8 +435,10 @@ List<String> _words(String s) {
         (w) =>
             w.length > 1 &&
             !_filler.contains(w) &&
-            // Números y tamaños ("30l", "33cl", "500g") no cuentan como palabra.
-            !RegExp(r'^\d+(l|ml|cl|g|gr|kg)?$').hasMatch(w),
+            // Números y tamaños ("30l", "33cl", "500g", "16oz") no cuentan como palabra.
+            !RegExp(
+              r'^\d+(?:l|ml|cl|g|gr|kg|oz|lb|lbs|gal|qt|pt)?$',
+            ).hasMatch(w),
       )
       .toList();
 }
@@ -389,25 +552,55 @@ String? confidentProductPhoto(String query, List<SupermarketProduct> products) {
   return null;
 }
 
+/// Convierte [n] + [unitToken] en cantidad/unidad del inventario ('g', 'kg',
+/// 'ml', 'litros'). Soporta medidas métricas e imperiales (`fl oz` antes que `oz`).
+({double quantity, String unit})? _convertSingleMeasure(
+  double n,
+  String unitToken,
+) {
+  if (n <= 0) return null;
+  final u = unitToken.toLowerCase().replaceAll(RegExp(r'[\s.]+'), '');
+  double round3(double v) => (v * 1000).round() / 1000;
+  return switch (u) {
+    'kg' => (quantity: round3(n), unit: 'kg'),
+    'g' || 'gr' => (quantity: round3(n), unit: 'g'),
+    'ml' => (quantity: round3(n), unit: 'ml'),
+    'cl' => (quantity: round3(n * 10), unit: 'ml'),
+    'l' || 'litro' || 'litros' => (quantity: round3(n), unit: 'litros'),
+    'floz' => (quantity: (n * 29.5735).roundToDouble(), unit: 'ml'),
+    'oz' => (quantity: (n * 28.3495).roundToDouble(), unit: 'g'),
+    'lb' || 'lbs' => (quantity: (n * 453.592).roundToDouble(), unit: 'g'),
+    'gal' => (quantity: (n * 3785.41).roundToDouble(), unit: 'ml'),
+    'qt' => (quantity: (n * 946.353).roundToDouble(), unit: 'ml'),
+    'pt' => (quantity: (n * 473.176).roundToDouble(), unit: 'ml'),
+    _ => null,
+  };
+}
+
 /// Formato de venta normalizado a cantidad + unidad del inventario
-/// ('g', 'kg', 'ml', 'litros'). Null si no se entiende ("pack de 6").
+/// ('g', 'kg', 'ml', 'litros'). Acepta multipacks (`6 x 125 g` → `750 g`) y
+/// unidades imperiales (`oz`, `fl oz`, `lb`, `gal`, `qt`, `pt`). Null si no trae
+/// medida real ("pack de 6").
 ({double quantity, String unit})? parsePackageQuantity(String? raw) {
   if (raw == null) return null;
-  // Packs ("6 x 125 g"): el formato unitario no es lo que hay en casa.
-  if (RegExp(r'\d\s*[x×]\s*\d').hasMatch(raw.toLowerCase())) return null;
-  final m = RegExp(
-    r'(\d+(?:[.,]\d+)?)\s*(kg|g|gr|ml|cl|l|L|litros?)\b',
-  ).firstMatch(raw.toLowerCase());
+  final lower = raw.toLowerCase();
+  const unitGroup = r'(fl\.?\s*oz|kg|gr?|ml|cl|litros?|lbs?|oz|gal|qt|pt|l)\b';
+  final multi = RegExp(
+    r'(\d+)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*' + unitGroup,
+  ).firstMatch(lower);
+  if (multi != null) {
+    final count = int.tryParse(multi.group(1)!);
+    final perItem = double.tryParse(multi.group(2)!.replaceAll(',', '.'));
+    if (count == null || count <= 0 || perItem == null || perItem <= 0) {
+      return null;
+    }
+    return _convertSingleMeasure(count * perItem, multi.group(3)!);
+  }
+  final m = RegExp(r'(\d+(?:[.,]\d+)?)\s*' + unitGroup).firstMatch(lower);
   if (m == null) return null;
   final n = double.tryParse(m.group(1)!.replaceAll(',', '.'));
   if (n == null || n <= 0) return null;
-  return switch (m.group(2)!) {
-    'kg' => (quantity: n, unit: 'kg'),
-    'g' || 'gr' => (quantity: n, unit: 'g'),
-    'ml' => (quantity: n, unit: 'ml'),
-    'cl' => (quantity: n * 10, unit: 'ml'),
-    _ => (quantity: n, unit: 'litros'),
-  };
+  return _convertSingleMeasure(n, m.group(2)!);
 }
 
 /// Súpers con catálogo propio en supermarket_products (scripts/*_sync.py).
@@ -462,7 +655,13 @@ List<String> catalogSearchOrder(String? supermarketKey) {
 }
 
 /// Catálogo que pone la foto a lo genérico (fruta, verdura…) en cada país.
-const catalogForCountry = {'ES': 'mercadona', 'DE': 'rewe'};
+const catalogForCountry = {
+  'ES': 'mercadona',
+  'DE': 'rewe',
+  'PT': 'pingodoce',
+  'FR': 'lidl_fr',
+  'IT': 'lidl_it',
+};
 
 /// Secciones de producto fresco y sin envase de marca: su foto sirve para
 /// lo genérico ("cebolla", "plátano").
@@ -476,6 +675,14 @@ const freshCategories = [
   'pescados-y-mariscos',
   'Obst & Gemüse',
   'Fleisch, Wurst & Fisch',
+  'Fruits et légumes',
+  'Viandes',
+  'Poissons et fruits de mer',
+  'Frutta e verdura',
+  'Carne e pesce',
+  'Frutas e Legumes',
+  'Carne e Peixe',
+  'Peixaria e Marisco',
 ];
 
 /// Palabras con las que se busca [query] en el catálogo: sin tildes, sin
@@ -627,8 +834,9 @@ class ProductSearchService {
   }) async {
     final q = query.trim();
     if (q.length < 2) return const ProductSearchResult([]);
+    final country = HomeCountry.current.value;
     final store = offStoreTag(supermarketKey);
-    final key = '${q.toLowerCase()}|$store';
+    final key = '${country.code}|${q.toLowerCase()}|$store';
     final cached = _cache[key];
     if (cached != null) return cached;
     // Primero los catálogos oficiales (foto y precio de la tienda), que
@@ -734,26 +942,29 @@ class ProductSearchService {
   /// Producto de OFF por código de barras (para comprobar fotos guardadas).
   /// Null si no existe o no se pudo leer; no gasta búsquedas.
   Future<SupermarketProduct?> productByCode(String code) async {
-    if (_byCode.containsKey(code)) return _byCode[code];
+    final country = HomeCountry.current.value;
+    final cacheKey = '${country.code}|$code';
+    if (_byCode.containsKey(cacheKey)) return _byCode[cacheKey];
     try {
       final res = await _client
           .get(
-            Uri.https('es.openfoodfacts.org', '/api/v2/product/$code.json', {
-              'fields': 'code,product_name_es,product_name,brands',
+            Uri.https('world.openfoodfacts.org', '/api/v2/product/$code.json', {
+              'fields':
+                  'code,product_name_${country.lang},product_name,product_name_en,product_name_es,brands',
             }),
             headers: const {'User-Agent': _userAgent},
           )
           .timeout(const Duration(seconds: 12));
-      if (res.statusCode == 404) return _byCode[code] = null;
+      if (res.statusCode == 404) return _byCode[cacheKey] = null;
       if (res.statusCode != 200) return null;
       final body = jsonDecode(utf8.decode(res.bodyBytes));
       final p = body is Map ? body['product'] : null;
       final parsed = p is Map
           ? parseProductSearch({
               'products': [p],
-            })
+            }, lang: country.lang)
           : const <SupermarketProduct>[];
-      return _byCode[code] = parsed.isEmpty ? null : parsed.first;
+      return _byCode[cacheKey] = parsed.isEmpty ? null : parsed.first;
     } catch (_) {
       return null;
     }
