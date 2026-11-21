@@ -62,11 +62,11 @@ Deno.test("Instagram: embed URL y caption con entidades", () => {
   );
   const html =
     '<div class="Caption"><a class="CaptionUsername" href="/ana">ana</a>' +
-    "<br /><br />Bizcocho &amp; yogur<br />3 huevos<br />200 g harina" +
+    "<br /><br />Bizcocho &amp; yogur<br />3 huevos<br />200 g harina<br />1 yogur natural" +
     '<div class="CaptionComments"><div>rico</div></div></div>';
   assertEquals(
     instagramCaption(html),
-    "Bizcocho & yogur\n3 huevos\n200 g harina",
+    "Bizcocho & yogur\n3 huevos\n200 g harina\n1 yogur natural",
   );
 });
 

@@ -1687,7 +1687,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             onPressed: () => Navigator.of(ctx).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.expired,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onTerracotta,
             ),
             child: Text(context.l.panEmpty),
           ),
@@ -1858,7 +1858,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               onPressed: () => Navigator.of(ctx).pop(true),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.expired,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onTerracotta,
               ),
               child: Text(context.l.delete),
             ),

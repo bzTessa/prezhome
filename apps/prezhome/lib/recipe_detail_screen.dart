@@ -491,7 +491,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.expired,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onTerracotta,
               elevation: 0,
             ),
             onPressed: () => Navigator.of(context).pop(true),
@@ -1202,7 +1202,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ? const Icon(
                       Icons.check_rounded,
                       size: 16,
-                      color: Colors.white,
+                      color: AppColors.onTerracotta,
                     )
                   : null,
             ),
@@ -1313,7 +1313,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ? Icon(
                           Icons.check_rounded,
                           size: 18,
-                          color: done ? Colors.white : AppColors.cream,
+                          color: AppColors.onTerracotta,
                         )
                       : Text(
                           '${i + 1}',

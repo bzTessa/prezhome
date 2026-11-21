@@ -220,4 +220,38 @@ void main() {
     expect(find.text('Leche'), findsOneWidget);
     expect(tester.getSize(find.byType(SuggestionCard)).height, lessThan(90));
   });
+
+  testWidgets('las sugerencias en rejilla llenan su celda sin desbordar', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _host(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final n in ['Leche', 'Pan de molde integral', 'Huevos'])
+                Expanded(
+                  child: SuggestionCard(
+                    expand: true,
+                    name: n,
+                    price: '1,05 €',
+                    added: false,
+                    onAdd: () {},
+                    photo: const ColoredBox(color: Colors.red),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    final cards = find.byType(SuggestionCard);
+    expect(cards, findsNWidgets(3));
+    // 360 - 32 de márgenes, repartido entre 3.
+    expect(tester.getSize(cards.first).width, closeTo(328 / 3, 1));
+  });
 }

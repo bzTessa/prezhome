@@ -1124,7 +1124,7 @@ class HomeTabState extends State<HomeTab> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.headline.copyWith(
-                        color: Colors.white,
+                        color: AppColors.onTerracotta,
                       ),
                     ),
                   ),
