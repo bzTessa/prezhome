@@ -49,6 +49,28 @@ class PlanDiary {
     ];
   }
 
+  /// Comida a la que corresponde [now] según las horas del plan: la más
+  /// cercana de [allowed] (las de la receta), o de las cuatro si no encaja
+  /// ninguna.
+  static String mealTypeAt(
+    DateTime now, {
+    Iterable<String> allowed = const [],
+    PlanPrefs prefs = const PlanPrefs(),
+  }) {
+    const main = ['breakfast', 'lunch', 'snack', 'dinner'];
+    final options = [
+      for (final t in main)
+        if (allowed.contains(t)) t,
+    ];
+    final pool = options.isEmpty ? main : options;
+    final m = now.hour * 60 + now.minute;
+    return pool.reduce(
+      (a, b) => (prefs.minutesOf(a) - m).abs() <= (prefs.minutesOf(b) - m).abs()
+          ? a
+          : b,
+    );
+  }
+
   static final _store = FileLocalStore(folderName: 'settings');
   static Future<int>? _running;
 

@@ -3399,5 +3399,16 @@
     }
   },
   "tskMaintAdded": "Añadida a mantenimiento",
-  "tskMaintHide": "Ocultar sugerencias"
+  "tskMaintHide": "Ocultar sugerencias",
+  "pcDiaryTitle": "Apuntar en mi diario",
+  "pcDiarySub": "1 ración · {kcal} kcal, en la comida que toca ahora",
+  "pcDiaryOnly": "Apuntar en mi diario",
+  "pcSummaryDiary": "Apuntado en tu diario",
+  "@pcDiarySub": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  }
 }

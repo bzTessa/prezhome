@@ -96,4 +96,29 @@ void main() {
       expect(prefs.canCook('airfryer'), isFalse);
     });
   });
+
+  group('PlanDiary.mealTypeAt', () {
+    test('por la hora: comida a las 14:30, cena a las 21:10', () {
+      expect(PlanDiary.mealTypeAt(DateTime(2026, 1, 1, 14, 30)), 'lunch');
+      expect(PlanDiary.mealTypeAt(DateTime(2026, 1, 1, 21, 10)), 'dinner');
+      expect(PlanDiary.mealTypeAt(DateTime(2026, 1, 1, 8)), 'breakfast');
+    });
+
+    test('se queda con las comidas de la receta', () {
+      expect(
+        PlanDiary.mealTypeAt(
+          DateTime(2026, 1, 1, 8),
+          allowed: const ['lunch', 'dinner'],
+        ),
+        'lunch',
+      );
+      expect(
+        PlanDiary.mealTypeAt(
+          DateTime(2026, 1, 1, 14),
+          allowed: const ['dessert'],
+        ),
+        'lunch',
+      );
+    });
+  });
 }

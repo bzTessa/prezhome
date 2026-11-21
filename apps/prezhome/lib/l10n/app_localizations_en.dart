@@ -5482,4 +5482,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tskMaintHide => 'Hide suggestions';
+
+  @override
+  String get pcDiaryTitle => 'Log it in my diary';
+
+  @override
+  String pcDiarySub(int kcal) {
+    return '1 serving · $kcal kcal, in the current meal';
+  }
+
+  @override
+  String get pcDiaryOnly => 'Log in my diary';
+
+  @override
+  String get pcSummaryDiary => 'Logged in your diary';
 }

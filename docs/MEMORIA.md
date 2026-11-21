@@ -122,6 +122,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   (`maintenancePresets` en `utils/task_kinds.dart`: nevera, lavadora,
   filtros, horno, colchón, cortinas, caldera, ITV). Al añadir pregunta si
   toca ya o se hizo hace poco. "Ocultar sugerencias" se guarda en el móvil.
+- Según el modo: sin el módulo de cocina en lote (`HomeModule.batchCooking`)
+  el plan no ofrece "En lote" (salvo si ya se está en él) ni la tarjeta de
+  cocinar todo junto. Tras cocinar, `PostCookSheet` ofrece "Apuntar en mi
+  diario" solo si se lleva el diario (`trackCalories`) y la receta tiene
+  calorías; la comida sale de `PlanDiary.mealTypeAt` (la más cercana por
+  hora). Misma clave que `PlanDiary`, así no se apunta dos veces.
 - Iconos de producto: `widgets/product_icons.dart` (palabra clave → nombre de
   icono). Nada de iconos de Microsoft (Tessa no los quiere): solo sus dibujos,
   apuntados en `_own` (`assets/icons/products/`). Lo genérico ("cebollas",

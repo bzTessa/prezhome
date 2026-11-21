@@ -116,4 +116,44 @@ void main() {
       expect(chosen, isNull);
     },
   );
+
+  testWidgets('sin diario no se ofrece apuntarlo', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        PostCookSheetContent(
+          recipe: _recipe(),
+          servingsCooked: 4,
+          uses: const [],
+          onDone: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('post-cook-diary')), findsNothing);
+  });
+
+  testWidgets('con diario: apuntar solo eso cambia el botón y lo devuelve', (
+    tester,
+  ) async {
+    PostCookChoice? chosen;
+    await tester.pumpWidget(
+      _wrap(
+        PostCookSheetContent(
+          recipe: _recipe(),
+          servingsCooked: 4,
+          uses: const [],
+          diaryKcal: 450,
+          onDone: (c) => chosen = c,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('450 kcal'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('post-cook-diary')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apuntar en mi diario').last);
+    await tester.pump();
+    expect(chosen?.logToDiary, isTrue);
+    expect(chosen?.deductPantry, isFalse);
+  });
 }

@@ -9,7 +9,11 @@ import 'utils/money.dart';
 
 import 'add_recipe_screen.dart';
 import 'cook_mode_screen.dart';
+import 'models/dashboard_prefs.dart';
+import 'models/food_log_entry.dart';
 import 'services/home_food_restrictions.dart';
+import 'services/plan_diary.dart';
+import 'services/plan_prefs.dart';
 import 'services/offline_provider.dart';
 import 'services/pantry_usage.dart';
 import 'services/recipe_photo_service.dart';
@@ -557,18 +561,22 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         client: _client,
         homeId: _recipe.homeId,
       );
+      final diaryKcal = await _diaryKcal();
       if (!mounted) return;
       final choice = await showPostCookSheet(
         context,
         recipe: _recipe,
         servingsCooked: _servingsNow,
         uses: uses,
+        diaryKcal: diaryKcal,
       );
       if (!mounted || choice == null) return;
+      final logged = choice.logToDiary ? await _logToDiary() : null;
       final usesToDeduct = choice.deductPantry ? uses : const <PantryUse>[];
       if (usesToDeduct.isEmpty &&
           choice.fridgeServings == 0 &&
           choice.freezerServings == 0) {
+        if (logged != null) _showDiaryLogged(logged);
         return;
       }
       final result = await PantryUsage.completeCook(
@@ -579,7 +587,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         client: _client,
         homeId: _recipe.homeId,
       );
-      if (!mounted || !result.hasAnyChange) return;
+      if (!mounted) return;
+      if (!result.hasAnyChange) {
+        if (logged != null) _showDiaryLogged(logged);
+        return;
+      }
       _changed = true;
       HapticFeedback.mediumImpact();
       await _reloadPantry();
@@ -591,6 +603,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         if (choice.fridgeServings > 0) l.pcSummaryFridge(choice.fridgeServings),
         if (choice.freezerServings > 0)
           l.pcSummaryFreezer(choice.freezerServings),
+        if (logged != null) l.pcSummaryDiary,
       ];
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -603,6 +616,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               label: l.undo,
               onPressed: () async {
                 await PantryUsage.undoCompleteCook(result, client: _client);
+                if (logged != null) await _unlog(logged);
                 await _reloadPantry();
                 if (!mounted) return;
                 ScaffoldMessenger.of(
@@ -623,6 +637,87 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     } finally {
       _finishingCook = false;
     }
+  }
+
+  /// Calorías de una ración si quien cocina lleva el diario y la receta las
+  /// sabe; si no, null (no se ofrece apuntarlo).
+  Future<int?> _diaryKcal() async {
+    final kcal = _recipe.calories;
+    final uid = _client.auth.currentUser?.id;
+    if (kcal == null || kcal <= 0 || uid == null) return null;
+    try {
+      final row = await _client
+          .from('profiles')
+          .select('dashboard_prefs')
+          .eq('id', uid)
+          .maybeSingle();
+      final raw = row?['dashboard_prefs'];
+      final prefs = raw is Map
+          ? DashboardPrefs.fromJson(Map<String, dynamic>.from(raw))
+          : DashboardPrefs.defaults();
+      return prefs.trackCalories ? kcal : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Apunta una ración en el diario de hoy, en la comida que toca por la
+  /// hora. Devuelve el id de la entrada (para Deshacer) o null si falla.
+  Future<String?> _logToDiary() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return null;
+    final now = DateTime.now();
+    final entry = FoodLogEntry(
+      userId: uid,
+      logDate: DateTime(now.year, now.month, now.day),
+      mealType: PlanDiary.mealTypeAt(
+        now,
+        allowed: _recipe.mealTypes,
+        prefs: PlanPrefs.current.value,
+      ),
+      name: _recipe.title,
+      calories: _recipe.calories?.toDouble(),
+      protein: _recipe.protein,
+      carbs: _recipe.carbs,
+      fat: _recipe.fat,
+      source: 'receta',
+      recipeId: _recipe.id,
+    );
+    try {
+      final row = await _client
+          .from('food_log_entries')
+          .insert(entry.toInsertMap())
+          .select('id')
+          .single();
+      return row['id'] as String?;
+    } catch (e) {
+      debugPrint('Diario tras cocinar: $e');
+      return null;
+    }
+  }
+
+  Future<void> _unlog(String id) async {
+    try {
+      await _client.from('food_log_entries').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Deshacer diario: $e');
+    }
+  }
+
+  void _showDiaryLogged(String id) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(context.l.pcSummaryDiary),
+          persist: false,
+          action: SnackBarAction(
+            label: context.l.undo,
+            onPressed: () => _unlog(id),
+          ),
+        ),
+      );
   }
 
   /// Abre el enlace de video de la receta en una app/pestaña externa.

@@ -1373,5 +1373,9 @@
   "tskMaintRecent": "Uradio/la sam nedavno",
   "tskMaintRecentSub": "Opet {when}",
   "tskMaintAdded": "Dodano u održavanje",
-  "tskMaintHide": "Sakrij prijedloge"
+  "tskMaintHide": "Sakrij prijedloge",
+  "pcDiaryTitle": "Upiši u moj dnevnik",
+  "pcDiarySub": "1 porcija · {kcal} kcal, u trenutni obrok",
+  "pcDiaryOnly": "Upiši u dnevnik",
+  "pcSummaryDiary": "Upisano u tvoj dnevnik"
 }

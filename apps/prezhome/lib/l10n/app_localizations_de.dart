@@ -5497,4 +5497,18 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tskMaintHide => 'Vorschläge ausblenden';
+
+  @override
+  String get pcDiaryTitle => 'Ins Tagebuch eintragen';
+
+  @override
+  String pcDiarySub(int kcal) {
+    return '1 Portion · $kcal kcal, bei der aktuellen Mahlzeit';
+  }
+
+  @override
+  String get pcDiaryOnly => 'Ins Tagebuch eintragen';
+
+  @override
+  String get pcSummaryDiary => 'Im Tagebuch eingetragen';
 }

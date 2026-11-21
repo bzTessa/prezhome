@@ -5495,4 +5495,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tskMaintHide => 'Ocultar sugestões';
+
+  @override
+  String get pcDiaryTitle => 'Registar no meu diário';
+
+  @override
+  String pcDiarySub(int kcal) {
+    return '1 dose · $kcal kcal, na refeição de agora';
+  }
+
+  @override
+  String get pcDiaryOnly => 'Registar no diário';
+
+  @override
+  String get pcSummaryDiary => 'Registado no teu diário';
 }

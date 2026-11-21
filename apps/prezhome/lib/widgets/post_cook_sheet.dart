@@ -16,14 +16,18 @@ class PostCookChoice {
     required this.deductPantry,
     required this.fridgeServings,
     required this.freezerServings,
+    this.logToDiary = false,
   });
 
   final bool deductPantry;
   final int fridgeServings;
   final int freezerServings;
 
+  /// Apuntar una ración en el diario de calorías de quien cocina.
+  final bool logToDiary;
+
   bool get hasAction =>
-      deductPantry || fridgeServings > 0 || freezerServings > 0;
+      deductPantry || fridgeServings > 0 || freezerServings > 0 || logToDiary;
 }
 
 /// Hoja modal tras cocinar: propone descontar ingredientes usados de En casa y
@@ -33,6 +37,7 @@ Future<PostCookChoice?> showPostCookSheet(
   required Recipe recipe,
   required int servingsCooked,
   required List<PantryUse> uses,
+  int? diaryKcal,
 }) {
   return showModalBottomSheet<PostCookChoice>(
     context: context,
@@ -45,6 +50,7 @@ Future<PostCookChoice?> showPostCookSheet(
       recipe: recipe,
       servingsCooked: servingsCooked,
       uses: uses,
+      diaryKcal: diaryKcal,
       onDone: (choice) => Navigator.of(ctx).pop(choice),
     ),
   );
@@ -58,7 +64,12 @@ class PostCookSheetContent extends StatefulWidget {
     required this.servingsCooked,
     required this.uses,
     required this.onDone,
+    this.diaryKcal,
   });
+
+  /// Calorías de una ración, si quien cocina lleva el diario. Con null no se
+  /// ofrece apuntarlo.
+  final int? diaryKcal;
 
   final Recipe recipe;
   final int servingsCooked;
@@ -74,9 +85,12 @@ class _PostCookSheetContentState extends State<PostCookSheetContent> {
   late bool _deduct = widget.uses.isNotEmpty;
   int _fridge = 0;
   int _freezer = 0;
+  bool _diary = false;
 
   bool get _hasEffectiveDeduct => _deduct && widget.uses.isNotEmpty;
-  bool get _hasAction => _hasEffectiveDeduct || _fridge > 0 || _freezer > 0;
+  bool get _hasEffectiveDiary => _diary && widget.diaryKcal != null;
+  bool get _hasAction =>
+      _hasEffectiveDeduct || _fridge > 0 || _freezer > 0 || _hasEffectiveDiary;
 
   String _formatUsed(PantryUse u) {
     final rounded = (u.used * 100).roundToDouble() / 100;
@@ -110,6 +124,7 @@ class _PostCookSheetContentState extends State<PostCookSheetContent> {
         deductPantry: _hasEffectiveDeduct,
         fridgeServings: _fridge,
         freezerServings: _freezer,
+        logToDiary: _hasEffectiveDiary,
       ),
     );
   }
@@ -339,9 +354,49 @@ class _PostCookSheetContentState extends State<PostCookSheetContent> {
                 ],
               ),
             ),
+            if (widget.diaryKcal case final kcal?) ...[
+              const SizedBox(height: 12),
+              // Tarjeta 3: apuntarlo en el diario (solo si se lleva).
+              Container(
+                decoration: AppTheme.surfaceDecoration(),
+                child: Material(
+                  type: MaterialType.transparency,
+                  borderRadius: AppRadius.lgRadius,
+                  clipBehavior: Clip.antiAlias,
+                  child: SwitchListTile.adaptive(
+                    key: const ValueKey('post-cook-diary'),
+                    value: _diary,
+                    activeThumbColor: AppColors.sage,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _diary = v);
+                    },
+                    title: Text(
+                      context.l.pcDiaryTitle,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l.pcDiarySub(kcal),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             TactileButton(
-              label: _hasAction ? context.l.pcConfirm : context.l.pcJustClose,
+              label: !_hasAction
+                  ? context.l.pcJustClose
+                  : (_hasEffectiveDeduct || _fridge > 0 || _freezer > 0)
+                  ? context.l.pcConfirm
+                  : context.l.pcDiaryOnly,
               icon: _hasAction ? Icons.check_rounded : null,
               onPressed: _submit,
             ),

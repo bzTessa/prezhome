@@ -1373,5 +1373,9 @@
   "tskMaintRecent": "I did it recently",
   "tskMaintRecentSub": "Back {when}",
   "tskMaintAdded": "Added to maintenance",
-  "tskMaintHide": "Hide suggestions"
+  "tskMaintHide": "Hide suggestions",
+  "pcDiaryTitle": "Log it in my diary",
+  "pcDiarySub": "1 serving · {kcal} kcal, in the current meal",
+  "pcDiaryOnly": "Log in my diary",
+  "pcSummaryDiary": "Logged in your diary"
 }

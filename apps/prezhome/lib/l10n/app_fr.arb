@@ -1373,5 +1373,9 @@
   "tskMaintRecent": "Je l'ai fait récemment",
   "tskMaintRecentSub": "Revient le {when}",
   "tskMaintAdded": "Ajoutée à l'entretien",
-  "tskMaintHide": "Masquer les suggestions"
+  "tskMaintHide": "Masquer les suggestions",
+  "pcDiaryTitle": "Noter dans mon journal",
+  "pcDiarySub": "1 portion · {kcal} kcal, dans le repas en cours",
+  "pcDiaryOnly": "Noter dans mon journal",
+  "pcSummaryDiary": "Noté dans votre journal"
 }

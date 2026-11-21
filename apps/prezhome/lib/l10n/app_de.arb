@@ -1373,5 +1373,9 @@
   "tskMaintRecent": "Habe ich vor Kurzem gemacht",
   "tskMaintRecentSub": "Wieder am {when}",
   "tskMaintAdded": "Zur Wartung hinzugefügt",
-  "tskMaintHide": "Vorschläge ausblenden"
+  "tskMaintHide": "Vorschläge ausblenden",
+  "pcDiaryTitle": "Ins Tagebuch eintragen",
+  "pcDiarySub": "1 Portion · {kcal} kcal, bei der aktuellen Mahlzeit",
+  "pcDiaryOnly": "Ins Tagebuch eintragen",
+  "pcSummaryDiary": "Im Tagebuch eingetragen"
 }
