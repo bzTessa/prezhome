@@ -4401,6 +4401,7 @@ class AppLocalizationsBs extends AppLocalizations {
   String remKind(String kind) {
     String _temp0 = intl.Intl.selectLogic(kind, {
       'tasks': 'Zadaci sa vremenom',
+      'notes': 'Bilješke s podsjetnikom',
       'kitchen': 'Zamrzivač i kuhanje',
       'expiry': 'Proizvodi kojima ističe rok',
       'other': 'Niz za dom',
@@ -5302,4 +5303,59 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get hhPacksShort => 'Slanutak 570 g, mlijeko 1 L…';
+
+  @override
+  String get captureToNote => 'Bilješka';
+
+  @override
+  String get captureHintNote =>
+      'Bilo šta: nazvati vodoinstalatera, pogledati akcije ulja…';
+
+  @override
+  String get inboxTitle => 'Za srediti';
+
+  @override
+  String get inboxHint =>
+      'Ono što si zapisao/la sa +. Dodirni da pošalješ u kupovinu, napraviš zadatak ili dobiješ podsjetnik.';
+
+  @override
+  String get inboxEmptyTitle => 'Ništa za srediti';
+
+  @override
+  String get inboxEmptyHint => 'Zapiši bilo šta sa + i kasnije odluči šta je.';
+
+  @override
+  String get inboxToShopping => 'U kupovinu';
+
+  @override
+  String get inboxToTask => 'Napravi zadatak';
+
+  @override
+  String get inboxRemind => 'Podsjeti me…';
+
+  @override
+  String get inboxDone => 'Gotovo (obriši)';
+
+  @override
+  String get inboxToShoppingDone => 'Dodano u kupovinu';
+
+  @override
+  String get inboxToTaskDone => 'Sada je zadatak';
+
+  @override
+  String inboxPending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stvari za srediti',
+      one: '1 stvar za srediti',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxPendingSub => 'Ono što si zapisao/la sa +';
+
+  @override
+  String get remNoteBody => 'Zapisao/la si ovo za sada.';
 }

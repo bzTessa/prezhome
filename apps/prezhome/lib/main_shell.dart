@@ -15,6 +15,7 @@ import 'tabs/home_tab.dart';
 import 'tabs/comidas_tab.dart';
 import 'tabs/compra_tab.dart';
 import 'tasks_screen.dart';
+import 'inbox_screen.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/quick_capture.dart';
@@ -367,7 +368,9 @@ class MainShellState extends State<MainShell> {
       TabId.tareas => CaptureTarget.task,
       TabId.compra when _compraKey.currentState?.currentSubTab == 1 =>
         CaptureTarget.pantry,
-      _ => CaptureTarget.shopping,
+      TabId.compra => CaptureTarget.shopping,
+      // En Hoy y Comida, apuntar sin decidir todavía qué es.
+      _ => CaptureTarget.note,
     };
     if (await showQuickCapture(
           context,
@@ -423,6 +426,19 @@ class MainShellState extends State<MainShell> {
     final kind = Reminders.opened.value;
     if (kind == null) return;
     Reminders.opened.value = null;
+    if (kind == 'notes') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => InboxScreen(
+              allowTasks: _prefs.isModuleEnabled(HomeModule.tasks),
+            ),
+          ),
+        );
+      });
+      return;
+    }
     if (kind == 'expiry') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _goToDespensa();

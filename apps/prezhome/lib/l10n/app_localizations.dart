@@ -7005,7 +7005,7 @@ abstract class AppLocalizations {
   /// No description provided for @remKind.
   ///
   /// In es, this message translates to:
-  /// **'{kind, select, tasks{Tareas con hora} kitchen{Congelador y cocina} expiry{Productos que caducan} other{Racha de casa al día}}'**
+  /// **'{kind, select, tasks{Tareas con hora} notes{Apuntes con aviso} kitchen{Congelador y cocina} expiry{Productos que caducan} other{Racha de casa al día}}'**
   String remKind(String kind);
 
   /// No description provided for @remTaskOne.
@@ -8177,6 +8177,96 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Garbanzos 570 g, leche 1 L…'**
   String get hhPacksShort;
+
+  /// No description provided for @captureToNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota'**
+  String get captureToNote;
+
+  /// No description provided for @captureHintNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que sea: llamar al fontanero, mirar ofertas de aceite…'**
+  String get captureHintNote;
+
+  /// No description provided for @inboxTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Para ordenar'**
+  String get inboxTitle;
+
+  /// No description provided for @inboxHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que apuntaste con el +. Tócalo para pasarlo a la compra, hacerlo tarea o que te avise.'**
+  String get inboxHint;
+
+  /// No description provided for @inboxEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada por ordenar'**
+  String get inboxEmptyTitle;
+
+  /// No description provided for @inboxEmptyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Apunta cualquier cosa con el + y decide luego qué es.'**
+  String get inboxEmptyHint;
+
+  /// No description provided for @inboxToShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'A la compra'**
+  String get inboxToShopping;
+
+  /// No description provided for @inboxToTask.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacerlo tarea'**
+  String get inboxToTask;
+
+  /// No description provided for @inboxRemind.
+  ///
+  /// In es, this message translates to:
+  /// **'Avisarme…'**
+  String get inboxRemind;
+
+  /// No description provided for @inboxDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya está (borrar)'**
+  String get inboxDone;
+
+  /// No description provided for @inboxToShoppingDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasado a la compra'**
+  String get inboxToShoppingDone;
+
+  /// No description provided for @inboxToTaskDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya es una tarea'**
+  String get inboxToTaskDone;
+
+  /// No description provided for @inboxPending.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 cosa por ordenar} other{{count} cosas por ordenar}}'**
+  String inboxPending(int count);
+
+  /// No description provided for @inboxPendingSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que apuntaste con el +'**
+  String get inboxPendingSub;
+
+  /// No description provided for @remNoteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo apuntaste para ahora.'**
+  String get remNoteBody;
 }
 
 class _AppLocalizationsDelegate
