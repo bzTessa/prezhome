@@ -1336,5 +1336,7 @@
   "pcSummaryDeducted": "{count, plural, =1{1 ingredient deducted} other{{count} ingredients deducted}}",
   "pcSummaryFridge": "{count, plural, =1{1 serving in fridge} other{{count} servings in fridge}}",
   "pcSummaryFreezer": "{count, plural, =1{1 serving in freezer} other{{count} servings in freezer}}",
-  "pcUndone": "Changes undone"
+  "pcUndone": "Changes undone",
+  "arImportFromPhoto": "Upload screenshot or photo",
+  "arImportPhotoHint": "If the recipe only appears on screen or paper, upload a screenshot."
 }

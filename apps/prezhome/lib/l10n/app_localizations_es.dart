@@ -5332,4 +5332,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pcUndone => 'Cambios deshechos';
+
+  @override
+  String get arImportFromPhoto => 'Subir captura o foto';
+
+  @override
+  String get arImportPhotoHint =>
+      'Si la receta solo sale en el vídeo o en papel, sube una captura.';
 }

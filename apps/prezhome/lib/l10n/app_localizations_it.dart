@@ -5332,4 +5332,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get pcUndone => 'Modifiche annullate';
+
+  @override
+  String get arImportFromPhoto => 'Carica screenshot o foto';
+
+  @override
+  String get arImportPhotoHint =>
+      'Se la ricetta appare solo nel video o su carta, carica uno screenshot.';
 }

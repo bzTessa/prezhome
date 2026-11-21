@@ -1336,5 +1336,7 @@
   "pcSummaryDeducted": "{count, plural, =1{1 Zutat abgezogen} other{{count} Zutaten abgezogen}}",
   "pcSummaryFridge": "{count, plural, =1{1 Portion im Kühlschrank} other{{count} Portionen im Kühlschrank}}",
   "pcSummaryFreezer": "{count, plural, =1{1 Portion im Gefrierfach} other{{count} Portionen im Gefrierfach}}",
-  "pcUndone": "Änderungen rückgängig gemacht"
+  "pcUndone": "Änderungen rückgängig gemacht",
+  "arImportFromPhoto": "Screenshot oder Foto hochladen",
+  "arImportPhotoHint": "Wenn das Rezept nur im Video oder auf Papier steht, lade einen Screenshot hoch."
 }

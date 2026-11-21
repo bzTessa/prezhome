@@ -5322,4 +5322,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pcUndone => 'Changes undone';
+
+  @override
+  String get arImportFromPhoto => 'Upload screenshot or photo';
+
+  @override
+  String get arImportPhotoHint =>
+      'If the recipe only appears on screen or paper, upload a screenshot.';
 }

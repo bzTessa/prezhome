@@ -91,9 +91,83 @@ void main() {
     expect(parsePackageQuantity('1,5 kg'), (quantity: 1.5, unit: 'kg'));
     expect(parsePackageQuantity('33 cl'), (quantity: 330.0, unit: 'ml'));
     expect(parsePackageQuantity('pack de 6'), isNull);
-    expect(parsePackageQuantity('6 x 125 g'), isNull);
+    expect(parsePackageQuantity('6 x 125 g'), (quantity: 750.0, unit: 'g'));
+    expect(parsePackageQuantity('4 × 33 cl'), (quantity: 1320.0, unit: 'ml'));
+    expect(parsePackageQuantity('6 x 1,5 l'), (quantity: 9.0, unit: 'litros'));
+    expect(parsePackageQuantity('6 x 12 fl oz'), (
+      quantity: 2129.0,
+      unit: 'ml',
+    ));
+    expect(parsePackageQuantity('16 oz'), (quantity: 454.0, unit: 'g'));
+    expect(parsePackageQuantity('1 lb'), (quantity: 454.0, unit: 'g'));
+    expect(parsePackageQuantity('12 fl oz'), (quantity: 355.0, unit: 'ml'));
+    expect(parsePackageQuantity('1 gal'), (quantity: 3785.0, unit: 'ml'));
     expect(parsePackageQuantity(null), isNull);
   });
+
+  test(
+    'offStoreTag y búsqueda OFF soportan países e idiomas internacionales',
+    () {
+      addTearDown(() => HomeCountry.current.value = Country.of('ES'));
+
+      expect(offStoreTag('rewe'), 'rewe');
+      expect(offStoreTag('leclerc'), 'e-leclerc');
+      expect(offStoreTag('esselunga'), 'esselunga');
+      expect(offStoreTag('pingodoce'), 'pingo-doce');
+      expect(offStoreTag('tesco'), 'tesco');
+      expect(offStoreTag('mands'), 'marks-spencer');
+      expect(offStoreTag('walmart'), 'walmart');
+      expect(offStoreTag('traderjoes'), 'trader-joes');
+      expect(offStoreTag('bodegaaurrera'), 'bodega-aurrera');
+      expect(offStoreTag('konzum'), 'konzum');
+      expect(offStoreTag('billa'), 'billa');
+
+      HomeCountry.current.value = Country.of('DE');
+      final uriDe = buildProductSearchUri(
+        'milch',
+        storeTag: offStoreTag('rewe'),
+      );
+      expect(
+        uriDe.queryParameters['q'],
+        'milch countries_tags:"en:germany" stores:"rewe"',
+      );
+      expect(uriDe.queryParameters['langs'], 'de');
+      expect(uriDe.queryParameters['fields'], contains('product_name_de'));
+      final parsedDe = parseProductSearch(
+        _off([
+          {
+            'code': 'de1',
+            'product_name_de': 'Vollmilch',
+            'product_name_en': 'Whole milk',
+            'brands': 'JA!',
+          },
+        ]),
+      );
+      expect(parsedDe.single.name, 'Vollmilch');
+
+      HomeCountry.current.value = Country.of('GB');
+      final uriGb = buildProductSearchUri(
+        'milk',
+        storeTag: offStoreTag('tesco'),
+      );
+      expect(
+        uriGb.queryParameters['q'],
+        'milk countries_tags:"en:united-kingdom" stores:"tesco"',
+      );
+      expect(uriGb.queryParameters['langs'], 'en');
+      final parsedGb = parseProductSearch(
+        _off([
+          {
+            'code': 'gb1',
+            'product_name_en': 'Semi-skimmed milk',
+            'product_name_es': 'Leche semi',
+            'brands': 'Tesco',
+          },
+        ]),
+      );
+      expect(parsedGb.single.name, 'Semi-skimmed milk');
+    },
+  );
 
   test('los catálogos son los del país del hogar', () {
     addTearDown(() => HomeCountry.current.value = Country.of('ES'));
@@ -351,18 +425,23 @@ void main() {
 
     test('Open Food Facts va siempre detrás de los catálogos', () async {
       final r = await ProductSearchService(
-        client: MockClient(
-          (_) async => http.Response.bytes(
+        client: MockClient((req) async {
+          final inStore = req.url.queryParameters['q']!.contains('stores:');
+          return http.Response.bytes(
             utf8.encode(
               jsonEncode(
-                _off([
-                  {'code': '9', 'product_name': 'Espinacas frescas'},
-                ]),
+                _off(
+                  inStore
+                      ? const []
+                      : [
+                          {'code': '9', 'product_name': 'Espinacas frescas'},
+                        ],
+                ),
               ),
             ),
             200,
-          ),
-        ),
+          );
+        }),
         catalog: (q, store, {freshOnly = false}) async => [
           if (store == 'mercadona')
             const SupermarketProduct(
@@ -420,6 +499,38 @@ void main() {
       );
       expect(fresh, isTrue);
       expect(await service.freshPhoto('patata', 'mercadona'), isNull);
+    });
+
+    test('la caché se separa por país del hogar', () async {
+      addTearDown(() => HomeCountry.current.value = Country.of('ES'));
+      final queries = <String>[];
+      final client = MockClient((req) async {
+        final q = req.url.queryParameters['q'] ?? '';
+        queries.add(q);
+        final isDe = q.contains('en:germany');
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode(
+              _off([
+                {
+                  'code': isDe ? 'de-1' : 'es-1',
+                  'product_name': isDe ? 'Leche DE' : 'Leche ES',
+                },
+              ]),
+            ),
+          ),
+          200,
+        );
+      });
+      final service = ProductSearchService(client: client);
+      HomeCountry.current.value = Country.of('ES');
+      final es = await service.search('leche');
+      HomeCountry.current.value = Country.of('DE');
+      final de = await service.search('leche');
+
+      expect(queries, hasLength(2));
+      expect(es.products.single.name, 'Leche ES');
+      expect(de.products.single.name, 'Leche DE');
     });
   });
 

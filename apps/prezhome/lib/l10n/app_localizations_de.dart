@@ -5337,4 +5337,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pcUndone => 'Änderungen rückgängig gemacht';
+
+  @override
+  String get arImportFromPhoto => 'Screenshot oder Foto hochladen';
+
+  @override
+  String get arImportPhotoHint =>
+      'Wenn das Rezept nur im Video oder auf Papier steht, lade einen Screenshot hoch.';
 }

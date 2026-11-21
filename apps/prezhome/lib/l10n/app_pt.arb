@@ -1336,5 +1336,7 @@
   "pcSummaryDeducted": "{count, plural, =1{1 ingrediente descontado} other{{count} ingredientes descontados}}",
   "pcSummaryFridge": "{count, plural, =1{1 dose no frigorífico} other{{count} doses no frigorífico}}",
   "pcSummaryFreezer": "{count, plural, =1{1 dose no congelador} other{{count} doses no congelador}}",
-  "pcUndone": "Alterações anuladas"
+  "pcUndone": "Alterações anuladas",
+  "arImportFromPhoto": "Carregar captura ou foto",
+  "arImportPhotoHint": "Se a receita só aparece no vídeo ou em papel, carrega uma captura."
 }

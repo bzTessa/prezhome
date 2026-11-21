@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -318,21 +320,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   }
 
   /// Importa una receta desde el enlace de un vídeo (TikTok, Instagram,
-  /// YouTube) o una web, o desde el texto de la receta pegado a mano. Llama a
-  /// la edge function import-recipe-link (que lee el texto público del post y
-  /// lo estructura) y rellena el formulario. Si el enlace no se puede leer
-  /// (Instagram casi nunca deja), vuelve a abrir el diálogo pidiendo pegar la
-  /// descripción del post. Devuelve true si la receta quedó rellenada.
+  /// YouTube) o una web, desde el texto pegado o desde una captura/foto. Llama
+  /// a la edge function import-recipe-link y rellena el formulario conservando
+  /// portada y enlace final. Devuelve true si la receta quedó rellenada.
   Future<bool> _importFromLink({
     String? link,
     String? note,
     String? shared,
   }) async {
-    final input = shared != null
-        ? (firstUrl(shared) ?? shared).trim()
-        : await showDialog<String>(
+    final choice = shared != null
+        ? _ImportDialogResult(text: (firstUrl(shared) ?? shared).trim())
+        : await showDialog<_ImportDialogResult>(
             context: context,
-            builder: (context) {
+            builder: (ctx) {
               final controller = TextEditingController();
               return AlertDialog(
                 scrollable: true,
@@ -342,6 +342,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       note ?? context.l.arImportHint,
@@ -377,11 +378,31 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(
+                        ctx,
+                      ).pop(const _ImportDialogResult(pickPhoto: true)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.woodDark,
+                        side: BorderSide(color: AppColors.stroke),
+                      ),
+                      icon: const Icon(Icons.photo_library_outlined, size: 18),
+                      label: Text(context.l.arImportFromPhoto),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      context.l.arImportPhotoHint,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
                   ],
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => Navigator.of(ctx).pop(),
                     child: Text(context.l.cancel),
                   ),
                   ElevatedButton(
@@ -390,8 +411,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       foregroundColor: AppColors.ink,
                       elevation: 0,
                     ),
-                    onPressed: () =>
-                        Navigator.of(context).pop(controller.text.trim()),
+                    onPressed: () => Navigator.of(
+                      ctx,
+                    ).pop(_ImportDialogResult(text: controller.text.trim())),
                     child: Text(context.l.arImportBtn),
                   ),
                 ],
@@ -399,11 +421,33 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             },
           );
 
-    if (input == null || input.isEmpty) return false;
-    if (!mounted) return false;
-    final isUrl = link == null && _looksLikeUrl(input);
+    if (choice == null || !mounted) return false;
+
+    String? imageBase64;
+    String? imageMime;
+    if (choice.pickPhoto) {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        imageQuality: 80,
+      );
+      if (file == null || !mounted) return false;
+      final bytes = await file.readAsBytes();
+      if (!mounted) return false;
+      imageBase64 = base64Encode(bytes);
+      final lower = file.name.toLowerCase();
+      imageMime = lower.endsWith('.png')
+          ? 'image/png'
+          : lower.endsWith('.webp')
+          ? 'image/webp'
+          : 'image/jpeg';
+    }
+
+    final input = (choice.text ?? '').trim();
+    if (!choice.pickPhoto && input.isEmpty) return false;
+    final isUrl = !choice.pickPhoto && link == null && _looksLikeUrl(input);
     final url = link ?? (isUrl ? input : null);
-    if (!isUrl && input.length < 15) {
+    if (!choice.pickPhoto && !isUrl && input.length < 15) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.l.arNeedLink)));
@@ -413,21 +457,55 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     String? needText;
     setState(() => _aiLoading = true);
     try {
-      // Primero intentamos leer el post desde el móvil (al servidor lo
-      // bloquean); si no sale nada, el servidor lo intenta por su cuenta.
-      final text = isUrl ? await fetchLinkText(input) : input;
+      // Primero leemos enlace/texto/portada desde el móvil; si el servidor
+      // recibió captura, la analizamos directamente.
+      final preview = isUrl ? await fetchLinkPreview(input) : null;
+      final text = choice.pickPhoto ? null : (isUrl ? preview?.text : input);
       final res = await _client.functions.invoke(
         'import-recipe-link',
-        body: {'url': ?url, 'text': ?text, ...HomeCountry.aiLocale},
+        body: {
+          'url': ?url,
+          'text': ?text,
+          'image_base64': ?imageBase64,
+          'image_mime': ?imageMime,
+          ...HomeCountry.aiLocale,
+        },
       );
       final data = res.data;
       if (data is Map && data['recipe'] is Map) {
-        await _applyAIRecipeRefined(
-          Map<String, dynamic>.from(data['recipe'] as Map),
-        );
-        // Guardamos el enlace en el campo de vídeo para conservar la fuente.
-        if (url != null) _videoController.text = url;
+        final recipeMap = Map<String, dynamic>.from(data['recipe'] as Map);
+        await _applyAIRecipeRefined(recipeMap);
+        final coverCandidate =
+            preview?.imageUrl ?? recipeMap['source_image_url']?.toString();
+        final coverUri = coverCandidate != null
+            ? Uri.tryParse(coverCandidate.trim())
+            : null;
+        final validCover =
+            coverUri != null &&
+                (coverUri.scheme == 'http' || coverUri.scheme == 'https') &&
+                coverUri.host.isNotEmpty
+            ? coverCandidate!.trim()
+            : null;
+        final resolvedUrl = preview?.resolvedUrl?.trim();
+        final resolvedUri = resolvedUrl != null
+            ? Uri.tryParse(resolvedUrl)
+            : null;
+        final finalVideoUrl =
+            (resolvedUri != null &&
+                (resolvedUri.scheme == 'http' ||
+                    resolvedUri.scheme == 'https') &&
+                resolvedUri.host.isNotEmpty)
+            ? resolvedUrl!
+            : url;
         if (mounted) {
+          setState(() {
+            if (validCover != null && _newImageBytes == null) {
+              _existingExternalImageUrl = validCover;
+              _existingImageUrl = validCover;
+            }
+            // Conservamos el enlace resuelto o el original como fuente.
+            if (finalVideoUrl != null) _videoController.text = finalVideoUrl;
+          });
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(context.l.arImported)));
@@ -441,7 +519,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       }
     } catch (e) {
       final d = e is FunctionException ? e.details : null;
-      if (isUrl && d is Map && d['need_text'] == true) {
+      if ((isUrl || choice.pickPhoto) && d is Map && d['need_text'] == true) {
         needText = d['error']?.toString();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -454,7 +532,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     } finally {
       if (mounted) setState(() => _aiLoading = false);
     }
-    // El enlace no se pudo leer: pedimos el texto sin perder el enlace.
+    // El enlace o la imagen no se pudo leer: pedimos texto u otra captura.
     if (needText != null && mounted) {
       return _importFromLink(link: url, note: needText);
     }
@@ -748,6 +826,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           !widget.isEditing &&
           _newImageBytes == null &&
           uploadedPath == null &&
+          _existingExternalImageUrl == null &&
           title.isNotEmpty;
       if (needsAutoPhoto) {
         // No bloquea el alta: si no hay foto, se guarda sin ella.
@@ -962,10 +1041,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                                     child: IconButton(
                                       tooltip: context.l.edit,
                                       padding: EdgeInsets.zero,
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.edit,
                                         size: 16,
-                                        color: Colors.white,
+                                        color: AppColors.onTerracotta,
                                       ),
                                       onPressed: _pickImage,
                                     ),
@@ -1336,6 +1415,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     }
     return rows;
   }
+}
+
+class _ImportDialogResult {
+  const _ImportDialogResult({this.text, this.pickPhoto = false});
+
+  final String? text;
+  final bool pickPhoto;
 }
 
 class _IngredientControllers {
