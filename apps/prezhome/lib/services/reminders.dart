@@ -33,7 +33,7 @@ typedef Reminder = ({DateTime at, String title, String body, String kind});
 /// hace falta, pasar a push remoto (FCM/APNs) desde Supabase.
 class Reminders {
   /// Nombre de cada uno: l10n.remKind.
-  static const kinds = ['tasks', 'kitchen', 'expiry', 'streak'];
+  static const kinds = ['tasks', 'notes', 'kitchen', 'expiry', 'streak'];
 
   /// Tipo del aviso que la persona acaba de tocar; el shell lo consume para
   /// abrir la pestaña que toca y lo vuelve a poner a null.
@@ -221,8 +221,26 @@ class Reminders {
         batch: NutritionProfile.fromMap(profile!).isMealPrep,
       );
     }
+    var notes = <({DateTime at, String text})>[];
+    if (!skip.contains('notes')) {
+      final res = await client
+          .from('inbox_notes')
+          .select('text, remind_at')
+          .eq('user_id', uid)
+          .gte('remind_at', now.toUtc().toIso8601String())
+          .lte(
+            'remind_at',
+            today.add(const Duration(days: _days)).toUtc().toIso8601String(),
+          );
+      notes = [
+        for (final r in res as List)
+          if (DateTime.tryParse(r['remind_at'].toString()) case final at?)
+            (at: at.toLocal(), text: r['text'].toString()),
+      ];
+    }
     final streak = skip.contains('streak') ? null : await Streak.load(client);
     return plan(
+      notes: notes,
       tasks: tasks,
       items: items,
       streak: streak,
@@ -297,6 +315,7 @@ class Reminders {
     required DateTime now,
     Map<DateTime, List<String>> defrost = const {},
     Map<DateTime, int> cookDays = const {},
+    List<({DateTime at, String text})> notes = const [],
   }) {
     final today = DateTime(now.year, now.month, now.day);
     final until = today.add(const Duration(days: _days));
@@ -319,6 +338,16 @@ class Reminders {
         kind: 'tasks',
       ));
     });
+
+    // Apuntes de la bandeja con aviso: a la hora que eligió la persona.
+    for (final n in notes) {
+      out.add((
+        at: n.at,
+        title: n.text,
+        body: appL10n.remNoteBody,
+        kind: 'notes',
+      ));
+    }
 
     // Un aviso por día, a las 10:00 del día anterior a caducar.
     final byDay = <DateTime, List<String>>{};

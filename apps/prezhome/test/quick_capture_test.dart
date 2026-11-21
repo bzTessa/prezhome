@@ -20,4 +20,10 @@ void main() {
   test('vacío no apunta nada', () {
     expect(splitCapture('  ', CaptureTarget.pantry), isEmpty);
   });
+
+  test('una nota no se parte', () {
+    expect(splitCapture('leche, pan y llamar a mamá', CaptureTarget.note), [
+      'leche, pan y llamar a mamá',
+    ]);
+  });
 }

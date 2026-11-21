@@ -109,6 +109,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `gal`, `qt`, `pt`) en `parsePackageQuantity`, y tamaño de envase tomando los
   catálogos del país (`catalogSearchOrder`).
   `services/plan_shopping.dart` genera la lista desde el plan.
+- Bandeja ("Nota" en el `+`): `services/inbox.dart` (tabla `inbox_notes`,
+  privada de cada persona, migración 0093), `inbox_screen.dart` (pasar a la
+  compra, hacer tarea si hay módulo, "Avisarme…" con `remind_at` que programa
+  `Reminders` como tipo `notes`, borrar con Deshacer) y tarjeta "Para
+  ordenar" en Hoy. `saveCapture` (en `quick_capture_sheet.dart`) guarda en
+  compra, En casa, tareas o bandeja. En Hoy y Comida el `+` abre en Nota.
 - Iconos de producto: `widgets/product_icons.dart` (palabra clave → nombre de
   icono). Nada de iconos de Microsoft (Tessa no los quiere): solo sus dibujos,
   apuntados en `_own` (`assets/icons/products/`). Lo genérico ("cebollas",

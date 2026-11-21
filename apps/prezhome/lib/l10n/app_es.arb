@@ -2682,7 +2682,7 @@
   "errRecipeImport": "No pude importar la receta de ese enlace",
   "someone": "Alguien",
   "reward": "Recompensa",
-  "remKind": "{kind, select, tasks{Tareas con hora} kitchen{Congelador y cocina} expiry{Productos que caducan} other{Racha de casa al día}}",
+  "remKind": "{kind, select, tasks{Tareas con hora} notes{Apuntes con aviso} kitchen{Congelador y cocina} expiry{Productos que caducan} other{Racha de casa al día}}",
   "@remKind": {
     "placeholders": {
       "kind": {
@@ -3328,5 +3328,27 @@
   "packsEmpty": "Aún no hay envases guardados. Añade los que compras siempre del mismo tamaño.",
   "packsAdd": "Añadir envase",
   "packsNameHint": "Producto (p. ej. garbanzos)",
-  "hhPacksShort": "Garbanzos 570 g, leche 1 L…"
+  "hhPacksShort": "Garbanzos 570 g, leche 1 L…",
+  "captureToNote": "Nota",
+  "captureHintNote": "Lo que sea: llamar al fontanero, mirar ofertas de aceite…",
+  "inboxTitle": "Para ordenar",
+  "inboxHint": "Lo que apuntaste con el +. Tócalo para pasarlo a la compra, hacerlo tarea o que te avise.",
+  "inboxEmptyTitle": "Nada por ordenar",
+  "inboxEmptyHint": "Apunta cualquier cosa con el + y decide luego qué es.",
+  "inboxToShopping": "A la compra",
+  "inboxToTask": "Hacerlo tarea",
+  "inboxRemind": "Avisarme…",
+  "inboxDone": "Ya está (borrar)",
+  "inboxToShoppingDone": "Pasado a la compra",
+  "inboxToTaskDone": "Ya es una tarea",
+  "inboxPending": "{count, plural, =1{1 cosa por ordenar} other{{count} cosas por ordenar}}",
+  "inboxPendingSub": "Lo que apuntaste con el +",
+  "remNoteBody": "Lo apuntaste para ahora.",
+  "@inboxPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

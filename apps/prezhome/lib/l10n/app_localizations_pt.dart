@@ -4465,6 +4465,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String remKind(String kind) {
     String _temp0 = intl.Intl.selectLogic(kind, {
       'tasks': 'Tarefas com hora',
+      'notes': 'Notas com aviso',
       'kitchen': 'Congelador e cozinha',
       'expiry': 'Produtos a expirar',
       'other': 'Sequência da casa',
@@ -5362,4 +5363,60 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get hhPacksShort => 'Grão 570 g, leite 1 L…';
+
+  @override
+  String get captureToNote => 'Nota';
+
+  @override
+  String get captureHintNote =>
+      'O que for: ligar ao canalizador, ver promoções de azeite…';
+
+  @override
+  String get inboxTitle => 'Para arrumar';
+
+  @override
+  String get inboxHint =>
+      'O que apontaste com o +. Toca para passar às compras, fazer tarefa ou receber um aviso.';
+
+  @override
+  String get inboxEmptyTitle => 'Nada para arrumar';
+
+  @override
+  String get inboxEmptyHint =>
+      'Aponta qualquer coisa com o + e decide depois o que é.';
+
+  @override
+  String get inboxToShopping => 'Para as compras';
+
+  @override
+  String get inboxToTask => 'Fazer tarefa';
+
+  @override
+  String get inboxRemind => 'Avisar-me…';
+
+  @override
+  String get inboxDone => 'Já está (apagar)';
+
+  @override
+  String get inboxToShoppingDone => 'Passado para as compras';
+
+  @override
+  String get inboxToTaskDone => 'Já é uma tarefa';
+
+  @override
+  String inboxPending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count coisas para arrumar',
+      one: '1 coisa para arrumar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxPendingSub => 'O que apontaste com o +';
+
+  @override
+  String get remNoteBody => 'Apontaste isto para agora.';
 }

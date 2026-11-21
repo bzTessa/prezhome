@@ -118,4 +118,22 @@ void main() {
     expect(list[2].title, 'Saca 2 platos del congelador');
     expect(list[2].body, startsWith('Pisto y Albóndigas.'));
   });
+
+  test('un apunte con aviso suena a su hora con su texto', () {
+    final now = DateTime(2026, 11, 21, 9);
+    final list = Reminders.plan(
+      tasks: const [],
+      items: const [],
+      streak: null,
+      now: now,
+      notes: [
+        (at: DateTime(2026, 11, 22, 18), text: 'Llamar al fontanero'),
+        (at: DateTime(2026, 11, 20, 18), text: 'Ya pasó'),
+      ],
+    );
+    expect(list, hasLength(1));
+    expect(list.single.title, 'Llamar al fontanero');
+    expect(list.single.kind, 'notes');
+    expect(list.single.at, DateTime(2026, 11, 22, 18));
+  });
 }

@@ -10,6 +10,7 @@ import '../add_recipe_chooser.dart';
 import '../discover_recipes_screen.dart';
 import '../food_diary_screen.dart';
 import '../household_screen.dart';
+import '../inbox_screen.dart';
 import '../main_shell.dart';
 import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
@@ -23,6 +24,7 @@ import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/home_food_restrictions.dart';
+import '../services/inbox.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
 import '../services/plan_repeats.dart';
@@ -160,6 +162,7 @@ class HomeTabState extends State<HomeTab> {
     _streakKey = UniqueKey();
     await Future.wait([
       _loadPrefs(),
+      Inbox(_client).refreshCount(),
       _loadTodayPlan(),
       _loadTasksSummary(),
       _loadEconomySummary(),
@@ -798,6 +801,16 @@ class HomeTabState extends State<HomeTab> {
                   StaggeredEntrance(index: 1, child: _dayCard(restLines)),
                   const SizedBox(height: AppSpacing.lg),
                 ],
+                // Lo apuntado con el "+" sin ordenar todavía.
+                ValueListenableBuilder<int>(
+                  valueListenable: Inbox.count,
+                  builder: (_, n, _) => n == 0
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                          child: _inboxCard(n),
+                        ),
+                ),
                 ValueListenableBuilder(
                   valueListenable: PlanPrefs.current,
                   builder: (_, p, _) => p.fastHours == null
@@ -1340,6 +1353,36 @@ class HomeTabState extends State<HomeTab> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Bandeja: cuántos apuntes quedan por ordenar. Tocar abre la bandeja.
+  Widget _inboxCard(int n) {
+    return Material(
+      color: AppColors.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: BorderSide(color: AppColors.cardEdge),
+      ),
+      child: ListTile(
+        leading: Icon(Icons.inbox_outlined, color: AppColors.terracotta),
+        title: Text(
+          context.l.inboxPending(n),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(context.l.inboxPendingSub),
+        trailing: Icon(Icons.chevron_right, color: AppColors.inkMuted),
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => InboxScreen(
+                allowTasks: _prefs.isModuleEnabled(HomeModule.tasks),
+              ),
+            ),
+          );
+          if (mounted) unawaited(Inbox(_client).refreshCount());
+        },
       ),
     );
   }

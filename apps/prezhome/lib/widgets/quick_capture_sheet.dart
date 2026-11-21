@@ -23,6 +23,7 @@ import '../utils/shopping_categories.dart';
 import '../utils/shopping_display.dart';
 import 'miau_character.dart';
 import 'segmented_pill.dart';
+import '../services/inbox.dart';
 
 enum _QuickCaptureResult { saved, ticket, barcode, recipe }
 
@@ -208,55 +209,13 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
           .maybeSingle();
       final homeId = profile?['home_id'] as String?;
       if (homeId == null) return;
-      switch (_target) {
-        case CaptureTarget.shopping:
-          final repo = OfflineProvider.instance.shopping;
-          final nowMillis = DateTime.now().millisecondsSinceEpoch;
-          for (var i = 0; i < items.length; i++) {
-            final name = items[i];
-            final localId = newLocalId(nowMillis: nowMillis, seq: i);
-            final entry = ShoppingListItem(
-              id: localId,
-              homeId: homeId,
-              name: name,
-              category: defaultCategoryFor(name),
-            );
-            await repo.applyLocalWrite(
-              buildInsertOp(
-                table: kShoppingTable,
-                id: localId,
-                payload: entry.toCacheMap(),
-                nowMillis: nowMillis,
-                seq: i,
-              ),
-            );
-          }
-          unawaited(repo.tryDrain());
-        case CaptureTarget.pantry:
-          final checkout = ShoppingCheckout();
-          for (final name in items) {
-            await checkout.addToPantry(
-              ShoppingListItem(
-                homeId: homeId,
-                name: name,
-                category: defaultCategoryFor(name),
-              ),
-              homeId: homeId,
-            );
-          }
-          unawaited(OfflineProvider.instance.inventory.tryDrain());
-        case CaptureTarget.task:
-          await _client
-              .from('tasks')
-              .insert(
-                HomeTask(
-                  id: '',
-                  homeId: homeId,
-                  title: items.single,
-                  dueDate: DateTime.now(),
-                ).toInsertMap(createdBy: user.id),
-              );
-      }
+      await saveCapture(
+        _client,
+        target: _target,
+        items: items,
+        homeId: homeId,
+        userId: user.id,
+      );
       HapticFeedback.mediumImpact();
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
@@ -278,15 +237,24 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // La nota va primero: es apuntar sin pensar dónde.
+    final targets = [
+      CaptureTarget.note,
+      CaptureTarget.shopping,
+      CaptureTarget.pantry,
+      if (widget.allowTasks) CaptureTarget.task,
+    ];
     final hint = switch (_target) {
       CaptureTarget.shopping => context.l.captureHintShopping,
       CaptureTarget.pantry => context.l.captureHintPantry,
       CaptureTarget.task => context.l.captureHintTask,
+      CaptureTarget.note => context.l.captureHintNote,
     };
     final mood = switch (_target) {
       CaptureTarget.shopping => MiauMood.shopping,
       CaptureTarget.pantry => MiauMood.curious,
       CaptureTarget.task => MiauMood.greeting,
+      CaptureTarget.note => MiauMood.neutral,
     };
     return SafeArea(
       child: SingleChildScrollView(
@@ -314,14 +282,9 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
             ),
             const SizedBox(height: AppSpacing.md),
             SegmentedPill(
-              labels: [
-                context.l.captureToShopping,
-                context.l.captureToPantry,
-                if (widget.allowTasks) context.l.captureToTask,
-              ],
-              selected: _target.index,
-              onChanged: (i) =>
-                  setState(() => _target = CaptureTarget.values[i]),
+              labels: [for (final t in targets) _label(context, t)],
+              selected: targets.indexOf(_target).clamp(0, targets.length - 1),
+              onChanged: (i) => setState(() => _target = targets[i]),
             ),
             const SizedBox(height: AppSpacing.md),
             TextField(
@@ -408,5 +371,74 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
         textStyle: AppTextStyles.label.copyWith(fontWeight: FontWeight.w700),
       ),
     );
+  }
+}
+
+String _label(BuildContext context, CaptureTarget t) => switch (t) {
+  CaptureTarget.shopping => context.l.captureToShopping,
+  CaptureTarget.pantry => context.l.captureToPantry,
+  CaptureTarget.task => context.l.captureToTask,
+  CaptureTarget.note => context.l.captureToNote,
+};
+
+/// Guarda lo apuntado en su sitio: lista de la compra, En casa, tareas o la
+/// bandeja. Lo usan la hoja del "+" y la bandeja al convertir un apunte.
+Future<void> saveCapture(
+  SupabaseClient client, {
+  required CaptureTarget target,
+  required List<String> items,
+  required String homeId,
+  required String userId,
+}) async {
+  switch (target) {
+    case CaptureTarget.shopping:
+      final repo = OfflineProvider.instance.shopping;
+      final nowMillis = DateTime.now().millisecondsSinceEpoch;
+      for (var i = 0; i < items.length; i++) {
+        final name = items[i];
+        final localId = newLocalId(nowMillis: nowMillis, seq: i);
+        final entry = ShoppingListItem(
+          id: localId,
+          homeId: homeId,
+          name: name,
+          category: defaultCategoryFor(name),
+        );
+        await repo.applyLocalWrite(
+          buildInsertOp(
+            table: kShoppingTable,
+            id: localId,
+            payload: entry.toCacheMap(),
+            nowMillis: nowMillis,
+            seq: i,
+          ),
+        );
+      }
+      unawaited(repo.tryDrain());
+    case CaptureTarget.pantry:
+      final checkout = ShoppingCheckout();
+      for (final name in items) {
+        await checkout.addToPantry(
+          ShoppingListItem(
+            homeId: homeId,
+            name: name,
+            category: defaultCategoryFor(name),
+          ),
+          homeId: homeId,
+        );
+      }
+      unawaited(OfflineProvider.instance.inventory.tryDrain());
+    case CaptureTarget.task:
+      await client
+          .from('tasks')
+          .insert(
+            HomeTask(
+              id: '',
+              homeId: homeId,
+              title: items.single,
+              dueDate: DateTime.now(),
+            ).toInsertMap(createdBy: userId),
+          );
+    case CaptureTarget.note:
+      await Inbox(client).add(homeId, items.single);
   }
 }
