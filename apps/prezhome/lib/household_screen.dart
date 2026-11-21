@@ -18,6 +18,7 @@ import 'services/home_people.dart';
 import 'services/offline_provider.dart';
 import 'services/reminders.dart';
 import 'nutrition_profile_screen.dart';
+import 'pack_sizes_screen.dart';
 import 'home_session_screen.dart';
 import 'login_screen.dart';
 import 'theme/app_theme.dart';
@@ -813,6 +814,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       '${context.l.country}: ${country.flag} ${country.name}',
                   subtitle: context.l.countryHint,
                   onTap: () => _pickCountry(data.homeId!),
+                ),
+              ),
+              _settingTile(
+                icon: Icons.inventory_2_outlined,
+                title: context.l.hhPacks,
+                subtitle: context.l.hhPacksShort,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PackSizesScreen(homeId: data.homeId!),
+                  ),
                 ),
               ),
               // Gastos y tickets siempre; los puntos dentro solo con el

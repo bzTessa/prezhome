@@ -5344,4 +5344,24 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get arImportPhotoHint =>
       'Wenn das Rezept nur im Video oder auf Papier steht, lade einen Screenshot hoch.';
+
+  @override
+  String get hhPacks => 'Übliche Packungsgrößen';
+
+  @override
+  String get hhPacksSub =>
+      'Was jede Packung enthält, die du immer gleich kaufst: Kichererbsen 570 g, Milch 1 L. Der Einkauf zählt ganze Packungen und Zu Hause zieht ab, was jedes Rezept verbraucht.';
+
+  @override
+  String get packsEmpty =>
+      'Noch keine Packungsgrößen gespeichert. Füge die hinzu, die du immer in derselben Größe kaufst.';
+
+  @override
+  String get packsAdd => 'Packungsgröße hinzufügen';
+
+  @override
+  String get packsNameHint => 'Produkt (z. B. Kichererbsen)';
+
+  @override
+  String get hhPacksShort => 'Kichererbsen 570 g, Milch 1 L…';
 }

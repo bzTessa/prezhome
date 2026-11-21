@@ -1338,5 +1338,11 @@
   "pcSummaryFreezer": "{count, plural, =1{1 Portion im Gefrierfach} other{{count} Portionen im Gefrierfach}}",
   "pcUndone": "Änderungen rückgängig gemacht",
   "arImportFromPhoto": "Screenshot oder Foto hochladen",
-  "arImportPhotoHint": "Wenn das Rezept nur im Video oder auf Papier steht, lade einen Screenshot hoch."
+  "arImportPhotoHint": "Wenn das Rezept nur im Video oder auf Papier steht, lade einen Screenshot hoch.",
+  "hhPacks": "Übliche Packungsgrößen",
+  "hhPacksSub": "Was jede Packung enthält, die du immer gleich kaufst: Kichererbsen 570 g, Milch 1 L. Der Einkauf zählt ganze Packungen und Zu Hause zieht ab, was jedes Rezept verbraucht.",
+  "packsEmpty": "Noch keine Packungsgrößen gespeichert. Füge die hinzu, die du immer in derselben Größe kaufst.",
+  "packsAdd": "Packungsgröße hinzufügen",
+  "packsNameHint": "Produkt (z. B. Kichererbsen)",
+  "hhPacksShort": "Kichererbsen 570 g, Milch 1 L…"
 }

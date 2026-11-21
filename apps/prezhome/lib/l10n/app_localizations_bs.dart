@@ -5282,4 +5282,24 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get arImportPhotoHint =>
       'Ako je recept samo na ekranu ili papiru, učitaj snimak ekrana.';
+
+  @override
+  String get hhPacks => 'Uobičajena pakovanja';
+
+  @override
+  String get hhPacksSub =>
+      'Koliko ima u svakom pakovanju koje uvijek kupuješ isto: slanutak 570 g, mlijeko 1 L. Kupovina broji cijela pakovanja, a Kod kuće oduzima koliko troši svaki recept.';
+
+  @override
+  String get packsEmpty =>
+      'Još nema sačuvanih pakovanja. Dodaj ona koja uvijek kupuješ iste veličine.';
+
+  @override
+  String get packsAdd => 'Dodaj pakovanje';
+
+  @override
+  String get packsNameHint => 'Proizvod (npr. slanutak)';
+
+  @override
+  String get hhPacksShort => 'Slanutak 570 g, mlijeko 1 L…';
 }

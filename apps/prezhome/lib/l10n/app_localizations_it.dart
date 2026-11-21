@@ -5339,4 +5339,24 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get arImportPhotoHint =>
       'Se la ricetta appare solo nel video o su carta, carica uno screenshot.';
+
+  @override
+  String get hhPacks => 'Confezioni abituali';
+
+  @override
+  String get hhPacksSub =>
+      'Quanto contiene ogni confezione che compri sempre uguale: ceci 570 g, latte 1 L. La spesa conta confezioni intere e A casa toglie quanto usa ogni ricetta.';
+
+  @override
+  String get packsEmpty =>
+      'Nessuna confezione salvata. Aggiungi quelle che compri sempre della stessa misura.';
+
+  @override
+  String get packsAdd => 'Aggiungi confezione';
+
+  @override
+  String get packsNameHint => 'Prodotto (es. ceci)';
+
+  @override
+  String get hhPacksShort => 'Ceci 570 g, latte 1 L…';
 }

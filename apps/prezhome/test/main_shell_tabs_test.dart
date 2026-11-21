@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prezhome/main_shell.dart';
 import 'package:prezhome/models/dashboard_prefs.dart';
+import 'package:prezhome/models/usage_mode.dart';
 
 void main() {
   group('computeVisibleTabIds (índices por identidad semántica)', () {
@@ -19,12 +20,20 @@ void main() {
       expect(compra, lessThan(ids.length));
     });
 
-    test('Tareas se ve aunque su módulo esté desactivado', () {
+    test('en modo Esencial (sin tareas) no sale la pestaña Tareas', () {
       final ids = computeVisibleTabIds(
-        DashboardPrefs.defaults().copyWith(enabledModules: <HomeModule>{}),
+        UsageMode.essential.applyTo(DashboardPrefs.defaults()),
       );
-      expect(ids.last, TabId.tareas);
-      expect(ids.indexOf(TabId.inicio), 0);
+      expect(ids, [TabId.inicio, TabId.comidas, TabId.compra]);
+    });
+
+    test('Hoy no enseña calorías ni tareas si el modo las apaga', () {
+      final esencial = UsageMode.essential.applyTo(DashboardPrefs.defaults());
+      expect(esencial.activeCards, isNot(contains(DashboardCard.calories)));
+      expect(esencial.activeCards, isNot(contains(DashboardCard.tasks)));
+      expect(esencial.activeCards, contains(DashboardCard.meals));
+      final completo = UsageMode.complete.applyTo(DashboardPrefs.defaults());
+      expect(completo.activeCards, DashboardPrefs.defaults().visibleCards);
     });
   });
 }

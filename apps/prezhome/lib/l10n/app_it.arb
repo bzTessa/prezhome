@@ -1338,5 +1338,11 @@
   "pcSummaryFreezer": "{count, plural, =1{1 porzione in freezer} other{{count} porzioni in freezer}}",
   "pcUndone": "Modifiche annullate",
   "arImportFromPhoto": "Carica screenshot o foto",
-  "arImportPhotoHint": "Se la ricetta appare solo nel video o su carta, carica uno screenshot."
+  "arImportPhotoHint": "Se la ricetta appare solo nel video o su carta, carica uno screenshot.",
+  "hhPacks": "Confezioni abituali",
+  "hhPacksSub": "Quanto contiene ogni confezione che compri sempre uguale: ceci 570 g, latte 1 L. La spesa conta confezioni intere e A casa toglie quanto usa ogni ricetta.",
+  "packsEmpty": "Nessuna confezione salvata. Aggiungi quelle che compri sempre della stessa misura.",
+  "packsAdd": "Aggiungi confezione",
+  "packsNameHint": "Prodotto (es. ceci)",
+  "hhPacksShort": "Ceci 570 g, latte 1 L…"
 }

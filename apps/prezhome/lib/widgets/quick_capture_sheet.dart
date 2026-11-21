@@ -32,6 +32,7 @@ enum _QuickCaptureResult { saved, ticket, barcode, recipe }
 Future<bool> showQuickCapture(
   BuildContext context, {
   CaptureTarget initialTarget = CaptureTarget.shopping,
+  bool allowTasks = true,
 }) async {
   final result = await showModalBottomSheet<_QuickCaptureResult>(
     context: context,
@@ -41,7 +42,12 @@ Future<bool> showQuickCapture(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
     ),
-    builder: (_) => _QuickCaptureSheet(initialTarget: initialTarget),
+    builder: (_) => _QuickCaptureSheet(
+      initialTarget: !allowTasks && initialTarget == CaptureTarget.task
+          ? CaptureTarget.shopping
+          : initialTarget,
+      allowTasks: allowTasks,
+    ),
   );
   if (!context.mounted || result == null) return false;
   switch (result) {
@@ -101,9 +107,15 @@ Future<bool> showQuickCapture(
 }
 
 class _QuickCaptureSheet extends StatefulWidget {
-  const _QuickCaptureSheet({required this.initialTarget});
+  const _QuickCaptureSheet({
+    required this.initialTarget,
+    this.allowTasks = true,
+  });
 
   final CaptureTarget initialTarget;
+
+  /// Sin el módulo de tareas no se ofrece "a Tareas".
+  final bool allowTasks;
 
   @override
   State<_QuickCaptureSheet> createState() => _QuickCaptureSheetState();
@@ -305,7 +317,7 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
               labels: [
                 context.l.captureToShopping,
                 context.l.captureToPantry,
-                context.l.captureToTask,
+                if (widget.allowTasks) context.l.captureToTask,
               ],
               selected: _target.index,
               onChanged: (i) =>

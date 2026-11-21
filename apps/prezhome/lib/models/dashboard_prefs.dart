@@ -194,6 +194,15 @@ class DashboardPrefs {
   List<DashboardCard> get visibleCards =>
       order.where((c) => !hidden.contains(c)).toList();
 
+  /// Tarjetas de Hoy que de verdad se enseñan: las visibles menos las que el
+  /// modo apaga (calorías sin seguimiento, tareas sin el módulo de tareas).
+  List<DashboardCard> get activeCards => [
+    for (final c in visibleCards)
+      if (!(c == DashboardCard.calories && !trackCalories) &&
+          !(c == DashboardCard.tasks && !isModuleEnabled(HomeModule.tasks)))
+        c,
+  ];
+
   /// Indica si un módulo está activado.
   bool isModuleEnabled(HomeModule m) => enabledModules.contains(m);
 

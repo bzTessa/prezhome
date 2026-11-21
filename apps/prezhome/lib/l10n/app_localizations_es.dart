@@ -5339,4 +5339,24 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get arImportPhotoHint =>
       'Si la receta solo sale en el vídeo o en papel, sube una captura.';
+
+  @override
+  String get hhPacks => 'Envases habituales';
+
+  @override
+  String get hhPacksSub =>
+      'Lo que trae cada envase que compras siempre igual: garbanzos 570 g, leche 1 L. La compra cuenta envases enteros y En casa resta lo que gasta cada receta.';
+
+  @override
+  String get packsEmpty =>
+      'Aún no hay envases guardados. Añade los que compras siempre del mismo tamaño.';
+
+  @override
+  String get packsAdd => 'Añadir envase';
+
+  @override
+  String get packsNameHint => 'Producto (p. ej. garbanzos)';
+
+  @override
+  String get hhPacksShort => 'Garbanzos 570 g, leche 1 L…';
 }

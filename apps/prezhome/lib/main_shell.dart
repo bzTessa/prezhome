@@ -30,10 +30,17 @@ import 'services/onboarding_applier.dart';
 /// funcionando aunque alguna pestaña opcional desaparezca.
 enum TabId { comidas, compra, inicio, tareas }
 
-/// Orden FIJO de las 4 pestañas principales: Hoy, Comida, Compra (Lista | En
-/// casa) y Tareas, acompañadas del botón global "+".
+/// Orden FIJO de las pestañas principales: Hoy, Comida, Compra (Lista | En
+/// casa) y Tareas, acompañadas del botón global "+". Tareas solo sale si el
+/// modo elegido la usa (en "Esencial" no hay tareas); se vuelve a encender
+/// desde Ajustes > Cómo usas PrezHome.
 List<TabId> computeVisibleTabIds(DashboardPrefs prefs) {
-  return [TabId.inicio, TabId.comidas, TabId.compra, TabId.tareas];
+  return [
+    TabId.inicio,
+    TabId.comidas,
+    TabId.compra,
+    if (prefs.isModuleEnabled(HomeModule.tasks)) TabId.tareas,
+  ];
 }
 
 /// Descriptor de una pestaña: su identidad semántica, el widget que renderiza
@@ -362,7 +369,12 @@ class MainShellState extends State<MainShell> {
         CaptureTarget.pantry,
       _ => CaptureTarget.shopping,
     };
-    if (await showQuickCapture(context, initialTarget: target) && mounted) {
+    if (await showQuickCapture(
+          context,
+          initialTarget: target,
+          allowTasks: _prefs.isModuleEnabled(HomeModule.tasks),
+        ) &&
+        mounted) {
       _homeKey.currentState?.refreshActiveView();
     }
   }
@@ -384,7 +396,10 @@ class MainShellState extends State<MainShell> {
   /// Recarga las prefs y reconstruye la barra de navegación. Público para que
   /// un flujo externo (onboarding/wizard) pueda forzar que el shell refleje un
   /// cambio de módulos sin recrear MainShell.
-  void reloadModules() => _loadPrefs();
+  void reloadModules() {
+    _loadPrefs();
+    _homeKey.currentState?.refreshActiveView();
+  }
 
   /// Oculta el aviso de caducidad hasta mañana.
   void _dismissSuggestions() {
