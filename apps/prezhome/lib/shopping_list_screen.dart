@@ -199,6 +199,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   /// Pestaña de sugerencias elegida: 0 = te toca, 1 = te falta en casa.
   int _sugTab = 0;
+  bool _sugAll = false;
 
   // Guarda para disparar la celebración (Miau + confeti) SOLO en la transición
   // a 0 pendientes (de >0 a 0), no en cada rebuild ni al cambiar de tab en el
@@ -2343,27 +2344,31 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   label: Text(tabs[i].label),
                   selected: i == tab,
                   showCheckmark: false,
-                  onSelected: (_) => setState(() => _sugTab = i),
+                  onSelected: (_) => setState(() {
+                    _sugTab = i;
+                    _sugAll = false;
+                  }),
                 ),
             ],
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            // Sin fotos, la tarjeta es solo texto y ocupa menos.
-            height: _view.showPhotos
-                ? 190
-                : MediaQuery.textScalerOf(context).scale(84),
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              itemCount: tabs[tab].items.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, i) {
-                final s = tabs[tab].items[i];
+          // Rejilla fija, sin deslizar: 3 por fila con fotos (2 sin ellas) y
+          // dos filas; "Más" enseña el resto.
+          Builder(
+            builder: (context) {
+              final items = tabs[tab].items;
+              final perRow = _view.showPhotos ? 3 : 2;
+              final limit = perRow * 2;
+              final shown = _sugAll || items.length <= limit
+                  ? items
+                  : items.take(limit).toList();
+              Widget card(int i) {
+                final s = shown[i];
                 final price = _view.showPrices
                     ? _prices[PriceMemory.keyFor(s.name)]?.bestPrice
                     : null;
                 return SuggestionCard(
+                  expand: true,
                   name: s.name,
                   reason: s.reason,
                   price: price == null ? null : money(price),
@@ -2371,8 +2376,42 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   onAdd: () => _addUsual(s.name),
                   photo: _view.showPhotos ? _suggestionPhoto(s.name) : null,
                 );
-              },
-            ),
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var r = 0; r * perRow < shown.length; r++) ...[
+                    if (r > 0) const SizedBox(height: 8),
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (var c = 0; c < perRow; c++) ...[
+                            if (c > 0) const SizedBox(width: 8),
+                            Expanded(
+                              child: r * perRow + c < shown.length
+                                  ? card(r * perRow + c)
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (items.length > limit)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () => setState(() => _sugAll = !_sugAll),
+                        child: Text(
+                          _sugAll ? context.l.recLess : context.l.recMore,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),

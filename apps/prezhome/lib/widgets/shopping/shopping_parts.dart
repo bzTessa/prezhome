@@ -801,7 +801,7 @@ class _CheckCircle extends StatelessWidget {
               child: const Icon(
                 Icons.check_rounded,
                 size: 18,
-                color: Colors.white,
+                color: AppColors.onTerracotta,
               ),
             ),
     );
@@ -1073,9 +1073,13 @@ class SuggestionCard extends StatelessWidget {
     required this.onAdd,
     this.price,
     this.reason,
+    this.expand = false,
   });
 
   final String name;
+
+  /// Ocupa todo el ancho que le den (celda de una rejilla) en vez del suyo.
+  final bool expand;
 
   /// Sin foto (la persona las quitó) la tarjeta es solo texto.
   final Widget? photo;
@@ -1097,7 +1101,7 @@ class SuggestionCard extends StatelessWidget {
       child: Icon(
         added ? Icons.check_rounded : Icons.add_rounded,
         size: 18,
-        color: Colors.white,
+        color: AppColors.onTerracotta,
       ),
     );
     final title = Text(
@@ -1126,7 +1130,7 @@ class SuggestionCard extends StatelessWidget {
           ),
           child: Container(
             // Sin foto, algo más ancha para que el nombre no se parta.
-            width: photo == null ? 128 : 108,
+            width: expand ? null : (photo == null ? 128 : 108),
             padding: const EdgeInsets.all(6),
             decoration: AppTheme.tactileDecoration(
               shadow: 2,

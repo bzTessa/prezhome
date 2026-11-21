@@ -271,6 +271,12 @@ class _TasksScreenState extends State<TasksScreen> {
           );
     if (doneBy == null) return; // Cancelado.
 
+    // ¿Es la última de hoy? Entonces se celebra el día entero.
+    final lastOfToday =
+        _isDueTodayOrOverdue(task) &&
+        !data.listTasks.any(
+          (t) => t.id != task.id && !t.isDone && _isDueTodayOrOverdue(t),
+        );
     HapticFeedback.mediumImpact();
     setState(() => _completing.add(task.id));
     try {
@@ -292,6 +298,10 @@ class _TasksScreenState extends State<TasksScreen> {
           context,
           points: data.pointsEnabled ? task.points : null,
         );
+        if (lastOfToday) {
+          HapticFeedback.heavyImpact();
+          Celebrate.show(context, size: 200);
+        }
       }
       // Hacer la compra: se tacha la lista y lo comprado va a la despensa.
       final bought = isShoppingTask(task.title)
@@ -303,9 +313,12 @@ class _TasksScreenState extends State<TasksScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            bought > 0
-                ? context.l.tskPointsForPantry(task.points, who, bought)
-                : context.l.tskPointsFor(task.points, who),
+            [
+              if (lastOfToday) context.l.tskAllDoneToday,
+              bought > 0
+                  ? context.l.tskPointsForPantry(task.points, who, bought)
+                  : context.l.tskPointsFor(task.points, who),
+            ].join(' · '),
           ),
         ),
       );
@@ -917,24 +930,6 @@ class _TasksScreenState extends State<TasksScreen> {
               ],
             );
           },
-        ),
-        floatingActionButton: HideFabOnScroll.fab(
-          FutureBuilder<_TasksData>(
-            future: _future,
-            builder: (context, snap) {
-              final data = snap.data;
-              if (data?.homeId == null) return const SizedBox.shrink();
-              return FloatingActionButton.extended(
-                heroTag: 'fab-tasks',
-                onPressed: () => _openNew(data!),
-                icon: const Icon(Icons.add_rounded),
-                label: Text(
-                  context.l.tskNew,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              );
-            },
-          ),
         ),
       ),
     );
