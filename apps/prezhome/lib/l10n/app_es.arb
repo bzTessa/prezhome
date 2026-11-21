@@ -2238,7 +2238,7 @@
   "drAddMissing": "Añadir lo que falta",
   "drSavedShort": "Guardada",
   "drSaveToRecipes": "Guardar en mis recetas",
-  "taskKind": "{kind, select, bano{Baño} ropa{Ropa} compra{Compra} basura{Basura} platos{Platos} limpieza{Limpieza} plantas{Plantas} cama{Cama} mascota{Mascota} cocinar{Cocinar} pagos{Pagos} other{Tarea}}",
+  "taskKind": "{kind, select, bano{Baño} ropa{Ropa} compra{Compra} basura{Basura} platos{Platos} limpieza{Limpieza} plantas{Plantas} cama{Cama} mascota{Mascota} cocinar{Cocinar} pagos{Pagos} mantenimiento{Mantenimiento} other{Tarea}}",
   "@taskKind": {
     "placeholders": {
       "kind": {
@@ -3350,5 +3350,54 @@
         "type": "int"
       }
     }
-  }
+  },
+  "planEveryMonths": "{months, plural, =1{Cada mes} other{Cada {months} meses}}",
+  "@planEveryMonths": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "planEveryYears": "{years, plural, =1{Cada año} other{Cada {years} años}}",
+  "@planEveryYears": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
+  "maintPreset": "{preset, select, fridge{Limpiar la nevera} washer{Limpiar la lavadora} filters{Limpiar los filtros} oven{Limpiar el horno} mattress{Girar el colchón} curtains{Lavar las cortinas} boiler{Revisar la caldera} other{Pasar la ITV}}",
+  "@maintPreset": {
+    "placeholders": {
+      "preset": {
+        "type": "String"
+      }
+    }
+  },
+  "tskMaintTitle": "Mantenimiento de la casa",
+  "tskMaintHint": "Lo que toca cada pocos meses. Te lo recordamos cuando llegue.",
+  "tskMaintSuggest": "Añadir con un toque",
+  "tskMaintNext": "Toca el {date}",
+  "@tskMaintNext": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "tskMaintAsk": "¿Cuándo lo hiciste por última vez?",
+  "tskMaintDueNow": "Toca ya",
+  "tskMaintDueNowSub": "Aparecerá hoy en tus tareas",
+  "tskMaintRecent": "Lo hice hace poco",
+  "tskMaintRecentSub": "Volverá el {when}",
+  "@tskMaintRecentSub": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "tskMaintAdded": "Añadida a mantenimiento",
+  "tskMaintHide": "Ocultar sugerencias"
 }

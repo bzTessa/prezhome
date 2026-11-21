@@ -3587,6 +3587,7 @@ class AppLocalizationsBs extends AppLocalizations {
       'mascota': 'Ljubimac',
       'cocinar': 'Kuhanje',
       'pagos': 'Plaćanja',
+      'mantenimiento': 'Održavanje',
       'other': 'Zadatak',
     });
     return '$_temp0';
@@ -5358,4 +5359,79 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get remNoteBody => 'Zapisao/la si ovo za sada.';
+
+  @override
+  String planEveryMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'Svakih $months mjeseci',
+      one: 'Svaki mjesec',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planEveryYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: 'Svakih $years godina',
+      one: 'Svake godine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintPreset(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'fridge': 'Očistiti frižider',
+      'washer': 'Očistiti veš mašinu',
+      'filters': 'Očistiti filtere',
+      'oven': 'Očistiti rernu',
+      'mattress': 'Okrenuti madrac',
+      'curtains': 'Oprati zavjese',
+      'boiler': 'Servis bojlera',
+      'other': 'Tehnički pregled auta',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tskMaintTitle => 'Održavanje doma';
+
+  @override
+  String get tskMaintHint =>
+      'Ono što dolazi svakih nekoliko mjeseci. Podsjetit ćemo te kad dođe vrijeme.';
+
+  @override
+  String get tskMaintSuggest => 'Dodaj jednim dodirom';
+
+  @override
+  String tskMaintNext(String date) {
+    return 'Na redu $date';
+  }
+
+  @override
+  String get tskMaintAsk => 'Kada si to zadnji put uradio/la?';
+
+  @override
+  String get tskMaintDueNow => 'Sad je na redu';
+
+  @override
+  String get tskMaintDueNowSub => 'Pojavit će se danas u tvojim zadacima';
+
+  @override
+  String get tskMaintRecent => 'Uradio/la sam nedavno';
+
+  @override
+  String tskMaintRecentSub(String when) {
+    return 'Opet $when';
+  }
+
+  @override
+  String get tskMaintAdded => 'Dodano u održavanje';
+
+  @override
+  String get tskMaintHide => 'Sakrij prijedloge';
 }

@@ -3645,6 +3645,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'mascota': 'Animale',
       'cocinar': 'Cucinare',
       'pagos': 'Pagamenti',
+      'mantenimiento': 'Manutenzione',
       'other': 'Attività',
     });
     return '$_temp0';
@@ -5416,4 +5417,79 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get remNoteBody => 'L\'avevi annotato per adesso.';
+
+  @override
+  String planEveryMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'Ogni $months mesi',
+      one: 'Ogni mese',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planEveryYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: 'Ogni $years anni',
+      one: 'Ogni anno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintPreset(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'fridge': 'Pulire il frigo',
+      'washer': 'Pulire la lavatrice',
+      'filters': 'Pulire i filtri',
+      'oven': 'Pulire il forno',
+      'mattress': 'Girare il materasso',
+      'curtains': 'Lavare le tende',
+      'boiler': 'Revisione caldaia',
+      'other': 'Revisione auto',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tskMaintTitle => 'Manutenzione della casa';
+
+  @override
+  String get tskMaintHint =>
+      'Ciò che torna ogni pochi mesi. Te lo ricordiamo quando è il momento.';
+
+  @override
+  String get tskMaintSuggest => 'Aggiungi con un tocco';
+
+  @override
+  String tskMaintNext(String date) {
+    return 'Previsto il $date';
+  }
+
+  @override
+  String get tskMaintAsk => 'Quando l\'hai fatto l\'ultima volta?';
+
+  @override
+  String get tskMaintDueNow => 'È il momento';
+
+  @override
+  String get tskMaintDueNowSub => 'Apparirà oggi tra le tue attività';
+
+  @override
+  String get tskMaintRecent => 'L\'ho fatto da poco';
+
+  @override
+  String tskMaintRecentSub(String when) {
+    return 'Torna il $when';
+  }
+
+  @override
+  String get tskMaintAdded => 'Aggiunta alla manutenzione';
+
+  @override
+  String get tskMaintHide => 'Nascondi suggerimenti';
 }

@@ -10,7 +10,7 @@ class HomeTask {
   // once | daily | weekly | custom_interval | custom_weekdays
   final String recurrence;
   final int? intervalCount; // para custom_interval (ej. 3)
-  final String? intervalUnit; // 'day' | 'week'
+  final String? intervalUnit; // 'day' | 'week' | 'month' | 'year'
   final List<int> weekdays; // para custom_weekdays: 1=Lun..7=Dom
   final String? assignedTo; // user id, o null = cualquiera
 
@@ -153,8 +153,10 @@ class HomeTask {
   ///   - 'once'            -> null (no se reprograma, es puntual).
   ///   - 'daily'           -> [from] + 1 dia.
   ///   - 'weekly'          -> [from] + 7 dias.
-  ///   - 'custom_interval' -> [from] + intervalCount * (dia|semana) segun
-  ///                          intervalUnit ('week' => *7 dias).
+  ///   - 'custom_interval' -> [from] + intervalCount * (dia|semana|mes|año)
+  ///                          segun intervalUnit. Meses y años van por
+  ///                          calendario: del 31 de enero + 1 mes sale el 28
+  ///                          (o 29) de febrero, no el 3 de marzo.
   ///   - 'custom_weekdays' -> el proximo dia marcado en [weekdays] (1=Lun..
   ///                          7=Dom) ESTRICTAMENTE posterior a [from], con wrap
   ///                          a la semana siguiente (de domingo a lunes). Si no
@@ -174,8 +176,12 @@ class HomeTask {
         final n = (intervalCount == null || intervalCount! < 1)
             ? 1
             : intervalCount!;
-        final days = intervalUnit == 'week' ? n * 7 : n;
-        return base.add(Duration(days: days));
+        return switch (intervalUnit) {
+          'month' => addMonths(base, n),
+          'year' => addMonths(base, n * 12),
+          'week' => base.add(Duration(days: n * 7)),
+          _ => base.add(Duration(days: n)),
+        };
       case 'custom_weekdays':
         if (weekdays.isEmpty) return null;
         final marked = weekdays.toSet();
@@ -189,6 +195,18 @@ class HomeTask {
       default:
         return null;
     }
+  }
+
+  /// Mantenimiento de la casa: lo que vuelve cada mes o más (filtros,
+  /// caldera, ITV...). Se agrupa aparte en Tareas.
+  bool get isMaintenance {
+    if (recurrence != 'custom_interval') return false;
+    final n = intervalCount ?? 1;
+    return switch (intervalUnit) {
+      'month' || 'year' => true,
+      'week' => n >= 4,
+      _ => n >= 28,
+    };
   }
 
   /// Normaliza una hora que puede venir como "20:00:00" a "20:00".
@@ -227,4 +245,14 @@ List<MapEntry<DateTime?, List<HomeTask>>> groupUpcomingByDay(
     }
   }
   return [...groups.entries, if (undated.isNotEmpty) MapEntry(null, undated)];
+}
+
+/// [d] + [months] meses de calendario, sin pasarse del último día del mes
+/// (31 ene + 1 mes = 28/29 feb).
+DateTime addMonths(DateTime d, int months) {
+  final total = d.year * 12 + (d.month - 1) + months;
+  final y = total ~/ 12;
+  final m = total % 12 + 1;
+  final last = DateTime(y, m + 1, 0).day;
+  return DateTime(y, m, d.day > last ? last : d.day);
 }

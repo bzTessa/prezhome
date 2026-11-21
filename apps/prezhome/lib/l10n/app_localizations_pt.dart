@@ -3643,6 +3643,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'mascota': 'Animal',
       'cocinar': 'Cozinhar',
       'pagos': 'Pagamentos',
+      'mantenimiento': 'Manutenção',
       'other': 'Tarefa',
     });
     return '$_temp0';
@@ -5419,4 +5420,79 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get remNoteBody => 'Apontaste isto para agora.';
+
+  @override
+  String planEveryMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'De $months em $months meses',
+      one: 'Todos os meses',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planEveryYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: 'De $years em $years anos',
+      one: 'Todos os anos',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String maintPreset(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'fridge': 'Limpar o frigorífico',
+      'washer': 'Limpar a máquina de lavar',
+      'filters': 'Limpar os filtros',
+      'oven': 'Limpar o forno',
+      'mattress': 'Virar o colchão',
+      'curtains': 'Lavar as cortinas',
+      'boiler': 'Revisão da caldeira',
+      'other': 'Inspeção do carro',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get tskMaintTitle => 'Manutenção da casa';
+
+  @override
+  String get tskMaintHint =>
+      'O que volta de poucos em poucos meses. Lembramos-te quando chegar a altura.';
+
+  @override
+  String get tskMaintSuggest => 'Adicionar com um toque';
+
+  @override
+  String tskMaintNext(String date) {
+    return 'Previsto a $date';
+  }
+
+  @override
+  String get tskMaintAsk => 'Quando o fizeste pela última vez?';
+
+  @override
+  String get tskMaintDueNow => 'Está na altura';
+
+  @override
+  String get tskMaintDueNowSub => 'Vai aparecer hoje nas tuas tarefas';
+
+  @override
+  String get tskMaintRecent => 'Fiz há pouco';
+
+  @override
+  String tskMaintRecentSub(String when) {
+    return 'Volta a $when';
+  }
+
+  @override
+  String get tskMaintAdded => 'Adicionada à manutenção';
+
+  @override
+  String get tskMaintHide => 'Ocultar sugestões';
 }

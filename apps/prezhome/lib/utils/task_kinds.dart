@@ -16,6 +16,7 @@ enum TaskKind {
   mascota(Icons.pets_rounded),
   cocinar(Icons.soup_kitchen_rounded),
   pagos(Icons.receipt_long_rounded),
+  mantenimiento(Icons.handyman_rounded),
   otra(Icons.home_rounded);
 
   const TaskKind(this.icon);
@@ -25,7 +26,7 @@ enum TaskKind {
   (Color, Color) get colors => switch (this) {
     bano || plantas => (AppColors.frostBg, AppColors.frost),
     ropa || cama => (AppColors.lilacBg, AppColors.lilac),
-    compra || pagos => (AppColors.sageBg, AppColors.sage),
+    compra || pagos || mantenimiento => (AppColors.sageBg, AppColors.sage),
     basura || mascota => (AppColors.soonBg, AppColors.soon),
     platos || cocinar => (AppColors.peachBg, AppColors.peach),
     limpieza => (AppColors.terracottaBg, AppColors.terracotta),
@@ -84,6 +85,14 @@ const _keywords = <TaskKind, List<String>>{
     'pay', 'bill', 'invoice', 'bank', 'rechnung', 'zahl', 'bezahl', 'facture',
     'banque', 'bollett', 'racun', 'platit',
   ],
+  // Antes que limpieza: "Limpiar los filtros" es mantenimiento.
+  TaskKind.mantenimiento: [
+    'caldera', 'filtro', 'itv', 'coche', 'colchon', 'cortina', 'revisar', //
+    'boiler', 'filter', 'mattress', 'curtain', 'heizung', 'tuv',
+    'matratz', 'vorhang', 'chaudiere', 'filtre', 'controle', 'matelas',
+    'rideau', 'caldaia', 'materass', 'tende', 'revision', 'caldeira',
+    'inspec', 'colchao', 'bojler', 'pregled', 'madrac', 'zavjes',
+  ],
   TaskKind.limpieza: [
     'aspirar',
     'barrer',
@@ -135,3 +144,27 @@ const taskPresets = <({String key, String recurrence})>[
   (key: 'plants', recurrence: 'weekly'),
   (key: 'sheets', recurrence: 'weekly'),
 ];
+
+/// Mantenimiento de la casa: lo que toca cada pocos meses o cada año. El
+/// título visible sale del ARB (`maintPreset`, por [key]).
+const maintenancePresets =
+    <({String key, int count, String unit, IconData icon})>[
+      (key: 'fridge', count: 1, unit: 'month', icon: Icons.kitchen_rounded),
+      (
+        key: 'washer',
+        count: 1,
+        unit: 'month',
+        icon: Icons.local_laundry_service_rounded,
+      ),
+      (key: 'filters', count: 3, unit: 'month', icon: Icons.air_rounded),
+      (key: 'oven', count: 3, unit: 'month', icon: Icons.microwave_rounded),
+      (key: 'mattress', count: 6, unit: 'month', icon: Icons.bed_rounded),
+      (key: 'curtains', count: 6, unit: 'month', icon: Icons.curtains_rounded),
+      (
+        key: 'boiler',
+        count: 1,
+        unit: 'year',
+        icon: Icons.local_fire_department_rounded,
+      ),
+      (key: 'car', count: 1, unit: 'year', icon: Icons.directions_car_rounded),
+    ];

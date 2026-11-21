@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/dashboard_prefs.dart';
@@ -51,6 +52,10 @@ class _TasksScreenState extends State<TasksScreen> {
   // instante, sin esperar a la base de datos.
   final Set<String> _completing = {};
 
+  // Sugerencias de mantenimiento ocultadas por la persona (en este móvil).
+  static const _maintHiddenKey = 'tasks_maint_suggestions_hidden';
+  bool _maintHidden = false;
+
   // Canal Realtime de las tareas del hogar. Se abre UNA sola vez en initState
   // (filtrado por home_id) y se cierra en dispose. Si el otro miembro del hogar
   // completa o cambia una tarea, recargamos al instante.
@@ -67,6 +72,130 @@ class _TasksScreenState extends State<TasksScreen> {
     super.initState();
     _future = _load();
     _subscribeRealtime();
+    _loadMaintHidden();
+  }
+
+  Future<void> _loadMaintHidden() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hidden = prefs.getBool(_maintHiddenKey) ?? false;
+      if (mounted && hidden) setState(() => _maintHidden = true);
+    } catch (_) {}
+  }
+
+  Future<void> _hideMaintSuggestions() async {
+    setState(() => _maintHidden = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_maintHiddenKey, true);
+    } catch (_) {}
+  }
+
+  /// Añade una tarea de mantenimiento sugerida. Pregunta si toca ya o si se
+  /// hizo hace poco (entonces la primera vez es dentro de un intervalo).
+  Future<void> _addMaintenance(
+    ({String key, int count, String unit, IconData icon}) p,
+    _TasksData data,
+  ) async {
+    final user = _client.auth.currentUser;
+    if (user == null || data.homeId == null) return;
+    final title = context.l.maintPreset(p.key);
+    final today = DateUtils.dateOnly(DateTime.now());
+    final draft = HomeTask(
+      id: '',
+      homeId: data.homeId!,
+      title: title,
+      recurrence: 'custom_interval',
+      intervalCount: p.count,
+      intervalUnit: p.unit,
+    );
+    final later = draft.computeNextDue(today)!;
+    final locale = Localizations.localeOf(context).toString();
+    final dueNow = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                leading: _KindBadge(kind: TaskKind.mantenimiento, size: 44),
+                title: Text(title, style: AppTextStyles.title),
+                subtitle: Text(intervalLabel(ctx, p.count, p.unit)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                ),
+                child: Text(ctx.l.tskMaintAsk, style: AppTextStyles.bodyMuted),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.event_available_rounded,
+                  color: AppColors.terracotta,
+                ),
+                title: Text(
+                  ctx.l.tskMaintDueNow,
+                  style: AppTextStyles.bodyStrong,
+                ),
+                subtitle: Text(ctx.l.tskMaintDueNowSub),
+                onTap: () => Navigator.of(ctx).pop(true),
+              ),
+              ListTile(
+                leading: Icon(Icons.history_rounded, color: AppColors.sage),
+                title: Text(
+                  ctx.l.tskMaintRecent,
+                  style: AppTextStyles.bodyStrong,
+                ),
+                subtitle: Text(
+                  ctx.l.tskMaintRecentSub(
+                    DateFormat.yMMMd(locale).format(later),
+                  ),
+                ),
+                onTap: () => Navigator.of(ctx).pop(false),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (dueNow == null || !mounted) return;
+    final task = HomeTask(
+      id: '',
+      homeId: draft.homeId,
+      title: title,
+      recurrence: 'custom_interval',
+      intervalCount: p.count,
+      intervalUnit: p.unit,
+      dueDate: dueNow ? today : later,
+    );
+    HapticFeedback.lightImpact();
+    try {
+      await _client.from('tasks').insert(task.toInsertMap(createdBy: user.id));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+      return;
+    }
+    _reload();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(context.l.tskMaintAdded)));
   }
 
   /// Abre el canal Realtime filtrado por el hogar. Resuelve el home_id sin
@@ -709,8 +838,27 @@ class _TasksScreenState extends State<TasksScreen> {
               ..sort(_byDue);
             final today = pending.where(_isDueTodayOrOverdue).toList();
             final upcoming = pending
-                .where((t) => !_isDueTodayOrOverdue(t))
+                .where((t) => !_isDueTodayOrOverdue(t) && !t.isMaintenance)
                 .toList();
+            // Mantenimiento: lo de cada mes o más va aparte, con su próxima
+            // fecha, y no llena "Próximos días".
+            final maint = pending
+                .where((t) => !_isDueTodayOrOverdue(t) && t.isMaintenance)
+                .toList();
+            final titles = {
+              for (final t in data.tasks) t.title.trim().toLowerCase(),
+            };
+            final maintSuggestions = _maintHidden
+                ? const <
+                    ({String key, int count, String unit, IconData icon})
+                  >[]
+                : [
+                    for (final p in maintenancePresets)
+                      if (!titles.contains(
+                        context.l.maintPreset(p.key).toLowerCase(),
+                      ))
+                        p,
+                  ];
             // Hechas hoy: las puntuales marcadas y las recurrentes completadas.
             final doneToday = visible
                 .where((t) => _isToday(t.completedAt ?? t.lastCompletedAt))
@@ -828,6 +976,16 @@ class _TasksScreenState extends State<TasksScreen> {
                         ],
                       ],
                     ),
+                  ),
+                ],
+                if (maint.isNotEmpty || maintSuggestions.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xl),
+                  _MaintenanceSection(
+                    tasks: maint,
+                    suggestions: maintSuggestions,
+                    onTapTask: (t) => _showActions(t, data),
+                    onAdd: (p) => _addMaintenance(p, data),
+                    onHide: _hideMaintSuggestions,
                   ),
                 ],
               ],
@@ -1287,12 +1445,22 @@ String taskRepeatLabel(BuildContext context, HomeTask t) =>
     switch (t.recurrence) {
       'daily' => context.l.planEveryDays(1),
       'weekly' => context.l.planEveryWeeks(1),
-      'custom_interval' =>
-        t.intervalUnit == 'week'
-            ? context.l.planEveryWeeks(t.intervalCount ?? 1)
-            : context.l.planEveryDays(t.intervalCount ?? 1),
+      'custom_interval' => intervalLabel(
+        context,
+        t.intervalCount ?? 1,
+        t.intervalUnit,
+      ),
       'custom_weekdays' => context.l.tskSomeDays,
       _ => context.l.tskOnce,
+    };
+
+/// "Cada 3 meses", "Cada año"...
+String intervalLabel(BuildContext context, int n, String? unit) =>
+    switch (unit) {
+      'week' => context.l.planEveryWeeks(n),
+      'month' => context.l.planEveryMonths(n),
+      'year' => context.l.planEveryYears(n),
+      _ => context.l.planEveryDays(n),
     };
 
 /// Icono de la tarea en su color: así se reconoce sin leer.
@@ -1703,6 +1871,116 @@ class _UpcomingRow extends StatelessWidget {
   }
 }
 
+/// Mantenimiento de la casa: lo de cada mes o más (filtros, caldera, ITV...)
+/// con su próxima fecha, y sugerencias para añadir con un toque.
+class _MaintenanceSection extends StatelessWidget {
+  const _MaintenanceSection({
+    required this.tasks,
+    required this.suggestions,
+    required this.onTapTask,
+    required this.onAdd,
+    required this.onHide,
+  });
+
+  final List<HomeTask> tasks;
+  final List<({String key, int count, String unit, IconData icon})> suggestions;
+  final ValueChanged<HomeTask> onTapTask;
+  final ValueChanged<({String key, int count, String unit, IconData icon})>
+  onAdd;
+  final VoidCallback onHide;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionTitle(
+          context.l.tskMaintTitle,
+          count: tasks.isEmpty ? null : tasks.length,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xs,
+            bottom: AppSpacing.md,
+          ),
+          child: Text(context.l.tskMaintHint, style: AppTextStyles.bodyMuted),
+        ),
+        if (tasks.isNotEmpty)
+          Container(
+            decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (i, t) in tasks.indexed) ...[
+                  if (i > 0) Divider(height: 1, color: AppColors.line),
+                  _UpcomingRow(
+                    task: t,
+                    who: (t.nextDue ?? t.dueDate) == null
+                        ? null
+                        : context.l.tskMaintNext(
+                            DateFormat.yMMMd(
+                              locale,
+                            ).format((t.nextDue ?? t.dueDate)!),
+                          ),
+                    onTap: () => onTapTask(t),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        if (suggestions.isNotEmpty) ...[
+          if (tasks.isNotEmpty) const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.xs),
+                child: Text(
+                  context.l.tskMaintSuggest,
+                  style: AppTextStyles.bodyStrong,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: onHide,
+                child: Text(context.l.tskMaintHide),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          // Rejilla de 4 por fila, sin deslizar.
+          LayoutBuilder(
+            builder: (context, c) {
+              final w = (c.maxWidth - AppSpacing.sm * 3) / 4;
+              return Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final p in suggestions)
+                    SizedBox(
+                      width: w,
+                      child: _PresetTile(
+                        title: context.l.maintPreset(p.key),
+                        selected: false,
+                        icon: p.icon,
+                        kind: TaskKind.mantenimiento,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onAdd(p);
+                        },
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Tarea hecha hoy, en pequeño y apagada.
 class _DoneChip extends StatelessWidget {
   const _DoneChip({required this.task});
@@ -1755,12 +2033,23 @@ class _TaskSheet extends StatefulWidget {
   State<_TaskSheet> createState() => _TaskSheetState();
 }
 
+/// Repeticiones largas que se ofrecen al crear una tarea (cada, unidad).
+const _longRepeats = <(int, String)>[
+  (1, 'month'),
+  (3, 'month'),
+  (6, 'month'),
+  (1, 'year'),
+];
+
 class _TaskSheetState extends State<_TaskSheet> {
   final _title = TextEditingController();
   final _notes = TextEditingController();
   int _when = 0; // 0 hoy, 1 mañana, 2 fecha elegida, -1 sin fecha
   DateTime? _date;
   String _repeat = 'once';
+  // Para 'custom_interval': cada [_count] [_unit] (día, semana, mes, año).
+  int? _count;
+  String? _unit;
   final Set<int> _weekdays = {}; // 1=Lun..7=Dom
   String? _assigned;
   bool _rotates = false;
@@ -1779,6 +2068,8 @@ class _TaskSheetState extends State<_TaskSheet> {
     _title.text = t.title;
     _notes.text = t.notes ?? '';
     _repeat = t.recurrence;
+    _count = t.intervalCount;
+    _unit = t.intervalUnit;
     _weekdays.addAll(t.weekdays);
     _assigned = widget.members.containsKey(t.assignedTo) ? t.assignedTo : null;
     _rotates = t.rotates;
@@ -1890,8 +2181,8 @@ class _TaskSheetState extends State<_TaskSheet> {
         points: _points,
         effortPoints: original?.effortPoints ?? 10,
         recurrence: _repeat,
-        intervalCount: original?.intervalCount,
-        intervalUnit: original?.intervalUnit,
+        intervalCount: _count,
+        intervalUnit: _unit,
         weekdays: _weekdays.toList()..sort(),
         assignedTo: _rotates && _repeat != 'once'
             ? (_assigned ?? rotationOrder(widget.members).firstOrNull)
@@ -1959,15 +2250,31 @@ class _TaskSheetState extends State<_TaskSheet> {
     final dateLabel = _when == 2 && _date != null
         ? '${_date!.day}/${_date!.month}'
         : context.l.tskOtherDay;
-    final repeats = [
-      ('once', context.l.no),
-      ('daily', context.l.planEveryDays(1)),
-      ('weekly', context.l.planEveryWeeks(1)),
-      ('custom_weekdays', context.l.tskSomeDays),
-      // Las de "cada N días" se crearon antes; se conservan al editarlas.
-      if (widget.task?.recurrence == 'custom_interval')
-        ('custom_interval', taskRepeatLabel(context, widget.task!)),
+    // (recurrencia, cada cuántos, unidad, texto). Las largas son para el
+    // mantenimiento de la casa: filtros, caldera, ITV...
+    final repeats = <(String, int?, String?, String)>[
+      ('once', null, null, context.l.no),
+      ('daily', null, null, context.l.planEveryDays(1)),
+      ('weekly', null, null, context.l.planEveryWeeks(1)),
+      ('custom_weekdays', null, null, context.l.tskSomeDays),
+      for (final (n, u) in _longRepeats)
+        ('custom_interval', n, u, intervalLabel(context, n, u)),
     ];
+    // Una "cada N" que no está entre las de arriba (de antes) se conserva.
+    final t = widget.task;
+    if (t != null &&
+        t.recurrence == 'custom_interval' &&
+        !_longRepeats.contains((
+          t.intervalCount ?? 1,
+          t.intervalUnit ?? 'day',
+        ))) {
+      repeats.add((
+        'custom_interval',
+        t.intervalCount,
+        t.intervalUnit,
+        taskRepeatLabel(context, t),
+      ));
+    }
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
@@ -2002,6 +2309,8 @@ class _TaskSheetState extends State<_TaskSheet> {
                               setState(() {
                                 _title.text = context.l.taskPreset(p.key);
                                 _repeat = p.recurrence;
+                                _count = null;
+                                _unit = null;
                               });
                             },
                           ),
@@ -2060,9 +2369,15 @@ class _TaskSheetState extends State<_TaskSheet> {
               children: [
                 for (final r in repeats)
                   _chip(
-                    r.$2,
-                    _repeat == r.$1,
-                    () => setState(() => _repeat = r.$1),
+                    r.$4,
+                    _repeat == r.$1 &&
+                        (r.$1 != 'custom_interval' ||
+                            (_count == r.$2 && _unit == r.$3)),
+                    () => setState(() {
+                      _repeat = r.$1;
+                      _count = r.$2;
+                      _unit = r.$3;
+                    }),
                   ),
               ],
             ),
@@ -2315,14 +2630,20 @@ class _PresetTile extends StatelessWidget {
     required this.title,
     required this.selected,
     required this.onTap,
+    this.icon,
+    this.kind,
   });
   final String title;
   final bool selected;
   final VoidCallback onTap;
 
+  /// Icono y tipo propios; si no, salen del título.
+  final IconData? icon;
+  final TaskKind? kind;
+
   @override
   Widget build(BuildContext context) {
-    final kind = taskKindFor(title);
+    final kind = this.kind ?? taskKindFor(title);
     final (bg, fg) = kind.colors;
     return Material(
       color: AppColors.card,
@@ -2349,7 +2670,7 @@ class _PresetTile extends StatelessWidget {
                   color: bg,
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(kind.icon, color: fg, size: 22),
+                child: Icon(icon ?? kind.icon, color: fg, size: 22),
               ),
               const SizedBox(height: 6),
               Text(

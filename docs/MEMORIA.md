@@ -115,6 +115,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `Reminders` como tipo `notes`, borrar con Deshacer) y tarjeta "Para
   ordenar" en Hoy. `saveCapture` (en `quick_capture_sheet.dart`) guarda en
   compra, En casa, tareas o bandeja. En Hoy y Comida el `+` abre en Nota.
+- Mantenimiento de la casa: tareas `custom_interval` con `interval_unit`
+  'month'/'year' (migración 0094; meses por calendario con `addMonths`).
+  `HomeTask.isMaintenance` (mes o más) las saca de "Próximos días" a su
+  sección en Tareas con la próxima fecha y sugerencias en rejilla
+  (`maintenancePresets` en `utils/task_kinds.dart`: nevera, lavadora,
+  filtros, horno, colchón, cortinas, caldera, ITV). Al añadir pregunta si
+  toca ya o se hizo hace poco. "Ocultar sugerencias" se guarda en el móvil.
 - Iconos de producto: `widgets/product_icons.dart` (palabra clave → nombre de
   icono). Nada de iconos de Microsoft (Tessa no los quiere): solo sus dibujos,
   apuntados en `_own` (`assets/icons/products/`). Lo genérico ("cebollas",
