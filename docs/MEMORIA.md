@@ -260,6 +260,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   `com.prezhome.app://login-callback`), iOS solo iPhone, firma Android con
   `android/key.properties`. Política en `docs/privacidad.md`; ficha y pasos en
   `/mnt/project-files/tiendas/`. En iPhone hay "Continuar con Apple".
+  Play exige 16 KB: todas las `.so` deben tener LOAD ≥ 0x4000 (comprobar con
+  `llvm-readelf -lW` del NDK). `mobile_scanner` 7.x ya lo cumple; la 5.x no.
+- Probar en el Pixel de Tessa: `adb` está en
+  `%LOCALAPPDATA%/Android/Sdk/platform-tools`; actividad
+  `com.prezhome.app/com.example.prezhome.MainActivity`. No hacer pulsaciones
+  largas con `input swipe` sobre opciones: Flutter lo cuenta como toque.
 - Borrar cuenta (lo piden las tiendas): "Borrar mi cuenta" al final de Mi
   Hogar → función `delete-account` (sale del hogar, borra el hogar si queda
   vacío y el usuario de Auth).
