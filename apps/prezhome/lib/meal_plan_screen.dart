@@ -1163,7 +1163,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           final window = draft.eatingWindow;
           Widget mealSwitch(String type) => SwitchListTile(
             value: !hidden.contains(type),
-            activeThumbColor: AppColors.woodDark,
             title: Text(context.l.mealType(type)),
             onChanged: (v) =>
                 setSheet(() => v ? hidden.remove(type) : hidden.add(type)),
@@ -1193,7 +1192,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             },
           );
           Widget title(String text) => Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
             child: Text(
               text,
               style: TextStyle(
@@ -1265,7 +1264,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     for (final t in const ['lunch', 'dinner'])
                       SwitchListTile(
                         value: dessertWith.contains(t),
-                        activeThumbColor: AppColors.woodDark,
                         title: Text(context.l.mealType(t)),
                         subtitle: t == 'lunch'
                             ? Text(context.l.planAutoDessertHint)
@@ -1332,7 +1330,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     if (!kIsWeb)
                       SwitchListTile(
                         value: busyAware,
-                        activeThumbColor: AppColors.woodDark,
                         title: Text(context.l.planBusyAware),
                         subtitle: Text(context.l.planBusyAwareHint),
                         onChanged: (v) async {

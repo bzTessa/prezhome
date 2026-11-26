@@ -26,6 +26,7 @@ import 'theme/theme_preference.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/list_skeleton.dart';
+import 'widgets/segmented_pill.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({
@@ -762,25 +763,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               const SizedBox(height: 8),
               ValueListenableBuilder(
                 valueListenable: ThemePreference.mode,
-                builder: (context, mode, _) => SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<AppThemeMode>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (final m in AppThemeMode.values)
-                        ButtonSegment(
-                          value: m,
-                          label: Text(context.l.themeMode(m.name)),
-                        ),
-                    ],
-                    selected: {mode},
-                    onSelectionChanged: (s) => ThemePreference.set(s.first),
-                    style: SegmentedButton.styleFrom(
-                      selectedBackgroundColor: AppColors.wood,
-                      selectedForegroundColor: AppColors.ink,
-                      foregroundColor: AppColors.ink,
-                    ),
-                  ),
+                builder: (context, mode, _) => SegmentedPill(
+                  labels: [
+                    for (final m in AppThemeMode.values)
+                      context.l.themeMode(m.name),
+                  ],
+                  selected: AppThemeMode.values.indexOf(mode),
+                  onChanged: (i) => ThemePreference.set(AppThemeMode.values[i]),
                 ),
               ),
               const SizedBox(height: 16),
@@ -829,7 +818,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               // Gastos y tickets siempre; los puntos dentro solo con el
               // "Modo Puntos".
               _settingTile(
-                icon: Icons.insights_rounded,
+                icon: Icons.bar_chart_rounded,
                 title: context.l.hhYourData,
                 subtitle: context.l.hhYourDataSub,
                 iconBg: AppColors.lilacBg,

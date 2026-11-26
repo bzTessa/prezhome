@@ -1365,7 +1365,7 @@ class _CatchUpCard extends StatelessWidget {
           onPressed: onTap,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.terracotta,
-            foregroundColor: AppColors.onBrand,
+            foregroundColor: AppColors.onTerracotta,
             visualDensity: VisualDensity.compact,
           ),
           child: Text(context.l.tskCatchUp),
