@@ -172,13 +172,22 @@ class _ZoneTile extends StatelessWidget {
               AppMotion.fast,
               reduceMotion: AppMotion.reduceMotionOf(context),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
             decoration: BoxDecoration(
-              color: selected ? s.bg : AppColors.card,
+              color: selected
+                  ? s.bg
+                  : count > 0
+                  ? s.bg.withValues(alpha: 0.32)
+                  : AppColors.card,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: selected
-                  ? Border.all(color: s.fg, width: 1.75)
-                  : AppElevation.border,
+                  ? Border.all(color: s.fg, width: 1.5)
+                  : Border.all(
+                      color: count > 0
+                          ? s.fg.withValues(alpha: 0.16)
+                          : AppColors.cardEdge,
+                      width: 1,
+                    ),
               boxShadow: selected ? AppElevation.level1 : AppElevation.level0,
             ),
             child: Stack(
@@ -190,12 +199,12 @@ class _ZoneTile extends StatelessWidget {
                     children: [
                       Image.asset(
                         z.zone.assetPath,
-                        width: 32,
-                        height: 32,
+                        width: 46,
+                        height: 46,
                         fit: BoxFit.contain,
-                        cacheWidth: 96,
+                        cacheWidth: 138,
                         errorBuilder: (_, _, _) =>
-                            Icon(s.icon, size: 28, color: s.fg),
+                            Icon(s.icon, size: 36, color: s.fg),
                       ),
                       const SizedBox(height: 6),
                       Text(

@@ -7,7 +7,6 @@ import '../../theme/app_motion.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/shopping_display.dart';
 import '../animations/animated_counter.dart';
-import '../animations/press_scale.dart';
 import '../animations/spring_value.dart';
 import '../../utils/money.dart';
 import '../../l10n/l10n.dart';
@@ -72,49 +71,79 @@ class ShoppingSummaryHeader extends StatelessWidget {
     final total = pending + done;
     final progress = total == 0 ? 0.0 : done / total;
     if (inStore) return _storeHeader(context, total, progress);
-    // Cabecera ligera, sin tarjeta, como en el concepto: súper arriba en
-    // pequeño, la lista en grande con lo que llevas y el precio a la derecha,
-    // una barra fina y una fila de acciones.
     final iconStyle = IconButton.styleFrom(
-      foregroundColor: AppColors.woodDark,
+      foregroundColor: AppColors.inkMuted,
+      backgroundColor: AppColors.card,
+      side: BorderSide(color: AppColors.cardEdge),
       visualDensity: VisualDensity.compact,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (onTapStore != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              onTap: onTapStore,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.place_outlined,
-                      size: 14,
-                      color: AppColors.terracottaText,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      (storeLabel ?? context.l.shopPickStore).toUpperCase(),
-                      style: AppTextStyles.label.copyWith(
+        Row(
+          children: [
+            if (onTapStore != null)
+              InkWell(
+                onTap: onTapStore,
+                borderRadius: AppRadius.pillRadius,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.terracottaBg,
+                    borderRadius: AppRadius.pillRadius,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.storefront_rounded,
+                        size: 14,
                         color: AppColors.terracottaText,
                       ),
-                    ),
-                    Icon(
-                      Icons.expand_more_rounded,
-                      size: 16,
-                      color: AppColors.terracottaText,
-                    ),
-                  ],
+                      const SizedBox(width: 5),
+                      Text(
+                        (storeLabel ?? context.l.shopPickStore),
+                        style: AppTextStyles.label.copyWith(
+                          color: AppColors.terracottaText,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        size: 16,
+                        color: AppColors.terracottaText,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
+            const Spacer(),
+            if (onToggleStore != null && total > 0)
+              FilledButton.icon(
+                onPressed: onToggleStore,
+                icon: const Icon(Icons.shopping_bag_outlined, size: 16),
+                label: Text(context.l.shopStoreModeOn),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.terracotta,
+                  foregroundColor: AppColors.onTerracotta,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  minimumSize: const Size(0, 34),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -122,23 +151,31 @@ class ShoppingSummaryHeader extends StatelessWidget {
               child: InkWell(
                 onTap: onTapList,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        listName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.display,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          listName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.display,
+                        ),
                       ),
-                    ),
-                    Icon(Icons.expand_more_rounded, color: AppColors.inkMuted),
-                  ],
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-            if (total > 0)
+            if (total > 0) ...[
+              const SizedBox(width: AppSpacing.sm),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -159,61 +196,98 @@ class ShoppingSummaryHeader extends StatelessWidget {
                     ),
                 ],
               ),
+            ],
           ],
         ),
         if (total > 0) ...[
           const SizedBox(height: AppSpacing.sm),
           CartProgressBar(progress: progress),
         ],
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
-            IconButton(
-              tooltip: context.l.shopAddFromPlan,
-              onPressed: generating ? null : onGenerate,
-              style: iconStyle,
-              icon: generating
-                  ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.event_note_rounded),
+            _HeaderActionChip(
+              icon: Icons.event_note_rounded,
+              label: context.l.shopFromPlanAction,
+              loading: generating,
+              onTap: generating ? null : onGenerate,
             ),
-            if (onShare != null)
+            if (onCompare != null && pending > 0) ...[
+              const SizedBox(width: AppSpacing.sm),
+              _HeaderActionChip(
+                icon: Icons.compare_arrows_rounded,
+                label: context.l.shopCompare,
+                onTap: onCompare,
+              ),
+            ],
+            const Spacer(),
+            if (onShare != null) ...[
               IconButton(
                 tooltip: context.l.shopShareList,
                 onPressed: onShare,
                 style: iconStyle,
-                icon: const Icon(Icons.ios_share_rounded),
+                icon: const Icon(Icons.ios_share_rounded, size: 18),
               ),
-            if (onCompare != null && pending > 0)
-              IconButton(
-                tooltip: context.l.shopCompare,
-                onPressed: onCompare,
-                style: iconStyle,
-                icon: const Icon(Icons.compare_arrows_rounded),
-              ),
+              const SizedBox(width: AppSpacing.xs),
+            ],
             IconButton(
               tooltip: context.l.shopListOptions,
               onPressed: onOptions,
               style: iconStyle,
-              icon: const Icon(Icons.tune_rounded),
+              icon: const Icon(Icons.tune_rounded, size: 18),
             ),
-            const Spacer(),
-            if (onToggleStore != null && total > 0)
-              FilledButton.icon(
-                onPressed: onToggleStore,
-                icon: const Icon(Icons.storefront_rounded, size: 18),
-                label: Text(context.l.shopStoreModeOn),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.terracotta,
-                  foregroundColor: AppColors.onBrand,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _HeaderActionChip extends StatelessWidget {
+  const _HeaderActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.loading = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.card,
+      shape: StadiumBorder(side: BorderSide(color: AppColors.cardEdge)),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading)
+                const SizedBox.square(
+                  dimension: 15,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(icon, size: 16, color: AppColors.terracottaText),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -382,7 +456,7 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 20, color: AppColors.woodDark),
+        Icon(icon, size: 20, color: AppColors.terracottaText),
         const SizedBox(width: AppSpacing.sm),
         Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
       ],
@@ -410,7 +484,7 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
             tooltip: context.l.shopAddProduct,
             onPressed: _submit,
             icon: const Icon(Icons.add_rounded),
-            color: AppColors.woodDark,
+            color: AppColors.terracottaText,
           ),
           Expanded(
             child: TextField(
@@ -435,13 +509,13 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
               tooltip: context.l.shopSearchStore,
               onPressed: _search,
               icon: const Icon(Icons.storefront_rounded),
-              color: AppColors.woodDark,
+              color: AppColors.terracottaText,
             ),
           // Menú de acciones CLARAS con nombre (ya no un formulario sin
           // contexto): buscar en el súper y añadir con detalles.
           PopupMenuButton<String>(
             tooltip: context.l.moreOptions,
-            icon: const Icon(Icons.more_horiz_rounded),
+            icon: Icon(Icons.more_horiz_rounded, color: AppColors.inkMuted),
             color: AppColors.cream,
             onSelected: (value) {
               switch (value) {
@@ -467,6 +541,122 @@ class _ShoppingQuickAddBarState extends State<ShoppingQuickAddBar> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Cabecera plegable de un pasillo (reutilizable en SliverList virtualizado y
+/// en [ShoppingSection]).
+class ShoppingAisleHeader extends StatelessWidget {
+  const ShoppingAisleHeader({
+    super.key,
+    required this.title,
+    required this.count,
+    required this.expanded,
+    required this.onToggle,
+    this.icon,
+    this.iconColor,
+    this.iconBackground,
+    this.complete = false,
+    this.trailing,
+  });
+
+  final String title;
+  final int count;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final IconData? icon;
+  final Color? iconColor;
+  final Color? iconBackground;
+  final bool complete;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: complete ? 0.55 : 1,
+      duration: AppMotion.fast,
+      child: InkWell(
+        onTap: onToggle,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xs,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              if (complete || icon != null) ...[
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: complete
+                        ? AppColors.done
+                        : iconBackground ?? AppColors.peachBg,
+                    shape: BoxShape.circle,
+                    border: complete
+                        ? null
+                        : Border.all(
+                            color: (iconColor ?? AppColors.peach).withValues(
+                              alpha: 0.25,
+                            ),
+                            width: 1,
+                          ),
+                  ),
+                  child: Icon(
+                    complete ? Icons.check_rounded : icon,
+                    size: 15,
+                    color: complete
+                        ? AppColors.onTerracotta
+                        : iconColor ?? AppColors.peach,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: complete
+                              ? FontWeight.w600
+                              : FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ?trailing,
+              AnimatedRotation(
+                turns: expanded ? 0 : -0.25,
+                duration: AppMotion.fast,
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 22,
+                  color: AppColors.inkMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -511,86 +701,16 @@ class ShoppingSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AnimatedOpacity(
-            opacity: complete ? 0.55 : 1,
-            duration: AppMotion.normal,
-            child: InkWell(
-              onTap: onToggle,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    if (complete || icon != null) ...[
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: complete
-                              ? AppColors.done
-                              : iconBackground ?? AppColors.peachBg,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.stroke,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Icon(
-                          complete ? Icons.check_rounded : icon,
-                          size: 15,
-                          color: complete
-                              ? AppColors.onBrand
-                              : iconColor ?? AppColors.peach,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                    ],
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: complete
-                                    ? FontWeight.w600
-                                    : FontWeight.w800,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            '$count',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.woodDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ?trailing,
-                    AnimatedRotation(
-                      turns: expanded ? 0 : -0.25,
-                      duration: AppMotion.fast,
-                      child: Icon(
-                        Icons.expand_more_rounded,
-                        size: 22,
-                        color: AppColors.inkMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          ShoppingAisleHeader(
+            title: title,
+            count: count,
+            expanded: expanded,
+            onToggle: onToggle,
+            icon: icon,
+            iconColor: iconColor,
+            iconBackground: iconBackground,
+            complete: complete,
+            trailing: trailing,
           ),
           AnimatedSize(
             duration: AppMotion.effectiveDuration(
@@ -600,14 +720,25 @@ class ShoppingSection extends StatelessWidget {
             curve: AppMotion.springCurve(AppMotion.fluidDefault),
             alignment: Alignment.topCenter,
             child: expanded
-                ? Column(
-                    children: [
-                      for (var i = 0; i < children.length; i++)
-                        Padding(
-                          padding: EdgeInsets.only(top: i == 0 ? 2 : 8),
-                          child: children[i],
-                        ),
-                    ],
+                ? Container(
+                    decoration: AppTheme.surfaceDecoration(
+                      radius: AppRadius.lg,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < children.length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              indent: 56,
+                              endIndent: 16,
+                              color: AppColors.line,
+                            ),
+                          children[i],
+                        ],
+                      ],
+                    ),
                   )
                 : const SizedBox(width: double.infinity),
           ),
@@ -617,10 +748,9 @@ class ShoppingSection extends StatelessWidget {
   }
 }
 
-/// Fila de un producto como tarjeta táctil: se marca tocando cualquier parte
-/// (responde nada más poner el dedo), lleva el icono del producto en un hueco
-/// crema y, si se puede, una pastilla para cambiar la cantidad. Mantener
-/// pulsado abre las acciones.
+/// Fila de un producto: se marca tocando la fila (sin animaciones pesadas
+/// por cada fila), lleva foto/ilustración y una píldora compacta de cantidad
+/// que se expande a − / + al tocarla cuando [compactQuantity] es true.
 class ShoppingItemTile extends StatelessWidget {
   const ShoppingItemTile({
     super.key,
@@ -635,6 +765,9 @@ class ShoppingItemTile extends StatelessWidget {
     this.unit,
     this.onQuantityChanged,
     this.packSize,
+    this.compactQuantity = false,
+    this.quantityExpanded = true,
+    this.onQuantityTap,
   });
 
   final String name;
@@ -657,115 +790,158 @@ class ShoppingItemTile extends StatelessWidget {
   /// en envase.
   final double? packSize;
 
+  /// Si true, en reposo muestra la píldora compacta y expande a − / + solo
+  /// cuando [quantityExpanded] es true (al tocar la píldora).
+  final bool compactQuantity;
+  final bool quantityExpanded;
+  final VoidCallback? onQuantityTap;
+
   @override
   Widget build(BuildContext context) {
     final qty = quantityLabel?.trim() ?? '';
+    final showStepper =
+        onQuantityChanged != null &&
+        !checked &&
+        (!compactQuantity || quantityExpanded);
+    final showCompactQty =
+        onQuantityChanged != null &&
+        !checked &&
+        compactQuantity &&
+        !quantityExpanded;
     return Semantics(
       checked: checked,
       label: name,
-      child: PressScale(
-        onTap: onToggle,
-        onLongPress: onLongPress,
-        pressedScale: 0.98,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 60),
-          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-          decoration: AppTheme.tactileDecoration(shadow: 2),
-          child: SpringValue(
-            value: checked ? 1 : 0,
-            spring: AppMotion.fluidBouncy,
-            builder: (context, t, _) {
-              final f = t.clamp(0.0, 1.0);
-              return Row(
-                children: [
-                  _CheckCircle(t: t),
-                  const SizedBox(width: AppSpacing.md),
-                  if (leading != null) ...[
-                    Opacity(
-                      opacity: 1 - 0.45 * f,
-                      child: Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.iconTile,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        alignment: Alignment.center,
-                        child: leading,
+      child: Material(
+        color: AppColors.card,
+        child: InkWell(
+          onTap: onToggle,
+          onLongPress: onLongPress,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 58),
+            padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+            child: Row(
+              children: [
+                _CheckCircle(checked: checked),
+                const SizedBox(width: AppSpacing.md),
+                if (leading != null) ...[
+                  AnimatedOpacity(
+                    opacity: checked ? 0.55 : 1,
+                    duration: AppMotion.fast,
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.iconTile,
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      clipBehavior: Clip.antiAlias,
+                      alignment: Alignment.center,
+                      child: leading,
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                  ],
-                  Expanded(
-                    child: Opacity(
-                      opacity: 1 - 0.45 * f,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              color: AppColors.ink,
-                              // El tachado aparece con el muelle.
-                              decoration: TextDecoration.lineThrough,
-                              decorationThickness: 2,
-                              decorationColor: AppColors.ink.withValues(
-                                alpha: f,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                ],
+                Expanded(
+                  child: AnimatedOpacity(
+                    opacity: checked ? 0.55 : 1,
+                    duration: AppMotion.fast,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                            color: AppColors.ink,
+                            decoration: checked
+                                ? TextDecoration.lineThrough
+                                : null,
+                            decorationThickness: 2,
+                            decorationColor: AppColors.ink,
+                          ),
+                        ),
+                        if (subtitle != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              subtitle!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.inkMuted,
                               ),
                             ),
                           ),
-                          if (subtitle != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                subtitle!,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
-                  if (onQuantityChanged != null && !checked) ...[
-                    const SizedBox(width: AppSpacing.sm),
-                    PressScaleExclude(
-                      child: _LiveQuantityStepper(
-                        quantity: quantity,
-                        unit: unit,
-                        packSize: packSize,
-                        onCommit: onQuantityChanged!,
+                ),
+                if (showStepper) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  _LiveQuantityStepper(
+                    quantity: quantity,
+                    unit: unit,
+                    packSize: packSize,
+                    onCommit: onQuantityChanged!,
+                  ),
+                ] else if (showCompactQty) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Semantics(
+                    button: true,
+                    label: qty.isEmpty ? '1' : qty,
+                    child: Material(
+                      color: AppColors.iconTile,
+                      shape: StadiumBorder(
+                        side: BorderSide(color: AppColors.cardEdge),
                       ),
-                    ),
-                  ] else if (qty.isNotEmpty) ...[
-                    const SizedBox(width: AppSpacing.sm),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: Text(
-                        qty,
-                        style: TextStyle(
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: checked
-                              ? AppColors.inkMuted
-                              : AppColors.woodDark,
+                      child: InkWell(
+                        customBorder: const StadiumBorder(),
+                        onTap: onQuantityTap,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 6,
+                          ),
+                          child: Text(
+                            qty.isEmpty ? '1 ud' : qty,
+                            style: TextStyle(
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ],
+                  ),
+                ] else if (qty.isNotEmpty) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Text(
+                      qty,
+                      style: TextStyle(
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: checked
+                            ? AppColors.inkMuted
+                            : AppColors.inkMuted,
+                      ),
+                    ),
+                  ),
                 ],
-              );
-            },
+              ],
+            ),
           ),
         ),
       ),
@@ -773,37 +949,36 @@ class ShoppingItemTile extends StatelessWidget {
   }
 }
 
-/// Círculo de 26 px que se rellena de verde con un rebote elástico. [t] va
-/// de 0 (sin marcar) a 1 (marcado) y puede pasarse de 1 con el muelle.
+/// Círculo de 26 px que se rellena de verde al marcar.
 class _CheckCircle extends StatelessWidget {
-  const _CheckCircle({required this.t});
+  const _CheckCircle({required this.checked});
 
-  final double t;
+  final bool checked;
 
   @override
   Widget build(BuildContext context) {
-    final f = t.clamp(0.0, 1.0);
-    return Container(
+    return AnimatedContainer(
+      duration: AppMotion.fast,
+      curve: AppMotion.easeOut,
       width: 26,
       height: 26,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Color.lerp(Colors.transparent, AppColors.done, f),
+        color: checked ? AppColors.done : Colors.transparent,
         border: Border.all(
-          color: Color.lerp(AppColors.stroke, AppColors.done, f)!,
+          color: checked
+              ? AppColors.done
+              : AppColors.woodDark.withValues(alpha: 0.45),
           width: 2,
         ),
       ),
-      child: f == 0
-          ? null
-          : Transform.scale(
-              scale: popScale(f, rest: 0.4, peak: 1.25),
-              child: const Icon(
-                Icons.check_rounded,
-                size: 18,
-                color: AppColors.onTerracotta,
-              ),
-            ),
+      child: checked
+          ? const Icon(
+              Icons.check_rounded,
+              size: 18,
+              color: AppColors.onTerracotta,
+            )
+          : null,
     );
   }
 }
@@ -932,7 +1107,9 @@ class _QuantityStepperState extends State<QuantityStepper> {
           child: Icon(
             icon,
             size: 18,
-            color: onTap == null ? AppColors.line : AppColors.ink,
+            color: onTap == null
+                ? AppColors.inkMuted.withValues(alpha: 0.32)
+                : AppColors.ink,
           ),
         ),
       ),
@@ -944,9 +1121,9 @@ class _QuantityStepperState extends State<QuantityStepper> {
     final reduce = AppMotion.reduceMotionOf(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.paper,
+        color: AppColors.iconTile,
         borderRadius: BorderRadius.circular(999),
-        border: AppElevation.border,
+        border: Border.all(color: AppColors.cardEdge),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1020,23 +1197,14 @@ class QuickAddChip extends StatelessWidget {
       button: true,
       label: added ? context.l.shopAdded(label) : context.l.shopAdd(label),
       excludeSemantics: true,
-      child: PressScale(
-        onTap: onAdd,
-        child: SpringValue(
-          value: added ? 1 : 0,
-          spring: AppMotion.fluidBouncy,
-          builder: (context, t, child) => Transform.scale(
-            scale: added ? popScale(t.clamp(0.0, 1.0), peak: 1.15) : 1,
-            child: child,
-          ),
-          child: AnimatedContainer(
-            duration: AppMotion.fast,
+      child: Material(
+        color: added ? AppColors.sageBg : AppColors.paper,
+        shape: StadiumBorder(side: BorderSide(color: AppColors.cardEdge)),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onAdd,
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 7, 12, 7),
-            decoration: BoxDecoration(
-              color: added ? AppColors.sageBg : AppColors.paper,
-              borderRadius: BorderRadius.circular(999),
-              border: AppElevation.border,
-            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1119,23 +1287,21 @@ class SuggestionCard extends StatelessWidget {
       button: true,
       label: added ? context.l.shopAdded(name) : context.l.shopAdd(name),
       excludeSemantics: true,
-      child: PressScale(
-        onTap: onAdd,
-        child: SpringValue(
-          value: added ? 1 : 0,
-          spring: AppMotion.fluidBouncy,
-          builder: (context, t, child) => Transform.scale(
-            scale: added ? popScale(t.clamp(0.0, 1.0), peak: 1.08) : 1,
-            child: child,
-          ),
+      child: Material(
+        color: added ? AppColors.sageBg : AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onAdd,
+          borderRadius: BorderRadius.circular(14),
           child: Container(
-            // Sin foto, algo más ancha para que el nombre no se parta.
             width: expand ? null : (photo == null ? 128 : 108),
             padding: const EdgeInsets.all(6),
-            decoration: AppTheme.tactileDecoration(
-              shadow: 2,
-              radius: 14,
-              color: added ? AppColors.sageBg : null,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: added ? AppColors.done : AppColors.cardEdge,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1262,57 +1428,66 @@ class ShoppingGridTile extends StatelessWidget {
     return Semantics(
       checked: checked,
       label: name,
-      child: PressScale(
-        onTap: onToggle,
-        onLongPress: onLongPress,
-        child: Container(
-          padding: const EdgeInsets.all(7),
-          decoration: AppTheme.tactileDecoration(shadow: 2),
-          child: Opacity(
-            opacity: checked ? 0.5 : 1,
-            child: photo == null
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _CheckCircle(t: checked ? 1 : 0),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: details,
+      child: Material(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onToggle,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: AppColors.cardEdge),
+            ),
+            child: Opacity(
+              opacity: checked ? 0.5 : 1,
+              child: photo == null
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _CheckCircle(checked: checked),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: details,
+                          ),
                         ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.iconTile,
-                                borderRadius: BorderRadius.circular(10),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.iconTile,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                alignment: Alignment.center,
+                                child: photo,
                               ),
-                              clipBehavior: Clip.antiAlias,
-                              alignment: Alignment.center,
-                              child: photo,
-                            ),
-                            Positioned(
-                              top: 6,
-                              left: 6,
-                              child: _CheckCircle(t: checked ? 1 : 0),
-                            ),
-                          ],
+                              Positioned(
+                                top: 6,
+                                left: 6,
+                                child: _CheckCircle(checked: checked),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      ...details,
-                    ],
-                  ),
+                        const SizedBox(height: 6),
+                        ...details,
+                      ],
+                    ),
+            ),
           ),
         ),
       ),

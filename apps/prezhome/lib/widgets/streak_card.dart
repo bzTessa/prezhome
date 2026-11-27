@@ -1,32 +1,58 @@
 import 'package:flutter/material.dart';
-import '../l10n/l10n.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../l10n/l10n.dart';
 import '../services/streak.dart';
 import '../theme/app_theme.dart';
-import 'miau_character.dart';
 
-/// Tarjeta de la racha de "casa al día" con la mascota según cómo vas.
+/// Tarjeta de la racha de "casa al día".
 class StreakCard extends StatefulWidget {
-  const StreakCard({super.key});
+  const StreakCard({super.key, this.loader});
+
+  /// Cargador opcional (útil en tests; por defecto lee Supabase).
+  final Future<Streak?> Function()? loader;
 
   @override
-  State<StreakCard> createState() => _StreakCardState();
+  State<StreakCard> createState() => StreakCardState();
 }
 
-class _StreakCardState extends State<StreakCard> {
-  late final Future<Streak?> _future = Streak.load(Supabase.instance.client);
+class StreakCardState extends State<StreakCard> {
+  // Última racha conocida en sesión: al volver a Hoy o recargar el panel,
+  // la tarjeta no colapsa a 0 px ni empuja el contenido de debajo.
+  static Streak? _cached;
+
+  late Streak? _streak = widget.loader == null ? _cached : null;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    refresh();
+  }
+
+  /// Recarga la racha en segundo plano sin ocultar ni mover la tarjeta.
+  Future<void> refresh() async {
+    if (_loading) return;
+    _loading = true;
+    try {
+      final next =
+          await (widget.loader?.call() ??
+              Streak.load(Supabase.instance.client));
+      if (!mounted || next == null) return;
+      if (widget.loader == null) _cached = next;
+      if (_streak?.days != next.days || _streak?.doneToday != next.doneToday) {
+        setState(() => _streak = next);
+      }
+    } finally {
+      _loading = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Streak?>(
-      future: _future,
-      builder: (context, snap) {
-        final s = snap.data;
-        if (s == null) return const SizedBox.shrink();
-        return StreakView(streak: s);
-      },
-    );
+    final s = _streak;
+    if (s == null) return const SizedBox.shrink();
+    return StreakView(streak: s);
   }
 }
 
@@ -43,54 +69,84 @@ class StreakView extends StatelessWidget {
       (m) => m > s.days,
       orElse: () => s.days + 100,
     );
-    final (mood, title, subtitle) = switch (s) {
+    final (title, subtitle) = switch (s) {
       _ when s.milestoneToday => (
-        MiauMood.celebrating,
         context.l.streakMilestone(s.days),
         context.l.streakMilestoneSub(next),
       ),
       _ when s.doneToday => (
-        MiauMood.greeting,
         context.l.streakDays(s.days),
         context.l.streakDoneSub(next),
       ),
       _ when s.days > 0 => (
-        MiauMood.curious,
         context.l.streakDays(s.days),
         context.l.streakKeepSub,
       ),
-      _ => (MiauMood.sleeping, context.l.streakStart, context.l.streakStartSub),
+      _ => (context.l.streakStart, context.l.streakStartSub),
     };
     return Semantics(
       label: '$title. $subtitle',
       excludeSemantics: true,
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: AppTheme.surfaceDecoration(elevation: 0),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.goldBg, AppColors.card],
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+          boxShadow: AppElevation.level1,
+        ),
         child: Row(
           children: [
-            MiauCharacter(mood: mood, size: 64, float: false),
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: s.doneToday
+                    ? AppColors.terracottaBg
+                    : AppColors.iconTile,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.local_fire_department_rounded,
+                color: s.doneToday ? AppColors.terracotta : AppColors.inkMuted,
+                size: 24,
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: TextStyle(color: AppColors.inkMuted)),
+                  Text(title, style: AppTextStyles.title),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: AppTextStyles.labelMuted),
                 ],
               ),
             ),
-            Icon(
-              Icons.local_fire_department_rounded,
-              color: s.doneToday ? AppColors.terracotta : AppColors.line,
-              size: 32,
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: AppRadius.pillRadius,
+                border: Border.all(color: AppColors.cardEdge),
+              ),
+              child: Text(
+                '${s.days}/$next',
+                style: AppTextStyles.numeric(
+                  AppTextStyles.label.copyWith(
+                    color: AppColors.terracottaText,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

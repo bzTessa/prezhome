@@ -15,6 +15,9 @@ class SupermarketProduct {
     this.quantity,
     this.imageUrl,
     this.price,
+    this.unitPrice,
+    this.unit,
+    this.ean,
     this.memberPrice,
     this.priceStartsAt,
   });
@@ -29,6 +32,15 @@ class SupermarketProduct {
 
   /// Precio orientativo en la tienda online (solo productos de catálogo).
   final double? price;
+
+  /// Precio por unidad de medida (€/kg, €/l, €/ud) cuando el catálogo lo trae.
+  final double? unitPrice;
+
+  /// Unidad de [unitPrice] ('kg', 'l', 'ud').
+  final String? unit;
+
+  /// Código de barras (EAN-13 / GTIN), si está en catálogo.
+  final String? ean;
 
   /// Precio con la tarjeta del súper (Lidl Plus), si es más barato.
   final double? memberPrice;
@@ -611,6 +623,8 @@ const catalogStores = {
   'bonarea',
   'lidl',
   'ahorramas',
+  'bm',
+  'aldi',
   'rewe',
   'pingodoce',
   'auchan',
@@ -622,7 +636,16 @@ const catalogStores = {
 
 /// Catálogos oficiales de cada país, en el orden en que se buscan.
 const catalogStoresByCountry = {
-  'ES': ['mercadona', 'dia', 'consum', 'bonarea', 'lidl', 'ahorramas'],
+  'ES': [
+    'mercadona',
+    'dia',
+    'consum',
+    'bonarea',
+    'lidl',
+    'ahorramas',
+    'bm',
+    'aldi',
+  ],
   'DE': ['rewe', 'lidl_de'],
   'PT': ['pingodoce', 'auchan', 'lidl_pt'],
   'FR': ['lidl_fr'],
@@ -698,7 +721,7 @@ List<String> catalogSearchWords(String query) => [
 ];
 
 const _catalogColumns =
-    'product_id,name,brand,size,price,image_url,member_price,price_starts_at';
+    'product_id,name,brand,size,price,unit_price,unit,ean,image_url,member_price,price_starts_at';
 
 /// Producto de supermarket_products de [store] a partir de su fila.
 SupermarketProduct catalogProductFromRow(
@@ -711,6 +734,9 @@ SupermarketProduct catalogProductFromRow(
   quantity: r['size'] as String?,
   imageUrl: r['image_url'] as String?,
   price: (r['price'] as num?)?.toDouble(),
+  unitPrice: (r['unit_price'] as num?)?.toDouble(),
+  unit: r['unit'] as String?,
+  ean: r['ean'] as String?,
   memberPrice: (r['member_price'] as num?)?.toDouble(),
   priceStartsAt: DateTime.tryParse(r['price_starts_at'] as String? ?? ''),
 );

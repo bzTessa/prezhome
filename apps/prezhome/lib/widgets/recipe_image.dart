@@ -8,10 +8,26 @@ import 'dish_illustration.dart';
 /// Muestra la foto de la receta si existe; si no, un placeholder cozy con un
 /// icono grande según el tipo de plato. Reutilizable en tarjetas y detalle.
 class RecipeImage extends StatelessWidget {
+  /// Ancho fijo de decodificado para miniaturas (evita recalcular en vuelos Hero).
+  static const int thumbCacheWidth = 240;
+
+  /// Ancho fijo de decodificado para tarjetas de la cuadrícula de recetas.
+  static const int gridCacheWidth = 480;
+
+  /// Ancho fijo de decodificado para cabeceras y tarjetas grandes.
+  static const int fullCacheWidth = 960;
+
   final Recipe recipe;
   final double? width;
   final double height;
   final double radius;
+
+  /// Ancho de decodificado explícito (si se omite, se elige según [width]).
+  final int? cacheWidth;
+
+  /// Ancho de caché ya decodificado que se usa como placeholder inmediato
+  /// mientras carga la versión a mayor resolución (p. ej. [gridCacheWidth]).
+  final int? placeholderCacheWidth;
 
   /// Si es true, ignora [recipe.imageUrl] y pinta SIEMPRE el placeholder cozy.
   /// Mismo patrón que [FoodImage.forceIllustration]: útil cuando se quiere la
@@ -24,6 +40,8 @@ class RecipeImage extends StatelessWidget {
     this.width,
     this.height = 160,
     this.radius = 20,
+    this.cacheWidth,
+    this.placeholderCacheWidth,
     this.forceIllustration = false,
   });
 
@@ -44,46 +62,49 @@ class RecipeImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final targetCacheWidth =
+        cacheWidth ??
+        ((width != null && width! <= 140) ? thumbCacheWidth : fullCacheWidth);
+    final Widget placeholderWidget =
+        (placeholderCacheWidth != null &&
+            placeholderCacheWidth != targetCacheWidth &&
+            _hasPhoto)
+        ? Image.network(
+            recipe.imageUrl!,
+            fit: BoxFit.cover,
+            cacheWidth: placeholderCacheWidth,
+            gaplessPlayback: true,
+            errorBuilder: (context, error, stack) => _placeholder(),
+            frameBuilder: (context, child, frame, sync) =>
+                (sync || frame != null) ? child : _placeholder(loading: true),
+          )
+        : _placeholder(loading: true);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: SizedBox(
         width: width ?? double.infinity,
         height: height,
         child: _hasPhoto
-            ? LayoutBuilder(
-                builder: (context, constraints) => Image.network(
-                  recipe.imageUrl!,
-                  fit: BoxFit.cover,
-                  // Acotamos la resolución de decodificado al ancho real que se
-                  // va a pintar (en píxeles físicos). Así la foto de Pexels no
-                  // se decodifica a resolución completa en una miniatura de la
-                  // rejilla, ahorrando memoria y datos en el móvil.
-                  cacheWidth: _cacheWidthFor(context, constraints),
-                  errorBuilder: (context, error, stack) => _placeholder(),
-                  frameBuilder: (context, child, frame, sync) => fadeInPhoto(
-                    context: context,
-                    image: child,
-                    frame: frame,
-                    wasSynchronouslyLoaded: sync,
-                    placeholder: _placeholder(loading: true),
-                  ),
+            ? Image.network(
+                recipe.imageUrl!,
+                fit: BoxFit.cover,
+                // Bucket fijo de decodificado para no invalidar la caché en
+                // animaciones Hero o cambios de tamaño.
+                cacheWidth: targetCacheWidth,
+                gaplessPlayback: true,
+                errorBuilder: (context, error, stack) => _placeholder(),
+                frameBuilder: (context, child, frame, sync) => fadeInPhoto(
+                  context: context,
+                  image: child,
+                  frame: frame,
+                  wasSynchronouslyLoaded: sync,
+                  placeholder: placeholderWidget,
                 ),
               )
             : _placeholder(),
       ),
     );
-  }
-
-  /// Ancho objetivo de decodificado en píxeles físicos: el ancho pintado por
-  /// el devicePixelRatio. Si el ancho es ilimitado (double.infinity), caemos a
-  /// un valor razonable para una tarjeta a pantalla completa.
-  int? _cacheWidthFor(BuildContext context, BoxConstraints constraints) {
-    final dpr = MediaQuery.of(context).devicePixelRatio;
-    final logicalWidth = constraints.maxWidth.isFinite
-        ? constraints.maxWidth
-        : (width ?? 400.0);
-    if (logicalWidth <= 0) return null;
-    return (logicalWidth * dpr).round();
   }
 
   Widget _placeholder({bool loading = false}) {
@@ -107,4 +128,48 @@ class RecipeImage extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Shuttle para transiciones [Hero] entre tarjeta de receta y detalle:
+/// interpola el radio de esquina usando la foto ya cacheada para evitar
+/// parpadeos y recargas durante el vuelo.
+HeroFlightShuttleBuilder recipeHeroFlightShuttle(
+  Recipe recipe, {
+  double startRadius = 14,
+  double endRadius = 0,
+  int cacheWidth = RecipeImage.thumbCacheWidth,
+}) {
+  final radiusTween = BorderRadiusTween(
+    begin: BorderRadius.circular(startRadius),
+    end: BorderRadius.circular(endRadius),
+  );
+  return (
+    flightContext,
+    animation,
+    flightDirection,
+    fromHeroContext,
+    toHeroContext,
+  ) {
+    final url = recipe.imageUrl;
+    final content = url != null
+        ? Image.network(
+            url,
+            fit: BoxFit.cover,
+            cacheWidth: cacheWidth,
+            gaplessPlayback: true,
+            errorBuilder: (context, error, stack) => DishIllustration(
+              title: recipe.title,
+              mealTypes: recipe.mealTypes,
+            ),
+          )
+        : DishIllustration(title: recipe.title, mealTypes: recipe.mealTypes);
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) => ClipRRect(
+        borderRadius: radiusTween.evaluate(animation) ?? BorderRadius.zero,
+        child: child,
+      ),
+      child: content,
+    );
+  };
 }

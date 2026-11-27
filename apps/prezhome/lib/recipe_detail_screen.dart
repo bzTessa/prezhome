@@ -31,6 +31,7 @@ import 'theme/app_theme.dart';
 import 'widgets/post_cook_sheet.dart';
 import 'widgets/recipe_chip.dart';
 import 'widgets/recipe_image.dart';
+import 'widgets/segmented_pill.dart';
 import 'utils/friendly_error.dart';
 import 'utils/pantry_ideas.dart';
 import 'utils/recipe_steps.dart';
@@ -771,6 +772,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               expandedHeight: 320,
               backgroundColor: AppColors.cream,
               surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: SystemUiOverlayStyle.light,
               automaticallyImplyLeading: false,
               leading: Padding(
                 padding: const EdgeInsets.all(6),
@@ -803,10 +805,60 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     if (widget.heroTag != null)
                       Hero(
                         tag: widget.heroTag!,
-                        child: RecipeImage(recipe: r, height: 360, radius: 0),
+                        flightShuttleBuilder: recipeHeroFlightShuttle(
+                          r,
+                          startRadius: AppRadius.lg,
+                          endRadius: 0,
+                          cacheWidth: RecipeImage.gridCacheWidth,
+                        ),
+                        child: RecipeImage(
+                          recipe: r,
+                          height: 360,
+                          radius: 0,
+                          placeholderCacheWidth: RecipeImage.gridCacheWidth,
+                        ),
                       )
                     else
-                      RecipeImage(recipe: r, height: 360, radius: 0),
+                      RecipeImage(
+                        recipe: r,
+                        height: 360,
+                        radius: 0,
+                        placeholderCacheWidth: RecipeImage.gridCacheWidth,
+                      ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 110,
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: 0.45),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: -1,
+                      height: 24,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.cream,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(28),
+                          ),
+                        ),
+                      ),
+                    ),
                     if (_changingPhoto)
                       Container(
                         color: Colors.black26,
@@ -819,11 +871,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
             SliverToBoxAdapter(
               child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.cream,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
+                color: AppColors.cream,
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -893,16 +942,22 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }) {
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: AppColors.card.withValues(alpha: 0.92),
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: 42,
-            height: 42,
-            child: Icon(icon, color: color ?? AppColors.ink, size: 22),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: AppElevation.level1,
+        ),
+        child: Material(
+          color: AppColors.card.withValues(alpha: 0.94),
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(
+              width: 42,
+              height: 42,
+              child: Icon(icon, color: color ?? AppColors.ink, size: 22),
+            ),
           ),
         ),
       ),
@@ -910,72 +965,78 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Widget _moreMenu() {
-    return Material(
-      color: AppColors.card.withValues(alpha: 0.92),
-      shape: const CircleBorder(),
-      child: SizedBox(
-        width: 42,
-        height: 42,
-        child: PopupMenuButton<String>(
-          tooltip: context.l.moreOptions,
-          icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
-          padding: EdgeInsets.zero,
-          onSelected: (v) {
-            switch (v) {
-              case 'cooked':
-                _finishCooking();
-              case 'photo':
-                if (!_changingPhoto) _openPhotoMenu();
-              case 'share':
-                _share();
-              case 'edit':
-                _edit();
-              case 'delete':
-                _delete();
-            }
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'cooked',
-              child: ListTile(
-                leading: const Icon(Icons.check_circle_outline_rounded),
-                title: Text(context.l.rdCookedIt),
-                contentPadding: EdgeInsets.zero,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: AppElevation.level1,
+      ),
+      child: Material(
+        color: AppColors.card.withValues(alpha: 0.94),
+        shape: const CircleBorder(),
+        child: SizedBox(
+          width: 42,
+          height: 42,
+          child: PopupMenuButton<String>(
+            tooltip: context.l.moreOptions,
+            icon: Icon(Icons.more_horiz_rounded, color: AppColors.ink),
+            padding: EdgeInsets.zero,
+            onSelected: (v) {
+              switch (v) {
+                case 'cooked':
+                  _finishCooking();
+                case 'photo':
+                  if (!_changingPhoto) _openPhotoMenu();
+                case 'share':
+                  _share();
+                case 'edit':
+                  _edit();
+                case 'delete':
+                  _delete();
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'cooked',
+                child: ListTile(
+                  leading: const Icon(Icons.check_circle_outline_rounded),
+                  title: Text(context.l.rdCookedIt),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ),
-            PopupMenuItem(
-              value: 'photo',
-              child: ListTile(
-                leading: Icon(Icons.photo_camera_outlined),
-                title: Text(context.l.changePhoto),
-                contentPadding: EdgeInsets.zero,
+              PopupMenuItem(
+                value: 'photo',
+                child: ListTile(
+                  leading: Icon(Icons.photo_camera_outlined),
+                  title: Text(context.l.changePhoto),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ),
-            PopupMenuItem(
-              value: 'share',
-              child: ListTile(
-                leading: Icon(Icons.ios_share_rounded),
-                title: Text(context.l.share),
-                contentPadding: EdgeInsets.zero,
+              PopupMenuItem(
+                value: 'share',
+                child: ListTile(
+                  leading: Icon(Icons.ios_share_rounded),
+                  title: Text(context.l.share),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ),
-            PopupMenuItem(
-              value: 'edit',
-              child: ListTile(
-                leading: Icon(Icons.edit_outlined),
-                title: Text(context.l.rdEdit),
-                contentPadding: EdgeInsets.zero,
+              PopupMenuItem(
+                value: 'edit',
+                child: ListTile(
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text(context.l.rdEdit),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete_outline, color: AppColors.expired),
-                title: Text(context.l.delete),
-                contentPadding: EdgeInsets.zero,
+              PopupMenuItem(
+                value: 'delete',
+                child: ListTile(
+                  leading: Icon(Icons.delete_outline, color: AppColors.expired),
+                  title: Text(context.l.delete),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1028,45 +1089,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       stepCount == 0 ? context.l.rdStepsWord : context.l.rdSteps(stepCount),
       context.l.rdNutrition,
     ];
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        children: [
-          for (var i = 0; i < labels.length; i++)
-            Expanded(
-              child: Semantics(
-                button: true,
-                selected: _tab == i,
-                child: GestureDetector(
-                  onTap: () => setState(() => _tab = i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _tab == i ? AppColors.ink : Colors.transparent,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      labels[i],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: _tab == i ? AppColors.cream : AppColors.ink,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+    return SegmentedPill(
+      labels: labels,
+      selected: _tab,
+      onChanged: (i) => setState(() => _tab = i),
     );
   }
 
@@ -1239,7 +1265,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.sageBg,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.sage.withValues(alpha: 0.22)),
       ),
       child: Row(
         children: [
@@ -1554,105 +1581,114 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   /// Barra fija de abajo: paso a paso + acceso directo "Ya lo cociné".
   Widget _cookBar(Recipe r, List<String> steps) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: steps.isEmpty
-            ? SizedBox(
-                height: 56,
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _finishCooking,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.ink,
-                    foregroundColor: AppColors.cream,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+          child: steps.isEmpty
+              ? SizedBox(
+                  height: 56,
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _finishCooking,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.terracotta,
+                      foregroundColor: AppColors.onTerracotta,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    icon: const Icon(Icons.check_circle_outline_rounded),
+                    label: Text(context.l.rdCookedIt),
                   ),
-                  icon: const Icon(Icons.check_circle_outline_rounded),
-                  label: Text(context.l.rdCookedIt),
-                ),
-              )
-            : Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 56,
-                      child: FilledButton.icon(
-                        onPressed: () async {
-                          final ings = await _ingredientsFuture;
-                          if (!mounted) return;
-                          final done = await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (_) => CookModeScreen(
-                                title: r.title,
-                                steps: [
-                                  for (final s in steps) CookStep.fromText(s),
-                                ],
-                                ingredients: [
-                                  for (final i in ings) _ingredientLine(i),
-                                ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: FilledButton.icon(
+                          onPressed: () async {
+                            final ings = await _ingredientsFuture;
+                            if (!mounted) return;
+                            final done = await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => CookModeScreen(
+                                  title: r.title,
+                                  steps: [
+                                    for (final s in steps) CookStep.fromText(s),
+                                  ],
+                                  ingredients: [
+                                    for (final i in ings) _ingredientLine(i),
+                                  ],
+                                ),
                               ),
+                            );
+                            if (done == true && mounted) await _finishCooking();
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.terracotta,
+                            foregroundColor: AppColors.onTerracotta,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
                             ),
-                          );
-                          if (done == true && mounted) await _finishCooking();
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.ink,
-                          foregroundColor: AppColors.cream,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
+                            textStyle: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                          textStyle: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
+                          icon: const Icon(Icons.soup_kitchen_rounded),
+                          label: Text(
+                            context.l.rdStartCooking,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        icon: const Icon(Icons.soup_kitchen_rounded),
-                        label: Text(
-                          context.l.rdStartCooking,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Tooltip(
-                    message: context.l.rdCookedIt,
-                    child: SizedBox(
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: _finishCooking,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.ink,
-                          backgroundColor: AppColors.card,
-                          side: BorderSide(color: AppColors.stroke, width: 1.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
+                    const SizedBox(width: 10),
+                    Tooltip(
+                      message: context.l.rdCookedIt,
+                      child: SizedBox(
+                        height: 56,
+                        child: OutlinedButton.icon(
+                          onPressed: _finishCooking,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.ink,
+                            backgroundColor: AppColors.card,
+                            side: BorderSide(
+                              color: AppColors.cardEdge,
+                              width: 1.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            textStyle: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          textStyle: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
+                          icon: const Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 20,
                           ),
+                          label: Text(context.l.rdCookedShort),
                         ),
-                        icon: const Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 20,
-                        ),
-                        label: Text(context.l.rdCookedShort),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+        ),
       ),
     );
   }

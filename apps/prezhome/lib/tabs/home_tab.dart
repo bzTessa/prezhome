@@ -154,12 +154,13 @@ class HomeTabState extends State<HomeTab> {
 
   /// Carga todas las secciones del dashboard. Cada carga tiene su propio
   /// try/catch, de modo que un fallo en una no impide ver las demás.
-  // Nueva clave en cada recarga para que la racha se vuelva a leer.
-  Key _streakKey = UniqueKey();
+  // Clave estable para refrescar la racha en segundo plano sin desmontarla
+  // ni hacer saltar las tarjetas de debajo al cambiar a Hoy.
+  final GlobalKey<StreakCardState> _streakKey = GlobalKey<StreakCardState>();
 
   Future<void> _loadDashboard() async {
     _profileFuture = null; // perfil fresco en cada recarga
-    _streakKey = UniqueKey();
+    unawaited(_streakKey.currentState?.refresh());
     await Future.wait([
       _loadPrefs(),
       Inbox(_client).refreshCount(),
@@ -194,14 +195,19 @@ class HomeTabState extends State<HomeTab> {
       if (user == null) return;
       final row = await _profile();
       final name = (row?['full_name'] as String?)?.trim() ?? '';
-      if (name.isNotEmpty && mounted) {
-        setState(() => _initial = name.characters.first.toUpperCase());
-      }
+      final nextInitial = name.isNotEmpty
+          ? name.characters.first.toUpperCase()
+          : _initial;
       final raw = row?['dashboard_prefs'];
       final prefs = raw is Map
           ? DashboardPrefs.fromJson(Map<String, dynamic>.from(raw))
           : DashboardPrefs.defaults();
-      if (mounted) setState(() => _prefs = prefs);
+      if (mounted && (nextInitial != _initial || prefs != _prefs)) {
+        setState(() {
+          _initial = nextInitial;
+          _prefs = prefs;
+        });
+      }
     } catch (e) {
       debugPrint('HomeTab._loadPrefs error: $e');
     }
@@ -739,7 +745,10 @@ class HomeTabState extends State<HomeTab> {
           // La lista principal, la que abre Compra: si no, sumaba también las
           // otras listas y no cuadraba con lo que se ve allí.
           .isFilter('list_id', null);
-      if (mounted) setState(() => _pendingShopping = (shopRes as List).length);
+      final nextPending = (shopRes as List).length;
+      if (mounted && nextPending != _pendingShopping) {
+        setState(() => _pendingShopping = nextPending);
+      }
     } catch (e) {
       debugPrint('HomeTab._loadPendingShopping error: $e');
     }
@@ -933,8 +942,14 @@ class HomeTabState extends State<HomeTab> {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: filled ? AppColors.ink : AppColors.card,
-        shape: CircleBorder(side: BorderSide.none),
+        color: filled ? AppColors.terracottaBg : AppColors.card,
+        shape: CircleBorder(
+          side: BorderSide(
+            color: filled
+                ? AppColors.terracotta.withValues(alpha: 0.25)
+                : AppColors.cardEdge,
+          ),
+        ),
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
@@ -946,15 +961,17 @@ class HomeTabState extends State<HomeTab> {
                   ? Text(
                       label,
                       style: TextStyle(
-                        fontSize: 19,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: filled ? AppColors.cream : AppColors.ink,
+                        color: filled
+                            ? AppColors.terracottaText
+                            : AppColors.ink,
                       ),
                     )
                   : Icon(
                       icon,
                       size: 22,
-                      color: filled ? AppColors.cream : AppColors.ink,
+                      color: filled ? AppColors.terracottaText : AppColors.ink,
                     ),
             ),
           ),
@@ -1508,7 +1525,20 @@ class HomeTabState extends State<HomeTab> {
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
+          if (total > 0) ...[
+            const SizedBox(height: AppSpacing.sm),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: (done / total).clamp(0.0, 1.0),
+                minHeight: 5,
+                backgroundColor: AppColors.iconTile,
+                color: AppColors.sage,
+              ),
+            ),
+            const SizedBox(height: 6),
+          ] else
+            const SizedBox(height: AppSpacing.xs),
           // Como en el concepto: las comidas de hoy con su hora, tachadas
           // cuando ya pasaron, y lo hecho hoy también tachado.
           for (final m in meals) _mealDayRow(m),
@@ -1698,71 +1728,96 @@ class HomeTabState extends State<HomeTab> {
         ? context.l.tskCatchUp
         : context.l.homeNextOpen;
     // Una franja, no una tarjeta grande: lo grande de Hoy es Tu día.
-    return Material(
-      color: AppColors.terracotta,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: open,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
-          child: Row(
-            children: [
-              Icon(icon, size: 26, color: onBrand.withValues(alpha: 0.9)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 1.2,
-                        fontWeight: FontWeight.w800,
-                        color: onBrand,
-                      ),
-                    ),
-                    if (sub != null && sub.isNotEmpty)
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.terracotta, AppColors.terracottaPressed],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.terracotta.withValues(alpha: 0.24),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: open,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: onBrand.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 22, color: onBrand),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        sub,
+                        title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
-                          color: onBrand.withValues(alpha: 0.85),
+                          fontSize: 16,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
+                          color: onBrand,
                         ),
                       ),
-                  ],
+                      if (sub != null && sub.isNotEmpty)
+                        Text(
+                          sub,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: onBrand.withValues(alpha: 0.85),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              IconButton(
-                tooltip: context.l.homeNextLater,
-                onPressed: () => setState(() => _nextSkips++),
-                icon: Icon(
-                  Icons.close_rounded,
-                  color: onBrand.withValues(alpha: 0.8),
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: context.l.homeNextLater,
+                  onPressed: () => setState(() => _nextSkips++),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: onBrand.withValues(alpha: 0.8),
+                  ),
                 ),
-              ),
-              IconButton.filled(
-                tooltip: doLabel,
-                onPressed: doIt,
-                style: IconButton.styleFrom(
-                  backgroundColor: onBrand,
-                  foregroundColor: AppColors.terracotta,
+                IconButton.filled(
+                  tooltip: doLabel,
+                  onPressed: doIt,
+                  style: IconButton.styleFrom(
+                    backgroundColor: onBrand,
+                    foregroundColor: AppColors.terracotta,
+                  ),
+                  icon: Icon(
+                    isTask
+                        ? Icons.check_rounded
+                        : line.kind == DayLineKind.overdue
+                        ? Icons.event_available_rounded
+                        : Icons.arrow_forward_rounded,
+                  ),
                 ),
-                icon: Icon(
-                  isTask
-                      ? Icons.check_rounded
-                      : line.kind == DayLineKind.overdue
-                      ? Icons.event_available_rounded
-                      : Icons.arrow_forward_rounded,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1836,7 +1891,15 @@ class HomeTabState extends State<HomeTab> {
           constraints: const BoxConstraints(minHeight: 44),
           child: Row(
             children: [
-              SizedBox(width: 26, child: Icon(icon, size: 22, color: color)),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: color),
+              ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
@@ -2127,15 +2190,61 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
-  /// Cifras del día en una sola superficie plana (es información, no algo
-  /// que pulsar con prisa): calorías y gasto, cada una en su fila con barra.
+  /// Cifras del día en Bento de 2 columnas (cuando están ambas) o en una
+  /// tarjeta compacta si solo hay una: calorías y gasto.
   Widget _numbersCard(List<DashboardCard> cards) {
+    Widget bentoFor(DashboardCard c) {
+      if (c == DashboardCard.calories) {
+        return _bentoNumberCard(
+          icon: Icons.local_fire_department_outlined,
+          iconBg: AppColors.terracottaBg,
+          color: AppColors.terracotta,
+          label: context.l.homeCaloriesToday,
+          value: _todayCalories,
+          format: (v) => context.l.homeKcal(v.round()),
+          target: _targetCalories?.toDouble(),
+          onTap: () async {
+            await Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const FoodDiaryScreen()));
+            _loadCaloriesSummary(); // refrescar al volver del diario
+          },
+        );
+      }
+      return _bentoNumberCard(
+        icon: Icons.savings_outlined,
+        iconBg: AppColors.goldBg,
+        color: AppColors.gold,
+        label: context.l.homeMonthSpend,
+        value: _monthSpent,
+        format: formatEuros,
+        target: _monthBudget,
+        onTap: _openStats,
+      );
+    }
+
+    if (cards.length == 2) {
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: bentoFor(cards[0])),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: bentoFor(cards[1])),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.sm,
       ),
-      decoration: AppTheme.surfaceDecoration(elevation: 0),
+      decoration: AppTheme.surfaceDecoration(
+        radius: AppRadius.lg,
+        elevation: 1,
+      ),
       child: Column(
         children: [
           for (final (i, c) in cards.indexed) ...[
@@ -2152,7 +2261,7 @@ class HomeTabState extends State<HomeTab> {
                   await Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const FoodDiaryScreen()),
                   );
-                  _loadCaloriesSummary(); // refrescar al volver del diario
+                  _loadCaloriesSummary();
                 },
               )
             else
@@ -2167,6 +2276,95 @@ class HomeTabState extends State<HomeTab> {
               ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _bentoNumberCard({
+    required IconData icon,
+    required Color iconBg,
+    required Color color,
+    required String label,
+    required double value,
+    required String Function(double) format,
+    required double? target,
+    required VoidCallback onTap,
+  }) {
+    final hasTarget = target != null && target > 0;
+    final over = hasTarget && value > target;
+    return Container(
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      child: Material(
+        color: AppColors.card,
+        borderRadius: AppRadius.lgRadius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, size: 18, color: color),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppColors.inkMuted,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelMuted.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                AnimatedCounter(
+                  value: value,
+                  formatter: format,
+                  style: AppTextStyles.numeric(
+                    AppTextStyles.headline.copyWith(fontSize: 22),
+                  ),
+                ),
+                if (hasTarget) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    context.l.homeOf(format(target)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.numeric(AppTextStyles.labelMuted),
+                  ),
+                  const Spacer(),
+                  const SizedBox(height: AppSpacing.sm),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: (value / target).clamp(0.0, 1.0),
+                      minHeight: 6,
+                      backgroundColor: AppColors.iconTile,
+                      color: over ? AppColors.expired : color,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

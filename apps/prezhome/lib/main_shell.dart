@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:prez_ui/prez_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -549,56 +550,65 @@ class MainShellState extends State<MainShell> {
         );
       },
     );
+    final overlayStyle = AppColors.dark
+        ? SystemUiOverlayStyle.light
+        : SystemUiOverlayStyle.dark;
     if (wide) {
-      return Scaffold(
-        backgroundColor: AppColors.cream,
-        body: Row(
-          children: [
-            _SideNav(
-              items: navItems,
-              selectedIndex: _index,
-              onSelected: _onDestinationSelected,
-              onQuickAdd: _openGlobalCapture,
-            ),
-            Expanded(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 860),
-                  child: body,
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: overlayStyle,
+        child: Scaffold(
+          backgroundColor: AppColors.cream,
+          body: Row(
+            children: [
+              _SideNav(
+                items: navItems,
+                selectedIndex: _index,
+                onSelected: _onDestinationSelected,
+                onQuickAdd: _openGlobalCapture,
+              ),
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 860),
+                    child: body,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      body: body,
-      // Barra flotante compartida (packages/prez_ui): 4 pestañas + botón "+"
-      // global con el borde y sombra del estilo táctil.
-      bottomNavigationBar: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: FloatingNavBar(
-          items: navItems,
-          selectedIndex: _index,
-          onSelected: _onDestinationSelected,
-          action: FloatingNavAction(
-            icon: Icons.add_rounded,
-            tooltip: context.l.captureTitle,
-            onPressed: _openGlobalCapture,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: Scaffold(
+        backgroundColor: AppColors.cream,
+        body: body,
+        // Barra flotante compartida (packages/prez_ui): 4 pestañas + botón "+"
+        // global con el borde y sombra del estilo táctil.
+        bottomNavigationBar: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: FloatingNavBar(
+            items: navItems,
+            selectedIndex: _index,
+            onSelected: _onDestinationSelected,
+            action: FloatingNavAction(
+              icon: Icons.add_rounded,
+              tooltip: context.l.captureTitle,
+              onPressed: _openGlobalCapture,
+            ),
+            backgroundColor: AppColors.card,
+            border: Border.all(color: AppColors.cardEdge, width: 1),
+            indicatorColor: AppColors.terracottaBg,
+            selectedColor: AppColors.terracottaText,
+            unselectedColor: AppColors.inkMuted,
+            actionColor: AppColors.terracotta,
+            actionForegroundColor: AppColors.onTerracotta,
+            shadow: AppElevation.level2,
+            duration: AppMotion.slow,
+            curve: AppMotion.springCurve(AppMotion.fluidDefault),
           ),
-          backgroundColor: AppColors.card,
-          border: AppElevation.tactileBorder,
-          indicatorColor: AppColors.goldBg,
-          selectedColor: AppColors.ink,
-          unselectedColor: AppColors.inkMuted,
-          actionColor: AppColors.terracotta,
-          actionForegroundColor: AppColors.onTerracotta,
-          shadow: AppElevation.tactileShadow,
-          duration: AppMotion.slow,
-          curve: AppMotion.springCurve(AppMotion.fluidDefault),
         ),
       ),
     );

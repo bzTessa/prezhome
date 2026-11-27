@@ -1835,32 +1835,84 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             );
           },
         ),
-        floatingActionButton: HideFabOnScroll.fab(
-          FutureBuilder<_PlanData>(
-            future: _future,
-            builder: (context, snap) {
-              final data = snap.data;
-              if (data == null || data.homeId == null || data.recipes.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return FloatingActionButton.extended(
-                heroTag: 'fab-meal-plan',
-                onPressed: _generating ? null : () => _askPlanRange(data),
-                icon: _generating
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.event_available_rounded),
-                label: Text(
-                  data.entries.isEmpty
-                      ? context.l.planMake
-                      : context.l.planRemake,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+        floatingActionButton: widget.embedded
+            ? null
+            : HideFabOnScroll.fab(
+                FutureBuilder<_PlanData>(
+                  future: _future,
+                  builder: (context, snap) {
+                    final data = snap.data;
+                    if (data == null ||
+                        data.homeId == null ||
+                        data.recipes.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return FloatingActionButton.extended(
+                      heroTag: 'fab-meal-plan',
+                      onPressed: _generating ? null : () => _askPlanRange(data),
+                      icon: _generating
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.event_available_rounded),
+                      label: Text(
+                        data.entries.isEmpty
+                            ? context.l.planMake
+                            : context.l.planRemake,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+      ),
+    );
+  }
+
+  Widget _planActionPill(_PlanData data) {
+    final label = data.entries.isEmpty
+        ? context.l.planMake
+        : context.l.planRemake;
+    return Material(
+      color: AppColors.terracottaBg,
+      shape: StadiumBorder(
+        side: BorderSide(color: AppColors.terracotta.withValues(alpha: 0.22)),
+      ),
+      child: InkWell(
+        onTap: _generating ? null : () => _askPlanRange(data),
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_generating)
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.terracottaText,
+                  ),
+                )
+              else
+                Icon(
+                  Icons.event_available_rounded,
+                  size: 16,
+                  color: AppColors.terracottaText,
+                ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.terracottaText,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -2068,7 +2120,15 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        if (_weekView)
+        if (_weekView) ...[
+          if (widget.embedded)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _planActionPill(data),
+              ),
+            ),
           for (var i = 0; i < 7; i++)
             _weekDayCard(
               data,
@@ -2077,6 +2137,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               i,
               isToday: i == todayIndex,
             ),
+        ],
         if (!_weekView) ...[
           WeekDayStrip(
             days: days,
@@ -2091,27 +2152,38 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text(_dayLabel(date), style: AppTextStyles.headline),
-              if (_isBusy(date)) ...[const SizedBox(width: 8), _busyBadge()],
-              if (sel == todayIndex) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.wood,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    context.l.today,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(_dayLabel(date), style: AppTextStyles.headline),
+                    if (_isBusy(date)) _busyBadge(),
+                    if (sel == todayIndex)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.wood,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          context.l.today,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
+              ),
+              if (widget.embedded) ...[
+                const SizedBox(width: 8),
+                _planActionPill(data),
               ],
             ],
           ),
@@ -2144,16 +2216,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 image: recipe != null
                     ? RecipeImage(
                         recipe: recipe,
-                        width: big ? 120 : 64,
-                        height: big ? 120 : 64,
-                        radius: big ? 60 : 18,
+                        width: big ? 120 : 78,
+                        height: big ? 120 : 78,
+                        radius: big ? 60 : 16,
                       )
                     : ready != null
                     ? FoodImage(
                         name: ready.name,
                         imageUrl: ready.imageUrl,
-                        size: big ? 120 : 64,
-                        radius: big ? 60 : 18,
+                        size: big ? 120 : 78,
+                        radius: big ? 60 : 16,
                       )
                     : null,
                 detail: e == null

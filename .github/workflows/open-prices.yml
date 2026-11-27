@@ -55,6 +55,12 @@ jobs:
           SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/consum_sync.py
+      - name: Importar catálogo de BM Supermercados
+        if: ${{ !cancelled() }}
+        env:
+          SUPABASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/consum_sync.py bm
       - name: Importar catálogo de bonÀrea
         if: ${{ !cancelled() }}
         env:
@@ -80,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        store: [ahorramas, pingodoce, auchan]
+        store: [ahorramas, aldi, pingodoce, auchan]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

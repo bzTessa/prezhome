@@ -61,4 +61,52 @@ void main() {
     await tester.pumpAndSettle();
     expect(picked?.displayName, 'Yogur griego natural · Hacendado');
   });
+
+  testWidgets('en pickPhotoMode filtra sin foto o urls rotas y ofrece Cerrar', (
+    tester,
+  ) async {
+    final client = MockClient(
+      (_) async => http.Response(
+        jsonEncode({
+          'products': [
+            {'code': '1', 'product_name_es': 'Zanahoria sin foto'},
+            {
+              'code': '2',
+              'product_name_es': 'Zanahoria Consum rota',
+              'image_front_small_url':
+                  'https://cdn-consum.example.com/zanahoria.jpg',
+            },
+            {
+              'code': '3',
+              'product_name_es': 'Zanahoria fresca buena',
+              'image_front_small_url':
+                  'https://images.openfoodfacts.org/images/products/123/front.jpg',
+            },
+          ],
+        }),
+        200,
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('es'),
+        home: Scaffold(
+          body: ProductSearchSheet(
+            initialQuery: 'zanahoria',
+            service: ProductSearchService(client: client),
+            pickPhotoMode: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Zanahoria sin foto'), findsNothing);
+    expect(find.text('Zanahoria Consum rota'), findsNothing);
+    expect(find.text('Zanahoria fresca buena'), findsOneWidget);
+    expect(find.text('Cerrar'), findsOneWidget);
+    expect(find.text('Añadir "zanahoria" sin elegir producto'), findsNothing);
+  });
 }

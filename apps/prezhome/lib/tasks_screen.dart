@@ -1574,34 +1574,51 @@ class _TodayHero extends StatelessWidget {
     // Una línea: la semana y cómo va hoy. Sin anillo, como en el concepto.
     return Padding(
       padding: const EdgeInsets.only(left: AppSpacing.xs),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Text(
-              '${day(monday)} – ${day(sunday)}'.toUpperCase(),
-              style: AppTextStyles.label.copyWith(
-                color: AppColors.terracottaText,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${day(monday)} – ${day(sunday)}'.toUpperCase(),
+                  style: AppTextStyles.label.copyWith(
+                    color: AppColors.terracottaText,
+                  ),
+                ),
               ),
-            ),
+              Text(
+                left == 0
+                    ? (total == 0
+                          ? context.l.tskNothingToday
+                          : context.l.tskAllDone)
+                    : '${context.l.today} $done/$total',
+                style: AppTextStyles.bodyMuted.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              // Sin aviso "N atrasadas" si ya sale el de "Ponerme al día" justo
+              // debajo (2 o más): salía dos veces seguidas.
+              if (overdue == 1) ...[
+                const SizedBox(width: AppSpacing.sm),
+                _Pill(
+                  text: context.l.tskOverdueCount(overdue),
+                  bg: AppColors.expiredBg,
+                  fg: AppColors.expired,
+                ),
+              ],
+            ],
           ),
-          Text(
-            left == 0
-                ? (total == 0
-                      ? context.l.tskNothingToday
-                      : context.l.tskAllDone)
-                : '${context.l.today} $done/$total',
-            style: AppTextStyles.bodyMuted.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          // Sin aviso "N atrasadas" si ya sale el de "Ponerme al día" justo
-          // debajo (2 o más): salía dos veces seguidas.
-          if (overdue == 1) ...[
-            const SizedBox(width: AppSpacing.sm),
-            _Pill(
-              text: context.l.tskOverdueCount(overdue),
-              bg: AppColors.expiredBg,
-              fg: AppColors.expired,
+          if (total > 0) ...[
+            const SizedBox(height: AppSpacing.sm),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: (done / total).clamp(0.0, 1.0),
+                minHeight: 6,
+                backgroundColor: AppColors.iconTile,
+                color: AppColors.sage,
+              ),
             ),
           ],
         ],
@@ -1707,7 +1724,9 @@ class _TaskTile extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: completing ? AppColors.done : AppColors.paper,
                         border: Border.all(
-                          color: completing ? AppColors.done : AppColors.stroke,
+                          color: completing
+                              ? AppColors.done
+                              : AppColors.woodDark.withValues(alpha: 0.55),
                           width: 1.8,
                         ),
                       ),
