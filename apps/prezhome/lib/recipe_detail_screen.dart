@@ -975,8 +975,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             padding: EdgeInsets.zero,
             onSelected: (v) {
               switch (v) {
-                case 'cooked':
-                  _finishCooking();
                 case 'photo':
                   if (!_changingPhoto) _openPhotoMenu();
                 case 'share':
@@ -988,14 +986,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               }
             },
             itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'cooked',
-                child: ListTile(
-                  leading: const Icon(Icons.check_circle_outline_rounded),
-                  title: Text(context.l.rdCookedIt),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
               PopupMenuItem(
                 value: 'photo',
                 child: ListTile(
@@ -1583,7 +1573,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-          child: steps.isEmpty
+          // Sin pasos, o el café/yogur: un solo botón, sin modo cocina.
+          child: steps.isEmpty || !r.needsCooking
               ? SizedBox(
                   height: 56,
                   width: double.infinity,
@@ -1601,7 +1592,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ),
                     ),
                     icon: const Icon(Icons.check_circle_outline_rounded),
-                    label: Text(context.l.rdCookedIt),
+                    label: Text(
+                      r.needsCooking
+                          ? context.l.rdCookedIt
+                          : context.l.kindDone,
+                    ),
                   ),
                 )
               : Row(

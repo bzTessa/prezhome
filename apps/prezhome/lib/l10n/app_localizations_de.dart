@@ -5895,4 +5895,75 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get pushShopFailed =>
       'Konnte nicht gesendet werden. Versuch es noch mal.';
+
+  @override
+  String get kindReady => 'Fertiggericht';
+
+  @override
+  String get kindFromFreezer => 'Aus dem Gefrierfach';
+
+  @override
+  String get kindNoCook => 'Ohne Kochen';
+
+  @override
+  String get kindSeeRecipe => 'Rezept ansehen';
+
+  @override
+  String get kindNow => 'Jetzt';
+
+  @override
+  String get kindDone => 'Erledigt';
+
+  @override
+  String get kindNoCookSwitch => 'Kein Kochen nötig';
+
+  @override
+  String get kindNoCookSwitchSub =>
+      'Wie ein Kaffee oder Joghurt: erscheint nicht im Kochmodus oder beim Vorkochen.';
+
+  @override
+  String get ncAction => 'Heute keine Lust';
+
+  @override
+  String get ncTitle => 'Worauf hast du stattdessen Lust?';
+
+  @override
+  String get ncBody =>
+      'Das hast du schon fertig. Das heutige Rezept rückt auf den nächsten freien Tag der Woche.';
+
+  @override
+  String get ncDishes => 'Schon fertig zu Hause';
+
+  @override
+  String get ncFrozen => 'Im Gefrierfach, muss auftauen';
+
+  @override
+  String get ncFridge => 'Im Kühlschrank';
+
+  @override
+  String get ncReady => 'Deine Fertiggerichte';
+
+  @override
+  String get ncAtHome => 'Hast du zu Hause';
+
+  @override
+  String get ncNotAtHome => 'Keins mehr da';
+
+  @override
+  String get ncQuick => 'Etwas Schnelles';
+
+  @override
+  String get ncNothing =>
+      'Keine Reste, Fertiggerichte oder schnellen Rezepte. Fertiggerichte, die du im Plan speicherst, erscheinen hier.';
+
+  @override
+  String get ncOut => 'Heute essen wir auswärts';
+
+  @override
+  String get ncDoneNoMove => 'Erledigt, heute wird nicht gekocht.';
+
+  @override
+  String ncDoneMoved(String title, String day) {
+    return 'Erledigt. $title rückt auf $day.';
+  }
 }

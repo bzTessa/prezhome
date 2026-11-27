@@ -5877,4 +5877,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pushShopFailed => 'Couldn\'t send it. Try again.';
+
+  @override
+  String get kindReady => 'Ready-made';
+
+  @override
+  String get kindFromFreezer => 'From the freezer';
+
+  @override
+  String get kindNoCook => 'No cooking';
+
+  @override
+  String get kindSeeRecipe => 'See recipe';
+
+  @override
+  String get kindNow => 'Now';
+
+  @override
+  String get kindDone => 'Done';
+
+  @override
+  String get kindNoCookSwitch => 'No cooking needed';
+
+  @override
+  String get kindNoCookSwitchSub =>
+      'Like a coffee or a yogurt: it won\'t show up in cook mode or batch cooking.';
+
+  @override
+  String get ncAction => 'Not feeling it';
+
+  @override
+  String get ncTitle => 'What do you fancy instead?';
+
+  @override
+  String get ncBody =>
+      'Here\'s what you already have ready. Today\'s recipe moves to the next free day this week.';
+
+  @override
+  String get ncDishes => 'Already made at home';
+
+  @override
+  String get ncFrozen => 'In the freezer, needs thawing';
+
+  @override
+  String get ncFridge => 'In the fridge';
+
+  @override
+  String get ncReady => 'Your ready meals';
+
+  @override
+  String get ncAtHome => 'You have it at home';
+
+  @override
+  String get ncNotAtHome => 'None left at home';
+
+  @override
+  String get ncQuick => 'Something quick';
+
+  @override
+  String get ncNothing =>
+      'No leftovers, ready meals or quick recipes. Ready meals you save in the plan will show up here.';
+
+  @override
+  String get ncOut => 'We\'re eating out today';
+
+  @override
+  String get ncDoneNoMove => 'Done, no cooking today.';
+
+  @override
+  String ncDoneMoved(String title, String day) {
+    return 'Done. $title moves to $day.';
+  }
 }

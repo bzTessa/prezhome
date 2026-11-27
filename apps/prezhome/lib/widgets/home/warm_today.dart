@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/recipe.dart';
 import '../../theme/app_theme.dart';
 import '../dish_illustration.dart';
@@ -17,6 +18,7 @@ class WarmMealHero extends StatelessWidget {
     required this.actionLabel,
     required this.onOpen,
     this.recipe,
+    this.onNotCooking,
   });
 
   final String tag;
@@ -26,6 +28,9 @@ class WarmMealHero extends StatelessWidget {
   final String actionLabel;
   final VoidCallback onOpen;
   final Recipe? recipe;
+
+  /// "Hoy no me apetece": cambia la comida por algo ya hecho.
+  final VoidCallback? onNotCooking;
 
   static const _plate = 184.0;
 
@@ -122,15 +127,36 @@ class WarmMealHero extends StatelessWidget {
                           ),
                         ],
                         const Spacer(),
-                        FilledButton(
-                          onPressed: onOpen,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: onT,
-                            foregroundColor: const Color(0xFF241C15),
-                            minimumSize: const Size(0, 48),
-                            padding: const EdgeInsets.symmetric(horizontal: 22),
-                          ),
-                          child: Text(actionLabel),
+                        Wrap(
+                          spacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            FilledButton(
+                              onPressed: onOpen,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: onT,
+                                foregroundColor: const Color(0xFF241C15),
+                                minimumSize: const Size(0, 48),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 22,
+                                ),
+                              ),
+                              child: Text(actionLabel),
+                            ),
+                            if (onNotCooking != null)
+                              TextButton(
+                                onPressed: onNotCooking,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: onT,
+                                  minimumSize: const Size(0, 48),
+                                  textStyle: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                                child: Text(context.l.ncAction),
+                              ),
+                          ],
                         ),
                       ],
                     ),

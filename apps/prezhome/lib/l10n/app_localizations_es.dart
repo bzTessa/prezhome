@@ -5893,4 +5893,75 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pushShopFailed => 'No se pudo avisar. Inténtalo otra vez.';
+
+  @override
+  String get kindReady => 'Preparado del súper';
+
+  @override
+  String get kindFromFreezer => 'Del congelador';
+
+  @override
+  String get kindNoCook => 'Sin cocinar';
+
+  @override
+  String get kindSeeRecipe => 'Ver receta';
+
+  @override
+  String get kindNow => 'Ahora';
+
+  @override
+  String get kindDone => 'Hecho';
+
+  @override
+  String get kindNoCookSwitch => 'No hace falta cocinar';
+
+  @override
+  String get kindNoCookSwitchSub =>
+      'Como un café o un yogur: no sale en el modo cocina ni en la cocina en lote.';
+
+  @override
+  String get ncAction => 'Hoy no me apetece';
+
+  @override
+  String get ncTitle => '¿Qué te apetece entonces?';
+
+  @override
+  String get ncBody =>
+      'Esto es lo que ya tienes listo. La receta de hoy pasa al siguiente día libre de la semana.';
+
+  @override
+  String get ncDishes => 'Ya hecho en casa';
+
+  @override
+  String get ncFrozen => 'En el congelador, hay que descongelarlo';
+
+  @override
+  String get ncFridge => 'En la nevera';
+
+  @override
+  String get ncReady => 'Tus preparados';
+
+  @override
+  String get ncAtHome => 'Lo tienes en casa';
+
+  @override
+  String get ncNotAtHome => 'No queda en casa';
+
+  @override
+  String get ncQuick => 'Algo rápido';
+
+  @override
+  String get ncNothing =>
+      'No hay tápers, preparados ni recetas rápidas. Los preparados del súper que guardes en el plan saldrán aquí.';
+
+  @override
+  String get ncOut => 'Hoy comemos fuera';
+
+  @override
+  String get ncDoneNoMove => 'Hecho, hoy no toca cocinar.';
+
+  @override
+  String ncDoneMoved(String title, String day) {
+    return 'Hecho. $title pasa al $day.';
+  }
 }

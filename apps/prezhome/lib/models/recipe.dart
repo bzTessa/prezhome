@@ -36,6 +36,10 @@ class Recipe {
   // sirven para buscar recetas por ingrediente.
   final List<String> ingredientNames;
 
+  /// "No hace falta cocinar" elegido a mano en la receta; null = lo decide
+  /// [needsCooking] por el nombre, el tipo y el tiempo.
+  final bool? noCook;
+
   Recipe({
     required this.id,
     required this.homeId,
@@ -60,6 +64,7 @@ class Recipe {
     this.components = const [],
     this.freezerDays,
     this.ingredientNames = const [],
+    this.noCook,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
@@ -105,6 +110,7 @@ class Recipe {
           for (final row in rows)
             if (row is Map && row['name'] != null) row['name'].toString(),
       ],
+      noCook: map['no_cook'] as bool?,
     );
   }
 
@@ -170,6 +176,76 @@ class Recipe {
     'bizcocho',
   ];
 
+  /// Lo que se prepara sin fuego en un par de minutos: café, yogur, fruta,
+  /// tostadas… No va al modo cocina ni a la cocina en lote.
+  static const _noCookWords = [
+    'café',
+    'cafe ',
+    'capuchino',
+    'cappuccino',
+    'cortado',
+    'té ',
+    'te verde',
+    'te negro',
+    'infusión',
+    'infusion',
+    'manzanilla',
+    'zumo',
+    'batido',
+    'smoothie',
+    'yogur',
+    'kéfir',
+    'kefir',
+    'skyr',
+    'cuajada',
+    'cereales',
+    'muesli',
+    'granola',
+    'fruta',
+    'tostada',
+    'colacao',
+    'cola cao',
+    'leche con',
+    'vaso de leche',
+    'cacao',
+  ];
+
+  static String _fold(String s) => s
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
+
+  /// Hay que cocinarla (fuego, horno, pasos). Lo marcado a mano manda; si no,
+  /// las bebidas, lo que empieza por café/yogur/fruta… y lo de 5 minutos sin
+  /// aparato no se cocinan.
+  bool get needsCooking => noCook != null
+      ? !noCook!
+      : guessNeedsCooking(
+          title: title,
+          mealTypes: mealTypes,
+          minutes: (prepTimeMinutes ?? 0) + (cookTimeMinutes ?? 0),
+          appliance: appliance,
+        );
+
+  /// Lo que la app supone sin que nadie lo marque (también en el editor).
+  static bool guessNeedsCooking({
+    required String title,
+    List<String> mealTypes = const [],
+    int minutes = 0,
+    String appliance = 'none',
+  }) {
+    if (mealTypes.isNotEmpty && mealTypes.every((t) => t == 'drink')) {
+      return false;
+    }
+    final t = '${_fold(title.trim())} ';
+    if (_noCookWords.any((w) => t.startsWith(_fold(w)))) return false;
+    if (minutes > 0 && minutes <= 5 && appliance == 'none') return false;
+    return true;
+  }
+
   /// Se congela bien: marcada como congelable o es un plato que lo aguanta.
   // shortcut: una receta desmarcada a mano que encaje con la lista cuenta
   // igual como congelable; si molesta, guardar "no congelable" aparte.
@@ -198,6 +274,7 @@ class Recipe {
       'meal_type': mealTypes.isNotEmpty ? mealTypes.first : 'lunch',
       'is_favorite': isFavorite,
       'freezable': freezable,
+      'no_cook': noCook,
       'grams_per_serving': gramsPerServing,
       // Solo escribimos image_url cuando es una URL externa real (Pexels), no
       // la derivada del bucket, para no duplicar la foto manual (image_path).
@@ -242,6 +319,7 @@ class Recipe {
       components: components,
       freezerDays: freezerDays,
       ingredientNames: ingredientNames,
+      noCook: noCook,
     );
   }
 

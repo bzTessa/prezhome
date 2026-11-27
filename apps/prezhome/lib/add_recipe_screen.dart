@@ -69,6 +69,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final Set<String> _mealTypes = {}; // selección múltiple
   bool _isFavorite = false;
   bool _freezable = false;
+
+  /// "No hace falta cocinar" tocado a mano; null = lo que suponga la app.
+  bool? _noCook;
   bool _isLoading = false;
 
   // Ingredientes/raciones y kcal tal y como se cargaron (edición o IA): si al
@@ -144,6 +147,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ..addAll(r.mealTypes.isEmpty ? ['lunch'] : r.mealTypes);
     _isFavorite = r.isFavorite;
     _freezable = r.freezable;
+    _noCook = r.noCook;
     _components = r.components;
     _freezerDays = r.freezerDays;
     _existingImageUrl = r.imageUrl;
@@ -871,6 +875,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         mealTypes: _mealTypes.toList(),
         isFavorite: _isFavorite,
         freezable: _freezable,
+        noCook: _noCook,
         // Al crear: la foto recién obtenida de Pexels (o null). Al editar:
         // conservamos la externa previa para que toMap no la pise con null.
         externalImageUrl: autoImageUrl ?? _existingExternalImageUrl,
@@ -1215,6 +1220,23 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     activeThumbColor: AppColors.wood,
                     contentPadding: EdgeInsets.zero,
                     onChanged: (v) => setState(() => _freezable = v),
+                  ),
+                  SwitchListTile(
+                    title: Text(context.l.kindNoCookSwitch),
+                    subtitle: Text(context.l.kindNoCookSwitchSub),
+                    value:
+                        _noCook ??
+                        !Recipe.guessNeedsCooking(
+                          title: _titleController.text,
+                          mealTypes: _mealTypes.toList(),
+                          minutes:
+                              (_parseI(_prepController) ?? 0) +
+                              (_parseI(_cookController) ?? 0),
+                          appliance: _appliance,
+                        ),
+                    activeThumbColor: AppColors.wood,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (v) => setState(() => _noCook = v),
                   ),
                   SwitchListTile(
                     title: Text(context.l.recFavorite),

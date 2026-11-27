@@ -2285,6 +2285,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     isLeftover(e, data.entries),
                 skipped: e?.skipped ?? false,
                 fromFreezer: e?.fromFreezer ?? false,
+                cooks:
+                    ready == null &&
+                    !(e?.fromFreezer ?? false) &&
+                    (recipe?.needsCooking ?? true),
                 extras: [
                   for (final x in dishes[t]?.skip(1) ?? <MealPlanEntry>[])
                     (

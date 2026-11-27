@@ -46,6 +46,8 @@ import '../widgets/miau_character.dart';
 import '../widgets/plan/plan_parts.dart';
 import '../widgets/recipe_image.dart';
 import '../widgets/home/warm_today.dart';
+import '../widgets/home/not_cooking_sheet.dart';
+import '../services/not_cooking.dart';
 import '../widgets/home/week_summary_card.dart';
 import '../widgets/animations/animated_counter.dart';
 import '../widgets/animations/celebrate.dart';
@@ -276,7 +278,7 @@ class HomeTabState extends State<HomeTab> {
       final res = await _client
           .from('meal_plan_entries')
           .select(
-            'plan_date, meal_type, skipped, from_freezer, position, recipes(*), ready_meals(name)',
+            'id, home_id, plan_date, meal_type, recipe_id, ready_meal_id, servings, inventory_item_id, skipped, from_freezer, position, recipes(*), ready_meals(name)',
           )
           .eq('home_id', homeId)
           .inFilter('plan_date', [todayKey, tomorrowKey]);
@@ -303,6 +305,8 @@ class HomeTabState extends State<HomeTab> {
           skipped: e.skipped,
           fromFreezer: e.fromFreezer,
           recipe: recipe,
+          ready: e.readyMealId != null,
+          entry: e,
         );
         (row['plan_date'] == tomorrowKey ? tomorrow : items).add(item);
         position[item] = e.position;
@@ -989,6 +993,55 @@ class HomeTabState extends State<HomeTab> {
     if (mounted) _loadDashboard();
   }
 
+  /// "Hoy no me apetece cocinar": lo que hay ya hecho en lugar de la receta,
+  /// que pasa al siguiente hueco libre de la semana.
+  Future<void> _notCooking(_PlanItem m) async {
+    final entry = m.entry;
+    if (entry == null) return;
+    final choice = await showNotCookingSheet(
+      context,
+      NotCooking.load(
+        _client,
+        homeId: entry.homeId,
+        currentRecipeId: entry.recipeId,
+      ),
+    );
+    if (choice == null || !mounted) return;
+    final l = context.l;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final moved = await NotCooking.swap(
+        _client,
+        entry: entry,
+        dish: choice.dish,
+        ready: choice.ready,
+        recipe: choice.recipe,
+        out: choice.out,
+      );
+      if (!mounted) return;
+      final day = moved == null
+          ? null
+          : DateFormat.EEEE(
+              Localizations.localeOf(context).toString(),
+            ).format(moved);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            day == null ? l.ncDoneNoMove : l.ncDoneMoved(m.title, day),
+          ),
+        ),
+      );
+      await _loadDashboard();
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(friendlyError(e, l.couldNotSave)),
+          backgroundColor: AppColors.expired,
+        ),
+      );
+    }
+  }
+
   /// Cocina cálida: la comida que toca, en grande y en terracota.
   Widget _warmMealHero(_PlanItem m) {
     final meal = context.l.mealType(m.mealType);
@@ -996,6 +1049,7 @@ class HomeTabState extends State<HomeTab> {
     final mins = r == null
         ? 0
         : (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0);
+    final cooks = m.cooks;
     return WarmMealHero(
       tag: [
         _showingTomorrow
@@ -1005,12 +1059,26 @@ class HomeTabState extends State<HomeTab> {
       ].join(' · ').toUpperCase(),
       title: m.title,
       subtitle: [
-        if (mins > 0) context.l.warmMinutes(mins),
-        if (r != null) context.l.warmServings(r.servings),
+        if (m.ready)
+          context.l.kindReady
+        else if (m.fromFreezer)
+          context.l.kindFromFreezer
+        else if (r != null && !cooks)
+          context.l.kindNoCook
+        else if (mins > 0)
+          context.l.warmMinutes(mins),
+        if (r != null && cooks) context.l.warmServings(r.servings),
       ].join(' · '),
       recipe: r,
       mealType: m.mealType,
-      actionLabel: r != null ? context.l.warmCookNow : context.l.warmSeePlan,
+      actionLabel: cooks
+          ? context.l.warmCookNow
+          : r != null
+          ? context.l.kindSeeRecipe
+          : context.l.warmSeePlan,
+      onNotCooking: cooks && !_showingTomorrow && m.entry?.id != null
+          ? () => _notCooking(m)
+          : null,
       onOpen: r != null ? () => _openRecipe(r) : _openMealPlan,
     );
   }
@@ -1778,7 +1846,7 @@ class HomeTabState extends State<HomeTab> {
             if (m.next && !m.done) ...[
               const SizedBox(width: AppSpacing.sm),
               Text(
-                context.l.planCookNow,
+                m.item.cooks ? context.l.planCookNow : context.l.kindNow,
                 style: AppTextStyles.labelMuted.copyWith(
                   color: AppColors.terracottaText,
                   fontWeight: FontWeight.w700,
@@ -2646,13 +2714,24 @@ class _PlanItem {
   final bool skipped;
   final bool fromFreezer;
   final Recipe? recipe;
+
+  /// Preparado del súper (comprado hecho).
+  final bool ready;
+
+  /// Fila del plan, para cambiarla ("Hoy no me apetece").
+  final MealPlanEntry? entry;
   _PlanItem({
     required this.mealType,
     required this.title,
     required this.skipped,
     this.fromFreezer = false,
     this.recipe,
+    this.ready = false,
+    this.entry,
   });
+
+  /// Hay que ponerse a cocinar: ni preparado, ni del congelador, ni café.
+  bool get cooks => !ready && !fromFreezer && (recipe?.needsCooking ?? false);
 }
 
 /// Pantalla para PERSONALIZAR el Inicio: reordenar y mostrar/ocultar tarjetas

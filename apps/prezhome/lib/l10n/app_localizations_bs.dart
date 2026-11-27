@@ -5799,4 +5799,75 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get pushShopFailed => 'Nije uspjelo. Pokušaj ponovo.';
+
+  @override
+  String get kindReady => 'Gotovo jelo';
+
+  @override
+  String get kindFromFreezer => 'Iz zamrzivača';
+
+  @override
+  String get kindNoCook => 'Bez kuhanja';
+
+  @override
+  String get kindSeeRecipe => 'Pogledaj recept';
+
+  @override
+  String get kindNow => 'Sada';
+
+  @override
+  String get kindDone => 'Gotovo';
+
+  @override
+  String get kindNoCookSwitch => 'Ne treba kuhati';
+
+  @override
+  String get kindNoCookSwitchSub =>
+      'Kao kafa ili jogurt: ne pojavljuje se u načinu kuhanja ni u kuhanju unaprijed.';
+
+  @override
+  String get ncAction => 'Danas mi se ne da';
+
+  @override
+  String get ncTitle => 'Šta ti se onda jede?';
+
+  @override
+  String get ncBody =>
+      'Ovo već imaš spremno. Današnji recept prelazi na prvi slobodan dan u sedmici.';
+
+  @override
+  String get ncDishes => 'Već spremljeno kod kuće';
+
+  @override
+  String get ncFrozen => 'U zamrzivaču, treba odmrznuti';
+
+  @override
+  String get ncFridge => 'U frižideru';
+
+  @override
+  String get ncReady => 'Tvoja gotova jela';
+
+  @override
+  String get ncAtHome => 'Imaš kod kuće';
+
+  @override
+  String get ncNotAtHome => 'Nema više kod kuće';
+
+  @override
+  String get ncQuick => 'Nešto brzo';
+
+  @override
+  String get ncNothing =>
+      'Nema ostataka, gotovih jela ni brzih recepata. Gotova jela koja sačuvaš u planu pojavit će se ovdje.';
+
+  @override
+  String get ncOut => 'Danas jedemo vani';
+
+  @override
+  String get ncDoneNoMove => 'Gotovo, danas se ne kuha.';
+
+  @override
+  String ncDoneMoved(String title, String day) {
+    return 'Gotovo. $title prelazi na $day.';
+  }
 }

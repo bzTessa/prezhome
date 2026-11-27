@@ -5919,4 +5919,75 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pushShopFailed => 'Impossible de prévenir. Réessaie.';
+
+  @override
+  String get kindReady => 'Plat tout prêt';
+
+  @override
+  String get kindFromFreezer => 'Du congélateur';
+
+  @override
+  String get kindNoCook => 'Sans cuisson';
+
+  @override
+  String get kindSeeRecipe => 'Voir la recette';
+
+  @override
+  String get kindNow => 'Maintenant';
+
+  @override
+  String get kindDone => 'Fait';
+
+  @override
+  String get kindNoCookSwitch => 'Pas besoin de cuisiner';
+
+  @override
+  String get kindNoCookSwitchSub =>
+      'Comme un café ou un yaourt : n\'apparaît ni en mode cuisine ni en cuisine en lot.';
+
+  @override
+  String get ncAction => 'Pas envie aujourd\'hui';
+
+  @override
+  String get ncTitle => 'Qu\'est-ce qui te tente alors ?';
+
+  @override
+  String get ncBody =>
+      'Voici ce que tu as déjà de prêt. La recette du jour passe au prochain jour libre de la semaine.';
+
+  @override
+  String get ncDishes => 'Déjà prêt à la maison';
+
+  @override
+  String get ncFrozen => 'Au congélateur, à décongeler';
+
+  @override
+  String get ncFridge => 'Au frigo';
+
+  @override
+  String get ncReady => 'Tes plats tout prêts';
+
+  @override
+  String get ncAtHome => 'Tu en as à la maison';
+
+  @override
+  String get ncNotAtHome => 'Il n\'en reste plus';
+
+  @override
+  String get ncQuick => 'Quelque chose de rapide';
+
+  @override
+  String get ncNothing =>
+      'Pas de restes, de plats tout prêts ni de recettes rapides. Les plats tout prêts enregistrés dans le menu apparaîtront ici.';
+
+  @override
+  String get ncOut => 'On mange dehors aujourd\'hui';
+
+  @override
+  String get ncDoneNoMove => 'C\'est fait, pas de cuisine aujourd\'hui.';
+
+  @override
+  String ncDoneMoved(String title, String day) {
+    return 'C\'est fait. $title passe à $day.';
+  }
 }
