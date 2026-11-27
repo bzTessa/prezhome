@@ -5768,4 +5768,78 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get planKcalHint =>
       'Calories in one serving of what\'s planned, against your daily target';
+
+  @override
+  String get sxTitle => 'Shared expenses';
+
+  @override
+  String get sxTile => 'Shared expenses';
+
+  @override
+  String get sxTileSub => 'Who paid what and who owes whom';
+
+  @override
+  String get sxYou => 'You';
+
+  @override
+  String get sxAdd => 'Add expense';
+
+  @override
+  String get sxEmpty =>
+      'Log what each of you pays for the home and the app tells you how to get even.';
+
+  @override
+  String get sxPending => 'Unsettled';
+
+  @override
+  String get sxEven => 'You\'re all even';
+
+  @override
+  String get sxToSettle => 'To get even';
+
+  @override
+  String sxTotal(String total, int n) {
+    return '$total split equally between $n people';
+  }
+
+  @override
+  String sxOwes(String from, String amount, String to) {
+    return '$from gives $amount to $to';
+  }
+
+  @override
+  String get sxSettle => 'Settle up';
+
+  @override
+  String get sxSettleTitle => 'Settle up?';
+
+  @override
+  String get sxSettleBody =>
+      'Make the payments above. All pending expenses will be marked as settled.';
+
+  @override
+  String sxPaidBy(String name, String date) {
+    return 'Paid by $name · $date';
+  }
+
+  @override
+  String get sxDelete => 'Delete expense';
+
+  @override
+  String get sxAmount => 'Amount';
+
+  @override
+  String get sxAmountInvalid => 'Enter an amount above 0';
+
+  @override
+  String get sxConcept => 'Description';
+
+  @override
+  String get sxConceptHint => 'Groceries, power, internet…';
+
+  @override
+  String get sxDefaultConcept => 'Home expense';
+
+  @override
+  String get sxWhoPaid => 'Who paid?';
 }

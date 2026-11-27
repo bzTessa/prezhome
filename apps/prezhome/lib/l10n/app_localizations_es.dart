@@ -5784,4 +5784,78 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get planKcalHint =>
       'Calorías de una ración de lo planificado, frente a tu objetivo diario';
+
+  @override
+  String get sxTitle => 'Gastos compartidos';
+
+  @override
+  String get sxTile => 'Gastos compartidos';
+
+  @override
+  String get sxTileSub => 'Quién ha pagado qué y quién debe a quién';
+
+  @override
+  String get sxYou => 'Tú';
+
+  @override
+  String get sxAdd => 'Añadir gasto';
+
+  @override
+  String get sxEmpty =>
+      'Apunta aquí lo que paga cada uno para la casa y la app os dice cómo quedar en paz.';
+
+  @override
+  String get sxPending => 'Sin saldar';
+
+  @override
+  String get sxEven => 'Estáis en paz';
+
+  @override
+  String get sxToSettle => 'Para quedar en paz';
+
+  @override
+  String sxTotal(String total, int n) {
+    return '$total entre $n personas, a partes iguales';
+  }
+
+  @override
+  String sxOwes(String from, String amount, String to) {
+    return '$from le da $amount a $to';
+  }
+
+  @override
+  String get sxSettle => 'Saldar cuentas';
+
+  @override
+  String get sxSettleTitle => '¿Saldar cuentas?';
+
+  @override
+  String get sxSettleBody =>
+      'Haced los pagos de arriba. Todos los gastos pendientes quedarán como saldados.';
+
+  @override
+  String sxPaidBy(String name, String date) {
+    return 'Pagó $name · $date';
+  }
+
+  @override
+  String get sxDelete => 'Borrar gasto';
+
+  @override
+  String get sxAmount => 'Importe';
+
+  @override
+  String get sxAmountInvalid => 'Escribe un importe mayor que 0';
+
+  @override
+  String get sxConcept => 'Concepto';
+
+  @override
+  String get sxConceptHint => 'Compra, luz, internet…';
+
+  @override
+  String get sxDefaultConcept => 'Gasto de casa';
+
+  @override
+  String get sxWhoPaid => '¿Quién pagó?';
 }

@@ -5690,4 +5690,78 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get planKcalHint =>
       'Kalorije jedne porcije planiranog u odnosu na dnevni cilj';
+
+  @override
+  String get sxTitle => 'Zajednički troškovi';
+
+  @override
+  String get sxTile => 'Zajednički troškovi';
+
+  @override
+  String get sxTileSub => 'Ko je šta platio i ko kome duguje';
+
+  @override
+  String get sxYou => 'Ti';
+
+  @override
+  String get sxAdd => 'Dodaj trošak';
+
+  @override
+  String get sxEmpty =>
+      'Upišite šta ko plaća za kuću i aplikacija će vam reći kako da budete kvit.';
+
+  @override
+  String get sxPending => 'Neizmireno';
+
+  @override
+  String get sxEven => 'Kvit ste';
+
+  @override
+  String get sxToSettle => 'Da budete kvit';
+
+  @override
+  String sxTotal(String total, int n) {
+    return '$total podijeljeno jednako na $n osoba';
+  }
+
+  @override
+  String sxOwes(String from, String amount, String to) {
+    return '$from daje $amount osobi $to';
+  }
+
+  @override
+  String get sxSettle => 'Izmiri račune';
+
+  @override
+  String get sxSettleTitle => 'Izmiriti račune?';
+
+  @override
+  String get sxSettleBody =>
+      'Izvršite plaćanja iznad. Svi neizmireni troškovi bit će označeni kao izmireni.';
+
+  @override
+  String sxPaidBy(String name, String date) {
+    return 'Platio/la $name · $date';
+  }
+
+  @override
+  String get sxDelete => 'Obriši trošak';
+
+  @override
+  String get sxAmount => 'Iznos';
+
+  @override
+  String get sxAmountInvalid => 'Upiši iznos veći od 0';
+
+  @override
+  String get sxConcept => 'Opis';
+
+  @override
+  String get sxConceptHint => 'Namirnice, struja, internet…';
+
+  @override
+  String get sxDefaultConcept => 'Trošak za kuću';
+
+  @override
+  String get sxWhoPaid => 'Ko je platio?';
 }

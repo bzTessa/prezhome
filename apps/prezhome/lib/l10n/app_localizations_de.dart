@@ -5784,4 +5784,78 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get planKcalHint =>
       'Kalorien einer Portion des Geplanten im Vergleich zu deinem Tagesziel';
+
+  @override
+  String get sxTitle => 'Geteilte Ausgaben';
+
+  @override
+  String get sxTile => 'Geteilte Ausgaben';
+
+  @override
+  String get sxTileSub => 'Wer was bezahlt hat und wer wem etwas schuldet';
+
+  @override
+  String get sxYou => 'Du';
+
+  @override
+  String get sxAdd => 'Ausgabe hinzufügen';
+
+  @override
+  String get sxEmpty =>
+      'Tragt ein, was jeder für den Haushalt zahlt, und die App sagt euch, wie ihr quitt werdet.';
+
+  @override
+  String get sxPending => 'Offen';
+
+  @override
+  String get sxEven => 'Ihr seid quitt';
+
+  @override
+  String get sxToSettle => 'Um quitt zu sein';
+
+  @override
+  String sxTotal(String total, int n) {
+    return '$total zu gleichen Teilen auf $n Personen';
+  }
+
+  @override
+  String sxOwes(String from, String amount, String to) {
+    return '$from gibt $to $amount';
+  }
+
+  @override
+  String get sxSettle => 'Abrechnen';
+
+  @override
+  String get sxSettleTitle => 'Abrechnen?';
+
+  @override
+  String get sxSettleBody =>
+      'Macht die Zahlungen oben. Alle offenen Ausgaben werden als beglichen markiert.';
+
+  @override
+  String sxPaidBy(String name, String date) {
+    return 'Bezahlt von $name · $date';
+  }
+
+  @override
+  String get sxDelete => 'Ausgabe löschen';
+
+  @override
+  String get sxAmount => 'Betrag';
+
+  @override
+  String get sxAmountInvalid => 'Gib einen Betrag über 0 ein';
+
+  @override
+  String get sxConcept => 'Beschreibung';
+
+  @override
+  String get sxConceptHint => 'Einkauf, Strom, Internet…';
+
+  @override
+  String get sxDefaultConcept => 'Haushaltsausgabe';
+
+  @override
+  String get sxWhoPaid => 'Wer hat bezahlt?';
 }
