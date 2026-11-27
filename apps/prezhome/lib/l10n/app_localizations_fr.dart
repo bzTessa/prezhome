@@ -5683,4 +5683,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gsBought => 'dans le panier';
+
+  @override
+  String wToBuy(int n) {
+    return '$n à acheter';
+  }
+
+  @override
+  String wTasks(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n tâches en attente',
+      one: '1 tâche en attente',
+    );
+    return '$_temp0';
+  }
 }

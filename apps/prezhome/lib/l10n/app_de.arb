@@ -1410,5 +1410,7 @@
   "gsAddToList": "„{q}“ zur Liste hinzufügen",
   "gsAdded": "„{q}“ ist auf der Liste",
   "gsAddFailed": "Konnte nicht hinzugefügt werden. Versuch es noch einmal.",
-  "gsBought": "im Wagen"
+  "gsBought": "im Wagen",
+  "wToBuy": "{n} einzukaufen",
+  "wTasks": "{n, plural, =1{1 offene Aufgabe} other{{n} offene Aufgaben}}"
 }

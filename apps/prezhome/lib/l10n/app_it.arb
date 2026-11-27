@@ -1410,5 +1410,7 @@
   "gsAddToList": "Aggiungi «{q}» alla lista",
   "gsAdded": "«{q}» è nella lista",
   "gsAddFailed": "Impossibile aggiungere. Riprova.",
-  "gsBought": "nel carrello"
+  "gsBought": "nel carrello",
+  "wToBuy": "{n} da comprare",
+  "wTasks": "{n, plural, =1{1 compito in sospeso} other{{n} compiti in sospeso}}"
 }

@@ -5659,4 +5659,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gsBought => 'im Wagen';
+
+  @override
+  String wToBuy(int n) {
+    return '$n einzukaufen';
+  }
+
+  @override
+  String wTasks(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n offene Aufgaben',
+      one: '1 offene Aufgabe',
+    );
+    return '$_temp0';
+  }
 }

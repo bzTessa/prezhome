@@ -1410,5 +1410,7 @@
   "gsAddToList": "Dodaj „{q}“ na listu",
   "gsAdded": "„{q}“ je na listi",
   "gsAddFailed": "Nije uspjelo. Pokušaj ponovo.",
-  "gsBought": "u korpi"
+  "gsBought": "u korpi",
+  "wToBuy": "{n} za kupiti",
+  "wTasks": "Zadaci na čekanju: {n}"
 }

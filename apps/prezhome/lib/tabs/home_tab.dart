@@ -26,6 +26,7 @@ import '../models/recipe.dart';
 import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/home_food_restrictions.dart';
+import '../services/home_screen_widget.dart';
 import '../services/inbox.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
@@ -769,6 +770,37 @@ class HomeTabState extends State<HomeTab> {
   }
 
   /// "Jueves, 30 de octubre" en el idioma de la app.
+  /// Pasa al widget de la pantalla de inicio la comida que toca y lo
+  /// pendiente.
+  void _syncHomeWidget() {
+    if (!mounted) return;
+    final m = _prefs.activeCards.contains(DashboardCard.meals)
+        ? _nextMeal()
+        : null;
+    final meal = m == null ? null : context.l.mealType(m.mealType);
+    unawaited(
+      HomeScreenWidget.update(
+        date: _todayLabel().toUpperCase(),
+        mealTag: m == null
+            ? null
+            : [
+                _showingTomorrow
+                    ? context.l.homeTomorrowTag(meal!)
+                    : context.l.homeTodayTag(meal!),
+                PlanPrefs.current.value.timeOf(m.mealType),
+              ].join(' · '),
+        meal: m?.title ?? context.l.warmNothingPlanned,
+        line1: _pendingShopping > 0 ? context.l.wToBuy(_pendingShopping) : null,
+        line2: _expiringNames.isNotEmpty
+            ? '${context.l.warmUseUp}: ${_expiringNames.take(2).join(', ')}'
+            : _prefs.isModuleEnabled(HomeModule.tasks) &&
+                  _pendingTasks.isNotEmpty
+            ? context.l.wTasks(_pendingTasks.length)
+            : null,
+      ),
+    );
+  }
+
   String _todayLabel() => DateFormat.MMMMEEEEd(
     Localizations.localeOf(context).toString(),
   ).format(DateTime.now());
@@ -793,6 +825,9 @@ class HomeTabState extends State<HomeTab> {
         warm && _loaded && _prefs.activeCards.contains(DashboardCard.meals)
         ? _nextMeal()
         : null;
+    if (_loaded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncHomeWidget());
+    }
     final next = _nextLine(allLines);
     final restLines = [
       for (final l in allLines)

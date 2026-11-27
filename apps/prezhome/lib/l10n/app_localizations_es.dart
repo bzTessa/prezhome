@@ -5659,4 +5659,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gsBought => 'en el carro';
+
+  @override
+  String wToBuy(int n) {
+    return '$n por comprar';
+  }
+
+  @override
+  String wTasks(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n tareas pendientes',
+      one: '1 tarea pendiente',
+    );
+    return '$_temp0';
+  }
 }

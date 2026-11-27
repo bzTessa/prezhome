@@ -5589,4 +5589,14 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get gsBought => 'u korpi';
+
+  @override
+  String wToBuy(int n) {
+    return '$n za kupiti';
+  }
+
+  @override
+  String wTasks(int n) {
+    return 'Zadaci na čekanju: $n';
+  }
 }
