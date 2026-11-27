@@ -120,16 +120,6 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: AppSpacing.sm),
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.inkMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.xl,

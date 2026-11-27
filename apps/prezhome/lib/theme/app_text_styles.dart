@@ -96,6 +96,15 @@ class AppTextStyles {
     height: 1.15,
   );
 
+  /// ~20 — título de hojas inferiores y diálogos: la misma serif que las
+  /// cabeceras, para que una hoja se lea como parte de la pantalla.
+  static TextStyle get sheetTitle => AppFonts.serif(
+    fontSize: 20,
+    color: AppColors.ink,
+    letterSpacing: -0.2,
+    height: 1.2,
+  );
+
   /// ~16 / semibold — títulos de tarjeta.
   static TextStyle get title => AppFonts.sans(
     fontSize: 16,

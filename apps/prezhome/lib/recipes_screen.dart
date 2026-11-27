@@ -198,15 +198,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Text(
-                recipe.title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.ink,
-                ),
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Text(recipe.title, style: AppTextStyles.sheetTitle),
             ),
             ListTile(
               leading: Icon(

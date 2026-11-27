@@ -398,9 +398,13 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
+      // Todas las hojas llevan asa: indica que se puede bajar para cerrarla.
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.cream,
         surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        dragHandleColor: AppColors.line,
+        dragHandleSize: const Size(40, 4),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -423,6 +427,8 @@ class AppTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.cream,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: AppTextStyles.sheetTitle,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),

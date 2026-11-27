@@ -280,15 +280,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
-              child: Text(
-                context.l.rdPhoto,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: AppColors.ink,
-                ),
-              ),
+              padding: EdgeInsets.fromLTRB(20, 4, 20, 4),
+              child: Text(context.l.rdPhoto, style: AppTextStyles.sheetTitle),
             ),
             ListTile(
               leading: Icon(Icons.image_search, color: AppColors.woodDark),
