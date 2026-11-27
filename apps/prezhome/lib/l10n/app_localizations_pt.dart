@@ -5787,4 +5787,78 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get planKcalHint =>
       'Calorias de uma dose do que está planeado, face ao teu objetivo diário';
+
+  @override
+  String get sxTitle => 'Despesas partilhadas';
+
+  @override
+  String get sxTile => 'Despesas partilhadas';
+
+  @override
+  String get sxTileSub => 'Quem pagou o quê e quem deve a quem';
+
+  @override
+  String get sxYou => 'Tu';
+
+  @override
+  String get sxAdd => 'Adicionar despesa';
+
+  @override
+  String get sxEmpty =>
+      'Registem aqui o que cada um paga para a casa e a app diz-vos como ficar quites.';
+
+  @override
+  String get sxPending => 'Por acertar';
+
+  @override
+  String get sxEven => 'Estão quites';
+
+  @override
+  String get sxToSettle => 'Para ficarem quites';
+
+  @override
+  String sxTotal(String total, int n) {
+    return '$total dividido em partes iguais por $n pessoas';
+  }
+
+  @override
+  String sxOwes(String from, String amount, String to) {
+    return '$from dá $amount a $to';
+  }
+
+  @override
+  String get sxSettle => 'Acertar contas';
+
+  @override
+  String get sxSettleTitle => 'Acertar contas?';
+
+  @override
+  String get sxSettleBody =>
+      'Façam os pagamentos acima. Todas as despesas pendentes ficam acertadas.';
+
+  @override
+  String sxPaidBy(String name, String date) {
+    return 'Pagou $name · $date';
+  }
+
+  @override
+  String get sxDelete => 'Apagar despesa';
+
+  @override
+  String get sxAmount => 'Valor';
+
+  @override
+  String get sxAmountInvalid => 'Escreve um valor maior que 0';
+
+  @override
+  String get sxConcept => 'Descrição';
+
+  @override
+  String get sxConceptHint => 'Compras, luz, internet…';
+
+  @override
+  String get sxDefaultConcept => 'Despesa da casa';
+
+  @override
+  String get sxWhoPaid => 'Quem pagou?';
 }

@@ -8734,6 +8734,138 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Calorías de una ración de lo planificado, frente a tu objetivo diario'**
   String get planKcalHint;
+
+  /// No description provided for @sxTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos compartidos'**
+  String get sxTitle;
+
+  /// No description provided for @sxTile.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos compartidos'**
+  String get sxTile;
+
+  /// No description provided for @sxTileSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Quién ha pagado qué y quién debe a quién'**
+  String get sxTileSub;
+
+  /// No description provided for @sxYou.
+  ///
+  /// In es, this message translates to:
+  /// **'Tú'**
+  String get sxYou;
+
+  /// No description provided for @sxAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir gasto'**
+  String get sxAdd;
+
+  /// No description provided for @sxEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Apunta aquí lo que paga cada uno para la casa y la app os dice cómo quedar en paz.'**
+  String get sxEmpty;
+
+  /// No description provided for @sxPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin saldar'**
+  String get sxPending;
+
+  /// No description provided for @sxEven.
+  ///
+  /// In es, this message translates to:
+  /// **'Estáis en paz'**
+  String get sxEven;
+
+  /// No description provided for @sxToSettle.
+  ///
+  /// In es, this message translates to:
+  /// **'Para quedar en paz'**
+  String get sxToSettle;
+
+  /// No description provided for @sxTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'{total} entre {n} personas, a partes iguales'**
+  String sxTotal(String total, int n);
+
+  /// No description provided for @sxOwes.
+  ///
+  /// In es, this message translates to:
+  /// **'{from} le da {amount} a {to}'**
+  String sxOwes(String from, String amount, String to);
+
+  /// No description provided for @sxSettle.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldar cuentas'**
+  String get sxSettle;
+
+  /// No description provided for @sxSettleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Saldar cuentas?'**
+  String get sxSettleTitle;
+
+  /// No description provided for @sxSettleBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Haced los pagos de arriba. Todos los gastos pendientes quedarán como saldados.'**
+  String get sxSettleBody;
+
+  /// No description provided for @sxPaidBy.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagó {name} · {date}'**
+  String sxPaidBy(String name, String date);
+
+  /// No description provided for @sxDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar gasto'**
+  String get sxDelete;
+
+  /// No description provided for @sxAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Importe'**
+  String get sxAmount;
+
+  /// No description provided for @sxAmountInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un importe mayor que 0'**
+  String get sxAmountInvalid;
+
+  /// No description provided for @sxConcept.
+  ///
+  /// In es, this message translates to:
+  /// **'Concepto'**
+  String get sxConcept;
+
+  /// No description provided for @sxConceptHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra, luz, internet…'**
+  String get sxConceptHint;
+
+  /// No description provided for @sxDefaultConcept.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto de casa'**
+  String get sxDefaultConcept;
+
+  /// No description provided for @sxWhoPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quién pagó?'**
+  String get sxWhoPaid;
 }
 
 class _AppLocalizationsDelegate

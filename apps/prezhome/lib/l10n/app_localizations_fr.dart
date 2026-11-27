@@ -5808,4 +5808,78 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get planKcalHint =>
       'Calories d\'une portion du menu prévu, par rapport à votre objectif quotidien';
+
+  @override
+  String get sxTitle => 'Dépenses partagées';
+
+  @override
+  String get sxTile => 'Dépenses partagées';
+
+  @override
+  String get sxTileSub => 'Qui a payé quoi et qui doit à qui';
+
+  @override
+  String get sxYou => 'Toi';
+
+  @override
+  String get sxAdd => 'Ajouter une dépense';
+
+  @override
+  String get sxEmpty =>
+      'Notez ce que chacun paie pour la maison et l\'app vous dit comment être quittes.';
+
+  @override
+  String get sxPending => 'Non réglé';
+
+  @override
+  String get sxEven => 'Vous êtes quittes';
+
+  @override
+  String get sxToSettle => 'Pour être quittes';
+
+  @override
+  String sxTotal(String total, int n) {
+    return '$total partagé à parts égales entre $n personnes';
+  }
+
+  @override
+  String sxOwes(String from, String amount, String to) {
+    return '$from donne $amount à $to';
+  }
+
+  @override
+  String get sxSettle => 'Régler les comptes';
+
+  @override
+  String get sxSettleTitle => 'Régler les comptes ?';
+
+  @override
+  String get sxSettleBody =>
+      'Faites les paiements ci-dessus. Toutes les dépenses en attente seront marquées comme réglées.';
+
+  @override
+  String sxPaidBy(String name, String date) {
+    return 'Payé par $name · $date';
+  }
+
+  @override
+  String get sxDelete => 'Supprimer la dépense';
+
+  @override
+  String get sxAmount => 'Montant';
+
+  @override
+  String get sxAmountInvalid => 'Saisissez un montant supérieur à 0';
+
+  @override
+  String get sxConcept => 'Libellé';
+
+  @override
+  String get sxConceptHint => 'Courses, électricité, internet…';
+
+  @override
+  String get sxDefaultConcept => 'Dépense de la maison';
+
+  @override
+  String get sxWhoPaid => 'Qui a payé ?';
 }

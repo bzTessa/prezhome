@@ -11,6 +11,7 @@ import 'nutrition_profile_screen.dart';
 import 'photo_meal_screen.dart';
 import 'services/plan_diary.dart';
 import 'theme/app_theme.dart';
+import 'widgets/weight_card.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
 import 'widgets/skeleton.dart';
@@ -675,6 +676,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 else
                   ..._buildGroups(data.entries),
                 if (data.prefs.trackCalories) _askSwitch(data.prefs),
+                const SizedBox(height: 16),
+                WeightCard(onSaved: _reload),
               ],
             );
           },

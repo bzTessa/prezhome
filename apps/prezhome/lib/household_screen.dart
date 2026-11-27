@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
 import 'economy_screen.dart';
+import 'shared_expenses_screen.dart';
 import 'plan_usage_screen.dart';
 import 'stats_screen.dart';
 import 'l10n/l10n.dart';
@@ -857,6 +858,20 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   ),
                 ),
               ),
+              if (data.peopleCount > 1 && data.homeId != null)
+                _settingTile(
+                  icon: Icons.handshake_outlined,
+                  title: context.l.sxTile,
+                  subtitle: context.l.sxTileSub,
+                  iconBg: AppColors.sageBg,
+                  iconFg: AppColors.sage,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          SharedExpensesScreen(homeId: data.homeId!),
+                    ),
+                  ),
+                ),
               _settingTile(
                 icon: Icons.workspace_premium_outlined,
                 title: context.l.hhYourPlan,

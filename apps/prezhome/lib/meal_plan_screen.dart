@@ -77,6 +77,44 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   String get _locale => Localizations.localeOf(context).toString();
 
+  /// Calorías de una ración de lo planificado ese día frente al objetivo
+  /// diario de la persona. Solo si tiene objetivo y alguna receta las sabe.
+  Widget? _kcalBadge(_PlanData data, List<MealPlanEntry> entries) {
+    final target = data.targetKcal;
+    if (target == null || target <= 0) return null;
+    var kcal = 0;
+    for (final e in entries) {
+      if (e.skipped) continue;
+      kcal +=
+          data.recipesById[e.recipeId]?.calories ??
+          data.readyById[e.readyMealId]?.calories?.round() ??
+          0;
+    }
+    if (kcal <= 0) return null;
+    final ratio = kcal / target;
+    final (Color bg, Color fg) = ratio > 1.1
+        ? (AppColors.terracottaBg, AppColors.terracottaText)
+        : ratio < 0.7
+        ? (AppColors.goldBg, AppColors.woodDark)
+        : (AppColors.sageBg, AppColors.sage);
+    return Tooltip(
+      message: context.l.planKcalHint,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          context.l.planKcalOf(kcal, target),
+          style: AppTextStyles.numeric(
+            TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: fg),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// "Lunes 3" en el idioma de la app.
   String _dayLabel(DateTime d) {
     final name = DateFormat.EEEE(_locale).format(d);
@@ -272,6 +310,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       isMealPrep: isMealPrep,
       // Si alguien cocina en lote, manda el lote.
       isAlternate: isAlternate && !isMealPrep,
+      targetKcal: myProfile.targetCalories,
       prefs: switch (profile['dashboard_prefs']) {
         final Map m => DashboardPrefs.fromJson(Map<String, dynamic>.from(m)),
         _ => null,
@@ -2180,6 +2219,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   children: [
                     Text(_dayLabel(date), style: AppTextStyles.headline),
                     if (_isBusy(date)) _busyBadge(),
+                    ?_kcalBadge(data, dayEntries),
                     if (sel == todayIndex)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -2912,6 +2952,9 @@ class _PlanData {
   /// Modo "Cada dos días": comidas con sobras al día siguiente.
   final bool isAlternate;
   final DashboardPrefs prefs;
+
+  /// Objetivo de calorías diario de la persona (null si no lo tiene).
+  final int? targetKcal;
   _PlanData({
     required this.homeId,
     this.activeMeals = const ['lunch', 'dinner'],
@@ -2923,6 +2966,7 @@ class _PlanData {
     this.members = const [],
     this.isMealPrep = false,
     this.isAlternate = false,
+    this.targetKcal,
     DashboardPrefs? prefs,
   }) : prefs = prefs ?? DashboardPrefs.defaults();
 }

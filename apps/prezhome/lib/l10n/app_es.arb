@@ -3658,5 +3658,60 @@
       }
     }
   },
-  "planKcalHint": "Calorías de una ración de lo planificado, frente a tu objetivo diario"
+  "planKcalHint": "Calorías de una ración de lo planificado, frente a tu objetivo diario",
+  "sxTitle": "Gastos compartidos",
+  "sxTile": "Gastos compartidos",
+  "sxTileSub": "Quién ha pagado qué y quién debe a quién",
+  "sxYou": "Tú",
+  "sxAdd": "Añadir gasto",
+  "sxEmpty": "Apunta aquí lo que paga cada uno para la casa y la app os dice cómo quedar en paz.",
+  "sxPending": "Sin saldar",
+  "sxEven": "Estáis en paz",
+  "sxToSettle": "Para quedar en paz",
+  "sxTotal": "{total} entre {n} personas, a partes iguales",
+  "@sxTotal": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sxOwes": "{from} le da {amount} a {to}",
+  "@sxOwes": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "sxSettle": "Saldar cuentas",
+  "sxSettleTitle": "¿Saldar cuentas?",
+  "sxSettleBody": "Haced los pagos de arriba. Todos los gastos pendientes quedarán como saldados.",
+  "sxPaidBy": "Pagó {name} · {date}",
+  "@sxPaidBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "sxDelete": "Borrar gasto",
+  "sxAmount": "Importe",
+  "sxAmountInvalid": "Escribe un importe mayor que 0",
+  "sxConcept": "Concepto",
+  "sxConceptHint": "Compra, luz, internet…",
+  "sxDefaultConcept": "Gasto de casa",
+  "sxWhoPaid": "¿Quién pagó?"
 }
