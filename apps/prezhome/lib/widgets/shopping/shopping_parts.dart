@@ -1454,9 +1454,12 @@ class ShoppingGridTile extends StatelessWidget {
                 Text(
                   checked
                       ? context.l.shopInCart
-                      : [qty, ?price].where((t) => t.isNotEmpty).join(' · '),
-                  maxLines: 1,
+                      // Cantidad y precio en dos líneas: juntos no caben en
+                      // una ficha de tres por fila ("1 paquete · ≈ 2,…").
+                      : [qty, ?price].where((t) => t.isNotEmpty).join('\n'),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,

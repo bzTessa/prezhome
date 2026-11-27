@@ -33,6 +33,21 @@ void main() {
       expect(due.map((e) => e.mealType), ['dinner']);
     });
 
+    test('apunta lo planificado tarde aunque su hora fuera antes', () {
+      // A las 23:00 se hace el plan de hoy: la comida de las 14:00 ya pasó.
+      final since = DateTime(2026, 10, 14, 22, 58);
+      final now = DateTime(2026, 10, 14, 23, 5);
+      final late = MealPlanEntry(
+        homeId: 'h',
+        date: day,
+        mealType: 'lunch',
+        recipeId: 'r-lunch',
+        createdAt: DateTime(2026, 10, 14, 23),
+      );
+      final due = PlanDiary.passed([late, meal('breakfast')], me, since, now);
+      expect(due.map((e) => e.mealType), ['lunch']);
+    });
+
     test('salta lo saltado y lo que no come en casa', () {
       final away = NutritionProfile.fromMap({
         'id': 'u',
