@@ -198,15 +198,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Text(
-                recipe.title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.ink,
-                ),
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Text(recipe.title, style: AppTextStyles.sheetTitle),
             ),
             ListTile(
               leading: Icon(
@@ -916,26 +909,6 @@ class _RecipeCard extends StatelessWidget {
                         )
                       else
                         photo,
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 54,
-                        child: IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withValues(alpha: 0.22),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                       if ((missing != null && missing! <= 1) ||
                           recipe.freezesWell)
                         Positioned(

@@ -684,10 +684,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Text(
                   context.l.panWhichDish,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: AppTextStyles.sheetTitle,
                 ),
               ),
               for (final r in recipes)
@@ -1835,17 +1832,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.inkMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
                   Container(
@@ -2302,11 +2288,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 children: [
                   Text(
                     shoppingCleanName(item.name),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.ink,
-                    ),
+                    style: AppTextStyles.sheetTitle,
                   ),
                   const SizedBox(height: 16),
                   Text(

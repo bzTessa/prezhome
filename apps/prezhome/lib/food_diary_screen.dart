@@ -229,16 +229,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.wood,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 12),
               ListTile(
                 leading: Icon(Icons.edit_outlined, color: AppColors.ink),
                 title: Text(context.l.diaManual),
@@ -464,13 +454,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 16),
-              Text(
-                context.l.planPickRecipe,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
+              Text(context.l.planPickRecipe, style: AppTextStyles.sheetTitle),
               const SizedBox(height: 8),
               Flexible(
                 child: ListView.builder(
@@ -675,7 +659,10 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   _empty()
                 else
                   ..._buildGroups(data.entries),
-                if (data.prefs.trackCalories) _askSwitch(data.prefs),
+                if (data.prefs.trackCalories) ...[
+                  const SizedBox(height: 16),
+                  _askSwitch(data.prefs),
+                ],
                 const SizedBox(height: 16),
                 WeightCard(onSaved: _reload),
               ],
@@ -1317,27 +1304,37 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   }
 
   Widget _askSwitch(DashboardPrefs prefs) {
-    return SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(context.l.diaAskFirst),
-      subtitle: Text(prefs.askMeals ? context.l.diaAskOn : context.l.diaAskOff),
-      value: prefs.askMeals,
-      onChanged: (v) async {
-        try {
-          await _client
-              .from('profiles')
-              .update({'dashboard_prefs': prefs.copyWith(askMeals: v).toJson()})
-              .eq('id', _client.auth.currentUser!.id);
-        } catch (e) {
-          debugPrint('FoodDiary._askSwitch error: $e');
-          if (!mounted) return;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(context.l.diaSettingError)));
-          return;
-        }
-        if (mounted) _reload();
-      },
+    // En su tarjeta, como el resto de bloques del diario, y no suelta
+    // pegada al borde.
+    return Container(
+      decoration: AppTheme.surfaceDecoration(),
+      clipBehavior: Clip.antiAlias,
+      child: SwitchListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        title: Text(context.l.diaAskFirst, style: AppTextStyles.title),
+        subtitle: Text(
+          prefs.askMeals ? context.l.diaAskOn : context.l.diaAskOff,
+        ),
+        value: prefs.askMeals,
+        onChanged: (v) async {
+          try {
+            await _client
+                .from('profiles')
+                .update({
+                  'dashboard_prefs': prefs.copyWith(askMeals: v).toJson(),
+                })
+                .eq('id', _client.auth.currentUser!.id);
+          } catch (e) {
+            debugPrint('FoodDiary._askSwitch error: $e');
+            if (!mounted) return;
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(context.l.diaSettingError)));
+            return;
+          }
+          if (mounted) _reload();
+        },
+      ),
     );
   }
 

@@ -31,14 +31,7 @@ Future<int?> askFreezeServings(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title ?? context.l.fzTitle,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.ink,
-                ),
-              ),
+              Text(title ?? context.l.fzTitle, style: AppTextStyles.sheetTitle),
               const SizedBox(height: 4),
               Text(recipe.title, style: TextStyle(color: AppColors.inkMuted)),
               const SizedBox(height: 16),

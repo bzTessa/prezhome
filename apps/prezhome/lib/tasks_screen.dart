@@ -25,6 +25,7 @@ import 'widgets/animations/swipe_action.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/segmented_pill.dart';
 import 'widgets/skeleton.dart';
+import 'widgets/warm_tab_header.dart';
 import 'utils/realtime_sync.dart';
 import 'widgets/miau_character.dart';
 import 'utils/friendly_error.dart';
@@ -820,288 +821,301 @@ class _TasksScreenState extends State<TasksScreen> {
         backgroundColor: AppColors.cream,
         // El teclado lo gestiona la hoja de nueva tarea; así el botón no sube.
         resizeToAvoidBottomInset: false,
-        appBar: AppBar(title: Text(context.l.tskTitle)),
-        body: FutureBuilder<_TasksData>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData &&
-                snapshot.connectionState == ConnectionState.waiting) {
-              return const TasksSkeleton();
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text(friendlyError(snapshot.error)));
-            }
-            final data = snapshot.data!;
-            if (data.homeId == null) {
-              return Center(child: Text(context.l.planNoHome));
-            }
-            if (data.tasks.isEmpty) {
-              return EmptyState(
-                title: context.l.tskEmptyTitle,
-                message: context.l.tskEmptyHint,
-                image: 'assets/images/vacio_tareas.png',
-                actionLabel: context.l.tskNew,
-                onAction: () => _openNew(data),
-              );
-            }
-
-            final visible = data.listTasks;
-            final pending = visible.where((t) => !t.isDone).toList()
-              ..sort(_byDue);
-            final today = pending.where(_isDueTodayOrOverdue).toList();
-            final upcoming = pending
-                .where((t) => !_isDueTodayOrOverdue(t) && !t.isMaintenance)
-                .toList();
-            // Mantenimiento: lo de cada mes o más va aparte, con su próxima
-            // fecha, y no llena "Próximos días".
-            final maint = pending
-                .where((t) => !_isDueTodayOrOverdue(t) && t.isMaintenance)
-                .toList();
-            final titles = {
-              for (final t in data.tasks) t.title.trim().toLowerCase(),
-            };
-            final maintSuggestions = _maintHidden
-                ? const <
-                    ({String key, int count, String unit, IconData icon})
-                  >[]
-                : [
-                    for (final p in maintenancePresets)
-                      if (!titles.contains(
-                        context.l.maintPreset(p.key).toLowerCase(),
-                      ))
-                        p,
-                  ];
-            // Hechas hoy: las puntuales marcadas y las recurrentes completadas.
-            final doneToday = visible
-                .where((t) => _isToday(t.completedAt ?? t.lastCompletedAt))
-                .toList();
-            final overdue = today.where(_isOverdue).length;
-            final showWho = data.members.length > 1;
-            String? who(HomeTask t) => !showWho
-                ? null
-                : t.assignedTo == null
-                ? context.l.tskAnyone
-                : t.rotates
-                ? context.l.tskTurnOf(
-                    data.members[t.assignedTo] ?? context.l.rdMember,
-                  )
-                : (data.members[t.assignedTo] ?? context.l.rdMember);
-
-            final pool = pending.where((t) => t.isInPool).toList();
-            final views = [
-              _TaskView.pending,
-              if (showWho) _TaskView.pool,
-              _TaskView.done,
-            ];
-            final view = views.contains(_view) ? _view : _TaskView.pending;
-
-            Widget tile(HomeTask t) => _TaskTile(
-              key: ValueKey(t.id),
-              task: t,
-              // Agrupadas por persona, su nombre ya está en el título.
-              who: t.assignedTo != null && !t.rotates ? null : who(t),
-              overdue: _isOverdue(t),
-              completing: _completing.contains(t.id),
-              points: data.pointsEnabled ? t.points : null,
-              onDone: () => _complete(t, data),
-              onMore: () => _showActions(t, data),
-              onClaim: showWho && t.isInPool && data.currentUserId != null
-                  ? () => _claim(t, data)
-                  : null,
-            );
-
-            // Filas, una debajo de otra, como en el concepto.
-            Widget grid(List<HomeTask> tasks) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final (i, t) in tasks.indexed)
-                  Padding(
-                    key: ValueKey(t.id),
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: StaggeredEntrance(index: i, child: tile(t)),
-                  ),
-              ],
-            );
-
-            final List<Widget> section = switch (view) {
-              _TaskView.pending => [
-                if (overdue >= 2) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  _CatchUpCard(
-                    count: overdue,
-                    onTap: () => _catchUp(today.where(_isOverdue).toList()),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.lg),
-                if (today.isEmpty)
-                  _TareasCelebracion(
-                    visible: true,
-                    nothingToday: upcoming.isNotEmpty,
-                  )
-                else if (showWho)
-                  // Una sección por persona, empezando por ti: ya hace de
-                  // filtro.
-                  for (final (gi, g) in groupByPerson(
-                    today,
-                    data.currentUserId,
-                    data.members,
-                  ).indexed) ...[
-                    if (gi > 0) const SizedBox(height: AppSpacing.lg),
-                    _SectionTitle(
-                      g.key == null
-                          ? context.l.tskAnyone
-                          : g.key == data.currentUserId
-                          ? context.l.tskYourTurn
-                          : data.members[g.key]!,
-                      count: g.value.length,
-                      avatar: g.key == null ? null : data.members[g.key],
-                    ),
-                    grid(g.value),
-                  ]
-                else ...[
-                  _SectionTitle(context.l.tskForToday, count: today.length),
-                  grid(today),
-                ],
-                if (upcoming.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionTitle(context.l.tskUpcoming, count: upcoming.length),
-                  Container(
-                    decoration: AppTheme.tactileDecoration(
-                      radius: AppRadius.lg,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final (gi, g) in groupUpcomingByDay(
-                          upcoming,
-                        ).indexed) ...[
-                          if (gi > 0) Divider(height: 1, color: AppColors.line),
-                          _DayHeader(g.key),
-                          for (final t in g.value)
-                            _UpcomingRow(
-                              task: t,
-                              who: who(t),
-                              onTap: () => _showActions(t, data),
-                            ),
-                          const SizedBox(height: AppSpacing.xs),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-                if (maint.isNotEmpty || maintSuggestions.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.xl),
-                  _MaintenanceSection(
-                    tasks: maint,
-                    suggestions: maintSuggestions,
-                    onTapTask: (t) => _showActions(t, data),
-                    onAdd: (p) => _addMaintenance(p, data),
-                    onHide: _hideMaintSuggestions,
-                  ),
-                ],
-              ],
-              _TaskView.pool => [
-                const SizedBox(height: AppSpacing.lg),
-                if (pool.isEmpty)
-                  _ViewEmpty(context.l.tskPoolEmpty)
-                else ...[
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: AppSpacing.xs,
-                      bottom: AppSpacing.md,
-                    ),
-                    child: Text(
-                      context.l.tskSwipeToClaim,
-                      style: AppTextStyles.bodyMuted,
-                    ),
-                  ),
-                  grid(pool),
-                ],
-              ],
-              _TaskView.done => [
-                const SizedBox(height: AppSpacing.lg),
-                if (doneToday.isEmpty)
-                  _ViewEmpty(context.l.tskNothingDone)
-                else
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      for (final (i, t) in doneToday.indexed)
-                        StaggeredEntrance(
-                          index: i,
-                          child: _DoneChip(task: t),
-                        ),
-                    ],
-                  ),
-              ],
-            };
-
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                120,
-              ),
-              children: [
-                _TodayHero(
-                  done: doneToday.length,
-                  left: today.length,
-                  overdue: overdue,
+        // En el estilo cálido, la misma cabecera serif con lupa que Comida y
+        // Compra; en el clásico, la barra de siempre.
+        appBar: AppColors.warmLight
+            ? null
+            : AppBar(title: Text(context.l.tskTitle)),
+        body: AppColors.warmLight
+            ? SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    WarmTabHeader(title: context.l.tskTitle),
+                    Expanded(child: _body()),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                SegmentedPill(
-                  labels: [for (final v in views) context.l.tskView(v.name)],
-                  selected: views.indexOf(view),
-                  onChanged: (i) => setState(() => _view = views[i]),
-                ),
-                // Al cambiar de vista, la nueva entra con un fundido y un leve
-                // deslizamiento en lugar de aparecer de golpe.
-                AnimatedSwitcher(
-                  duration: AppMotion.effectiveDuration(
-                    AppMotion.base,
-                    reduceMotion: AppMotion.reduceMotionOf(context),
-                  ),
-                  switchInCurve: AppMotion.easeOut,
-                  switchOutCurve: AppMotion.easeOut,
-                  layoutBuilder: (current, previous) => Stack(
-                    alignment: Alignment.topCenter,
-                    children: [...previous, ?current],
-                  ),
-                  transitionBuilder: (child, anim) => FadeTransition(
-                    opacity: anim,
-                    child: SlideTransition(
-                      position: Tween(
-                        begin: const Offset(0, 0.02),
-                        end: Offset.zero,
-                      ).animate(anim),
-                      child: child,
-                    ),
-                  ),
-                  child: Column(
-                    key: ValueKey(view),
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: section,
-                  ),
-                ),
-                // Marcador de puntos solo con el "Modo Puntos".
-                // Y solo si sois dos o más: con una persona no compara nada.
-                if (data.pointsEnabled && data.members.length > 1) ...[
-                  const SizedBox(height: AppSpacing.xl),
-                  _Scoreboard(
-                    members: data.members,
-                    scores: data.scores,
-                    currentUserId: data.currentUserId,
-                    onResetPoints: (userId) => _resetPoints(data, userId),
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
+              )
+            : _body(),
       ),
+    );
+  }
+
+  Widget _body() {
+    return FutureBuilder<_TasksData>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData &&
+            snapshot.connectionState == ConnectionState.waiting) {
+          return const TasksSkeleton();
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text(friendlyError(snapshot.error)));
+        }
+        final data = snapshot.data!;
+        if (data.homeId == null) {
+          return Center(child: Text(context.l.planNoHome));
+        }
+        if (data.tasks.isEmpty) {
+          return EmptyState(
+            title: context.l.tskEmptyTitle,
+            message: context.l.tskEmptyHint,
+            image: 'assets/images/vacio_tareas.png',
+            actionLabel: context.l.tskNew,
+            onAction: () => _openNew(data),
+          );
+        }
+
+        final visible = data.listTasks;
+        final pending = visible.where((t) => !t.isDone).toList()..sort(_byDue);
+        final today = pending.where(_isDueTodayOrOverdue).toList();
+        final upcoming = pending
+            .where((t) => !_isDueTodayOrOverdue(t) && !t.isMaintenance)
+            .toList();
+        // Mantenimiento: lo de cada mes o más va aparte, con su próxima
+        // fecha, y no llena "Próximos días".
+        final maint = pending
+            .where((t) => !_isDueTodayOrOverdue(t) && t.isMaintenance)
+            .toList();
+        final titles = {
+          for (final t in data.tasks) t.title.trim().toLowerCase(),
+        };
+        final maintSuggestions = _maintHidden
+            ? const <({String key, int count, String unit, IconData icon})>[]
+            : [
+                for (final p in maintenancePresets)
+                  if (!titles.contains(
+                    context.l.maintPreset(p.key).toLowerCase(),
+                  ))
+                    p,
+              ];
+        // Hechas hoy: las puntuales marcadas y las recurrentes completadas.
+        final doneToday = visible
+            .where((t) => _isToday(t.completedAt ?? t.lastCompletedAt))
+            .toList();
+        final overdue = today.where(_isOverdue).length;
+        final showWho = data.members.length > 1;
+        String? who(HomeTask t) => !showWho
+            ? null
+            : t.assignedTo == null
+            ? context.l.tskAnyone
+            : t.rotates
+            ? context.l.tskTurnOf(
+                data.members[t.assignedTo] ?? context.l.rdMember,
+              )
+            : (data.members[t.assignedTo] ?? context.l.rdMember);
+
+        final pool = pending.where((t) => t.isInPool).toList();
+        final views = [
+          _TaskView.pending,
+          if (showWho) _TaskView.pool,
+          _TaskView.done,
+        ];
+        final view = views.contains(_view) ? _view : _TaskView.pending;
+
+        Widget tile(HomeTask t) => _TaskTile(
+          key: ValueKey(t.id),
+          task: t,
+          // Agrupadas por persona, su nombre ya está en el título.
+          who: t.assignedTo != null && !t.rotates ? null : who(t),
+          overdue: _isOverdue(t),
+          completing: _completing.contains(t.id),
+          points: data.pointsEnabled ? t.points : null,
+          onDone: () => _complete(t, data),
+          onMore: () => _showActions(t, data),
+          onClaim: showWho && t.isInPool && data.currentUserId != null
+              ? () => _claim(t, data)
+              : null,
+        );
+
+        // Filas, una debajo de otra, como en el concepto.
+        Widget grid(List<HomeTask> tasks) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, t) in tasks.indexed)
+              Padding(
+                key: ValueKey(t.id),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: StaggeredEntrance(index: i, child: tile(t)),
+              ),
+          ],
+        );
+
+        final List<Widget> section = switch (view) {
+          _TaskView.pending => [
+            if (overdue >= 2) ...[
+              const SizedBox(height: AppSpacing.md),
+              _CatchUpCard(
+                count: overdue,
+                onTap: () => _catchUp(today.where(_isOverdue).toList()),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            if (today.isEmpty)
+              _TareasCelebracion(
+                visible: true,
+                nothingToday: upcoming.isNotEmpty,
+              )
+            else if (showWho)
+              // Una sección por persona, empezando por ti: ya hace de
+              // filtro.
+              for (final (gi, g) in groupByPerson(
+                today,
+                data.currentUserId,
+                data.members,
+              ).indexed) ...[
+                if (gi > 0) const SizedBox(height: AppSpacing.lg),
+                _SectionTitle(
+                  g.key == null
+                      ? context.l.tskAnyone
+                      : g.key == data.currentUserId
+                      ? context.l.tskYourTurn
+                      : data.members[g.key]!,
+                  count: g.value.length,
+                  avatar: g.key == null ? null : data.members[g.key],
+                ),
+                grid(g.value),
+              ]
+            else ...[
+              _SectionTitle(context.l.tskForToday, count: today.length),
+              grid(today),
+            ],
+            if (upcoming.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xl),
+              _SectionTitle(context.l.tskUpcoming, count: upcoming.length),
+              Container(
+                decoration: AppTheme.tactileDecoration(radius: AppRadius.lg),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (gi, g) in groupUpcomingByDay(
+                      upcoming,
+                    ).indexed) ...[
+                      if (gi > 0) Divider(height: 1, color: AppColors.line),
+                      _DayHeader(g.key),
+                      for (final t in g.value)
+                        _UpcomingRow(
+                          task: t,
+                          who: who(t),
+                          onTap: () => _showActions(t, data),
+                        ),
+                      const SizedBox(height: AppSpacing.xs),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            if (maint.isNotEmpty || maintSuggestions.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xl),
+              _MaintenanceSection(
+                tasks: maint,
+                suggestions: maintSuggestions,
+                onTapTask: (t) => _showActions(t, data),
+                onAdd: (p) => _addMaintenance(p, data),
+                onHide: _hideMaintSuggestions,
+              ),
+            ],
+          ],
+          _TaskView.pool => [
+            const SizedBox(height: AppSpacing.lg),
+            if (pool.isEmpty)
+              _ViewEmpty(context.l.tskPoolEmpty)
+            else ...[
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.xs,
+                  bottom: AppSpacing.md,
+                ),
+                child: Text(
+                  context.l.tskSwipeToClaim,
+                  style: AppTextStyles.bodyMuted,
+                ),
+              ),
+              grid(pool),
+            ],
+          ],
+          _TaskView.done => [
+            const SizedBox(height: AppSpacing.lg),
+            if (doneToday.isEmpty)
+              _ViewEmpty(context.l.tskNothingDone)
+            else
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final (i, t) in doneToday.indexed)
+                    StaggeredEntrance(
+                      index: i,
+                      child: _DoneChip(task: t),
+                    ),
+                ],
+              ),
+          ],
+        };
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            120,
+          ),
+          children: [
+            _TodayHero(
+              done: doneToday.length,
+              left: today.length,
+              overdue: overdue,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            SegmentedPill(
+              labels: [for (final v in views) context.l.tskView(v.name)],
+              selected: views.indexOf(view),
+              onChanged: (i) => setState(() => _view = views[i]),
+            ),
+            // Al cambiar de vista, la nueva entra con un fundido y un leve
+            // deslizamiento en lugar de aparecer de golpe.
+            AnimatedSwitcher(
+              duration: AppMotion.effectiveDuration(
+                AppMotion.base,
+                reduceMotion: AppMotion.reduceMotionOf(context),
+              ),
+              switchInCurve: AppMotion.easeOut,
+              switchOutCurve: AppMotion.easeOut,
+              layoutBuilder: (current, previous) => Stack(
+                alignment: Alignment.topCenter,
+                children: [...previous, ?current],
+              ),
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, 0.02),
+                    end: Offset.zero,
+                  ).animate(anim),
+                  child: child,
+                ),
+              ),
+              child: Column(
+                key: ValueKey(view),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: section,
+              ),
+            ),
+            // Marcador de puntos solo con el "Modo Puntos".
+            // Y solo si sois dos o más: con una persona no compara nada.
+            if (data.pointsEnabled && data.members.length > 1) ...[
+              const SizedBox(height: AppSpacing.xl),
+              _Scoreboard(
+                members: data.members,
+                scores: data.scores,
+                currentUserId: data.currentUserId,
+                onResetPoints: (userId) => _resetPoints(data, userId),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 

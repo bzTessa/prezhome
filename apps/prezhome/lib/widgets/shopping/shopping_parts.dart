@@ -123,13 +123,16 @@ class ShoppingSummaryHeader extends StatelessWidget {
               ),
             const Spacer(),
             if (onToggleStore != null && total > 0)
-              FilledButton.icon(
+              // Contorno: al lado del súper en terracota, un segundo botón
+              // relleno competía con él y con el título de la lista.
+              OutlinedButton.icon(
                 onPressed: onToggleStore,
                 icon: const Icon(Icons.shopping_bag_outlined, size: 16),
                 label: Text(context.l.shopStoreModeOn),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.terracotta,
-                  foregroundColor: AppColors.onTerracotta,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.ink,
+                  backgroundColor: AppColors.card,
+                  side: BorderSide(color: AppColors.cardEdge, width: 1.5),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 8,

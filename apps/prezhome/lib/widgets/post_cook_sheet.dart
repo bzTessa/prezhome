@@ -142,17 +142,6 @@ class _PostCookSheetContentState extends State<PostCookSheetContent> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.line,
-                  borderRadius: AppRadius.pillRadius,
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
             Row(
               children: [
                 const MiauCharacter(

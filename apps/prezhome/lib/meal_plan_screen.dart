@@ -357,14 +357,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
               child: Text(
                 context.l.planHowLong,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: AppColors.ink,
-                ),
+                style: AppTextStyles.sheetTitle,
               ),
             ),
             for (final (n, label) in [
@@ -885,11 +881,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                       ? context.l.planNoRecipe
                       : _dishTitle(data, e),
                 ),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: AppColors.ink,
-                ),
+                style: AppTextStyles.sheetTitle,
               ),
             ),
             ListTile(
@@ -1015,11 +1007,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 children: [
                   Text(
                     context.l.planRepeatTitle(context.l.mealType(e.mealType)),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.ink,
-                    ),
+                    style: AppTextStyles.sheetTitle,
                   ),
                   label(context.l.planHowOften),
                   Wrap(
@@ -1105,14 +1093,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
                 child: Text(
                   context.l.planWhoAtHome,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: AppColors.ink,
-                  ),
+                  style: AppTextStyles.sheetTitle,
                 ),
               ),
               for (var i = 0; i < data.members.length; i++)
@@ -1539,14 +1523,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+                  padding: EdgeInsets.fromLTRB(20, 4, 20, 4),
                   child: Text(
                     context.l.planWhichMeal,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppColors.ink,
-                    ),
+                    style: AppTextStyles.sheetTitle,
                   ),
                 ),
                 for (final t in disponibles)
