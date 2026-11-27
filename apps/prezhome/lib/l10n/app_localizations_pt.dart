@@ -5662,4 +5662,20 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gsBought => 'no carrinho';
+
+  @override
+  String wToBuy(int n) {
+    return '$n para comprar';
+  }
+
+  @override
+  String wTasks(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n tarefas pendentes',
+      one: '1 tarefa pendente',
+    );
+    return '$_temp0';
+  }
 }

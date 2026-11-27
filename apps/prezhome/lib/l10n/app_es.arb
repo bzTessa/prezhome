@@ -3546,5 +3546,21 @@
     }
   },
   "gsAddFailed": "No se pudo añadir. Inténtalo otra vez.",
-  "gsBought": "en el carro"
+  "gsBought": "en el carro",
+  "wToBuy": "{n} por comprar",
+  "@wToBuy": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "wTasks": "{n, plural, =1{1 tarea pendiente} other{{n} tareas pendientes}}",
+  "@wTasks": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

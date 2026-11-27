@@ -5643,4 +5643,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gsBought => 'in the cart';
+
+  @override
+  String wToBuy(int n) {
+    return '$n to buy';
+  }
+
+  @override
+  String wTasks(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n pending tasks',
+      one: '1 pending task',
+    );
+    return '$_temp0';
+  }
 }

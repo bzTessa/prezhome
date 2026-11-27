@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="today_widget_description">La comida de hoy y lo que queda por hacer</string>
+    <string name="today_widget_empty">Abre PrezHome para ver tu día</string>
+</resources>

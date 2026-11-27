@@ -8578,6 +8578,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'en el carro'**
   String get gsBought;
+
+  /// No description provided for @wToBuy.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} por comprar'**
+  String wToBuy(int n);
+
+  /// No description provided for @wTasks.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{1 tarea pendiente} other{{n} tareas pendientes}}'**
+  String wTasks(int n);
 }
 
 class _AppLocalizationsDelegate
