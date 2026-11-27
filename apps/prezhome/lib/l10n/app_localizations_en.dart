@@ -4865,6 +4865,57 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shopCompareOneStore => '1 store';
+
+  @override
+  String get shopCompareTwoStores => 'Split in 2';
+
+  @override
+  String get shopCompareSameQty => 'Same quantity';
+
+  @override
+  String get shopCompareCheckout => 'At checkout';
+
+  @override
+  String shopCompareEquiv(String target, String pack) {
+    return 'equiv. $target · pack $pack';
+  }
+
+  @override
+  String shopCompareSplitSave(String amount) {
+    return 'Save ≈ $amount';
+  }
+
+  @override
+  String get shopCompareSplitSame => 'Same price split or at 1 store';
+
+  @override
+  String shopCompareSplitCombined(String total) {
+    return 'Combined total: ≈ $total';
+  }
+
+  @override
+  String get shopCompareSplitOnlyHere => 'Only here';
+
+  @override
+  String shopCompareSplitMissing(String names) {
+    return 'Kept in this list: $names';
+  }
+
+  @override
+  String get shopCompareSplitBtn => 'Split into 2 lists';
+
+  @override
+  String shopCompareSplitDone(
+    String storeA,
+    int countA,
+    String storeB,
+    int countB,
+  ) {
+    return 'List split: $storeA ($countA) and $storeB ($countB)';
+  }
+
+  @override
   String get tskCatchUp => 'Catch up';
 
   @override

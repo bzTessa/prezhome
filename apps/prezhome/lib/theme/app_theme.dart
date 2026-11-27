@@ -23,7 +23,7 @@ class AppColors {
 
   static Color get cream => dark
       ? const Color(0xFF181512)
-      : const Color(0xFFF9F5EB); // crema del logo
+      : const Color(0xFFFAF7F2); // porcelana cálida limpia
   static Color get wood => dark
       ? const Color(0xFF7A6238)
       : const Color(0xFFE2C792); // madera clara (acento)
@@ -36,7 +36,7 @@ class AppColors {
       ? const Color(0xFFF2EBD9)
       : const Color(0xFF1E1E1E); // gris muy oscuro (texto)
   static Color get card =>
-      dark ? const Color(0xFF24201C) : const Color(0xFFFFFDF7);
+      dark ? const Color(0xFF24201C) : const Color(0xFFFFFFFF);
   static Color get softShadow =>
       dark ? const Color(0x40000000) : const Color(0x14000000);
 
@@ -50,7 +50,7 @@ class AppColors {
 
   /// Línea suave crema para separadores, asas de hojas y bordes discretos.
   static Color get line =>
-      dark ? const Color(0xFF3A342B) : const Color(0xFFEFE7CC);
+      dark ? const Color(0xFF3A342B) : const Color(0xFFEFEAE0);
 
   /// Sombra aún más suave que `softShadow`, para superficies en reposo que
   /// necesitan apenas una pizca de profundidad (nivel 1 de [AppElevation]).
@@ -69,19 +69,19 @@ class AppColors {
 
   /// Verde salvia suave: tiempo de preparación (reloj).
   static Color get sageBg =>
-      dark ? const Color(0xFF2A3326) : const Color(0xFFE6EFE0);
+      dark ? const Color(0xFF2A3326) : const Color(0xFFE8F3E9);
   static Color get sage =>
-      dark ? const Color(0xFF7E9C6E) : const Color(0xFF5C7A4F);
+      dark ? const Color(0xFF7E9C6E) : const Color(0xFF4E7A51);
 
   /// Terracota suave: calorías / energía (destacado cálido).
   static Color get terracottaBg =>
-      dark ? const Color(0xFF3A2A22) : const Color(0xFFF6E0D4);
+      dark ? const Color(0xFF3A2A22) : const Color(0xFFFCECE6);
   static Color get terracotta =>
-      dark ? const Color(0xFFE56B43) : const Color(0xFFC94E28);
+      dark ? const Color(0xFFE56B43) : const Color(0xFFD14E28);
 
   /// Terracota para texto pequeño: el de marca no llega a 4,5:1 sobre crema.
   static Color get terracottaText =>
-      dark ? const Color(0xFFE56B43) : const Color(0xFFA84826);
+      dark ? const Color(0xFFE56B43) : const Color(0xFFB53E1B);
 
   /// Terracota al pulsar.
   static Color get terracottaPressed => const Color(0xFF9E3B1C);
@@ -100,12 +100,12 @@ class AppColors {
 
   /// Dorado de la corona del logo: favorita y puntos.
   static Color get gold =>
-      dark ? const Color(0xFFF2B632) : const Color(0xFFE8A923);
+      dark ? const Color(0xFFF2B632) : const Color(0xFFE5A01D);
   static Color get favorite => gold;
 
   /// Fondo de las insignias de puntos.
   static Color get goldBg =>
-      dark ? const Color(0xFF3A3020) : const Color(0xFFFFF3D6);
+      dark ? const Color(0xFF3A3020) : const Color(0xFFFEF5DC);
 
   // --- Estilo táctil del logo ("Warm Tactile") -------------------------------
 
@@ -114,16 +114,16 @@ class AppColors {
 
   /// Hueco crema para iconos dentro de una tarjeta táctil.
   static Color get iconTile =>
-      dark ? const Color(0xFF302A24) : const Color(0xFFF2E9D8);
+      dark ? const Color(0xFF302A24) : const Color(0xFFF2ECE2);
 
   /// Borde de tarjeta: línea cálida fina en claro para recortarla sobre el
   /// fondo crema, y línea sutil en oscuro.
   static Color get cardEdge =>
-      dark ? const Color(0xFF363029) : const Color(0xFFEAE1CB);
+      dark ? const Color(0xFF363029) : const Color(0xFFEBE4D8);
 
   /// Sombra cálida y difusa de las tarjetas.
   static Color get cardShadow =>
-      dark ? const Color(0x66000000) : const Color(0x477A5028);
+      dark ? const Color(0x66000000) : const Color(0x1838291E);
 
   /// Trazo marrón tinta cálido para botones y elementos destacados del estilo
   /// táctil (acorde al trazo de la mascota).

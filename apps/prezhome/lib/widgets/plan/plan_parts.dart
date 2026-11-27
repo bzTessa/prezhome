@@ -73,10 +73,15 @@ class WeekDayStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < days.length; i++) Expanded(child: _day(context, i)),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+      child: Row(
+        children: [
+          for (var i = 0; i < days.length; i++)
+            Expanded(child: _day(context, i)),
+        ],
+      ),
     );
   }
 
@@ -104,7 +109,9 @@ class WeekDayStrip extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.4,
-                  color: isSelected ? AppColors.ink : AppColors.inkMuted,
+                  color: isSelected
+                      ? AppColors.terracottaText
+                      : AppColors.inkMuted,
                 ),
               ),
               const SizedBox(height: 6),
@@ -114,11 +121,11 @@ class WeekDayStrip extends StatelessWidget {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.ink : Colors.transparent,
+                  color: isSelected ? AppColors.terracotta : Colors.transparent,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isToday && !isSelected
-                        ? AppColors.woodDark
+                        ? AppColors.terracotta.withValues(alpha: 0.45)
                         : Colors.transparent,
                     width: 2,
                   ),
@@ -128,7 +135,7 @@ class WeekDayStrip extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: isSelected ? AppColors.cream : AppColors.ink,
+                    color: isSelected ? AppColors.onTerracotta : AppColors.ink,
                   ),
                 ),
               ),
@@ -144,7 +151,9 @@ class WeekDayStrip extends StatelessWidget {
                         height: 5,
                         margin: const EdgeInsets.symmetric(horizontal: 1.5),
                         decoration: BoxDecoration(
-                          color: AppColors.woodDark,
+                          color: isSelected
+                              ? AppColors.terracotta
+                              : AppColors.sage,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -224,8 +233,10 @@ class MealSlotCard extends StatelessWidget {
           boxShadow: empty ? AppElevation.level0 : AppElevation.level1,
         ),
         child: Material(
-          // Vacías, todas del mismo tono suave: el color va solo en el icono.
-          color: empty ? AppColors.card.withValues(alpha: 0.5) : AppColors.card,
+          // Vacías, ranura ligera y compacta; con receta, tarjeta blanca elevada.
+          color: empty
+              ? AppColors.card.withValues(alpha: 0.72)
+              : AppColors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -233,53 +244,36 @@ class MealSlotCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: empty
-                    ? Border.all(color: AppColors.line)
-                    : AppElevation.border,
+                border: Border.all(
+                  color: empty ? AppColors.cardEdge : AppColors.cardEdge,
+                ),
               ),
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hero)
-                    _hero(context)
-                  else
-                    Row(
+              padding: empty
+                  ? const EdgeInsets.symmetric(horizontal: 14, vertical: 11)
+                  : const EdgeInsets.all(AppSpacing.md),
+              child: empty
+                  ? Row(
                       children: [
-                        if (!empty && image != null)
-                          Opacity(opacity: skipped ? 0.4 : 1, child: image!)
-                        else
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: s.bg,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Icon(s.icon, color: s.fg, size: 28),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: s.bg,
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          child: Icon(s.icon, color: s.fg, size: 20),
+                        ),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (state == MealSlotState.next && !empty)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: _StateChip(
-                                    text: context.l.planCookNow,
-                                    bg: AppColors.ink,
-                                    fg: AppColors.card,
-                                  ),
-                                ),
                               Row(
                                 children: [
-                                  Icon(s.icon, size: 14, color: s.fg),
-                                  const SizedBox(width: 4),
                                   Text(
                                     context.l.mealType(mealType).toUpperCase(),
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 0.6,
                                       color: s.fg,
@@ -292,171 +286,271 @@ class MealSlotCard extends StatelessWidget {
                                           ? context.l.ppFastTime(time!)
                                           : time!,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.inkMuted,
-                                      ),
-                                    ),
-                                  ],
-                                  if (skipped) ...[
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      context.l.ppEatOut,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
                                         color: AppColors.inkMuted,
                                       ),
                                     ),
                                   ],
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
-                                empty ? context.l.mealAdd(mealType) : title!,
-                                maxLines: 2,
+                                context.l.mealAdd(mealType),
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: empty
-                                      ? AppColors.inkMuted
-                                      : AppColors.ink,
-                                  decoration: skipped
-                                      ? TextDecoration.lineThrough
-                                      : null,
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.inkMuted,
                                 ),
                               ),
-                              if (!empty && detail != null) detail!,
-                              if (state == MealSlotState.done && !empty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: _StateChip(
-                                    text: context.l.planEaten,
-                                    icon: Icons.check_rounded,
-                                    bg: AppColors.sageBg,
-                                    fg: AppColors.sage,
-                                  ),
-                                ),
-                              if (leftover)
-                                Padding(
-                                  padding: EdgeInsets.only(top: 2),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.replay_rounded,
-                                        size: 13,
-                                        color: AppColors.woodDark,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        context.l.planLeftover,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.woodDark,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              if (fromFreezer)
-                                Padding(
-                                  padding: EdgeInsets.only(top: 2),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.ac_unit_rounded,
-                                        size: 13,
-                                        color: AppColors.frost,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        context.l.ppFromFreezer,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.frost,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                             ],
                           ),
                         ),
-                        Icon(
-                          empty
-                              ? Icons.add_circle_rounded
-                              : Icons.more_horiz_rounded,
-                          color: empty ? s.fg : AppColors.inkMuted,
-                          size: empty ? 28 : 22,
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: s.bg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.add_rounded, color: s.fg, size: 20),
                         ),
                       ],
-                    ),
-                  for (final x in extras)
-                    Dismissible(
-                      key: ValueKey(x.id),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (_) => x.onRemove(),
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Icon(
-                          Icons.delete_outline,
-                          color: AppColors.expired,
-                        ),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        onTap: x.onTap,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(76, 8, 0, 4),
-                          child: Row(
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hero)
+                          _hero(context)
+                        else
+                          Row(
                             children: [
-                              Icon(Icons.add_rounded, size: 14, color: s.fg),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  x.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: skipped
-                                        ? AppColors.inkMuted
-                                        : AppColors.ink,
-                                    decoration: skipped
-                                        ? TextDecoration.lineThrough
-                                        : null,
+                              if (!empty && image != null)
+                                Opacity(
+                                  opacity: skipped ? 0.4 : 1,
+                                  child: image!,
+                                )
+                              else
+                                Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: s.bg,
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
+                                  child: Icon(s.icon, color: s.fg, size: 28),
                                 ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (state == MealSlotState.next && !empty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 6,
+                                        ),
+                                        child: _StateChip(
+                                          text: context.l.planCookNow,
+                                          bg: AppColors.ink,
+                                          fg: AppColors.card,
+                                        ),
+                                      ),
+                                    Row(
+                                      children: [
+                                        Icon(s.icon, size: 14, color: s.fg),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          context.l
+                                              .mealType(mealType)
+                                              .toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.6,
+                                            color: s.fg,
+                                          ),
+                                        ),
+                                        if (time != null) ...[
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            inFast
+                                                ? context.l.ppFastTime(time!)
+                                                : time!,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.inkMuted,
+                                            ),
+                                          ),
+                                        ],
+                                        if (skipped) ...[
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            context.l.ppEatOut,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.inkMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      empty
+                                          ? context.l.mealAdd(mealType)
+                                          : title!,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: empty
+                                            ? AppColors.inkMuted
+                                            : AppColors.ink,
+                                        decoration: skipped
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                      ),
+                                    ),
+                                    if (!empty && detail != null) detail!,
+                                    if (state == MealSlotState.done && !empty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 6),
+                                        child: _StateChip(
+                                          text: context.l.planEaten,
+                                          icon: Icons.check_rounded,
+                                          bg: AppColors.sageBg,
+                                          fg: AppColors.sage,
+                                        ),
+                                      ),
+                                    if (leftover)
+                                      Padding(
+                                        padding: EdgeInsets.only(top: 2),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.replay_rounded,
+                                              size: 13,
+                                              color: AppColors.woodDark,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              context.l.planLeftover,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.woodDark,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (fromFreezer)
+                                      Padding(
+                                        padding: EdgeInsets.only(top: 2),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.ac_unit_rounded,
+                                              size: 13,
+                                              color: AppColors.frost,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              context.l.ppFromFreezer,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.frost,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                empty
+                                    ? Icons.add_circle_rounded
+                                    : Icons.more_horiz_rounded,
+                                color: empty ? s.fg : AppColors.inkMuted,
+                                size: empty ? 28 : 22,
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                    ),
-                  if (onAddDish != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 64),
-                      child: TextButton.icon(
-                        onPressed: onAddDish,
-                        icon: const Icon(Icons.add_rounded, size: 16),
-                        label: Text(context.l.planAddDish),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.inkMuted,
-                          visualDensity: VisualDensity.compact,
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                        for (final x in extras)
+                          Dismissible(
+                            key: ValueKey(x.id),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (_) => x.onRemove(),
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Icon(
+                                Icons.delete_outline,
+                                color: AppColors.expired,
+                              ),
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              onTap: x.onTap,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(76, 8, 0, 4),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.add_rounded,
+                                      size: 14,
+                                      color: s.fg,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        x.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: skipped
+                                              ? AppColors.inkMuted
+                                              : AppColors.ink,
+                                          decoration: skipped
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        if (onAddDish != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 64),
+                            child: TextButton.icon(
+                              onPressed: onAddDish,
+                              icon: const Icon(Icons.add_rounded, size: 16),
+                              label: Text(context.l.planAddDish),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.inkMuted,
+                                visualDensity: VisualDensity.compact,
+                                textStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ),
         ),

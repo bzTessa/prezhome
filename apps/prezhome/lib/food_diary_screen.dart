@@ -630,17 +630,19 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         appBar: widget.embedded
             ? null
             : AppBar(title: Text(context.l.diaTitle)),
-        floatingActionButton: HideFabOnScroll.fab(
-          FloatingActionButton.extended(
-            heroTag: 'fab-food-diary',
-            onPressed: _openAddChooser,
-            icon: const Icon(Icons.add),
-            label: Text(
-              context.l.diaAddMeal,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
+        floatingActionButton: widget.embedded
+            ? null
+            : HideFabOnScroll.fab(
+                FloatingActionButton.extended(
+                  heroTag: 'fab-food-diary',
+                  onPressed: _openAddChooser,
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    context.l.diaAddMeal,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
         body: FadeFutureBuilder<_DiaryData>(
           future: _future,
           builder: (context, snapshot) {
@@ -708,6 +710,41 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     );
   }
 
+  Widget _addMealPill() {
+    return Material(
+      color: AppColors.terracottaBg,
+      shape: StadiumBorder(
+        side: BorderSide(color: AppColors.terracotta.withValues(alpha: 0.22)),
+      ),
+      child: InkWell(
+        onTap: _openAddChooser,
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.add_rounded,
+                size: 16,
+                color: AppColors.terracottaText,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                context.l.add,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.terracottaText,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _summaryCard(_DiaryData data) {
     final total = data.totalCalories;
     final target = data.targetCalories;
@@ -721,36 +758,86 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            context.l.diaDayCalories,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l.diaDayCalories,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (widget.embedded) _addMealPill(),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${total.round()} kcal',
-            style: TextStyle(
-              fontSize: 32,
-              letterSpacing: -0.6,
-              fontWeight: FontWeight.bold,
-              color: AppColors.ink,
-            ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${total.round()} kcal',
+                      style: AppTextStyles.numeric(
+                        AppTextStyles.display.copyWith(fontSize: 32),
+                      ),
+                    ),
+                    if (hasTarget)
+                      Text(
+                        context.l.diaOfTarget(target),
+                        style: TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 15,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (hasTarget)
+                SizedBox(
+                  width: 66,
+                  height: 66,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CircularProgressIndicator(
+                        value: ratio,
+                        strokeWidth: 7,
+                        strokeCap: StrokeCap.round,
+                        backgroundColor: AppColors.iconTile,
+                        color: over ? AppColors.expired : AppColors.terracotta,
+                      ),
+                      Center(
+                        child: Text(
+                          '${(ratio * 100).round()}%',
+                          style: AppTextStyles.numeric(
+                            AppTextStyles.label.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: over ? AppColors.expired : AppColors.ink,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           if (hasTarget) ...[
-            Text(
-              context.l.diaOfTarget(target),
-              style: TextStyle(color: AppColors.inkMuted, fontSize: 15),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(999),
               child: LinearProgressIndicator(
                 value: ratio,
-                minHeight: 10,
-                backgroundColor: AppColors.line,
-                color: over ? AppColors.expired : AppColors.wood,
+                minHeight: 9,
+                backgroundColor: AppColors.iconTile,
+                color: over ? AppColors.expired : AppColors.terracotta,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               over
                   ? context.l.homeKcalOver((total - target).round())
@@ -993,14 +1080,14 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                         horizontalLines: [
                           HorizontalLine(
                             y: targetValue,
-                            color: AppColors.woodDark,
+                            color: AppColors.sage,
                             strokeWidth: 2,
                             dashArray: [6, 4],
                             label: HorizontalLineLabel(
                               show: true,
                               alignment: Alignment.topRight,
                               style: TextStyle(
-                                color: AppColors.woodDark,
+                                color: AppColors.sage,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1017,11 +1104,11 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       barRods: [
                         BarChartRodData(
                           toY: days[i].calories,
-                          color: AppColors.wood,
-                          width: 16,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(6),
-                          ),
+                          color: i == days.length - 1
+                              ? AppColors.terracotta
+                              : AppColors.sage,
+                          width: 18,
+                          borderRadius: BorderRadius.circular(9),
                         ),
                       ],
                     ),
@@ -1067,24 +1154,24 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   width: 120,
                   child: PieChart(
                     PieChartData(
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 28,
+                      sectionsSpace: 3,
+                      centerSpaceRadius: 30,
                       sections: [
                         PieChartSectionData(
                           value: protein,
-                          color: AppColors.woodDark,
+                          color: AppColors.terracotta,
                           radius: 26,
                           showTitle: false,
                         ),
                         PieChartSectionData(
                           value: carbs,
-                          color: AppColors.wood,
+                          color: AppColors.gold,
                           radius: 26,
                           showTitle: false,
                         ),
                         PieChartSectionData(
                           value: fat,
-                          color: AppColors.line,
+                          color: AppColors.sage,
                           radius: 26,
                           showTitle: false,
                         ),
@@ -1098,14 +1185,25 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _macroLegend(
-                        AppColors.woodDark,
+                        AppColors.terracotta,
                         context.l.diaProtein,
                         protein,
+                        total,
                       ),
                       const SizedBox(height: 8),
-                      _macroLegend(AppColors.wood, context.l.diaCarbs, carbs),
+                      _macroLegend(
+                        AppColors.gold,
+                        context.l.diaCarbs,
+                        carbs,
+                        total,
+                      ),
                       const SizedBox(height: 8),
-                      _macroLegend(AppColors.line, context.l.diaFat, fat),
+                      _macroLegend(
+                        AppColors.sage,
+                        context.l.diaFat,
+                        fat,
+                        total,
+                      ),
                     ],
                   ),
                 ),
@@ -1116,7 +1214,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     );
   }
 
-  Widget _macroLegend(Color color, String label, double grams) {
+  Widget _macroLegend(Color color, String label, double grams, double total) {
+    final pct = total > 0 ? (grams / total * 100).round() : 0;
     return Row(
       children: [
         Container(
@@ -1124,15 +1223,19 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
           height: 12,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
         Text(
           '${grams.round()} g',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: AppTextStyles.numeric(
+            const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
         ),
+        const SizedBox(width: 6),
+        Text('$pct%', style: AppTextStyles.numeric(AppTextStyles.labelMuted)),
       ],
     );
   }

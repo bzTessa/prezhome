@@ -34,6 +34,10 @@ STORES = {
         "https://www.ahorramas.com/sitemap_index.xml",
         r"^https://www\.ahorramas\.com/.+-\d+\.html$",
     ),
+    "aldi": (
+        "https://www.aldi.es/.aldi-nord-sitemap.xml",
+        r"^https://www\.aldi\.es/producto/.+\.html$",
+    ),
     "pingodoce": (
         "https://www.pingodoce.pt/home/sitemap_index.xml",
         r"/home/produtos/(?!higiene|livraria|casa-e|animais|promocoes)[^/]+/",
@@ -108,6 +112,7 @@ def to_row(store: str, url: str, page: str, now: str) -> dict | None:
     if isinstance(image, dict):
         image = image.get("url")
     pid = str(p.get("sku") or p.get("productID") or url.rstrip("/").rsplit("/", 1)[-1])
+    ean = str(p.get("gtin13") or p.get("gtin") or p.get("gtin14") or "").strip() or None
     return {
         "store": store,
         "product_id": pid,
@@ -115,6 +120,7 @@ def to_row(store: str, url: str, page: str, now: str) -> dict | None:
         "name_normalized": normalize(name),
         "brand": html.unescape(str(brand)).strip() if brand else None,
         "size": None,
+        "ean": ean,
         "price": price,
         "unit_price": None,
         "unit": None,
@@ -150,8 +156,9 @@ def _self_check() -> None:
     assert row["product_id"] == "52360" and row["price"] == 2.35
     assert row["brand"] == "Vega Cáceres" and row["image_url"] == "https://www.ahorramas.com/on/a.jpg"
     graph = '<script type="application/ld+json">{"@graph":[{"@type":"WebPage"},' \
-        '{"@type":"Product","name":"Leite","offers":[{"price":0.9}]}]}</script>'
-    assert to_row("auchan", "https://x/1.html", graph, "t")["price"] == 0.9
+        '{"@type":"Product","name":"Leite","gtin13":"8412345678901","offers":[{"price":0.9}]}]}</script>'
+    g_row = to_row("auchan", "https://x/1.html", graph, "t")
+    assert g_row["price"] == 0.9 and g_row["ean"] == "8412345678901"
     assert to_row("auchan", "https://x/1.html", "<html></html>", "t") is None
 
 

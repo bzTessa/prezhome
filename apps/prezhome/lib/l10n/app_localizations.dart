@@ -7488,6 +7488,83 @@ abstract class AppLocalizations {
   /// **'Sin encontrar: {names}'**
   String shopCompareMissing(String names);
 
+  /// No description provided for @shopCompareOneStore.
+  ///
+  /// In es, this message translates to:
+  /// **'1 súper'**
+  String get shopCompareOneStore;
+
+  /// No description provided for @shopCompareTwoStores.
+  ///
+  /// In es, this message translates to:
+  /// **'Repartir en 2'**
+  String get shopCompareTwoStores;
+
+  /// No description provided for @shopCompareSameQty.
+  ///
+  /// In es, this message translates to:
+  /// **'Misma cantidad'**
+  String get shopCompareSameQty;
+
+  /// No description provided for @shopCompareCheckout.
+  ///
+  /// In es, this message translates to:
+  /// **'En caja'**
+  String get shopCompareCheckout;
+
+  /// No description provided for @shopCompareEquiv.
+  ///
+  /// In es, this message translates to:
+  /// **'equiv. {target} · envase {pack}'**
+  String shopCompareEquiv(String target, String pack);
+
+  /// No description provided for @shopCompareSplitSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahorras ≈ {amount}'**
+  String shopCompareSplitSave(String amount);
+
+  /// No description provided for @shopCompareSplitSame.
+  ///
+  /// In es, this message translates to:
+  /// **'Mismo precio repartiendo o en 1 súper'**
+  String get shopCompareSplitSame;
+
+  /// No description provided for @shopCompareSplitCombined.
+  ///
+  /// In es, this message translates to:
+  /// **'Total entre los 2: ≈ {total}'**
+  String shopCompareSplitCombined(String total);
+
+  /// No description provided for @shopCompareSplitOnlyHere.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo aquí'**
+  String get shopCompareSplitOnlyHere;
+
+  /// No description provided for @shopCompareSplitMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quedan en esta lista: {names}'**
+  String shopCompareSplitMissing(String names);
+
+  /// No description provided for @shopCompareSplitBtn.
+  ///
+  /// In es, this message translates to:
+  /// **'Separar en 2 listas'**
+  String get shopCompareSplitBtn;
+
+  /// No description provided for @shopCompareSplitDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista separada: {storeA} ({countA}) y {storeB} ({countB})'**
+  String shopCompareSplitDone(
+    String storeA,
+    int countA,
+    String storeB,
+    int countB,
+  );
+
   /// No description provided for @tskCatchUp.
   ///
   /// In es, this message translates to:

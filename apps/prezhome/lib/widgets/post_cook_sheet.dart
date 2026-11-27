@@ -499,8 +499,8 @@ class _CompactStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.cream,
-      shape: StadiumBorder(side: BorderSide(color: AppColors.stroke)),
+      color: AppColors.iconTile,
+      shape: StadiumBorder(side: BorderSide(color: AppColors.cardEdge)),
       clipBehavior: Clip.antiAlias,
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -234,5 +234,16 @@ void main() {
       // Sin precio de mercado para ese alimento, sigue la tabla fija.
       expect(ApproxPrice.estimate('Cebolla', 1000, 'g'), closeTo(1.3, 1e-9));
     });
+
+    test(
+      'dientes de ajo y lonchas no multiplican por precio de cabeza o pieza',
+      () {
+        ApproxPrice.market = (kg: {}, l: {}, ud: {'ajo': 1.2, 'jamon': 4.0});
+        final cloves = ApproxPrice.estimate('Diente de ajo', 14, 'dientes')!;
+        final slices = ApproxPrice.estimate('Jamón', 6, 'lonchas')!;
+        expect(cloves, lessThan(1.0));
+        expect(slices, lessThan(3.0));
+      },
+    );
   });
 }

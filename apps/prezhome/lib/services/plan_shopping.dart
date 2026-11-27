@@ -135,7 +135,7 @@ List<String> batchIngredientLines(
 }
 
 /// Pasa las necesidades a cantidades de súper ("1 ud" de pimienta) y junta
-/// en una sola línea lo que coincide en nombre y unidad.
+/// en una sola línea lo que coincide en nombre y unidad compatible.
 List<({String name, double? qty, String? unit})> shoppingLines(
   List<PlanNeed> needs, {
   Map<String, CountMode> modes = const {},
@@ -155,23 +155,48 @@ List<({String name, double? qty, String? unit})> shoppingLines(
         garlicHeads(need.name, practical.quantity, practical.unit) != null
         ? 'Diente de ajo'
         : need.name;
-    final unit = practical.unit.trim().toLowerCase();
-    // "unidad", "unidades" y "ud" son lo mismo: una sola fila.
-    final unitKey = const {'unidad', 'unidades'}.contains(unit)
-        ? 'ud'
-        : unit.startsWith('diente')
-        ? 'diente'
-        : unit;
+    final rawUnit = practical.unit.trim().toLowerCase();
+    var qty = practical.quantity;
+    var displayUnit = practical.unit;
+    final String unitKey;
+    if (const {
+      'unidad',
+      'unidades',
+      'ud',
+      'uds',
+      'pieza',
+      'piezas',
+    }.contains(rawUnit)) {
+      unitKey = 'ud';
+      displayUnit = 'ud';
+    } else if (rawUnit == 'kg') {
+      unitKey = 'g';
+      displayUnit = 'g';
+      if (qty != null) qty = qty * 1000;
+    } else if (const {'g', 'gr', 'gramo', 'gramos'}.contains(rawUnit)) {
+      unitKey = 'g';
+      displayUnit = 'g';
+    } else if (const {'l', 'litro', 'litros'}.contains(rawUnit)) {
+      unitKey = 'ml';
+      displayUnit = 'ml';
+      if (qty != null) qty = qty * 1000;
+    } else if (const {'ml', 'mililitro', 'mililitros'}.contains(rawUnit)) {
+      unitKey = 'ml';
+      displayUnit = 'ml';
+    } else if (rawUnit.startsWith('diente')) {
+      unitKey = 'diente';
+    } else {
+      unitKey = rawUnit;
+    }
     final key = '${CategoryIcons.normalize(name)}|$unitKey';
     final prev = merged[key];
     if (prev == null) {
-      merged[key] = (name: name, qty: practical.quantity, unit: practical.unit);
+      merged[key] = (name: name, qty: qty, unit: displayUnit);
     } else {
       // Un bote de especia (1 ud) no se suma: con uno basta.
-      final q =
-          isCondiment(name) || prev.qty == null || practical.quantity == null
+      final q = isCondiment(name) || prev.qty == null || qty == null
           ? prev.qty
-          : prev.qty! + practical.quantity!;
+          : prev.qty! + qty;
       merged[key] = (name: prev.name, qty: q, unit: prev.unit);
     }
   }
@@ -313,8 +338,26 @@ class PlanShoppingService {
       modes: await CountPrefs(_client).load(homeId),
     );
 
+    var manualQuery = _client
+        .from('shopping_list_items')
+        .select('name')
+        .eq('home_id', homeId)
+        .eq('source', 'manual')
+        .eq('checked', false);
+    if (listId == null) {
+      manualQuery = manualQuery.filter('list_id', 'is', null);
+    } else {
+      manualQuery = manualQuery.eq('list_id', listId);
+    }
+    final manualRows = await manualQuery;
+    final manualNames = {
+      for (final r in manualRows as List)
+        CategoryIcons.normalize((r['name'] ?? '').toString()),
+    };
+
     final items = <ShoppingListItem>[];
     for (final m in merged) {
+      if (manualNames.contains(CategoryIcons.normalize(m.name))) continue;
       final cat = defaultCategoryFor(m.name);
       items.add(
         ShoppingListItem(

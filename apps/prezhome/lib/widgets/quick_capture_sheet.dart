@@ -260,7 +260,7 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
       child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           AppSpacing.xl,
-          AppSpacing.lg,
+          AppSpacing.sm,
           AppSpacing.xl,
           MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
         ),
@@ -268,6 +268,17 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.inkMuted.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 MiauCharacter(mood: mood, size: 46, interactive: true),
@@ -295,6 +306,19 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
               onSubmitted: (_) => _save(),
               decoration: InputDecoration(
                 hintText: hint,
+                filled: true,
+                fillColor: AppColors.card,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide(color: AppColors.cardEdge),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide(
+                    color: AppColors.terracotta,
+                    width: 1.5,
+                  ),
+                ),
                 suffixIcon: kIsWeb
                     ? null
                     : IconButton(
@@ -308,7 +332,7 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
                               : Icons.mic_none_rounded,
                           color: _listening
                               ? AppColors.terracotta
-                              : AppColors.woodDark,
+                              : AppColors.inkMuted,
                         ),
                       ),
               ),
@@ -319,6 +343,8 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
               icon: const Icon(Icons.check_rounded),
               label: Text(context.l.captureSave),
               style: FilledButton.styleFrom(
+                backgroundColor: AppColors.terracotta,
+                foregroundColor: AppColors.onTerracotta,
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
@@ -360,7 +386,7 @@ class _QuickCaptureSheetState extends State<_QuickCaptureSheet> {
   }) {
     return OutlinedButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, size: 17, color: AppColors.woodDark),
+      icon: Icon(icon, size: 17, color: AppColors.terracottaText),
       label: Text(label),
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, 40),

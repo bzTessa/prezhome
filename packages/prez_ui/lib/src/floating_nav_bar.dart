@@ -61,6 +61,7 @@ class FloatingNavBar extends StatelessWidget {
     this.actionForegroundColor,
     this.shadow,
     this.border,
+    this.actionBorder,
     this.duration = const Duration(milliseconds: 260),
     this.curve = Curves.easeOutCubic,
   }) : assert(items.length >= 2),
@@ -88,8 +89,11 @@ class FloatingNavBar extends StatelessWidget {
   /// Sombra de la píldora y del botón. Por defecto, una sombra suave.
   final List<BoxShadow>? shadow;
 
-  /// Borde de la píldora y del botón (por defecto, ninguno).
+  /// Borde de la píldora (por defecto, ninguno).
   final BoxBorder? border;
+
+  /// Borde opcional del botón circular de acción (por defecto, ninguno).
+  final BoxBorder? actionBorder;
 
   final Duration duration;
   final Curve curve;
@@ -179,7 +183,7 @@ class FloatingNavBar extends StatelessWidget {
           color: actionColor ?? scheme.primary,
           foregroundColor: actionForegroundColor ?? scheme.onPrimary,
           shadow: shadows,
-          border: border,
+          border: actionBorder,
         ),
       ],
     );

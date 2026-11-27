@@ -16,7 +16,7 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
 - Migraciones que tocan RLS/grants/DROP: el check "Revisión manual requerida"
   de `ai-development.yml` falla a propósito; lo aprueba Tessa.
 - Supabase: proyecto `ubrihtnnkbwcbchvvlno`. RLS por `auth_home_id()`.
-  `pgcrypto` está en el esquema `extensions`. Última migración: 0090.
+  `pgcrypto` está en el esquema `extensions`. Última migración: 0091.
 - Límite de IA: cupo por hogar, función y mes. Cupos en `plan_quotas`
   (plan free/pro × scan_ticket, recipes, meal_photo, import_link; se cambian
   editando filas), uso en `ai_usage`. Las funciones usan `serveAi` de
@@ -60,12 +60,18 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Hogar y ajustes; sin sesión, siempre claro) (no usar `const` con `AppColors`; nada de `Colors.white`
   para superficies: `AppColors.card`). Widgets comunes: `widgets/empty_state.dart`,
   `widgets/list_skeleton.dart`, `widgets/food_image.dart`.
-- Estilo Cozy Editorial + acentos táctiles: tarjetas en reposo con borde arena
-  (`AppColors.cardEdge`) y sombra suave (`AppElevation.level1`); trazo carbón y
-  sombra dura (`AppColors.stroke`, `AppElevation.tactileBorder`/`tactileShadow`,
-  `AppTheme.heroTactileDecoration`, `TactileButton`, `FloatingNavBar`)
-  reservados a CTAs clave y radios 20/14/10, con `AppColors.onTerracotta` para
-  contraste crema sobre terracota.
+- Estilo Editorial Gastronómico Cálido: porcelana cálida (`cream` `#FAF7F2`),
+  tarjetas blancas (`card` `#FFFFFF`) con borde arena (`AppColors.cardEdge`) y
+  sombra espresso suave (`AppElevation.level1`); acentos vivos terracota
+  (`#D14E28`), salvia (`#4E7A51`) y miel (`#E5A01D`); `AppColors.onTerracotta`
+  para contraste crema sobre terracota. `Hoy` muestra cifras en Bento de 2
+  columnas y franja compacta de racha sin duplicar el gato; `Recetas` usa
+  cuadrícula visual de 2 columnas con foto protagonista. `RecipeImage` usa
+  cubos fijos de `cacheWidth` (`thumbCacheWidth` 240 / `gridCacheWidth` 480 /
+  `fullCacheWidth` 960), `gaplessPlayback: true` y `recipeHeroFlightShuttle`
+  para evitar parpadeos en transiciones `Hero`. `MealPlanScreen` y
+  `FoodDiaryScreen` no muestran FAB propio cuando van embebidos (`ComidasTab`),
+  usando píldoras inline para no pisar contenido ni duplicar el `+` global.
 - El nombre de la mascota no sale en ningún texto ni se muestran iconos
   `auto_awesome`. `MiauCharacter` tiene coreografía por `mood` (aleteos/bote/
   inclinación), saltito con anticipación y efectos ambientales en `CustomPaint`
@@ -152,10 +158,10 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   de barras (`photoMatches`, `productByCode`) y, si no es ese producto, se
   cambia o se quita. La búsqueda quita resultados sin relación (`rankProducts`).
 - Chips: el seleccionado va en `AppColors.wood` con texto en tinta (tema).
-- Estilo "Warm Tactile" (logo): `AppTheme.tactileDecoration` (papel, borde
-  `AppColors.stroke`, sombra dura), `TactileButton`, `SegmentedPill`. Muelles
-  en `AppMotion` (`fluidDefault`/`fluidBouncy`/`miauSpring`) vía `SpringValue`;
-  deslizar con `SwipeAction` (rubber-band). Miau sin animación por fotogramas.
+- **Lista de la compra y UX móvil**: `shopping_list_screen.dart` virtualizada con `SliverList.builder` (filas `_ShopRow` agrupadas en tarjetas por pasillo con bordes continuos, sin `CollapseOut`/`SpringValue` por fila ni `jsonEncode` en comparaciones); `ShoppingSummaryHeader` limpio (`Lidl` + `Estoy en la tienda` arriba, `Desde el plan` / `Comparar súpers` en píldoras); `"Te toca"` colapsado por defecto en píldora desplegable; filas con píldora compacta de cantidad (`1 ud`) expandible inline a `− / +` al tocarla; barra unificada `"Guardar en casa (N)"` + escáner de ticket. `ApproxPrice` corrige sub-unidades (`dientes` a ~5 g y `lonchas` a ~25 g) y `plan_shopping.dart` normaliza unidades y evita duplicados contra artículos manuales.
+- **Hoy sin tirones y Miau limpio**: `StreakCard` mantiene caché en sesión y método `refresh()` con `GlobalKey<StreakCardState>` estable en `HomeTab` (sin recrear `UniqueKey` al cambiar de pestaña). `MiauCharacter` prescinde del pintor de partículas y bucle continuo por fotogramas, manteniendo transición suave entre poses y respuesta táctil al tocar.
+- **Hojas de producto y fotos del súper**: Hojas de pulsación larga en `ShoppingListScreen` y `InventoryScreen` con cabecera visual (foto + nombre + zona/pasillo), `SegmentedPill` para conteo y tarjetas directas para fotos (`Del súper`, `Cámara`, `Galería`); `ProductSearchSheet` añade chips filtrables de supermercado y `pickPhotoMode: true` (descarta resultados sin foto o con URL rota como `cdn-consum.` y muestra `Cerrar`). `FoodImage` descarta `isBrokenPhoto`, quita el mini-spinner y evita `LayoutBuilder` redundantes en miniaturas fijas. `QuickCaptureSheet` y `ScanTicketScreen` alineados con CTA terracota editorial.
+- **Estilo táctil editorial**: `AppTheme.tactileDecoration`, `TactileButton`, `SegmentedPill` (pista `iconTile` + deslizador elevado `card` usado en todas las sub-pestañas y detalle de receta). Muelles en `AppMotion` (`fluidDefault`/`fluidBouncy`/`miauSpring`) vía `SpringValue`; deslizar con `SwipeAction` (rubber-band). Miau sin animación por fotogramas ni partículas superpuestas.
 - Icono de la app: logo de Tessa en `apps/prezhome/assets/brand/app_icon.png`
   (1024, fondo amarillo #F6D57F, de `/mnt/project-files/logo/prezhome-logo.svg`); los de Android/iOS se generan redimensionándolo. Android
   8+ usa icono adaptativo (`mipmap-anydpi-v26`): dibujo recortado sin fondo
@@ -280,8 +286,13 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   Plus (`member_price`) salen del `__NUXT_DATA__` de la ficha (zona por
   defecto; si aún no está a la venta, el próximo precio con `price_starts_at`);
   sin precio se conserva el último conocido. El buscador de productos enseña
-  "con Lidl Plus" y "desde el…"; el escáner busca por `ean` en los catálogos si
-  OFF no conoce el código. Foto: la "small" (380 px) de `media.imageMap`.
+  ("con Lidl Plus" y "desde el…"; el escáner busca por `ean` en los catálogos si
+  OFF no conoce el código. Foto: la "small" (380 px) de `media.imageMap`).
+  `consum_sync.py` importa Consum y BM Supermercados (`bm`), `jsonld_sync.py`
+  añade Aldi España (`aldi`). Comparador de súpers (`services/store_comparison.dart`,
+  `widgets/shopping/store_comparison_sheet.dart`): limpia marcas blancas,
+  normaliza a igual cantidad (`€/kg`, `€/L`, `€/ud`) alineando formatos y
+  permite repartir en 2 listas (`_splitIntoTwoLists` con deshacer).
 
 ## Pendiente
 - Tessa: activar "Leaked password protection" en Supabase Auth.
