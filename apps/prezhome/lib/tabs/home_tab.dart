@@ -27,6 +27,7 @@ import '../models/nutrition_profile.dart';
 import '../models/task.dart';
 import '../services/home_food_restrictions.dart';
 import '../services/home_screen_widget.dart';
+import '../services/week_summary.dart';
 import '../services/inbox.dart';
 import '../services/pantry_usage.dart';
 import '../services/plan_diary.dart';
@@ -45,6 +46,7 @@ import '../widgets/miau_character.dart';
 import '../widgets/plan/plan_parts.dart';
 import '../widgets/recipe_image.dart';
 import '../widgets/home/warm_today.dart';
+import '../widgets/home/week_summary_card.dart';
 import '../widgets/animations/animated_counter.dart';
 import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
@@ -174,8 +176,28 @@ class HomeTabState extends State<HomeTab> {
       _loadCaloriesSummary(),
       _loadExpirySummary(),
       _loadPendingShopping(),
+      _loadWeekSummary(),
     ]);
     if (mounted && !_loaded) setState(() => _loaded = true);
+  }
+
+  /// Resumen de la semana (domingo y lunes).
+  WeekSummary? _week;
+
+  Future<void> _loadWeekSummary() async {
+    try {
+      final homeId = (await _profile())?['home_id'] as String?;
+      if (homeId == null) return;
+      final w = await WeekSummary.load(_client, homeId);
+      if (mounted) setState(() => _week = w);
+    } catch (_) {}
+  }
+
+  void _dismissWeek() {
+    final w = _week;
+    if (w == null) return;
+    unawaited(WeekSummary.dismiss(w.weekStart));
+    setState(() => _week = null);
   }
 
   // Todas las tarjetas leen la misma fila de perfil: una sola petición en vez
@@ -860,6 +882,16 @@ class HomeTabState extends State<HomeTab> {
                 ],
                 if (warm) ...[
                   StaggeredEntrance(index: 1, child: _warmTiles()),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                if (_week != null) ...[
+                  StaggeredEntrance(
+                    index: 1,
+                    child: WeekSummaryCard(
+                      summary: _week!,
+                      onDismiss: _dismissWeek,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.lg),
                 ],
                 if (next != null) ...[

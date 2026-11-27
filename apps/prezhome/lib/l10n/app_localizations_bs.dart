@@ -5599,4 +5599,95 @@ class AppLocalizationsBs extends AppLocalizations {
   String wTasks(int n) {
     return 'Zadaci na čekanju: $n';
   }
+
+  @override
+  String get wsTitle => 'Tvoja sedmica kod kuće';
+
+  @override
+  String get wsClose => 'Zatvori pregled';
+
+  @override
+  String get wsMeals => 'obroka kod kuće';
+
+  @override
+  String get wsSpent => 'po računima';
+
+  @override
+  String get wsRescued => 'iskorišteno na vrijeme';
+
+  @override
+  String get wsTasks => 'urađenih zadataka';
+
+  @override
+  String wsThrownLess(int n) {
+    return 'Bačeno manje nego prošle sedmice: $n';
+  }
+
+  @override
+  String get wsNothingThrown => 'Ove sedmice ništa nije bačeno.';
+
+  @override
+  String wsThrown(int n) {
+    return 'Bačeno: $n';
+  }
+
+  @override
+  String get colTitle => 'Moja kolekcija';
+
+  @override
+  String colIntro(int won, int total) {
+    return 'Imaš $won od $total. Svaki put kad niz dostigne cilj, dobiješ novu ilustraciju.';
+  }
+
+  @override
+  String colWon(int n) {
+    return 'Osvojeno nakon $n dana niza';
+  }
+
+  @override
+  String colLocked(int n, int left) {
+    return 'Nakon $n dana niza. Još $left.';
+  }
+
+  @override
+  String colDays(int n) {
+    return '$n dana';
+  }
+
+  @override
+  String get colWonShort => 'Osvojeno';
+
+  @override
+  String colMissing(int n) {
+    return 'Još $n dana';
+  }
+
+  @override
+  String get wtTitle => 'Tvoja težina';
+
+  @override
+  String get wtEmpty => 'Upiši je s vremena na vrijeme i vidi kako se mijenja.';
+
+  @override
+  String wtChange(String kg) {
+    return '$kg kg za mjesec';
+  }
+
+  @override
+  String get wtAdd => 'Upiši';
+
+  @override
+  String get wtDialogTitle => 'Tvoja težina danas';
+
+  @override
+  String get wtInvalid => 'Upiši težinu između 20 i 400 kg';
+
+  @override
+  String planKcalOf(int kcal, int target) {
+    return '$kcal od $target kcal';
+  }
+
+  @override
+  String get planKcalHint =>
+      'Kalorije jedne porcije planiranog u odnosu na dnevni cilj';
 }

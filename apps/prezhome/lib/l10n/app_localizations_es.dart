@@ -5675,4 +5675,113 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get wsTitle => 'Tu semana en casa';
+
+  @override
+  String get wsClose => 'Cerrar el resumen';
+
+  @override
+  String get wsMeals => 'comidas en casa';
+
+  @override
+  String get wsSpent => 'en tickets';
+
+  @override
+  String get wsRescued => 'aprovechado a tiempo';
+
+  @override
+  String get wsTasks => 'tareas hechas';
+
+  @override
+  String wsThrownLess(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Habéis tirado $n cosas menos que la semana pasada.',
+      one: 'Habéis tirado 1 cosa menos que la semana pasada.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wsNothingThrown => 'No se ha tirado nada esta semana.';
+
+  @override
+  String wsThrown(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Se han tirado $n cosas.',
+      one: 'Se ha tirado 1 cosa.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get colTitle => 'Mi colección';
+
+  @override
+  String colIntro(int won, int total) {
+    return 'Tienes $won de $total. Cada vez que tu racha llega a un hito, ganas una ilustración nueva.';
+  }
+
+  @override
+  String colWon(int n) {
+    return 'Ganada a los $n días de racha';
+  }
+
+  @override
+  String colLocked(int n, int left) {
+    return 'A los $n días de racha. Te faltan $left.';
+  }
+
+  @override
+  String colDays(int n) {
+    return '$n días';
+  }
+
+  @override
+  String get colWonShort => 'Ganada';
+
+  @override
+  String colMissing(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Faltan $n días',
+      one: 'Falta 1 día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wtTitle => 'Tu peso';
+
+  @override
+  String get wtEmpty => 'Apúntalo de vez en cuando y verás cómo cambia.';
+
+  @override
+  String wtChange(String kg) {
+    return '$kg kg en un mes';
+  }
+
+  @override
+  String get wtAdd => 'Apuntar';
+
+  @override
+  String get wtDialogTitle => 'Tu peso de hoy';
+
+  @override
+  String get wtInvalid => 'Escribe un peso entre 20 y 400 kg';
+
+  @override
+  String planKcalOf(int kcal, int target) {
+    return '$kcal de $target kcal';
+  }
+
+  @override
+  String get planKcalHint =>
+      'Calorías de una ración de lo planificado, frente a tu objetivo diario';
 }

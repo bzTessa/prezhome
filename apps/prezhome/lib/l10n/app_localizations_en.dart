@@ -5659,4 +5659,113 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get wsTitle => 'Your week at home';
+
+  @override
+  String get wsClose => 'Close summary';
+
+  @override
+  String get wsMeals => 'meals at home';
+
+  @override
+  String get wsSpent => 'on receipts';
+
+  @override
+  String get wsRescued => 'used in time';
+
+  @override
+  String get wsTasks => 'tasks done';
+
+  @override
+  String wsThrownLess(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'You threw away $n things less than last week.',
+      one: 'You threw away 1 thing less than last week.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wsNothingThrown => 'Nothing was thrown away this week.';
+
+  @override
+  String wsThrown(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n things were thrown away.',
+      one: '1 thing was thrown away.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get colTitle => 'My collection';
+
+  @override
+  String colIntro(int won, int total) {
+    return 'You have $won of $total. Each time your streak reaches a milestone, you win a new illustration.';
+  }
+
+  @override
+  String colWon(int n) {
+    return 'Won at a $n-day streak';
+  }
+
+  @override
+  String colLocked(int n, int left) {
+    return 'At a $n-day streak. $left to go.';
+  }
+
+  @override
+  String colDays(int n) {
+    return '$n days';
+  }
+
+  @override
+  String get colWonShort => 'Won';
+
+  @override
+  String colMissing(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days to go',
+      one: '1 day to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wtTitle => 'Your weight';
+
+  @override
+  String get wtEmpty => 'Log it now and then and see how it changes.';
+
+  @override
+  String wtChange(String kg) {
+    return '$kg kg in a month';
+  }
+
+  @override
+  String get wtAdd => 'Log';
+
+  @override
+  String get wtDialogTitle => 'Your weight today';
+
+  @override
+  String get wtInvalid => 'Enter a weight between 20 and 400 kg';
+
+  @override
+  String planKcalOf(int kcal, int target) {
+    return '$kcal of $target kcal';
+  }
+
+  @override
+  String get planKcalHint =>
+      'Calories in one serving of what\'s planned, against your daily target';
 }

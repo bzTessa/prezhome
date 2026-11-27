@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'file_local_store.dart';
+
 /// Racha de "casa al día": días seguidos en los que la persona hizo algo útil
 /// (tachar una tarea o apuntar una comida, también las del plan que se
 /// apuntan solas al abrir la app). Abrir la app sin más no cuenta.
@@ -20,6 +22,29 @@ class Streak {
 
   /// Hoy se alcanza un hito.
   bool get milestoneToday => doneToday && milestones.contains(days);
+
+  static final _settings = FileLocalStore(folderName: 'settings');
+  static const _bestKey = 'streak_best';
+
+  /// La mejor racha que ha tenido la persona en este móvil: decide qué
+  /// ilustraciones de Mi colección están desbloqueadas.
+  static Future<int> best() async {
+    try {
+      return int.tryParse(await _settings.read(_bestKey) ?? '') ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Guarda [days] si supera la mejor racha. Devuelve la mejor.
+  static Future<int> rememberBest(int days) async {
+    final b = await best();
+    if (days <= b) return b;
+    try {
+      await _settings.write(_bestKey, '$days');
+    } catch (_) {}
+    return days;
+  }
 
   static DateTime _date(DateTime d) => DateTime(d.year, d.month, d.day);
 
