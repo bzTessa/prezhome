@@ -16,3 +16,6 @@
 # Python
 __pycache__/
 *.pyc
+
+# Clave de la cuenta de servicio de Firebase: va como secreto en Supabase, nunca al repo.
+apps/prezhome/android/app/firebase-admin*.json
