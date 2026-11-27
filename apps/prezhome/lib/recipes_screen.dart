@@ -909,26 +909,6 @@ class _RecipeCard extends StatelessWidget {
                         )
                       else
                         photo,
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 54,
-                        child: IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withValues(alpha: 0.22),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                       if ((missing != null && missing! <= 1) ||
                           recipe.freezesWell)
                         Positioned(

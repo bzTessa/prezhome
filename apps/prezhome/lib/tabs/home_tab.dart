@@ -1899,7 +1899,10 @@ class HomeTabState extends State<HomeTab> {
         widget.onNavigateToTasks,
       ),
     };
-    final onBrand = AppColors.onTerracotta;
+    // En el estilo cálido la comida de arriba ya es el bloque terracota: la
+    // franja va en terracota suave para no tener dos bloques que griten.
+    final soft = AppColors.warmLight;
+    final onBrand = soft ? AppColors.ink : AppColors.onTerracotta;
     final isTask = line.kind == DayLineKind.task;
     final doIt = isTask ? () => _completeTaskFromDashboard(line.task!) : open;
     final doLabel = isTask
@@ -1909,21 +1912,26 @@ class HomeTabState extends State<HomeTab> {
         : context.l.homeNextOpen;
     // Una franja, no una tarjeta grande: lo grande de Hoy es Tu día.
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.terracotta, AppColors.terracottaPressed],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.terracotta.withValues(alpha: 0.24),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      decoration: soft
+          ? BoxDecoration(
+              color: AppColors.terracottaBg,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            )
+          : BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.terracotta, AppColors.terracottaPressed],
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.terracotta.withValues(alpha: 0.24),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -1938,10 +1946,16 @@ class HomeTabState extends State<HomeTab> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: onBrand.withValues(alpha: 0.18),
+                    color: soft
+                        ? AppColors.card
+                        : onBrand.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: 22, color: onBrand),
+                  child: Icon(
+                    icon,
+                    size: 22,
+                    color: soft ? AppColors.terracottaText : onBrand,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1985,8 +1999,10 @@ class HomeTabState extends State<HomeTab> {
                   tooltip: doLabel,
                   onPressed: doIt,
                   style: IconButton.styleFrom(
-                    backgroundColor: onBrand,
-                    foregroundColor: AppColors.terracotta,
+                    backgroundColor: soft ? AppColors.terracotta : onBrand,
+                    foregroundColor: soft
+                        ? AppColors.onTerracotta
+                        : AppColors.terracotta,
                   ),
                   icon: Icon(
                     isTask
