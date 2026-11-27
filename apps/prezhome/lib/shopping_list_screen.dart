@@ -2329,7 +2329,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         ShoppingViewPrefs.storageKey,
       );
       if (!mounted) return;
-      setState(() => _view = ShoppingViewPrefs.decode(raw));
+      setState(
+        () => _view = raw == null || raw.isEmpty
+            // Sin elegir nada aún: en el estilo cálido, cuadrícula.
+            ? ShoppingViewPrefs(grid: AppColors.warmLight)
+            : ShoppingViewPrefs.decode(raw),
+      );
     } catch (_) {
       // Sin almacenamiento: se queda la vista por defecto.
     }
@@ -2612,13 +2617,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           );
         }
       } else {
-        for (var i = 0; i < items.length; i += 2) {
+        // Estilo cálido: tres por fila, foto redonda (como la propuesta B).
+        final cols = AppColors.warmLight ? 3 : 2;
+        for (var i = 0; i < items.length; i += cols) {
           rows.add(
             _ShopGridPairRow(
-              left: items[i],
-              right: i + 1 < items.length ? items[i + 1] : null,
+              items: items.sublist(i, (i + cols).clamp(0, items.length)),
+              columns: cols,
               hasPhoto: _view.showPhotos,
-              isLast: i + 2 >= items.length,
+              isLast: i + cols >= items.length,
             ),
           );
         }
@@ -2818,48 +2825,47 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
         );
       case _ShopGridPairRow():
+        final compact = row.columns > 2;
         Widget tile(ShoppingListItem item) => ShoppingGridTile(
           key: ValueKey(item.id ?? item.name),
           name: shoppingCleanName(item.name),
           checked: item.checked,
+          compact: compact,
           quantityLabel: shoppingQtyLabel(
             item.quantity,
             item.unit,
             packSize: item.packSize,
           ),
           price: _linePrice(item),
-          photo: row.hasPhoto ? _photo(item, width: double.infinity) : null,
+          photo: row.hasPhoto
+              ? _photo(item, width: compact ? 64 : double.infinity)
+              : null,
           onToggle: () => _toggleChecked(item, !item.checked),
           onLongPress: () => _openItemActions(item),
         );
+        final slots = [
+          for (var k = 0; k < row.columns; k++) ...[
+            if (k > 0) const SizedBox(width: 10),
+            Expanded(
+              child: k < row.items.length
+                  ? (row.hasPhoto
+                        ? SizedBox(
+                            height: compact ? 168 : 210,
+                            child: tile(row.items[k]),
+                          )
+                        : tile(row.items[k]))
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ];
         return Padding(
           padding: EdgeInsets.only(bottom: row.isLast ? AppSpacing.lg : 10),
           child: row.hasPhoto
-              ? Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(height: 210, child: tile(row.left)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: row.right != null
-                          ? SizedBox(height: 210, child: tile(row.right!))
-                          : const SizedBox.shrink(),
-                    ),
-                  ],
-                )
+              ? Row(children: slots)
               : IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: tile(row.left)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: row.right != null
-                            ? tile(row.right!)
-                            : const SizedBox.shrink(),
-                      ),
-                    ],
+                    children: slots,
                   ),
                 ),
         );
@@ -3453,14 +3459,15 @@ class _ShopItemRow extends _ShopRow {
 
 class _ShopGridPairRow extends _ShopRow {
   const _ShopGridPairRow({
-    required this.left,
-    required this.right,
+    required this.items,
+    required this.columns,
     required this.hasPhoto,
     required this.isLast,
   });
 
-  final ShoppingListItem left;
-  final ShoppingListItem? right;
+  /// De 1 a [columns] productos; los huecos de la última fila quedan vacíos.
+  final List<ShoppingListItem> items;
+  final int columns;
   final bool hasPhoto;
   final bool isLast;
 }

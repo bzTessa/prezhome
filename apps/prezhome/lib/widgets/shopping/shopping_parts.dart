@@ -1372,18 +1372,108 @@ class ShoppingGridTile extends StatelessWidget {
     this.photo,
     this.quantityLabel,
     this.price,
+    this.compact = false,
   });
 
   final String name;
   final bool checked;
+
+  /// Ficha pequeña de tres por fila: foto redonda centrada y, ya en el
+  /// carro, borde verde en vez de atenuarse.
+  final bool compact;
   final VoidCallback onToggle;
   final VoidCallback? onLongPress;
   final Widget? photo;
   final String? quantityLabel;
   final String? price;
 
+  Widget _compact(BuildContext context) {
+    final qty = quantityLabel?.trim() ?? '';
+    final radius = BorderRadius.circular(20);
+    return Semantics(
+      checked: checked,
+      label: name,
+      child: Material(
+        color: checked ? AppColors.sageBg : AppColors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: checked
+              ? BorderSide(color: AppColors.sage, width: 2)
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onToggle,
+          onLongPress: onLongPress,
+          borderRadius: radius,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.iconTile,
+                          shape: BoxShape.circle,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        alignment: Alignment.center,
+                        child: photo,
+                      ),
+                      if (checked)
+                        Positioned(
+                          right: -4,
+                          bottom: -4,
+                          child: _CheckCircle(checked: checked),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      height: 1.2,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+                Text(
+                  checked
+                      ? context.l.shopInCart
+                      : [qty, ?price].where((t) => t.isNotEmpty).join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: checked ? AppColors.sage : AppColors.inkMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (compact && photo != null) return _compact(context);
     final qty = quantityLabel?.trim() ?? '';
     final details = [
       Text(
