@@ -2199,7 +2199,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   children: [
                     Text(_dayLabel(date), style: AppTextStyles.headline),
                     if (_isBusy(date)) _busyBadge(),
-                    ?_kcalBadge(data, dayEntries),
                     if (sel == todayIndex)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -2218,6 +2217,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           ),
                         ),
                       ),
+                    ?_kcalBadge(data, dayEntries),
                   ],
                 ),
               ),

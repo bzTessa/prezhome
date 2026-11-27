@@ -98,8 +98,11 @@ class WarmMealHero extends StatelessWidget {
                             title,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
+                            // Nombres largos ("Tortilla de espinacas y queso
+                            // de cabra") en letra algo menor, para que se lean
+                            // enteros en vez de cortarse con "…".
                             style: AppFonts.serif(
-                              fontSize: 31,
+                              fontSize: title.length > 28 ? 25 : 31,
                               height: 1.05,
                               color: onT,
                             ),

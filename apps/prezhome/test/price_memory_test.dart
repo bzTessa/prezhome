@@ -63,6 +63,21 @@ void main() {
       expect(est.isReliable, isFalse);
     });
 
+    test('12 huevos con precio de docena: no multiplica por 12', () {
+      // Antes: 12 x 1,80 € = 21,60 €.
+      final est = PriceMemory.estimateCost(
+        [(name: 'Huevos', quantity: 12, unit: 'ud')],
+        {
+          'huevos': const ProductPrice(
+            nameNormalized: 'huevos',
+            lastUnitPrice: 1.8,
+            samples: 1,
+          ),
+        },
+      );
+      expect(est.total, closeTo(1.8, 0.001));
+    });
+
     test('en gramos cuenta un paquete, no precio x gramos', () {
       // Antes: 900 g x 5,60 € = 5.040 €.
       final est = PriceMemory.estimateCost(
