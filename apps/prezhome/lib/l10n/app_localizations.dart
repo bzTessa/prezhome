@@ -8590,6 +8590,150 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{n, plural, =1{1 tarea pendiente} other{{n} tareas pendientes}}'**
   String wTasks(int n);
+
+  /// No description provided for @wsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu semana en casa'**
+  String get wsTitle;
+
+  /// No description provided for @wsClose.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar el resumen'**
+  String get wsClose;
+
+  /// No description provided for @wsMeals.
+  ///
+  /// In es, this message translates to:
+  /// **'comidas en casa'**
+  String get wsMeals;
+
+  /// No description provided for @wsSpent.
+  ///
+  /// In es, this message translates to:
+  /// **'en tickets'**
+  String get wsSpent;
+
+  /// No description provided for @wsRescued.
+  ///
+  /// In es, this message translates to:
+  /// **'aprovechado a tiempo'**
+  String get wsRescued;
+
+  /// No description provided for @wsTasks.
+  ///
+  /// In es, this message translates to:
+  /// **'tareas hechas'**
+  String get wsTasks;
+
+  /// No description provided for @wsThrownLess.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{Habéis tirado 1 cosa menos que la semana pasada.} other{Habéis tirado {n} cosas menos que la semana pasada.}}'**
+  String wsThrownLess(int n);
+
+  /// No description provided for @wsNothingThrown.
+  ///
+  /// In es, this message translates to:
+  /// **'No se ha tirado nada esta semana.'**
+  String get wsNothingThrown;
+
+  /// No description provided for @wsThrown.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{Se ha tirado 1 cosa.} other{Se han tirado {n} cosas.}}'**
+  String wsThrown(int n);
+
+  /// No description provided for @colTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi colección'**
+  String get colTitle;
+
+  /// No description provided for @colIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes {won} de {total}. Cada vez que tu racha llega a un hito, ganas una ilustración nueva.'**
+  String colIntro(int won, int total);
+
+  /// No description provided for @colWon.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganada a los {n} días de racha'**
+  String colWon(int n);
+
+  /// No description provided for @colLocked.
+  ///
+  /// In es, this message translates to:
+  /// **'A los {n} días de racha. Te faltan {left}.'**
+  String colLocked(int n, int left);
+
+  /// No description provided for @colDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} días'**
+  String colDays(int n);
+
+  /// No description provided for @colWonShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganada'**
+  String get colWonShort;
+
+  /// No description provided for @colMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{Falta 1 día} other{Faltan {n} días}}'**
+  String colMissing(int n);
+
+  /// No description provided for @wtTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu peso'**
+  String get wtTitle;
+
+  /// No description provided for @wtEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Apúntalo de vez en cuando y verás cómo cambia.'**
+  String get wtEmpty;
+
+  /// No description provided for @wtChange.
+  ///
+  /// In es, this message translates to:
+  /// **'{kg} kg en un mes'**
+  String wtChange(String kg);
+
+  /// No description provided for @wtAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntar'**
+  String get wtAdd;
+
+  /// No description provided for @wtDialogTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu peso de hoy'**
+  String get wtDialogTitle;
+
+  /// No description provided for @wtInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un peso entre 20 y 400 kg'**
+  String get wtInvalid;
+
+  /// No description provided for @planKcalOf.
+  ///
+  /// In es, this message translates to:
+  /// **'{kcal} de {target} kcal'**
+  String planKcalOf(int kcal, int target);
+
+  /// No description provided for @planKcalHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Calorías de una ración de lo planificado, frente a tu objetivo diario'**
+  String get planKcalHint;
 }
 
 class _AppLocalizationsDelegate

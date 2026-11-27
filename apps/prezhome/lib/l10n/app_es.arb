@@ -3562,5 +3562,101 @@
         "type": "int"
       }
     }
-  }
+  },
+  "wsTitle": "Tu semana en casa",
+  "wsClose": "Cerrar el resumen",
+  "wsMeals": "comidas en casa",
+  "wsSpent": "en tickets",
+  "wsRescued": "aprovechado a tiempo",
+  "wsTasks": "tareas hechas",
+  "wsThrownLess": "{n, plural, =1{Habéis tirado 1 cosa menos que la semana pasada.} other{Habéis tirado {n} cosas menos que la semana pasada.}}",
+  "@wsThrownLess": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "wsNothingThrown": "No se ha tirado nada esta semana.",
+  "wsThrown": "{n, plural, =1{Se ha tirado 1 cosa.} other{Se han tirado {n} cosas.}}",
+  "@wsThrown": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "colTitle": "Mi colección",
+  "colIntro": "Tienes {won} de {total}. Cada vez que tu racha llega a un hito, ganas una ilustración nueva.",
+  "@colIntro": {
+    "placeholders": {
+      "won": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "colWon": "Ganada a los {n} días de racha",
+  "@colWon": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "colLocked": "A los {n} días de racha. Te faltan {left}.",
+  "@colLocked": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "colDays": "{n} días",
+  "@colDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "colWonShort": "Ganada",
+  "colMissing": "{n, plural, =1{Falta 1 día} other{Faltan {n} días}}",
+  "@colMissing": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "wtTitle": "Tu peso",
+  "wtEmpty": "Apúntalo de vez en cuando y verás cómo cambia.",
+  "wtChange": "{kg} kg en un mes",
+  "@wtChange": {
+    "placeholders": {
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "wtAdd": "Apuntar",
+  "wtDialogTitle": "Tu peso de hoy",
+  "wtInvalid": "Escribe un peso entre 20 y 400 kg",
+  "planKcalOf": "{kcal} de {target} kcal",
+  "@planKcalOf": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "planKcalHint": "Calorías de una ración de lo planificado, frente a tu objetivo diario"
 }

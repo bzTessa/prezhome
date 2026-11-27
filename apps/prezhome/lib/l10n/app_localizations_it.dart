@@ -5675,4 +5675,113 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get wsTitle => 'La tua settimana in casa';
+
+  @override
+  String get wsClose => 'Chiudi il riepilogo';
+
+  @override
+  String get wsMeals => 'pasti a casa';
+
+  @override
+  String get wsSpent => 'in scontrini';
+
+  @override
+  String get wsRescued => 'usato in tempo';
+
+  @override
+  String get wsTasks => 'compiti fatti';
+
+  @override
+  String wsThrownLess(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n cose buttate in meno della settimana scorsa.',
+      one: '1 cosa buttata in meno della settimana scorsa.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wsNothingThrown => 'Questa settimana non si è buttato niente.';
+
+  @override
+  String wsThrown(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Sono state buttate $n cose.',
+      one: 'È stata buttata 1 cosa.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get colTitle => 'La mia collezione';
+
+  @override
+  String colIntro(int won, int total) {
+    return 'Ne hai $won su $total. Ogni volta che la serie raggiunge un traguardo, vinci una nuova illustrazione.';
+  }
+
+  @override
+  String colWon(int n) {
+    return 'Vinta a $n giorni di serie';
+  }
+
+  @override
+  String colLocked(int n, int left) {
+    return 'A $n giorni di serie. Ne mancano $left.';
+  }
+
+  @override
+  String colDays(int n) {
+    return '$n giorni';
+  }
+
+  @override
+  String get colWonShort => 'Vinta';
+
+  @override
+  String colMissing(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Mancano $n giorni',
+      one: 'Manca 1 giorno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wtTitle => 'Il tuo peso';
+
+  @override
+  String get wtEmpty => 'Annotalo ogni tanto e vedrai come cambia.';
+
+  @override
+  String wtChange(String kg) {
+    return '$kg kg in un mese';
+  }
+
+  @override
+  String get wtAdd => 'Annota';
+
+  @override
+  String get wtDialogTitle => 'Il tuo peso di oggi';
+
+  @override
+  String get wtInvalid => 'Scrivi un peso tra 20 e 400 kg';
+
+  @override
+  String planKcalOf(int kcal, int target) {
+    return '$kcal di $target kcal';
+  }
+
+  @override
+  String get planKcalHint =>
+      'Calorie di una porzione di quanto pianificato, rispetto al tuo obiettivo giornaliero';
 }
