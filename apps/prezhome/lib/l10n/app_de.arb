@@ -1389,5 +1389,16 @@
   "pcDiaryTitle": "Ins Tagebuch eintragen",
   "pcDiarySub": "1 Portion · {kcal} kcal, bei der aktuellen Mahlzeit",
   "pcDiaryOnly": "Ins Tagebuch eintragen",
-  "pcSummaryDiary": "Im Tagebuch eingetragen"
+  "pcSummaryDiary": "Im Tagebuch eingetragen",
+  "hhLookTitle": "Stil",
+  "hhLookName": "{look, select, calida{Warme Küche} other{Klassisch}}",
+  "warmMinutes": "{n} Min.",
+  "warmServings": "{n, plural, =1{1 Portion} other{{n} Portionen}}",
+  "warmCookNow": "Jetzt kochen",
+  "warmSeePlan": "Plan ansehen",
+  "warmToBuy": "Einzukaufen",
+  "warmUseUp": "Bald aufbrauchen",
+  "warmTasks": "Offene Aufgaben",
+  "warmDoneToday": "{n} heute erledigt",
+  "warmNothingPlanned": "Noch nichts geplant"
 }

@@ -8452,6 +8452,72 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Apuntado en tu diario'**
   String get pcSummaryDiary;
+
+  /// No description provided for @hhLookTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Estilo'**
+  String get hhLookTitle;
+
+  /// No description provided for @hhLookName.
+  ///
+  /// In es, this message translates to:
+  /// **'{look, select, calida{Cocina cálida} other{Clásico}}'**
+  String hhLookName(String look);
+
+  /// No description provided for @warmMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} min'**
+  String warmMinutes(int n);
+
+  /// No description provided for @warmServings.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{1 ración} other{{n} raciones}}'**
+  String warmServings(int n);
+
+  /// No description provided for @warmCookNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocinar ahora'**
+  String get warmCookNow;
+
+  /// No description provided for @warmSeePlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver el plan'**
+  String get warmSeePlan;
+
+  /// No description provided for @warmToBuy.
+  ///
+  /// In es, this message translates to:
+  /// **'Por comprar'**
+  String get warmToBuy;
+
+  /// No description provided for @warmUseUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Gástalo ya'**
+  String get warmUseUp;
+
+  /// No description provided for @warmTasks.
+  ///
+  /// In es, this message translates to:
+  /// **'Tareas pendientes'**
+  String get warmTasks;
+
+  /// No description provided for @warmDoneToday.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{1 hecha hoy} other{{n} hechas hoy}}'**
+  String warmDoneToday(int n);
+
+  /// No description provided for @warmNothingPlanned.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin plan todavía'**
+  String get warmNothingPlanned;
 }
 
 class _AppLocalizationsDelegate

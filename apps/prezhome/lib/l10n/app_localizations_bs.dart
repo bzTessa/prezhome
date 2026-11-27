@@ -5499,4 +5499,49 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get pcSummaryDiary => 'Upisano u tvoj dnevnik';
+
+  @override
+  String get hhLookTitle => 'Stil';
+
+  @override
+  String hhLookName(String look) {
+    String _temp0 = intl.Intl.selectLogic(look, {
+      'calida': 'Topla kuhinja',
+      'other': 'Klasični',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String warmMinutes(int n) {
+    return '$n min';
+  }
+
+  @override
+  String warmServings(int n) {
+    return '$n porcija';
+  }
+
+  @override
+  String get warmCookNow => 'Kuhaj sada';
+
+  @override
+  String get warmSeePlan => 'Pogledaj plan';
+
+  @override
+  String get warmToBuy => 'Za kupiti';
+
+  @override
+  String get warmUseUp => 'Potroši odmah';
+
+  @override
+  String get warmTasks => 'Zadaci na čekanju';
+
+  @override
+  String warmDoneToday(int n) {
+    return '$n urađeno danas';
+  }
+
+  @override
+  String get warmNothingPlanned => 'Još ništa';
 }

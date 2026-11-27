@@ -1389,5 +1389,16 @@
   "pcDiaryTitle": "Registar no meu diário",
   "pcDiarySub": "1 dose · {kcal} kcal, na refeição de agora",
   "pcDiaryOnly": "Registar no diário",
-  "pcSummaryDiary": "Registado no teu diário"
+  "pcSummaryDiary": "Registado no teu diário",
+  "hhLookTitle": "Estilo",
+  "hhLookName": "{look, select, calida{Cozinha acolhedora} other{Clássico}}",
+  "warmMinutes": "{n} min",
+  "warmServings": "{n, plural, =1{1 dose} other{{n} doses}}",
+  "warmCookNow": "Cozinhar agora",
+  "warmSeePlan": "Ver o plano",
+  "warmToBuy": "Para comprar",
+  "warmUseUp": "Gasta já",
+  "warmTasks": "Tarefas pendentes",
+  "warmDoneToday": "{n, plural, =1{1 feita hoje} other{{n} feitas hoje}}",
+  "warmNothingPlanned": "Ainda sem plano"
 }

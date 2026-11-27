@@ -30,6 +30,11 @@ Future<void> main() async {
   for (final w in const [FontWeight.w500, FontWeight.w600, FontWeight.w700]) {
     GoogleFonts.fraunces(fontWeight: w);
   }
+  // Estilo "Cocina cálida": DM Sans y DM Serif Display, también dentro.
+  for (final w in FontWeight.values.sublist(3, 8)) {
+    GoogleFonts.dmSans(fontWeight: w);
+  }
+  GoogleFonts.dmSerifDisplay();
   // Las preferencias locales se leen a la vez que arranca Supabase.
   final prefs = Future.wait([
     // Si fallara, la app arranca igual con la letra del sistema.
@@ -77,6 +82,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ThemePreference.mode.addListener(_applyTheme);
+    ThemePreference.look.addListener(_applyLook);
     HomeCountry.current.addListener(_rebuildAll);
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((s) {
       // Al entrar (correo, Google o enlace de confirmación) el login suele
@@ -99,6 +105,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
         unawaited(Reminders.sync(Supabase.instance.client));
       }
     });
+    AppColors.warm = ThemePreference.look.value == AppLook.calida;
     _syncBrightness();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => listenSharedText(_importShared),
@@ -117,6 +124,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     ThemePreference.mode.removeListener(_applyTheme);
+    ThemePreference.look.removeListener(_applyLook);
     HomeCountry.current.removeListener(_rebuildAll);
     _authSub.cancel();
     super.dispose();
@@ -136,6 +144,13 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
       // Al salir, los avisos se rehacen con lo que se haya hecho en la app.
       unawaited(Reminders.sync(Supabase.instance.client));
     }
+  }
+
+  void _applyLook() {
+    final warm = ThemePreference.look.value == AppLook.calida;
+    if (warm == AppColors.warm) return;
+    AppColors.warm = warm;
+    _rebuildAll();
   }
 
   void _applyTheme() {
