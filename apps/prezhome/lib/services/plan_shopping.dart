@@ -150,29 +150,51 @@ List<({String name, double? qty, String? unit})> shoppingLines(
       need.unit,
       pieces: mode == null || mode == CountMode.piece,
     );
+    // "Diente de ajo" y "Ajo" en dientes son lo mismo: una sola fila.
+    final name =
+        garlicHeads(need.name, practical.quantity, practical.unit) != null
+        ? 'Diente de ajo'
+        : need.name;
     final unit = practical.unit.trim().toLowerCase();
     // "unidad", "unidades" y "ud" son lo mismo: una sola fila.
-    final unitKey = const {'unidad', 'unidades'}.contains(unit) ? 'ud' : unit;
-    final key = '${CategoryIcons.normalize(need.name)}|$unitKey';
+    final unitKey = const {'unidad', 'unidades'}.contains(unit)
+        ? 'ud'
+        : unit.startsWith('diente')
+        ? 'diente'
+        : unit;
+    final key = '${CategoryIcons.normalize(name)}|$unitKey';
     final prev = merged[key];
     if (prev == null) {
-      merged[key] = (
-        name: need.name,
-        qty: practical.quantity,
-        unit: practical.unit,
-      );
+      merged[key] = (name: name, qty: practical.quantity, unit: practical.unit);
     } else {
       // Un bote de especia (1 ud) no se suma: con uno basta.
       final q =
-          isCondiment(need.name) ||
-              prev.qty == null ||
-              practical.quantity == null
+          isCondiment(name) || prev.qty == null || practical.quantity == null
           ? prev.qty
           : prev.qty! + practical.quantity!;
       merged[key] = (name: prev.name, qty: q, unit: prev.unit);
     }
   }
-  return merged.values.toList();
+  // El ajo se compra por cabezas (unos 10 dientes), no "14 dientes".
+  return [
+    for (final l in merged.values)
+      if (garlicHeads(l.name, l.qty, l.unit) case final heads?)
+        (name: 'Cabeza de ajo', qty: heads, unit: 'ud')
+      else
+        l,
+  ];
+}
+
+/// Cabezas de ajo para [quantity] dientes (unos 10 por cabeza), o null si
+/// [name] no son dientes de ajo.
+double? garlicHeads(String name, double? quantity, String? unit) {
+  final n = CategoryIcons.normalize(name);
+  final u = (unit ?? '').toLowerCase();
+  final cloves = u.contains('diente') || n.startsWith('diente');
+  if (!cloves || !RegExp(r'\bajos?\b').hasMatch(n) || quantity == null) {
+    return null;
+  }
+  return (quantity / 10).ceilToDouble().clamp(1, 99).toDouble();
 }
 
 /// Rellena la lista de la compra con lo que pide el plan de comidas y le

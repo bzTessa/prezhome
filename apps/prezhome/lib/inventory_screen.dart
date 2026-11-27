@@ -222,6 +222,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   bool _photosRechecked = false;
 
+  /// "Para gastar ya" enseña 4; con "Más" salen todos.
+  bool _urgentAll = false;
+
   /// Las fotos de OFF a veces eran otro producto (vinagre por vino): se
   /// comprueban y, si no son ese producto, se cambian o se quitan.
   Future<void> _recheckOldPhotos(List<Map<String, dynamic>> rows) async {
@@ -1201,7 +1204,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          for (final item in urgent.take(4))
+          for (final item in _urgentAll ? urgent : urgent.take(4))
             InkWell(
               onTap: () => _openItemActions(item),
               borderRadius: AppRadius.smRadius,
@@ -1256,6 +1259,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+          if (urgent.length > 4)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => setState(() => _urgentAll = !_urgentAll),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                child: Text(
+                  _urgentAll
+                      ? context.l.recLess
+                      : '${context.l.recMore} (${urgent.length - 4})',
                 ),
               ),
             ),

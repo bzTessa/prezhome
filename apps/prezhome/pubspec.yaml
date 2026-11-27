@@ -58,8 +58,8 @@ dependencies:
   # Ajustes y caché offline en la versión web (en móvil van a ficheros).
   shared_preferences: ^2.5.3
   # Escáner de código de barras (cámara) para añadir productos al inventario
-  # escaneando el EAN/UPC. Línea 5.x estable, resoluble en este toolchain.
-  mobile_scanner: ^5.2.3
+  # escaneando el EAN/UPC. 7.x: ML Kit alineado a 16 KB (Play lo exige).
+  mobile_scanner: ^7.5.0
   # Componentes de interfaz compartidos del monorepo (barra flotante...).
   prez_ui:
     path: ../../packages/prez_ui

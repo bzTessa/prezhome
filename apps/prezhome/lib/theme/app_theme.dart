@@ -209,6 +209,12 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
+      // Pulsación cálida y con esquinas, no el gris cuadrado de Material.
+      splashColor: AppColors.wood.withValues(alpha: 0.22),
+      highlightColor: AppColors.wood.withValues(alpha: 0.14),
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
       cardTheme: CardThemeData(
         color: AppColors.card,
         elevation: 0,

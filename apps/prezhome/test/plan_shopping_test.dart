@@ -95,6 +95,18 @@ void main() {
       expect(pimiento.qty, 2);
     });
 
+    test('los dientes de ajo se compran por cabezas', () {
+      final lines = shoppingLines(const [
+        PlanNeed(name: 'Diente de ajo', quantity: 8, unit: 'dientes'),
+        PlanNeed(name: 'Ajo', quantity: 6, unit: 'diente'),
+        PlanNeed(name: 'Ajo en polvo', quantity: 1, unit: 'cucharadita'),
+      ]);
+      final heads = lines.firstWhere((l) => l.name == 'Cabeza de ajo');
+      expect(heads.qty, 2);
+      expect(heads.unit, 'ud');
+      expect(lines, hasLength(2));
+    });
+
     test('junta duplicados tras pasar a cantidades de súper', () {
       final lines = shoppingLines(const [
         PlanNeed(name: 'Pimienta negra', quantity: 1, unit: 'cucharadita'),

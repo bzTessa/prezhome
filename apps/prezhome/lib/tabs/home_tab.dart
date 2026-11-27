@@ -615,8 +615,16 @@ class HomeTabState extends State<HomeTab> {
       if (user == null) return;
       await PlanDiary.sync(_client);
       // Lo usado en las comidas del plan sale también de la despensa.
-      unawaited(PantryUsage.syncPlan(_client));
-      unawaited(TaperSync.sync(_client));
+      // Al acabar, se recuentan las caducidades: si no, "Tu día" se queda con
+      // la cuenta de antes de descontar (p. ej. 8 caducados cuando ya son 7).
+      unawaited(
+        Future.wait([
+          PantryUsage.syncPlan(_client),
+          TaperSync.sync(_client),
+        ]).then((_) {
+          if (mounted) _loadExpirySummary();
+        }, onError: (_) {}),
+      );
       // Fotos automáticas antiguas que no son del plato: se cambian o se quitan.
       unawaited(RecipePhotoAudit.run(_client));
 
@@ -1720,7 +1728,7 @@ class HomeTabState extends State<HomeTab> {
                     if (sub != null && sub.isNotEmpty)
                       Text(
                         sub,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,

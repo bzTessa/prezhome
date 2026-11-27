@@ -110,8 +110,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
-            errorBuilder: (context, error, child) =>
-                _ScannerError(error: error),
+            errorBuilder: (context, error) => _ScannerError(error: error),
           ),
           if (_loading)
             Container(
