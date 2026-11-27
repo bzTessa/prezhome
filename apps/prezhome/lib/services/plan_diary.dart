@@ -36,7 +36,11 @@ class PlanDiary {
         0,
         prefs.minutesOf(e.mealType) + _doneAfter,
       );
-      return at.isAfter(since) && !at.isAfter(now);
+      if (at.isAfter(now)) return false;
+      // Pasó después de la última vez, o se planificó después (p. ej. a las
+      // 23:00 se hace el plan de hoy y la comida de las 14:00 ya pasó).
+      final made = e.createdAt;
+      return at.isAfter(since) || (made != null && made.isAfter(since));
     }
 
     return [

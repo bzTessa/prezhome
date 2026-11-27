@@ -267,9 +267,16 @@ class PriceMemory {
       final countable = _countableUnits.contains(
         (it.unit ?? '').trim().toLowerCase(),
       );
-      final cost = real != null
+      final approx = ApproxPrice.estimate(it.name, it.quantity, it.unit);
+      var cost = real != null
           ? real * (countable ? (it.quantity ?? 1) : 1)
-          : ApproxPrice.estimate(it.name, it.quantity, it.unit);
+          : approx;
+      // El ticket guarda el precio del paquete (la docena de huevos): "12 ud"
+      // no son 12 paquetes. Si multiplicar sale muy por encima de lo normal,
+      // ese precio ya era el del total.
+      if (real != null && countable && approx != null && cost! > approx * 4) {
+        cost = real;
+      }
       // shortcut: tope fijo por línea contra precios mal aprendidos; afinar si
       // aparecen compras legítimas más caras.
       if (cost == null || cost <= 0 || cost > _maxLineCost) continue;

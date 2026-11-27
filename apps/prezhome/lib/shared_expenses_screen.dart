@@ -356,6 +356,9 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
           ],
           decoration: InputDecoration(
             labelText: context.l.sxAmount,
+            suffixText: NumberFormat.simpleCurrency(
+              locale: Localizations.localeOf(context).toString(),
+            ).currencySymbol,
             errorText: _error,
           ),
         ),
