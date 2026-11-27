@@ -21,6 +21,8 @@ class SegmentedPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // En el estilo cálido la opción elegida va en tinta, como la barra de abajo.
+    final warm = AppColors.warmLight;
     return Container(
       height: 44,
       padding: const EdgeInsets.all(4),
@@ -48,13 +50,17 @@ class SegmentedPill extends StatelessWidget {
                       width: w,
                       height: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppColors.card,
+                        color: warm ? AppColors.ink : AppColors.card,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: AppColors.cardEdge.withValues(alpha: 0.6),
-                          width: 0.5,
-                        ),
-                        boxShadow: AppElevation.level1,
+                        border: warm
+                            ? null
+                            : Border.all(
+                                color: AppColors.cardEdge.withValues(
+                                  alpha: 0.6,
+                                ),
+                                width: 0.5,
+                              ),
+                        boxShadow: warm ? null : AppElevation.level1,
                       ),
                     ),
                   ),
@@ -86,7 +92,7 @@ class SegmentedPill extends StatelessWidget {
                                     ? FontWeight.w800
                                     : FontWeight.w600,
                                 color: i == selected
-                                    ? AppColors.ink
+                                    ? (warm ? AppColors.cream : AppColors.ink)
                                     : AppColors.inkMuted,
                               ),
                             ),

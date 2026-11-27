@@ -7,6 +7,7 @@ import '../recipes_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animations/app_transitions.dart';
 import '../widgets/segmented_pill.dart';
+import '../widgets/warm_tab_header.dart';
 
 /// Claves de sub-pestaña visibles en [ComidasTab] según si está activo el
 /// diario de calorías. Lógica pura reutilizable en UI y tests.
@@ -96,6 +97,7 @@ class ComidasTabState extends State<ComidasTab> {
         bottom: false,
         child: Column(
           children: [
+            WarmTabHeader(title: context.l.tabLabel('comidas')),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
