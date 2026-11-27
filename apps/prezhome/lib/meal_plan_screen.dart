@@ -23,6 +23,7 @@ import 'services/meal_prep_planner.dart';
 import 'services/plan_adjuster.dart';
 import 'services/plan_hints.dart';
 import 'services/plan_prefs.dart';
+import 'services/rows_cache.dart';
 import 'services/taper_sync.dart';
 import 'services/plan_repeats.dart';
 import 'services/plan_prep.dart';
@@ -153,11 +154,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Future<_PlanData> _load() async {
     final user = _client.auth.currentUser;
     if (user == null) throw 'No autenticado';
-    final profile = await _client
-        .from('profiles')
-        .select()
-        .eq('id', user.id)
-        .maybeSingle();
+    // Sin conexión se enseña la última copia guardada de cada consulta.
+    final profile = await RowsCache.fetchOne(
+      'plan_profile:${user.id}',
+      () => _client.from('profiles').select().eq('id', user.id).maybeSingle(),
+    );
     final homeId = profile?['home_id'] as String?;
     if (homeId == null) return _PlanData(homeId: null);
     unawaited(CalendarSync.sync(_client));
@@ -170,10 +171,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
     // Todos los perfiles del hogar, para calcular raciones por comida según
     // quién come en casa cada día. El usuario actual se muestra como "tú".
-    final profilesRes = await _client
-        .from('profiles')
-        .select()
-        .eq('home_id', homeId);
+    final profilesRes = await RowsCache.fetch(
+      'plan_members:$homeId',
+      () => _client.from('profiles').select().eq('home_id', homeId),
+    );
     final members = <HouseholdMember>[];
     // El plan de cocción (meal prep) solo se activa si ALGÚN perfil del hogar
     // cocina en modo 'mealprep'. En modo 'daily' no mostramos nada nuevo.
@@ -208,34 +209,49 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
 
     // Recetas del hogar
-    final recRes = await _client
-        .from('recipes')
-        .select('*, recipe_ingredients(name)')
-        .eq('home_id', homeId)
-        .order('created_at', ascending: false);
+    final recRes = await RowsCache.fetch(
+      'plan_recipes:$homeId',
+      () => _client
+          .from('recipes')
+          .select('*, recipe_ingredients(name)')
+          .eq('home_id', homeId)
+          .order('created_at', ascending: false),
+    );
     final recipes = (recRes as List).map((m) => Recipe.fromMap(m)).toList();
-    final readyRes = await _client
-        .from('ready_meals')
-        .select()
-        .eq('home_id', homeId)
-        .order('created_at', ascending: false);
+    final readyRes = await RowsCache.fetch(
+      'plan_ready:$homeId',
+      () => _client
+          .from('ready_meals')
+          .select()
+          .eq('home_id', homeId)
+          .order('created_at', ascending: false),
+    );
     final readyMeals = [for (final m in readyRes as List) ReadyMeal.fromMap(m)];
 
     // Plan de esta semana, con las comidas que se repiten ya puestas.
     final start = _weekStart;
     final end = start.add(const Duration(days: 7));
-    await PlanRepeats.fill(
-      _client,
-      homeId,
-      end,
-      servingsFor: (type, d) => servingsCountForMeal(members, type, d.weekday),
+    try {
+      await PlanRepeats.fill(
+        _client,
+        homeId,
+        end,
+        servingsFor: (type, d) =>
+            servingsCountForMeal(members, type, d.weekday),
+      );
+    } catch (_) {
+      // Sin conexión, las repeticiones se ponen la próxima vez.
+    }
+    final startDay = start.toIso8601String().split('T').first;
+    final planRes = await RowsCache.fetch(
+      'plan_week:$homeId:$startDay',
+      () => _client
+          .from('meal_plan_entries')
+          .select()
+          .eq('home_id', homeId)
+          .gte('plan_date', startDay)
+          .lt('plan_date', end.toIso8601String().split('T').first),
     );
-    final planRes = await _client
-        .from('meal_plan_entries')
-        .select()
-        .eq('home_id', homeId)
-        .gte('plan_date', start.toIso8601String().split('T').first)
-        .lt('plan_date', end.toIso8601String().split('T').first);
     final entries = (planRes as List)
         .map((m) => MealPlanEntry.fromMap(m))
         .toList();
@@ -243,28 +259,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     // cocina en esta (planes de varias semanas).
     final later = !isMealPrep
         ? const <MealPlanEntry>[]
-        : [
-            for (final m
-                in await _client
-                        .from('meal_plan_entries')
-                        .select()
-                        .eq('home_id', homeId)
-                        .gte(
-                          'plan_date',
-                          end.toIso8601String().split('T').first,
-                        )
-                        .lt(
-                          'plan_date',
-                          end
-                              .add(const Duration(days: 63))
-                              .toIso8601String()
-                              .split('T')
-                              .first,
-                        )
-                    as List)
-              MealPlanEntry.fromMap(m),
-          ];
-
+        : await _laterEntries(homeId, end);
     return _PlanData(
       homeId: homeId,
       activeMeals: activeMeals.isEmpty ? ['lunch', 'dinner'] : activeMeals,
@@ -282,6 +277,31 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         _ => null,
       },
     );
+  }
+
+  /// Lo planificado para las 9 semanas siguientes (tandas que salen del
+  /// congelador). Sin conexión, la última copia.
+  Future<List<MealPlanEntry>> _laterEntries(String homeId, DateTime end) async {
+    final from = end.toIso8601String().split('T').first;
+    final to = end
+        .add(const Duration(days: 63))
+        .toIso8601String()
+        .split('T')
+        .first;
+    try {
+      final rows = await RowsCache.fetch(
+        'plan_later:$homeId:$from',
+        () => _client
+            .from('meal_plan_entries')
+            .select()
+            .eq('home_id', homeId)
+            .gte('plan_date', from)
+            .lt('plan_date', to),
+      );
+      return [for (final m in rows) MealPlanEntry.fromMap(m)];
+    } catch (_) {
+      return const [];
+    }
   }
 
   /// ¿Para cuánto tiempo hacer el plan? Una semana, dos, un mes o las fechas

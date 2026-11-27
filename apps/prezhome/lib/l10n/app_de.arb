@@ -1400,5 +1400,15 @@
   "warmUseUp": "Bald aufbrauchen",
   "warmTasks": "Offene Aufgaben",
   "warmDoneToday": "{n} heute erledigt",
-  "warmNothingPlanned": "Noch nichts geplant"
+  "warmNothingPlanned": "Noch nichts geplant",
+  "gsTitle": "Suchen",
+  "gsHint": "Rezepte, Produkte, Aufgaben…",
+  "gsTip": "Suche in deiner Liste, deinem Vorrat, deinen Rezepten und Aufgaben.",
+  "gsClear": "Löschen",
+  "gsSection": "{kind, select, shopping{Auf der Liste} pantry{Zu Hause} recipe{Rezepte} other{Aufgaben}}",
+  "gsNothing": "Nichts gefunden für „{q}“.",
+  "gsAddToList": "„{q}“ zur Liste hinzufügen",
+  "gsAdded": "„{q}“ ist auf der Liste",
+  "gsAddFailed": "Konnte nicht hinzugefügt werden. Versuch es noch einmal.",
+  "gsBought": "im Wagen"
 }

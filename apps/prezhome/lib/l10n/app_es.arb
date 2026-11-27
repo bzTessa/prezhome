@@ -3508,5 +3508,43 @@
       }
     }
   },
-  "warmNothingPlanned": "Sin plan todavía"
+  "warmNothingPlanned": "Sin plan todavía",
+  "gsTitle": "Buscar",
+  "gsHint": "Recetas, productos, tareas…",
+  "gsTip": "Busca en tu lista, en lo que tienes en casa, en tus recetas y en las tareas.",
+  "gsClear": "Borrar",
+  "gsSection": "{kind, select, shopping{En la lista} pantry{En casa} recipe{Recetas} other{Tareas}}",
+  "@gsSection": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "gsNothing": "No hay nada con «{q}».",
+  "@gsNothing": {
+    "placeholders": {
+      "q": {
+        "type": "String"
+      }
+    }
+  },
+  "gsAddToList": "Añadir «{q}» a la lista",
+  "@gsAddToList": {
+    "placeholders": {
+      "q": {
+        "type": "String"
+      }
+    }
+  },
+  "gsAdded": "«{q}» está en la lista",
+  "@gsAdded": {
+    "placeholders": {
+      "q": {
+        "type": "String"
+      }
+    }
+  },
+  "gsAddFailed": "No se pudo añadir. Inténtalo otra vez.",
+  "gsBought": "en el carro"
 }

@@ -5544,4 +5544,49 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get warmNothingPlanned => 'Još ništa';
+
+  @override
+  String get gsTitle => 'Pretraga';
+
+  @override
+  String get gsHint => 'Recepti, proizvodi, zadaci…';
+
+  @override
+  String get gsTip =>
+      'Pretraži listu, ono što imaš kod kuće, recepte i zadatke.';
+
+  @override
+  String get gsClear => 'Obriši';
+
+  @override
+  String gsSection(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'shopping': 'Na listi',
+      'pantry': 'Kod kuće',
+      'recipe': 'Recepti',
+      'other': 'Zadaci',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String gsNothing(String q) {
+    return 'Nema ništa za „$q“.';
+  }
+
+  @override
+  String gsAddToList(String q) {
+    return 'Dodaj „$q“ na listu';
+  }
+
+  @override
+  String gsAdded(String q) {
+    return '„$q“ je na listi';
+  }
+
+  @override
+  String get gsAddFailed => 'Nije uspjelo. Pokušaj ponovo.';
+
+  @override
+  String get gsBought => 'u korpi';
 }

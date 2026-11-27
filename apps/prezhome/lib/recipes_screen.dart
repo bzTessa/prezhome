@@ -9,6 +9,8 @@ import 'models/nutrition_profile.dart';
 import 'models/inventory_item.dart';
 import 'models/recipe.dart';
 import 'utils/pantry_ideas.dart';
+import 'services/offline_provider.dart';
+import 'services/rows_cache.dart';
 import 'theme/app_theme.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/miau_character.dart';
@@ -105,10 +107,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 
   Future<_RecipesData> _fetch() async {
-    final recipesRes = await supabase
-        .from('recipes')
-        .select('*, recipe_ingredients(name)')
-        .order('created_at', ascending: false);
+    // Sin conexión, la última copia guardada (la misma que usa el buscador).
+    final recipesRes = await RowsCache.fetch(
+      'recipes:${OfflineProvider.instance.homeId}',
+      () => supabase
+          .from('recipes')
+          .select('*, recipe_ingredients(name)')
+          .order('created_at', ascending: false),
+    );
     final recipes = (recipesRes as List)
         .map((item) => Recipe.fromMap(item))
         .toList();
@@ -117,11 +123,11 @@ class _RecipesScreenState extends State<RecipesScreen> {
     NutritionProfile? profile;
     final user = supabase.auth.currentUser;
     if (user != null) {
-      final p = await supabase
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
+      final p = await RowsCache.fetchOne(
+        'recipes_profile:${user.id}',
+        () =>
+            supabase.from('profiles').select().eq('id', user.id).maybeSingle(),
+      ).catchError((_) => null);
       if (p != null) profile = NutritionProfile.fromMap(p);
     }
     // Despensa del hogar: marca las recetas que se pueden hacer ya.
@@ -131,7 +137,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
         final rows = await supabase
             .from('inventory_items')
             .select()
-            .eq('home_id', recipes.first.homeId);
+            .eq('home_id', recipes.first.homeId)
+            .catchError((_) => OfflineProvider.instance.inventory.readCached());
         pantry = pantryNamesForIdeas(
           (rows as List)
               .map((r) => InventoryItem.fromMap(Map<String, dynamic>.from(r)))
