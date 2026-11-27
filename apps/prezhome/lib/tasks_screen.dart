@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/dashboard_prefs.dart';
 import 'models/task.dart';
 import 'services/calendar_sync.dart';
+import 'services/push.dart';
 import 'services/plan_prefs.dart';
 import 'services/shopping_checkout.dart';
 import 'services/task_scheduler.dart';
@@ -2240,6 +2241,11 @@ class _TaskSheetState extends State<_TaskSheet> {
         // Quitar los turnos también se guarda.
         if (original.rotates && !task.rotates) map['rotates'] = false;
         await client.from('tasks').update(map).eq('id', original.id);
+      }
+      // Si se la pones a otra persona (o cambias a quién le toca), le avisa.
+      final to = task.assignedTo;
+      if (to != null && to != original?.assignedTo) {
+        unawaited(Push.taskAssigned(client, to: to, title: task.title));
       }
       unawaited(CalendarSync.sync(client, force: true));
       if (mounted) Navigator.of(context).pop(true);

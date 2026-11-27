@@ -17,6 +17,7 @@ import 'services/home_country.dart';
 import 'services/home_invites.dart';
 import 'services/home_people.dart';
 import 'services/offline_provider.dart';
+import 'services/push.dart';
 import 'services/reminders.dart';
 import 'nutrition_profile_screen.dart';
 import 'pack_sizes_screen.dart';
@@ -443,6 +444,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     await OfflineProvider.instance.clearForLogout();
     // La sesión ya no vale; cerrarla solo limpia el dispositivo.
     try {
+      await Push.unregister(_client);
       await _client.auth.signOut();
     } catch (_) {}
     if (!mounted) return;
@@ -459,6 +461,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   );
 
   Future<void> _logout() async {
+    await Push.unregister(_client);
     await _client.auth.signOut();
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(

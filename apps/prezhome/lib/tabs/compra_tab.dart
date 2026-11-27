@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../inventory_screen.dart';
 import '../l10n/l10n.dart';
+import '../services/push.dart';
 import '../shopping_list_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animations/app_transitions.dart';
@@ -23,6 +25,28 @@ class CompraTab extends StatefulWidget {
 class CompraTabState extends State<CompraTab> {
   late int _subTab = widget.initialSubTab.clamp(0, 1);
   final Set<int> _opened = {};
+  bool _sending = false;
+
+  /// "Voy al súper": avisa a los demás de casa para que añadan lo que falte.
+  Future<void> _shoppingRun() async {
+    setState(() => _sending = true);
+    final r = await Push.shoppingRun(Supabase.instance.client);
+    if (!mounted) return;
+    setState(() => _sending = false);
+    final l = context.l;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(switch (r) {
+            PushResult.sent => l.pushShopSent,
+            PushResult.nobody => l.pushShopNobody,
+            PushResult.notConfigured => l.pushNotReady,
+            PushResult.failed => l.pushShopFailed,
+          }),
+        ),
+      );
+  }
 
   int get currentSubTab => _subTab;
 
@@ -61,10 +85,25 @@ class CompraTabState extends State<CompraTab> {
                 AppSpacing.lg,
                 AppSpacing.xs,
               ),
-              child: SegmentedPill(
-                labels: [context.l.compraSubList, context.l.compraSubHome],
-                selected: _subTab,
-                onChanged: showSubTab,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SegmentedPill(
+                      labels: [
+                        context.l.compraSubList,
+                        context.l.compraSubHome,
+                      ],
+                      selected: _subTab,
+                      onChanged: showSubTab,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  IconButton.filledTonal(
+                    tooltip: context.l.pushShopAction,
+                    onPressed: _sending ? null : _shoppingRun,
+                    icon: const Icon(Icons.campaign_outlined),
+                  ),
+                ],
               ),
             ),
             Expanded(

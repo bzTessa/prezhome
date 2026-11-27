@@ -5764,4 +5764,39 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get sxWhoPaid => 'Ko je platio?';
+
+  @override
+  String get pushChannel => 'Obavijesti doma';
+
+  @override
+  String get pushShoppingTitle => 'Ide u kupovinu';
+
+  @override
+  String pushShoppingBody(String who) {
+    return '$who ide u market. Fali li nešto? Dodaj na listu.';
+  }
+
+  @override
+  String get pushTaskTitle => 'Imaš novi zadatak';
+
+  @override
+  String pushTaskBody(String who, String task) {
+    return '$who ti je dodijelio/la: $task';
+  }
+
+  @override
+  String get pushShopAction => 'Javi ukućanima da ideš u kupovinu';
+
+  @override
+  String get pushShopSent => 'Poslano. Šta dodaju pojavit će se na listi.';
+
+  @override
+  String get pushShopNobody =>
+      'Niko drugi u kući još nema uključene obavijesti.';
+
+  @override
+  String get pushNotReady => 'Obavijesti još nisu uključene.';
+
+  @override
+  String get pushShopFailed => 'Nije uspjelo. Pokušaj ponovo.';
 }

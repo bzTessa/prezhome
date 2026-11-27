@@ -5861,4 +5861,38 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sxWhoPaid => 'Quem pagou?';
+
+  @override
+  String get pushChannel => 'Avisos da casa';
+
+  @override
+  String get pushShoppingTitle => 'Vai às compras';
+
+  @override
+  String pushShoppingBody(String who) {
+    return '$who vai ao supermercado. Falta alguma coisa? Adiciona à lista.';
+  }
+
+  @override
+  String get pushTaskTitle => 'Tens uma tarefa nova';
+
+  @override
+  String pushTaskBody(String who, String task) {
+    return '$who deu-te: $task';
+  }
+
+  @override
+  String get pushShopAction => 'Avisar a casa de que vais às compras';
+
+  @override
+  String get pushShopSent => 'Avisado. O que adicionarem aparece na lista.';
+
+  @override
+  String get pushShopNobody => 'Mais ninguém em casa tem os avisos ativados.';
+
+  @override
+  String get pushNotReady => 'Os avisos ainda não estão ativados.';
+
+  @override
+  String get pushShopFailed => 'Não foi possível avisar. Tenta outra vez.';
 }

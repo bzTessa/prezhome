@@ -3713,5 +3713,32 @@
   "sxConcept": "Concepto",
   "sxConceptHint": "Compra, luz, internet…",
   "sxDefaultConcept": "Gasto de casa",
-  "sxWhoPaid": "¿Quién pagó?"
+  "sxWhoPaid": "¿Quién pagó?",
+  "pushChannel": "Avisos de casa",
+  "pushShoppingTitle": "Va a hacer la compra",
+  "pushShoppingBody": "{who} va al súper. ¿Falta algo? Añádelo a la lista.",
+  "@pushShoppingBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "pushTaskTitle": "Tienes una tarea nueva",
+  "pushTaskBody": "{who} te ha puesto: {task}",
+  "@pushTaskBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "pushShopAction": "Avisar a casa de que vas al súper",
+  "pushShopSent": "Avisado. Lo que añadan saldrá en la lista.",
+  "pushShopNobody": "Nadie más de casa tiene los avisos activados todavía.",
+  "pushNotReady": "Los avisos aún no están activados.",
+  "pushShopFailed": "No se pudo avisar. Inténtalo otra vez."
 }

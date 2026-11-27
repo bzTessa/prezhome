@@ -14,6 +14,7 @@ import 'theme/app_theme.dart';
 import 'theme/theme_preference.dart';
 import 'widgets/drawn_icons.dart';
 import 'services/plan_prefs.dart';
+import 'services/push.dart';
 import 'services/reminders.dart';
 import 'services/share_inbox.dart';
 import 'add_recipe_screen.dart';
@@ -103,6 +104,7 @@ class _PrezHomeAppState extends State<PrezHomeApp> with WidgetsBindingObserver {
           s.event == AuthChangeEvent.signedIn) {
         unawaited(HomeCountry.load(Supabase.instance.client));
         unawaited(Reminders.sync(Supabase.instance.client));
+        unawaited(Push.register(Supabase.instance.client));
       }
     });
     AppColors.warm = ThemePreference.look.value == AppLook.calida;

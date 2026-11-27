@@ -112,6 +112,38 @@ class Reminders {
     iOS: DarwinNotificationDetails(threadIdentifier: r.kind),
   );
 
+  /// Aviso inmediato (p. ej. un push de alguien de casa con la app abierta,
+  /// que Android no pinta solo). [open] es lo que recibe [opened] al tocarlo.
+  static Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+    required String open,
+  }) async {
+    try {
+      await _init();
+      await _plugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            'household',
+            appL10n.pushChannel,
+            color: _brand,
+            importance: Importance.high,
+            priority: Priority.high,
+            styleInformation: BigTextStyleInformation(body),
+          ),
+          iOS: const DarwinNotificationDetails(threadIdentifier: 'household'),
+        ),
+        payload: open,
+      );
+    } catch (e) {
+      debugPrint('reminders.showNow: $e');
+    }
+  }
+
   static Future<void>? _running;
 
   /// Vuelve a programar los avisos. No lanza.

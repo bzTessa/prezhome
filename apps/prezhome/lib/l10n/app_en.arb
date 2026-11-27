@@ -1458,5 +1458,15 @@
   "sxConcept": "Description",
   "sxConceptHint": "Groceries, power, internet…",
   "sxDefaultConcept": "Home expense",
-  "sxWhoPaid": "Who paid?"
+  "sxWhoPaid": "Who paid?",
+  "pushChannel": "Household alerts",
+  "pushShoppingTitle": "Going shopping",
+  "pushShoppingBody": "{who} is going to the shop. Need anything? Add it to the list.",
+  "pushTaskTitle": "You have a new task",
+  "pushTaskBody": "{who} gave you: {task}",
+  "pushShopAction": "Tell the household you're going shopping",
+  "pushShopSent": "Sent. Whatever they add will show up on the list.",
+  "pushShopNobody": "Nobody else at home has alerts turned on yet.",
+  "pushNotReady": "Alerts aren't turned on yet.",
+  "pushShopFailed": "Couldn't send it. Try again."
 }

@@ -1458,5 +1458,15 @@
   "sxConcept": "Libellé",
   "sxConceptHint": "Courses, électricité, internet…",
   "sxDefaultConcept": "Dépense de la maison",
-  "sxWhoPaid": "Qui a payé ?"
+  "sxWhoPaid": "Qui a payé ?",
+  "pushChannel": "Alertes de la maison",
+  "pushShoppingTitle": "Part faire les courses",
+  "pushShoppingBody": "{who} va au supermarché. Il manque quelque chose ? Ajoute-le à la liste.",
+  "pushTaskTitle": "Tu as une nouvelle tâche",
+  "pushTaskBody": "{who} t'a confié : {task}",
+  "pushShopAction": "Prévenir la maison que tu vas faire les courses",
+  "pushShopSent": "C'est envoyé. Ce qu'ils ajoutent apparaîtra dans la liste.",
+  "pushShopNobody": "Personne d'autre à la maison n'a encore activé les alertes.",
+  "pushNotReady": "Les alertes ne sont pas encore activées.",
+  "pushShopFailed": "Impossible de prévenir. Réessaie."
 }

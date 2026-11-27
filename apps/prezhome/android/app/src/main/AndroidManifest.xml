@@ -11,6 +11,16 @@
         android:label="PrezHome"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Avisos de la gente de casa (Firebase): icono, color y canal. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/push_brand" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="household" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

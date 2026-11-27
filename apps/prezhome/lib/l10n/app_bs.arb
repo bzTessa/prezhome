@@ -1458,5 +1458,15 @@
   "sxConcept": "Opis",
   "sxConceptHint": "Namirnice, struja, internet…",
   "sxDefaultConcept": "Trošak za kuću",
-  "sxWhoPaid": "Ko je platio?"
+  "sxWhoPaid": "Ko je platio?",
+  "pushChannel": "Obavijesti doma",
+  "pushShoppingTitle": "Ide u kupovinu",
+  "pushShoppingBody": "{who} ide u market. Fali li nešto? Dodaj na listu.",
+  "pushTaskTitle": "Imaš novi zadatak",
+  "pushTaskBody": "{who} ti je dodijelio/la: {task}",
+  "pushShopAction": "Javi ukućanima da ideš u kupovinu",
+  "pushShopSent": "Poslano. Šta dodaju pojavit će se na listi.",
+  "pushShopNobody": "Niko drugi u kući još nema uključene obavijesti.",
+  "pushNotReady": "Obavijesti još nisu uključene.",
+  "pushShopFailed": "Nije uspjelo. Pokušaj ponovo."
 }
