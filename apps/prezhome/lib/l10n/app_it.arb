@@ -1389,5 +1389,16 @@
   "pcDiaryTitle": "Segna nel mio diario",
   "pcDiarySub": "1 porzione · {kcal} kcal, nel pasto di adesso",
   "pcDiaryOnly": "Segna nel diario",
-  "pcSummaryDiary": "Segnato nel tuo diario"
+  "pcSummaryDiary": "Segnato nel tuo diario",
+  "hhLookTitle": "Stile",
+  "hhLookName": "{look, select, calida{Cucina calda} other{Classico}}",
+  "warmMinutes": "{n} min",
+  "warmServings": "{n, plural, =1{1 porzione} other{{n} porzioni}}",
+  "warmCookNow": "Cucina ora",
+  "warmSeePlan": "Vedi il piano",
+  "warmToBuy": "Da comprare",
+  "warmUseUp": "Da consumare",
+  "warmTasks": "Compiti in sospeso",
+  "warmDoneToday": "{n, plural, =1{1 fatto oggi} other{{n} fatti oggi}}",
+  "warmNothingPlanned": "Ancora niente"
 }

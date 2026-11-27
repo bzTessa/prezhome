@@ -14,6 +14,7 @@ import '../inbox_screen.dart';
 import '../main_shell.dart';
 import '../meal_plan_screen.dart';
 import '../profile_wizard_screen.dart';
+import '../recipe_detail_screen.dart';
 import '../scan_ticket_screen.dart';
 import '../shopping_list_screen.dart';
 import '../stats_screen.dart';
@@ -41,6 +42,7 @@ import '../widgets/skeleton.dart';
 import '../widgets/miau_character.dart';
 import '../widgets/plan/plan_parts.dart';
 import '../widgets/recipe_image.dart';
+import '../widgets/home/warm_today.dart';
 import '../widgets/animations/animated_counter.dart';
 import '../widgets/animations/celebrate.dart';
 import '../widgets/animations/press_scale.dart';
@@ -778,7 +780,18 @@ class HomeTabState extends State<HomeTab> {
           (c) => c == DashboardCard.calories || c == DashboardCard.spending,
         )
         .toList();
-    final allLines = _loaded ? _dayLines() : const <DayLine>[];
+    // Cocina cálida: compra y caducidades van en sus fichas, no en Tu día.
+    final warm = AppColors.warm;
+    final allLines = !_loaded
+        ? const <DayLine>[]
+        : [
+            for (final l in _dayLines())
+              if (!warm || !_tileKinds.contains(l.kind)) l,
+          ];
+    final warmMeal =
+        warm && _loaded && _prefs.activeCards.contains(DashboardCard.meals)
+        ? _nextMeal()
+        : null;
     final next = _nextLine(allLines);
     final restLines = [
       for (final l in allLines)
@@ -805,6 +818,14 @@ class HomeTabState extends State<HomeTab> {
               if (!_loaded)
                 const HomeSkeleton()
               else ...[
+                if (warmMeal != null) ...[
+                  StaggeredEntrance(index: 1, child: _warmMealHero(warmMeal)),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                if (warm) ...[
+                  StaggeredEntrance(index: 1, child: _warmTiles()),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
                 if (next != null) ...[
                   StaggeredEntrance(index: 1, child: _nextUpCard(next)),
                   const SizedBox(height: AppSpacing.lg),
@@ -841,7 +862,7 @@ class HomeTabState extends State<HomeTab> {
                 // Con plan, las comidas van en Tu día; sin plan, la tarjeta
                 // para planificar.
                 if (_prefs.activeCards.contains(DashboardCard.meals)) ...[
-                  if (_todayItems.isEmpty) ...[
+                  if (_todayItems.isEmpty && warmMeal == null) ...[
                     StaggeredEntrance(index: 1, child: _todayMealHero()),
                     const SizedBox(height: AppSpacing.lg),
                   ],
@@ -877,6 +898,84 @@ class HomeTabState extends State<HomeTab> {
           ),
         ),
       ),
+    );
+  }
+
+  static const _tileKinds = {
+    DayLineKind.shopping,
+    DayLineKind.expiring,
+    DayLineKind.expired,
+  };
+
+  Future<void> _openRecipe(Recipe r) async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipe: r)));
+    if (mounted) _loadDashboard();
+  }
+
+  /// Cocina cálida: la comida que toca, en grande y en terracota.
+  Widget _warmMealHero(_PlanItem m) {
+    final meal = context.l.mealType(m.mealType);
+    final r = m.recipe;
+    final mins = r == null
+        ? 0
+        : (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0);
+    return WarmMealHero(
+      tag: [
+        _showingTomorrow
+            ? context.l.homeTomorrowTag(meal)
+            : context.l.homeTodayTag(meal),
+        PlanPrefs.current.value.timeOf(m.mealType),
+      ].join(' · ').toUpperCase(),
+      title: m.title,
+      subtitle: [
+        if (mins > 0) context.l.warmMinutes(mins),
+        if (r != null) context.l.warmServings(r.servings),
+      ].join(' · '),
+      recipe: r,
+      mealType: m.mealType,
+      actionLabel: r != null ? context.l.warmCookNow : context.l.warmSeePlan,
+      onOpen: r != null ? () => _openRecipe(r) : _openMealPlan,
+    );
+  }
+
+  /// Cocina cálida: compra, lo que caduca, tareas y mañana, de un vistazo.
+  Widget _warmTiles() {
+    final tomorrow = _tomorrowItems.where((i) => !i.skipped).firstOrNull;
+    return WarmTiles(
+      tiles: [
+        WarmTileData(
+          label: context.l.warmToBuy,
+          value: '$_pendingShopping',
+          tone: WarmTileTone.plain,
+          onTap: widget.onNavigateToShopping,
+        ),
+        WarmTileData(
+          label: context.l.warmUseUp,
+          value: '${_expiringNames.length + _expired}',
+          sub: _expiringNames.take(3).join(', '),
+          tone: WarmTileTone.terracotta,
+          onTap: widget.onNavigateToDespensa,
+        ),
+        if (_prefs.isModuleEnabled(HomeModule.tasks))
+          WarmTileData(
+            label: context.l.warmTasks,
+            value: '${_pendingTasks.length}',
+            sub: _doneTodayTasks.isEmpty
+                ? null
+                : context.l.warmDoneToday(_doneTodayTasks.length),
+            tone: WarmTileTone.sage,
+            onTap: widget.onNavigateToTasks,
+          ),
+        WarmTileData(
+          label: context.l.homeTomorrow,
+          value: tomorrow?.title ?? context.l.warmNothingPlanned,
+          number: false,
+          tone: WarmTileTone.plain,
+          onTap: _openMealPlan,
+        ),
+      ],
     );
   }
 

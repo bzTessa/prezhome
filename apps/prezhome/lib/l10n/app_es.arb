@@ -3029,32 +3029,56 @@
   "shopCompareEquiv": "equiv. {target} · envase {pack}",
   "@shopCompareEquiv": {
     "placeholders": {
-      "target": { "type": "String" },
-      "pack": { "type": "String" }
+      "target": {
+        "type": "String"
+      },
+      "pack": {
+        "type": "String"
+      }
     }
   },
   "shopCompareSplitSave": "Ahorras ≈ {amount}",
   "@shopCompareSplitSave": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "shopCompareSplitSame": "Mismo precio repartiendo o en 1 súper",
   "shopCompareSplitCombined": "Total entre los 2: ≈ {total}",
   "@shopCompareSplitCombined": {
-    "placeholders": { "total": { "type": "String" } }
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
   },
   "shopCompareSplitOnlyHere": "Solo aquí",
   "shopCompareSplitMissing": "Se quedan en esta lista: {names}",
   "@shopCompareSplitMissing": {
-    "placeholders": { "names": { "type": "String" } }
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
   },
   "shopCompareSplitBtn": "Separar en 2 listas",
   "shopCompareSplitDone": "Lista separada: {storeA} ({countA}) y {storeB} ({countB})",
   "@shopCompareSplitDone": {
     "placeholders": {
-      "storeA": { "type": "String" },
-      "countA": { "type": "int" },
-      "storeB": { "type": "String" },
-      "countB": { "type": "int" }
+      "storeA": {
+        "type": "String"
+      },
+      "countA": {
+        "type": "int"
+      },
+      "storeB": {
+        "type": "String"
+      },
+      "countB": {
+        "type": "int"
+      }
     }
   },
   "tskCatchUp": "Ponerme al día",
@@ -3445,5 +3469,44 @@
         "type": "int"
       }
     }
-  }
+  },
+  "hhLookTitle": "Estilo",
+  "hhLookName": "{look, select, calida{Cocina cálida} other{Clásico}}",
+  "@hhLookName": {
+    "placeholders": {
+      "look": {
+        "type": "String"
+      }
+    }
+  },
+  "warmMinutes": "{n} min",
+  "@warmMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "warmServings": "{n, plural, =1{1 ración} other{{n} raciones}}",
+  "@warmServings": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "warmCookNow": "Cocinar ahora",
+  "warmSeePlan": "Ver el plan",
+  "warmToBuy": "Por comprar",
+  "warmUseUp": "Gástalo ya",
+  "warmTasks": "Tareas pendientes",
+  "warmDoneToday": "{n, plural, =1{1 hecha hoy} other{{n} hechas hoy}}",
+  "@warmDoneToday": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "warmNothingPlanned": "Sin plan todavía"
 }

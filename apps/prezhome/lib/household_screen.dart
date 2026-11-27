@@ -774,6 +774,23 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               ),
               const SizedBox(height: 16),
               Text(
+                context.l.hhLookTitle,
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              ValueListenableBuilder(
+                valueListenable: ThemePreference.look,
+                builder: (context, look, _) => SegmentedPill(
+                  labels: [
+                    for (final l in AppLook.values)
+                      context.l.hhLookName(l.name),
+                  ],
+                  selected: AppLook.values.indexOf(look),
+                  onChanged: (i) => ThemePreference.setLook(AppLook.values[i]),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
                 context.l.hhPhoneAlerts,
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),

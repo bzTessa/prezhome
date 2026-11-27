@@ -1389,5 +1389,16 @@
   "pcDiaryTitle": "Log it in my diary",
   "pcDiarySub": "1 serving · {kcal} kcal, in the current meal",
   "pcDiaryOnly": "Log in my diary",
-  "pcSummaryDiary": "Logged in your diary"
+  "pcSummaryDiary": "Logged in your diary",
+  "hhLookTitle": "Style",
+  "hhLookName": "{look, select, calida{Warm kitchen} other{Classic}}",
+  "warmMinutes": "{n} min",
+  "warmServings": "{n, plural, =1{1 serving} other{{n} servings}}",
+  "warmCookNow": "Cook now",
+  "warmSeePlan": "See the plan",
+  "warmToBuy": "To buy",
+  "warmUseUp": "Use it up",
+  "warmTasks": "Pending tasks",
+  "warmDoneToday": "{n} done today",
+  "warmNothingPlanned": "Nothing planned yet"
 }

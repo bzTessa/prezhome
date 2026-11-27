@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 import 'animations/press_scale.dart';
@@ -66,7 +65,7 @@ class TactileButton extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     // GoogleFonts para que cargue el peso 800 de verdad.
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.sans(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: fg,

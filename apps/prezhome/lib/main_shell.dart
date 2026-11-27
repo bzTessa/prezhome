@@ -579,6 +579,7 @@ class MainShellState extends State<MainShell> {
         ),
       );
     }
+    final darkBar = AppColors.warm && !AppColors.dark;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: Scaffold(
@@ -598,14 +599,23 @@ class MainShellState extends State<MainShell> {
               tooltip: context.l.captureTitle,
               onPressed: _openGlobalCapture,
             ),
-            backgroundColor: AppColors.card,
-            border: Border.all(color: AppColors.cardEdge, width: 1),
-            indicatorColor: AppColors.terracottaBg,
-            selectedColor: AppColors.terracottaText,
-            unselectedColor: AppColors.inkMuted,
-            actionColor: AppColors.terracotta,
-            actionForegroundColor: AppColors.onTerracotta,
-            shadow: AppElevation.level2,
+            // Cocina cálida: barra oscura de tinta y "+" dorado.
+            backgroundColor: darkBar ? AppColors.ink : AppColors.card,
+            border: darkBar
+                ? null
+                : Border.all(color: AppColors.cardEdge, width: 1),
+            indicatorColor: darkBar
+                ? AppColors.cream.withValues(alpha: 0.14)
+                : AppColors.terracottaBg,
+            selectedColor: darkBar ? AppColors.cream : AppColors.terracottaText,
+            unselectedColor: darkBar
+                ? const Color(0xFFB9AC9C)
+                : AppColors.inkMuted,
+            actionColor: darkBar ? AppColors.gold : AppColors.terracotta,
+            actionForegroundColor: darkBar
+                ? AppColors.onBrand
+                : AppColors.onTerracotta,
+            shadow: darkBar ? AppElevation.level1 : AppElevation.level2,
             duration: AppMotion.slow,
             curve: AppMotion.springCurve(AppMotion.fluidDefault),
           ),

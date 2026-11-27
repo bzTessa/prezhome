@@ -12,11 +12,17 @@ enum AppThemeMode {
   final String label;
 }
 
+/// Estilo visual de la app. "Cocina cálida" (fondo crema tostado, títulos
+/// DM Serif y barra oscura) es el nuevo; "Clásico" es el de antes.
+enum AppLook { calida, clasica }
+
 /// Guarda la apariencia en el dispositivo y avisa al cambiarla.
 class ThemePreference {
   static final mode = ValueNotifier<AppThemeMode>(AppThemeMode.claro);
   static final _store = FileLocalStore(folderName: 'settings');
   static const _key = 'theme_mode';
+  static final look = ValueNotifier<AppLook>(AppLook.calida);
+  static const _lookKey = 'app_look';
 
   static Future<void> load() async {
     try {
@@ -25,6 +31,20 @@ class ThemePreference {
         (m) => m.name == v,
         orElse: () => AppThemeMode.claro,
       );
+    } catch (_) {}
+    try {
+      final v = await _store.read(_lookKey);
+      look.value = AppLook.values.firstWhere(
+        (m) => m.name == v,
+        orElse: () => AppLook.calida,
+      );
+    } catch (_) {}
+  }
+
+  static Future<void> setLook(AppLook l) async {
+    look.value = l;
+    try {
+      await _store.write(_lookKey, l.name);
     } catch (_) {}
   }
 

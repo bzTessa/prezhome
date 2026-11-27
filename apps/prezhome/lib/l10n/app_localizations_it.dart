@@ -5557,4 +5557,61 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get pcSummaryDiary => 'Segnato nel tuo diario';
+
+  @override
+  String get hhLookTitle => 'Stile';
+
+  @override
+  String hhLookName(String look) {
+    String _temp0 = intl.Intl.selectLogic(look, {
+      'calida': 'Cucina calda',
+      'other': 'Classico',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String warmMinutes(int n) {
+    return '$n min';
+  }
+
+  @override
+  String warmServings(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n porzioni',
+      one: '1 porzione',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warmCookNow => 'Cucina ora';
+
+  @override
+  String get warmSeePlan => 'Vedi il piano';
+
+  @override
+  String get warmToBuy => 'Da comprare';
+
+  @override
+  String get warmUseUp => 'Da consumare';
+
+  @override
+  String get warmTasks => 'Compiti in sospeso';
+
+  @override
+  String warmDoneToday(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n fatti oggi',
+      one: '1 fatto oggi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warmNothingPlanned => 'Ancora niente';
 }

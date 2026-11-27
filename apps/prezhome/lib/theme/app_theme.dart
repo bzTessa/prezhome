@@ -7,6 +7,7 @@ import '../widgets/animations/app_transitions.dart';
 import 'app_elevation.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
+import 'app_text_styles.dart';
 
 // Reexportamos los tokens del sistema de diseño para que un único import de
 // `app_theme.dart` dé acceso a toda la paleta y escalas (sin dependencias
@@ -21,8 +22,15 @@ class AppColors {
   /// Modo oscuro activo. Lo fija la raíz de la app según el brillo del sistema.
   static bool dark = false;
 
+  /// Estilo "Cocina cálida" (ver [AppLook]). Solo cambia la paleta clara y
+  /// las letras; el modo oscuro es el mismo en los dos estilos.
+  static bool warm = true;
+  static bool get _w => warm && !dark;
+
   static Color get cream => dark
       ? const Color(0xFF181512)
+      : _w
+      ? const Color(0xFFF4ECDF) // crema tostado
       : const Color(0xFFFAF7F2); // porcelana cálida limpia
   static Color get wood => dark
       ? const Color(0xFF7A6238)
@@ -34,9 +42,14 @@ class AppColors {
         ); // acento oscuro para texto/números (≥4,5:1 sobre crema)
   static Color get ink => dark
       ? const Color(0xFFF2EBD9)
+      : _w
+      ? const Color(0xFF241C15)
       : const Color(0xFF1E1E1E); // gris muy oscuro (texto)
-  static Color get card =>
-      dark ? const Color(0xFF24201C) : const Color(0xFFFFFFFF);
+  static Color get card => dark
+      ? const Color(0xFF24201C)
+      : _w
+      ? const Color(0xFFFFFCF6)
+      : const Color(0xFFFFFFFF);
   static Color get softShadow =>
       dark ? const Color(0x40000000) : const Color(0x14000000);
 
@@ -45,17 +58,26 @@ class AppColors {
   /// Reemplaza los `Colors.grey[500/600/700]` sueltos repartidos por la app.
   /// Derivado del tono `ink` pero más claro para dar jerarquía sin perder
   /// la calidez de la paleta.
-  static Color get inkMuted =>
-      dark ? const Color(0xFFA89F8E) : const Color(0xFF6E6558);
+  static Color get inkMuted => dark
+      ? const Color(0xFFA89F8E)
+      : _w
+      ? const Color(0xFF6B5C4C)
+      : const Color(0xFF6E6558);
 
   /// Línea suave crema para separadores, asas de hojas y bordes discretos.
-  static Color get line =>
-      dark ? const Color(0xFF3A342B) : const Color(0xFFEFEAE0);
+  static Color get line => dark
+      ? const Color(0xFF3A342B)
+      : _w
+      ? const Color(0xFFE6DACA)
+      : const Color(0xFFEFEAE0);
 
   /// Sombra aún más suave que `softShadow`, para superficies en reposo que
   /// necesitan apenas una pizca de profundidad (nivel 1 de [AppElevation]).
-  static Color get faintShadow =>
-      dark ? const Color(0x26000000) : const Color(0x0D000000);
+  static Color get faintShadow => dark
+      ? const Color(0x26000000)
+      : _w
+      ? const Color(0x00000000) // tarjetas planas de papel
+      : const Color(0x0D000000);
 
   /// Sombra algo más marcada para elementos elevados / interactivos
   /// (nivel 2 de [AppElevation]).
@@ -68,27 +90,42 @@ class AppColors {
   // fondo + texto/icono para chips tipo "pastel".
 
   /// Verde salvia suave: tiempo de preparación (reloj).
-  static Color get sageBg =>
-      dark ? const Color(0xFF2A3326) : const Color(0xFFE8F3E9);
+  static Color get sageBg => dark
+      ? const Color(0xFF2A3326)
+      : _w
+      ? const Color(0xFFE3EEDF)
+      : const Color(0xFFE8F3E9);
   static Color get sage =>
       dark ? const Color(0xFF7E9C6E) : const Color(0xFF4E7A51);
 
   /// Terracota suave: calorías / energía (destacado cálido).
-  static Color get terracottaBg =>
-      dark ? const Color(0xFF3A2A22) : const Color(0xFFFCECE6);
-  static Color get terracotta =>
-      dark ? const Color(0xFFE56B43) : const Color(0xFFD14E28);
+  static Color get terracottaBg => dark
+      ? const Color(0xFF3A2A22)
+      : _w
+      ? const Color(0xFFFBE3D6)
+      : const Color(0xFFFCECE6);
+  static Color get terracotta => dark
+      ? const Color(0xFFE56B43)
+      : _w
+      ? const Color(0xFFB8431F)
+      : const Color(0xFFD14E28);
 
   /// Terracota para texto pequeño: el de marca no llega a 4,5:1 sobre crema.
-  static Color get terracottaText =>
-      dark ? const Color(0xFFE56B43) : const Color(0xFFB53E1B);
+  static Color get terracottaText => dark
+      ? const Color(0xFFE56B43)
+      : _w
+      ? const Color(0xFFA23C1A)
+      : const Color(0xFFB53E1B);
 
   /// Terracota al pulsar.
   static Color get terracottaPressed => const Color(0xFF9E3B1C);
 
   /// Melocotón suave: tipo de comida principal.
-  static Color get peachBg =>
-      dark ? const Color(0xFF3A3020) : const Color(0xFFF6E6CC);
+  static Color get peachBg => dark
+      ? const Color(0xFF3A3020)
+      : _w
+      ? const Color(0xFFF7E3C4)
+      : const Color(0xFFF6E6CC);
   static Color get peach =>
       dark ? const Color(0xFFD9AE73) : const Color(0xFF9B6B2E);
 
@@ -113,13 +150,19 @@ class AppColors {
   static Color get paper => card;
 
   /// Hueco crema para iconos dentro de una tarjeta táctil.
-  static Color get iconTile =>
-      dark ? const Color(0xFF302A24) : const Color(0xFFF2ECE2);
+  static Color get iconTile => dark
+      ? const Color(0xFF302A24)
+      : _w
+      ? const Color(0xFFF1E7D8)
+      : const Color(0xFFF2ECE2);
 
   /// Borde de tarjeta: línea cálida fina en claro para recortarla sobre el
   /// fondo crema, y línea sutil en oscuro.
-  static Color get cardEdge =>
-      dark ? const Color(0xFF363029) : const Color(0xFFEBE4D8);
+  static Color get cardEdge => dark
+      ? const Color(0xFF363029)
+      : _w
+      ? const Color(0xFFEDE3D3)
+      : const Color(0xFFEBE4D8);
 
   /// Sombra cálida y difusa de las tarjetas.
   static Color get cardShadow =>
@@ -194,7 +237,9 @@ class AppTheme {
 
     return base.copyWith(
       textTheme: _withSerifHeadings(
-        GoogleFonts.plusJakartaSansTextTheme(base.textTheme),
+        AppColors.warm
+            ? GoogleFonts.dmSansTextTheme(base.textTheme)
+            : GoogleFonts.plusJakartaSansTextTheme(base.textTheme),
       ).apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.cream,
@@ -202,10 +247,9 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: GoogleFonts.fraunces(
+        titleTextStyle: AppFonts.serif(
           color: AppColors.ink,
           fontSize: 22,
-          fontWeight: FontWeight.w600,
           letterSpacing: -0.3,
         ),
       ),
@@ -228,10 +272,7 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size.fromHeight(52),
           shape: const StadiumBorder(),
-          textStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          textStyle: AppFonts.sans(fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
       // Campos de texto: rellenos en blanco, sin borde y con foco en madera.
@@ -291,10 +332,7 @@ class AppTheme {
           foregroundColor: AppColors.cream,
           minimumSize: const Size(64, 52),
           shape: const StadiumBorder(),
-          textStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          textStyle: AppFonts.sans(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -304,14 +342,14 @@ class AppTheme {
           minimumSize: const Size(64, 48),
           side: BorderSide(color: AppColors.wood, width: 1.5),
           shape: const StadiumBorder(),
-          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+          textStyle: AppFonts.sans(fontWeight: FontWeight.w700),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundBuilder: pressFeedbackBuilder,
           foregroundColor: AppColors.woodDark,
-          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+          textStyle: AppFonts.sans(fontWeight: FontWeight.w700),
         ),
       ),
       iconButtonTheme: const IconButtonThemeData(
@@ -370,7 +408,7 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.ink,
-        contentTextStyle: GoogleFonts.plusJakartaSans(
+        contentTextStyle: AppFonts.sans(
           color: AppColors.cream,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -416,9 +454,8 @@ class AppTheme {
 
   /// Títulos grandes en Fraunces (serifa cálida); el resto, Plus Jakarta.
   static TextTheme _withSerifHeadings(TextTheme t) {
-    TextStyle? serif(TextStyle? s) => s == null
-        ? null
-        : GoogleFonts.fraunces(textStyle: s, fontWeight: FontWeight.w600);
+    TextStyle? serif(TextStyle? s) =>
+        s == null ? null : AppFonts.serif(textStyle: s);
     return t.copyWith(
       displayLarge: serif(t.displayLarge),
       displayMedium: serif(t.displayMedium),

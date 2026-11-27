@@ -1389,5 +1389,16 @@
   "pcDiaryTitle": "Upiši u moj dnevnik",
   "pcDiarySub": "1 porcija · {kcal} kcal, u trenutni obrok",
   "pcDiaryOnly": "Upiši u dnevnik",
-  "pcSummaryDiary": "Upisano u tvoj dnevnik"
+  "pcSummaryDiary": "Upisano u tvoj dnevnik",
+  "hhLookTitle": "Stil",
+  "hhLookName": "{look, select, calida{Topla kuhinja} other{Klasični}}",
+  "warmMinutes": "{n} min",
+  "warmServings": "{n} porcija",
+  "warmCookNow": "Kuhaj sada",
+  "warmSeePlan": "Pogledaj plan",
+  "warmToBuy": "Za kupiti",
+  "warmUseUp": "Potroši odmah",
+  "warmTasks": "Zadaci na čekanju",
+  "warmDoneToday": "{n} urađeno danas",
+  "warmNothingPlanned": "Još ništa"
 }
