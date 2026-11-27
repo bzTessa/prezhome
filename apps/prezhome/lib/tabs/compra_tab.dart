@@ -6,6 +6,7 @@ import '../shopping_list_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animations/app_transitions.dart';
 import '../widgets/segmented_pill.dart';
+import '../widgets/warm_tab_header.dart';
 
 /// Pestaña "Compra": agrupa todo lo que entra y sale de casa en dos sub-vistas
 /// ("Lista" y "En casa"), sin competir con el deslizamiento de filas ni del
@@ -52,6 +53,7 @@ class CompraTabState extends State<CompraTab> {
         bottom: false,
         child: Column(
           children: [
+            WarmTabHeader(title: context.l.tabLabel('compra')),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,

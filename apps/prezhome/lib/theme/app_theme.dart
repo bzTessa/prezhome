@@ -27,6 +27,9 @@ class AppColors {
   static bool warm = true;
   static bool get _w => warm && !dark;
 
+  /// Estilo «Cocina cálida» en modo claro (cabeceras serif, píldoras oscuras).
+  static bool get warmLight => _w;
+
   static Color get cream => dark
       ? const Color(0xFF181512)
       : _w
