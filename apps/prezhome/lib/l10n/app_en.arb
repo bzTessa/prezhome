@@ -1400,5 +1400,15 @@
   "warmUseUp": "Use it up",
   "warmTasks": "Pending tasks",
   "warmDoneToday": "{n} done today",
-  "warmNothingPlanned": "Nothing planned yet"
+  "warmNothingPlanned": "Nothing planned yet",
+  "gsTitle": "Search",
+  "gsHint": "Recipes, products, tasks…",
+  "gsTip": "Search your list, what you have at home, your recipes and tasks.",
+  "gsClear": "Clear",
+  "gsSection": "{kind, select, shopping{On the list} pantry{At home} recipe{Recipes} other{Tasks}}",
+  "gsNothing": "Nothing found for “{q}”.",
+  "gsAddToList": "Add “{q}” to the list",
+  "gsAdded": "“{q}” is on the list",
+  "gsAddFailed": "Couldn't add it. Try again.",
+  "gsBought": "in the cart"
 }

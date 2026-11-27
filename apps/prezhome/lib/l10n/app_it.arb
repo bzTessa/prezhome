@@ -1400,5 +1400,15 @@
   "warmUseUp": "Da consumare",
   "warmTasks": "Compiti in sospeso",
   "warmDoneToday": "{n, plural, =1{1 fatto oggi} other{{n} fatti oggi}}",
-  "warmNothingPlanned": "Ancora niente"
+  "warmNothingPlanned": "Ancora niente",
+  "gsTitle": "Cerca",
+  "gsHint": "Ricette, prodotti, compiti…",
+  "gsTip": "Cerca nella lista, in quello che hai in casa, nelle ricette e nei compiti.",
+  "gsClear": "Cancella",
+  "gsSection": "{kind, select, shopping{Nella lista} pantry{In casa} recipe{Ricette} other{Compiti}}",
+  "gsNothing": "Niente per «{q}».",
+  "gsAddToList": "Aggiungi «{q}» alla lista",
+  "gsAdded": "«{q}» è nella lista",
+  "gsAddFailed": "Impossibile aggiungere. Riprova.",
+  "gsBought": "nel carrello"
 }

@@ -342,6 +342,11 @@ class MainShellState extends State<MainShell> {
     setState(() => _index = index);
   }
 
+  /// Atajos públicos para el buscador general.
+  void openShopping() => _goToShopping();
+  void openPantry() => _goToDespensa();
+  void openTab(TabId id) => goToTab(_indexOf(id));
+
   /// Lleva a Compra > En casa (donde vive el inventario del hogar).
   void _goToDespensa() {
     _compraInitialSubTab = 1;

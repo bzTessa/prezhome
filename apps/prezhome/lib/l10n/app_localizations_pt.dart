@@ -5617,4 +5617,49 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get warmNothingPlanned => 'Ainda sem plano';
+
+  @override
+  String get gsTitle => 'Pesquisar';
+
+  @override
+  String get gsHint => 'Receitas, produtos, tarefas…';
+
+  @override
+  String get gsTip =>
+      'Pesquisa na lista, no que tens em casa, nas receitas e nas tarefas.';
+
+  @override
+  String get gsClear => 'Limpar';
+
+  @override
+  String gsSection(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'shopping': 'Na lista',
+      'pantry': 'Em casa',
+      'recipe': 'Receitas',
+      'other': 'Tarefas',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String gsNothing(String q) {
+    return 'Nada com «$q».';
+  }
+
+  @override
+  String gsAddToList(String q) {
+    return 'Adicionar «$q» à lista';
+  }
+
+  @override
+  String gsAdded(String q) {
+    return '«$q» está na lista';
+  }
+
+  @override
+  String get gsAddFailed => 'Não foi possível adicionar. Tenta outra vez.';
+
+  @override
+  String get gsBought => 'no carrinho';
 }

@@ -25,6 +25,7 @@ library;
 import 'file_local_store.dart';
 import 'local_store.dart';
 import 'offline_repository.dart';
+import 'rows_cache.dart';
 import 'supabase_remote_sender.dart';
 
 /// Tabla de la lista de la compra en Supabase.
@@ -94,9 +95,13 @@ class OfflineProvider {
 
   /// Limpia la caché y la cola de AMBOS repositorios. Se invoca al CERRAR
   /// SESIÓN para que la caché local no arrastre datos de otro hogar.
+  /// Hogar activo, para separar por hogar otras copias locales (RowsCache).
+  String get homeId => _homeId;
+
   Future<void> clearForLogout() async {
     await shopping.clearForLogout();
     await inventory.clearForLogout();
+    await RowsCache.clear();
   }
 
   /// Cambia el hogar activo: separa (borra) la caché/cola del hogar anterior en

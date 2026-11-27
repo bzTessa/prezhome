@@ -1400,5 +1400,15 @@
   "warmUseUp": "Potroši odmah",
   "warmTasks": "Zadaci na čekanju",
   "warmDoneToday": "{n} urađeno danas",
-  "warmNothingPlanned": "Još ništa"
+  "warmNothingPlanned": "Još ništa",
+  "gsTitle": "Pretraga",
+  "gsHint": "Recepti, proizvodi, zadaci…",
+  "gsTip": "Pretraži listu, ono što imaš kod kuće, recepte i zadatke.",
+  "gsClear": "Obriši",
+  "gsSection": "{kind, select, shopping{Na listi} pantry{Kod kuće} recipe{Recepti} other{Zadaci}}",
+  "gsNothing": "Nema ništa za „{q}“.",
+  "gsAddToList": "Dodaj „{q}“ na listu",
+  "gsAdded": "„{q}“ je na listi",
+  "gsAddFailed": "Nije uspjelo. Pokušaj ponovo.",
+  "gsBought": "u korpi"
 }

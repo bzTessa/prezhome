@@ -9,6 +9,7 @@ import '../add_inventory_item_screen.dart';
 import '../add_recipe_chooser.dart';
 import '../discover_recipes_screen.dart';
 import '../food_diary_screen.dart';
+import '../global_search_screen.dart';
 import '../household_screen.dart';
 import '../inbox_screen.dart';
 import '../main_shell.dart';
@@ -907,6 +908,13 @@ class HomeTabState extends State<HomeTab> {
     DayLineKind.expired,
   };
 
+  Future<void> _openSearch() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const GlobalSearchScreen()));
+    if (mounted) _loadDashboard();
+  }
+
   Future<void> _openRecipe(Recipe r) async {
     await Navigator.of(
       context,
@@ -1020,6 +1028,12 @@ class HomeTabState extends State<HomeTab> {
         ),
         // Una sola entrada a Mi hogar y Ajustes: tu inicial (la casa se
         // confundía con la pestaña Hoy).
+        _roundButton(
+          icon: Icons.search_rounded,
+          tooltip: context.l.gsTitle,
+          onTap: _openSearch,
+        ),
+        const SizedBox(width: AppSpacing.sm),
         _roundButton(
           icon: Icons.person_rounded,
           label: _initial,

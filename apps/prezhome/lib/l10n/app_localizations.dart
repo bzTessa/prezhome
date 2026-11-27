@@ -8518,6 +8518,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin plan todavía'**
   String get warmNothingPlanned;
+
+  /// No description provided for @gsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar'**
+  String get gsTitle;
+
+  /// No description provided for @gsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Recetas, productos, tareas…'**
+  String get gsHint;
+
+  /// No description provided for @gsTip.
+  ///
+  /// In es, this message translates to:
+  /// **'Busca en tu lista, en lo que tienes en casa, en tus recetas y en las tareas.'**
+  String get gsTip;
+
+  /// No description provided for @gsClear.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar'**
+  String get gsClear;
+
+  /// No description provided for @gsSection.
+  ///
+  /// In es, this message translates to:
+  /// **'{kind, select, shopping{En la lista} pantry{En casa} recipe{Recetas} other{Tareas}}'**
+  String gsSection(String kind);
+
+  /// No description provided for @gsNothing.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay nada con «{q}».'**
+  String gsNothing(String q);
+
+  /// No description provided for @gsAddToList.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir «{q}» a la lista'**
+  String gsAddToList(String q);
+
+  /// No description provided for @gsAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'«{q}» está en la lista'**
+  String gsAdded(String q);
+
+  /// No description provided for @gsAddFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo añadir. Inténtalo otra vez.'**
+  String get gsAddFailed;
+
+  /// No description provided for @gsBought.
+  ///
+  /// In es, this message translates to:
+  /// **'en el carro'**
+  String get gsBought;
 }
 
 class _AppLocalizationsDelegate

@@ -1400,5 +1400,15 @@
   "warmUseUp": "À finir vite",
   "warmTasks": "Tâches en attente",
   "warmDoneToday": "{n, plural, =1{1 faite aujourd'hui} other{{n} faites aujourd'hui}}",
-  "warmNothingPlanned": "Rien de prévu"
+  "warmNothingPlanned": "Rien de prévu",
+  "gsTitle": "Rechercher",
+  "gsHint": "Recettes, produits, tâches…",
+  "gsTip": "Cherchez dans votre liste, ce que vous avez à la maison, vos recettes et vos tâches.",
+  "gsClear": "Effacer",
+  "gsSection": "{kind, select, shopping{Sur la liste} pantry{À la maison} recipe{Recettes} other{Tâches}}",
+  "gsNothing": "Rien pour « {q} ».",
+  "gsAddToList": "Ajouter « {q} » à la liste",
+  "gsAdded": "« {q} » est sur la liste",
+  "gsAddFailed": "Impossible d'ajouter. Réessayez.",
+  "gsBought": "dans le panier"
 }

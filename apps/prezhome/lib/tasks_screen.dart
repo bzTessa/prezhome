@@ -13,6 +13,7 @@ import 'services/plan_prefs.dart';
 import 'services/shopping_checkout.dart';
 import 'services/task_scheduler.dart';
 import 'services/home_people.dart';
+import 'services/rows_cache.dart';
 import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animations/animated_counter.dart';
@@ -312,22 +313,21 @@ class _TasksScreenState extends State<TasksScreen> {
     unawaited(CalendarSync.sync(_client));
     final user = _client.auth.currentUser;
     if (user == null) throw 'No autenticado';
-    final profile = await _client
-        .from('profiles')
-        .select('home_id')
-        .eq('id', user.id)
-        .maybeSingle();
+    // Sin conexión se enseña la última copia guardada (RowsCache).
+    final profile = await RowsCache.fetchOne(
+      'tasks_profile:${user.id}',
+      () => _client
+          .from('profiles')
+          .select('home_id, dashboard_prefs')
+          .eq('id', user.id)
+          .maybeSingle(),
+    );
     final homeId = profile?['home_id'] as String?;
 
     // Preferencias del hogar para saber si el "Modo Puntos" está activado y
     // mostrar/ocultar el marcador y la gráfica de puntos. Mismo patrón
     // tolerante que HomeTab._loadPrefs.
-    final prefsRow = await _client
-        .from('profiles')
-        .select('dashboard_prefs')
-        .eq('id', user.id)
-        .maybeSingle();
-    final rawPrefs = prefsRow?['dashboard_prefs'];
+    final rawPrefs = profile?['dashboard_prefs'];
     final prefs = rawPrefs is Map
         ? DashboardPrefs.fromJson(Map<String, dynamic>.from(rawPrefs))
         : DashboardPrefs.defaults();
@@ -338,10 +338,13 @@ class _TasksScreenState extends State<TasksScreen> {
     }
 
     // Miembros del hogar (id -> nombre)
-    final profs = await _client
-        .from('profiles')
-        .select('id, full_name')
-        .eq('home_id', homeId);
+    final profs = await RowsCache.fetch(
+      'tasks_members:$homeId',
+      () => _client
+          .from('profiles')
+          .select('id, full_name')
+          .eq('home_id', homeId),
+    );
     final members = <String, String>{};
     for (final p in (profs as List)) {
       members[p['id']
@@ -349,22 +352,30 @@ class _TasksScreenState extends State<TasksScreen> {
           ? p['full_name'] as String
           : 'Miembro';
     }
-    members.addAll(await HomePeople(_client).load(homeId));
+    try {
+      members.addAll(await HomePeople(_client).load(homeId));
+    } catch (_) {}
 
     // Tareas
-    final tasksRes = await _client
-        .from('tasks')
-        .select()
-        .eq('home_id', homeId)
-        .order('is_done')
-        .order('created_at', ascending: false);
+    final tasksRes = await RowsCache.fetch(
+      'tasks_list:$homeId',
+      () => _client
+          .from('tasks')
+          .select()
+          .eq('home_id', homeId)
+          .order('is_done')
+          .order('created_at', ascending: false),
+    );
     final tasks = (tasksRes as List).map((m) => HomeTask.fromMap(m)).toList();
 
     // Puntos por usuario
-    final pointsRes = await _client
-        .from('task_points')
-        .select('user_id, points, created_at')
-        .eq('home_id', homeId);
+    final pointsRes = await RowsCache.fetch(
+      'tasks_points:$homeId',
+      () => _client
+          .from('task_points')
+          .select('user_id, points, created_at')
+          .eq('home_id', homeId),
+    );
     final pointRows = (pointsRes as List).cast<Map<String, dynamic>>();
     final scores = <String, int>{};
     for (final row in pointRows) {

@@ -1400,5 +1400,15 @@
   "warmUseUp": "Gasta já",
   "warmTasks": "Tarefas pendentes",
   "warmDoneToday": "{n, plural, =1{1 feita hoje} other{{n} feitas hoje}}",
-  "warmNothingPlanned": "Ainda sem plano"
+  "warmNothingPlanned": "Ainda sem plano",
+  "gsTitle": "Pesquisar",
+  "gsHint": "Receitas, produtos, tarefas…",
+  "gsTip": "Pesquisa na lista, no que tens em casa, nas receitas e nas tarefas.",
+  "gsClear": "Limpar",
+  "gsSection": "{kind, select, shopping{Na lista} pantry{Em casa} recipe{Receitas} other{Tarefas}}",
+  "gsNothing": "Nada com «{q}».",
+  "gsAddToList": "Adicionar «{q}» à lista",
+  "gsAdded": "«{q}» está na lista",
+  "gsAddFailed": "Não foi possível adicionar. Tenta outra vez.",
+  "gsBought": "no carrinho"
 }
