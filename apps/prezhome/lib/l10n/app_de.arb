@@ -1458,5 +1458,15 @@
   "sxConcept": "Beschreibung",
   "sxConceptHint": "Einkauf, Strom, Internet…",
   "sxDefaultConcept": "Haushaltsausgabe",
-  "sxWhoPaid": "Wer hat bezahlt?"
+  "sxWhoPaid": "Wer hat bezahlt?",
+  "pushChannel": "Haushalts-Hinweise",
+  "pushShoppingTitle": "Geht einkaufen",
+  "pushShoppingBody": "{who} geht einkaufen. Fehlt etwas? Setz es auf die Liste.",
+  "pushTaskTitle": "Du hast eine neue Aufgabe",
+  "pushTaskBody": "{who} hat dir gegeben: {task}",
+  "pushShopAction": "Dem Haushalt sagen, dass du einkaufen gehst",
+  "pushShopSent": "Gesendet. Was sie hinzufügen, erscheint auf der Liste.",
+  "pushShopNobody": "Sonst hat noch niemand im Haushalt Hinweise aktiviert.",
+  "pushNotReady": "Hinweise sind noch nicht aktiviert.",
+  "pushShopFailed": "Konnte nicht gesendet werden. Versuch es noch mal."
 }

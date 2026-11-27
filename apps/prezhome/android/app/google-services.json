@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "253425842520",
+    "project_id": "prezhome-da083",
+    "storage_bucket": "prezhome-da083.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:253425842520:android:1e52d788207580d4118d2d",
+        "android_client_info": {
+          "package_name": "com.prezhome.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATqe8iwEFG75C-gLO_Qm5Pvl2WX4kQjhM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
