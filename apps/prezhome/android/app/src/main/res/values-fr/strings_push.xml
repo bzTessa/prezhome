@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos de los avisos push: Android los traduce al idioma del móvil
+     aunque la app esté cerrada (title_loc_key / body_loc_key). -->
+<resources>
+    <string name="push_shopping_title">Part faire les courses</string>
+    <string name="push_shopping_body" formatted="false">%1$s va au supermarché. Il manque quelque chose ? Ajoute-le à la liste.</string>
+    <string name="push_task_title">Tu as une nouvelle tâche</string>
+    <string name="push_task_body" formatted="false">%1$s t\'a confié : %2$s</string>
+    <string name="push_channel">Alertes de la maison</string>
+</resources>

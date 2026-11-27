@@ -125,6 +125,9 @@ jobs:
       - name: Desplegar discover-recipes
         run: supabase functions deploy discover-recipes --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" --yes
 
+      - name: Desplegar notify-home
+        run: supabase functions deploy notify-home --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" --yes
+
       - name: Desplegar food-facts
         run: supabase functions deploy food-facts --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" --yes
 

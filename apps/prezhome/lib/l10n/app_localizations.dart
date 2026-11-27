@@ -8866,6 +8866,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'¿Quién pagó?'**
   String get sxWhoPaid;
+
+  /// No description provided for @pushChannel.
+  ///
+  /// In es, this message translates to:
+  /// **'Avisos de casa'**
+  String get pushChannel;
+
+  /// No description provided for @pushShoppingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Va a hacer la compra'**
+  String get pushShoppingTitle;
+
+  /// No description provided for @pushShoppingBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{who} va al súper. ¿Falta algo? Añádelo a la lista.'**
+  String pushShoppingBody(String who);
+
+  /// No description provided for @pushTaskTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes una tarea nueva'**
+  String get pushTaskTitle;
+
+  /// No description provided for @pushTaskBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{who} te ha puesto: {task}'**
+  String pushTaskBody(String who, String task);
+
+  /// No description provided for @pushShopAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Avisar a casa de que vas al súper'**
+  String get pushShopAction;
+
+  /// No description provided for @pushShopSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Avisado. Lo que añadan saldrá en la lista.'**
+  String get pushShopSent;
+
+  /// No description provided for @pushShopNobody.
+  ///
+  /// In es, this message translates to:
+  /// **'Nadie más de casa tiene los avisos activados todavía.'**
+  String get pushShopNobody;
+
+  /// No description provided for @pushNotReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Los avisos aún no están activados.'**
+  String get pushNotReady;
+
+  /// No description provided for @pushShopFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo avisar. Inténtalo otra vez.'**
+  String get pushShopFailed;
 }
 
 class _AppLocalizationsDelegate

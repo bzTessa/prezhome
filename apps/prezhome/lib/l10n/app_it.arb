@@ -1458,5 +1458,15 @@
   "sxConcept": "Descrizione",
   "sxConceptHint": "Spesa, luce, internet…",
   "sxDefaultConcept": "Spesa di casa",
-  "sxWhoPaid": "Chi ha pagato?"
+  "sxWhoPaid": "Chi ha pagato?",
+  "pushChannel": "Avvisi di casa",
+  "pushShoppingTitle": "Va a fare la spesa",
+  "pushShoppingBody": "{who} va al supermercato. Manca qualcosa? Aggiungilo alla lista.",
+  "pushTaskTitle": "Hai una nuova faccenda",
+  "pushTaskBody": "{who} ti ha assegnato: {task}",
+  "pushShopAction": "Avvisa casa che vai a fare la spesa",
+  "pushShopSent": "Avvisati. Quello che aggiungono comparirà nella lista.",
+  "pushShopNobody": "Nessun altro in casa ha ancora attivato gli avvisi.",
+  "pushNotReady": "Gli avvisi non sono ancora attivi.",
+  "pushShopFailed": "Non è stato possibile avvisare. Riprova."
 }

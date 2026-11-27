@@ -1458,5 +1458,15 @@
   "sxConcept": "Descrição",
   "sxConceptHint": "Compras, luz, internet…",
   "sxDefaultConcept": "Despesa da casa",
-  "sxWhoPaid": "Quem pagou?"
+  "sxWhoPaid": "Quem pagou?",
+  "pushChannel": "Avisos da casa",
+  "pushShoppingTitle": "Vai às compras",
+  "pushShoppingBody": "{who} vai ao supermercado. Falta alguma coisa? Adiciona à lista.",
+  "pushTaskTitle": "Tens uma tarefa nova",
+  "pushTaskBody": "{who} deu-te: {task}",
+  "pushShopAction": "Avisar a casa de que vais às compras",
+  "pushShopSent": "Avisado. O que adicionarem aparece na lista.",
+  "pushShopNobody": "Mais ninguém em casa tem os avisos ativados.",
+  "pushNotReady": "Os avisos ainda não estão ativados.",
+  "pushShopFailed": "Não foi possível avisar. Tenta outra vez."
 }
