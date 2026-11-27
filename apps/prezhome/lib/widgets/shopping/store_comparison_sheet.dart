@@ -442,53 +442,58 @@ class _PairSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: stores.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 6),
-        itemBuilder: (context, i) {
-          final store = stores[i];
-          final active = store == selected;
-          final info = _marketFor(store);
-          return Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => onSelect(store),
-              borderRadius: BorderRadius.circular(999),
-              child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: active ? AppColors.terracottaBg : AppColors.card,
+    // Súpers en filas que saltan de línea: nada que deslizar.
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final store in stores)
+          Builder(
+            builder: (context) {
+              final active = store == selected;
+              final info = _marketFor(store);
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => onSelect(store),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: active ? AppColors.terracotta : AppColors.cardEdge,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (info.market != null) ...[
-                      SupermarketBadge(supermarket: info.market!, size: 18),
-                      const SizedBox(width: 6),
-                    ],
-                    Text(
-                      info.label,
-                      style: AppTextStyles.label.copyWith(
+                  child: Ink(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: active ? AppColors.terracottaBg : AppColors.card,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
                         color: active
-                            ? AppColors.terracottaText
-                            : AppColors.ink,
-                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                            ? AppColors.terracotta
+                            : AppColors.cardEdge,
                       ),
                     ),
-                  ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (info.market != null) ...[
+                          SupermarketBadge(supermarket: info.market!, size: 18),
+                          const SizedBox(width: 6),
+                        ],
+                        Text(
+                          info.label,
+                          style: AppTextStyles.label.copyWith(
+                            color: active
+                                ? AppColors.terracottaText
+                                : AppColors.ink,
+                            fontWeight: active
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+      ],
     );
   }
 }

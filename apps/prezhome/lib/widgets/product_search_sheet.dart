@@ -169,51 +169,54 @@ class _ProductSearchSheetState extends State<ProductSearchSheet> {
               ),
             ),
             if (storeChoices.length > 1)
-              SizedBox(
-                height: 44,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.xl,
-                    AppSpacing.sm,
-                    AppSpacing.xl,
-                    0,
-                  ),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: storeChoices.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, i) {
-                    final key = storeChoices[i];
-                    final selected = _selectedStore == key;
-                    final label = key == null
-                        ? context.l.recAll
-                        : Supermarket.labelFor(key);
-                    return ChoiceChip(
-                      label: Text(label),
-                      selected: selected,
-                      showCheckmark: false,
-                      visualDensity: VisualDensity.compact,
-                      selectedColor: AppColors.terracottaBg,
-                      backgroundColor: AppColors.card,
-                      side: BorderSide(
-                        color: selected
-                            ? AppColors.terracotta.withValues(alpha: 0.4)
-                            : AppColors.cardEdge,
+              // Súpers en filas que saltan de línea: nada que deslizar.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.sm,
+                  AppSpacing.xl,
+                  0,
+                ),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    for (final key in storeChoices)
+                      Builder(
+                        builder: (context) {
+                          final selected = _selectedStore == key;
+                          final label = key == null
+                              ? context.l.recAll
+                              : Supermarket.labelFor(key);
+                          return ChoiceChip(
+                            label: Text(label),
+                            selected: selected,
+                            showCheckmark: false,
+                            visualDensity: VisualDensity.compact,
+                            selectedColor: AppColors.terracottaBg,
+                            backgroundColor: AppColors.card,
+                            side: BorderSide(
+                              color: selected
+                                  ? AppColors.terracotta.withValues(alpha: 0.4)
+                                  : AppColors.cardEdge,
+                            ),
+                            labelStyle: AppTextStyles.label.copyWith(
+                              color: selected
+                                  ? AppColors.terracottaText
+                                  : AppColors.inkMuted,
+                              fontWeight: selected
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                            ),
+                            onSelected: (_) {
+                              if (_selectedStore == key) return;
+                              setState(() => _selectedStore = key);
+                              _search();
+                            },
+                          );
+                        },
                       ),
-                      labelStyle: AppTextStyles.label.copyWith(
-                        color: selected
-                            ? AppColors.terracottaText
-                            : AppColors.inkMuted,
-                        fontWeight: selected
-                            ? FontWeight.w800
-                            : FontWeight.w600,
-                      ),
-                      onSelected: (_) {
-                        if (_selectedStore == key) return;
-                        setState(() => _selectedStore = key);
-                        _search();
-                      },
-                    );
-                  },
+                  ],
                 ),
               ),
             const SizedBox(height: AppSpacing.sm),
