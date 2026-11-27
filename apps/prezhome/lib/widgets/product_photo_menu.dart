@@ -76,6 +76,7 @@ Future<String?> pickProductPhoto(
           context,
           initialQuery: shoppingCleanName(name),
           supermarketKey: supermarketKey,
+          pickPhotoMode: true,
         );
         url = product?.imageUrl;
         if (url == null) return null;

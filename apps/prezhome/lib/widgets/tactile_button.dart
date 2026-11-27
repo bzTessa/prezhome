@@ -41,9 +41,16 @@ class TactileButton extends StatelessWidget {
           child: Container(
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: AppTheme.heroTactileDecoration(
-              radius: 999,
+            decoration: BoxDecoration(
               color: fill,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: [
+                BoxShadow(
+                  color: fill.withValues(alpha: 0.28),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

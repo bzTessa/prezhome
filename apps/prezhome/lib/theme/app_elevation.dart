@@ -24,11 +24,17 @@ class AppElevation {
 
   /// Borde táctil para botones clave, barra inferior y tarjetas destacadas.
   static Border get tactileBorder =>
-      Border.all(color: AppColors.stroke, width: 1.75);
+      Border.all(color: AppColors.cardEdge, width: 1);
 
-  /// Sombra dura corta del estilo táctil para elementos destacados.
+  /// Sombra suave en capas del estilo editorial para elementos destacados.
   static List<BoxShadow> get tactileShadow => <BoxShadow>[
-    BoxShadow(color: AppColors.stroke, offset: const Offset(0, 3)),
+    BoxShadow(color: AppColors.faintShadow, offset: const Offset(0, 1)),
+    BoxShadow(
+      color: AppColors.cardShadow,
+      offset: const Offset(0, 8),
+      blurRadius: 20,
+      spreadRadius: -8,
+    ),
   ];
 
   /// Nivel 0: superficie plana, sin sombra.
@@ -36,28 +42,40 @@ class AppElevation {
 
   /// Nivel 1: tarjeta en reposo, sombra suave y cálida.
   static List<BoxShadow> get level1 => <BoxShadow>[
-    BoxShadow(color: AppColors.faintShadow, offset: const Offset(0, 1)),
+    BoxShadow(
+      color: AppColors.faintShadow,
+      offset: const Offset(0, 1),
+      blurRadius: 2,
+    ),
     BoxShadow(
       color: AppColors.cardShadow,
-      offset: const Offset(0, 8),
-      blurRadius: 22,
-      spreadRadius: -14,
+      offset: const Offset(0, 6),
+      blurRadius: 18,
+      spreadRadius: -6,
     ),
   ];
 
   /// Nivel 2: elemento elevado o flotante (barra inferior, botón flotante).
   static List<BoxShadow> get level2 => <BoxShadow>[
-    BoxShadow(color: AppColors.faintShadow, offset: const Offset(0, 1)),
+    BoxShadow(
+      color: AppColors.faintShadow,
+      offset: const Offset(0, 2),
+      blurRadius: 4,
+    ),
     BoxShadow(
       color: AppColors.cardShadow,
-      offset: const Offset(0, 14),
-      blurRadius: 30,
-      spreadRadius: -14,
+      offset: const Offset(0, 12),
+      blurRadius: 28,
+      spreadRadius: -6,
     ),
   ];
 
   /// Pulsado: la sombra casi desaparece (la pieza "baja").
   static List<BoxShadow> get pressed => <BoxShadow>[
-    BoxShadow(color: AppColors.faintShadow, offset: const Offset(0, 1)),
+    BoxShadow(
+      color: AppColors.faintShadow,
+      offset: const Offset(0, 1),
+      blurRadius: 4,
+    ),
   ];
 }

@@ -105,6 +105,35 @@ void main() {
     expect(toggles, 1);
   });
 
+  testWidgets('la fila compacta muestra píldora y se expande al tocarla', (
+    tester,
+  ) async {
+    var expanded = false;
+    await tester.pumpWidget(
+      StatefulBuilder(
+        builder: (context, setState) => _host(
+          ShoppingItemTile(
+            name: 'Espinacas',
+            quantity: 300,
+            unit: 'g',
+            quantityLabel: '300 g',
+            checked: false,
+            compactQuantity: true,
+            quantityExpanded: expanded,
+            onQuantityTap: () => setState(() => expanded = true),
+            onQuantityChanged: (_) {},
+            onToggle: () {},
+          ),
+        ),
+      ),
+    );
+    expect(find.bySemanticsLabel('Más'), findsNothing);
+    await tester.tap(find.text('300 g'));
+    await tester.pump();
+    expect(expanded, isTrue);
+    expect(find.bySemanticsLabel('Más'), findsOneWidget);
+  });
+
   testWidgets('la sección pliega y despliega sus filas', (tester) async {
     var expanded = true;
     await tester.pumpWidget(

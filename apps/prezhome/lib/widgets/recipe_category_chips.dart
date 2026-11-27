@@ -162,7 +162,18 @@ class _Tile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: selected ? fg : bg,
                   shape: BoxShape.circle,
-                  border: selected ? null : Border.all(color: AppColors.stroke),
+                  border: selected
+                      ? null
+                      : Border.all(color: fg.withValues(alpha: 0.22), width: 1),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: fg.withValues(alpha: 0.28),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Icon(
                   recipeCategoryIcon(category),
@@ -217,7 +228,7 @@ class _MoreTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.card,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.line),
+                  border: Border.all(color: AppColors.cardEdge, width: 1),
                 ),
                 child: Icon(
                   open ? Icons.expand_less_rounded : Icons.more_horiz_rounded,

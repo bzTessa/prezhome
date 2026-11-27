@@ -1023,19 +1023,54 @@ class _InventoryScreenState extends State<InventoryScreen> {
             const SizedBox(height: AppSpacing.lg),
           ] else ...[
             // Al revés que el plan: ideas de recetas con lo que ya hay.
-            FilledButton.tonalIcon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const DiscoverRecipesScreen(pantryMode: true),
-                ),
+            Material(
+              color: AppColors.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                side: BorderSide(color: AppColors.cardEdge),
               ),
-              icon: const Icon(Icons.soup_kitchen_outlined, size: 20),
-              label: Text(context.l.panWhatToCook),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(44),
-                backgroundColor: AppColors.wood.withValues(alpha: 0.35),
-                foregroundColor: AppColors.ink,
-                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const DiscoverRecipesScreen(pantryMode: true),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: AppColors.terracottaBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.soup_kitchen_outlined,
+                          size: 18,
+                          color: AppColors.terracottaText,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          context.l.panWhatToCook,
+                          style: AppTextStyles.titleSmall,
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -1165,9 +1200,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: AppTheme.surfaceDecoration(
-        radius: AppRadius.lg,
-        color: AppColors.goldBg,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.goldBg, AppColors.card],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.soon.withValues(alpha: 0.3)),
+        boxShadow: AppElevation.level1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1764,83 +1805,212 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
   }
 
-  /// Menú de acciones de un producto (pulsación larga o toque): marcar/quitar
-  /// "no comprar", editar y eliminar.
+  /// Menú de acciones de un producto (pulsación larga o toque): editar,
+  /// mover de zona, foto, marcar/quitar "no comprar" y eliminar.
   Future<void> _openItemActions(InventoryItem item) async {
+    final zone = KitchenZone.values.firstWhere((z) => z.matches(item));
+    final qty = pantryQtyLabel(
+      item.quantity,
+      item.unit,
+      packSize: _packOf(item),
+      byLevel: isLevelTracked(item),
+    );
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: AppColors.cream,
+      isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Text(
-                item.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.ink,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.inkMuted.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            ListTile(
-              leading: Icon(Icons.edit_outlined, color: AppColors.woodDark),
-              title: Text(context.l.edit),
-              onTap: () => Navigator.of(ctx).pop('edit'),
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.swap_horiz_rounded,
-                color: AppColors.woodDark,
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.iconTile,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.cardEdge),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: FoodImage(
+                      name: item.name,
+                      itemType: item.itemType,
+                      imageUrl: isStockPhoto(item.imageUrl)
+                          ? null
+                          : item.imageUrl,
+                      photoOnly: true,
+                      illustrationFallback: true,
+                      fit: BoxFit.contain,
+                      size: 56,
+                      radius: 14,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          shoppingCleanName(item.name),
+                          style: AppTextStyles.title,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            ctx.l.kitchenZone(zone.name),
+                            if (qty.isNotEmpty) qty,
+                          ].join(' · '),
+                          style: AppTextStyles.labelMuted,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              title: Text(context.l.panMoveZone),
-              onTap: () => Navigator.of(ctx).pop('move'),
-            ),
-            if (item.itemType == 'comida')
-              ListTile(
-                leading: Icon(
-                  item.isStaple
-                      ? Icons.add_shopping_cart
-                      : Icons.remove_shopping_cart,
-                  color: AppColors.woodDark,
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: Icon(
+                        Icons.edit_outlined,
+                        color: AppColors.terracottaText,
+                      ),
+                      title: Text(context.l.edit),
+                      trailing: Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                      onTap: () => Navigator.of(ctx).pop('edit'),
+                    ),
+                    Divider(
+                      height: 1,
+                      indent: 56,
+                      endIndent: 16,
+                      color: AppColors.line,
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.image_outlined,
+                        color: AppColors.terracottaText,
+                      ),
+                      title: Text(context.l.changePhoto),
+                      trailing: Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                      onTap: () => Navigator.of(ctx).pop('photo'),
+                    ),
+                    Divider(
+                      height: 1,
+                      indent: 56,
+                      endIndent: 16,
+                      color: AppColors.line,
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.swap_horiz_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                      title: Text(context.l.panMoveZone),
+                      trailing: Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.inkMuted,
+                      ),
+                      onTap: () => Navigator.of(ctx).pop('move'),
+                    ),
+                    if (item.itemType == 'comida') ...[
+                      Divider(
+                        height: 1,
+                        indent: 56,
+                        endIndent: 16,
+                        color: AppColors.line,
+                      ),
+                      ListTile(
+                        leading: Icon(
+                          item.isStaple
+                              ? Icons.add_shopping_cart
+                              : Icons.remove_shopping_cart,
+                          color: AppColors.inkMuted,
+                        ),
+                        title: Text(
+                          item.isStaple
+                              ? context.l.panShopAgain
+                              : context.l.panDontShop,
+                        ),
+                        subtitle: item.isStaple
+                            ? null
+                            : Text(context.l.panStapleHint),
+                        onTap: () => Navigator.of(ctx).pop('staple'),
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 56,
+                        endIndent: 16,
+                        color: AppColors.line,
+                      ),
+                      ListTile(
+                        leading: Icon(
+                          Icons.check_circle_outline_rounded,
+                          color: AppColors.done,
+                        ),
+                        title: Text(context.l.panConsumed),
+                        subtitle: item.isStaple
+                            ? Text(context.l.panWillAddToShop)
+                            : null,
+                        onTap: () => Navigator.of(ctx).pop('consumed'),
+                      ),
+                    ],
+                  ],
                 ),
-                title: Text(
-                  item.isStaple
-                      ? context.l.panShopAgain
-                      : context.l.panDontShop,
-                ),
-                subtitle: item.isStaple ? null : Text(context.l.panStapleHint),
-                onTap: () => Navigator.of(ctx).pop('staple'),
               ),
-            if (item.itemType == 'comida')
-              ListTile(
-                leading: Icon(
-                  Icons.check_circle_outline_rounded,
-                  color: AppColors.woodDark,
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(ctx).pop('delete'),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppColors.expired,
                 ),
-                title: Text(context.l.panConsumed),
-                subtitle: item.isStaple
-                    ? Text(context.l.panWillAddToShop)
-                    : null,
-                onTap: () => Navigator.of(ctx).pop('consumed'),
+                label: Text(context.l.delete),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.expired,
+                  backgroundColor: AppColors.card,
+                  side: BorderSide(
+                    color: AppColors.expired.withValues(alpha: 0.3),
+                  ),
+                  minimumSize: const Size.fromHeight(46),
+                ),
               ),
-            ListTile(
-              leading: Icon(Icons.image_outlined, color: AppColors.woodDark),
-              title: Text(context.l.changePhoto),
-              onTap: () => Navigator.of(ctx).pop('photo'),
-            ),
-            ListTile(
-              leading: Icon(Icons.delete_outline, color: AppColors.expired),
-              title: Text(context.l.delete),
-              onTap: () => Navigator.of(ctx).pop('delete'),
-            ),
-            const SizedBox(height: 8),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -2217,21 +2387,43 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  /// Cambia la foto del producto (cámara, galería, súper, generada o dibujo).
+  /// Cambia la foto del producto (súper, cámara o galería).
   Future<void> _changePhoto(InventoryItem item) async {
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: AppColors.cream,
+      showDragHandle: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 8),
-            ...productPhotoTiles(ctx, name: item.name, imageUrl: item.imageUrl),
-            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                shoppingCleanName(item.name),
+                style: AppTextStyles.title,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Container(
+                decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: productPhotoTiles(
+                    ctx,
+                    name: item.name,
+                    imageUrl: item.imageUrl,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

@@ -4812,6 +4812,57 @@ class AppLocalizationsBs extends AppLocalizations {
   }
 
   @override
+  String get shopCompareOneStore => '1 trgovina';
+
+  @override
+  String get shopCompareTwoStores => 'Podijeli na 2';
+
+  @override
+  String get shopCompareSameQty => 'Ista količina';
+
+  @override
+  String get shopCompareCheckout => 'Na blagajni';
+
+  @override
+  String shopCompareEquiv(String target, String pack) {
+    return 'ekviv. $target · pak. $pack';
+  }
+
+  @override
+  String shopCompareSplitSave(String amount) {
+    return 'Ušteda ≈ $amount';
+  }
+
+  @override
+  String get shopCompareSplitSame => 'Ista cijena u 1 ili 2 trgovine';
+
+  @override
+  String shopCompareSplitCombined(String total) {
+    return 'Ukupno za obje: ≈ $total';
+  }
+
+  @override
+  String get shopCompareSplitOnlyHere => 'Samo ovdje';
+
+  @override
+  String shopCompareSplitMissing(String names) {
+    return 'Ostaju na ovoj listi: $names';
+  }
+
+  @override
+  String get shopCompareSplitBtn => 'Podijeli u 2 liste';
+
+  @override
+  String shopCompareSplitDone(
+    String storeA,
+    int countA,
+    String storeB,
+    int countB,
+  ) {
+    return 'Lista podijeljena: $storeA ($countA) i $storeB ($countB)';
+  }
+
+  @override
   String get tskCatchUp => 'Sustigni';
 
   @override

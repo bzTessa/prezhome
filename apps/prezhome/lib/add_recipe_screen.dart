@@ -384,8 +384,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         ctx,
                       ).pop(const _ImportDialogResult(pickPhoto: true)),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.woodDark,
-                        side: BorderSide(color: AppColors.stroke),
+                        foregroundColor: AppColors.terracottaText,
+                        side: BorderSide(color: AppColors.cardEdge),
                       ),
                       icon: const Icon(Icons.photo_library_outlined, size: 18),
                       label: Text(context.l.arImportFromPhoto),

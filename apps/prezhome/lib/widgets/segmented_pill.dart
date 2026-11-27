@@ -5,8 +5,8 @@ import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
 import 'animations/spring_value.dart';
 
-/// Selector de vistas en píldora táctil: el indicador se desliza con un
-/// muelle (interrumpible) hasta la opción elegida.
+/// Selector de vistas en píldora editorial: el indicador elevado se desliza
+/// con un muelle (interrumpible) hasta la opción elegida.
 class SegmentedPill extends StatelessWidget {
   const SegmentedPill({
     super.key,
@@ -22,9 +22,13 @@ class SegmentedPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 46,
+      height: 44,
       padding: const EdgeInsets.all(4),
-      decoration: AppTheme.tactileDecoration(radius: 999, shadow: 2),
+      decoration: BoxDecoration(
+        color: AppColors.iconTile,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.cardEdge, width: 1),
+      ),
       child: LayoutBuilder(
         builder: (context, c) {
           final w = c.maxWidth / labels.length;
@@ -44,9 +48,13 @@ class SegmentedPill extends StatelessWidget {
                       width: w,
                       height: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppColors.gold,
+                        color: AppColors.card,
                         borderRadius: BorderRadius.circular(999),
-                        border: AppElevation.border,
+                        border: Border.all(
+                          color: AppColors.cardEdge.withValues(alpha: 0.6),
+                          width: 0.5,
+                        ),
+                        boxShadow: AppElevation.level1,
                       ),
                     ),
                   ),
@@ -74,9 +82,11 @@ class SegmentedPill extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: i == selected
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
                                 color: i == selected
-                                    ? AppColors.onBrand
+                                    ? AppColors.ink
                                     : AppColors.inkMuted,
                               ),
                             ),

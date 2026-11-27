@@ -300,8 +300,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
         },
       );
 
-  /// Recetas en filas compactas (foto, título, despensa y favoritos), juntas en
-  /// un bloque como en la Despensa.
+  /// Recetas en cuadrícula visual de 2 columnas con foto protagonista.
   SliverPadding _grid(
     List<Recipe> recipes,
     int? perMeal, {
@@ -309,27 +308,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
     double bottom = 0,
   }) => SliverPadding(
     padding: EdgeInsets.fromLTRB(16, 0, 16, bottom),
-    sliver: SliverToBoxAdapter(
-      child: Container(
-        // El relleno deja el borde por encima de las filas opacas.
-        padding: const EdgeInsets.all(1.5),
-        decoration: AppTheme.surfaceDecoration(radius: AppRadius.md),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.md - 1.5),
-          child: Column(
-            children: [
-              for (var i = 0; i < recipes.length; i++) ...[
-                if (i > 0)
-                  Divider(height: 1, indent: 100, color: AppColors.line),
-                _card(
-                  recipes[i],
-                  perMeal,
-                  heroTag: 'recipe-photo-$scopeKey-${recipes[i].id}',
-                ),
-              ],
-            ],
-          ),
+    sliver: SliverGrid(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.74,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, i) => _card(
+          recipes[i],
+          perMeal,
+          heroTag: 'recipe-photo-$scopeKey-${recipes[i].id}',
         ),
+        childCount: recipes.length,
       ),
     ),
   );
@@ -715,7 +707,11 @@ class _ReadyFilterPill extends StatelessWidget {
       child: Material(
         color: selected ? AppColors.sage : AppColors.sageBg,
         shape: StadiumBorder(
-          side: BorderSide(color: selected ? AppColors.sage : AppColors.stroke),
+          side: BorderSide(
+            color: selected
+                ? AppColors.sage
+                : AppColors.sage.withValues(alpha: 0.3),
+          ),
         ),
         child: InkWell(
           onTap: onTap,
@@ -760,13 +756,16 @@ class _PantryBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       child: Container(
-        decoration:
-            AppTheme.surfaceDecoration(
-              color: AppColors.sageBg,
-              radius: 22,
-            ).copyWith(
-              border: Border.all(color: AppColors.sage.withValues(alpha: 0.28)),
-            ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.sageBg, AppColors.card],
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: AppColors.sage.withValues(alpha: 0.25)),
+          boxShadow: AppElevation.level1,
+        ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -778,8 +777,11 @@ class _PantryBanner extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: AppColors.card,
-                    child: Icon(Icons.kitchen_rounded, color: AppColors.sage),
+                    backgroundColor: AppColors.sage,
+                    child: Icon(
+                      Icons.kitchen_rounded,
+                      color: AppColors.onTerracotta,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -789,7 +791,7 @@ class _PantryBanner extends StatelessWidget {
                         Text(
                           context.l.recWhatToCook,
                           style: TextStyle(
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
                             fontSize: 16,
                             color: AppColors.ink,
                           ),
@@ -807,7 +809,19 @@ class _PantryBanner extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: AppColors.sage),
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.sageBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.sage,
+                      size: 20,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -825,8 +839,9 @@ class _RecipesData {
   _RecipesData({required this.recipes, this.profile, this.pantry = const []});
 }
 
-/// Fila de receta: foto con Hero opcional, título, metadatos en [Wrap] con
-/// estado en En casa y etiqueta de congelador, y botón de favorita.
+/// Tarjeta editorial de receta en cuadrícula de 2 columnas: foto protagonista
+/// arriba con insignia de despensa y botón flotante de favorita, y título +
+/// metadatos limpios debajo.
 class _RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final int? caloriesPerMeal;
@@ -855,32 +870,140 @@ class _RecipeCard extends StatelessWidget {
       if (recipe.calories != null) '${recipe.calories} kcal',
     ].join(' · ');
 
-    final photo = Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.stroke),
-      ),
-      child: RecipeImage(recipe: recipe, width: 72, height: 72, radius: 15),
+    final photo = RecipeImage(
+      recipe: recipe,
+      height: double.infinity,
+      radius: 0,
+      cacheWidth: RecipeImage.gridCacheWidth,
     );
 
     return Semantics(
       button: true,
       label: recipe.title,
-      child: Material(
-        color: AppColors.card,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
-            child: Row(
+      child: Container(
+        decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+        child: Material(
+          color: AppColors.card,
+          borderRadius: AppRadius.lgRadius,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (heroTag != null)
-                  Hero(tag: heroTag!, child: photo)
-                else
-                  photo,
-                const SizedBox(width: 12),
                 Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (heroTag != null)
+                        Hero(
+                          tag: heroTag!,
+                          flightShuttleBuilder: recipeHeroFlightShuttle(
+                            recipe,
+                            startRadius: AppRadius.lg,
+                            endRadius: 0,
+                            cacheWidth: RecipeImage.gridCacheWidth,
+                          ),
+                          child: photo,
+                        )
+                      else
+                        photo,
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: 54,
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.22),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if ((missing != null && missing! <= 1) ||
+                          recipe.freezesWell)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          right: 48,
+                          child: Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: [
+                              if (missing != null && missing! <= 1)
+                                _HomeStockPill(missing: missing!),
+                              if (recipe.freezesWell)
+                                Tooltip(
+                                  message: context.l.rdFreezable,
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.card.withValues(
+                                        alpha: 0.92,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.ac_unit_rounded,
+                                      size: 13,
+                                      color: AppColors.frost,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Tooltip(
+                          message: recipe.isFavorite
+                              ? context.l.recUnfavorite
+                              : context.l.recFavorite,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: AppElevation.level1,
+                            ),
+                            child: Material(
+                              color: AppColors.card.withValues(alpha: 0.92),
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: onToggleFavorite,
+                                child: SizedBox(
+                                  width: 34,
+                                  height: 34,
+                                  child: Icon(
+                                    recipe.isFavorite
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
+                                    color: recipe.isFavorite
+                                        ? AppColors.terracotta
+                                        : AppColors.ink,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -889,70 +1012,35 @@ class _RecipeCard extends StatelessWidget {
                         shoppingCleanName(recipe.title),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
+                        style: AppTextStyles.titleSmall.copyWith(
+                          fontSize: 14.5,
                           height: 1.2,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
                         ),
                       ),
-                      if (meta.isNotEmpty ||
-                          (missing ?? 2) <= 1 ||
-                          recipe.freezesWell) ...[
-                        const SizedBox(height: 5),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
+                      if (meta.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
                           children: [
-                            if (meta.isNotEmpty)
-                              Text(
+                            Icon(
+                              Icons.schedule_rounded,
+                              size: 13,
+                              color: AppColors.inkMuted,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
                                 meta,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.inkMuted,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.numeric(
+                                  AppTextStyles.labelMuted,
                                 ),
                               ),
-                            if (missing != null && missing! <= 1)
-                              _HomeStockPill(missing: missing!),
-                            if (recipe.freezesWell)
-                              Tooltip(
-                                message: context.l.rdFreezable,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.frostBg,
-                                    borderRadius: AppRadius.pillRadius,
-                                  ),
-                                  child: Icon(
-                                    Icons.ac_unit_rounded,
-                                    size: 13,
-                                    color: AppColors.frost,
-                                  ),
-                                ),
-                              ),
+                            ),
                           ],
                         ),
                       ],
                     ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: recipe.isFavorite
-                      ? context.l.recUnfavorite
-                      : context.l.recFavorite,
-                  onPressed: onToggleFavorite,
-                  icon: Icon(
-                    recipe.isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: recipe.isFavorite
-                        ? AppColors.favorite
-                        : AppColors.inkMuted,
-                    size: 22,
                   ),
                 ),
               ],
@@ -1023,32 +1111,38 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final field = TextField(
-      controller: controller,
-      onChanged: onChanged,
-      textInputAction: TextInputAction.search,
-      style: TextStyle(color: AppColors.ink, fontSize: 15),
-      decoration: InputDecoration(
-        hintText: context.l.recSearchHint,
-        hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
-        prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
-        suffixIcon: controller.text.isEmpty
-            ? null
-            : IconButton(
-                icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
-                onPressed: onClear,
-                tooltip: context.l.clear,
-              ),
-        filled: true,
-        fillColor: AppColors.card,
-        contentPadding: const EdgeInsets.symmetric(vertical: 2),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.stroke, width: 1.2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.terracotta, width: 1.8),
+    final field = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppElevation.level1,
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.search,
+        style: TextStyle(color: AppColors.ink, fontSize: 15),
+        decoration: InputDecoration(
+          hintText: context.l.recSearchHint,
+          hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.45)),
+          prefixIcon: Icon(Icons.search_rounded, color: AppColors.woodDark),
+          suffixIcon: controller.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: Icon(Icons.close_rounded, color: AppColors.woodDark),
+                  onPressed: onClear,
+                  tooltip: context.l.clear,
+                ),
+          filled: true,
+          fillColor: AppColors.card,
+          contentPadding: const EdgeInsets.symmetric(vertical: 2),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: AppColors.cardEdge, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: AppColors.terracotta, width: 1.6),
+          ),
         ),
       ),
     );
@@ -1063,8 +1157,13 @@ class _SearchBar extends StatelessWidget {
             Tooltip(
               message: context.l.recNew,
               child: Material(
-                color: AppColors.terracotta,
-                borderRadius: BorderRadius.circular(16),
+                color: AppColors.terracottaBg,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: AppColors.terracotta.withValues(alpha: 0.22),
+                  ),
+                ),
                 child: InkWell(
                   onTap: () {
                     HapticFeedback.lightImpact();
@@ -1076,7 +1175,7 @@ class _SearchBar extends StatelessWidget {
                     height: 48,
                     child: Icon(
                       Icons.add_rounded,
-                      color: AppColors.onTerracotta,
+                      color: AppColors.terracottaText,
                       size: 26,
                     ),
                   ),
@@ -1133,9 +1232,9 @@ class _HomeStockPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final all = missing == 0;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: all ? AppColors.sageBg : AppColors.card,
+        color: all ? AppColors.sage : AppColors.card.withValues(alpha: 0.92),
         borderRadius: AppRadius.pillRadius,
       ),
       child: Row(
@@ -1143,16 +1242,16 @@ class _HomeStockPill extends StatelessWidget {
         children: [
           Icon(
             all ? Icons.check_rounded : Icons.shopping_basket_outlined,
-            size: 14,
-            color: all ? AppColors.sage : AppColors.terracottaText,
+            size: 12,
+            color: all ? AppColors.onTerracotta : AppColors.terracottaText,
           ),
           const SizedBox(width: 4),
           Text(
             all ? context.l.recHaveAll : context.l.recMissingOne,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: all ? AppColors.sage : AppColors.terracottaText,
+              color: all ? AppColors.onTerracotta : AppColors.terracottaText,
             ),
           ),
         ],

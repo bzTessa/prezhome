@@ -528,49 +528,62 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
 
   Widget _buildStart() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MiauCharacter(
-              mood: MiauMood.shopping,
-              size: 116,
-              interactive: true,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.l.stkStartTitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.l.stkStartSub,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.inkMuted),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => _pickAndScan(ImageSource.camera),
-              icon: const Icon(Icons.camera_alt_outlined),
-              label: Text(context.l.takePhoto),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => _pickAndScan(ImageSource.gallery),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.ink,
-                minimumSize: const Size.fromHeight(50),
-                side: BorderSide(color: AppColors.wood, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          decoration: AppTheme.surfaceDecoration(radius: AppRadius.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Center(
+                child: MiauCharacter(
+                  mood: MiauMood.shopping,
+                  size: 112,
+                  interactive: true,
                 ),
               ),
-              icon: const Icon(Icons.photo_library_outlined),
-              label: Text(context.l.rdGallery),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                context.l.stkStartTitle,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.headline,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                context.l.stkStartSub,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMuted,
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              FilledButton.icon(
+                onPressed: () => _pickAndScan(ImageSource.camera),
+                icon: const Icon(Icons.camera_alt_outlined),
+                label: Text(context.l.takePhoto),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.terracotta,
+                  foregroundColor: AppColors.onTerracotta,
+                  minimumSize: const Size.fromHeight(50),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                onPressed: () => _pickAndScan(ImageSource.gallery),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.ink,
+                  backgroundColor: AppColors.card,
+                  minimumSize: const Size.fromHeight(50),
+                  side: BorderSide(color: AppColors.cardEdge),
+                ),
+                icon: Icon(
+                  Icons.photo_library_outlined,
+                  color: AppColors.terracottaText,
+                ),
+                label: Text(context.l.rdGallery),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -152,21 +152,37 @@ class ApproxPrice {
     final u = (unit ?? '').trim().toLowerCase();
     final qty = quantity ?? 1;
 
+    // Sub-unidades pequeñas (dientes de ajo, lonchas): no multiplicar por
+    // precio de unidad completa / cabeza.
+    if (u == 'diente' || u == 'dientes') {
+      final perKg = _kg(tokens) ?? _byCategoryKg(name);
+      if (perKg != null) return perKg * 0.005 * qty;
+      final perUnit = _ud(tokens);
+      if (perUnit != null) return (perUnit / 10.0) * qty;
+      return null;
+    }
+    if (u == 'loncha' || u == 'lonchas') {
+      final perKg = _kg(tokens) ?? _byCategoryKg(name);
+      if (perKg != null) return perKg * 0.025 * qty;
+      final perUnit = _ud(tokens);
+      if (perUnit != null) return (perUnit / 8.0) * qty;
+      return null;
+    }
+
     // Unidades contables: precio por unidad.
     const unitUnits = {
       'unidad',
       'unidades',
       'ud',
+      'uds',
+      'pieza',
+      'piezas',
       'huevo',
       'huevos',
       'lata',
       'latas',
       'bote',
       'botes',
-      'loncha',
-      'lonchas',
-      'diente',
-      'dientes',
     };
     if (unitUnits.contains(u)) {
       final perUnit = _ud(tokens);

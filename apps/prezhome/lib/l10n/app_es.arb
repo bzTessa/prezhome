@@ -3022,6 +3022,41 @@
       }
     }
   },
+  "shopCompareOneStore": "1 súper",
+  "shopCompareTwoStores": "Repartir en 2",
+  "shopCompareSameQty": "Misma cantidad",
+  "shopCompareCheckout": "En caja",
+  "shopCompareEquiv": "equiv. {target} · envase {pack}",
+  "@shopCompareEquiv": {
+    "placeholders": {
+      "target": { "type": "String" },
+      "pack": { "type": "String" }
+    }
+  },
+  "shopCompareSplitSave": "Ahorras ≈ {amount}",
+  "@shopCompareSplitSave": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "shopCompareSplitSame": "Mismo precio repartiendo o en 1 súper",
+  "shopCompareSplitCombined": "Total entre los 2: ≈ {total}",
+  "@shopCompareSplitCombined": {
+    "placeholders": { "total": { "type": "String" } }
+  },
+  "shopCompareSplitOnlyHere": "Solo aquí",
+  "shopCompareSplitMissing": "Se quedan en esta lista: {names}",
+  "@shopCompareSplitMissing": {
+    "placeholders": { "names": { "type": "String" } }
+  },
+  "shopCompareSplitBtn": "Separar en 2 listas",
+  "shopCompareSplitDone": "Lista separada: {storeA} ({countA}) y {storeB} ({countB})",
+  "@shopCompareSplitDone": {
+    "placeholders": {
+      "storeA": { "type": "String" },
+      "countA": { "type": "int" },
+      "storeB": { "type": "String" },
+      "countB": { "type": "int" }
+    }
+  },
   "tskCatchUp": "Ponerme al día",
   "tskCatchUpExplain": "Las tareas que se repiten saltan a su próxima vez y las puntuales pasan a hoy. No se marcan como hechas ni suman puntos.",
   "tskCaughtUp": "Listo, estás al día",

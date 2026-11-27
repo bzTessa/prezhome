@@ -419,6 +419,8 @@ void main() {
         'bonarea',
         'lidl',
         'ahorramas',
+        'bm',
+        'aldi',
       ]);
       expect(r.filteredByStore, isTrue);
     });
