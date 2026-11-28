@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'economy_screen.dart';
 import 'shared_expenses_screen.dart';
+import 'home_info_screen.dart';
 import 'plan_usage_screen.dart';
 import 'stats_screen.dart';
 import 'l10n/l10n.dart';
@@ -861,6 +862,19 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   ),
                 ),
               ),
+              if (data.homeId != null)
+                _settingTile(
+                  icon: Icons.home_work_outlined,
+                  title: context.l.hiTile,
+                  subtitle: context.l.hiTileSub,
+                  iconBg: AppColors.terracottaBg,
+                  iconFg: AppColors.terracotta,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => HomeInfoScreen(homeId: data.homeId!),
+                    ),
+                  ),
+                ),
               if (data.peopleCount > 1 && data.homeId != null)
                 _settingTile(
                   icon: Icons.handshake_outlined,

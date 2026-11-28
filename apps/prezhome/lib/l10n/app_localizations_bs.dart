@@ -5943,4 +5943,123 @@ class AppLocalizationsBs extends AppLocalizations {
   String warmOverdue(int count) {
     return '$count kasni';
   }
+
+  @override
+  String get hiTitle => 'Podaci o kući';
+
+  @override
+  String get hiTile => 'Podaci o kući';
+
+  @override
+  String get hiTileSub => 'Wi-Fi, korisni kontakti i garancije';
+
+  @override
+  String get hiIntro =>
+      'Ono što svi u kući trebaju imati pri ruci. Vidi cijelo domaćinstvo.';
+
+  @override
+  String get hiWifi => 'Wi-Fi';
+
+  @override
+  String get hiContacts => 'Kontakti';
+
+  @override
+  String get hiAppliances => 'Aparati';
+
+  @override
+  String get hiNotes => 'Bilješke';
+
+  @override
+  String get hiAdd => 'Dodaj';
+
+  @override
+  String get hiEdit => 'Uredi';
+
+  @override
+  String get hiDelete => 'Obriši';
+
+  @override
+  String get hiSave => 'Sačuvaj';
+
+  @override
+  String get hiDeleted => 'Obrisano';
+
+  @override
+  String get hiCopied => 'Kopirano';
+
+  @override
+  String get hiCopy => 'Kopiraj';
+
+  @override
+  String get hiCopyKey => 'Kopiraj lozinku';
+
+  @override
+  String get hiShareWifi => 'Podijeli Wi-Fi s gostom';
+
+  @override
+  String get hiCall => 'Pozovi';
+
+  @override
+  String get hiWifiNetwork => 'Mreža';
+
+  @override
+  String get hiWifiKey => 'Lozinka';
+
+  @override
+  String get hiFieldWho => 'Ko (stanodavac, vodoinstalater…)';
+
+  @override
+  String get hiFieldAppliance => 'Aparat';
+
+  @override
+  String get hiFieldTitle => 'Naslov';
+
+  @override
+  String get hiFieldModel => 'Marka, model ili gdje je račun';
+
+  @override
+  String get hiFieldNote => 'Bilješka';
+
+  @override
+  String get hiFieldPhone => 'Telefon';
+
+  @override
+  String get hiFieldWarranty => 'Garancija do…';
+
+  @override
+  String hiWarrantyUntil(String date) {
+    return 'Garancija do $date';
+  }
+
+  @override
+  String hiWarrantyExpired(String date) {
+    return 'Garancija je istekla $date';
+  }
+
+  @override
+  String get hiSugWifi => 'Kućni Wi-Fi';
+
+  @override
+  String get hiSugLandlord => 'Stanodavac';
+
+  @override
+  String get hiSugPlumber => 'Vodoinstalater';
+
+  @override
+  String get hiSugInsurance => 'Osiguranje kuće';
+
+  @override
+  String get hiSugBuilding => 'Upravnik zgrade';
+
+  @override
+  String get hiSugWasher => 'Veš mašina';
+
+  @override
+  String get hiSugFridge => 'Frižider';
+
+  @override
+  String get hiSugBoiler => 'Kotao';
+
+  @override
+  String get hiSugBins => 'Dani odvoza smeća';
 }
