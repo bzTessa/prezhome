@@ -5915,4 +5915,32 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get rlNo => 'Ne sada';
+
+  @override
+  String get pgStepRecipes => 'Gledam tvoje recepte i šta imaš kod kuće…';
+
+  @override
+  String get pgStepWeek => 'Raspoređujem obroke u sedmici…';
+
+  @override
+  String get pgStepShopping => 'Pripremam listu za kupovinu…';
+
+  @override
+  String pgEmpty(int count, String meals) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count obroka su ostala prazna',
+      one: '1 obrok je ostao prazan',
+    );
+    return '$_temp0 jer nedostaju recepti za: $meals.';
+  }
+
+  @override
+  String get pgEmptyAction => 'Ideje';
+
+  @override
+  String warmOverdue(int count) {
+    return '$count kasni';
+  }
 }

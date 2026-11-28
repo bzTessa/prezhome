@@ -973,10 +973,13 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
+  // Las atrasadas van en la ficha de Tareas (Tareas ya tiene su aviso para
+  // ponerse al día): así no salen dos veces.
   static const _tileKinds = {
     DayLineKind.shopping,
     DayLineKind.expiring,
     DayLineKind.expired,
+    DayLineKind.overdue,
   };
 
   Future<void> _openSearch() async {
@@ -1086,6 +1089,12 @@ class HomeTabState extends State<HomeTab> {
   /// Cocina cálida: compra, lo que caduca, tareas y mañana, de un vistazo.
   Widget _warmTiles() {
     final tomorrow = _tomorrowItems.where((i) => !i.skipped).firstOrNull;
+    final overdue =
+        _dayLines()
+            .where((l) => l.kind == DayLineKind.overdue)
+            .firstOrNull
+            ?.count ??
+        0;
     return WarmTiles(
       tiles: [
         WarmTileData(
@@ -1105,10 +1114,12 @@ class HomeTabState extends State<HomeTab> {
           WarmTileData(
             label: context.l.warmTasks,
             value: '${_pendingTasks.length}',
-            sub: _doneTodayTasks.isEmpty
+            sub: overdue > 0
+                ? context.l.warmOverdue(overdue)
+                : _doneTodayTasks.isEmpty
                 ? null
                 : context.l.warmDoneToday(_doneTodayTasks.length),
-            tone: WarmTileTone.sage,
+            tone: overdue > 0 ? WarmTileTone.terracotta : WarmTileTone.sage,
             onTap: widget.onNavigateToTasks,
           ),
         WarmTileData(

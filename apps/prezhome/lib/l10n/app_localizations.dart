@@ -9142,6 +9142,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ahora no'**
   String get rlNo;
+
+  /// No description provided for @pgStepRecipes.
+  ///
+  /// In es, this message translates to:
+  /// **'Mirando tus recetas y lo que tienes en casa…'**
+  String get pgStepRecipes;
+
+  /// No description provided for @pgStepWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Repartiendo las comidas de la semana…'**
+  String get pgStepWeek;
+
+  /// No description provided for @pgStepShopping.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparando la lista de la compra…'**
+  String get pgStepShopping;
+
+  /// No description provided for @pgEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 comida se ha quedado vacía} other{{count} comidas se han quedado vacías}} porque faltan recetas de {meals}.'**
+  String pgEmpty(int count, String meals);
+
+  /// No description provided for @pgEmptyAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ideas'**
+  String get pgEmptyAction;
+
+  /// No description provided for @warmOverdue.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 atrasada} other{{count} atrasadas}}'**
+  String warmOverdue(int count);
 }
 
 class _AppLocalizationsDelegate

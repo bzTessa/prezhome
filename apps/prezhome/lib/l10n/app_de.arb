@@ -1504,5 +1504,11 @@
   "rlTitle": "Bei deinen Fertiggerichten speichern?",
   "rlBody": "Das hast du fertig gekauft. Wenn du es speicherst, schlage ich es an Tagen ohne Kochlust vor.",
   "rlYes": "Speichern",
-  "rlNo": "Jetzt nicht"
+  "rlNo": "Jetzt nicht",
+  "pgStepRecipes": "Ich schaue deine Rezepte und Vorräte an…",
+  "pgStepWeek": "Ich verteile die Mahlzeiten auf die Woche…",
+  "pgStepShopping": "Ich bereite die Einkaufsliste vor…",
+  "pgEmpty": "{count, plural, =1{1 Mahlzeit ist leer geblieben} other{{count} Mahlzeiten sind leer geblieben}}, weil Rezepte fehlen für: {meals}.",
+  "pgEmptyAction": "Ideen",
+  "warmOverdue": "{count} überfällig"
 }

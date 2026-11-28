@@ -1504,5 +1504,11 @@
   "rlTitle": "Je les garde dans tes plats tout prêts ?",
   "rlBody": "Tu as acheté ça tout prêt. Si tu les gardes, je te les proposerai les jours sans envie de cuisiner.",
   "rlYes": "Garder",
-  "rlNo": "Pas maintenant"
+  "rlNo": "Pas maintenant",
+  "pgStepRecipes": "Je regarde tes recettes et ce que tu as à la maison…",
+  "pgStepWeek": "Je répartis les repas de la semaine…",
+  "pgStepShopping": "Je prépare la liste de courses…",
+  "pgEmpty": "{count, plural, =1{1 repas est resté vide} other{{count} repas sont restés vides}} faute de recettes pour : {meals}.",
+  "pgEmptyAction": "Idées",
+  "warmOverdue": "{count, plural, =1{1 en retard} other{{count} en retard}}"
 }
