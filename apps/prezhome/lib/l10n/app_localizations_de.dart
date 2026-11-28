@@ -6158,4 +6158,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hiSugBins => 'Müllabfuhr-Tage';
+
+  @override
+  String get dxTile => 'Meine Daten herunterladen';
+
+  @override
+  String get dxTileSub =>
+      'Rezepte, Vorrat, Plan, Einkäufe und mehr in einer Datei';
+
+  @override
+  String get dxWorking => 'Deine Daten werden vorbereitet…';
+
+  @override
+  String get dxError => 'Deine Daten konnten nicht heruntergeladen werden';
 }
