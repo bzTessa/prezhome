@@ -6142,6 +6142,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hiSugBins => 'Bin and recycling days';
 
   @override
+  String get dxTile => 'Download my data';
+
+  @override
+  String get dxTileSub =>
+      'Recipes, pantry, plan, shopping and more in one file';
+
+  @override
+  String get dxWorking => 'Preparing your data…';
+
+  @override
+  String get dxError => 'Couldn\'t download your data';
+
+  @override
   String get fsFacts => 'Fun facts';
 
   @override

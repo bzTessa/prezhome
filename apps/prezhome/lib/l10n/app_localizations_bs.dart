@@ -6064,6 +6064,19 @@ class AppLocalizationsBs extends AppLocalizations {
   String get hiSugBins => 'Dani odvoza smeća';
 
   @override
+  String get dxTile => 'Preuzmi moje podatke';
+
+  @override
+  String get dxTileSub =>
+      'Recepti, ostava, plan, kupovina i više u jednoj datoteci';
+
+  @override
+  String get dxWorking => 'Pripremam tvoje podatke…';
+
+  @override
+  String get dxError => 'Nije moguće preuzeti tvoje podatke';
+
+  @override
   String get fsFacts => 'Zanimljivosti';
 
   @override

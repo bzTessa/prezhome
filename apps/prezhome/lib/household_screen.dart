@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -7,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'economy_screen.dart';
 import 'shared_expenses_screen.dart';
 import 'home_info_screen.dart';
+import 'services/data_export.dart';
 import 'plan_usage_screen.dart';
 import 'stats_screen.dart';
 import 'l10n/l10n.dart';
@@ -455,6 +458,54 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     );
   }
 
+  Future<void> _exportData(String homeId) async {
+    final l = context.l;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: Text(l.dxWorking)),
+          ],
+        ),
+      ),
+    );
+    var open = true;
+    void close() {
+      if (open && mounted) Navigator.of(context, rootNavigator: true).pop();
+      open = false;
+    }
+
+    try {
+      final export = await DataExport(_client).collect(homeId);
+      final name = DataExport.fileName(DateTime.now());
+      close();
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            XFile.fromData(
+              utf8.encode(DataExport.encode(export)),
+              mimeType: 'application/json',
+              name: name,
+            ),
+          ],
+          fileNameOverrides: [name],
+          subject: l.dxTile,
+        ),
+      );
+    } catch (e) {
+      close();
+      _snack(friendlyError(e, l.dxError), error: true);
+    }
+  }
+
   Widget _deleteAccountButton() => TextButton(
     onPressed: _deleteAccount,
     style: TextButton.styleFrom(foregroundColor: AppColors.inkMuted),
@@ -874,6 +925,15 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                       builder: (_) => HomeInfoScreen(homeId: data.homeId!),
                     ),
                   ),
+                ),
+              if (data.homeId != null)
+                _settingTile(
+                  icon: Icons.download_outlined,
+                  title: context.l.dxTile,
+                  subtitle: context.l.dxTileSub,
+                  iconBg: AppColors.sageBg,
+                  iconFg: AppColors.sage,
+                  onTap: () => _exportData(data.homeId!),
                 ),
               if (data.peopleCount > 1 && data.homeId != null)
                 _settingTile(

@@ -6191,6 +6191,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hiSugBins => 'Jours des poubelles et du tri';
 
   @override
+  String get dxTile => 'Télécharger mes données';
+
+  @override
+  String get dxTileSub =>
+      'Recettes, garde-manger, menu, courses et plus dans un fichier';
+
+  @override
+  String get dxWorking => 'Préparation de vos données…';
+
+  @override
+  String get dxError => 'Impossible de télécharger vos données';
+
+  @override
   String get fsFacts => 'Le saviez-vous ?';
 
   @override

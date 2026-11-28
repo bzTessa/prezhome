@@ -6166,6 +6166,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get hiSugBins => 'Dias do lixo e reciclagem';
 
   @override
+  String get dxTile => 'Descarregar os meus dados';
+
+  @override
+  String get dxTileSub =>
+      'Receitas, despensa, plano, compras e mais num ficheiro';
+
+  @override
+  String get dxWorking => 'A preparar os teus dados…';
+
+  @override
+  String get dxError => 'Não foi possível descarregar os teus dados';
+
+  @override
   String get fsFacts => 'Curiosidades';
 
   @override
