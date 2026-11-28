@@ -6035,4 +6035,39 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rlNo => 'Pas maintenant';
+
+  @override
+  String get pgStepRecipes =>
+      'Je regarde tes recettes et ce que tu as à la maison…';
+
+  @override
+  String get pgStepWeek => 'Je répartis les repas de la semaine…';
+
+  @override
+  String get pgStepShopping => 'Je prépare la liste de courses…';
+
+  @override
+  String pgEmpty(int count, String meals) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count repas sont restés vides',
+      one: '1 repas est resté vide',
+    );
+    return '$_temp0 faute de recettes pour : $meals.';
+  }
+
+  @override
+  String get pgEmptyAction => 'Idées';
+
+  @override
+  String warmOverdue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count en retard',
+      one: '1 en retard',
+    );
+    return '$_temp0';
+  }
 }

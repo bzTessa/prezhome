@@ -1504,5 +1504,11 @@
   "rlTitle": "Save to your ready meals?",
   "rlBody": "You bought these ready-made. If you save them, I'll suggest them on days you don't feel like cooking.",
   "rlYes": "Save",
-  "rlNo": "Not now"
+  "rlNo": "Not now",
+  "pgStepRecipes": "Looking at your recipes and what's at home…",
+  "pgStepWeek": "Spreading meals across the week…",
+  "pgStepShopping": "Getting the shopping list ready…",
+  "pgEmpty": "{count, plural, =1{1 meal is empty} other{{count} meals are empty}} because there aren't enough {meals} recipes.",
+  "pgEmptyAction": "Ideas",
+  "warmOverdue": "{count} overdue"
 }

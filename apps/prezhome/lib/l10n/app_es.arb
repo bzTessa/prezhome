@@ -3796,5 +3796,28 @@
   "rlTitle": "¿Lo guardo en tus preparados?",
   "rlBody": "Esto lo has comprado ya hecho. Si lo guardas, te lo propondré los días que no apetezca cocinar.",
   "rlYes": "Guardar",
-  "rlNo": "Ahora no"
+  "rlNo": "Ahora no",
+  "pgStepRecipes": "Mirando tus recetas y lo que tienes en casa…",
+  "pgStepWeek": "Repartiendo las comidas de la semana…",
+  "pgStepShopping": "Preparando la lista de la compra…",
+  "pgEmpty": "{count, plural, =1{1 comida se ha quedado vacía} other{{count} comidas se han quedado vacías}} porque faltan recetas de {meals}.",
+  "@pgEmpty": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "meals": {
+        "type": "String"
+      }
+    }
+  },
+  "pgEmptyAction": "Ideas",
+  "warmOverdue": "{count, plural, =1{1 atrasada} other{{count} atrasadas}}",
+  "@warmOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

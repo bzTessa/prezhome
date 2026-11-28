@@ -1504,5 +1504,11 @@
   "rlTitle": "Guardo nos teus pratos prontos?",
   "rlBody": "Compraste isto já feito. Se guardares, proponho-o nos dias em que não te apetecer cozinhar.",
   "rlYes": "Guardar",
-  "rlNo": "Agora não"
+  "rlNo": "Agora não",
+  "pgStepRecipes": "A ver as tuas receitas e o que tens em casa…",
+  "pgStepWeek": "A distribuir as refeições da semana…",
+  "pgStepShopping": "A preparar a lista de compras…",
+  "pgEmpty": "{count, plural, =1{1 refeição ficou vazia} other{{count} refeições ficaram vazias}} porque faltam receitas de {meals}.",
+  "pgEmptyAction": "Ideias",
+  "warmOverdue": "{count, plural, =1{1 atrasada} other{{count} atrasadas}}"
 }

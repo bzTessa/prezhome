@@ -1504,5 +1504,11 @@
   "rlTitle": "Li salvo tra i tuoi piatti pronti?",
   "rlBody": "Questi li hai comprati già pronti. Se li salvi, te li proporrò nei giorni in cui non hai voglia di cucinare.",
   "rlYes": "Salva",
-  "rlNo": "Non ora"
+  "rlNo": "Non ora",
+  "pgStepRecipes": "Guardo le tue ricette e cosa c'è in casa…",
+  "pgStepWeek": "Distribuisco i pasti della settimana…",
+  "pgStepShopping": "Preparo la lista della spesa…",
+  "pgEmpty": "{count, plural, =1{1 pasto è rimasto vuoto} other{{count} pasti sono rimasti vuoti}} perché mancano ricette per: {meals}.",
+  "pgEmptyAction": "Idee",
+  "warmOverdue": "{count, plural, =1{1 in ritardo} other{{count} in ritardo}}"
 }

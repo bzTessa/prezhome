@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:device_calendar_plus/device_calendar_plus.dart' show Calendar;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'discover_recipes_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -412,6 +413,46 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   Future<void> _generatePlan(_PlanData data, DateTime start, int days) async {
     setState(() => _generating = true);
+    // Hacer el plan tarda unos segundos: se dice qué está haciendo.
+    final step = ValueNotifier<String>(context.l.pgStepRecipes);
+    final nav = Navigator.of(context);
+    var dialogOpen = true;
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Row(
+              children: [
+                const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: step,
+                    builder: (_, text, _) =>
+                        Text(text, style: AppTextStyles.bodyStrong),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ).whenComplete(() => dialogOpen = false),
+    );
+    void closeDialog() {
+      if (dialogOpen) {
+        dialogOpen = false;
+        nav.pop();
+      }
+    }
+
+    var missing = <String, int>{};
     try {
       // Peso por receta a partir del feedback histórico.
       final fbRes = await _client
@@ -474,6 +515,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         );
         await PlanPrefs.save(prefs);
       }
+      if (mounted) step.value = context.l.pgStepWeek;
       final planner = MealPlanner();
       final plan = planner.generate(
         startDate: start,
@@ -586,8 +628,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       if (rows.isNotEmpty) {
         await _client.from('meal_plan_entries').insert(rows);
       }
+      // Comidas que se quedaron sin nada por falta de recetas.
+      final filled = {
+        ...kept,
+        for (final r in rows) '${r['plan_date']}|${r['meal_type']}',
+      };
+      for (var i = 0; i < days; i++) {
+        final d = start.add(Duration(days: i));
+        final day = d.toIso8601String().split('T').first;
+        for (final t in PlanPrefs.current.value.planned(data.activeMeals)) {
+          if (!filled.contains('$day|$t')) missing[t] = (missing[t] ?? 0) + 1;
+        }
+      }
       _reload();
       if (rows.isNotEmpty) {
+        if (mounted) step.value = context.l.pgStepShopping;
         await _fillShoppingFromPlan(data.homeId!, start, end);
         // Lo congelado ya está pagado: solo cuenta lo que hay que cocinar.
         var cost = 0.0;
@@ -601,8 +656,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           _showMiau(context.l.planCostEstimate(money(cost, decimals: 0)));
         }
       }
+      closeDialog();
+      if (missing.isNotEmpty && mounted) _explainEmpty(missing);
       await _offerRemoveOldTapers(data.homeId!, start, end);
     } catch (e) {
+      closeDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -612,8 +670,31 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         );
       }
     } finally {
+      closeDialog();
+      step.dispose();
       if (mounted) setState(() => _generating = false);
     }
+  }
+
+  /// Dice qué comidas se quedaron vacías por falta de recetas y ofrece
+  /// ideas, en vez de dejar huecos sin explicar.
+  void _explainEmpty(Map<String, int> missing) {
+    final total = missing.values.fold<int>(0, (a, b) => a + b);
+    final meals = [
+      for (final t in missing.keys) context.l.mealType(t).toLowerCase(),
+    ].join(', ');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 8),
+        content: Text(context.l.pgEmpty(total, meals)),
+        action: SnackBarAction(
+          label: context.l.pgEmptyAction,
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const DiscoverRecipesScreen()),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Al rehacer el plan, los tápers del plan anterior que siguen en la nevera

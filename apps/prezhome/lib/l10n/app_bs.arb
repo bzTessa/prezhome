@@ -1504,5 +1504,11 @@
   "rlTitle": "Da sačuvam u tvoja gotova jela?",
   "rlBody": "Ovo si kupila/kupio već gotovo. Ako sačuvaš, predložit ću ti to danima kad ti se ne kuha.",
   "rlYes": "Sačuvaj",
-  "rlNo": "Ne sada"
+  "rlNo": "Ne sada",
+  "pgStepRecipes": "Gledam tvoje recepte i šta imaš kod kuće…",
+  "pgStepWeek": "Raspoređujem obroke u sedmici…",
+  "pgStepShopping": "Pripremam listu za kupovinu…",
+  "pgEmpty": "{count, plural, =1{1 obrok je ostao prazan} other{{count} obroka su ostala prazna}} jer nedostaju recepti za: {meals}.",
+  "pgEmptyAction": "Ideje",
+  "warmOverdue": "{count} kasni"
 }
