@@ -9178,6 +9178,234 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{count, plural, =1{1 atrasada} other{{count} atrasadas}}'**
   String warmOverdue(int count);
+
+  /// No description provided for @hiTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ficha de la casa'**
+  String get hiTitle;
+
+  /// No description provided for @hiTile.
+  ///
+  /// In es, this message translates to:
+  /// **'Ficha de la casa'**
+  String get hiTile;
+
+  /// No description provided for @hiTileSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Wifi, contactos útiles y garantías'**
+  String get hiTileSub;
+
+  /// No description provided for @hiIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que toda la gente de casa necesita tener a mano. Lo ve todo el hogar.'**
+  String get hiIntro;
+
+  /// No description provided for @hiWifi.
+  ///
+  /// In es, this message translates to:
+  /// **'Wifi'**
+  String get hiWifi;
+
+  /// No description provided for @hiContacts.
+  ///
+  /// In es, this message translates to:
+  /// **'Contactos'**
+  String get hiContacts;
+
+  /// No description provided for @hiAppliances.
+  ///
+  /// In es, this message translates to:
+  /// **'Electrodomésticos'**
+  String get hiAppliances;
+
+  /// No description provided for @hiNotes.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas'**
+  String get hiNotes;
+
+  /// No description provided for @hiAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get hiAdd;
+
+  /// No description provided for @hiEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar'**
+  String get hiEdit;
+
+  /// No description provided for @hiDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar'**
+  String get hiDelete;
+
+  /// No description provided for @hiSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get hiSave;
+
+  /// No description provided for @hiDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrado'**
+  String get hiDeleted;
+
+  /// No description provided for @hiCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiado'**
+  String get hiCopied;
+
+  /// No description provided for @hiCopy.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar'**
+  String get hiCopy;
+
+  /// No description provided for @hiCopyKey.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar contraseña'**
+  String get hiCopyKey;
+
+  /// No description provided for @hiShareWifi.
+  ///
+  /// In es, this message translates to:
+  /// **'Pasar el wifi a una visita'**
+  String get hiShareWifi;
+
+  /// No description provided for @hiCall.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamar'**
+  String get hiCall;
+
+  /// No description provided for @hiWifiNetwork.
+  ///
+  /// In es, this message translates to:
+  /// **'Red'**
+  String get hiWifiNetwork;
+
+  /// No description provided for @hiWifiKey.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña'**
+  String get hiWifiKey;
+
+  /// No description provided for @hiFieldWho.
+  ///
+  /// In es, this message translates to:
+  /// **'Quién (casero, fontanero…)'**
+  String get hiFieldWho;
+
+  /// No description provided for @hiFieldAppliance.
+  ///
+  /// In es, this message translates to:
+  /// **'Electrodoméstico'**
+  String get hiFieldAppliance;
+
+  /// No description provided for @hiFieldTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Título'**
+  String get hiFieldTitle;
+
+  /// No description provided for @hiFieldModel.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca, modelo o dónde está la factura'**
+  String get hiFieldModel;
+
+  /// No description provided for @hiFieldNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota'**
+  String get hiFieldNote;
+
+  /// No description provided for @hiFieldPhone.
+  ///
+  /// In es, this message translates to:
+  /// **'Teléfono'**
+  String get hiFieldPhone;
+
+  /// No description provided for @hiFieldWarranty.
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía hasta…'**
+  String get hiFieldWarranty;
+
+  /// No description provided for @hiWarrantyUntil.
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía hasta el {date}'**
+  String hiWarrantyUntil(String date);
+
+  /// No description provided for @hiWarrantyExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'La garantía acabó el {date}'**
+  String hiWarrantyExpired(String date);
+
+  /// No description provided for @hiSugWifi.
+  ///
+  /// In es, this message translates to:
+  /// **'Wifi de casa'**
+  String get hiSugWifi;
+
+  /// No description provided for @hiSugLandlord.
+  ///
+  /// In es, this message translates to:
+  /// **'Casero'**
+  String get hiSugLandlord;
+
+  /// No description provided for @hiSugPlumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Fontanero'**
+  String get hiSugPlumber;
+
+  /// No description provided for @hiSugInsurance.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguro del hogar'**
+  String get hiSugInsurance;
+
+  /// No description provided for @hiSugBuilding.
+  ///
+  /// In es, this message translates to:
+  /// **'Comunidad'**
+  String get hiSugBuilding;
+
+  /// No description provided for @hiSugWasher.
+  ///
+  /// In es, this message translates to:
+  /// **'Lavadora'**
+  String get hiSugWasher;
+
+  /// No description provided for @hiSugFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'Nevera'**
+  String get hiSugFridge;
+
+  /// No description provided for @hiSugBoiler.
+  ///
+  /// In es, this message translates to:
+  /// **'Caldera'**
+  String get hiSugBoiler;
+
+  /// No description provided for @hiSugBins.
+  ///
+  /// In es, this message translates to:
+  /// **'Días de basura y reciclaje'**
+  String get hiSugBins;
 }
 
 class _AppLocalizationsDelegate

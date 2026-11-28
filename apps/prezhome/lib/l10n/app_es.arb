@@ -3819,5 +3819,57 @@
         "type": "int"
       }
     }
-  }
+  },
+  "hiTitle": "Ficha de la casa",
+  "hiTile": "Ficha de la casa",
+  "hiTileSub": "Wifi, contactos útiles y garantías",
+  "hiIntro": "Lo que toda la gente de casa necesita tener a mano. Lo ve todo el hogar.",
+  "hiWifi": "Wifi",
+  "hiContacts": "Contactos",
+  "hiAppliances": "Electrodomésticos",
+  "hiNotes": "Notas",
+  "hiAdd": "Añadir",
+  "hiEdit": "Editar",
+  "hiDelete": "Borrar",
+  "hiSave": "Guardar",
+  "hiDeleted": "Borrado",
+  "hiCopied": "Copiado",
+  "hiCopy": "Copiar",
+  "hiCopyKey": "Copiar contraseña",
+  "hiShareWifi": "Pasar el wifi a una visita",
+  "hiCall": "Llamar",
+  "hiWifiNetwork": "Red",
+  "hiWifiKey": "Contraseña",
+  "hiFieldWho": "Quién (casero, fontanero…)",
+  "hiFieldAppliance": "Electrodoméstico",
+  "hiFieldTitle": "Título",
+  "hiFieldModel": "Marca, modelo o dónde está la factura",
+  "hiFieldNote": "Nota",
+  "hiFieldPhone": "Teléfono",
+  "hiFieldWarranty": "Garantía hasta…",
+  "hiWarrantyUntil": "Garantía hasta el {date}",
+  "@hiWarrantyUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "hiWarrantyExpired": "La garantía acabó el {date}",
+  "@hiWarrantyExpired": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "hiSugWifi": "Wifi de casa",
+  "hiSugLandlord": "Casero",
+  "hiSugPlumber": "Fontanero",
+  "hiSugInsurance": "Seguro del hogar",
+  "hiSugBuilding": "Comunidad",
+  "hiSugWasher": "Lavadora",
+  "hiSugFridge": "Nevera",
+  "hiSugBoiler": "Caldera",
+  "hiSugBins": "Días de basura y reciclaje"
 }

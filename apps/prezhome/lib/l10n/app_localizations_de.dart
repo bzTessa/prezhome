@@ -6039,4 +6039,123 @@ class AppLocalizationsDe extends AppLocalizations {
   String warmOverdue(int count) {
     return '$count überfällig';
   }
+
+  @override
+  String get hiTitle => 'Haus-Infos';
+
+  @override
+  String get hiTile => 'Haus-Infos';
+
+  @override
+  String get hiTileSub => 'WLAN, wichtige Kontakte und Garantien';
+
+  @override
+  String get hiIntro =>
+      'Was alle im Haushalt griffbereit haben sollten. Für den ganzen Haushalt sichtbar.';
+
+  @override
+  String get hiWifi => 'WLAN';
+
+  @override
+  String get hiContacts => 'Kontakte';
+
+  @override
+  String get hiAppliances => 'Geräte';
+
+  @override
+  String get hiNotes => 'Notizen';
+
+  @override
+  String get hiAdd => 'Hinzufügen';
+
+  @override
+  String get hiEdit => 'Bearbeiten';
+
+  @override
+  String get hiDelete => 'Löschen';
+
+  @override
+  String get hiSave => 'Speichern';
+
+  @override
+  String get hiDeleted => 'Gelöscht';
+
+  @override
+  String get hiCopied => 'Kopiert';
+
+  @override
+  String get hiCopy => 'Kopieren';
+
+  @override
+  String get hiCopyKey => 'Passwort kopieren';
+
+  @override
+  String get hiShareWifi => 'WLAN mit Gästen teilen';
+
+  @override
+  String get hiCall => 'Anrufen';
+
+  @override
+  String get hiWifiNetwork => 'Netzwerk';
+
+  @override
+  String get hiWifiKey => 'Passwort';
+
+  @override
+  String get hiFieldWho => 'Wer (Vermieter, Klempner…)';
+
+  @override
+  String get hiFieldAppliance => 'Gerät';
+
+  @override
+  String get hiFieldTitle => 'Titel';
+
+  @override
+  String get hiFieldModel => 'Marke, Modell oder wo die Rechnung ist';
+
+  @override
+  String get hiFieldNote => 'Notiz';
+
+  @override
+  String get hiFieldPhone => 'Telefon';
+
+  @override
+  String get hiFieldWarranty => 'Garantie bis…';
+
+  @override
+  String hiWarrantyUntil(String date) {
+    return 'Garantie bis $date';
+  }
+
+  @override
+  String hiWarrantyExpired(String date) {
+    return 'Garantie endete am $date';
+  }
+
+  @override
+  String get hiSugWifi => 'WLAN zu Hause';
+
+  @override
+  String get hiSugLandlord => 'Vermieter';
+
+  @override
+  String get hiSugPlumber => 'Klempner';
+
+  @override
+  String get hiSugInsurance => 'Hausratversicherung';
+
+  @override
+  String get hiSugBuilding => 'Hausverwaltung';
+
+  @override
+  String get hiSugWasher => 'Waschmaschine';
+
+  @override
+  String get hiSugFridge => 'Kühlschrank';
+
+  @override
+  String get hiSugBoiler => 'Heizkessel';
+
+  @override
+  String get hiSugBins => 'Müllabfuhr-Tage';
 }
