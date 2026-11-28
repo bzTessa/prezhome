@@ -1548,5 +1548,9 @@
   "hiSugWasher": "Washing machine",
   "hiSugFridge": "Fridge",
   "hiSugBoiler": "Boiler",
-  "hiSugBins": "Bin and recycling days"
+  "hiSugBins": "Bin and recycling days",
+  "dxTile": "Download my data",
+  "dxTileSub": "Recipes, pantry, plan, shopping and more in one file",
+  "dxWorking": "Preparing your data…",
+  "dxError": "Couldn't download your data"
 }

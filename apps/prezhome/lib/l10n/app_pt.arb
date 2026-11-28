@@ -1548,5 +1548,9 @@
   "hiSugWasher": "Máquina de lavar",
   "hiSugFridge": "Frigorífico",
   "hiSugBoiler": "Caldeira",
-  "hiSugBins": "Dias do lixo e reciclagem"
+  "hiSugBins": "Dias do lixo e reciclagem",
+  "dxTile": "Descarregar os meus dados",
+  "dxTileSub": "Receitas, despensa, plano, compras e mais num ficheiro",
+  "dxWorking": "A preparar os teus dados…",
+  "dxError": "Não foi possível descarregar os teus dados"
 }

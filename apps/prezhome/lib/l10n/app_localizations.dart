@@ -9406,6 +9406,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Días de basura y reciclaje'**
   String get hiSugBins;
+
+  /// No description provided for @dxTile.
+  ///
+  /// In es, this message translates to:
+  /// **'Descargar mis datos'**
+  String get dxTile;
+
+  /// No description provided for @dxTileSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Recetas, despensa, plan, compras y más en un archivo'**
+  String get dxTileSub;
+
+  /// No description provided for @dxWorking.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparando tus datos…'**
+  String get dxWorking;
+
+  /// No description provided for @dxError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron descargar tus datos'**
+  String get dxError;
 }
 
 class _AppLocalizationsDelegate

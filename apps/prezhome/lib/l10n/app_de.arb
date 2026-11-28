@@ -1548,5 +1548,9 @@
   "hiSugWasher": "Waschmaschine",
   "hiSugFridge": "Kühlschrank",
   "hiSugBoiler": "Heizkessel",
-  "hiSugBins": "Müllabfuhr-Tage"
+  "hiSugBins": "Müllabfuhr-Tage",
+  "dxTile": "Meine Daten herunterladen",
+  "dxTileSub": "Rezepte, Vorrat, Plan, Einkäufe und mehr in einer Datei",
+  "dxWorking": "Deine Daten werden vorbereitet…",
+  "dxError": "Deine Daten konnten nicht heruntergeladen werden"
 }

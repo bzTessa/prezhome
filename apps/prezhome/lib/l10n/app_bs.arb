@@ -1548,5 +1548,9 @@
   "hiSugWasher": "Veš mašina",
   "hiSugFridge": "Frižider",
   "hiSugBoiler": "Kotao",
-  "hiSugBins": "Dani odvoza smeća"
+  "hiSugBins": "Dani odvoza smeća",
+  "dxTile": "Preuzmi moje podatke",
+  "dxTileSub": "Recepti, ostava, plan, kupovina i više u jednoj datoteci",
+  "dxWorking": "Pripremam tvoje podatke…",
+  "dxError": "Nije moguće preuzeti tvoje podatke"
 }
