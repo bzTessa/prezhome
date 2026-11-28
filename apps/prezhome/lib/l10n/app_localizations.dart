@@ -8926,6 +8926,222 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudo avisar. Inténtalo otra vez.'**
   String get pushShopFailed;
+
+  /// No description provided for @kindReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparado del súper'**
+  String get kindReady;
+
+  /// No description provided for @kindFromFreezer.
+  ///
+  /// In es, this message translates to:
+  /// **'Del congelador'**
+  String get kindFromFreezer;
+
+  /// No description provided for @kindNoCook.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cocinar'**
+  String get kindNoCook;
+
+  /// No description provided for @kindSeeRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver receta'**
+  String get kindSeeRecipe;
+
+  /// No description provided for @kindNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora'**
+  String get kindNow;
+
+  /// No description provided for @kindDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho'**
+  String get kindDone;
+
+  /// No description provided for @kindNoCookSwitch.
+  ///
+  /// In es, this message translates to:
+  /// **'No hace falta cocinar'**
+  String get kindNoCookSwitch;
+
+  /// No description provided for @kindNoCookSwitchSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Como un café o un yogur: no sale en el modo cocina ni en la cocina en lote.'**
+  String get kindNoCookSwitchSub;
+
+  /// No description provided for @ncAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy no me apetece'**
+  String get ncAction;
+
+  /// No description provided for @ncTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué te apetece entonces?'**
+  String get ncTitle;
+
+  /// No description provided for @ncBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Esto es lo que ya tienes listo. La receta de hoy pasa al siguiente día libre de la semana.'**
+  String get ncBody;
+
+  /// No description provided for @ncDishes.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya hecho en casa'**
+  String get ncDishes;
+
+  /// No description provided for @ncFrozen.
+  ///
+  /// In es, this message translates to:
+  /// **'En el congelador, hay que descongelarlo'**
+  String get ncFrozen;
+
+  /// No description provided for @ncFridge.
+  ///
+  /// In es, this message translates to:
+  /// **'En la nevera'**
+  String get ncFridge;
+
+  /// No description provided for @ncReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus preparados'**
+  String get ncReady;
+
+  /// No description provided for @ncAtHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo tienes en casa'**
+  String get ncAtHome;
+
+  /// No description provided for @ncNotAtHome.
+  ///
+  /// In es, this message translates to:
+  /// **'No queda en casa'**
+  String get ncNotAtHome;
+
+  /// No description provided for @ncQuick.
+  ///
+  /// In es, this message translates to:
+  /// **'Algo rápido'**
+  String get ncQuick;
+
+  /// No description provided for @ncNothing.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay tápers, preparados ni recetas rápidas. Los preparados del súper que guardes en el plan saldrán aquí.'**
+  String get ncNothing;
+
+  /// No description provided for @ncOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy comemos fuera'**
+  String get ncOut;
+
+  /// No description provided for @ncDoneNoMove.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho, hoy no toca cocinar.'**
+  String get ncDoneNoMove;
+
+  /// No description provided for @ncDoneMoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho. {title} pasa al {day}.'**
+  String ncDoneMoved(String title, String day);
+
+  /// No description provided for @recUsual.
+  ///
+  /// In es, this message translates to:
+  /// **'Las de siempre'**
+  String get recUsual;
+
+  /// No description provided for @apTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Poner en el plan'**
+  String get apTitle;
+
+  /// No description provided for @apDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día'**
+  String get apDay;
+
+  /// No description provided for @apMeal.
+  ///
+  /// In es, this message translates to:
+  /// **'Comida'**
+  String get apMeal;
+
+  /// No description provided for @apToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get apToday;
+
+  /// No description provided for @apTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get apTomorrow;
+
+  /// No description provided for @apAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir al plan'**
+  String get apAdd;
+
+  /// No description provided for @apDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Puesta en {meal} del {day}.'**
+  String apDone(String meal, String day);
+
+  /// No description provided for @recReadyMeals.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus preparados'**
+  String get recReadyMeals;
+
+  /// No description provided for @recReadyRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de tus preparados'**
+  String get recReadyRemove;
+
+  /// No description provided for @rlTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Lo guardo en tus preparados?'**
+  String get rlTitle;
+
+  /// No description provided for @rlBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Esto lo has comprado ya hecho. Si lo guardas, te lo propondré los días que no apetezca cocinar.'**
+  String get rlBody;
+
+  /// No description provided for @rlYes.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get rlYes;
+
+  /// No description provided for @rlNo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get rlNo;
 }
 
 class _AppLocalizationsDelegate

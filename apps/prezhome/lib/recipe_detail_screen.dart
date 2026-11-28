@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/plan/add_to_plan_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -975,8 +976,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             padding: EdgeInsets.zero,
             onSelected: (v) {
               switch (v) {
-                case 'cooked':
-                  _finishCooking();
+                case 'plan':
+                  addRecipeToPlan(context, _recipe);
                 case 'photo':
                   if (!_changingPhoto) _openPhotoMenu();
                 case 'share':
@@ -989,10 +990,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             },
             itemBuilder: (_) => [
               PopupMenuItem(
-                value: 'cooked',
+                value: 'plan',
                 child: ListTile(
-                  leading: const Icon(Icons.check_circle_outline_rounded),
-                  title: Text(context.l.rdCookedIt),
+                  leading: const Icon(Icons.calendar_month_outlined),
+                  title: Text(context.l.apTitle),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -1583,7 +1584,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-          child: steps.isEmpty
+          // Sin pasos, o el café/yogur: un solo botón, sin modo cocina.
+          child: steps.isEmpty || !r.needsCooking
               ? SizedBox(
                   height: 56,
                   width: double.infinity,
@@ -1601,7 +1603,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ),
                     ),
                     icon: const Icon(Icons.check_circle_outline_rounded),
-                    label: Text(context.l.rdCookedIt),
+                    label: Text(
+                      r.needsCooking
+                          ? context.l.rdCookedIt
+                          : context.l.kindDone,
+                    ),
                   ),
                 )
               : Row(

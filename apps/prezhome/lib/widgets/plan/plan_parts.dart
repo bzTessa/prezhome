@@ -186,9 +186,14 @@ class MealSlotCard extends StatelessWidget {
     this.extras = const [],
     this.onAddDish,
     this.state = MealSlotState.normal,
+    this.cooks = true,
   });
 
   final String mealType;
+
+  /// Hay que cocinarlo; si no (café, preparado, del congelador), la etiqueta
+  /// de la siguiente comida dice "Ahora" en vez de "Toca cocinar".
+  final bool cooks;
 
   /// Hoy: comida ya hecha o la siguiente que toca cocinar.
   final MealSlotState state;
@@ -353,7 +358,9 @@ class MealSlotCard extends StatelessWidget {
                                           bottom: 6,
                                         ),
                                         child: _StateChip(
-                                          text: context.l.planCookNow,
+                                          text: cooks
+                                              ? context.l.planCookNow
+                                              : context.l.kindNow,
                                           bg: AppColors.ink,
                                           fg: AppColors.card,
                                         ),
@@ -587,7 +594,7 @@ class MealSlotCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _StateChip(
-                      text: context.l.planCookNow,
+                      text: cooks ? context.l.planCookNow : context.l.kindNow,
                       bg: AppColors.ink,
                       fg: AppColors.card,
                     ),

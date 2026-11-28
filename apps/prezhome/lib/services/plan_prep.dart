@@ -30,6 +30,8 @@ MealPrepPlan prepPlanForWeek({
     if (made == null || d.isBefore(made)) made = d;
   }
   final from = made != null && made.isAfter(weekStart) ? made : weekStart;
+  // El café o el yogur del desayuno no se cocinan en lote.
+  bool cooks(MealPlanEntry e) => recipesById[e.recipeId]?.needsCooking ?? true;
   final meals = <PrepMeal>[
     for (final e in entries)
       // Sin raciones (nadie come en casa o plan antiguo) no se cocina; lo que
@@ -37,6 +39,7 @@ MealPrepPlan prepPlanForWeek({
       if (!e.skipped &&
           !e.fromFreezer &&
           e.recipeId != null &&
+          cooks(e) &&
           (e.servings ?? 0) > 0 &&
           !e.date.isBefore(from) &&
           e.date.isBefore(end))
@@ -55,6 +58,7 @@ MealPrepPlan prepPlanForWeek({
           e.fromFreezer &&
           e.inventoryItemId == null &&
           e.recipeId != null &&
+          cooks(e) &&
           (e.servings ?? 0) > 0 &&
           !e.date.isBefore(end) &&
           // Nadie más la cocina entre esta semana y ese día.

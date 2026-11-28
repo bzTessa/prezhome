@@ -5799,4 +5799,120 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get pushShopFailed => 'Nije uspjelo. Pokušaj ponovo.';
+
+  @override
+  String get kindReady => 'Gotovo jelo';
+
+  @override
+  String get kindFromFreezer => 'Iz zamrzivača';
+
+  @override
+  String get kindNoCook => 'Bez kuhanja';
+
+  @override
+  String get kindSeeRecipe => 'Pogledaj recept';
+
+  @override
+  String get kindNow => 'Sada';
+
+  @override
+  String get kindDone => 'Gotovo';
+
+  @override
+  String get kindNoCookSwitch => 'Ne treba kuhati';
+
+  @override
+  String get kindNoCookSwitchSub =>
+      'Kao kafa ili jogurt: ne pojavljuje se u načinu kuhanja ni u kuhanju unaprijed.';
+
+  @override
+  String get ncAction => 'Danas mi se ne da';
+
+  @override
+  String get ncTitle => 'Šta ti se onda jede?';
+
+  @override
+  String get ncBody =>
+      'Ovo već imaš spremno. Današnji recept prelazi na prvi slobodan dan u sedmici.';
+
+  @override
+  String get ncDishes => 'Već spremljeno kod kuće';
+
+  @override
+  String get ncFrozen => 'U zamrzivaču, treba odmrznuti';
+
+  @override
+  String get ncFridge => 'U frižideru';
+
+  @override
+  String get ncReady => 'Tvoja gotova jela';
+
+  @override
+  String get ncAtHome => 'Imaš kod kuće';
+
+  @override
+  String get ncNotAtHome => 'Nema više kod kuće';
+
+  @override
+  String get ncQuick => 'Nešto brzo';
+
+  @override
+  String get ncNothing =>
+      'Nema ostataka, gotovih jela ni brzih recepata. Gotova jela koja sačuvaš u planu pojavit će se ovdje.';
+
+  @override
+  String get ncOut => 'Danas jedemo vani';
+
+  @override
+  String get ncDoneNoMove => 'Gotovo, danas se ne kuha.';
+
+  @override
+  String ncDoneMoved(String title, String day) {
+    return 'Gotovo. $title prelazi na $day.';
+  }
+
+  @override
+  String get recUsual => 'Uvijek iste';
+
+  @override
+  String get apTitle => 'Dodaj u plan';
+
+  @override
+  String get apDay => 'Dan';
+
+  @override
+  String get apMeal => 'Obrok';
+
+  @override
+  String get apToday => 'Danas';
+
+  @override
+  String get apTomorrow => 'Sutra';
+
+  @override
+  String get apAdd => 'Dodaj u plan';
+
+  @override
+  String apDone(String meal, String day) {
+    return 'Dodano: $meal, $day.';
+  }
+
+  @override
+  String get recReadyMeals => 'Tvoja gotova jela';
+
+  @override
+  String get recReadyRemove => 'Ukloni iz gotovih jela';
+
+  @override
+  String get rlTitle => 'Da sačuvam u tvoja gotova jela?';
+
+  @override
+  String get rlBody =>
+      'Ovo si kupila/kupio već gotovo. Ako sačuvaš, predložit ću ti to danima kad ti se ne kuha.';
+
+  @override
+  String get rlYes => 'Sačuvaj';
+
+  @override
+  String get rlNo => 'Ne sada';
 }

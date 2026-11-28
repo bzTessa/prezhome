@@ -5895,4 +5895,120 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get pushShopFailed => 'Não foi possível avisar. Tenta outra vez.';
+
+  @override
+  String get kindReady => 'Pronto a comer';
+
+  @override
+  String get kindFromFreezer => 'Do congelador';
+
+  @override
+  String get kindNoCook => 'Sem cozinhar';
+
+  @override
+  String get kindSeeRecipe => 'Ver receita';
+
+  @override
+  String get kindNow => 'Agora';
+
+  @override
+  String get kindDone => 'Feito';
+
+  @override
+  String get kindNoCookSwitch => 'Não é preciso cozinhar';
+
+  @override
+  String get kindNoCookSwitchSub =>
+      'Como um café ou um iogurte: não aparece no modo cozinha nem na cozinha em lote.';
+
+  @override
+  String get ncAction => 'Hoje não me apetece';
+
+  @override
+  String get ncTitle => 'O que te apetece então?';
+
+  @override
+  String get ncBody =>
+      'Isto é o que já tens pronto. A receita de hoje passa para o próximo dia livre da semana.';
+
+  @override
+  String get ncDishes => 'Já feito em casa';
+
+  @override
+  String get ncFrozen => 'No congelador, tem de descongelar';
+
+  @override
+  String get ncFridge => 'No frigorífico';
+
+  @override
+  String get ncReady => 'Os teus pratos prontos';
+
+  @override
+  String get ncAtHome => 'Tens em casa';
+
+  @override
+  String get ncNotAtHome => 'Já não há em casa';
+
+  @override
+  String get ncQuick => 'Algo rápido';
+
+  @override
+  String get ncNothing =>
+      'Não há sobras, pratos prontos nem receitas rápidas. Os pratos prontos que guardares no plano aparecem aqui.';
+
+  @override
+  String get ncOut => 'Hoje comemos fora';
+
+  @override
+  String get ncDoneNoMove => 'Feito, hoje não se cozinha.';
+
+  @override
+  String ncDoneMoved(String title, String day) {
+    return 'Feito. $title passa para $day.';
+  }
+
+  @override
+  String get recUsual => 'As do costume';
+
+  @override
+  String get apTitle => 'Pôr no plano';
+
+  @override
+  String get apDay => 'Dia';
+
+  @override
+  String get apMeal => 'Refeição';
+
+  @override
+  String get apToday => 'Hoje';
+
+  @override
+  String get apTomorrow => 'Amanhã';
+
+  @override
+  String get apAdd => 'Adicionar ao plano';
+
+  @override
+  String apDone(String meal, String day) {
+    return 'Adicionada a $meal de $day.';
+  }
+
+  @override
+  String get recReadyMeals => 'Os teus pratos prontos';
+
+  @override
+  String get recReadyRemove => 'Tirar dos teus pratos prontos';
+
+  @override
+  String get rlTitle => 'Guardo nos teus pratos prontos?';
+
+  @override
+  String get rlBody =>
+      'Compraste isto já feito. Se guardares, proponho-o nos dias em que não te apetecer cozinhar.';
+
+  @override
+  String get rlYes => 'Guardar';
+
+  @override
+  String get rlNo => 'Agora não';
 }

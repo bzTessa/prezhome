@@ -3740,5 +3740,61 @@
   "pushShopSent": "Avisado. Lo que añadan saldrá en la lista.",
   "pushShopNobody": "Nadie más de casa tiene los avisos activados todavía.",
   "pushNotReady": "Los avisos aún no están activados.",
-  "pushShopFailed": "No se pudo avisar. Inténtalo otra vez."
+  "pushShopFailed": "No se pudo avisar. Inténtalo otra vez.",
+  "kindReady": "Preparado del súper",
+  "kindFromFreezer": "Del congelador",
+  "kindNoCook": "Sin cocinar",
+  "kindSeeRecipe": "Ver receta",
+  "kindNow": "Ahora",
+  "kindDone": "Hecho",
+  "kindNoCookSwitch": "No hace falta cocinar",
+  "kindNoCookSwitchSub": "Como un café o un yogur: no sale en el modo cocina ni en la cocina en lote.",
+  "ncAction": "Hoy no me apetece",
+  "ncTitle": "¿Qué te apetece entonces?",
+  "ncBody": "Esto es lo que ya tienes listo. La receta de hoy pasa al siguiente día libre de la semana.",
+  "ncDishes": "Ya hecho en casa",
+  "ncFrozen": "En el congelador, hay que descongelarlo",
+  "ncFridge": "En la nevera",
+  "ncReady": "Tus preparados",
+  "ncAtHome": "Lo tienes en casa",
+  "ncNotAtHome": "No queda en casa",
+  "ncQuick": "Algo rápido",
+  "ncNothing": "No hay tápers, preparados ni recetas rápidas. Los preparados del súper que guardes en el plan saldrán aquí.",
+  "ncOut": "Hoy comemos fuera",
+  "ncDoneNoMove": "Hecho, hoy no toca cocinar.",
+  "ncDoneMoved": "Hecho. {title} pasa al {day}.",
+  "@ncDoneMoved": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "recUsual": "Las de siempre",
+  "apTitle": "Poner en el plan",
+  "apDay": "Día",
+  "apMeal": "Comida",
+  "apToday": "Hoy",
+  "apTomorrow": "Mañana",
+  "apAdd": "Añadir al plan",
+  "apDone": "Puesta en {meal} del {day}.",
+  "@apDone": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "recReadyMeals": "Tus preparados",
+  "recReadyRemove": "Quitar de tus preparados",
+  "rlTitle": "¿Lo guardo en tus preparados?",
+  "rlBody": "Esto lo has comprado ya hecho. Si lo guardas, te lo propondré los días que no apetezca cocinar.",
+  "rlYes": "Guardar",
+  "rlNo": "Ahora no"
 }
