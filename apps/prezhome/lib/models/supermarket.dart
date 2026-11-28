@@ -195,6 +195,36 @@ class Supermarket {
         key.contains(q.replaceAll(' ', ''));
   }
 
+  /// Todos los súper conocidos, de España y de fuera.
+  static Iterable<Supermarket> get known => [
+    ...all,
+    ..._abroad.values.expand((l) => l),
+  ];
+
+  /// Súper que nombra lo que pone un ticket ("MERCADONA, S.A." es
+  /// Mercadona), o null si no es ninguno conocido.
+  static Supermarket? fromMerchant(String merchant) {
+    final words = _plain(merchant).split(RegExp(r'[^a-z0-9]+'));
+    final joined = words.join();
+    for (final s in known) {
+      final k = s.key.split('_').first;
+      // Las claves cortas ("bm", "dia") solo como palabra entera.
+      if (k.length <= 3 ? words.contains(k) : joined.contains(k)) return s;
+    }
+    return null;
+  }
+
+  static String _plain(String s) {
+    const from = 'áàäâéèëêíìïîóòöôúùüûñç';
+    const to = 'aaaaeeeeiiiioooouuuunc';
+    final b = StringBuffer();
+    for (final ch in s.toLowerCase().split('')) {
+      final i = from.indexOf(ch);
+      b.write(i < 0 ? ch : to[i]);
+    }
+    return b.toString();
+  }
+
   /// Súper de la clave [key] ("lidl_fr" es Lidl), o null si no se conoce.
   static Supermarket? byKey(String key) {
     for (final s in [...all, ..._abroad.values.expand((l) => l)]) {

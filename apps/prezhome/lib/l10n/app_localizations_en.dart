@@ -6153,4 +6153,243 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dxError => 'Couldn\'t download your data';
+
+  @override
+  String get fsFacts => 'Fun facts';
+
+  @override
+  String get fsSecMoney => 'Money and shopping';
+
+  @override
+  String get fsSecKitchen => 'Kitchen and pantry';
+
+  @override
+  String get fsSecHome => 'Home';
+
+  @override
+  String get fsSecYou => 'You';
+
+  @override
+  String get fsSecYouNote => 'Only you can see this';
+
+  @override
+  String get fsFactBoughtCaption => 'Bought this month';
+
+  @override
+  String fsFactStoreShare(int count) {
+    return '$count out of 10 receipts';
+  }
+
+  @override
+  String get fsFactShopDay => 'Your shopping day';
+
+  @override
+  String fsFactRecord(String place) {
+    return 'Biggest receipt · $place';
+  }
+
+  @override
+  String fsFactTopRecipe(int count) {
+    return 'Your most eaten · $count times';
+  }
+
+  @override
+  String get fsFactRescued => 'Saved before expiring this month';
+
+  @override
+  String fsFactStreak(int best) {
+    return 'Days in a row · your best: $best';
+  }
+
+  @override
+  String fsDayPart(String part) {
+    String _temp0 = intl.Intl.selectLogic(part, {
+      'morning': 'A morning person',
+      'afternoon': 'An afternoon person',
+      'other': 'A night owl',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String fsFactDayPart(int count) {
+    return '$count out of 10 chores';
+  }
+
+  @override
+  String get fsFactDistinct => 'Different products in 6 months';
+
+  @override
+  String get fsFactKcal => 'Kcal a day on average';
+
+  @override
+  String fsFactWeight(String date) {
+    return 'Since $date';
+  }
+
+  @override
+  String get fsByStore => 'By supermarket';
+
+  @override
+  String fsByStoreFooter(String avg, int count) {
+    return 'Average receipt $avg · $count receipts in 6 months';
+  }
+
+  @override
+  String get fsShopDays => 'Which day you shop';
+
+  @override
+  String get fsShopDaysFooter => 'Receipts by day of the week, 6 months';
+
+  @override
+  String get fsPrices => 'Prices on the move';
+
+  @override
+  String get fsPricesFooter =>
+      'Same store, from your first to your last purchase';
+
+  @override
+  String fsPriceSince(String before, String now, String date) {
+    return '$before → $now · since $date';
+  }
+
+  @override
+  String get fsCheaper => 'Where it’s cheaper';
+
+  @override
+  String fsCheaperRow(
+    String cheapStore,
+    String cheap,
+    String dearStore,
+    String dear,
+  ) {
+    return '$cheapStore $cheap · $dearStore $dear';
+  }
+
+  @override
+  String get fsCheaperFooter => 'Latest price at each store';
+
+  @override
+  String get fsBoughtMonth => 'Bought so far this month';
+
+  @override
+  String get fsBoughtFooter => 'Units on your receipts';
+
+  @override
+  String get fsTopRecipes => 'What you eat most';
+
+  @override
+  String fsTopRecipesFooter(int now, int before) {
+    return 'Different dishes: $now this month, $before last month';
+  }
+
+  @override
+  String get fsTopRecipesEmpty => 'Plan meals to see your star dishes.';
+
+  @override
+  String get fsWaste => 'Used up and thrown away';
+
+  @override
+  String get fsRescued => 'Used up';
+
+  @override
+  String get fsThrown => 'Thrown away';
+
+  @override
+  String fsMostThrown(String list) {
+    return 'Most thrown away: $list';
+  }
+
+  @override
+  String get fsWasteFooter => 'Used up: eaten when it was about to expire';
+
+  @override
+  String get fsTaskTop => 'Most done chores';
+
+  @override
+  String get fsTaskTopFooter => 'Times in the last 3 months';
+
+  @override
+  String get fsTaskWhen => 'When chores get done';
+
+  @override
+  String get fsMorning => 'Morning';
+
+  @override
+  String get fsAfternoon => 'Afternoon';
+
+  @override
+  String get fsNight => 'Night';
+
+  @override
+  String fsTaskWhenFooter(String day) {
+    return 'Busiest day: $day';
+  }
+
+  @override
+  String get fsActivity => 'Your activity';
+
+  @override
+  String get fsActivityFooter => 'Chores done and meals logged, 12 weeks';
+
+  @override
+  String fsActivityA11y(int days, int weeks) {
+    return '$days active days in $weeks weeks';
+  }
+
+  @override
+  String get fsStreakNow => 'Streak';
+
+  @override
+  String get fsStreakBest => 'Best streak';
+
+  @override
+  String get fsDaysActive => 'Active days';
+
+  @override
+  String fsDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fsKcal => 'Your calories';
+
+  @override
+  String get fsKcalFooter => 'Last 30 days';
+
+  @override
+  String get fsKcalAvg => 'Average';
+
+  @override
+  String get fsKcalLogged => 'Logged';
+
+  @override
+  String get fsKcalOnTarget => 'On target';
+
+  @override
+  String get fsGoal => 'Goal';
+
+  @override
+  String fsMacros(int p, int c, int f) {
+    return 'Protein $p % · Carbs $c % · Fat $f %';
+  }
+
+  @override
+  String fsTopFoods(String list) {
+    return 'You log most: $list';
+  }
+
+  @override
+  String get fsWeight => 'Your weight';
+
+  @override
+  String fsWeightChange(String change, String date) {
+    return '$change since $date';
+  }
 }

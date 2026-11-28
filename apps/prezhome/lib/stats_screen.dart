@@ -1,4 +1,3 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,10 +7,10 @@ import 'utils/money.dart';
 import 'economy_screen.dart';
 import 'product_stats_screen.dart';
 import 'scan_ticket_screen.dart';
+import 'services/fun_stats.dart';
 import 'services/month_wins.dart';
 import 'services/spend_forecast.dart';
 import 'services/home_people.dart';
-import 'theme/app_motion.dart';
 import 'theme/app_theme.dart';
 import 'utils/friendly_error.dart';
 import 'utils/ticket_date.dart';
@@ -20,6 +19,8 @@ import 'widgets/animations/staggered_entrance.dart';
 import 'widgets/food_category_icon.dart';
 import 'widgets/list_skeleton.dart';
 import 'widgets/month_wins_card.dart';
+import 'widgets/stats/fun_sections.dart';
+import 'widgets/stats/stat_charts.dart';
 import 'l10n/l10n.dart';
 
 /// "Tus datos": gráficas de gasto (con previsión), compra, despensa, comidas
@@ -48,8 +49,10 @@ class _StatsData {
   final List<(String, double)> tasksByPerson;
   final List<(String, double)> tasksByWeek;
   final MonthWins wins;
+  final FunStats fun;
 
   _StatsData({
+    this.fun = const FunStats(),
     required this.budget,
     required this.months,
     required this.forecast,
@@ -115,6 +118,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final since = weeks.first.isBefore(monthStart) ? weeks.first : monthStart;
 
     final winsFuture = MonthWins.load(_client, now: now);
+    final funFuture = FunStats.load(_client, homeId, now: now);
     final results = await Future.wait<dynamic>([
       _client
           .from('budgets')
@@ -258,6 +262,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
     return _StatsData(
       wins: await winsFuture,
+      fun: await funFuture,
       budget: budget,
       months: months,
       forecast: forecast,
@@ -333,89 +338,110 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  List<Widget> _sections(_StatsData d) => [
-    _spendHero(d),
-    if (!d.wins.isEmpty) MonthWinsCard(wins: d.wins),
-    _card(
-      title: context.l.stSpendByMonth,
-      icon: Icons.bar_chart_rounded,
-      accent: (AppColors.peachBg, AppColors.woodDark),
-      footer: d.spent > 0 ? context.l.stForecastFooter : null,
-      child: d.months.every((m) => m.$2 == 0)
-          ? _noData(context.l.stNoSpend)
-          : _ColumnChart(
-              values: d.months,
-              color: AppColors.wood,
-              euros: true,
-              lastGhost: d.forecast,
-              guide: d.budget > 0 ? d.budget : null,
-            ),
-    ),
-    _card(
-      title: context.l.stWhereSpend,
-      icon: Icons.donut_small_outlined,
-      accent: (AppColors.peachBg, AppColors.woodDark),
-      child: d.byCategory.isEmpty
-          ? _noData(context.l.stNoTicketsMonth)
-          : _BarList(items: d.byCategory, color: AppColors.wood, euros: true),
-    ),
-    _card(
-      title: context.l.stTopProducts,
-      icon: Icons.shopping_basket_outlined,
-      accent: (AppColors.sageBg, AppColors.sage),
-      footer: context.l.stTopProductsFooter,
-      onTap: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const ProductStatsScreen())),
-      child: d.topProducts.isEmpty
-          ? _noData(context.l.stTopProductsEmpty)
-          : _BarList(items: d.topProducts, color: AppColors.sage),
-    ),
-    _card(
-      title: context.l.stPantry,
-      icon: Icons.kitchen_outlined,
-      accent: (AppColors.frostBg, AppColors.frost),
-      child: Column(
-        children: [
-          _pantryStatus(d),
-          if (d.pantryByZone.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.lg),
-            _BarList(items: d.pantryByZone, color: AppColors.frost),
-          ],
-        ],
+  List<Widget> _sections(_StatsData d) {
+    final f = FunSections(context, d.fun);
+    final l = context.l;
+    return [
+      _spendHero(d),
+      if (!d.wins.isEmpty) MonthWinsCard(wins: d.wins),
+      ?f.facts(),
+      StatSectionHeader(l.fsSecMoney),
+      _card(
+        title: context.l.stSpendByMonth,
+        icon: Icons.bar_chart_rounded,
+        accent: (AppColors.peachBg, AppColors.woodDark),
+        footer: d.spent > 0 ? context.l.stForecastFooter : null,
+        child: d.months.every((m) => m.$2 == 0)
+            ? _noData(context.l.stNoSpend)
+            : ColumnChart(
+                values: d.months,
+                color: AppColors.wood,
+                euros: true,
+                lastGhost: d.forecast,
+                guide: d.budget > 0 ? d.budget : null,
+              ),
       ),
-    ),
-    _card(
-      title: context.l.stMealsHome,
-      icon: Icons.restaurant_menu_rounded,
-      accent: (AppColors.terracottaBg, AppColors.terracotta),
-      footer: d.mealsOut > 0
-          ? context.l.stMealsOut(d.mealsOut)
-          : context.l.stPerWeek,
-      child: d.mealsByWeek.every((w) => w.$2 == 0)
-          ? _noData(context.l.stMealsEmpty)
-          : _ColumnChart(values: d.mealsByWeek, color: AppColors.terracotta),
-    ),
-    _card(
-      title: context.l.stTasksDone,
-      icon: Icons.check_circle_outline_rounded,
-      accent: (AppColors.lilacBg, AppColors.lilac),
-      footer: d.tasksByPerson.isEmpty
-          ? context.l.stPerWeek
-          : context.l.stTasksFooter,
-      child: d.tasksByWeek.every((w) => w.$2 == 0)
-          ? _noData(context.l.stTasksEmpty)
-          : Column(
-              children: [
-                _ColumnChart(values: d.tasksByWeek, color: AppColors.lilac),
-                if (d.tasksByPerson.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  _BarList(items: d.tasksByPerson, color: AppColors.lilac),
+      _card(
+        title: context.l.stWhereSpend,
+        icon: Icons.donut_small_outlined,
+        accent: (AppColors.peachBg, AppColors.woodDark),
+        child: d.byCategory.isEmpty
+            ? _noData(context.l.stNoTicketsMonth)
+            : BarList(items: d.byCategory, color: AppColors.wood, euros: true),
+      ),
+      ?f.byStore(),
+      ?f.shopDays(),
+      ?f.prices(),
+      ?f.cheaper(),
+      _card(
+        title: context.l.stTopProducts,
+        icon: Icons.shopping_basket_outlined,
+        accent: (AppColors.sageBg, AppColors.sage),
+        footer: context.l.stTopProductsFooter,
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ProductStatsScreen())),
+        child: d.topProducts.isEmpty
+            ? _noData(context.l.stTopProductsEmpty)
+            : BarList(items: d.topProducts, color: AppColors.sage),
+      ),
+      ?f.boughtThisMonth(),
+      StatSectionHeader(l.fsSecKitchen),
+      f.topRecipes(),
+      _card(
+        title: context.l.stMealsHome,
+        icon: Icons.restaurant_menu_rounded,
+        accent: (AppColors.terracottaBg, AppColors.terracotta),
+        footer: d.mealsOut > 0
+            ? context.l.stMealsOut(d.mealsOut)
+            : context.l.stPerWeek,
+        child: d.mealsByWeek.every((w) => w.$2 == 0)
+            ? _noData(context.l.stMealsEmpty)
+            : ColumnChart(values: d.mealsByWeek, color: AppColors.terracotta),
+      ),
+      _card(
+        title: context.l.stPantry,
+        icon: Icons.kitchen_outlined,
+        accent: (AppColors.frostBg, AppColors.frost),
+        child: Column(
+          children: [
+            _pantryStatus(d),
+            if (d.pantryByZone.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
+              BarList(items: d.pantryByZone, color: AppColors.frost),
+            ],
+          ],
+        ),
+      ),
+      ?f.waste(),
+      StatSectionHeader(l.fsSecHome),
+      _card(
+        title: context.l.stTasksDone,
+        icon: Icons.check_circle_outline_rounded,
+        accent: (AppColors.lilacBg, AppColors.lilac),
+        footer: d.tasksByPerson.isEmpty
+            ? context.l.stPerWeek
+            : context.l.stTasksFooter,
+        child: d.tasksByWeek.every((w) => w.$2 == 0)
+            ? _noData(context.l.stTasksEmpty)
+            : Column(
+                children: [
+                  ColumnChart(values: d.tasksByWeek, color: AppColors.lilac),
+                  if (d.tasksByPerson.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    BarList(items: d.tasksByPerson, color: AppColors.lilac),
+                  ],
                 ],
-              ],
-            ),
-    ),
-  ];
+              ),
+      ),
+      ?f.topTasks(),
+      ?f.taskWhen(),
+      StatSectionHeader(l.fsSecYou, note: l.fsSecYouNote),
+      f.activity(),
+      ?f.kcal(),
+      ?f.weight(),
+    ];
+  }
 
   /// Lo primero: cuánto llevas este mes, cuánto vas a gastar y el acceso a
   /// escanear un ticket.
@@ -563,50 +589,14 @@ class _StatsScreenState extends State<StatsScreen> {
     required Widget child,
     String? footer,
     VoidCallback? onTap,
-  }) {
-    return Material(
-      color: AppColors.card,
-      borderRadius: AppRadius.lgRadius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.lgRadius,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: accent.$1,
-                      borderRadius: AppRadius.smRadius,
-                    ),
-                    child: Icon(icon, size: 20, color: accent.$2),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(child: Text(title, style: AppTextStyles.title)),
-                  if (onTap != null)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColors.inkMuted,
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              child,
-              if (footer != null) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(footer, style: AppTextStyles.labelMuted),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  }) => StatCard(
+    title: title,
+    icon: icon,
+    accent: accent,
+    footer: footer,
+    onTap: onTap,
+    child: child,
+  );
 }
 
 /// Barra de presupuesto: lo gastado en sólido y lo previsto, más claro.
@@ -654,210 +644,6 @@ class _BudgetBar extends StatelessWidget {
             color: over ? AppColors.expired : null,
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// Columnas de una sola serie con el valor al tocar. [lastGhost] dibuja en
-/// claro, detrás de la última columna, hasta dónde se espera que llegue;
-/// [guide] es una línea discontinua de referencia (el presupuesto).
-class _ColumnChart extends StatelessWidget {
-  const _ColumnChart({
-    required this.values,
-    required this.color,
-    this.euros = false,
-    this.lastGhost,
-    this.guide,
-  });
-
-  final List<(String, double)> values;
-  final Color color;
-  final bool euros;
-  final double? lastGhost;
-  final double? guide;
-
-  String _fmt(double v) => euros ? money(v, decimals: 0) : v.toStringAsFixed(0);
-
-  @override
-  Widget build(BuildContext context) {
-    final maxV = [
-      ...values.map((v) => v.$2),
-      lastGhost ?? 0,
-      guide ?? 0,
-    ].reduce((a, b) => a > b ? a : b);
-    final last = values.length - 1;
-    return SizedBox(
-      height: 170,
-      child: BarChart(
-        duration: AppMotion.slow,
-        BarChartData(
-          maxY: maxV <= 0 ? 1 : maxV * 1.15,
-          minY: 0,
-          alignment: BarChartAlignment.spaceAround,
-          borderData: FlBorderData(show: false),
-          gridData: FlGridData(
-            drawVerticalLine: false,
-            getDrawingHorizontalLine: (_) =>
-                FlLine(color: AppColors.line, strokeWidth: 1),
-          ),
-          barTouchData: BarTouchData(
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => AppColors.ink,
-              getTooltipItem: (group, _, rod, _) => BarTooltipItem(
-                group.x == last && lastGhost != null
-                    ? '${_fmt(rod.toY)}\n${context.l.stForecastTip(_fmt(lastGhost!))}'
-                    : _fmt(rod.toY),
-                TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(),
-            rightTitles: const AxisTitles(),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 36,
-                getTitlesWidget: (v, meta) => v == meta.max
-                    ? const SizedBox.shrink()
-                    : Text(
-                        meta.formattedValue,
-                        style: AppTextStyles.labelMuted.copyWith(fontSize: 11),
-                      ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 26,
-                getTitlesWidget: (v, _) {
-                  final i = v.toInt();
-                  if (i < 0 || i > last) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      values[i].$1,
-                      style: AppTextStyles.labelMuted.copyWith(
-                        fontSize: 12,
-                        fontWeight: i == last ? FontWeight.w800 : null,
-                        color: i == last ? AppColors.ink : null,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          extraLinesData: guide == null
-              ? const ExtraLinesData()
-              : ExtraLinesData(
-                  horizontalLines: [
-                    HorizontalLine(
-                      y: guide!,
-                      color: AppColors.inkMuted,
-                      strokeWidth: 1.5,
-                      dashArray: [5, 4],
-                      label: HorizontalLineLabel(
-                        show: true,
-                        alignment: Alignment.topRight,
-                        style: AppTextStyles.labelMuted.copyWith(fontSize: 11),
-                        labelResolver: (_) => context.l.ecoBudgetShort,
-                      ),
-                    ),
-                  ],
-                ),
-          barGroups: [
-            for (int i = 0; i <= last; i++)
-              BarChartGroupData(
-                x: i,
-                barRods: [
-                  BarChartRodData(
-                    toY: values[i].$2,
-                    color: color,
-                    width: 22,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(6),
-                    ),
-                    backDrawRodData: i == last && lastGhost != null
-                        ? BackgroundBarChartRodData(
-                            show: true,
-                            toY: lastGhost!,
-                            color: color.withValues(alpha: 0.3),
-                          )
-                        : null,
-                  ),
-                ],
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Barras horizontales con su nombre y el valor escrito (no solo color).
-class _BarList extends StatelessWidget {
-  const _BarList({
-    required this.items,
-    required this.color,
-    this.euros = false,
-  });
-
-  final List<(String, double)> items;
-  final Color color;
-  final bool euros;
-
-  @override
-  Widget build(BuildContext context) {
-    final maxV = items.fold<double>(0, (a, e) => e.$2 > a ? e.$2 : a);
-    return Column(
-      children: [
-        for (final (label, v) in items)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.label,
-                      ),
-                    ),
-                    Text(
-                      euros ? money(v) : v.toStringAsFixed(0),
-                      style: AppTextStyles.label.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: maxV > 0 ? v / maxV : 0),
-                  duration: AppMotion.slow,
-                  curve: Curves.easeOutCubic,
-                  builder: (_, f, _) => ClipRRect(
-                    borderRadius: AppRadius.pillRadius,
-                    child: Stack(
-                      children: [
-                        Container(height: 8, color: AppColors.line),
-                        FractionallySizedBox(
-                          widthFactor: f,
-                          child: Container(height: 8, color: color),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }

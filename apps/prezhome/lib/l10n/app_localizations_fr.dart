@@ -6202,4 +6202,243 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dxError => 'Impossible de télécharger vos données';
+
+  @override
+  String get fsFacts => 'Le saviez-vous ?';
+
+  @override
+  String get fsSecMoney => 'Argent et courses';
+
+  @override
+  String get fsSecKitchen => 'Cuisine et placards';
+
+  @override
+  String get fsSecHome => 'Maison';
+
+  @override
+  String get fsSecYou => 'Vous';
+
+  @override
+  String get fsSecYouNote => 'Vous seul le voyez';
+
+  @override
+  String get fsFactBoughtCaption => 'Achetés ce mois-ci';
+
+  @override
+  String fsFactStoreShare(int count) {
+    return '$count tickets sur 10';
+  }
+
+  @override
+  String get fsFactShopDay => 'Votre jour de courses';
+
+  @override
+  String fsFactRecord(String place) {
+    return 'Ticket record · $place';
+  }
+
+  @override
+  String fsFactTopRecipe(int count) {
+    return 'Votre plat le plus mangé · $count fois';
+  }
+
+  @override
+  String get fsFactRescued => 'Sauvés avant péremption ce mois-ci';
+
+  @override
+  String fsFactStreak(int best) {
+    return 'Jours d’affilée · votre record : $best';
+  }
+
+  @override
+  String fsDayPart(String part) {
+    String _temp0 = intl.Intl.selectLogic(part, {
+      'morning': 'Du matin',
+      'afternoon': 'De l’après-midi',
+      'other': 'Du soir',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String fsFactDayPart(int count) {
+    return '$count tâches sur 10';
+  }
+
+  @override
+  String get fsFactDistinct => 'Produits différents en 6 mois';
+
+  @override
+  String get fsFactKcal => 'Kcal par jour en moyenne';
+
+  @override
+  String fsFactWeight(String date) {
+    return 'Depuis le $date';
+  }
+
+  @override
+  String get fsByStore => 'Par supermarché';
+
+  @override
+  String fsByStoreFooter(String avg, int count) {
+    return 'Ticket moyen $avg · $count tickets en 6 mois';
+  }
+
+  @override
+  String get fsShopDays => 'Quel jour vous faites les courses';
+
+  @override
+  String get fsShopDaysFooter => 'Tickets par jour de la semaine, 6 mois';
+
+  @override
+  String get fsPrices => 'Les prix qui bougent';
+
+  @override
+  String get fsPricesFooter => 'Même magasin, du premier au dernier achat';
+
+  @override
+  String fsPriceSince(String before, String now, String date) {
+    return '$before → $now · depuis $date';
+  }
+
+  @override
+  String get fsCheaper => 'Où c’est moins cher';
+
+  @override
+  String fsCheaperRow(
+    String cheapStore,
+    String cheap,
+    String dearStore,
+    String dear,
+  ) {
+    return '$cheapStore $cheap · $dearStore $dear';
+  }
+
+  @override
+  String get fsCheaperFooter => 'Dernier prix dans chaque magasin';
+
+  @override
+  String get fsBoughtMonth => 'Acheté ce mois-ci';
+
+  @override
+  String get fsBoughtFooter => 'Unités sur vos tickets';
+
+  @override
+  String get fsTopRecipes => 'Ce que vous mangez le plus';
+
+  @override
+  String fsTopRecipesFooter(int now, int before) {
+    return 'Plats différents : $now ce mois-ci, $before le mois dernier';
+  }
+
+  @override
+  String get fsTopRecipesEmpty =>
+      'Planifiez vos repas pour voir vos plats phares.';
+
+  @override
+  String get fsWaste => 'Utilisé et jeté';
+
+  @override
+  String get fsRescued => 'Utilisé';
+
+  @override
+  String get fsThrown => 'Jeté';
+
+  @override
+  String fsMostThrown(String list) {
+    return 'Le plus jeté : $list';
+  }
+
+  @override
+  String get fsWasteFooter => 'Utilisé : consommé juste avant la date limite';
+
+  @override
+  String get fsTaskTop => 'Les tâches les plus faites';
+
+  @override
+  String get fsTaskTopFooter => 'Fois sur les 3 derniers mois';
+
+  @override
+  String get fsTaskWhen => 'Quand les tâches sont faites';
+
+  @override
+  String get fsMorning => 'Matin';
+
+  @override
+  String get fsAfternoon => 'Après-midi';
+
+  @override
+  String get fsNight => 'Soir';
+
+  @override
+  String fsTaskWhenFooter(String day) {
+    return 'Le jour le plus actif : $day';
+  }
+
+  @override
+  String get fsActivity => 'Votre activité';
+
+  @override
+  String get fsActivityFooter => 'Tâches faites et repas notés, 12 semaines';
+
+  @override
+  String fsActivityA11y(int days, int weeks) {
+    return '$days jours actifs en $weeks semaines';
+  }
+
+  @override
+  String get fsStreakNow => 'Série';
+
+  @override
+  String get fsStreakBest => 'Meilleure série';
+
+  @override
+  String get fsDaysActive => 'Jours actifs';
+
+  @override
+  String fsDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours',
+      one: '1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fsKcal => 'Vos calories';
+
+  @override
+  String get fsKcalFooter => '30 derniers jours';
+
+  @override
+  String get fsKcalAvg => 'Moyenne';
+
+  @override
+  String get fsKcalLogged => 'Notés';
+
+  @override
+  String get fsKcalOnTarget => 'Dans l’objectif';
+
+  @override
+  String get fsGoal => 'Objectif';
+
+  @override
+  String fsMacros(int p, int c, int f) {
+    return 'Protéines $p % · Glucides $c % · Lipides $f %';
+  }
+
+  @override
+  String fsTopFoods(String list) {
+    return 'Ce que vous notez le plus : $list';
+  }
+
+  @override
+  String get fsWeight => 'Votre poids';
+
+  @override
+  String fsWeightChange(String change, String date) {
+    return '$change depuis le $date';
+  }
 }

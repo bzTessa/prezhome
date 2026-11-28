@@ -9430,6 +9430,383 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudieron descargar tus datos'**
   String get dxError;
+
+  /// No description provided for @fsFacts.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos curiosos'**
+  String get fsFacts;
+
+  /// No description provided for @fsSecMoney.
+  ///
+  /// In es, this message translates to:
+  /// **'Dinero y compra'**
+  String get fsSecMoney;
+
+  /// No description provided for @fsSecKitchen.
+  ///
+  /// In es, this message translates to:
+  /// **'Cocina y despensa'**
+  String get fsSecKitchen;
+
+  /// No description provided for @fsSecHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Casa'**
+  String get fsSecHome;
+
+  /// No description provided for @fsSecYou.
+  ///
+  /// In es, this message translates to:
+  /// **'Tú'**
+  String get fsSecYou;
+
+  /// No description provided for @fsSecYouNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo lo ves tú'**
+  String get fsSecYouNote;
+
+  /// No description provided for @fsFactBoughtCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprados este mes'**
+  String get fsFactBoughtCaption;
+
+  /// No description provided for @fsFactStoreShare.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} de cada 10 tickets'**
+  String fsFactStoreShare(int count);
+
+  /// No description provided for @fsFactShopDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu día de ir a comprar'**
+  String get fsFactShopDay;
+
+  /// No description provided for @fsFactRecord.
+  ///
+  /// In es, this message translates to:
+  /// **'Ticket récord · {place}'**
+  String fsFactRecord(String place);
+
+  /// No description provided for @fsFactTopRecipe.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que más coméis · {count} veces'**
+  String fsFactTopRecipe(int count);
+
+  /// No description provided for @fsFactRescued.
+  ///
+  /// In es, this message translates to:
+  /// **'Salvados de caducar este mes'**
+  String get fsFactRescued;
+
+  /// No description provided for @fsFactStreak.
+  ///
+  /// In es, this message translates to:
+  /// **'Días seguidos · tu mejor racha: {best}'**
+  String fsFactStreak(int best);
+
+  /// No description provided for @fsDayPart.
+  ///
+  /// In es, this message translates to:
+  /// **'{part, select, morning{De mañanas} afternoon{De tardes} other{De noches}}'**
+  String fsDayPart(String part);
+
+  /// No description provided for @fsFactDayPart.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} de cada 10 tareas'**
+  String fsFactDayPart(int count);
+
+  /// No description provided for @fsFactDistinct.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos distintos en 6 meses'**
+  String get fsFactDistinct;
+
+  /// No description provided for @fsFactKcal.
+  ///
+  /// In es, this message translates to:
+  /// **'Kcal de media al día'**
+  String get fsFactKcal;
+
+  /// No description provided for @fsFactWeight.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde el {date}'**
+  String fsFactWeight(String date);
+
+  /// No description provided for @fsByStore.
+  ///
+  /// In es, this message translates to:
+  /// **'Por supermercado'**
+  String get fsByStore;
+
+  /// No description provided for @fsByStoreFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Ticket medio {avg} · {count} tickets en 6 meses'**
+  String fsByStoreFooter(String avg, int count);
+
+  /// No description provided for @fsShopDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Qué día compras'**
+  String get fsShopDays;
+
+  /// No description provided for @fsShopDaysFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Tickets por día de la semana, 6 meses'**
+  String get fsShopDaysFooter;
+
+  /// No description provided for @fsPrices.
+  ///
+  /// In es, this message translates to:
+  /// **'Precios que cambian'**
+  String get fsPrices;
+
+  /// No description provided for @fsPricesFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'En el mismo súper, de la primera a la última compra'**
+  String get fsPricesFooter;
+
+  /// No description provided for @fsPriceSince.
+  ///
+  /// In es, this message translates to:
+  /// **'{before} → {now} · desde {date}'**
+  String fsPriceSince(String before, String now, String date);
+
+  /// No description provided for @fsCheaper.
+  ///
+  /// In es, this message translates to:
+  /// **'Dónde sale más barato'**
+  String get fsCheaper;
+
+  /// No description provided for @fsCheaperRow.
+  ///
+  /// In es, this message translates to:
+  /// **'{cheapStore} {cheap} · {dearStore} {dear}'**
+  String fsCheaperRow(
+    String cheapStore,
+    String cheap,
+    String dearStore,
+    String dear,
+  );
+
+  /// No description provided for @fsCheaperFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Último precio en cada súper'**
+  String get fsCheaperFooter;
+
+  /// No description provided for @fsBoughtMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Llevas comprado este mes'**
+  String get fsBoughtMonth;
+
+  /// No description provided for @fsBoughtFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Unidades en tus tickets'**
+  String get fsBoughtFooter;
+
+  /// No description provided for @fsTopRecipes.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que más coméis'**
+  String get fsTopRecipes;
+
+  /// No description provided for @fsTopRecipesFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Platos distintos: {now} este mes, {before} el pasado'**
+  String fsTopRecipesFooter(int now, int before);
+
+  /// No description provided for @fsTopRecipesEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Planifica comidas y verás vuestros platos estrella.'**
+  String get fsTopRecipesEmpty;
+
+  /// No description provided for @fsWaste.
+  ///
+  /// In es, this message translates to:
+  /// **'Aprovechado y tirado'**
+  String get fsWaste;
+
+  /// No description provided for @fsRescued.
+  ///
+  /// In es, this message translates to:
+  /// **'Aprovechado'**
+  String get fsRescued;
+
+  /// No description provided for @fsThrown.
+  ///
+  /// In es, this message translates to:
+  /// **'Tirado'**
+  String get fsThrown;
+
+  /// No description provided for @fsMostThrown.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que más se tira: {list}'**
+  String fsMostThrown(String list);
+
+  /// No description provided for @fsWasteFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Aprovechado: gastado cuando estaba a punto de caducar'**
+  String get fsWasteFooter;
+
+  /// No description provided for @fsTaskTop.
+  ///
+  /// In es, this message translates to:
+  /// **'Las tareas que más se hacen'**
+  String get fsTaskTop;
+
+  /// No description provided for @fsTaskTopFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Veces en los últimos 3 meses'**
+  String get fsTaskTopFooter;
+
+  /// No description provided for @fsTaskWhen.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuándo se hacen las tareas'**
+  String get fsTaskWhen;
+
+  /// No description provided for @fsMorning.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get fsMorning;
+
+  /// No description provided for @fsAfternoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarde'**
+  String get fsAfternoon;
+
+  /// No description provided for @fsNight.
+  ///
+  /// In es, this message translates to:
+  /// **'Noche'**
+  String get fsNight;
+
+  /// No description provided for @fsTaskWhenFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'El día que más se hace: {day}'**
+  String fsTaskWhenFooter(String day);
+
+  /// No description provided for @fsActivity.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu actividad'**
+  String get fsActivity;
+
+  /// No description provided for @fsActivityFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Tareas hechas y comidas apuntadas, 12 semanas'**
+  String get fsActivityFooter;
+
+  /// No description provided for @fsActivityA11y.
+  ///
+  /// In es, this message translates to:
+  /// **'{days} días con actividad en {weeks} semanas'**
+  String fsActivityA11y(int days, int weeks);
+
+  /// No description provided for @fsStreakNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha'**
+  String get fsStreakNow;
+
+  /// No description provided for @fsStreakBest.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor racha'**
+  String get fsStreakBest;
+
+  /// No description provided for @fsDaysActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Días activos'**
+  String get fsDaysActive;
+
+  /// No description provided for @fsDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 día} other{{count} días}}'**
+  String fsDays(int count);
+
+  /// No description provided for @fsKcal.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus calorías'**
+  String get fsKcal;
+
+  /// No description provided for @fsKcalFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos 30 días'**
+  String get fsKcalFooter;
+
+  /// No description provided for @fsKcalAvg.
+  ///
+  /// In es, this message translates to:
+  /// **'Media'**
+  String get fsKcalAvg;
+
+  /// No description provided for @fsKcalLogged.
+  ///
+  /// In es, this message translates to:
+  /// **'Apuntados'**
+  String get fsKcalLogged;
+
+  /// No description provided for @fsKcalOnTarget.
+  ///
+  /// In es, this message translates to:
+  /// **'En objetivo'**
+  String get fsKcalOnTarget;
+
+  /// No description provided for @fsGoal.
+  ///
+  /// In es, this message translates to:
+  /// **'Objetivo'**
+  String get fsGoal;
+
+  /// No description provided for @fsMacros.
+  ///
+  /// In es, this message translates to:
+  /// **'Proteína {p} % · Hidratos {c} % · Grasa {f} %'**
+  String fsMacros(int p, int c, int f);
+
+  /// No description provided for @fsTopFoods.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que más apuntas: {list}'**
+  String fsTopFoods(String list);
+
+  /// No description provided for @fsWeight.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu peso'**
+  String get fsWeight;
+
+  /// No description provided for @fsWeightChange.
+  ///
+  /// In es, this message translates to:
+  /// **'{change} desde el {date}'**
+  String fsWeightChange(String change, String date);
 }
 
 class _AppLocalizationsDelegate
