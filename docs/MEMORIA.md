@@ -250,7 +250,12 @@ cuando cambie algo de lo que aquí se dice (breve, sin historia).
   día (`taperMoves`). Se llama al abrir Inicio y Mi cocina.
 - Gasto y datos: `stats_screen.dart` ("Tus datos": gráficas de gasto con
   previsión `services/spend_forecast.dart`, compra, despensa, comidas y
-  tareas; se abre desde Inicio y Hogar). `economy_screen.dart` = "Gastos y
+  tareas; se abre desde Inicio y Hogar). Datos curiosos y bloques Dinero y
+  compra / Cocina y despensa / Casa / Tú: `services/fun_stats.dart`
+  (`FunStats.fromRows`, puro y probado; súper del ticket con
+  `Supermarket.fromMerchant`), tarjetas en `widgets/stats/fun_sections.dart`
+  y gráficos comunes en `widgets/stats/stat_charts.dart`. Una tarjeta sin
+  datos no se muestra. `economy_screen.dart` = "Gastos y
   tickets" (siempre visible; puntos solo con Modo Puntos, `showPoints`).
   Escanear ticket: `scan_ticket_screen.dart` (categoría con selector de
   `FoodCategory`, adivinada con `guessTicketCategory`; se guarda su nombre;

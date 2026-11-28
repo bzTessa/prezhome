@@ -3871,5 +3871,226 @@
   "hiSugWasher": "Lavadora",
   "hiSugFridge": "Nevera",
   "hiSugBoiler": "Caldera",
-  "hiSugBins": "Días de basura y reciclaje"
+  "hiSugBins": "Días de basura y reciclaje",
+  "fsFacts": "Datos curiosos",
+  "fsSecMoney": "Dinero y compra",
+  "fsSecKitchen": "Cocina y despensa",
+  "fsSecHome": "Casa",
+  "fsSecYou": "Tú",
+  "fsSecYouNote": "Solo lo ves tú",
+  "fsFactBoughtCaption": "Comprados este mes",
+  "fsFactStoreShare": "{count} de cada 10 tickets",
+  "@fsFactStoreShare": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fsFactShopDay": "Tu día de ir a comprar",
+  "fsFactRecord": "Ticket récord · {place}",
+  "@fsFactRecord": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "fsFactTopRecipe": "Lo que más coméis · {count} veces",
+  "@fsFactTopRecipe": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fsFactRescued": "Salvados de caducar este mes",
+  "fsFactStreak": "Días seguidos · tu mejor racha: {best}",
+  "@fsFactStreak": {
+    "placeholders": {
+      "best": {
+        "type": "int"
+      }
+    }
+  },
+  "fsDayPart": "{part, select, morning{De mañanas} afternoon{De tardes} other{De noches}}",
+  "@fsDayPart": {
+    "placeholders": {
+      "part": {
+        "type": "String"
+      }
+    }
+  },
+  "fsFactDayPart": "{count} de cada 10 tareas",
+  "@fsFactDayPart": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fsFactDistinct": "Productos distintos en 6 meses",
+  "fsFactKcal": "Kcal de media al día",
+  "fsFactWeight": "Desde el {date}",
+  "@fsFactWeight": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "fsByStore": "Por supermercado",
+  "fsByStoreFooter": "Ticket medio {avg} · {count} tickets en 6 meses",
+  "@fsByStoreFooter": {
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fsShopDays": "Qué día compras",
+  "fsShopDaysFooter": "Tickets por día de la semana, 6 meses",
+  "fsPrices": "Precios que cambian",
+  "fsPricesFooter": "En el mismo súper, de la primera a la última compra",
+  "fsPriceSince": "{before} → {now} · desde {date}",
+  "@fsPriceSince": {
+    "placeholders": {
+      "before": {
+        "type": "String"
+      },
+      "now": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "fsCheaper": "Dónde sale más barato",
+  "fsCheaperRow": "{cheapStore} {cheap} · {dearStore} {dear}",
+  "@fsCheaperRow": {
+    "placeholders": {
+      "cheapStore": {
+        "type": "String"
+      },
+      "cheap": {
+        "type": "String"
+      },
+      "dearStore": {
+        "type": "String"
+      },
+      "dear": {
+        "type": "String"
+      }
+    }
+  },
+  "fsCheaperFooter": "Último precio en cada súper",
+  "fsBoughtMonth": "Llevas comprado este mes",
+  "fsBoughtFooter": "Unidades en tus tickets",
+  "fsTopRecipes": "Lo que más coméis",
+  "fsTopRecipesFooter": "Platos distintos: {now} este mes, {before} el pasado",
+  "@fsTopRecipesFooter": {
+    "placeholders": {
+      "now": {
+        "type": "int"
+      },
+      "before": {
+        "type": "int"
+      }
+    }
+  },
+  "fsTopRecipesEmpty": "Planifica comidas y verás vuestros platos estrella.",
+  "fsWaste": "Aprovechado y tirado",
+  "fsRescued": "Aprovechado",
+  "fsThrown": "Tirado",
+  "fsMostThrown": "Lo que más se tira: {list}",
+  "@fsMostThrown": {
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "fsWasteFooter": "Aprovechado: gastado cuando estaba a punto de caducar",
+  "fsTaskTop": "Las tareas que más se hacen",
+  "fsTaskTopFooter": "Veces en los últimos 3 meses",
+  "fsTaskWhen": "Cuándo se hacen las tareas",
+  "fsMorning": "Mañana",
+  "fsAfternoon": "Tarde",
+  "fsNight": "Noche",
+  "fsTaskWhenFooter": "El día que más se hace: {day}",
+  "@fsTaskWhenFooter": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "fsActivity": "Tu actividad",
+  "fsActivityFooter": "Tareas hechas y comidas apuntadas, 12 semanas",
+  "fsActivityA11y": "{days} días con actividad en {weeks} semanas",
+  "@fsActivityA11y": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "fsStreakNow": "Racha",
+  "fsStreakBest": "Mejor racha",
+  "fsDaysActive": "Días activos",
+  "fsDays": "{count, plural, =1{1 día} other{{count} días}}",
+  "@fsDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fsKcal": "Tus calorías",
+  "fsKcalFooter": "Últimos 30 días",
+  "fsKcalAvg": "Media",
+  "fsKcalLogged": "Apuntados",
+  "fsKcalOnTarget": "En objetivo",
+  "fsGoal": "Objetivo",
+  "fsMacros": "Proteína {p} % · Hidratos {c} % · Grasa {f} %",
+  "@fsMacros": {
+    "placeholders": {
+      "p": {
+        "type": "int"
+      },
+      "c": {
+        "type": "int"
+      },
+      "f": {
+        "type": "int"
+      }
+    }
+  },
+  "fsTopFoods": "Lo que más apuntas: {list}",
+  "@fsTopFoods": {
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "fsWeight": "Tu peso",
+  "fsWeightChange": "{change} desde el {date}",
+  "@fsWeightChange": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

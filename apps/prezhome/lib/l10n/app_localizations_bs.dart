@@ -6062,4 +6062,243 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get hiSugBins => 'Dani odvoza smeća';
+
+  @override
+  String get fsFacts => 'Zanimljivosti';
+
+  @override
+  String get fsSecMoney => 'Novac i kupovina';
+
+  @override
+  String get fsSecKitchen => 'Kuhinja i ostava';
+
+  @override
+  String get fsSecHome => 'Kuća';
+
+  @override
+  String get fsSecYou => 'Ti';
+
+  @override
+  String get fsSecYouNote => 'Samo ti ovo vidiš';
+
+  @override
+  String get fsFactBoughtCaption => 'Kupljeno ovaj mjesec';
+
+  @override
+  String fsFactStoreShare(int count) {
+    return '$count od 10 računa';
+  }
+
+  @override
+  String get fsFactShopDay => 'Tvoj dan za kupovinu';
+
+  @override
+  String fsFactRecord(String place) {
+    return 'Rekordni račun · $place';
+  }
+
+  @override
+  String fsFactTopRecipe(int count) {
+    return 'Najčešće jelo · $count puta';
+  }
+
+  @override
+  String get fsFactRescued => 'Spašeno prije isteka ovaj mjesec';
+
+  @override
+  String fsFactStreak(int best) {
+    return 'Dana zaredom · tvoj rekord: $best';
+  }
+
+  @override
+  String fsDayPart(String part) {
+    String _temp0 = intl.Intl.selectLogic(part, {
+      'morning': 'Ujutro',
+      'afternoon': 'Popodne',
+      'other': 'Navečer',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String fsFactDayPart(int count) {
+    return '$count od 10 zadataka';
+  }
+
+  @override
+  String get fsFactDistinct => 'Različitih proizvoda za 6 mjeseci';
+
+  @override
+  String get fsFactKcal => 'Kcal dnevno u prosjeku';
+
+  @override
+  String fsFactWeight(String date) {
+    return 'Od $date';
+  }
+
+  @override
+  String get fsByStore => 'Po supermarketu';
+
+  @override
+  String fsByStoreFooter(String avg, int count) {
+    return 'Prosječan račun $avg · $count računa za 6 mjeseci';
+  }
+
+  @override
+  String get fsShopDays => 'Kojim danom kupuješ';
+
+  @override
+  String get fsShopDaysFooter => 'Računi po danu u sedmici, 6 mjeseci';
+
+  @override
+  String get fsPrices => 'Cijene koje se mijenjaju';
+
+  @override
+  String get fsPricesFooter => 'Ista prodavnica, od prve do zadnje kupovine';
+
+  @override
+  String fsPriceSince(String before, String now, String date) {
+    return '$before → $now · od $date';
+  }
+
+  @override
+  String get fsCheaper => 'Gdje je jeftinije';
+
+  @override
+  String fsCheaperRow(
+    String cheapStore,
+    String cheap,
+    String dearStore,
+    String dear,
+  ) {
+    return '$cheapStore $cheap · $dearStore $dear';
+  }
+
+  @override
+  String get fsCheaperFooter => 'Zadnja cijena u svakoj prodavnici';
+
+  @override
+  String get fsBoughtMonth => 'Do sada kupljeno ovaj mjesec';
+
+  @override
+  String get fsBoughtFooter => 'Komada na tvojim računima';
+
+  @override
+  String get fsTopRecipes => 'Šta najviše jedete';
+
+  @override
+  String fsTopRecipesFooter(int now, int before) {
+    return 'Različita jela: $now ovaj mjesec, $before prošli';
+  }
+
+  @override
+  String get fsTopRecipesEmpty =>
+      'Planiraj obroke i vidjet ćeš vaša omiljena jela.';
+
+  @override
+  String get fsWaste => 'Iskorišteno i bačeno';
+
+  @override
+  String get fsRescued => 'Iskorišteno';
+
+  @override
+  String get fsThrown => 'Bačeno';
+
+  @override
+  String fsMostThrown(String list) {
+    return 'Najviše se baca: $list';
+  }
+
+  @override
+  String get fsWasteFooter => 'Iskorišteno: potrošeno pred istek roka';
+
+  @override
+  String get fsTaskTop => 'Najčešći zadaci';
+
+  @override
+  String get fsTaskTopFooter => 'Puta u zadnja 3 mjeseca';
+
+  @override
+  String get fsTaskWhen => 'Kada se rade zadaci';
+
+  @override
+  String get fsMorning => 'Jutro';
+
+  @override
+  String get fsAfternoon => 'Popodne';
+
+  @override
+  String get fsNight => 'Veče';
+
+  @override
+  String fsTaskWhenFooter(String day) {
+    return 'Najaktivniji dan: $day';
+  }
+
+  @override
+  String get fsActivity => 'Tvoja aktivnost';
+
+  @override
+  String get fsActivityFooter => 'Urađeni zadaci i upisani obroci, 12 sedmica';
+
+  @override
+  String fsActivityA11y(int days, int weeks) {
+    return '$days aktivnih dana u $weeks sedmica';
+  }
+
+  @override
+  String get fsStreakNow => 'Niz';
+
+  @override
+  String get fsStreakBest => 'Najbolji niz';
+
+  @override
+  String get fsDaysActive => 'Aktivni dani';
+
+  @override
+  String fsDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dana',
+      one: '1 dan',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fsKcal => 'Tvoje kalorije';
+
+  @override
+  String get fsKcalFooter => 'Zadnjih 30 dana';
+
+  @override
+  String get fsKcalAvg => 'Prosjek';
+
+  @override
+  String get fsKcalLogged => 'Upisano';
+
+  @override
+  String get fsKcalOnTarget => 'U cilju';
+
+  @override
+  String get fsGoal => 'Cilj';
+
+  @override
+  String fsMacros(int p, int c, int f) {
+    return 'Proteini $p % · Ugljikohidrati $c % · Masti $f %';
+  }
+
+  @override
+  String fsTopFoods(String list) {
+    return 'Najčešće upisuješ: $list';
+  }
+
+  @override
+  String get fsWeight => 'Tvoja težina';
+
+  @override
+  String fsWeightChange(String change, String date) {
+    return '$change od $date';
+  }
 }
