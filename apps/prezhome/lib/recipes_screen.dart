@@ -3,11 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'add_recipe_chooser.dart';
+import 'add_recipe_screen.dart';
+import 'widgets/plan/add_to_plan_sheet.dart';
 import 'discover_recipes_screen.dart';
 import 'recipe_detail_screen.dart';
 import 'models/nutrition_profile.dart';
 import 'models/inventory_item.dart';
 import 'models/recipe.dart';
+import 'models/ready_meal.dart';
+import 'widgets/food_image.dart';
+import 'services/file_local_store.dart';
 import 'utils/pantry_ideas.dart';
 import 'services/offline_provider.dart';
 import 'services/rows_cache.dart';
@@ -38,7 +43,7 @@ class RecipesScreen extends StatefulWidget {
 /// "favorites" si es favorita y, si no, en el primer tipo de esta lista que
 /// tenga (una receta de comida y cena va a "Comida"). Sin tipo -> "other".
 const recipeSectionOrder = [
-  'favorites',
+  'usual',
   'breakfast',
   'lunch',
   'dinner',
@@ -48,20 +53,46 @@ const recipeSectionOrder = [
   'other',
 ];
 
-/// Agrupa las recetas en secciones (ver [recipeSectionOrder]) respetando el
-/// orden de entrada dentro de cada una. Solo devuelve secciones con recetas.
+/// Veces que una receta tiene que salir en el plan (últimos meses) para
+/// contar como "de las de siempre".
+const _usualMin = 2;
+
+/// Agrupa las recetas en secciones (ver [recipeSectionOrder]), como los
+/// recetarios: arriba "Las de siempre" (las que más salen en vuestro plan),
+/// luego por momento del día. Cada receta va en una sola sección de comida;
+/// dentro, favoritas primero, luego las que más coméis y luego las nuevas.
+/// [eaten] = veces en el plan por receta. Solo devuelve secciones con recetas.
 List<MapEntry<String, List<Recipe>>> groupRecipesBySection(
-  List<Recipe> recipes,
-) {
+  List<Recipe> recipes, {
+  Map<String, int> eaten = const {},
+}) {
+  final order = {for (var i = 0; i < recipes.length; i++) recipes[i].id: i};
+  int byUse(Recipe a, Recipe b) {
+    if (a.isFavorite != b.isFavorite) return a.isFavorite ? -1 : 1;
+    final e = (eaten[b.id] ?? 0).compareTo(eaten[a.id] ?? 0);
+    return e != 0 ? e : order[a.id]!.compareTo(order[b.id]!);
+  }
+
   final groups = {for (final k in recipeSectionOrder) k: <Recipe>[]};
   for (final r in recipes) {
-    final key = r.isFavorite
-        ? 'favorites'
-        : recipeSectionOrder.firstWhere(
-            r.mealTypes.contains,
-            orElse: () => 'other',
-          );
+    final key = recipeSectionOrder
+        .skip(1)
+        .firstWhere(r.mealTypes.contains, orElse: () => 'other');
     groups[key]!.add(r);
+  }
+  for (final g in groups.values) {
+    g.sort(byUse);
+  }
+  groups['usual'] =
+      [
+        for (final r in recipes)
+          if ((eaten[r.id] ?? 0) >= _usualMin) r,
+      ]..sort((a, b) {
+        final e = (eaten[b.id] ?? 0).compareTo(eaten[a.id] ?? 0);
+        return e != 0 ? e : byUse(a, b);
+      });
+  if (groups['usual']!.length > 6) {
+    groups['usual'] = groups['usual']!.take(6).toList();
   }
   return [
     for (final e in groups.entries)
@@ -88,6 +119,18 @@ class _RecipesScreenState extends State<RecipesScreen> {
   // Despensa del último fetch: las tarjetas dicen si tienes todo.
   List<String> _pantry = const [];
 
+  // Veces que sale cada receta en el plan (para "Las de siempre").
+  Map<String, int> _eaten = const {};
+
+  // El orden elegido se recuerda en el móvil.
+  static final _settings = FileLocalStore(folderName: 'settings');
+  static const _sortKey = 'recipes_sort';
+
+  void _setSort(RecipeSort s) {
+    setState(() => _sort = s);
+    _settings.write(_sortKey, s.name).catchError((_) {});
+  }
+
   void _toggleFilter(String category) {
     setState(() {
       if (!_filters.add(category)) _filters.remove(category);
@@ -98,6 +141,13 @@ class _RecipesScreenState extends State<RecipesScreen> {
   void initState() {
     super.initState();
     _future = _fetch();
+    _settings
+        .read(_sortKey)
+        .then((v) {
+          final s = RecipeSort.values.where((e) => e.name == v).firstOrNull;
+          if (s != null && mounted) setState(() => _sort = s);
+        })
+        .catchError((_) {});
   }
 
   @override
@@ -149,7 +199,48 @@ class _RecipesScreenState extends State<RecipesScreen> {
         // Sin despensa, el recetario se enseña igual.
       }
     }
-    return _RecipesData(recipes: recipes, profile: profile, pantry: pantry);
+    // Lo que más sale en el plan de los últimos 4 meses.
+    final eaten = <String, int>{};
+    if (recipes.isNotEmpty) {
+      try {
+        String day(DateTime d) => d.toIso8601String().split('T').first;
+        final now = DateTime.now();
+        final rows = await supabase
+            .from('meal_plan_entries')
+            .select('recipe_id')
+            .eq('home_id', recipes.first.homeId)
+            .eq('skipped', false)
+            .not('recipe_id', 'is', null)
+            .gte('plan_date', day(now.subtract(const Duration(days: 120))))
+            .lte('plan_date', day(now));
+        for (final r in rows as List) {
+          final id = r['recipe_id'] as String?;
+          if (id != null) eaten[id] = (eaten[id] ?? 0) + 1;
+        }
+      } catch (_) {
+        // Sin conexión, sin "Las de siempre".
+      }
+    }
+    // Tus preparados del súper (los de confianza).
+    var readyMeals = const <ReadyMeal>[];
+    try {
+      final rows = await supabase
+          .from('ready_meals')
+          .select()
+          .eq('trusted', true)
+          .order('name');
+      readyMeals = [
+        for (final r in rows as List)
+          ReadyMeal.fromMap(Map<String, dynamic>.from(r)),
+      ];
+    } catch (_) {}
+    return _RecipesData(
+      recipes: recipes,
+      profile: profile,
+      pantry: pantry,
+      eaten: eaten,
+      readyMeals: readyMeals,
+    );
   }
 
   void _reload() {
@@ -185,7 +276,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
     }
   }
 
-  /// Menú rápido (pulsación larga) sobre una tarjeta: favorita o eliminar.
+  /// Menú rápido (pulsación larga) sobre una tarjeta: favorita, al plan,
+  /// editar o eliminar.
   Future<void> _openQuickActions(Recipe recipe) async {
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -216,6 +308,16 @@ class _RecipesScreenState extends State<RecipesScreen> {
               onTap: () => Navigator.of(ctx).pop('favorite'),
             ),
             ListTile(
+              leading: const Icon(Icons.calendar_month_outlined),
+              title: Text(context.l.apTitle),
+              onTap: () => Navigator.of(ctx).pop('plan'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(context.l.rdEdit),
+              onTap: () => Navigator.of(ctx).pop('edit'),
+            ),
+            ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.expired),
               title: Text(context.l.recDelete),
               onTap: () => Navigator.of(ctx).pop('delete'),
@@ -225,8 +327,16 @@ class _RecipesScreenState extends State<RecipesScreen> {
         ),
       ),
     );
+    if (!mounted) return;
     if (action == 'favorite') {
       await _toggleFavorite(recipe);
+    } else if (action == 'plan') {
+      await addRecipeToPlan(context, recipe);
+    } else if (action == 'edit') {
+      final updated = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => AddRecipeScreen(recipe: recipe)),
+      );
+      if (updated == true) _reload();
     } else if (action == 'delete') {
       await _confirmDelete(recipe);
     }
@@ -337,7 +447,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
     final slivers = <Widget>[];
     final sections = [
       if (ready.isNotEmpty) MapEntry('ready', ready),
-      ...groupRecipesBySection(recipes),
+      ...groupRecipesBySection(recipes, eaten: _eaten),
     ];
     for (final section in sections) {
       final key = section.key;
@@ -388,13 +498,119 @@ class _RecipesScreenState extends State<RecipesScreen> {
         );
       }
     }
-    slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 120)));
     return slivers;
+  }
+
+  /// "Tus preparados": lo que compráis ya hecho, al final del recetario.
+  List<Widget> _readyMealsSection(List<ReadyMeal> meals) => [
+    SliverToBoxAdapter(
+      child: _SectionHeader(
+        icon: Icons.storefront_outlined,
+        title: context.l.recReadyMeals,
+        count: meals.length,
+      ),
+    ),
+    SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: DecoratedBox(
+          decoration: AppTheme.surfaceDecoration(radius: 18),
+          child: Column(
+            children: [
+              for (final (i, m) in meals.indexed) ...[
+                if (i > 0) const Divider(height: 1, indent: 76),
+                ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: FoodImage(
+                      name: m.name,
+                      imageUrl: m.imageUrl,
+                      size: 44,
+                      radius: 12,
+                    ),
+                  ),
+                  title: Text(m.name),
+                  subtitle: Text(
+                    m.isDessert
+                        ? context.l.mealType('dessert')
+                        : context.l.kindReady,
+                    style: AppTextStyles.labelMuted,
+                  ),
+                  trailing: const Icon(Icons.more_horiz_rounded),
+                  onTap: () => _readyMealActions(m),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ),
+  ];
+
+  Future<void> _readyMealActions(ReadyMeal m) async {
+    final id = OfflineProvider.instance.homeId;
+    final homeId = id == kDefaultLocalHome ? null : id;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Text(m.name, style: AppTextStyles.sheetTitle),
+            ),
+            if (homeId != null)
+              ListTile(
+                leading: const Icon(Icons.calendar_month_outlined),
+                title: Text(context.l.apTitle),
+                onTap: () => Navigator.of(ctx).pop('plan'),
+              ),
+            ListTile(
+              leading: Icon(
+                Icons.remove_circle_outline,
+                color: AppColors.expired,
+              ),
+              title: Text(context.l.recReadyRemove),
+              onTap: () => Navigator.of(ctx).pop('remove'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (action == 'plan' && homeId != null) {
+      await addToPlan(
+        context,
+        homeId: homeId,
+        title: m.name,
+        readyMealId: m.id,
+        mealTypes: [m.isDessert ? 'dessert' : 'dinner'],
+      );
+    } else if (action == 'remove') {
+      try {
+        await supabase
+            .from('ready_meals')
+            .update({'trusted': false})
+            .eq('id', m.id);
+        _reload();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(friendlyError(e, context.l.couldNotUpdate)),
+            backgroundColor: AppColors.expired,
+          ),
+        );
+      }
+    }
   }
 
   static String _sectionTitle(BuildContext context, String key) =>
       switch (key) {
         'favorites' => context.l.recFavorites,
+        'usual' => context.l.recUsual,
         'ready' => context.l.recReadyNow,
         'other' => context.l.recOther,
         _ => context.l.mealType(key),
@@ -402,6 +618,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
   static IconData _sectionIcon(String key) => switch (key) {
     'favorites' => Icons.favorite_rounded,
+    'usual' => Icons.repeat_rounded,
     'ready' => Icons.kitchen_rounded,
     'other' => Icons.restaurant_rounded,
     _ => mealTypeIcon(key),
@@ -450,6 +667,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
             }
             final data = snapshot.data!;
             _pantry = data.pantry;
+            _eaten = data.eaten;
             final allRecipes = data.recipes;
             final perMeal = data.profile?.caloriesPerMeal;
 
@@ -532,7 +750,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     child: _ResultsBar(
                       count: found.length,
                       sort: _sort,
-                      onSort: (s) => setState(() => _sort = s),
+                      onSort: _setSort,
                       onClear: () => setState(() {
                         _searchCtrl.clear();
                         _query = '';
@@ -554,6 +772,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     ),
                   ),
                   ..._sections(allRecipes, ready, perMeal),
+                  if (data.readyMeals.isNotEmpty)
+                    ..._readyMealsSection(data.readyMeals),
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
                 ] else if (found.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
@@ -836,7 +1057,15 @@ class _RecipesData {
   final List<String> pantry;
   final List<Recipe> recipes;
   final NutritionProfile? profile;
-  _RecipesData({required this.recipes, this.profile, this.pantry = const []});
+  final Map<String, int> eaten;
+  final List<ReadyMeal> readyMeals;
+  _RecipesData({
+    required this.recipes,
+    this.profile,
+    this.pantry = const [],
+    this.eaten = const {},
+    this.readyMeals = const [],
+  });
 }
 
 /// Tarjeta editorial de receta en cuadrícula de 2 columnas: foto protagonista

@@ -5870,4 +5870,49 @@ class AppLocalizationsBs extends AppLocalizations {
   String ncDoneMoved(String title, String day) {
     return 'Gotovo. $title prelazi na $day.';
   }
+
+  @override
+  String get recUsual => 'Uvijek iste';
+
+  @override
+  String get apTitle => 'Dodaj u plan';
+
+  @override
+  String get apDay => 'Dan';
+
+  @override
+  String get apMeal => 'Obrok';
+
+  @override
+  String get apToday => 'Danas';
+
+  @override
+  String get apTomorrow => 'Sutra';
+
+  @override
+  String get apAdd => 'Dodaj u plan';
+
+  @override
+  String apDone(String meal, String day) {
+    return 'Dodano: $meal, $day.';
+  }
+
+  @override
+  String get recReadyMeals => 'Tvoja gotova jela';
+
+  @override
+  String get recReadyRemove => 'Ukloni iz gotovih jela';
+
+  @override
+  String get rlTitle => 'Da sačuvam u tvoja gotova jela?';
+
+  @override
+  String get rlBody =>
+      'Ovo si kupila/kupio već gotovo. Ako sačuvaš, predložit ću ti to danima kad ti se ne kuha.';
+
+  @override
+  String get rlYes => 'Sačuvaj';
+
+  @override
+  String get rlNo => 'Ne sada';
 }

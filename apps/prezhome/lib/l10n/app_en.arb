@@ -1490,5 +1490,19 @@
   "ncNothing": "No leftovers, ready meals or quick recipes. Ready meals you save in the plan will show up here.",
   "ncOut": "We're eating out today",
   "ncDoneNoMove": "Done, no cooking today.",
-  "ncDoneMoved": "Done. {title} moves to {day}."
+  "ncDoneMoved": "Done. {title} moves to {day}.",
+  "recUsual": "Your regulars",
+  "apTitle": "Add to plan",
+  "apDay": "Day",
+  "apMeal": "Meal",
+  "apToday": "Today",
+  "apTomorrow": "Tomorrow",
+  "apAdd": "Add to plan",
+  "apDone": "Added to {meal} on {day}.",
+  "recReadyMeals": "Your ready meals",
+  "recReadyRemove": "Remove from your ready meals",
+  "rlTitle": "Save to your ready meals?",
+  "rlBody": "You bought these ready-made. If you save them, I'll suggest them on days you don't feel like cooking.",
+  "rlYes": "Save",
+  "rlNo": "Not now"
 }

@@ -9058,6 +9058,90 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Hecho. {title} pasa al {day}.'**
   String ncDoneMoved(String title, String day);
+
+  /// No description provided for @recUsual.
+  ///
+  /// In es, this message translates to:
+  /// **'Las de siempre'**
+  String get recUsual;
+
+  /// No description provided for @apTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Poner en el plan'**
+  String get apTitle;
+
+  /// No description provided for @apDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día'**
+  String get apDay;
+
+  /// No description provided for @apMeal.
+  ///
+  /// In es, this message translates to:
+  /// **'Comida'**
+  String get apMeal;
+
+  /// No description provided for @apToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get apToday;
+
+  /// No description provided for @apTomorrow.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get apTomorrow;
+
+  /// No description provided for @apAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir al plan'**
+  String get apAdd;
+
+  /// No description provided for @apDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Puesta en {meal} del {day}.'**
+  String apDone(String meal, String day);
+
+  /// No description provided for @recReadyMeals.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus preparados'**
+  String get recReadyMeals;
+
+  /// No description provided for @recReadyRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de tus preparados'**
+  String get recReadyRemove;
+
+  /// No description provided for @rlTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Lo guardo en tus preparados?'**
+  String get rlTitle;
+
+  /// No description provided for @rlBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Esto lo has comprado ya hecho. Si lo guardas, te lo propondré los días que no apetezca cocinar.'**
+  String get rlBody;
+
+  /// No description provided for @rlYes.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get rlYes;
+
+  /// No description provided for @rlNo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get rlNo;
 }
 
 class _AppLocalizationsDelegate

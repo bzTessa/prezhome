@@ -1490,5 +1490,19 @@
   "ncNothing": "Keine Reste, Fertiggerichte oder schnellen Rezepte. Fertiggerichte, die du im Plan speicherst, erscheinen hier.",
   "ncOut": "Heute essen wir auswärts",
   "ncDoneNoMove": "Erledigt, heute wird nicht gekocht.",
-  "ncDoneMoved": "Erledigt. {title} rückt auf {day}."
+  "ncDoneMoved": "Erledigt. {title} rückt auf {day}.",
+  "recUsual": "Eure Klassiker",
+  "apTitle": "In den Plan",
+  "apDay": "Tag",
+  "apMeal": "Mahlzeit",
+  "apToday": "Heute",
+  "apTomorrow": "Morgen",
+  "apAdd": "Zum Plan hinzufügen",
+  "apDone": "Hinzugefügt: {meal} am {day}.",
+  "recReadyMeals": "Deine Fertiggerichte",
+  "recReadyRemove": "Aus deinen Fertiggerichten entfernen",
+  "rlTitle": "Bei deinen Fertiggerichten speichern?",
+  "rlBody": "Das hast du fertig gekauft. Wenn du es speicherst, schlage ich es an Tagen ohne Kochlust vor.",
+  "rlYes": "Speichern",
+  "rlNo": "Jetzt nicht"
 }

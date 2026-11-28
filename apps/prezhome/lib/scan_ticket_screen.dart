@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
+import 'services/ready_learning.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'utils/money.dart';
@@ -405,6 +406,17 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text(context.l.stkCrossed(crossed))));
       }
+      // 6. Lo comprado ya hecho (pizza, coulant…): ¿a tus preparados?
+      await ReadyLearning.offer(
+        context,
+        _client,
+        homeId: homeId as String,
+        bought: [
+          for (final it in _items)
+            if (it.name.text.trim().isNotEmpty) it.name.text.trim(),
+        ],
+      );
+      if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {

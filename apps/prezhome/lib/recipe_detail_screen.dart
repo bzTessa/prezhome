@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/plan/add_to_plan_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -975,6 +976,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             padding: EdgeInsets.zero,
             onSelected: (v) {
               switch (v) {
+                case 'plan':
+                  addRecipeToPlan(context, _recipe);
                 case 'photo':
                   if (!_changingPhoto) _openPhotoMenu();
                 case 'share':
@@ -986,6 +989,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               }
             },
             itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'plan',
+                child: ListTile(
+                  leading: const Icon(Icons.calendar_month_outlined),
+                  title: Text(context.l.apTitle),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
               PopupMenuItem(
                 value: 'photo',
                 child: ListTile(

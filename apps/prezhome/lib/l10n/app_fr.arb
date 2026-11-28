@@ -1490,5 +1490,19 @@
   "ncNothing": "Pas de restes, de plats tout prêts ni de recettes rapides. Les plats tout prêts enregistrés dans le menu apparaîtront ici.",
   "ncOut": "On mange dehors aujourd'hui",
   "ncDoneNoMove": "C'est fait, pas de cuisine aujourd'hui.",
-  "ncDoneMoved": "C'est fait. {title} passe à {day}."
+  "ncDoneMoved": "C'est fait. {title} passe à {day}.",
+  "recUsual": "Les incontournables",
+  "apTitle": "Ajouter au menu",
+  "apDay": "Jour",
+  "apMeal": "Repas",
+  "apToday": "Aujourd'hui",
+  "apTomorrow": "Demain",
+  "apAdd": "Ajouter au menu",
+  "apDone": "Ajoutée au {meal} de {day}.",
+  "recReadyMeals": "Tes plats tout prêts",
+  "recReadyRemove": "Retirer de tes plats tout prêts",
+  "rlTitle": "Je les garde dans tes plats tout prêts ?",
+  "rlBody": "Tu as acheté ça tout prêt. Si tu les gardes, je te les proposerai les jours sans envie de cuisiner.",
+  "rlYes": "Garder",
+  "rlNo": "Pas maintenant"
 }

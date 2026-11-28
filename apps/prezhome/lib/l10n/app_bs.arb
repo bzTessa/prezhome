@@ -1490,5 +1490,19 @@
   "ncNothing": "Nema ostataka, gotovih jela ni brzih recepata. Gotova jela koja sačuvaš u planu pojavit će se ovdje.",
   "ncOut": "Danas jedemo vani",
   "ncDoneNoMove": "Gotovo, danas se ne kuha.",
-  "ncDoneMoved": "Gotovo. {title} prelazi na {day}."
+  "ncDoneMoved": "Gotovo. {title} prelazi na {day}.",
+  "recUsual": "Uvijek iste",
+  "apTitle": "Dodaj u plan",
+  "apDay": "Dan",
+  "apMeal": "Obrok",
+  "apToday": "Danas",
+  "apTomorrow": "Sutra",
+  "apAdd": "Dodaj u plan",
+  "apDone": "Dodano: {meal}, {day}.",
+  "recReadyMeals": "Tvoja gotova jela",
+  "recReadyRemove": "Ukloni iz gotovih jela",
+  "rlTitle": "Da sačuvam u tvoja gotova jela?",
+  "rlBody": "Ovo si kupila/kupio već gotovo. Ako sačuvaš, predložit ću ti to danima kad ti se ne kuha.",
+  "rlYes": "Sačuvaj",
+  "rlNo": "Ne sada"
 }

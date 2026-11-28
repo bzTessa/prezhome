@@ -11,8 +11,12 @@ Recipe _r(String title, List<String> types, {bool fav = false}) => Recipe(
   isFavorite: fav,
 );
 
+Map<String, List<String>> _titles(List<MapEntry<String, List<Recipe>>> g) => {
+  for (final e in g) e.key: e.value.map((r) => r.title).toList(),
+};
+
 void main() {
-  test('cada receta sale una vez, en su sección y en orden', () {
+  test('cada receta va en una sección de comida, por momento del día', () {
     final groups = groupRecipesBySection([
       _r('Café', ['breakfast', 'drink'], fav: true),
       _r('Lentejas', ['lunch', 'dinner']),
@@ -21,22 +25,28 @@ void main() {
       _r('Sin tipo', []),
       _r('Pollo', ['lunch']),
     ]);
-    expect(
-      {for (final g in groups) g.key: g.value.map((r) => r.title).toList()},
-      {
-        'favorites': ['Café'],
-        'breakfast': ['Tortilla'],
-        'lunch': ['Lentejas', 'Pollo'],
-        'dessert': ['Cheesecake'],
-        'other': ['Sin tipo'],
-      },
+    expect(_titles(groups), {
+      'breakfast': ['Café', 'Tortilla'],
+      'lunch': ['Lentejas', 'Pollo'],
+      'dessert': ['Cheesecake'],
+      'other': ['Sin tipo'],
+    });
+  });
+
+  test('favoritas primero, luego lo que más se come, luego lo nuevo', () {
+    final groups = groupRecipesBySection(
+      [
+        _r('Nueva', ['lunch']),
+        _r('Pollo', ['lunch']),
+        _r('Lentejas', ['lunch']),
+        _r('Paella', ['lunch'], fav: true),
+      ],
+      eaten: {'Lentejas': 5, 'Pollo': 2},
     );
-    expect(groups.map((g) => g.key).toList(), [
-      'favorites',
-      'breakfast',
-      'lunch',
-      'dessert',
-      'other',
-    ]);
+    expect(_titles(groups), {
+      'usual': ['Lentejas', 'Pollo'],
+      'lunch': ['Paella', 'Lentejas', 'Pollo', 'Nueva'],
+    });
+    expect(groups.first.key, 'usual');
   });
 }

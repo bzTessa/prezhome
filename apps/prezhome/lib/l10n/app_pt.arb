@@ -1490,5 +1490,19 @@
   "ncNothing": "Não há sobras, pratos prontos nem receitas rápidas. Os pratos prontos que guardares no plano aparecem aqui.",
   "ncOut": "Hoje comemos fora",
   "ncDoneNoMove": "Feito, hoje não se cozinha.",
-  "ncDoneMoved": "Feito. {title} passa para {day}."
+  "ncDoneMoved": "Feito. {title} passa para {day}.",
+  "recUsual": "As do costume",
+  "apTitle": "Pôr no plano",
+  "apDay": "Dia",
+  "apMeal": "Refeição",
+  "apToday": "Hoje",
+  "apTomorrow": "Amanhã",
+  "apAdd": "Adicionar ao plano",
+  "apDone": "Adicionada a {meal} de {day}.",
+  "recReadyMeals": "Os teus pratos prontos",
+  "recReadyRemove": "Tirar dos teus pratos prontos",
+  "rlTitle": "Guardo nos teus pratos prontos?",
+  "rlBody": "Compraste isto já feito. Se guardares, proponho-o nos dias em que não te apetecer cozinhar.",
+  "rlYes": "Guardar",
+  "rlNo": "Agora não"
 }

@@ -5965,4 +5965,49 @@ class AppLocalizationsIt extends AppLocalizations {
   String ncDoneMoved(String title, String day) {
     return 'Fatto. $title passa a $day.';
   }
+
+  @override
+  String get recUsual => 'Le solite';
+
+  @override
+  String get apTitle => 'Metti nel piano';
+
+  @override
+  String get apDay => 'Giorno';
+
+  @override
+  String get apMeal => 'Pasto';
+
+  @override
+  String get apToday => 'Oggi';
+
+  @override
+  String get apTomorrow => 'Domani';
+
+  @override
+  String get apAdd => 'Aggiungi al piano';
+
+  @override
+  String apDone(String meal, String day) {
+    return 'Aggiunta a $meal di $day.';
+  }
+
+  @override
+  String get recReadyMeals => 'I tuoi piatti pronti';
+
+  @override
+  String get recReadyRemove => 'Togli dai tuoi piatti pronti';
+
+  @override
+  String get rlTitle => 'Li salvo tra i tuoi piatti pronti?';
+
+  @override
+  String get rlBody =>
+      'Questi li hai comprati già pronti. Se li salvi, te li proporrò nei giorni in cui non hai voglia di cucinare.';
+
+  @override
+  String get rlYes => 'Salva';
+
+  @override
+  String get rlNo => 'Non ora';
 }

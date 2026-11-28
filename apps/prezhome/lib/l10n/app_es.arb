@@ -3772,5 +3772,29 @@
         "type": "String"
       }
     }
-  }
+  },
+  "recUsual": "Las de siempre",
+  "apTitle": "Poner en el plan",
+  "apDay": "Día",
+  "apMeal": "Comida",
+  "apToday": "Hoy",
+  "apTomorrow": "Mañana",
+  "apAdd": "Añadir al plan",
+  "apDone": "Puesta en {meal} del {day}.",
+  "@apDone": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "recReadyMeals": "Tus preparados",
+  "recReadyRemove": "Quitar de tus preparados",
+  "rlTitle": "¿Lo guardo en tus preparados?",
+  "rlBody": "Esto lo has comprado ya hecho. Si lo guardas, te lo propondré los días que no apetezca cocinar.",
+  "rlYes": "Guardar",
+  "rlNo": "Ahora no"
 }
